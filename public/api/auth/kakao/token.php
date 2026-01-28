@@ -160,14 +160,12 @@ $profile = $kakaoAccount['profile'] ?? [];
 
 $nickname = $profile['nickname'] ?? '사용자';
 $profileImage = $profile['profile_image_url'] ?? null;
-$email = $kakaoAccount['email'] ?? null;
 
 // JWT 토큰 생성
 $jwtSecret = 'news-context-jwt-secret-key-2026';
 $jwtPayload = [
     'user_id' => $kakaoId,
     'nickname' => $nickname,
-    'email' => $email,
     'profile_image' => $profileImage,
     'provider' => 'kakao',
     'iat' => time(),
@@ -199,7 +197,6 @@ echo json_encode([
     'user' => [
         'id' => $kakaoId,
         'nickname' => $nickname,
-        'email' => $email,
         'profile_image' => $profileImage,
         'role' => 'user',
         'created_at' => date('c'),
