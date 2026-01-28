@@ -134,7 +134,7 @@ export const kakaoLogin = async (): Promise<void> => {
     console.log('Using Kakao SDK');
     window.Kakao.Auth.authorize({
       redirectUri: REDIRECT_URI,
-      scope: 'profile_nickname,profile_image,account_email',
+      scope: 'profile_nickname,profile_image',
     });
     return;
   }
@@ -145,7 +145,7 @@ export const kakaoLogin = async (): Promise<void> => {
     client_id: KAKAO_REST_API_KEY,
     redirect_uri: REDIRECT_URI,
     response_type: 'code',
-    scope: 'profile_nickname,profile_image,account_email',
+    scope: 'profile_nickname,profile_image',
   });
 
   const authUrl = `https://kauth.kakao.com/oauth/authorize?${params.toString()}`;
