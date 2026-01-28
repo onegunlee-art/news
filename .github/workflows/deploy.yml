@@ -31,8 +31,22 @@ jobs:
 
       - name: Validate PHP syntax
         run: |
-          find src/backend -name "*.php" -exec php -l {} \; | grep -v "No syntax errors"
-          if [ $? -eq 0 ]; then exit 0; else exit 1; fi
+          echo "Validating PHP syntax..."
+          failed=0
+          for file in $(find src/backend -name "*.php"); do
+            if ! php -l "$file" > /dev/null 2>&1; then
+              echo "❌ Syntax error in: $file"
+              php -l "$file"
+              failed=1
+            else
+              echo "✅ $file"
+            fi
+          done
+          if [ $failed -eq 1 ]; then
+            echo "PHP syntax validation failed"
+            exit 1
+          fi
+          echo "All PHP files validated successfully"
 
       - name: Check PHP files
         run: |
