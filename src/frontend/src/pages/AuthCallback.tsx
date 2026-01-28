@@ -47,7 +47,7 @@ export default function AuthCallback() {
     if (code) {
       try {
         // 백엔드에서 토큰 교환
-        const response = await fetch('/api/auth/kakao/token.php', {
+        const response = await fetch('/api/auth/kakao/token', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -55,7 +55,18 @@ export default function AuthCallback() {
           body: JSON.stringify({ code }),
         })
 
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ message: 'Unknown error' }))
+          console.error('Token exchange failed:', {
+            status: response.status,
+            statusText: response.statusText,
+            error: errorData,
+          })
+          throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`)
+        }
+
         const data = await response.json()
+        console.log('Token exchange response:', { success: data.success, hasToken: !!data.access_token })
 
         if (data.success && data.access_token) {
           localStorage.setItem('access_token', data.access_token)
@@ -70,10 +81,16 @@ export default function AuthCallback() {
           navigate('/')
           return
         } else {
+          console.error('Token exchange failed:', data)
           throw new Error(data.message || '토큰 교환 실패')
         }
       } catch (err: any) {
-        console.error('Token exchange error:', err)
+        console.error('Token exchange error:', {
+          error: err,
+          message: err.message,
+          stack: err.stack,
+          code: code ? code.substring(0, 20) + '...' : 'no code',
+        })
         setError(err.message || '로그인 처리 중 오류가 발생했습니다.')
         setTimeout(() => navigate('/'), 3000)
         return

@@ -41,13 +41,30 @@ if (empty($code)) {
 }
 
 // 설정 파일 로드
+// 배포 환경에 맞게 경로 조정
 $configPath = dirname(__DIR__, 4) . '/config/kakao.php';
+
+// 배포 환경에서 경로가 다를 수 있으므로 여러 경로 시도
+if (!file_exists($configPath)) {
+    // 대체 경로 시도
+    $configPath = dirname(__DIR__, 3) . '/config/kakao.php';
+}
+
+if (!file_exists($configPath)) {
+    // 또 다른 대체 경로 시도
+    $configPath = __DIR__ . '/../../../../config/kakao.php';
+}
 
 if (!file_exists($configPath)) {
     http_response_code(500);
     echo json_encode([
         'success' => false,
         'message' => '설정 파일을 찾을 수 없습니다.',
+        'tried_paths' => [
+            dirname(__DIR__, 4) . '/config/kakao.php',
+            dirname(__DIR__, 3) . '/config/kakao.php',
+            __DIR__ . '/../../../../config/kakao.php',
+        ],
     ], JSON_UNESCAPED_UNICODE);
     exit;
 }
@@ -88,6 +105,10 @@ if ($httpCode !== 200) {
         'success' => false,
         'message' => '토큰 발급 실패',
         'error' => $error,
+        'http_code' => $httpCode,
+        'response' => $tokenResponse,
+        'redirect_uri' => $redirectUri,
+        'code' => substr($code, 0, 20) . '...', // 코드 일부만 로깅
     ], JSON_UNESCAPED_UNICODE);
     exit;
 }

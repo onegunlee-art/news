@@ -67,8 +67,13 @@ export const initKakao = (): boolean => {
  * 카카오 로그인 (REST API 방식 - JavaScript 키 불필요)
  */
 export const kakaoLogin = (): void => {
+  // Redirect URI 확인 (디버깅)
+  console.log('Kakao Login - Redirect URI:', REDIRECT_URI);
+  console.log('Kakao Login - REST API Key:', KAKAO_REST_API_KEY ? 'Set' : 'Not Set');
+  
   // JavaScript SDK가 초기화되어 있으면 SDK 사용
   if (initKakao()) {
+    console.log('Using Kakao SDK');
     window.Kakao.Auth.authorize({
       redirectUri: REDIRECT_URI,
       scope: 'profile_nickname,profile_image,account_email',
@@ -77,6 +82,7 @@ export const kakaoLogin = (): void => {
   }
 
   // REST API 방식으로 직접 리다이렉트
+  console.log('Using REST API method');
   const params = new URLSearchParams({
     client_id: KAKAO_REST_API_KEY,
     redirect_uri: REDIRECT_URI,
@@ -85,6 +91,7 @@ export const kakaoLogin = (): void => {
   });
 
   const authUrl = `https://kauth.kakao.com/oauth/authorize?${params.toString()}`;
+  console.log('Kakao Auth URL:', authUrl);
   window.location.href = authUrl;
 };
 
