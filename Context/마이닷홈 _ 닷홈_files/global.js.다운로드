@@ -1,0 +1,3055 @@
+var HTTP_HOST = document.domain;
+var SEPARATOR = '';
+var processStatus = 0;
+var doubleSubmitFlag = true;
+
+
+// Left 빈자리 만큼 padStr 을 붙인다.
+function lpad(src, len, padStr) {
+    var retStr = "";
+    var padCnt = Number(len) - String(src).length;
+    for (var i = 0; i < padCnt; i++)
+        retStr += String(padStr);
+    return retStr + src;
+}
+
+function doubleSubmitCheck() {
+    if (doubleSubmitFlag) {
+        doubleSubmitFlag = !doubleSubmitFlag;
+        // 타이밍 추가
+        setTimeout(function () {
+            doubleSubmitFlag = true;
+        }, 2000);
+        return true;
+
+    } else {
+        return doubleSubmitFlag;
+    }
+}
+
+
+// Right 빈자리 만큼 padStr 을 붙인다.
+function rpad(src, len, padStr) {
+    var retStr = "";
+    var padCnt = Number(len) - String(src).length;
+    for (var i = 0; i < padCnt; i++)
+        retStr += String(padStr);
+    return src + retStr;
+}
+
+// 금액 3자리 단위 쉼표 찍기 10,000
+function number_format(num) {
+    var sign = "";
+    if (num == 0) {
+        return num;
+    }
+    if (num < 0) {
+        num = num * (-1);
+        sign = "-";
+    } else
+        num = num * 1;
+    num = new String(num)
+    var temp = "";
+    var pos = 3;
+    num_len = num.length;
+    while (num_len > 0) {
+        num_len = num_len - pos;
+        if (num_len < 0) {
+            pos = num_len + pos;
+            num_len = 0;
+        }
+        temp = "," + num.substr(num_len, pos) + temp;
+    }
+    return sign + temp.substr(1);
+}
+
+// id 에서 구분자 뺀 나머지 필요한 값 구하기
+function getIdVal(id) {
+    var tmpId = id.split('_00_');
+    var val = tmpId[1];
+    return val;
+}
+
+//	TRIM
+function trim(str) {
+    return str.replace(/(^[\s\xA0]+|[\s\xA0]+$)/g, '');
+}
+
+//	RAND
+function rand(min, max) {
+    if (max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    } else {
+        return Math.floor(Math.random() * (min + 1));
+    }
+}
+
+function isKorDomainName(domain) {
+
+    var host = trim(domain);
+    var arrResult = new Array(2);
+
+    //[1.1] 도메인명 유무
+    if (host == null || host == "") {
+        arrResult[0] = false;
+        arrResult[1] = "도메인명을 입력해 주세요.";
+        return arrResult;
+    }
+
+    //[1.2] 도메인명 형식 체크
+    var valid_dom = /^[\uac00-\ud7a3a-zA-Z0-9\-]+$/;
+    if (!valid_dom.test(host)) {
+        arrResult[0] = false;
+        arrResult[1] = "도메인 형식이 맞지 않습니다. \n\n다시 입력해주십시오.";
+        return arrResult;
+    }
+
+// 숫자나 영문 포함되면 닷네임 api로 등록 불가이기 때문에 순수한글 체크함 (2014/06/03확인)
+//	var valid_dom = /^[\uac00-\ud7a3]+$/; //순수한글만 있어야함.
+//	if(!valid_dom.test(host)){
+//		arrResult[0] = false;
+//		arrResult[1] = "도메인 형식이 맞지 않습니다. \n\n다시 입력해주십시오.";
+//		return arrResult;
+//	}
+
+    var strlength = host.length;
+    var krstr = /[\uac00-\ud7a3]/;
+    if (!krstr.test(host)) {
+        arrResult[0] = false;
+        arrResult[1] = "한글을 적어도 한 글자 이상 포함해야 합니다. \n\n다시 입력해주십시오.";
+        return arrResult;
+    }
+
+    //[1.3] 길이 검사 : 최소 1자 - 17자 까지
+    if (strlength < 1 || strlength > 17) {
+        arrResult[0] = false;
+        arrResult[1] = "도메인명은 최소 1자에서 최대 17까지만 등록가능합니다. \n다시 입력해주십시오.";
+        return arrResult;
+    }
+
+    //[1.4] "-"  으로 시작하는 것 금지
+    if (host.indexOf("-") == 0) {
+        arrResult[0] = false;
+        arrResult[1] = "하이픈(-)으로 시작하는 도메인명은 등록하실 수 없습니다. \n다시 입력해주십시오.";
+        return arrResult;
+    }
+
+    //[1.5] "-"  으로 끝나는 것 금지
+    if (host.lastIndexOf("-") == (strlength - 1)) {
+        arrResult[0] = false;
+        arrResult[1] = "하이픈(-)으로 끝나는 도메인명은 등록하실 수 없습니다. \n다시 입력해주십시오.";
+        return arrResult;
+    }
+
+    arrResult[0] = true;
+    arrResult[1] = "";
+    return arrResult;
+}
+
+//도메인 연결시 한글도메인명 체크 별도사용 2014/10/27
+function isKorDomainNameMoreDomain(domain) {
+
+    var host = trim(domain);
+    var arrResult = new Array(2);
+
+    //[1.1] 도메인명 유무
+    if (host == null || host == "") {
+        arrResult[0] = false;
+        arrResult[1] = "도메인명을 입력해 주세요.";
+        return arrResult;
+    }
+
+    var strlength = host.length;
+    var krstr = /[\uac00-\ud7a3]/;
+    if (!krstr.test(host)) {
+        arrResult[0] = false;
+        arrResult[1] = "한글을 적어도 한 글자 이상 포함해야 합니다. \n\n다시 입력해주십시오.";
+        return arrResult;
+    }
+
+    //[1.3] 길이 검사 : 최소 1자 - 17자 까지
+    if (strlength < 1 || strlength > 17) {
+        arrResult[0] = false;
+        arrResult[1] = "도메인명은 최소 1자에서 최대 17까지만 등록가능합니다. \n다시 입력해주십시오.";
+        return arrResult;
+    }
+
+    //[1.4] "-"  으로 시작하는 것 금지
+    if (host.indexOf("-") == 0) {
+        arrResult[0] = false;
+        arrResult[1] = "하이픈(-)으로 시작하는 도메인명은 등록하실 수 없습니다. \n다시 입력해주십시오.";
+        return arrResult;
+    }
+
+    //[1.5] "-"  으로 끝나는 것 금지
+    if (host.lastIndexOf("-") == (strlength - 1)) {
+        arrResult[0] = false;
+        arrResult[1] = "하이픈(-)으로 끝나는 도메인명은 등록하실 수 없습니다. \n다시 입력해주십시오.";
+        return arrResult;
+    }
+
+    arrResult[0] = true;
+    arrResult[1] = "";
+    return arrResult;
+}
+
+function isEngDomainName(domain) {
+
+    var host = domain;
+    var strlength = host.length;
+    var str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-";
+    var arrResult = new Array(2);
+
+    //[1.1] 도메인명 유무
+    if (host == null || host == "") {
+        arrResult[0] = false;
+        arrResult[1] = "도메인명을 입력해 주세요.";
+        return arrResult;
+    }
+
+    //[1.2] 도메인길이 체크
+    if (host.length < 2 || host.length > 63)
+    {
+        arrResult[0] = false;
+        arrResult[1] = "도메인 이름은 최소 2자, 최대 63자까지 가능합니다.";
+        return arrResult;
+    }
+    var valid_dom = /^band-us|^pentagirl/;
+    if (valid_dom.test(host)) {
+        arrResult[0] = 0;
+        arrResult[1] = "제한된 도메인입니다.";
+        return arrResult;
+    }
+    //[1.3] 도메인명 유효 체크
+    for (var i = 0; i < host.length; i++)
+    {
+        temp = host.charAt(i);
+
+        if (temp == " ") {
+            arrResult[0] = false;
+            arrResult[1] = "유효하지 않은 도메인 이름입니다. \n\n도메인 이름은 공백을 포함할 수 없습니다. \n\n다시 입력해 주십시오!!";
+            return arrResult;
+        } else if (temp == ".") {
+            arrResult[0] = false;
+            arrResult[1] = "유효하지 않은 도메인 이름입니다. \n\n도메인 이름은 . 를 포함할 수 없습니다. \n\n다시 입력해 주십시오!!";
+            return arrResult;
+        }
+
+        if (host.value != "" && str.indexOf(temp) < 0)
+        {
+            arrResult[0] = false;
+            arrResult[1] = "유효하지 않은 도메인 이름입니다. \n\n도메인 이름은 특수문자를 포함할 수 없습니다. \n\n다시 입력해 주십시오!!";
+            return arrResult;
+        }
+    }
+
+    //[1.4] "-"  으로 시작하는 것 금지
+    if (host.indexOf("-") == 0) {
+        arrResult[0] = false;
+        arrResult[1] = "하이픈(-)으로 시작하는 도메인명은 등록하실 수 없습니다. \n다시 입력해주십시오.";
+        return arrResult;
+    }
+
+    //[1.5] "-"  으로 끝나는 것 금지
+    if (host.lastIndexOf("-") == (strlength - 1)) {
+        arrResult[0] = false;
+        arrResult[1] = "하이픈(-)으로 끝나는 도메인명은 등록하실 수 없습니다. \n다시 입력해주십시오.";
+        return arrResult;
+    }
+
+    arrResult[0] = true;
+    arrResult[1] = "";
+    return arrResult;
+}
+
+function isEngDomain(domain) {
+
+    var arrResult = new Array(2);
+
+    //[1.1] 도메인명 유무
+    if (domain == null || domain == "") {
+        arrResult[0] = false;
+        arrResult[1] = "도메인명을 입력해 주세요.";
+        return arrResult;
+    }
+
+    var tmpdomain;
+    tmpdomain = domain.split(".");
+
+    if (tmpdomain.length < 2 || tmpdomain.length > 3) {
+        arrResult[0] = false;
+        arrResult[1] = "도메인이 잘못되었습니다.\n다시 입력해주십시오.";
+        return arrResult;
+    }
+
+    var host = tmpdomain[0];
+    arrResult = isEngDomainName(host);
+
+    if (arrResult[0] == false) {
+        return arrResult;
+    }
+
+    arrResult[0] = true;
+    arrResult[1] = "";
+    return arrResult;
+}
+
+function isKorDomain(domain) {
+
+    var arrResult = new Array(2);
+
+    //[1.1] 도메인명 유무
+    if (domain == null || domain == "") {
+        arrResult[0] = false;
+        arrResult[1] = "도메인명을 입력해 주세요.";
+        return arrResult;
+    }
+
+    var tmpdomain;
+    tmpdomain = domain.split(".");
+
+    if (tmpdomain.length < 2 || tmpdomain.length > 3) {
+        arrResult[0] = false;
+        arrResult[1] = "도메인이 잘못되었습니다.\n다시 입력해주십시오.";
+        return arrResult;
+    }
+
+    var host = tmpdomain[0];
+    arrResult = isKorDomainName(host);
+
+    if (arrResult[0] == false) {
+        return arrResult;
+    }
+
+    arrResult[0] = true;
+    arrResult[1] = "";
+    return arrResult;
+}
+
+function isDomain(domain) {
+
+    var arrResult = new Array(2);
+
+    //[1.1] 도메인명 유무
+    if (domain == null || domain == "") {
+        arrResult[0] = false;
+        arrResult[1] = "도메인명을 입력해 주세요.";
+        return arrResult;
+    }
+
+    var tmpdomain;
+    tmpdomain = domain.split(".");
+
+
+    if (tmpdomain.length < 2 || tmpdomain.length > 3) {
+        arrResult[0] = false;
+        arrResult[1] = "도메인이 잘못되었습니다.\n다시 입력해주십시오.";
+        return arrResult;
+    }
+
+    /*
+     if( tmpdomain.length == 2) { //.한국 도메인 추가
+     if(tmpdomain[1] != "com"    &&
+     tmpdomain[1] != "net"    &&
+     tmpdomain[1] != "org"    &&
+     tmpdomain[1] != "kr"     &&
+     tmpdomain[1] != "biz"    &&
+     tmpdomain[1] != "info"   &&
+     tmpdomain[1] != "한국"   &&
+     tmpdomain[1] != "ws"     &&
+     tmpdomain[1] != "ru"     &&
+     tmpdomain[1] != "ga"     &&
+     tmpdomain[1] != "party"  &&
+     tmpdomain[1] != "la" ) {
+     arrResult[0] = false;
+     arrResult[1] = "지원하지 않은 도메인입니다.\n다시 입력해주십시오.";
+     return arrResult;
+     }
+     }
+     */
+
+    if (tmpdomain.length == 2) {
+
+        if (!inArray(tmpdomain[1], GTLD())) {
+            arrResult[0] = false;
+            arrResult[1] = "지원하지 않은 도메인입니다.\n다시 입력해주십시오.";
+            return arrResult;
+        }
+    }
+
+    if (tmpdomain.length == 3) {
+        if (tmpdomain[2] != "kr") {
+            arrResult[0] = false;
+            arrResult[1] = "지원하지 않은 도메인입니다.\n다시 입력해주십시오.";
+            return arrResult;
+        }
+    }
+
+    var last_host_pos = tmpdomain.length - 1;
+    var last_host_str = tmpdomain[last_host_pos];
+
+    var host = tmpdomain[0];
+    var valid_eng = /^[a-zA-Z0-9\-]+$/;
+
+    if (valid_eng.test(host)) {
+        arrResult = isEngDomainName(host);
+    } else {
+        // 한글도메인일때 - .한국 도메인 추가
+
+        if (tmpdomain.length == 3) {
+            arrResult[0] = false;
+            arrResult[1] = "한글도메인은 com, net, org, biz, kr, 한국, 닷컴, 닷넷 도메인만 가능합니다.\n다시 입력해주십시오.";
+            return arrResult;
+        }
+
+        if (tmpdomain.length == 2) {
+
+            if (tmpdomain[1] != "com" && tmpdomain[1] != "net" && tmpdomain[1] != "org" && tmpdomain[1] != "biz" && tmpdomain[1] != "kr" && tmpdomain[1] != "한국" && tmpdomain[1] != "닷컴" && tmpdomain[1] != "닷넷") {
+                arrResult[0] = false;
+                arrResult[1] = "한글도메인은 com, net, org, biz, kr, 한국, 닷컴, 닷넷 도메인만 가능합니다.\n다시 입력해주십시오.";
+                return arrResult;
+            }
+        }
+
+        arrResult = isKorDomainName(host);
+    }
+
+    if (arrResult[0] == false) {
+        return arrResult;
+    }
+
+    arrResult[0] = true;
+    arrResult[1] = "";
+    return arrResult;
+}
+function isWMailDomain(domain) {
+    var arrResult = new Array(2);
+    arrResult[0] = true;
+    arrResult[1] = "";
+    var isKor = isKorDomain(domain);
+    if (isKor[0] === false) {
+        var isEng = isEngDomain(domain);
+        if (isEng[0] === true) {
+            var keyPatt = "naver.com|hanmail.net|yahoo.co.kr|gmail.com|daum.net";
+            var arrKeyPatt = keyPatt.split("|");
+            for (i = 0; i < arrKeyPatt.length; i++) {
+                if (domain === arrKeyPatt[i]) {
+                    arrResult[0] = false;
+                    arrResult[1] = "사용할 수 없는 도메인 입니다.";
+                }
+            }
+        }
+    } else {
+        arrResult[0] = false;
+        arrResult[1] = "한글 도메인은 사용할 수 없습니다.";
+    }
+    return arrResult;
+
+}
+function isWebDomain(domain) {
+
+    var arrResult = new Array(2);
+
+    //[1.1] 도메인명 유무
+    if (domain == null || domain == "") {
+        arrResult[0] = false;
+        arrResult[1] = "도메인명을 입력해 주세요.";
+        return arrResult;
+    }
+
+    var tmpdomain;
+    tmpdomain = domain.split(".");
+
+    if (tmpdomain.length < 2 || tmpdomain.length > 3) {
+        arrResult[0] = false;
+        arrResult[1] = "도메인이 잘못되었습니다.\n다시 입력해주십시오.";
+        return arrResult;
+    }
+
+    var host = tmpdomain[0];
+    var valid_eng = /^[a-zA-Z0-9\-]+$/;
+
+    if (valid_eng.test(host)) {
+        arrResult = isEngDomainName(host);
+    } else {
+        // 한글도메인일때
+
+        if (tmpdomain.length == 3) {
+            arrResult[0] = false;
+            arrResult[1] = "한글도메인은 com, net, org, biz, kr, 한국, 닷컴, 닷넷 도메인만 가능합니다.\n다시 입력해주십시오.";
+            return arrResult;
+        }
+
+        if (tmpdomain.length == 2) {
+
+            if (tmpdomain[1] != "com" && tmpdomain[1] != "net" && tmpdomain[1] != "org" && tmpdomain[1] != "biz" && tmpdomain[1] != "kr" && tmpdomain[1] != "한국" && tmpdomain[1] != "닷컴" && tmpdomain[1] != "닷넷") {
+                arrResult[0] = false;
+                arrResult[1] = "한글도메인은 com, net, org, biz, kr, 한국, 닷컴, 닷넷 도메인만 가능합니다.\n다시 입력해주십시오.";
+                return arrResult;
+            }
+        }
+        arrResult = isKorDomainName(host);
+    }
+
+    if (arrResult[0] == false) {
+        return arrResult;
+    }
+
+    arrResult[0] = true;
+    arrResult[1] = "";
+    return arrResult;
+}
+
+//2013.03.25 도메인연결부분에 사용. 다양한 tld 허용
+function isMoreDomain(domain) {
+
+    var arrResult = new Array(2);
+
+    //[1.1] 도메인명 유무
+    if (domain == null || domain == "") {
+        arrResult[0] = false;
+        arrResult[1] = "도메인명을 입력해 주세요.";
+        return arrResult;
+    }
+
+    var tmpdomain;
+    tmpdomain = domain.split(".");
+
+    if (tmpdomain.length < 2 || tmpdomain.length > 5) {
+        arrResult[0] = false;
+        arrResult[1] = "도메인이 잘못되었습니다.\n다시 입력해주십시오.";
+        return arrResult;
+    }
+
+    if (tmpdomain.length == 2) { // 2016-03-25 http://www.iana.org/domains/root/db 에 기록된 도메인 대부분 추가
+        if (!inArray(tmpdomain[1], GTLD())) {
+            arrResult[0] = false;
+            arrResult[1] = "지원하지 않은 도메인입니다.\n다시 입력해주십시오.";
+            return arrResult;
+        }
+    }
+
+    var last_host_pos = tmpdomain.length - 1;
+    var last_host_str = tmpdomain[last_host_pos];
+
+    var host = tmpdomain[0];
+    var valid_eng = /^[a-zA-Z0-9\-]+$/;
+    var valid_str = /^[a-zA-Z0-9가-힣\-\.]+$/;
+
+    if (!valid_str.test(domain)) {
+        arrResult[0] = false;
+        arrResult[1] = "도메인이 올바르지 않습니다.\n다시 입력해주십시오.";
+        return arrResult;
+    }
+
+    if (arrResult[0] == false) {
+        return arrResult;
+    }
+
+    arrResult[0] = true;
+    arrResult[1] = "";
+    return arrResult;
+}
+
+//호스트 체크
+function isHost(str) {
+
+    var valid_str = /^[0-9a-zA-Z-]+(\.[_0-9a-zA-Z-]+)+$/;
+
+    if (!valid_str.test(str)) {
+        return false;
+    }
+    return true;
+}
+
+//한글 체크
+function isKorean(str) {
+    var valid_str = /^[\uac00-\ud7a3]+$/;
+    if (!valid_str.test(str)) {
+        return false;
+    }
+    return true;
+}
+
+//한글 포함 체크
+function hasKorean(str) {
+    var valid_str = /[\uac00-\ud7a3]+/;
+    if (!valid_str.test(str)) {
+        return false;
+    }
+    return true;
+}
+
+//숫자 체크
+function isNum(str) {
+    var valid_str = /^[0-9]+$/;
+    if (!valid_str.test(str)) {
+        return false;
+    }
+    return true;
+}
+
+//사용자 아이디 체크
+function isUserID(str) {
+    var arrResult = new Array(2);
+    var valid_str = /^[a-z0-9]{3,15}$/;
+
+    if (!valid_str.test(str)) {
+        arrResult[0] = false;
+        arrResult[1] = "아이디는  3~15자의 영문소문자,숫자만 입력가능합니다.";
+        return arrResult;
+    }
+
+    var str_char = str.charAt(0);
+
+    if (isNum(str_char)) {
+        arrResult[0] = false;
+        arrResult[1] = "아이디는 숫자로 시작할 수 없습니다. 영문소문자부터 입력하셔야 합니다.";
+        return arrResult;
+    }
+
+    /*
+     if(isNum(str)) {
+     arrResult[0] = false;
+     arrResult[1] = "아이디는 숫자로만 입력하실 수 없습니다.";
+     return arrResult;
+     }
+     */
+
+    arrResult[0] = true;
+    arrResult[1] = "";
+    return arrResult;
+}
+
+function isUserName(str) {
+    var arrResult = new Array(2);
+    var str_len = str.length;
+    var valid_str_kr = /^[가-힣a-zA-Z0-9()']{2,20}$/;
+    var valid_str_en = /^[a-zA-Z0-9&\-\`\.\,\·]{2,20}$/;
+    var check_kor = /[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/;
+    ;
+    if (str_len < 2 || str_len > 20) {
+        arrResult[0] = false;
+        arrResult[1] = "이름(회사명)은 2~20자만 가능합니다.";
+        return arrResult;
+    }
+    if (str.charAt(0).toString().match(/[a-zA-Z가-힣]/) == null) {
+        arrResult[0] = false;
+        arrResult[1] = "첫글자는 영문, 한글으로 시작되어야 합니다.";
+        return arrResult;
+    }
+    if (check_kor.test(str)) {
+        if (!valid_str_kr.test(str)) {
+            arrResult[0] = false;
+            arrResult[1] = "이름(회사명)은 한글, 영문자, 숫자와 특수문자 '()' 입력가능하며\n공백은 사용하실수 없습니다.";
+            return arrResult;
+        }
+    } else {
+        if (!valid_str_en.test(str)) {
+            arrResult[0] = false;
+            arrResult[1] = "영문자, 숫자와 특수문자 '&-`.,·' 입력가능합니다.";
+            return arrResult;
+        }
+    }
+
+    if (str.match(/[a-zA-Z]/) == null && str.match(/[가-힣]/) == null) {
+        arrResult[0] = false;
+        arrResult[1] = "숫자 또는 특수문자만 입력할 수 없습니다.";
+        return arrResult;
+    }
+    arrResult[0] = true;
+    arrResult[1] = "";
+    return arrResult;
+}
+function isDothomePW(str, type, ftp_id, member_id) {
+    var arrResult = new Array(2);
+    var str_len = str.length;
+    var valid_str = /^[a-zA-Z0-9!@#$%^*\^\*]{8,20}$/;
+    var alpaBig = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    var alpaSmall = "abcdefghijklmnopqrstuvwxyz";
+    var num = "0123456789";
+    var keyPatt = "qwert|asdfg|zxcvb|trewq|gfdsa|bvcxz";
+    if (str_len < 8 || str_len > 20) {
+        arrResult[0] = false;
+        arrResult[1] = "비밀번호는 8~20자만 가능합니다.";
+        return arrResult;
+    }
+    if (str.search(/\s/) != -1) {
+        arrResult[0] = false;
+        arrResult[1] = "공백을 포함할 수 없습니다.";
+        return arrResult;
+    }
+    if (!valid_str.test(str)) {
+        arrResult[0] = false;
+        arrResult[1] = "영문자, 숫자와 특수문자 !#%^* 입력가능합니다.";
+        return arrResult;
+    }
+    if (str.match(/[a-zA-Z]/) == null || str.match(/[0-9]/) == null || str.match(/[\!\@\#\$\%\^\*]/) == null) {
+        arrResult[0] = false;
+        arrResult[1] = "비밀번호는 영문, 숫자, 특수문자가 최소 1개 이상 포함되어야 합니다.";
+        return arrResult;
+    }
+
+    let pattern = ['!!', '!*', '!$', '$$', '$@', '$*', '$!'];
+    if(pattern.some(p => str.includes(p))){
+        arrResult[0] = false;
+        arrResult[1] = "사용불가능한 문자가 포함되어있습니다.";
+        return arrResult;    
+    }
+
+
+    if (str.charAt(0).toString().match(/[a-zA-Z]/) == null) {
+        arrResult[0] = false;
+        arrResult[1] = "첫글자는 영문으로 시작되어야 합니다.";
+        return arrResult;
+    }
+    if(/[@#*\[\]{};':"\\|,.<>/?]{2,}/.test(str)){
+        arrResult[0] = false;
+        arrResult[1] = "특수문자는 2개 이상 연속으로 사용할 수 없습니다.";
+        return arrResult;
+    }
+
+    for (var i = 0; i < alpaBig.length; i++) {
+        if (alpaBig.substring(i, i + 4).length == 4) {
+            if (str.match(alpaBig.substring(i, i + 4)) != null)
+            {
+                arrResult[0] = false;
+                arrResult[1] = "ABCD처럼 연속된 문자는 사용할 수 없습니다.";
+                return arrResult;
+            }
+        }
+    }
+    for (i = 0; i < alpaSmall.length; i++) {
+        if (alpaSmall.substring(i, i + 4).length == 4) {
+            if (str.match(alpaSmall.substring(i, i + 4)) != null)
+            {
+                arrResult[0] = false;
+                arrResult[1] = "abcd처럼 연속된 문자는 사용할 수 없습니다.";
+                return arrResult;
+            }
+        }
+    }
+    for (i = 0; i < num.length; i++) {
+        if (num.substring(i, i + 3).length == 3) {
+            if (str.match(num.substring(i, i + 3)) != null)
+            {
+                arrResult[0] = false;
+                arrResult[1] = "123, 456처럼 연속된 숫자는 사용할 수 없습니다.";
+                return arrResult;
+            }
+        }
+    }
+    var arrKeyPatt = keyPatt.split("|");
+    for (i = 0; i < arrKeyPatt.length; i++) {
+        var strKeyPatt = arrKeyPatt[i].toString();
+        for (j = 0; j < strKeyPatt.length; j++) {
+            if (strKeyPatt.substring(j, j + 3).length == 3) {
+                if (str.match(strKeyPatt.substring(j, j + 3)) != null)
+                {
+                    arrResult[0] = false;
+                    arrResult[1] = "asd, qwe처럼 연속된 문자는 사용할 수 없습니다.";
+                    return arrResult;
+                }
+            }
+        }
+    }
+
+    for (i = 1; i < str.length - 2; i++) {
+        if (str.charAt(i) == str.charAt(i - 1) && str.charAt(i) == str.charAt(i + 1) && str.charAt(i) == str.charAt(i + 2)) {
+            arrResult[0] = false;
+            arrResult[1] = "aaaa, 3333 처럼 연속된 문자는 사용할 수 없습니다.";
+            return arrResult;
+        }
+    }
+    if (type == 'MAIL') {
+        if (str.search(ftp_id) != -1) {
+            arrResult[0] = false;
+            arrResult[1] = "관리자 메일 아이디를 포함할 수 없습니다.";
+            return arrResult;
+        }
+    } else if (type == 'WEB') {
+
+        if (str.search(ftp_id) != -1) {
+            arrResult[0] = false;
+            arrResult[1] = "호스팅 아이디를 포함할 수 없습니다.";
+            return arrResult;
+        }
+    } else if (type == 'BBS') {
+        if (str.search(ftp_id) != -1) {
+            arrResult[0] = false;
+            arrResult[1] = "관리자 아이디를 포함할 수 없습니다.";
+            return arrResult;
+        }
+    }
+    if (str.search(member_id) != -1) {
+        arrResult[0] = false;
+        arrResult[1] = "닷홈 회원 아이디를 포함할 수 없습니다.";
+        return arrResult;
+    }
+
+
+    arrResult[0] = true;
+    arrResult[1] = "";
+    return arrResult;
+}
+//사용자 암호 체크 (특수문자 사용안함)
+function isUserPWBasic(str) {
+    var arrResult = new Array(2);
+
+    var str_len = str.length;
+
+    var valid_str = /^[a-z0-9]{8,20}$/;
+
+
+    if (!valid_str.test(str)) {
+        arrResult[0] = false;
+        arrResult[1] = "비밀번호는 8~20자의 영문자,숫자만 입력가능합니다.";
+        return arrResult;
+    }
+
+    if (str_len < 8 || str_len > 20) {
+        arrResult[0] = false;
+        arrResult[1] = "비밀번호는 8~20자만 가능합니다.";
+        return arrResult;
+    }
+
+    var valid_str = /^[0-9]*$/;
+    if (valid_str.test(str)) {
+        arrResult[0] = false;
+        arrResult[1] = "비밀번호에 숫자만 사용하실수 없습니다.영문,숫자 조합으로 입력하시기 바랍니다.";
+        return arrResult;
+    }
+
+    var valid_str2 = /^[a-zA-Z]*$/;
+    if (valid_str2.test(str)) {
+        arrResult[0] = false;
+        arrResult[1] = "비밀번호에 영문만 사용하실수 없습니다.영문,숫자 조합으로 입력하시기 바랍니다.";
+        return arrResult;
+    }
+
+    for (var i = 0; i < str_len; i++)
+    {
+        temp = str.charAt(i);
+
+        if (i == 0 && temp == "#") {
+            arrResult[0] = false;
+            arrResult[1] = "비밀번호는 #으로 시작하실수 없습니다.";
+            return arrResult;
+        }
+
+        var valid_str3 = /[가-힣ㄱ-ㅣ]/;
+        if (valid_str3.test(temp)) {
+            arrResult[0] = false;
+            arrResult[1] = "비밀번호에 한글은 사용하실수 없습니다.";
+            return arrResult;
+        }
+
+        var valid_str4 = /[\x20]/;
+        if (valid_str4.test(temp)) {
+            arrResult[0] = false;
+            arrResult[1] = "비밀번호에 공백은 사용하실수 없습니다.";
+            return arrResult;
+        }
+        if (temp == "'" || temp == '"') {
+            arrResult[0] = false;
+            arrResult[1] = "비밀번호에 작은따옴표,큰따옴표는  사용하실수 없습니다.";
+            return arrResult;
+        }
+    }
+
+    arrResult[0] = true;
+    arrResult[1] = "";
+    return arrResult;
+}
+
+
+
+//사용자 암호 체크
+function isUserPW(str) {
+    var arrResult = new Array(2);
+
+    var str_len = str.length;
+
+    var valid_str = /^[\w~!#%@\^\*\+=\?\[\]\|\-]{8,20}$/;  //CMS설치 및 스크립트 사용 문자 제외 $,(,),& 2017/08/16
+
+    if (!valid_str.test(str)) {
+        arrResult[0] = false;
+        arrResult[1] = "비밀번호는 8~20자의 영문자, 숫자와 \n특수문자 ~!#%^*-+=?[] 입력가능합니다.";
+        return arrResult;
+    }
+
+    if (str_len < 8 || str_len > 20) {
+        arrResult[0] = false;
+        arrResult[1] = "비밀번호는 8~20자만 가능합니다.";
+        return arrResult;
+    }
+
+    var valid_str = /^[0-9]*$/;
+    if (valid_str.test(str)) {
+        arrResult[0] = false;
+        arrResult[1] = "비밀번호에 숫자만 사용하실수 없습니다.영문,숫자 조합으로 입력하시기 바랍니다.";
+        return arrResult;
+    }
+
+    var valid_str2 = /^[a-zA-Z]*$/;
+    if (valid_str2.test(str)) {
+        arrResult[0] = false;
+        arrResult[1] = "비밀번호에 영문만 사용하실수 없습니다.영문,숫자 조합으로 입력하시기 바랍니다.";
+        return arrResult;
+    }
+
+    for (var i = 0; i < str_len; i++)
+    {
+        temp = str.charAt(i);
+
+        if (i == 0 && temp == "#") {
+            arrResult[0] = false;
+            arrResult[1] = "비밀번호는 #으로 시작하실수 없습니다.";
+            return arrResult;
+        }
+
+        if (i == 0 && temp == "@") {
+            arrResult[0] = false;
+            arrResult[1] = "비밀번호는 @으로 시작하실수 없습니다.";
+            return arrResult;
+        }
+
+        var valid_str3 = /[가-힣ㄱ-ㅣ]/;
+        if (valid_str3.test(temp)) {
+            arrResult[0] = false;
+            arrResult[1] = "비밀번호에 한글은 사용하실수 없습니다.";
+            return arrResult;
+        }
+
+        var valid_str4 = /[\x20]/;
+        if (valid_str4.test(temp)) {
+            arrResult[0] = false;
+            arrResult[1] = "비밀번호에 공백은 사용하실수 없습니다.";
+            return arrResult;
+        }
+
+        if (temp == "'" || temp == '"') {
+            arrResult[0] = false;
+            arrResult[1] = "비밀번호에 작은따옴표,큰따옴표는  사용하실수 없습니다.";
+            return arrResult;
+        }
+
+
+
+    }
+
+    arrResult[0] = true;
+    arrResult[1] = "";
+    return arrResult;
+}
+
+
+//iredMail 암호체크
+function isUserPWired(pw) {
+
+    var arrResult = new Array(2);
+    var str_len = pw.length;
+
+    if (str_len < 8 || str_len > 20)
+    {
+        arrResult[0] = false;
+        arrResult[1] = "비밀번호는 8~20자로 입력하셔야 합니다.";
+        return arrResult;
+    } else {
+        if (
+                (pw.match(/[a-z]/) == null)
+                || (pw.match(/[A-Z]/) == null)
+                || (pw.match(/[0-9]/) == null)
+                || (pw.match(/[\#\$\%\&\'\"\*\+\-\,\.\:\;\!\<\=\>\?\@\[\]\/\\\(\)\{\}\_\`\~]/) == null)
+                )
+        {
+            arrResult[0] = false;
+            arrResult[1] = "비밀번호가 옳바르지 않습니다. 비밀번호 규칙을 확인해주세요.";
+            return arrResult;
+        }
+    }
+
+    arrResult[0] = true;
+    arrResult[1] = "";
+    return arrResult;
+}
+
+//사용자 암호 체크
+function isUserPWFreeMail(id, pw, level) {
+
+    var arrResult = new Array(2);
+    var str_len = pw.length;
+
+    if (str_len > 20)
+    {
+        arrResult[0] = false;
+        arrResult[1] = "비밀번호는 20자 이상 입력할 수 없습니다.";
+        return arrResult;
+    } else if (id == pw)
+    {
+        arrResult[0] = false;
+        arrResult[1] = "비밀번호는 아이디와 같을 수 없습니다.";
+        return arrResult;
+    } else
+    {
+        switch (level)
+        {
+            case 1:
+                if (str_len < 4)
+                {
+                    arrResult[0] = false;
+                    arrResult[1] = "비밀번호는 4자 이상 입력해야 합니다.";
+                    return arrResult;
+                } else {
+                    var forbidden = ['0000', '00000', '000000', '1111', '11111', '111111', '2222', '3333', '4444', '5555', '6666', '7777', '8888', '9999', '1234', '12345', '123456', '1234567', '12345678', '123456789', '1234567890', '123123'];
+                    var i;
+                    for (i = 0; i < forbidden.length; i++)
+                    {
+                        if (forbidden[i] == pw)
+                        {
+                            arrResult[0] = false;
+                            arrResult[1] = "비밀번호는 동일하거나 순차적인 숫자로만(1111,1234,...) 사용할 수 없습니다.";
+                            return arrResult;
+                        }
+                    }
+                }   // if()
+                break;
+
+            case 2:
+                if (str_len < 6)
+                {
+                    arrResult[0] = false;
+                    arrResult[1] = "비밀번호는 6자 이상 입력해야 합니다.";
+                    return arrResult;
+                } else {
+
+                    if (
+                            (pw.match(/[a-zA-Z]/) == null)
+                            ||
+                            (
+                                    (pw.match(/[0-9]/) == null)
+                                    && (pw.match(/[\~\`\!\@\#\$\%\^\&\*\(\)\_\+\{\}\|\:\"\<\>\?\-\=\[\]\;\'\/\.\,\\]/) == null)
+                                    )
+                            )
+                    {
+                        arrResult[0] = false;
+                        arrResult[1] = "비밀번호는 영문과 숫자가 1개 이상 포함되어야 합니다.";
+                        return arrResult;
+                    }
+                }   // if()
+                break;
+
+            default:        // 3
+
+                var valid_str_korean = /[가-힣ㄱ-ㅣ]/;
+                var valid_str_space = /[\x20]/;
+
+                if (str_len < 8 || str_len > 20)
+                {
+                    arrResult[0] = false;
+                    arrResult[1] = "비밀번호는 8자 이상 20자 이하로 입력해야 합니다.";
+                    return arrResult;
+                } else if (valid_str_korean.test(pw))
+                {
+                    arrResult[0] = false;
+                    arrResult[1] = "비밀번호에 한글은 사용하실수 없습니다.";
+                    return arrResult;
+                } else if (valid_str_space.test(pw))
+                {
+                    arrResult[0] = false;
+                    arrResult[1] = "비밀번호에 공백은 사용하실수 없습니다.";
+                    return arrResult;
+                } else if (
+                        pw.match(/[a-z]/) == null
+                        || (
+                                pw.match(/[A-Z]/) == null
+                                && pw.match(/[~`\!@#\$%\^&\*\(\)_\+\{\}\|\:\"\<\>\?\-\=\[\];\'\/\.,\\]/) == null
+                                )
+                        )
+                {
+                    arrResult[0] = false;
+                    arrResult[1] = "비밀번호는 영문소문자 1개 이상, 영문대문자나 특수문자가 1개 이상 포함되어야 합니다.";
+                    return arrResult;
+                }   // if()
+                break;
+        }   // switch()
+    }   // else
+
+    arrResult[0] = true;
+    arrResult[1] = "";
+    return arrResult;
+
+} // function isUserPWFreeMail
+
+//사용자 암호 체크 (특수문자 사용가능 - 회원관련)
+function isUserPWSpecial(str) {
+    var arrResult = new Array(2);
+
+    var str_len = str.length;
+
+    var valid_str = /^[\w~!@#\$%\^&*\-()+=]{8,20}$/;
+
+    if (!valid_str.test(str)) {
+        arrResult[0] = false;
+        arrResult[1] = "비밀번호는 8~20자의 영문자, 숫자와 \n특수문자 ~!@#\$%^&*()-_+= 입력가능합니다.";
+        return arrResult;
+    }
+
+    if (str_len < 8 || str_len > 20) {
+        arrResult[0] = false;
+        arrResult[1] = "비밀번호는 8~20자만 가능합니다.";
+        return arrResult;
+    }
+
+    var valid_str = /^[0-9]*$/;
+    if (valid_str.test(str)) {
+        arrResult[0] = false;
+        arrResult[1] = "비밀번호에 숫자만 사용하실수 없습니다.\n영문, 숫자, 특수문자 중 두가지 이상 조합으로\n입력하시기 바랍니다.";
+        return arrResult;
+    }
+
+    var valid_str2 = /^[a-zA-Z]*$/;
+    if (valid_str2.test(str)) {
+        arrResult[0] = false;
+        arrResult[1] = "비밀번호에 영문만 사용하실수 없습니다.\n영문, 숫자, 특수문자 중 두가지 이상 조합으로\n입력하시기 바랍니다.";
+        return arrResult;
+    }
+
+    var valid_str2 = /^[~!@#\$%\^&*\-()+=_]*$/;
+    if (valid_str2.test(str)) {
+        arrResult[0] = false;
+        arrResult[1] = "비밀번호에 특수문자만 사용하실수 없습니다.\n영문, 숫자, 특수문자 중 두가지 이상 조합으로\n입력하시기 바랍니다.";
+        return arrResult;
+    }
+
+    for (var i = 0; i < str_len; i++)
+    {
+        temp = str.charAt(i);
+
+        if (i == 0 && temp == "#") {
+            arrResult[0] = false;
+            arrResult[1] = "비밀번호는 #으로 시작하실수 없습니다.";
+            return arrResult;
+        }
+
+        if (i == 0 && temp == "@") {
+            arrResult[0] = false;
+            arrResult[1] = "비밀번호는 @으로 시작하실수 없습니다.";
+            return arrResult;
+        }
+
+        var valid_str3 = /[가-힣ㄱ-ㅣ]/;
+        if (valid_str3.test(temp)) {
+            arrResult[0] = false;
+            arrResult[1] = "비밀번호에 한글은 사용하실수 없습니다.";
+            return arrResult;
+        }
+
+        var valid_str4 = /[\x20]/;
+        if (valid_str4.test(temp)) {
+            arrResult[0] = false;
+            arrResult[1] = "비밀번호에 공백은 사용하실수 없습니다.";
+            return arrResult;
+        }
+
+        if (temp == "'" || temp == '"') {
+            arrResult[0] = false;
+            arrResult[1] = "비밀번호에 작은따옴표,큰따옴표는  사용하실수 없습니다.";
+            return arrResult;
+        }
+
+    }
+
+    arrResult[0] = true;
+    arrResult[1] = "";
+    return arrResult;
+}
+
+//아이피 체크
+function isIP(str) {
+    var valid_str = /^(25[0-5]|2[0-4][0-9]|[0-1]{1}[0-9]{2}|[1-9]{1}[0-9]{1}|[1-9])\.(25[0-5]|2[0-4]\d|[01]?\d\d|\d)\.(25[0-5]|2[0-4]\d|[01]?\d\d|\d)\.(25[0-5]|2[0-4]\d|[01]?\d\d|\d)$/;
+
+    if (!valid_str.test(str)) {
+        return false;
+    }
+    return true;
+}
+
+//이메일 체크
+function isEmail(str) {
+    var valid_str = /^([\w-]+(?:\.[\w-]+)*)@((?:[\w-]+\.)*\w[\w-]{0,66})\.([a-z]{2,6}(?:\.[a-z]{2})?)$/i;
+
+    if (!valid_str.test(str)) {
+        return false;
+    }
+    return true;
+}
+
+//전화 체크
+function isTel(str) {
+    var valid_str = /^(0)([0-9]{1,3})[-]([0-9]{3,4})[-]([0-9]{4})$/;
+
+    if (!valid_str.test(str)) {
+        return false;
+    }
+    return true;
+}
+
+// 핸드폰 체크
+function isMobile(str) {
+    var valid_str = /^(01)(0|1|6|7|8|9)[-]([0-9]{3,4})[-]([0-9]{4})$/;
+
+    if (!valid_str.test(str)) {
+        return false;
+    }
+    return true;
+}
+
+
+//주민등록번호 체크
+function isSocNo(socno) {
+
+    if (socno == null || socno.length != 13 || isNaN(socno)) {
+        return false;
+    }
+
+    var socnoStr = socno.toString();
+    a = socnoStr.substring(0, 1);
+    b = socnoStr.substring(1, 2);
+    c = socnoStr.substring(2, 3);
+    d = socnoStr.substring(3, 4);
+    e = socnoStr.substring(4, 5);
+    f = socnoStr.substring(5, 6);
+    g = socnoStr.substring(6, 7);
+    h = socnoStr.substring(7, 8);
+    i = socnoStr.substring(8, 9);
+    j = socnoStr.substring(9, 10);
+    k = socnoStr.substring(10, 11);
+    l = socnoStr.substring(11, 12);
+    m = socnoStr.substring(12, 13);
+    month = socnoStr.substring(2, 4);
+    day = socnoStr.substring(4, 6);
+    socnoStr1 = socnoStr.substring(0, 7);
+    socnoStr2 = socnoStr.substring(7, 13);
+    // 뒷번호 첫자리 '1,2,3,4' 체크
+    if (g < 1 || g > 4) {
+        return false;
+    }
+    // 월,일 Validation Check
+    if (month <= 0 || month > 12) {
+        return false;
+    }
+    if (day <= 0 || day > 31) {
+        return false;
+    }
+    temp = a * 2 + b * 3 + c * 4 + d * 5 + e * 6 + f * 7 + g * 8 + h * 9 + i * 2 + j * 3 + k * 4 + l * 5;
+    temp = temp % 11;
+    temp = 11 - temp;
+    temp = temp % 10;
+    if (temp == m) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+//외국인등록번호 체크
+function isForeignerNo(fsn) {
+
+    if (fsn == null || fsn.length != 13 || isNaN(fsn)) {
+        return false;
+    }
+
+    var sum = 0;
+    var odd = 0;
+    buf = new Array(13);
+    for (i = 0; i < 13; i++) {
+        buf[i] = parseInt(fsn.charAt(i));
+    }
+    odd = buf[7] * 10 + buf[8];
+
+    if (odd % 2 != 0) {
+        return false;
+    }
+
+    if ((buf[11] != 6) && (buf[11] != 7) && (buf[11] != 8) && (buf[11] != 9)) {
+        return false;
+    }
+
+    multipliers = [2, 3, 4, 5, 6, 7, 8, 9, 2, 3, 4, 5];
+    for (i = 0, sum = 0; i < 12; i++) {
+        sum += (buf[i] *= multipliers[i]);
+    }
+    sum = 11 - (sum % 11);
+    if (sum >= 10) {
+        sum -= 10;
+    }
+    sum += 2;
+    if (sum >= 10) {
+        sum -= 10;
+    }
+    if (sum != buf[12]) {
+        return false;
+    }
+
+    return true;
+}
+
+
+//사업자등록번호 체크
+function isBizNo(no) {
+    var regStr = /^[0-9]{10}$/;
+    if (!regStr.test(no)) {
+        return false;
+    }
+
+    if ('0000000000' == no
+            || '4444444444' == no
+            || '8888888888' == no
+            ) {
+        return false;
+    }
+
+    var str = no.toString();
+    a = str.substring(0, 1);
+    b = str.substring(1, 2);
+    c = str.substring(2, 3);
+    d = str.substring(3, 4);
+    e = str.substring(4, 5);
+    f = str.substring(5, 6);
+    g = str.substring(6, 7);
+    h = str.substring(7, 8);
+    i = str.substring(8, 9);
+    j = str.substring(9, 10);
+
+    var sum = 0;
+    sum += a * 1 % 10;
+    sum += b * 3 % 10;
+    sum += c * 7 % 10;
+    sum += d * 1 % 10;
+    sum += e * 3 % 10;
+    sum += f * 7 % 10;
+    sum += g * 1 % 10;
+    sum += h * 3 % 10;
+    sum += i * 5 % 10 + Math.floor(i * 5 / 10);
+    sum += j * 1 % 10;
+
+    if (sum % 10 == 0) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+//법인번호 체크
+function isCorpNo(resno) {
+    var sum = 0;
+    var num = [1, 2, 1, 2, 1, 2, 1, 2, 1, 2, 1, 2];
+    var last = parseInt(resno.charAt(12));
+    for (var i = 0; i < 12; i++) {
+        sum += parseInt(resno.charAt(i)) * num[i];
+    }
+    return ((10 - sum % 10) % 10 == last) ? true : false;
+}
+
+
+//문자열의 순서를 바꾸기
+function reverse(str) {
+
+    var sArray = str.split("");
+    var newS = "";
+    for (var i = sArray.length - 1; i >= 0; i--) {
+        newS += sArray[i];
+    }
+    return newS;
+}
+
+//카드번호 체크
+function isCardNo(cardno) {
+    var rev = reverse(cardno);
+    var revArr = rev.split("");// 문자열을 한자씩 쪼개어 배열에 담는다
+    var total = 0;
+    var tmp = 0;
+    for (var i = 0; i < revArr.length; i++) {
+        if ((i % 2) > 0) {
+            tmp = revArr[i] * 2;
+            tmp = (tmp < 9 ? tmp : (tmp - 9));
+            total += tmp;
+        } else {
+            total += Number(revArr[i]);
+        }
+    }
+    return (total % 10) == 0;
+}
+
+//은행계좌번호 체크
+function isBankNo(str) {
+    var valid_str = /^([0-9]{10,16})$/;
+
+    if (!valid_str.test(str)) {
+        return false;
+    }
+    return true;
+}
+
+// 14세 이상 체크 - 주민번호 체크 (사용안함)
+function isMoreThan14age(socno1, checkYear)
+{
+    var u_year;
+    var u_month;
+    var u_day;
+    var v_age;
+    var v_today = new Date();
+
+    if (checkYear > 0 && checkYear < 3)
+        u_year = "19" + socno1.substring(0, 2)
+    else if (checkYear > 2 && checkYear < 5)
+        u_year = "20" + socno1.substring(0, 2)
+    else
+        return 'wrong';
+    // 주민등록뒷자리 첫번째 번호 유효성 체크 (1,2,3,4) are only valid
+
+    u_month = socno1.substring(2, 4);
+    u_day = socno1.substring(4);
+
+    var rVal = isValidDate(u_year, u_month, u_day);
+    if (rVal == 'N')
+        return 'I';
+    else if (rVal == 'Y') {
+        v_age = v_today.getFullYear() * 1 - u_year * 1;
+        if (u_month * 1 > (v_today.getMonth() * 1 + 1)) {
+            v_age -= 1;
+        } else if (u_month * 1 == (v_today.getMonth() * 1 + 1) && u_day * 1 > v_today.getDate() * 1) {
+            v_age -= 1;
+        }
+    }
+
+    if (v_age < 14)
+        return 'N';
+    else if (v_age >= 14 && v_age < 18)
+        return 'M';
+    else
+        return 'Y';
+}
+
+
+//14세 이상 체크 - 생년월일로 처리 - 20130125
+function isMoreThan14ageFromBirth(birthYear, birthMonth, birthDay)
+{
+    var v_age;
+    var v_today = new Date();
+
+    var rVal = isValidDate(birthYear, birthMonth, birthDay);
+    if (rVal == 'N')
+        return 'I';
+    else if (rVal == 'Y') {
+        v_age = v_today.getFullYear() * 1 - birthYear * 1;
+        if (birthMonth * 1 > (v_today.getMonth() * 1 + 1)) {
+            v_age -= 1;
+        } else if (birthMonth * 1 == (v_today.getMonth() * 1 + 1) && birthDay * 1 > v_today.getDate() * 1) {
+            v_age -= 1;
+        }
+    }
+
+    if (v_age < 14)
+        return 'N';
+    else if (v_age >= 14 && v_age < 18)
+        return 'M';
+    else
+        return 'Y';
+}
+
+function isValidDate(v_year, v_month, v_day)
+{
+    var today = new Date();
+    var d_year = v_year * 1;
+    var d_month = v_month * 1;
+    var d_day = v_day * 1;
+
+    /* 과거 날짜여야 함. */
+    if (v_year > today.getFullYear())
+        return 'N';
+    else if (v_year == today.getFullYear() && v_month * 1 > (today.getMonth() * 1 + 1))
+        return 'N';
+    else if (v_year == today.getFullYear() && v_month * 1 == (today.getMonth() * 1 + 1) && v_day > today.getDate())
+        return 'N';
+
+    /* 달별 일 check */
+    if (d_month == 1 || d_month == 3 || d_month == 5 || d_month == 7 || d_month == 8 || d_month == 10 || d_month == 12) {
+        if (d_day > 31 || d_day < 1)
+            return 'N';
+    } else if (d_month == 4 || d_month == 6 || d_month == 9 || d_month == 11) {
+        if (d_day > 30 || d_day < 1)
+            return 'N';
+    } else if (d_month == 2)
+    {
+        if (((d_year % 4) == 0 && (d_year % 100) != 0) || ((d_year % 100) == 0 && (d_year % 400) == 0)) {
+            if (d_day > 29 || d_day < 1)
+                return 'N';
+        } else {
+            if (d_day > 28 || d_day < 1)
+                return 'N';
+        }
+    }
+
+    return 'Y';
+}
+
+
+function blank_check(f, type) { //scripted by lyx
+    for (i = 0; i < f.elements.length; i++) {
+        if (f.elements[i].getAttribute("alt") == "true") {
+            if (!f.elements[i].value) {
+                errmsg = f.elements[i].getAttribute("title")
+                alert("[" + errmsg + "]란을 입력하세요.");
+                f.elements[i].focus();
+                return false;
+            }
+        }
+    }
+
+    if (type == "secession") {
+        if (!confirm("탈퇴하시겠습니까?")) {
+            alert('취소되었습니다.');
+            return false;
+        }
+    }
+    if (type == "kdomain") {
+        var elems = f.elements;
+        var temp = false;
+        for (var i = 0; i < elems.length; i++) {
+            if (elems[i].type.toLowerCase() == 'checkbox' && elems[i].checked) {
+                temp = true;
+            }
+        }
+        if (temp == false) {
+            alert('도메인 종류를 선택하세요.');
+            return false;
+        }
+    }
+
+    if (type == "member") {
+        if (f.sFullString.value != f.joincode.value) {
+            alert('자동방지입력번호가 일치하지 않습니다.');
+            f.joincode.value = "";
+            f.joincode.focus();
+            return false;
+        }
+        if (f.PW.value != f.PW_CHECK.value) {
+            alert("비밀번호가 서로 일치하지 않습니다.");
+            f.PW.focus();
+            return false;
+        }
+        if (f.idChecked.value == "N") {
+            alert("아이디 중복확인을 하세요.");
+            return false;
+        }
+        if (f.codeChecked.value == "N") {
+            alert("회원고유번호(주민등록번호,사업자등록번호) 중복을 체크하세요.");
+            return false;
+        }
+    }
+    f.submit();
+    return false;
+}
+
+
+function encode64(input) {
+    var keyStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+
+    var output = "";
+    var chr1, chr2, chr3;
+    var enc1, enc2, enc3, enc4;
+    var i = 0;
+
+    do {
+        chr1 = input.charCodeAt(i++);
+        chr2 = input.charCodeAt(i++);
+        chr3 = input.charCodeAt(i++);
+
+        enc1 = chr1 >> 2;
+        enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);
+        enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
+        enc4 = chr3 & 63;
+
+        if (isNaN(chr2)) {
+            enc3 = enc4 = 64;
+        } else if (isNaN(chr3)) {
+            enc4 = 64;
+        }
+
+        output = output + keyStr.charAt(enc1) + keyStr.charAt(enc2) +
+                keyStr.charAt(enc3) + keyStr.charAt(enc4);
+    } while (i < input.length);
+
+    return output;
+}
+
+
+//숫자만 리턴
+function returnNum(obj) {
+    var new_val = '';
+    for (var i = 0; i < obj.length; i++) {
+        vChar = obj.substring(i, i + 1);
+        if (vChar < '0' || vChar > '9') {
+            return new_val;
+        } else
+            new_val = new_val + vChar;
+    }
+    return new_val;
+}
+
+// 숫자만 입력받기
+function onlyNum() {
+    var id = "#" + this.id;
+    var newval = returnNum($(id).val());
+    $(id).val(newval);
+}
+
+
+/*
+ 오라클의 개월수 더하는 함수와 동일
+ ex) add_months('2008-04-04',10);
+ */
+function add_months(pdate, diff_m) {
+    var add_m;
+    var lastDay;    // 마지막 날(30,31..)
+    var pyear, pmonth, pday;
+
+    pdate = makeDateFormat(pdate); // javascript 날짜형변수로 변환
+    if (pdate == "")
+        return "";
+
+    pyear = pdate.getFullYear();
+    pmonth = pdate.getMonth() + 1;
+    pday = pdate.getDate();
+
+    add_m = new Date(pyear, pmonth + diff_m, 1);    // 더해진 달의 첫날로 셋팅
+
+    lastDay = new Date(pyear, pmonth, 0).getDate(); // 현재월의 마지막 날짜를 가져온다.
+    if (lastDay == pday) {  // 현재월의 마지막 일자라면 더해진 월도 마지막 일자로
+        pday = new Date(add_m.getFullYear(), add_m.getMonth(), 0).getDate();
+    }
+
+    add_m = new Date(add_m.getFullYear(), add_m.getMonth() - 1, pday);
+//return add_m;
+
+    var mm = add_m.getMonth() + 1;
+    if (mm < 10)
+        mm = "0" + mm;
+    if (pday < 10)
+        pday = "0" + pday;
+
+    var strDate = add_m.getFullYear() + '-' + mm + '-' + pday;
+
+    return strDate;
+}
+
+/*
+ 오라클의 개월수 차이 구하는 함수와 동일
+ ex) months_between('20080404','20060101');
+ */
+function months_between(edate, sdate) {
+    var syear, smonth, sday;
+    var eday;
+    var diff_month = 1;
+
+    sdate = makeDateFormat(sdate); // javascript 날짜형변수로 변환
+    edate = makeDateFormat(edate); // javascript 날짜형변수로 변환
+
+    if (sdate == "")
+        return "";
+    if (edate == "")
+        return "";
+
+    syear = sdate.getFullYear();
+    smonth = sdate.getMonth() + 1;
+    sday = sdate.getDate();
+    eday = edate.getDate();
+
+    while (sdate < edate) { // 한달씩 더해서 몇개월 차이 생기는지 검사
+        sdate = new Date(syear, smonth - 1 + diff_month, 0);
+        diff_month++;
+    }
+
+    if (sday > eday)
+        diff_month--;
+
+    diff_month = diff_month - 2;
+
+    return diff_month;
+}
+
+/* yyyymmdd, yyyy-mm-dd, yyyy.mm.dd 를 javascript 날짜형 변수로 변환 */
+function makeDateFormat(pdate) {
+    var yy, mm, dd, yymmdd;
+    var ar;
+    if (pdate.indexOf("-") > -1) {  // yyyy.mm.dd
+        ar = pdate.split("-");
+        yy = ar[0];
+        mm = ar[1];
+        dd = ar[2];
+
+        if (mm < 10)
+            mm = "0" + mm;
+        if (dd < 10)
+            dd = "0" + dd;
+    } else if (pdate.indexOf(".") > -1) {// yyyy-mm-dd
+        ar = pdate.split(".");
+        yy = ar[0];
+        mm = ar[1];
+        dd = ar[2];
+
+        if (mm < 10)
+            mm = "0" + mm;
+        if (dd < 10)
+            dd = "0" + dd;
+    } else if (pdate.length == 8) {
+        yy = pdate.substr(0, 4);
+        mm = pdate.substr(4, 2);
+        dd = pdate.substr(6, 2);
+    }
+
+    yymmdd = yy + "/" + mm + "/" + dd;
+
+    yymmdd = new Date(yymmdd);
+
+    if (isNaN(yymmdd)) {
+        return false;
+    }
+
+    return yymmdd;
+}
+
+
+function popup(url, w, h, scroll) {
+    var winl = (screen.width - w) / 2;
+    var wint = (screen.height - h) / 2;
+    var settings = 'height=' + h + ',';
+    settings += 'width=' + w + ',';
+    settings += 'top=' + wint + ',';
+    settings += 'left=' + winl + ',';
+    settings += 'scrollbars=' + scroll + ',';
+    settings += 'resizable=no';
+    window.open(url, 'popup', settings);
+}
+
+
+// 드림위버 공통 함수
+
+function MM_swapImgRestore() { //v3.0
+    var i, x, a = document.MM_sr;
+    for (i = 0; a && i < a.length && (x = a[i]) && x.oSrc; i++)
+        x.src = x.oSrc;
+}
+
+function MM_preloadImages() { //v3.0
+    var d = document;
+    if (d.images) {
+        if (!d.MM_p)
+            d.MM_p = new Array();
+        var i, j = d.MM_p.length, a = MM_preloadImages.arguments;
+        for (i = 0; i < a.length; i++)
+            if (a[i].indexOf("#") != 0) {
+                d.MM_p[j] = new Image;
+                d.MM_p[j++].src = a[i];
+            }
+    }
+}
+
+function MM_findObj(n, d) { //v4.01
+    var p, i, x;
+    if (!d)
+        d = document;
+    if ((p = n.indexOf("?")) > 0 && parent.frames.length) {
+        d = parent.frames[n.substring(p + 1)].document;
+        n = n.substring(0, p);
+    }
+    if (!(x = d[n]) && d.all)
+        x = d.all[n];
+    for (i = 0; !x && i < d.forms.length; i++)
+        x = d.forms[i][n];
+    for (i = 0; !x && d.layers && i < d.layers.length; i++)
+        x = MM_findObj(n, d.layers[i].document);
+    if (!x && d.getElementById)
+        x = d.getElementById(n);
+    return x;
+}
+
+function MM_swapImage() { //v3.0
+    var i, j = 0, x, a = MM_swapImage.arguments;
+    document.MM_sr = new Array;
+    for (i = 0; i < (a.length - 2); i += 3)
+        if ((x = MM_findObj(a[i])) != null) {
+            document.MM_sr[j++] = x;
+            if (!x.oSrc)
+                x.oSrc = x.src;
+            x.src = a[i + 2];
+        }
+}
+
+function MM_showHideLayers() { //v6.0
+    var i, p, v, obj, args = MM_showHideLayers.arguments;
+    for (i = 0; i < (args.length - 2); i += 3)
+        if ((obj = MM_findObj(args[i])) != null) {
+            v = args[i + 2];
+            if (obj.style) {
+                obj = obj.style;
+                v = (v == 'show') ? 'visible' : (v == 'hide') ? 'hidden' : v;
+            }
+            obj.visibility = v;
+        }
+}
+
+// 앞으로 사용안할것
+
+function togle(layer) {
+    if (document.getElementById(layer).style.display == "none") {
+        document.getElementById(layer).style.display = '';
+    } else {
+        document.getElementById(layer).style.display = "none";
+    }
+}
+
+function windowOpen(url, title, width, height, scroll) { // 팝업창 띄우기
+    window.open(url, title, "width=" + width + ",height=" + height + ",scrollbars=" + scroll + ",resize=no");
+}
+
+function isHostName(domain) {
+
+    var host = domain;
+    var strlength = host.length;
+    var str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-.";
+    var arrResult = new Array(2);
+
+    //[1.1] 도메인명 유무
+    if (host == null || host == "") {
+        arrResult[0] = false;
+        arrResult[1] = "도메인명을 입력해 주세요.";
+        return arrResult;
+    }
+
+    //[1.2] 도메인길이 체크
+    if (host.length < 1 || host.length > 63)
+    {
+        arrResult[0] = false;
+        arrResult[1] = "도메인 이름은 최소 1자, 최대 63자까지 가능합니다.";
+        return arrResult;
+    }
+
+    //[1.3] 도메인명 유효 체크
+    for (var i = 0; i < host.length; i++)
+    {
+        temp = host.charAt(i);
+
+        if (temp == " ") {
+            arrResult[0] = false;
+            arrResult[1] = "유효하지 않은 도메인 이름입니다. \n\n도메인 이름은 공백을 포함할 수 없습니다. \n\n다시 입력해 주십시오!!";
+            return arrResult;
+        }
+
+        if (host.value != "" && str.indexOf(temp) < 0)
+        {
+            arrResult[0] = false;
+            arrResult[1] = "유효하지 않은 도메인 이름입니다. \n\n도메인 이름은 특수문자를 포함할 수 없습니다. \n\n다시 입력해 주십시오!!";
+            return arrResult;
+        }
+    }
+
+    //[1.4] "-"  으로 시작하는 것 금지
+    if (host.indexOf("-") == 0) {
+        arrResult[0] = false;
+        arrResult[1] = "하이픈(-)으로 시작하는 도메인명은 등록하실 수 없습니다. \n다시 입력해주십시오.";
+        return arrResult;
+    }
+
+    //[1.5] "-"  으로 끝나는 것 금지
+    if (host.lastIndexOf("-") == (strlength - 1)) {
+        arrResult[0] = false;
+        arrResult[1] = "하이픈(-)으로 끝나는 도메인명은 등록하실 수 없습니다. \n다시 입력해주십시오.";
+        return arrResult;
+    }
+
+    arrResult[0] = true;
+    arrResult[1] = "";
+    return arrResult;
+}
+
+function inArray(needle, haystack) {
+    var length = haystack.length;
+    for (var i = 0; i < length; i++) {
+        if (haystack[i] == needle)
+            return true;
+    }
+    return false;
+}
+
+function locationBack(arg, url, method) {
+
+    var rtfrm = $("<form></form>");
+    rtfrm.attr("method", method);
+    rtfrm.attr("action", url);
+    $.each(arg, function (key, val) {
+        rtfrm.append($("<input/>", {type: 'hidden', name: key, value: val}));
+    });
+    rtfrm.appendTo("body");
+    rtfrm.submit();
+
+}
+
+function GTLD() {
+    return [
+        'aaa',
+        'aarp',
+        'abb',
+        'abbott',
+        'abogado',
+        'ac',
+        'academy',
+        'accenture',
+        'accountant',
+        'accountants',
+        'aco',
+        'active',
+        'actor',
+        'ad',
+        'adac',
+        'ads',
+        'adult',
+        'ae',
+        'aeg',
+        'aero',
+        'af',
+        'afl',
+        'ag',
+        'agency',
+        'ai',
+        'aig',
+        'airforce',
+        'airtel',
+        'al',
+        'alibaba',
+        'alipay',
+        'allfinanz',
+        'ally',
+        'alsace',
+        'am',
+        'amica',
+        'amsterdam',
+        'an',
+        'analytics',
+        'android',
+        'ao',
+        'apartments',
+        'app',
+        'apple',
+        'aq',
+        'aquarelle',
+        'ar',
+        'aramco',
+        'archi',
+        'army',
+        'arpa',
+        'arte',
+        'as',
+        'asia',
+        'associates',
+        'at',
+        'attorney',
+        'au',
+        'auction',
+        'audi',
+        'audio',
+        'author',
+        'auto',
+        'autos',
+        'avianca',
+        'aw',
+        'aws',
+        'ax',
+        'axa',
+        'az',
+        'azure',
+        'ba',
+        'baidu',
+        'band',
+        'bank',
+        'bar',
+        'barcelona',
+        'barclaycard',
+        'barclays',
+        'barefoot',
+        'bargains',
+        'bauhaus',
+        'bayern',
+        'bb',
+        'bbc',
+        'bbva',
+        'bcg',
+        'bcn',
+        'bd',
+        'be',
+        'beats',
+        'beer',
+        'bentley',
+        'berlin',
+        'best',
+        'bet',
+        'bf',
+        'bg',
+        'bh',
+        'bharti',
+        'bi',
+        'bible',
+        'bid',
+        'bike',
+        'bing',
+        'bingo',
+        'bio',
+        'biz',
+        'bj',
+        'bl',
+        'black',
+        'blackfriday',
+        'blog',
+        'bloomberg',
+        'blue',
+        'bm',
+        'bms',
+        'bmw',
+        'bn',
+        'bnl',
+        'bnpparibas',
+        'bo',
+        'boats',
+        'boehringer',
+        'bom',
+        'bond',
+        'boo',
+        'book',
+        'boots',
+        'bosch',
+        'bostik',
+        'bot',
+        'boutique',
+        'bq',
+        'br',
+        'bradesco',
+        'bridgestone',
+        'broadway',
+        'broker',
+        'brother',
+        'brussels',
+        'bs',
+        'bt',
+        'budapest',
+        'bugatti',
+        'build',
+        'builders',
+        'business',
+        'buy',
+        'buzz',
+        'bv',
+        'bw',
+        'by',
+        'bz',
+        'bzh',
+        'ca',
+        'cab',
+        'cafe',
+        'cal',
+        'call',
+        'camera',
+        'camp',
+        'cancerresearch',
+        'canon',
+        'capetown',
+        'capital',
+        'car',
+        'caravan',
+        'cards',
+        'care',
+        'career',
+        'careers',
+        'cars',
+        'cartier',
+        'casa',
+        'cash',
+        'casino',
+        'cat',
+        'catering',
+        'cba',
+        'cbn',
+        'cc',
+        'cd',
+        'ceb',
+        'center',
+        'ceo',
+        'cern',
+        'cf',
+        'cfa',
+        'cfd',
+        'cg',
+        'ch',
+        'chanel',
+        'channel',
+        'chase',
+        'chat',
+        'cheap',
+        'chloe',
+        'christmas',
+        'chrome',
+        'church',
+        'ci',
+        'cipriani',
+        'circle',
+        'cisco',
+        'citic',
+        'city',
+        'cityeats',
+        'ck',
+        'cl',
+        'claims',
+        'cleaning',
+        'click',
+        'clinic',
+        'clinique',
+        'clothing',
+        'cloud',
+        'club',
+        'clubmed',
+        'cm',
+        'cn',
+        'co',
+        'coach',
+        'codes',
+        'coffee',
+        'college',
+        'cologne',
+        'com',
+        'commbank',
+        'community',
+        'company',
+        'compare',
+        'computer',
+        'comsec',
+        'condos',
+        'construction',
+        'consulting',
+        'contact',
+        'contractors',
+        'cooking',
+        'cool',
+        'coop',
+        'corsica',
+        'country',
+        'coupon',
+        'coupons',
+        'courses',
+        'cr',
+        'credit',
+        'creditcard',
+        'creditunion',
+        'cricket',
+        'crown',
+        'crs',
+        'cruises',
+        'csc',
+        'cu',
+        'cuisinella',
+        'cv',
+        'cw',
+        'cx',
+        'cy',
+        'cymru',
+        'cyou',
+        'cz',
+        'dabur',
+        'dad',
+        'dance',
+        'date',
+        'dating',
+        'datsun',
+        'day',
+        'dclk',
+        'de',
+        'dealer',
+        'deals',
+        'degree',
+        'delivery',
+        'dell',
+        'deloitte',
+        'delta',
+        'democrat',
+        'dental',
+        'dentist',
+        'desi',
+        'design',
+        'dev',
+        'diamonds',
+        'diet',
+        'digital',
+        'direct',
+        'directory',
+        'discount',
+        'dj',
+        'dk',
+        'dm',
+        'dnp',
+        'do',
+        'docs',
+        'dog',
+        'doha',
+        'domains',
+        'doosan',
+        'download',
+        'drive',
+        'dubai',
+        'durban',
+        'dvag',
+        'dz',
+        'earth',
+        'eat',
+        'ec',
+        'edeka',
+        'edu',
+        'education',
+        'ee',
+        'eg',
+        'eh',
+        'email',
+        'emerck',
+        'energy',
+        'engineer',
+        'engineering',
+        'enterprises',
+        'epson',
+        'equipment',
+        'er',
+        'erni',
+        'es',
+        'esq',
+        'estate',
+        'et',
+        'eu',
+        'eurovision',
+        'eus',
+        'events',
+        'everbank',
+        'exchange',
+        'expert',
+        'exposed',
+        'express',
+        'extraspace',
+        'fage',
+        'fail',
+        'fairwinds',
+        'faith',
+        'family',
+        'fan',
+        'fans',
+        'farm',
+        'fashion',
+        'fast',
+        'feedback',
+        'ferrero',
+        'fi',
+        'film',
+        'final',
+        'finance',
+        'financial',
+        'firestone',
+        'firmdale',
+        'fish',
+        'fishing',
+        'fit',
+        'fitness',
+        'fj',
+        'fk',
+        'flickr',
+        'flights',
+        'florist',
+        'flowers',
+        'flsmidth',
+        'fly',
+        'fm',
+        'fo',
+        'foo',
+        'football',
+        'ford',
+        'forex',
+        'forsale',
+        'forum',
+        'foundation',
+        'fox',
+        'fr',
+        'fresenius',
+        'frl',
+        'frogans',
+        'frontier',
+        'fund',
+        'furniture',
+        'futbol',
+        'fyi',
+        'ga',
+        'gal',
+        'gallery',
+        'gallo',
+        'gallup',
+        'game',
+        'garden',
+        'gb',
+        'gbiz',
+        'gd',
+        'gdn',
+        'ge',
+        'gea',
+        'gent',
+        'genting',
+        'gf',
+        'gg',
+        'ggee',
+        'gh',
+        'gi',
+        'gift',
+        'gifts',
+        'gives',
+        'giving',
+        'gl',
+        'glass',
+        'gle',
+        'global',
+        'globo',
+        'gm',
+        'gmail',
+        'gmbh',
+        'gmo',
+        'gmx',
+        'gn',
+        'gold',
+        'goldpoint',
+        'golf',
+        'goo',
+        'goog',
+        'google',
+        'gop',
+        'got',
+        'gov',
+        'gp',
+        'gq',
+        'gr',
+        'grainger',
+        'graphics',
+        'gratis',
+        'green',
+        'gripe',
+        'group',
+        'gs',
+        'gt',
+        'gu',
+        'gucci',
+        'guge',
+        'guide',
+        'guitars',
+        'guru',
+        'gw',
+        'gy',
+        'hamburg',
+        'hangout',
+        'haus',
+        'hdfcbank',
+        'health',
+        'healthcare',
+        'help',
+        'helsinki',
+        'here',
+        'hermes',
+        'hiphop',
+        'hitachi',
+        'hiv',
+        'hk',
+        'hm',
+        'hn',
+        'hockey',
+        'holdings',
+        'holiday',
+        'homedepot',
+        'homes',
+        'honda',
+        'horse',
+        'host',
+        'hosting',
+        'hoteles',
+        'hotmail',
+        'house',
+        'how',
+        'hr',
+        'hsbc',
+        'ht',
+        'hu',
+        'hyundai',
+        'ibm',
+        'icbc',
+        'ice',
+        'icu',
+        'id',
+        'ie',
+        'ifm',
+        'iinet',
+        'il',
+        'im',
+        'immo',
+        'immobilien',
+        'in',
+        'industries',
+        'infiniti',
+        'info',
+        'ing',
+        'ink',
+        'institute',
+        'insurance',
+        'insure',
+        'int',
+        'international',
+        'investments',
+        'io',
+        'ipiranga',
+        'iq',
+        'ir',
+        'irish',
+        'is',
+        'iselect',
+        'ist',
+        'istanbul',
+        'it',
+        'itau',
+        'iwc',
+        'jaguar',
+        'java',
+        'jcb',
+        'jcp',
+        'je',
+        'jetzt',
+        'jewelry',
+        'jlc',
+        'jll',
+        'jm',
+        'jmp',
+        'jo',
+        'jobs',
+        'joburg',
+        'jot',
+        'joy',
+        'jp',
+        'jpmorgan',
+        'jprs',
+        'juegos',
+        'kaufen',
+        'kddi',
+        'ke',
+        'kerryhotels',
+        'kerrylogistics',
+        'kerryproperties',
+        'kfh',
+        'kg',
+        'kh',
+        'ki',
+        'kia',
+        'kim',
+        'kinder',
+        'kitchen',
+        'kiwi',
+        'km',
+        'kn',
+        'koeln',
+        'komatsu',
+        'kp',
+        'kpn',
+        'kr',
+        'krd',
+        'kred',
+        'kuokgroup',
+        'kw',
+        'ky',
+        'kyoto',
+        'kz',
+        'la',
+        'lacaixa',
+        'lamborghini',
+        'lamer',
+        'lancaster',
+        'land',
+        'landrover',
+        'lanxess',
+        'lasalle',
+        'lat',
+        'latrobe',
+        'law',
+        'lawyer',
+        'lb',
+        'lc',
+        'lds',
+        'lease',
+        'leclerc',
+        'legal',
+        'lexus',
+        'lgbt',
+        'li',
+        'liaison',
+        'lidl',
+        'life',
+        'lifeinsurance',
+        'lifestyle',
+        'lighting',
+        'like',
+        'limited',
+        'limo',
+        'lincoln',
+        'linde',
+        'link',
+        'live',
+        'living',
+        'lixil',
+        'lk',
+        'loan',
+        'loans',
+        'locus',
+        'lol',
+        'london',
+        'lotte',
+        'lotto',
+        'love',
+        'lr',
+        'ls',
+        'lt',
+        'ltd',
+        'ltda',
+        'lu',
+        'lupin',
+        'luxe',
+        'luxury',
+        'lv',
+        'ly',
+        'ma',
+        'madrid',
+        'maif',
+        'maison',
+        'makeup',
+        'man',
+        'management',
+        'mango',
+        'market',
+        'marketing',
+        'markets',
+        'marriott',
+        'mba',
+        'mc',
+        'md',
+        'me',
+        'med',
+        'media',
+        'meet',
+        'melbourne',
+        'meme',
+        'memorial',
+        'men',
+        'menu',
+        'meo',
+        'mf',
+        'mg',
+        'mh',
+        'miami',
+        'microsoft',
+        'mil',
+        'mini',
+        'mk',
+        'ml',
+        'mm',
+        'mma',
+        'mn',
+        'mo',
+        'mobi',
+        'mobily',
+        'moda',
+        'moe',
+        'moi',
+        'mom',
+        'monash',
+        'money',
+        'montblanc',
+        'mormon',
+        'mortgage',
+        'moscow',
+        'motorcycles',
+        'mov',
+        'movie',
+        'movistar',
+        'mp',
+        'mq',
+        'mr',
+        'ms',
+        'mt',
+        'mtn',
+        'mtpc',
+        'mtr',
+        'mu',
+        'museum',
+        'mutuelle',
+        'mv',
+        'mw',
+        'mx',
+        'my',
+        'mz',
+        'na',
+        'nadex',
+        'nagoya',
+        'name',
+        'natura',
+        'navy',
+        'nc',
+        'ne',
+        'nec',
+        'net',
+        'netbank',
+        'network',
+        'neustar',
+        'new',
+        'news',
+        'nexus',
+        'nf',
+        'ng',
+        'ngo',
+        'nhk',
+        'ni',
+        'nico',
+        'nikon',
+        'ninja',
+        'nissan',
+        'nl',
+        'no',
+        'nokia',
+        'norton',
+        'nowruz',
+        'np',
+        'nr',
+        'nra',
+        'nrw',
+        'ntt',
+        'nu',
+        'nyc',
+        'nz',
+        'obi',
+        'office',
+        'okinawa',
+        'om',
+        'omega',
+        'one',
+        'ong',
+        'onl',
+        'online',
+        'ooo',
+        'oracle',
+        'orange',
+        'org',
+        'organic',
+        'origins',
+        'osaka',
+        'otsuka',
+        'ovh',
+        'pa',
+        'page',
+        'pamperedchef',
+        'panerai',
+        'paris',
+        'pars',
+        'partners',
+        'parts',
+        'party',
+        'passagens',
+        'pe',
+        'pet',
+        'pf',
+        'pg',
+        'ph',
+        'pharmacy',
+        'philips',
+        'photo',
+        'photography',
+        'photos',
+        'physio',
+        'piaget',
+        'pics',
+        'pictet',
+        'pictures',
+        'pid',
+        'pin',
+        'ping',
+        'pink',
+        'pizza',
+        'pk',
+        'pl',
+        'place',
+        'play',
+        'playstation',
+        'plumbing',
+        'plus',
+        'pm',
+        'pn',
+        'pohl',
+        'poker',
+        'porn',
+        'post',
+        'pr',
+        'praxi',
+        'press',
+        'pro',
+        'prod',
+        'productions',
+        'prof',
+        'promo',
+        'properties',
+        'property',
+        'protection',
+        'ps',
+        'pt',
+        'pub',
+        'pw',
+        'pwc',
+        'py',
+        'qa',
+        'qpon',
+        'quebec',
+        'quest',
+        'racing',
+        're',
+        'read',
+        'realtor',
+        'realty',
+        'recipes',
+        'red',
+        'redstone',
+        'redumbrella',
+        'rehab',
+        'reise',
+        'reisen',
+        'reit',
+        'ren',
+        'rent',
+        'rentals',
+        'repair',
+        'report',
+        'republican',
+        'rest',
+        'restaurant',
+        'review',
+        'reviews',
+        'rexroth',
+        'rich',
+        'ricoh',
+        'rio',
+        'rip',
+        'ro',
+        'rocher',
+        'rocks',
+        'rodeo',
+        'room',
+        'rs',
+        'rsvp',
+        'ru',
+        'ruhr',
+        'run',
+        'rw',
+        'rwe',
+        'ryukyu',
+        'sa',
+        'saarland',
+        'safe',
+        'safety',
+        'sakura',
+        'sale',
+        'salon',
+        'samsung',
+        'sandvik',
+        'sandvikcoromant',
+        'sanofi',
+        'sap',
+        'sapo',
+        'sarl',
+        'sas',
+        'saxo',
+        'sb',
+        'sbs',
+        'sc',
+        'sca',
+        'scb',
+        'schaeffler',
+        'schmidt',
+        'scholarships',
+        'school',
+        'schule',
+        'schwarz',
+        'science',
+        'scor',
+        'scot',
+        'sd',
+        'se',
+        'seat',
+        'security',
+        'seek',
+        'select',
+        'sener',
+        'services',
+        'seven',
+        'sew',
+        'sex',
+        'sexy',
+        'sfr',
+        'sg',
+        'sh',
+        'sharp',
+        'shaw',
+        'shell',
+        'shia',
+        'shiksha',
+        'shoes',
+        'shop',
+        'show',
+        'shriram',
+        'si',
+        'singles',
+        'site',
+        'sj',
+        'sk',
+        'ski',
+        'skin',
+        'sky',
+        'skype',
+        'sl',
+        'sm',
+        'smile',
+        'sn',
+        'sncf',
+        'so',
+        'soccer',
+        'social',
+        'softbank',
+        'software',
+        'sohu',
+        'solar',
+        'solutions',
+        'song',
+        'sony',
+        'soy',
+        'space',
+        'spiegel',
+        'spot',
+        'spreadbetting',
+        'sr',
+        'srl',
+        'ss',
+        'st',
+        'stada',
+        'star',
+        'starhub',
+        'statefarm',
+        'statoil',
+        'stc',
+        'stcgroup',
+        'stockholm',
+        'storage',
+        'store',
+        'stream',
+        'studio',
+        'study',
+        'style',
+        'su',
+        'sucks',
+        'supplies',
+        'supply',
+        'support',
+        'surf',
+        'surgery',
+        'suzuki',
+        'sv',
+        'swatch',
+        'swiss',
+        'sx',
+        'sy',
+        'sydney',
+        'symantec',
+        'systems',
+        'sz',
+        'tab',
+        'taipei',
+        'talk',
+        'taobao',
+        'tatamotors',
+        'tatar',
+        'tattoo',
+        'tax',
+        'taxi',
+        'tc',
+        'tci',
+        'td',
+        'team',
+        'tech',
+        'technology',
+        'tel',
+        'telecity',
+        'telefonica',
+        'temasek',
+        'tennis',
+        'tf',
+        'tg',
+        'th',
+        'thd',
+        'theater',
+        'theatre',
+        'tickets',
+        'tienda',
+        'tiffany',
+        'tips',
+        'tires',
+        'tirol',
+        'tj',
+        'tk',
+        'tl',
+        'tm',
+        'tmall',
+        'tn',
+        'to',
+        'today',
+        'tokyo',
+        'tools',
+        'top',
+        'toray',
+        'toshiba',
+        'total',
+        'tours',
+        'town',
+        'toyota',
+        'toys',
+        'tp',
+        'tr',
+        'trade',
+        'trading',
+        'training',
+        'travel',
+        'travelers',
+        'travelersinsurance',
+        'trust',
+        'trv',
+        'tt',
+        'tube',
+        'tui',
+        'tunes',
+        'tushu',
+        'tv',
+        'tvs',
+        'tw',
+        'tz',
+        'ua',
+        'ubs',
+        'ug',
+        'uk',
+        'um',
+        'unicom',
+        'university',
+        'uno',
+        'uol',
+        'us',
+        'uy',
+        'uz',
+        'va',
+        'vacations',
+        'vana',
+        'vc',
+        've',
+        'vegas',
+        'ventures',
+        'verisign',
+        'versicherung',
+        'vet',
+        'vg',
+        'vi',
+        'viajes',
+        'video',
+        'viking',
+        'villas',
+        'vin',
+        'vip',
+        'virgin',
+        'vision',
+        'vista',
+        'vistaprint',
+        'viva',
+        'vlaanderen',
+        'vn',
+        'vodka',
+        'volkswagen',
+        'vote',
+        'voting',
+        'voto',
+        'voyage',
+        'vu',
+        'vuelos',
+        'wales',
+        'walter',
+        'wang',
+        'wanggou',
+        'watch',
+        'watches',
+        'weather',
+        'weatherchannel',
+        'webcam',
+        'weber',
+        'website',
+        'wed',
+        'wedding',
+        'weir',
+        'wf',
+        'whoswho',
+        'wien',
+        'wiki',
+        'williamhill',
+        'win',
+        'windows',
+        'wine',
+        'wme',
+        'wolterskluwer',
+        'work',
+        'works',
+        'world',
+        'ws',
+        'wtc',
+        'wtf',
+        'xbox',
+        'xerox',
+        'xin',
+        '한국',
+        '닷컴',
+        '닷넷',
+        'xperia',
+        'xxx',
+        'xyz',
+        'yachts',
+        'yahoo',
+        'yamaxun',
+        'yandex',
+        'ye',
+        'yodobashi',
+        'yoga',
+        'yokohama',
+        'you',
+        'youtube',
+        'yt',
+        'za',
+        'zara',
+        'zero',
+        'zip',
+        'zm',
+        'zone',
+        'zuerich',
+        'zw'
+    ];
+}

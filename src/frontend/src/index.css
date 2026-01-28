@@ -1,0 +1,143 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 기본 스타일 */
+:root {
+  --primary: #00d9ff;
+  --primary-dark: #00a8cc;
+  --bg-dark: #0a0a0f;
+  --bg-card: #12121a;
+  --text-primary: #ffffff;
+  --text-secondary: #8b8b9a;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg-dark);
+  color: var(--text-primary);
+  min-height: 100vh;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 스크롤바 스타일 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #444;
+}
+
+/* 선택 영역 스타일 */
+::selection {
+  background: rgba(0, 217, 255, 0.3);
+  color: white;
+}
+
+/* 링크 기본 스타일 */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* 버튼 기본 스타일 */
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: inherit;
+}
+
+/* 입력 필드 기본 스타일 */
+input, textarea, select {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+/* 포커스 스타일 */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* 유틸리티 클래스 */
+@layer utilities {
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary-400 to-primary-600;
+  }
+  
+  .bg-glass {
+    @apply bg-dark-600/50 backdrop-blur-md;
+  }
+  
+  .card {
+    @apply bg-dark-600 rounded-2xl border border-white/5 p-6;
+  }
+  
+  .card-hover {
+    @apply transition-all duration-300 hover:border-primary-500/30 hover:shadow-lg hover:shadow-primary-500/10;
+  }
+}
+
+/* 애니메이션 */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* 배경 그라디언트 */
+.bg-gradient-main {
+  background: 
+    radial-gradient(ellipse at 20% 80%, rgba(102, 126, 234, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(0, 217, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(ellipse at 40% 40%, rgba(118, 75, 162, 0.1) 0%, transparent 40%);
+}
+
+/* 카드 그림자 */
+.shadow-glow {
+  box-shadow: 0 0 40px rgba(0, 217, 255, 0.15);
+}
+
+/* 감정 색상 */
+.sentiment-positive {
+  color: #00d26a;
+}
+
+.sentiment-negative {
+  color: #ff6b6b;
+}
+
+.sentiment-neutral {
+  color: #95a5a6;
+}

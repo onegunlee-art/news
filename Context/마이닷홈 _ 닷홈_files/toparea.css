@@ -1,0 +1,639 @@
+.gnb {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100%;
+  z-index: 9999;
+  background: #fff;
+}
+
+.gnb .menu {
+  border-bottom: 1px solid #ddd;
+}
+
+.gnb * {
+  font-family: NotoSans-regular, "Malgun Gothic", "맑은 고딕", Dotum, sans-serif, arial;
+}
+
+.gnb .menu .mainmenu-wrap,
+.gnb .menu .wrap {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.gnb .menu .wrap .gnb-logo {
+  padding: 15px 15px;
+}
+
+.gnb .menu .wrap .gnb-logo.off {
+  display: block;
+}
+
+.gnb .menu .main-menu ul {
+  display: flex;
+  margin-bottom: 0;
+}
+
+.gnb .menu .main-menu ul li a {
+  padding: 26px 10px;
+  font-size: 18px;
+  font-weight: 600;
+  display: inline-block;
+  height: 80px;
+  position: relative;
+}
+
+.gnb .menu .main-menu ul li a span {
+  display: inline-block;
+  width: 0px;
+  background: #0070c0;
+  height: 4px;
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transition: 0.2s;
+  opacity: 0;
+}
+
+.gnb .menu .main-menu ul li a:focus {
+  text-decoration: none;
+}
+
+.gnb .menu .main-menu ul li a:hover span,
+.gnb .menu .main-menu ul li a.active span {
+  width: 100%;
+  opacity: 1;
+  left: 0;
+}
+
+.gnb .menu .etc-menu {
+  display: flex;
+}
+
+.gnb .menu .etc-menu a {
+  font-size: 15px;
+}
+
+.gnb .menu .etc-menu a:hover {
+  color: #0070c0;
+  font-weight: 600;
+}
+
+.gnb .menu .etc-menu div a {
+  padding: 8px 8px;
+}
+
+.gnb .menu .etc-menu div span {
+  font-size: 10px;
+  vertical-align: 2px;
+}
+
+.gnb .menu .etc-menu div a:last-of-type {
+  font-weight: 600;
+  color: #0070c0;
+}
+
+.gnb .menu .etc-menu div a:hover {
+  text-decoration: underline !important;
+}
+
+.gnb .menu .menu-toggle {
+  display: none;
+  padding: 10px 15px;
+}
+
+.gnb .menu .menu-toggle.active {
+  display: none !important;
+}
+
+.gnb .menu .menu-toggle ul li {
+  border-bottom: 3px solid #333;
+  width: 30px;
+  padding: 3px;
+  transition: 0.2s;
+}
+
+.gnb .menu .menu-toggle.active ul {
+  position: relative;
+}
+
+.gnb .menu .menu-toggle.active ul li {
+  padding: 0;
+  position: absolute;
+  left: -30px;
+}
+
+.gnb .menu .menu-toggle.active ul li:first-of-type {
+  transform: rotate(45deg);
+}
+
+.gnb .menu .menu-toggle.active ul li:last-of-type {
+  transform: rotate(135deg);
+}
+
+.gnb .menu .menu-toggle.active ul li:nth-of-type(2) {
+  display: none;
+}
+
+.gnb .m-open-menu,
+.gnb .m-open-menu.active {
+  display: none !important;
+}
+
+.gnb .menu-open {
+  border-bottom: 1px solid #ddd;
+  border-top: 1px solid #ddd;
+  position: absolute;
+  left: 0;
+  top: 80px;
+  height: 0;
+  width: 100%;
+  background: #fff;
+  opacity: 0;
+  transition: 0.2s;
+}
+
+.gnb .menu-open.active {
+  opacity: 1;
+  height: 228px;
+}
+
+.gnb .menu-open a {
+  font-size: 16px;
+}
+
+.gnb .menu-open .submenu-wrap.use-event {
+  display: flex;
+}
+
+.gnb .menu-open .submenu-wrap,
+.gnb .menu-open .submenu-wrap.use-event {
+  display: none;
+}
+
+.gnb .menu-open .submenu-wrap.use-event.active {
+  display: flex !important;
+}
+
+.gnb .menu-open .submenu-wrap.active {
+  display: block !important;
+}
+
+.gnb .menu-open .submenu-wrap .submenu {
+  display: flex;
+  flex-wrap: nowrap;
+  padding: 15px 0;
+}
+
+.gnb .menu-open .submenu-wrap .submenu ul {
+  flex: 0 0 23%;
+  max-width: 23%;
+  margin-bottom: 0;
+  text-align: left;
+}
+
+.gnb .menu-open .submenu-wrap .submenu ul a {
+  padding: 6px 15px;
+  display: inline-block;
+}
+
+.gnb .menu-open .submenu-wrap .submenu ul a:hover span:first-of-type {
+  color: #0070c0;
+  text-decoration: underline !important;
+  transition: 0.2s;
+}
+
+.gnb .menu-open .submenu-wrap .my-menu {
+  display: flex;
+  flex-wrap: nowrap;
+  border-top: 1px solid #ddd;
+  padding: 5px 0;
+}
+
+.gnb .menu-open .submenu-wrap .my-menu ul {
+  flex: 0 0 23%;
+  max-width: 23%;
+  margin-bottom: 0;
+  text-align: left;
+}
+
+.gnb .menu-open .submenu-wrap .my-menu ul a {
+  padding: 6px 15px;
+  display: inline-block;
+}
+
+.gnb .menu-open .submenu-wrap .my-menu ul a i {
+  color: #a6a6a6;
+}
+
+.gnb .menu-open .submenu-wrap .my-menu ul a:hover span {
+  color: #0070c0;
+  text-decoration: underline !important;
+  transition: 0.2s;
+}
+
+.gnb .menu-open .submenu-wrap.use-event .wrap {
+  flex: 0 0 69%;
+  max-width: 69%;
+}
+
+.gnb .menu-open .submenu-wrap.use-event .wrap .submenu ul,
+.gnb .menu-open .submenu-wrap.use-event .wrap .my-menu ul {
+  flex: 0 0 33.333333%;
+  max-width: 33.333333%;
+}
+
+.gnb .menu-open .submenu-wrap.use-event .menu-banner {
+  flex: 0 0 31%;
+  max-width: 31%;
+  padding: 15px 15px 0;
+}
+
+.gnb .menu-open .submenu-wrap.use-event .menu-banner a {
+  display: block;
+  text-align: left;
+}
+
+.gnb .menu-open .submenu-wrap.use-event .menu-banner a.text {
+  font-weight: 600;
+  padding: 12px 0;
+}
+
+.gnb .menu-open .submenu-wrap.use-event .menu-banner .img-t {
+  display: none;
+}
+
+.gnb .menu-open .submenu-wrap.use-event .menu-banner .img-pc {
+  border: 1px solid #ddd;
+  text-align: center;
+  overflow: hidden;
+}
+
+.gnb .menu-open .submenu-wrap.use-event .menu-banner .img-pc:hover img {
+  opacity: 0.8;
+  transition: 0.2s;
+}
+
+.gnb .menu-open .submenu-wrap.use-event .menu-banner a:hover {
+  color: #0070c0;
+  text-decoration: underline !important;
+  transition: 0.2s;
+}
+
+.gnb-back {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100vh;
+  z-index: 998;
+  background: rgba(0, 0, 0, 0.2);
+  content: "";
+  display: none;
+}
+
+.gnb-back.active {
+  display: block;
+}
+
+.gnb-height {
+  height: 80px;
+}
+
+.gnb .nav-icon {
+  text-transform: uppercase;
+  letter-spacing: 0;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 5px;
+}
+
+.gnb .menu-open-m {
+  display: none;
+}
+
+.m-open-menu div a {
+  padding: 8px 8px;
+}
+
+.m-open-menu div span {
+  font-size: 10px;
+  vertical-align: 2px;
+}
+
+.menu-open-m {
+  overflow-y: auto;
+  display: none;
+}
+
+.menu-open-m.active {
+  display: none !important;
+  padding-bottom: 30px;
+}
+
+.menu-open-m a {
+  font-size: 16px;
+}
+
+.menu-open-m .login-visible {
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+.menu-open-m .login-visible a {
+  border: 1px solid #0070c0;
+  background: #dde8f0;
+  margin: 5px;
+  font-size: 14px;
+}
+
+.menu-open-m .login-visible a span {
+  color: red;
+  font-weight: 600;
+}
+
+.menu-open-m .panel {
+  border: none;
+  box-shadow: none;
+  background: none;
+}
+
+.menu-open-m .panel-default>.panel-heading {
+  border: none;
+  background: none;
+  text-align: left;
+  padding: 0;
+}
+
+.menu-open-m .panel-default>.panel-heading a {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 15px;
+}
+
+.menu-open-m .panel-default>.panel-heading a:focus {
+  text-decoration: none;
+}
+
+.menu-open-m ul li {
+  text-align: left;
+}
+
+.menu-open-m ul li a {
+  padding: 10px 15px;
+  display: block;
+}
+
+.menu-open-m .line-top {
+  border-top: 1px solid #ddd;
+}
+
+.menu-open-m .panel-default .panel-collapse .panel-group ul li {
+  margin-bottom: 5px;
+  padding: 0 15px;
+}
+
+.menu-open-m .panel-default .panel-collapse .panel-group ul li a {
+  padding: 8px 10px;
+  display: block;
+  background: #fff;
+  border-radius: 5px;
+}
+
+#m_menu {
+  padding-top: 15px;
+  padding-bottom: 30px;
+}
+
+.menu-open-m .panel-collapse {
+  background: #f4f4f4;
+}
+
+.menu-open-m .panel-default>.panel-heading a.collapsed i:before {
+  content: "\f107";
+}
+
+.gnb .active {
+  box-shadow: none;
+  border-radius: 0;
+}
+
+@media only screen and (max-width: 1199.98px) and (min-width: 993px) {
+  .gnb .menu .main-menu ul li a {
+    font-size: 15px !important;
+  }
+
+  .gnb .menu .wrap .gnb-logo {
+    width: 158px;
+  }
+
+  .gnb .menu .wrap .gnb-logo a img {
+    width: 100%;
+  }
+}
+
+@media (max-width: 1200px) {
+  .gnb .menu-open .submenu-wrap.use-event .menu-banner .img-t {
+    display: block;
+  }
+
+  .gnb .menu-open .submenu-wrap.use-event .menu-banner .img-pc {
+    display: none;
+  }
+
+  .gnb .menu-open .menu-banner a {
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 992px) {
+  .gnb-height {
+    height: 65px;
+  }
+
+  .gnb .menu .mainmenu-wrap {
+    height: 64px;
+  }
+
+  .gnb .menu .menu-toggle,
+  .gnb .menu .menu-toggle.active {
+    display: block !important;
+  }
+
+  .gnb .menu>.container {
+    padding: 0;
+  }
+
+  .gnb .menu .main-menu,
+  .gnb .menu .etc-menu {
+    display: none;
+  }
+
+  .gnb .menu-open,
+  .gnb .menu-open .submenu-wrap,
+  .gnb .menu-open .submenu-wrap.active {
+    display: none !important;
+  }
+
+  .gnb .menu-open-m {
+    display: block !important;
+    opacity: 0;
+    height: 0;
+    transition: 0.2s;
+  }
+
+  .gnb .menu-open-m .m-menu {
+    display: none;
+  }
+
+  .gnb .menu-open-m.active {
+    opacity: 1;
+    height: 100vh;
+  }
+
+  .gnb .menu-open-m.active .m-menu {
+    display: block;
+  }
+
+  .gnb .menu-open-m .container {
+    padding: 0;
+  }
+
+  .gnb .menu .wrap .gnb-logo.off {
+    display: none;
+  }
+
+  .gnb .m-open-menu.active {
+    display: block !important;
+  }
+
+  .gnb-back,
+  .gnb-back.active {
+    display: none !important;
+  }
+}
+
+/* 기존 페이지 타이틀 맞춤 */
+.pub-container {
+  margin-top: -133px;
+}
+
+.title-section {
+  top: 170px !important;
+}
+
+.m-slider {
+  margin-top: 108px;
+}
+
+.pub-container .pub-web-box01 {
+  height: 135px !important;
+}
+
+.menu-height {
+  height: 133px !important;
+}
+
+.sticky-menu,
+.sticky {
+  top: 80px;
+}
+
+/* 페이지 네비 */
+@media (max-width: 1200px) {
+  .m-slider {
+    margin-top: 0;
+  }
+}
+
+@media (max-width: 992px) {
+  .pub-container {
+    margin-top: -86px;
+  }
+
+  .section.m-slider {
+    margin-top: 0;
+    padding-top: 66px !important;
+  }
+
+  .pub-container .pub-web-box01 {
+    height: 86px !important;
+  }
+
+  .sticky-menu,
+  .sticky {
+    top: 64px;
+  }
+
+  /* 페이지 네비 */
+  .menu-height {
+    height: 86px !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .section.m-slider {
+    margin-top: 0;
+    padding-top: 60px !important;
+  }
+}
+
+@media (max-width: 258px) {
+  .section.m-slider {
+    margin-top: 0;
+    padding-top: 41px !important;
+  }
+}
+
+/* 2019 layout.css 에서 분리한 코드 */
+.gnb li {
+  list-style: none
+}
+
+@media (min-width: 1400px) {
+  .gnb .container {
+    width: 1170px;
+  }
+}
+
+@media (min-width: 992px) {
+  .container {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+}
+
+.gnb a {
+  color: #555;
+  text-decoration: none;
+}
+
+
+.gnb a:focus,
+.gnb a:hover {
+  color: #23527c;
+  text-decoration: underline;
+}
+
+.gnb ul {
+  padding-left: 0;
+}
+
+.gnb .nav-icon-new {
+  background-color: #0095ff !important;
+}
+
+.gnb .nav-icon {
+  display: inline !important;
+  background-color: #ffba00;
+  display: inline-block;
+  padding: 2px 5px;
+  margin-left: 5px;
+  border-radius: 5px;
+  color: #fff;
+}
+
+/* 2019 layout.css 에서 분리한 코드 - 종료  */

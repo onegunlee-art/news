@@ -1,0 +1,110 @@
+$(function(){
+    
+    var nowhost = window.location.host;
+//	alert(nowhost +" | " + HTTP_HOST);
+
+    $(".popPad").click(function(){    
+    
+        var pburl = this.id;
+        padPop('divPad',pburl);
+    
+    });
+    
+ 
+    $(".popMobile").click(function(){    
+    
+        var pburl = this.id;
+  
+        if(pburl=="mobilemailpreview"){
+            //location.href = "http://"+nowhost+"/mail/product/index.php?link=pv#section2";
+            location.href = "http://"+nowhost+"/mail/product/index.php?link=pv";
+        }else{
+            mobilePop('divMobile',pburl);
+        }
+    
+    });
+    
+    
+    $(".popClose").click(function(){
+
+        $('#inner_divPad').load("/homepage/pop_pad_blank.php");
+        $('#divPad').hide();        
+        $('#urlPad').val('');
+        $('#inner_divMobile').load("/homepage/pop_mobile_blank.php");
+        $('#divMobile').hide();
+        $('#urlMobile').val('');
+        $('#modal_backdrop_div').hide();
+        $("html").css("overflow","scroll");
+
+    
+    });
+    
+    
+});
+    
+    
+function padPop(id,pburl){
+    
+    var divName = '#' + id;
+    var inner_divName = '#inner_' + id;
+  
+    var top = ($(window).scrollTop()+($(window).height()-$(divName).height())/2);     
+    var left = ($(window).scrollLeft()+($(window).width()-$(divName).width())/2); 
+
+    $(divName).css('top',top);
+    $(divName).css('left',left);
+    $(divName).show();  
+    $("html").css("overflow","hidden");   
+    $('#modal_backdrop_div').show();
+    $('#urlPad').val(pburl);
+    
+    $(inner_divName).load("/homepage/pop_pad_inner2.php",{"pburl":pburl});
+    
+
+}
+
+function mobilePop(id,pburl){
+    
+    var divName = '#' + id;
+    var inner_divName = '#inner_' + id;
+
+    var top = ($(window).scrollTop()+($(window).height()-$(divName).height())/2);     
+    var left = ($(window).scrollLeft()+($(window).width()-$(divName).width())/2); 
+     
+    $(divName).css('top',top);
+    $(divName).css('left',left);
+    $(divName).show();  
+    $("html").css("overflow","hidden");   
+    $('#modal_backdrop_div').show();
+    $('#urlMobile').val(pburl);
+    
+    $(inner_divName).load("/homepage/pop_mobile_inner2.php",{"pburl":pburl});    
+
+}
+
+function padResize(id,pburl){
+    
+    var divName = '#' + id;
+    var inner_divName = '#inner_' + id;
+  
+    var top = ($(window).scrollTop()+($(window).height()-$(divName).height())/2);     
+    var left = ($(window).scrollLeft()+($(window).width()-$(divName).width())/2); 
+        
+    $(divName).css('top',top);
+    $(divName).css('left',left);    
+
+}
+
+function mobileResize(id,pburl){
+    
+    var divName = '#' + id;
+    var inner_divName = '#inner_' + id;
+  
+    var top = ($(window).scrollTop()+($(window).height()-$(divName).height())/2);     
+    var left = ($(window).scrollLeft()+($(window).width()-$(divName).width())/2); 
+        
+    $(divName).css('top',top);
+    $(divName).css('left',left);
+
+
+}

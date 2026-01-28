@@ -1,0 +1,90 @@
+# ===========================================
+# News 맥락 분석 - Apache 설정
+# ===========================================
+
+# Rewrite 엔진 활성화
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # HTTPS 리다이렉트 (옵션)
+    # RewriteCond %{HTTPS} off
+    # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # 카카오 로그인 경로 직접 처리
+    RewriteRule ^api/auth/kakao$ api/auth/kakao.php [L]
+    RewriteRule ^api/auth/kakao/callback$ api/auth/kakao/callback.php [QSA,L]
+    RewriteRule ^api/auth/kakao/token$ api/auth/kakao/token.php [QSA,L]
+
+    # 정적 파일은 직접 제공 (PHP 파일 포함)
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule ^ - [L]
+
+    # 디렉토리는 직접 제공
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # API 요청 중 실제 파일이 없는 경우만 index.php로 라우팅
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^api/(.*)$ index.php [QSA,L]
+
+    # React SPA 라우팅 지원
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^ index.php [QSA,L]
+</IfModule>
+
+# 보안 헤더
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-XSS-Protection "1; mode=block"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# Gzip 압축
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css
+    AddOutputFilterByType DEFLATE text/javascript application/javascript application/json
+</IfModule>
+
+# 캐시 설정
+<IfModule mod_expires.c>
+    ExpiresActive On
+    
+    # 이미지
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/gif "access plus 1 month"
+    ExpiresByType image/svg+xml "access plus 1 month"
+    ExpiresByType image/webp "access plus 1 month"
+    
+    # CSS/JS
+    ExpiresByType text/css "access plus 1 week"
+    ExpiresByType application/javascript "access plus 1 week"
+    
+    # 폰트
+    ExpiresByType font/woff2 "access plus 1 month"
+    ExpiresByType font/woff "access plus 1 month"
+</IfModule>
+
+# 디렉토리 목록 비활성화
+Options -Indexes
+
+# PHP 설정 (dothome 호환)
+<IfModule mod_php.c>
+    php_value upload_max_filesize 10M
+    php_value post_max_size 10M
+    php_value max_execution_time 60
+</IfModule>
+
+# 민감한 파일 접근 차단
+<FilesMatch "\.(env|sql|md|json|lock|yml|yaml)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+<FilesMatch "^\.">
+    Order allow,deny
+    Deny from all
+</FilesMatch>

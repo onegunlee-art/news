@@ -1,0 +1,65 @@
+# Dependencies
+node_modules/
+vendor/
+
+# Build outputs
+dist/
+build/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Config files (실제 값 포함)
+config/database.php
+config/kakao.php
+config/naver.php
+# 예제 파일은 커밋됨: config/*.example.php
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Cache
+.cache/
+storage/cache/*
+!storage/cache/.gitkeep
+
+# Temporary files
+tmp/
+temp/
+
+# Test coverage
+coverage/
+
+# Package locks (optional - some teams prefer to commit these)
+# package-lock.json
+
+# PHP specific
+composer.lock
+
+# Uploads
+uploads/*
+!uploads/.gitkeep
+
+# Generated files
+public/assets/*
+!public/assets/.gitkeep
+public/*.js
+public/*.css
+public/*.map
+
+# Keep directories
+!.gitkeep

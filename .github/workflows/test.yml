@@ -1,0 +1,120 @@
+name: Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ========================================
+  # PHP Lint & Syntax Check
+  # ========================================
+  php-lint:
+    name: PHP Lint
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo, pdo_mysql, curl, json, mbstring
+
+      - name: PHP Syntax Check
+        run: |
+          errors=0
+          while IFS= read -r file; do
+            php -l "$file" > /dev/null 2>&1 || { echo "Syntax error in: $file"; errors=$((errors + 1)); }
+          done < <(find . -name "*.php" -not -path "./vendor/*")
+          
+          if [ $errors -gt 0 ]; then
+            echo "Found $errors files with syntax errors"
+            exit 1
+          fi
+          echo "All PHP files have valid syntax"
+
+  # ========================================
+  # TypeScript Type Check
+  # ========================================
+  typescript-check:
+    name: TypeScript Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: src/frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: src/frontend
+        run: npm ci
+
+      - name: TypeScript check
+        working-directory: src/frontend
+        run: npx tsc --noEmit
+        continue-on-error: true
+
+  # ========================================
+  # ESLint
+  # ========================================
+  eslint:
+    name: ESLint
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: src/frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: src/frontend
+        run: npm ci
+
+      - name: Run ESLint
+        working-directory: src/frontend
+        run: npm run lint
+        continue-on-error: true
+
+  # ========================================
+  # Build Test
+  # ========================================
+  build-test:
+    name: Build Test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: src/frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: src/frontend
+        run: npm ci
+
+      - name: Build
+        working-directory: src/frontend
+        run: npm run build
+        env:
+          VITE_API_URL: /api

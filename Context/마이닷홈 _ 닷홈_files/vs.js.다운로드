@@ -1,0 +1,70 @@
+/*이벤트 게시판 목록 이미지 hidden*/
+$(document).ready(function() {
+
+    function centerImage() {        
+
+        var imageHeight, wrapperHeight, overlap;
+        var strId = "", container = "";
+        
+        for(i=0;i<$('.image-wrap').length;i++){            
+        
+            strId = '#listWrapper' + i;
+            container = $(strId);
+            imageHeight = container.find('img').height();
+            wrapperHeight = container.height();
+            overlap = (wrapperHeight - imageHeight) / 2;
+            container.find('img').css('margin-top', overlap);
+
+        }
+    }
+     
+    $(window).on("load resize", centerImage);
+    
+    if($("#wrapper").length>0){
+
+       var el = document.getElementById('wrapper');
+       if (el.addEventListener) { 
+           el.addEventListener("webkitTransitionEnd", centerImage, false); // Webkit event
+           el.addEventListener("transitionend", centerImage, false); // FF event
+           el.addEventListener("oTransitionEnd", centerImage, false); // Opera event
+       }
+
+    }
+    
+    /*제목 글자수 제한*/
+    $('.titleLimit').each(function () {
+    if ($(this).text().length>39) {
+        $(this).text($(this).text().substr(0, 42) + "...");
+    }
+	});
+    
+    /*목록 글자수 제한*/
+    $('.txtLimit').each(function () {
+    if ($(this).text().length>157) {
+        $(this).text($(this).text().substr(0, 160) + "...");
+    }
+	});
+
+ 
+});
+
+
+$(function(){
+ var shrinkHeader = 120;
+  $(window).scroll(function() {
+    var scroll = getCurrentScroll();
+      if ( scroll >= shrinkHeader ) {
+           $('.vs-top-container').addClass('topDisable-vs-top');
+           $('.vs-header').addClass('topDisable-vs-header');
+        }
+        else {
+            $('.vs-top-container').removeClass('topDisable-vs-top');
+            $('.vs-header').removeClass('topDisable-vs-header');
+        }
+  });
+
+});
+
+function getCurrentScroll() {
+    return window.pageYOffset;
+}

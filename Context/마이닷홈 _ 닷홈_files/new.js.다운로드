@@ -1,0 +1,89 @@
+$(function () {
+  $('[data-toggle="tooltip"]').tooltip()
+})
+
+
+
+
+$(document).ready(function(){
+	
+	var headerHeight = $(".vs-top-container").height();
+	var menuHeight = $(".vs-header").height();
+	
+	$('a[href^="#"]:not([href="#"]):not([data-toggle="tab"]):not([data-toggle="collapse"]):not([href="#goheader"]):not([href="#sidr"]):not([href="#carousel-example-generic"])').on('click',function (e) {
+	    e.preventDefault();
+
+	    var target = this.hash;
+	    var $target = $(target);
+
+	    $('html, body').stop().animate({
+	        'scrollTop': $target.offset().top - (headerHeight + menuHeight)
+	    }, 500, 'swing', function () {
+	        //window.location.hash = target - (headerHeight + menuHeight);
+	    });
+	});
+	
+	window.onhashchange = function(){
+            $('a[href^="'+location.hash+'"]').click();
+	}
+	
+	
+	$('.gotop-btn').click(function () {
+		$('body,html').animate({
+			scrollTop: 0
+		}, 800);
+		return false;
+	});
+	
+   // cache the window object
+   $window = $(window);
+ 
+   $('section[data-type="background"]').each(function(){
+     // declare the variable to affect the defined data-type
+     var $scroll = $(this);
+                     
+      $(window).scroll(function() {
+        // HTML5 proves useful for helping with creating JS functions!
+        // also, negative value because we're scrolling upwards                             
+        var yPos = -($window.scrollTop() / $scroll.data('speed')); 
+         
+        // background position
+        var coords = '50% '+ yPos + 'px';
+ 
+        // move the background
+        $scroll.css({ backgroundPosition: coords });    
+      }); // end window scroll
+   });  // end section function
+
+
+
+     $(".my_gnb").mouseover(function(){
+         $("#bgLine").addClass("wide");
+     })
+     $(".my_gnb").mouseout(function(){
+        $("#bgLine").removeClass("wide");
+    })
+
+
+
+});
+
+$(window).resize(function(){
+	var margin = $(".vs-top-container").height() + $(".vs-header").height() + 2;
+	$('.pub-con-init-box').height( margin );
+});
+
+
+$(window).load(function() {
+    $(this).trigger('resize');
+    
+    //해쉬를 포함한 주소이동
+    $('a[href^="'+location.hash+'"]').click();
+});
+
+
+
+
+
+
+

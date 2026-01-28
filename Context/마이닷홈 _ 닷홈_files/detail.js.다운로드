@@ -1,0 +1,1034 @@
+$(function () {
+    var tmpno_el = $("input[name='tmpno']");
+    $.each(tmpno_el, function (idx, el) {
+        var tmpval = $(el).val();
+        arr_val = tmpval.split(SEPARATOR);
+        var no = arr_val[0];
+        var chk_hosting_platform = arr_val[10];
+        var product_code = arr_val[4];
+        if (product_code.substring(0, 8) == "21000004" || product_code == "210000004" || chk_hosting_platform == 1) {
+            $.ajax({
+                type: "post",
+                url: "/common/ajax/ajax_dothome.php",
+                data: "do=exec&mode=usage_info&order_product_no=" + no + "&product_code=" + product_code,
+                dataType: 'Json',
+                success: function (result) {
+                    if(typeof result.resultData.CHARGING_TRAFFIC === 'undefined' || result.resultData.CHARGING_TRAFFIC == 0){
+                        var defaultTraffic = Number(result.resultData.setTraffic);
+                        var chargingTraffic = Number(0);
+                        var setTraffic = defaultTraffic;
+                    }else{
+                        var defaultTraffic = Number(result.resultData.DEFAULT_TRAFFIC);
+                        var chargingTraffic = Number(result.resultData.CHARGING_TRAFFIC);
+                        var setTraffic = Number(result.resultData.SET_TRAFFIC);
+                    }
+                    var curTraffic = Number(result.resultData.curTraffic);
+                    if(curTraffic == null){
+                        curTraffic =0;
+                    }
+                    var curHDD = Number(result.resultData.curHDD);
+                    var setHDD = Number(result.resultData.setHDD);
+                    var tarfficChartData = new Object();
+                    
+                    if(document.documentElement.clientWidth > 1024){
+                        
+                        if (defaultTraffic + chargingTraffic == setTraffic) {
+                            if(setTraffic != 0 ){
+                                tarfficChartData = {
+                                    labels: ['총용량', '사용량'],
+                                    datasets: [{
+                                            label: '기본트래픽',
+                                            backgroundColor: window.chartColors.blue,
+                                            data: [
+                                                defaultTraffic, 0
+                                            ]
+                                        }, {
+                                            label: '충전트래픽',
+                                            backgroundColor: window.chartColors.green,
+                                            data: [
+                                                chargingTraffic, 0
+                                            ]
+                                        }, {
+                                            label: '사용량',
+                                            backgroundColor: window.chartColors.red,
+                                            data: [
+                                                0, curTraffic
+                                            ]
+                                        }]
+                                };
+                            }else{
+                                tarfficChartData = {
+                                    labels: ['사용량'],
+                                    datasets: [{
+                                            label: '사용량',
+                                            backgroundColor: window.chartColors.red,
+                                            data: [
+                                                curTraffic
+                                            ]
+                                        }]
+                                };
+                            }
+                        }
+                    
+                        if (setHDD != 0) {
+                            var hddChartData = {
+                                labels: ['디스크'],
+                                datasets: [
+                                    {
+                                        label: '사용량',
+                                        backgroundColor: window.chartColors.red,
+                                        data: [
+                                            curHDD
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    
+                        if (hddChartData) {
+                            var ctx1 = document.getElementById('hdd-chart');
+                            window.myBar1 = new Chart(ctx1, {
+                                type: 'horizontalBar',
+                                data: hddChartData,
+                                options: {
+                                    layout: {
+                                        padding: {
+                                            left: 0,
+                                            right: 0,
+                                            top: 5,
+                                            bottom: 5
+                                        }
+                                    },
+                                    tooltips: {
+                                        mode: 'single',
+                                        intersect: false,
+                                        callbacks: {
+                                            label: function (tooltipItems, data) {
+                                                if (parseInt(tooltipItems.xLabel) < 1000) {
+                                                    xLabel = Math.round(tooltipItems.xLabel) + "M";
+                                                } else if (parseInt(tooltipItems.xLabel) < 1000000) {
+                                                    xLabel = Math.round(tooltipItems.xLabel / 1024) + "G";
+                                                } else {
+                                                    xLabel = Math.round(tooltipItems.xLabel / 1024000) + "T";
+                                                }
+                                                return data.datasets[tooltipItems.datasetIndex].label + ': ' + xLabel;
+                                            }
+                                        }
+                                    },
+                                    responsive: true,
+                                    scales: {
+                                        xAxes: [{
+                                                ticks: {
+                                                    min: 0,
+                                                    max: setHDD,
+                                                    stepSize: setHDD / 5,
+                                                    beginAtZero: true,
+                                                    callback: function (value) {
+                                                        if (parseInt(value) < 1000) {
+                                                            return Math.round(value) + "M";
+                                                        } else if (parseInt(value) < 1000000) {
+                                                            return Math.round((value * 10) / 1024) / 10 + "G";
+                                                        } else {
+                                                            return Math.round((value * 10) / 1024000) / 10 + "T";
+                                                        }
+                                                    }
+                                                
+                                                }
+                                            }],
+                                        yAxes: [{
+                                                stacked: true
+                                            }]
+                                    },
+                                    legend: {
+                                        display: false
+                                    }
+                                }
+                            });
+                        }
+                    
+                        if (tarfficChartData) {
+                            if(setTraffic != 0){
+                                var ctx2 = document.getElementById('traffic-chart');
+                                window.myBar2 = new Chart(ctx2, {
+                                    type: 'horizontalBar',
+                                    data: tarfficChartData,
+                                    options: {
+                                        responsive: true,
+                                        scales: {
+                                            xAxes: [{
+                                                    stacked: true,
+                                                    ticks: {
+                                                        min: 0,
+                                                        max: setTraffic,
+                                                        stepSize: setTraffic / 5,
+                                                        beginAtZero: true,
+                                                        barPercentage: 1.0,
+                                                        categoryPercentage: 1.0,
+                                                        callback: function (value) {
+                                                            if (parseInt(value) < 1000) {
+                                                                return Math.round(value) + "M";
+                                                            } else if (parseInt(value) < 1000000) {
+                                                                return Math.round((value * 10) / 1024) / 10 + "G";
+                                                            } else {
+                                                                return Math.round((value * 10) / 1024000) / 10 + "T";
+                                                            }
+                                                        }
+                                                    }
+                                                
+                                                }],
+                                            yAxes: [{
+                                                    stacked: true
+                                                }]
+                                        },
+                                        tooltips: {
+                                            mode: 'single',
+                                            intersect: false,
+                                            callbacks: {
+                                                label: function (tooltipItems, data) {
+                                                    if (parseInt(tooltipItems.xLabel) < 1000) {
+                                                        xLabel = (tooltipItems.xLabel).toFixed(1) + "M";
+                                                    } else if (parseInt(tooltipItems.xLabel) < 1000000) {
+                                                        xLabel = (tooltipItems.xLabel / 1024).toFixed(1) + "G";
+                                                    } else {
+                                                        xLabel = (tooltipItems.xLabel / 1024000).toFixed(1) + "T";
+                                                    }
+                                                    return data.datasets[tooltipItems.datasetIndex].label + ': ' + xLabel;
+                                                }
+                                            }
+                                        },
+                                        legend: {
+                                            align: 'center'
+                                        }
+
+                                    }
+
+                                });
+                            
+                            }else{
+
+                                var ctx2 = document.getElementById('traffic-chart');
+                                window.myBar2 = new Chart(ctx2, {
+                                    type: 'horizontalBar',
+                                    data: tarfficChartData,
+                                    options: {
+                                        layout: {
+                                            padding: {
+                                                left: 0,
+                                                right: 0,
+                                                top: 5,
+                                                bottom: 5
+                                            }
+                                        },
+                                        tooltips: {
+                                            mode: 'single',
+                                            intersect: false,
+                                            callbacks: {
+                                                label: function (tooltipItems, data) {
+                                                    if (parseInt(tooltipItems.xLabel) < 1000) {
+                                                        xLabel = Math.round(tooltipItems.xLabel) + "M";
+                                                    } else if (parseInt(tooltipItems.xLabel) < 1000000) {
+                                                        xLabel = Math.round(tooltipItems.xLabel / 1024) + "G";
+                                                    } else {
+                                                        xLabel = Math.round(tooltipItems.xLabel / 1024000) + "T";
+                                                    }
+                                                    return data.datasets[tooltipItems.datasetIndex].label + ': ' + xLabel;
+                                                }
+                                            }
+                                        },
+                                        responsive: true,
+                                        scales: {
+                                            xAxes: [{
+                                                    ticks: {
+                                                        min: 0,
+                                                        max: curTraffic * 2,
+                                                        stepSize: curTraffic / 5,
+                                                        beginAtZero: true,
+                                                        callback: function (value) {
+                                                            if (parseInt(value) < 1000) {
+                                                                return Math.round(value) + "M";
+                                                            } else if (parseInt(value) < 1000000) {
+                                                                return Math.round((value * 10) / 1024) / 10 + "G";
+                                                            } else {
+                                                                return Math.round((value * 10) / 1024000) / 10 + "T";
+                                                            }
+                                                        }
+                                                    }
+                                                }],
+                                            yAxes: [{
+                                                    stacked: true
+                                                }]
+                                        },    
+                                        legend: {
+                                            align: 'center'
+                                        }
+
+                                    }
+                                });
+                            
+                            }
+                        } else {
+                        
+                        }
+                    } else{
+                        $(".chart-table").detach();
+                        $(".chart-value").attr("colspan" , "2");            
+                    }
+    
+                    let totalhdd = 0;
+                    let cuhdd = 0;
+                    let straffic = 0;
+                    let cutt = 0;
+    
+                    let total_traffic = parseInt(chargingTraffic) + parseInt(defaultTraffic);
+    
+                    if (total_traffic < 1000) {
+                        straffic = (total_traffic).toFixed(1) + "M";
+                    } else if (total_traffic < 1000000) {
+                        straffic = (total_traffic / 1024).toFixed(1) + "G";
+                    } else {
+                        straffic = (total_traffic / 1024000).toFixed(1) + "T";
+                    }
+
+                    if(product_code == "210000044"){
+                        straffic = "무제한";
+                    }
+
+                    if (curTraffic < 1000) {
+                        cutt = (curTraffic).toFixed(1) + "M";
+                    } else if (curTraffic < 1000000) {
+                        cutt = (curTraffic / 1024).toFixed(1) + "G";
+                    } else {
+                        cutt = (curTraffic / 1024000).toFixed(1) + "T";
+                    }
+                    if (curHDD < 1000) {
+                        cuhdd = (curHDD).toFixed(1) + "M";
+                    } else if (curHDD < 1000000) {
+                        cuhdd = (curHDD / 1024).toFixed(1) + "G";
+                    } else {
+                        cuhdd = (curHDD / 1024000).toFixed(1) + "T";
+                    }
+    
+                    if (setHDD < 1000) {
+                        totalhdd = (setHDD).toFixed(1) + "M";
+                    } else if (setHDD < 1000000) {
+                        totalhdd = (setHDD / 1024).toFixed(1) + "G";
+                    } else {
+                        totalhdd = (setHDD / 1024000).toFixed(1) + "T";
+                    }
+    
+                    $(".my_total_traffic").text(straffic);
+                    $(".my_cur_traffic").text(cutt);
+            
+                    $(".my_total_hdd").text(totalhdd);
+                    $(".my_cur_hdd").text(cuhdd);
+                }
+            });
+
+        }else{
+            $.ajax({
+                type: "post",
+                url: "/common/ajax/ajax_hosting.php",
+                data: "do=exec&act=ajax&mode=chkHDD&no=" + arr_val[0],
+                dataType: 'json',
+                success: function (result) {
+                    if (result.code == 1) {
+                        $(".hdd-progress").eq(idx).find(".check-bal-text").hide();
+                        $(".hdd-progress").eq(idx).find(".bar-img").show();
+                        $(".hdd-progress").eq(idx).find(".my_hdd_cur").text(result.data['my_hdd_cur']);
+                        $(".hdd-progress").eq(idx).find(".my_hdd_set").text(result.data['my_hdd_set']);
+                        $(".hdd-progress").eq(idx).find(".my_hdd_per").text(result.data['my_hdd_per']);
+                        $(".hdd-progress").eq(idx).find(".my_hdd_bar_per").css('width', result.data['my_hdd_bar_per']);
+                    } else {
+                        $(".hdd-progress").eq(idx).find(".check-bal-text").text('디스크 조회 실패')
+                    }
+                }
+            });
+            $.ajax({
+                type: "post",
+                url: "/common/ajax/ajax_hosting.php",
+                data: "do=exec&act=ajax&mode=chkDB&no=" + arr_val[0],
+                dataType: 'json',
+                success: function (result) {
+                    if (result.code == 1) {
+                        $(".db-progress").eq(idx).find(".check-bal-text").hide();
+                        $(".db-progress").eq(idx).find(".bar-img").show();
+                        $(".db-progress").eq(idx).find(".my_db_cur").text(result.data['my_db_cur']);
+                        $(".db-progress").eq(idx).find(".my_db_set").text(result.data['my_db_set']);
+                        $(".db-progress").eq(idx).find(".my_db_per").text(result.data['my_db_per']);
+                        $(".db-progress").eq(idx).find(".my_db_bar_per").css('width', result.data['my_db_bar_per']);
+                    } else {
+                        $(".db-progress").eq(idx).find(".check-bal-text").text('DB 조회 실패')
+                    }
+                }
+            });
+            $.ajax({
+                type: "post",
+                url: "/common/ajax/ajax_hosting.php",
+                data: "do=exec&act=ajax&mode=chkTraffic&no=" + arr_val[0],
+                dataType: 'json',
+                success: function (result) {
+                    if (result.code == 1) {
+                        $(".traffic-progress").eq(idx).find(".check-bal-text").hide();
+                        $(".traffic-progress").eq(idx).find(".bar-img").show();
+                        if (result.data['my_traffic_type'] != 'unlimit') {
+                            $(".traffic-progress").eq(idx).find(".my_traffic_set").text(result.data['my_traffic_set']);
+                            $(".traffic-progress").eq(idx).find(".my_traffic_per").text(result.data['my_traffic_per']);
+                        }
+                        $(".traffic-progress").eq(idx).find(".my_traffic_cur").text(result.data['my_traffic_cur']);
+
+                        $(".traffic-progress").eq(idx).find(".my_traffic_bar_per").css('width', result.data['my_traffic_bar_per']);
+                        $(".traffic-progress").eq(idx).find(".my_traffic_bar_per").attr('src', '/static/images/common/my/' + result.data['my_traffic_bar_color'] + '.gif');
+                        if (result.data['my_traffic_bar_color'] == 'red_bg') {
+                            $("#str_traffic_warning").show();
+                        }
+                    } else {
+                        $(".traffic-progress").eq(idx).find(".check-bal-text").text('트래픽 조회 실패')
+                    }
+                }
+            });
+        }
+        $.ajax({
+            type: "post",
+            url: "/common/ajax/ajax_hosting.php",
+            data: "do=exec&act=ajax&mode=chkHome&no=" + arr_val[0],
+            dataType: 'json',
+            success: function (result) {
+                if (result.code == 1) {
+                    $("#homd_dir").text(result.data['home_dir'] + '/html');
+                } else {
+                    $("#homd_dir").text('홈 디렉토리 조회 실패')
+                }
+            }
+        });
+        $.ajax({
+            type: "post",
+            url: "/common/ajax/ajax_hosting.php",
+            data: "do=exec&act=ajax&mode=get_config&no=" + arr_val[0],
+            dataType: 'json',
+            success: function (result) {
+                if (result.code == 1) {
+                    result.data['ftpAccess'] == '1' ? $("#ftpAccess1").prop('checked', true) : $("#ftpAccess0").prop('checked', true);
+                    result.data['sshAccess'] == '1' ? $("#sshAccess1").prop('checked', true) : $("#sshAccess0").prop('checked', true);
+                    result.data['fopenAccess'] == '1' ? $("#fopenAccess1").prop('checked', true) : $("#fopenAccess0").prop('checked', true);
+                    var modSecurity = result.data['modSecurity'].toString();
+                    modSecurity = modSecurity.toLowerCase();
+                    modSecurity == '1' ? $("#modSecurity1").prop('checked', true) : $("#modSecurity0").prop('checked', true);
+                }
+            }
+        });
+    });
+
+    $('.freeService').click(function(){
+        alert("- 무료호스팅 서비스는 도메인 연결을 지원하지 않습니다.\n- 도메인연결이 필요하신 경우 무료호스팅 도메인플러스 이상의 서비스를 선택해 주시기 바랍니다.");
+    })
+
+    $('.btnClassFtpAccess').click(function () {
+
+        var newFtpAccess = $('[name="ftpAccess"]:checked').val();
+
+        var tmpNO = "";
+        tmpNO = $("input[name='tmpno']").val();
+        if (tmpNO == "") {
+            return false;
+        }
+
+        var arrData = tmpNO.split(SEPARATOR);
+        var order_product_no = arrData[0];
+
+        $.ajax({
+            url: "/common/ajax/ajax_hosting.php",
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                no: order_product_no,
+                ftp_access: newFtpAccess,
+                mode: 'ftpAccess',
+                act: 'ajax',
+                do: 'exec'
+            },
+            success: function (result) {
+                alert(result.msg);
+                location.reload();
+            },
+            error: function () {
+                alert('FTP 접속설정 변경에 실패하였습니다.\n관리자에게 문의하여 주시기 바랍니다.');
+            }
+        })
+    });
+
+    $('.btnClassSshAccess').click(function () {
+
+        var newSshAccess = $('[name="sshAccess"]:checked').val();
+
+        var tmpNO = "";
+        tmpNO = $("input[name='tmpno']").val();
+        if (tmpNO == "") {
+            return false;
+        }
+        var arrData = tmpNO.split(SEPARATOR);
+        var order_product_no = arrData[0];
+        var product_code = arrData[4];
+        var chk_hosting_platform = arr_val[10];
+        if (product_code == "210000001" || product_code == "210000002" || product_code == "210000003" || product_code == "210000004") {
+            alert('무료 서비스는 SSH 접속설정을 변경할 수 없습니다.');
+            return false;
+        }else if( chk_hosting_platform == 1){
+            if (!confirm(" - SSH 접속설정 변경 시 설정이 적용되기까지 최대 10분이 소요됩니다. \n - SSH 접속허용 설정은 24시간 후 SSH 접속제한으로 자동변경됩니다.")) {
+                return false;
+            }
+        }
+
+        $.ajax({
+            url: "/common/ajax/ajax_hosting.php",
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                no: order_product_no,
+                ssh_access: newSshAccess,
+                mode: 'sshAccess',
+                act: 'ajax',
+                do: 'exec'
+            },
+            success: function (result) {
+                alert(result.msg);
+                location.reload();
+            },
+            error: function () {
+                alert('SSH 접속설정 변경에 실패하였습니다.\n관리자에게 문의하여 주시기 바랍니다.');
+            }
+        });
+    });
+    $('.btnClassModSecurity').click(function () {
+
+        var newModSecurity = $('[name="modSecurity"]:checked').val();
+
+        var tmpNO = "";
+        tmpNO = $("input[name='tmpno']").val();
+        if (tmpNO == "") {
+            return false;
+        }
+
+        var arrData = tmpNO.split(SEPARATOR);
+        var order_product_no = arrData[0];
+
+        $.ajax({
+            url: "/common/ajax/ajax_hosting.php",
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                no: order_product_no,
+                mod_security: newModSecurity,
+                mode: 'modSecurity',
+                act: 'ajax',
+                do: 'exec'
+            },
+            success: function (result) {
+                alert(result.msg);
+
+            },
+            error: function () {
+                alert('방화벽 설정 변경에 실패하였습니다.\n관리자에게 문의하여 주시기 바랍니다.');
+            }
+        })
+    });
+
+    $('.btnClassFopenAccess').click(function () {
+
+        var newFopenAccess = $('[name="fopenAccess"]:checked').val();
+
+        var tmpNO = "";
+        tmpNO = $("input[name='tmpno']").val();
+        if (tmpNO == "") {
+            return false;
+        }
+
+        var arrData = tmpNO.split(SEPARATOR);
+        var order_product_no = arrData[0];
+
+        $.ajax({
+            url: "/common/ajax/ajax_hosting.php",
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                no: order_product_no,
+                fopen_access: newFopenAccess,
+                mode: 'fopenAccess',
+                act: 'ajax',
+                do: 'exec'
+            },
+            success: function (result) {
+                alert(result.msg);
+
+            },
+            error: function () {
+                alert('FOPEN 설정 변경에 실패하였습니다.\n관리자에게 문의하여 주시기 바랍니다.');
+            }
+        })
+    });
+
+    $("#optSSLDomain").change(function () {
+        if ($(this).find("option:selected").data("check") == 'unins') {
+            $("#btnFreeSSL").show();
+            $("#ssl_ins_txt").hide();
+        } else {
+            $("#btnFreeSSL").hide();
+            $("#ssl_ins_txt").show();
+        }
+    }).change();
+    $("#btnSslDatail").click(function () {
+        var tmpNO = "";
+        tmpNO = $("input[name='tmpno']").val();
+        var arrData = tmpNO.split(SEPARATOR);
+        var product_code = eval(arrData[4]);
+
+        var link_ssl_order_no = link_ssl_product_code = "";
+        link_ssl_order_no = $("input[name='link_ssl_order_no']").val();
+        link_ssl_product_code = $("input[name='link_ssl_product_code']").val();
+
+        if (link_ssl_order_no != '') {
+            $("input[name='no']").val(link_ssl_order_no);
+            $("input[name='product_code']").val(link_ssl_product_code);
+
+            if (link_ssl_product_code.substring(0, 3) == "951") {
+                $("#frmHostingInfo").attr("action", "/my/service/ssl/info_free_ssl.php");
+                $("#frmHostingInfo").submit();
+            } else {
+                $("#frmHostingInfo").attr("action", "/my/service/ssl/info_ssl.php");
+                $("#frmHostingInfo").submit();
+            }
+        } else {
+            //alert('신청페이지로 이동 예정');
+            $("#frmHostingInfo").attr("action", "/etc/ssl/price.php");
+            $("#frmHostingInfo").submit();
+        }
+
+        return;
+    });
+
+    $("#btnFreeSSL").click(function () {
+        var tmpNO = "";
+        tmpNO = $("input[name='tmpno']").val();
+        var ssl_domain_opt = $("select[name='ssl_domain_opt']").val();
+        if (tmpNO == "") {
+            return false;
+        } else if (ssl_domain_opt == '') {
+            return false;
+        }
+        var arrData = tmpNO.split(SEPARATOR);
+        var no = eval(arrData[0]);
+        var product_code = eval(arrData[4]);
+        if (product_code.toString().substring(0, 3) !== '510') {
+            alert('해당서비스는 이용하실 수 없습니다.');
+            return false;
+        } else {
+            wrapWindowByMask("/static/images/event/ssl_check_loding.gif");
+            $.ajax({
+                type: "post",
+                url: "detail.php",
+                data: "do=exec&act=ajax&mode=free_ssl&no=" + no + "&ssl_domain_opt=" + ssl_domain_opt,
+                dataType: "Json",
+                success: function (response) {
+                    if (response[3] == 1) {
+                        wrapWindowByMask("/static/images/event/ssl_ins_loding.gif");
+                        $.ajax({
+                            type: "post",
+                            url: "detail.php",
+                            data: "do=exec&act=ajax&mode=free_ssl_ins&no=" + no + "&ssl_domain=" + response[2],
+                            dataType: "Json",
+                            success: function (response) {
+                                if (response[0] == 1) {
+                                    alert(response[1]);
+                                    location.reload();
+                                } else {
+                                    alert(response[1]);
+                                }
+                            }
+                        });
+                    } else {
+                        if (response[0] == 1) {
+                            if (confirm("선택하신 도메인으로  SSL발급이 가능합니다.\r\n진행하시겠습니까?")) {
+                                $("#ssl_type").val("all");
+                                $("#ssl_domain").val(response[2]);
+                                $("#frmHostingInfo").attr("action", "/my/service/web/extra/additional_free_ssl.php");
+                                $("#frmHostingInfo").submit();
+                            }
+                        } else if (response[0] == 0) {
+                            alert("선택하신 도메인으로 SSL발급이 불가능 합니다. \r\n관리자에게 문의 바랍니다.");
+                        } else if (response[0] == 2) {
+                            alert("SSL 도메인 연결 및 변경은 1일 1회 가능합니다.");
+                        } else if (response[0] == 3) {
+                            alert("이미 연결된 도메인입니다.");
+                        } else {
+                            alert("알수없는 에러 관리자에게 문의 바랍니다.");
+                        }
+                    }
+                }
+            });
+        }
+    });
+
+    $(".btnClass").click(function () {
+        var tmpNO = "";
+        tmpNO = $("input[name='tmpno']").val();
+        if (tmpNO == "") {
+            return false;
+        }
+
+        var arrData = tmpNO.split(SEPARATOR);
+        var no = eval(arrData[0]);
+        var status = eval(arrData[1]);
+        var pay_method = arrData[2];
+        var expire_count = eval(arrData[3]);
+        var product_code = eval(arrData[4]);
+        var host_id = arrData[5];
+
+        if (product_code != "210000001" && product_code != "210000002" && product_code != "210000003") {
+            if (expire_count < -30) {
+                alert('만료일이 지나서 이용하실 수 없습니다.');
+                return false;
+            }
+        } else {
+            if (expire_count < -30) {
+                alert('만료일이 지나서 이용하실 수 없습니다.');
+                return false;
+            }
+        }
+
+        if (status == 9) {
+            alert('해지된 서비스이므로 이용하실 수 없습니다.');
+            return false;
+        }
+
+        if (this.id == "btnChangePassword") {
+            $("#frmHostingList").attr("action", "/my/service/web/basic/pw_change.php");
+            $("#frmHostingInfo").submit();
+        } else if (this.id == "btnLinkDomain") {
+            if (product_code == "232000010") {
+                alert("빌더 체험은 마음에 드셨나요.\n아쉽게도 체험상품은 도메인 연결이 안됩니다.\n\n서비스변경을 통해 상품을 변경하시면\n지금 작업하신 홈페이지 그대로 더 다양한 \n서비스와 함께 이용하실 수 있습니다.");
+                return false;
+            }
+
+            $("#frmHostingInfo").attr("action", "/my/service/web/extra/moredomain.php");
+            $("#frmHostingInfo").submit();
+        } else if (this.id == "btnLinkDomain_2024") {
+            if (product_code == "232000010") {
+                alert("빌더 체험은 마음에 드셨나요.\n아쉽게도 체험상품은 도메인 연결이 안됩니다.\n\n서비스변경을 통해 상품을 변경하시면\n지금 작업하신 홈페이지 그대로 더 다양한 \n서비스와 함께 이용하실 수 있습니다.");
+                return false;
+            }
+
+            $("#frmHostingInfo").attr("action", "/my/service/web/extra/moredomain_2024.php");
+            $("#frmHostingInfo").submit();
+        } else if (this.id == "btnAutoReset") {
+            if (product_code == "210000001" || product_code == "210000002" || product_code == "210000003") {
+                alert('무료호스팅으로는 이용하실 수 없습니다.');
+                return false;
+            }
+            $("#frmHostingInfo").attr("action", "/my/service/web/extra/auto_reset_list.php");
+            $("#frmHostingInfo").submit();
+        } else if (this.id == "btnPlusHDD") {
+
+            if (product_code == "232000010") {
+                alert("빌더 체험은 마음에 드셨나요.\n아쉽게도 체험상품은 옵션추가가 안됩니다.\n\n서비스변경을 통해 상품을 변경하시면\n지금 작업하신 홈페이지 그대로 더 다양한 \n서비스와 함께 이용하실 수 있습니다.");
+                return false;
+            }
+
+            $("#frmHostingInfo").attr("action", "/my/service/web/extra/option.php");
+            $("#frmHostingInfo").submit();
+        } else if (this.id == "btnPlusTraffic") {
+
+            if (product_code == "232000010") {
+                alert("빌더 체험은 마음에 드셨나요.\n아쉽게도 체험상품은 옵션추가가 안됩니다.\n\n서비스변경을 통해 상품을 변경하시면\n지금 작업하신 홈페이지 그대로 더 다양한 \n서비스와 함께 이용하실 수 있습니다.");
+                return false;
+            }
+            $("#frmHostingInfo").attr("action", "/my/service/web/extra/option.php");
+            $("#frmHostingInfo").submit();
+        } else if (this.id == "btnPlusMemory") {
+
+            if (product_code == "232000010") {
+                alert("빌더 체험은 마음에 드셨나요.\n아쉽게도 체험상품은 옵션추가가 안됩니다.\n\n서비스변경을 통해 상품을 변경하시면\n지금 작업하신 홈페이지 그대로 더 다양한 \n서비스와 함께 이용하실 수 있습니다.");
+                return false;
+            }
+            $("#frmHostingInfo").attr("action", "/my/service/web/extra/option.php");
+            $("#frmHostingInfo").submit();
+        } else if (this.id == "btnPlusCPU") {
+
+            if (product_code == "232000010") {
+                alert("빌더 체험은 마음에 드셨나요.\n아쉽게도 체험상품은 옵션추가가 안됩니다.\n\n서비스변경을 통해 상품을 변경하시면\n지금 작업하신 홈페이지 그대로 더 다양한 \n서비스와 함께 이용하실 수 있습니다.");
+                return false;
+            }
+            $("#frmHostingInfo").attr("action", "/my/service/web/extra/option.php");
+            $("#frmHostingInfo").submit();
+        }else if (this.id == "btnRecover") {
+            $("#frmHostingInfo").attr("action", "/my/service/web/extra/backup.php");
+            $("#frmHostingInfo").submit();
+        } else if (this.id == "btnBackup") {
+            $("#frmHostingInfo").attr("action", "/my/service/web/extra/backup.php");
+            $("#frmHostingInfo").submit();
+        } else if (this.id == "btnInit") {
+            $("#frmHostingInfo").attr("action", "/my/service/web/extra/additional_initialization.php");
+            $("#frmHostingInfo").submit();
+        } else if (this.id == "btnMove") {
+            $("#frmHostingInfo").attr("action", "/my/service/web/extra/additional.php");
+            $("#frmHostingInfo").submit();
+        } else if (this.id == "btnMigration") {
+            $("#frmHostingInfo").attr("action", "/my/service/web/extra/migration.php");
+            $("#frmHostingInfo").submit();
+        } else if (this.id == "btnEtc") {
+            $("#frmHostingInfo").attr("action", "/my/service/web/extra/additional.php");
+            $("#frmHostingInfo").submit();
+        } else if (this.id == "btnCms") {
+            $("#frmHostingInfo").attr("action", "/my/service/web/extra/cms.php");
+            $("#frmHostingInfo").submit();
+        } else if (this.id == "btnTheme") {
+            $("#frmHostingInfo").attr("action", "/my/service/web/extra/builder_theme.php");
+            $("#frmHostingInfo").submit();
+        } else if (this.id == "btnChangeService") {
+
+            if (expire_count <= 0) {
+                alert('만료일이 남아야만 서비스 변경을 하실 수 있습니다.');
+                return false;
+            }
+
+            $("#frmHostingInfo").attr("action", "/my/service/web/basic/service_change.php");
+            wrapWindowByMask()
+            $("#frmHostingInfo").submit();
+        } else if (this.id == "btnChangeServiceEv") {
+
+            if (expire_count <= 0) {
+                alert('만료일이 남아야만 서비스 변경을 하실 수 있습니다.');
+                return false;
+            }
+
+            $("#frmHostingInfo").attr("action", "/my/service/web/basic/service_change_ev.php");
+            wrapWindowByMask()
+            $("#frmHostingInfo").submit();
+        } else if (this.id == "btnChangeServiceBuilderFree") {
+
+            if (expire_count <= 0) {
+                alert('만료일이 남아야만 서비스 변경을 하실 수 있습니다.');
+                return false;
+            }
+
+            $("#frmHostingInfo").attr("action", "/my/service/web/basic/service_change_ev_builder.php");
+            wrapWindowByMask()
+            $("#frmHostingInfo").submit();
+        } else if (this.id == "btnManualReset") {
+            $("#frmHostingInfo").attr("action", "/my/service/web/extra/manual_reset.php");
+            $("#frmHostingInfo").submit();
+        } else if (this.id == "btnOption") {
+            $("#frmHostingInfo").attr("action", "/my/service/mail/extra/multidomain_plus.php");
+            $("#frmHostingInfo").submit();
+        } else if (this.id == "btnDetail") {
+            $("#frmHostingInfo").attr("action", "/my/service/web/basic/detail.php");
+            $("#frmHostingInfo").submit();
+        } else if (this.id == "btnAlarm") {
+            if (product_code == "210000001" || product_code == "210000002" || product_code == "210000003") {
+                alert('무료호스팅으로는 이용하실 수 없습니다.');
+                return false;
+            }
+            $("#frmHostingInfo").attr("action", "/my/service/web/extra/alarm_list.php");
+            $("#frmHostingInfo").submit();
+        } else if (this.id == "btnTrafficStat") {
+            $("#frmHostingInfo").attr("action", "/my/service/web/basic/traffic_stat.php");
+            $("#frmHostingInfo").submit();
+        } else if (this.id == "btnCharging") {
+            $("#frmHostingInfo").attr("action", "/my/service/web/extra/additional_charge.php");
+            $("#frmHostingInfo").submit();
+        } else {
+            if (product_code == "232000010") {
+                alert("빌더 체험은 마음에 드셨나요.\n아쉽게도 체험상품은 연장이 안됩니다.\n\n서비스변경을 통해 상품을 변경하시면\n지금 작업하신 홈페이지 그대로 더 다양한 \n서비스와 함께 이용하실 수 있습니다.");
+                return false;
+            }
+
+            if (product_code == "210000001" || product_code == "210000002" || product_code == "210000003" || product_code == "210000004") {
+
+                if (expire_count > 30) {
+                    alert('만료일 1달 이내만 연장할 수 있습니다.');
+                    return false;
+                }
+
+                $("#frmHostingInfo").attr("action", "/web/free/extend.php");
+
+            } else {
+                if (pay_method == "0105" || pay_method == "0106") {
+                    alert("자동이체시에는 연장하실수 없습니다.");
+                    return false;
+                }
+
+                $("#frmHostingInfo").attr("action", "/my/service/web/basic/extend.php");
+            }
+
+            $("#frmHostingInfo").submit();
+        }
+
+    });
+
+    $(".btnClassPW").click(function () {
+        var tmpNO = "";
+        tmpNO = $("input[name='tmpno']").val();
+        var chg_type = $(this).val();
+        $("input[name='chg_type']").val(chg_type);
+        if (tmpNO == "") {
+            return false;
+        }
+
+        var arrData = tmpNO.split(SEPARATOR);
+        var no = eval(arrData[0]);
+        var status = eval(arrData[1]);
+        var pay_method = arrData[2];
+        var expire_count = eval(arrData[3]);
+        var product_code = eval(arrData[4]);
+        var host_id = arrData[5];
+
+        if (status == 9) {
+            alert('해지된 서비스이므로 이용하실 수 없습니다.');
+            return false;
+        }
+
+        if (product_code != "210000001" && product_code != "210000002" && product_code != "210000003") {
+            if (expire_count < -30) {
+                alert('만료일이 지나서 이용하실 수 없습니다.');
+                return false;
+            }
+        } else {
+            if (expire_count < -30) {
+                alert('만료일이 지나서 이용하실 수 없습니다.');
+                return false;
+            }
+        }
+
+        $("#frmHostingInfo").attr("action", "/my/service/web/basic/pw_change.php");
+
+        $("#frmHostingInfo").submit();
+    });
+    $(".btnClassVersion").click(function () {
+        var tmpNO = "";
+        tmpNO = $("input[name='tmpno']").val();
+        if (tmpNO == "") {
+            return false;
+        }
+
+        var arrData = tmpNO.split(SEPARATOR);
+        var no = eval(arrData[0]);
+        var status = eval(arrData[1]);
+        var pay_method = arrData[2];
+        var expire_count = eval(arrData[3]);
+        var product_code = eval(arrData[4]);
+        var host_id = arrData[5];
+
+        if (status == 9) {
+            alert('해지된 서비스이므로 이용하실 수 없습니다.');
+            return false;
+        }
+
+        if (product_code != "210000001" || product_code != "210000002") {
+            if (expire_count < -30) {
+                alert('만료일이 지나서 이용하실 수 없습니다.');
+                return false;
+            }
+        } else {
+            if (expire_count < -30) {
+                alert('만료일이 지나서 이용하실 수 없습니다.');
+                return false;
+            }
+        }
+
+        $("#frmHostingInfo").attr("action", "/my/service/web/extra/version_change.php");
+
+        $("#frmHostingInfo").submit();
+    });
+
+    $(".btnClassVDir").click(function () {
+        var tmpNO = "";
+        tmpNO = $("input[name='tmpno']").val();
+        if (tmpNO == "") {
+            return false;
+        }
+
+        var arrData = tmpNO.split(SEPARATOR);
+        var no = eval(arrData[0]);
+        var status = eval(arrData[1]);
+        var pay_method = arrData[2];
+        var expire_count = eval(arrData[3]);
+        var product_code = eval(arrData[4]);
+        var host_id = arrData[5];
+
+        if (status == 9) {
+            alert('해지된 서비스이므로 이용하실 수 없습니다.');
+            return false;
+        }
+
+        if (product_code != "210000001" && product_code != "210000002" && product_code != "210000003") {
+            if (expire_count < -30) {
+                alert('만료일이 지나서 이용하실 수 없습니다.');
+                return false;
+            }
+        } else {
+            if (expire_count < -30) {
+                alert('만료일이 지나서 이용하실 수 없습니다.');
+                return false;
+            }
+        }
+
+        $("#frmHostingInfo").attr("action", "/my/service/web/extra/virtual_directory.php");
+
+        $("#frmHostingInfo").submit();
+    });
+
+    $(window).ajaxStart(function () {
+
+    }).ajaxStop(function () {
+        $('#mask').hide();
+        $('#window').hide();
+    });
+    $('.btnClassPHPVer').click(function () {
+        var php_ver_ori = $("input[name='php_ver_ori']").val();
+        var php_ver = $('select[name="php_ver"]').val();
+        
+        $(this).prop("disabled", true);
+        $.ajax({
+            url: "/common/ajax/ajax_hosting.php",
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                phpVerOri: php_ver_ori,
+                phpVer: php_ver,
+                mode: 'set_phpVer',
+                no: arr_val[0],
+                act: 'ajax',
+                do: 'exec'
+            },
+            success: function (result) {
+                alert(result.msg);
+                location.reload();
+            },
+            error: function () {
+                alert('PHP 버전변경에 실패했습니다.');
+            }
+        });
+    });
+});
+function wrapWindowByMask(img) {
+    //화면의 높이와 너비를 구한다.
+    var maskHeight = $(document).height();
+    var maskWidth = $(window).width();
+    $("#window").find("img").css("left", '50%');
+    if (maskWidth < 500) {
+        $("#window").find("img").attr("src", "/static/images/admin/loading.gif");
+    } else {
+        $("#window").find("img").attr("src", img);
+    }
+
+    //마스크의 높이와 너비를 화면 것으로 만들어 전체 화면을 채운다.
+    $('#mask').css({'width': maskWidth, 'height': maskHeight});
+    $('#window').css({'width': maskWidth, 'height': maskHeight});
+
+    //애니메이션 효과
+    $('#mask').show();
+    $('#window').show();
+}
+
+window.onpageshow = () => {
+    $('#mask').hide(); // 페이지 로드 시 마스크 숨기기
+    $('#window').hide(); // 로딩 창 숨기기
+}

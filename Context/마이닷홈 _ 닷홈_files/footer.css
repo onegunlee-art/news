@@ -1,0 +1,47 @@
+.footer {background: #434c53; color: #fff; font-size: 12px; text-align: left}
+.footer .info{padding: 15px 0}
+.footer .f-menu {background: #f3f6f8; border-top: 1px solid #e0e5e9;border-bottom: 1px solid #535353; padding: 30px 0}
+.footer .f-menu p{font-weight: 600; font-size: 16px; color: #333}
+.footer .f-menu a{color: #333; padding: 8px 0; font-weight: 400; display: block; font-size: 14px}
+.footer .f-menu a:hover{text-decoration: underline!important}
+.footer .f-menu ul{margin-bottom: 50px}
+.footer .f-menu .col-lg-3:last-of-type ul{margin-bottom: 0}
+.footer .f-menu .f-menu-pc{padding: 0 15px}
+.footer .f-menu .f-menu-m{display: none;}
+.footer .middle {border-bottom: 1px solid #535353}
+.footer .middle .wrap{display: flex; justify-content: space-between}
+.footer .middle  ul{display: flex; margin-bottom: 0}
+.footer .middle  ul li a{color: #ddd; padding: 12px 15px; display: inline-block}
+.footer .middle  ul li:nth-of-type(3) a{color: #fff; font-weight: 600}
+.footer .middle ul:last-of-type a{padding: 9px }
+.footer .middle ul:last-of-type a:hover img{opacity: .6; transition: .2s}
+
+.footer .info .container{padding: 15px; padding-left: 15px !important; padding-right: 15px !important}
+.footer .panel{border: none; box-shadow: none; background: none}
+.footer  .panel-default>.panel-heading {border: none; background: none; text-align: left; padding: 0} 
+.footer  .panel-default>.panel-heading a {display: flex; justify-content: space-between; align-items: center; padding: 10px 15px}
+.footer  .panel-default>.panel-heading a:focus {text-decoration: none;}
+.footer  .panel-heading .container{padding: 0}
+.footer  .panel-heading a{font-weight: 600}
+.footer .panel-default>.panel-heading a.collapsed i:before{content:"\f107"}
+.footer  .f-menu-m ul a{padding:10px 30px}
+.footer a{color: #fff}
+.footer p {margin: 0 0 10px;}
+.text-right{text-align: right;}
+.visible-sm{display: none;}
+@media (max-width: 1200px){
+    .footer .f-menu  .col-lg-3:nth-of-type(5) ul, .footer .f-menu  .col-lg-3:nth-of-type(6) ul {min-height: 350px}
+}
+@media (max-width: 992px){
+    .footer .f-menu  ul{min-height: auto; margin-bottom: 15px}
+    .footer .f-menu .f-menu-pc{display: none}
+    .footer .f-menu .f-menu-m{display: block}
+    .footer .f-menu .container, .footer .middle .container{padding-left: 0 !important; padding-right: 0 !important}
+}
+@media (max-width: 768px){
+    .footer .middle .wrap{display: block}
+    .footer .middle .wrap ul{width: 100%}
+    .footer .middle  ul:first-of-type{display: block}
+    .footer .middle  ul li{float: left}
+    .footer .middle  ul {content: ""; clear: both; display: block}
+}

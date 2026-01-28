@@ -1,0 +1,321 @@
+/*  마이닷홈  */
+.pub-page-2col{padding-top:20px}
+.my-con{text-align:left;}
+.my-con-box{margin-bottom:30px; text-align:left;}
+.my-con-box > h3, .my-con-box > h4{margin-top:0px !important;}
+.pub-btn-detail{background:#2B3E4F; font-size:12px; padding:3px 12px !important; color:#fff;}
+.pub-btn-detail:hover, .pub-btn-detail:focus{color:#fff; outline: none}
+.panel{overflow:hidden;}
+.smallBtn{font-size: 12px; padding: 2px 5px;}
+.smallBtn.active, .smallBtn.focus, .smallBtn:active, .smallBtn:focus{color: #fff; background-color: #23ADE3; border-color: #23ADE3;}
+.btn.active.focus, .btn.active:focus, .btn.focus, .btn:active.focus, .btn:active:focus, .btn:focus{outline: none; outline-offset: 0}
+
+/* 마이닷홈 웹/이미지 호스팅 관리 "기타"버튼 3개 */
+.pub-btn-green{background:#0D67AB; color:#fff; padding:3px 12px;     border-radius: 5px !important; }/* 초록색 버튼 */
+.pub-btn-blue{background:#0D67AB; color:#fff; padding:3px 12px;     border-radius: 5px !important; }/* 파란색 버튼 */
+.pub-btn-gray{background:#ddd; color:#333; padding:3px 12px;     border-radius: 5px !important; }/* 회색 버튼 */
+.pub-btn-red{background:#23ADE3; color:#fff!important; padding:3px 12px;     border-radius: 5px !important; }/* 빨간색 버튼 */
+
+.pub-btn-del, .pub-btn-del:hover{background:#ce0003; color:#fff!important; padding:3px 12px;     border-radius: 5px !important; }/* 빨간색 버튼 추가_200212 */
+
+.pub-btn-green:hover{background:#07538c;  color:#fff;}
+.pub-btn-blue:hover{background:#07538c;color:#fff; }
+.pub-btn-gray:hover{background:#b0afaf; color:#fff; }
+.pub-btn-red:hover{background:#0f8dbe; color:#fff!important; }
+.pub-btn-del:hover{background:#a40002; color:#fff!important; }
+
+
+.pub-btn-green.focus, .pub-btn-green:focus, .pub-btn-green:hover, .pub-btn-blue.focus, .pub-btn-blue:focus, .pub-btn-blue:hover, .pub-btn-gray.focus, .pub-btn-gray:focus, .pub-btn-gray:hover, .pub-btn-red.focus, .pub-btn-red:focus, .pub-btn-red:hover, .pub-btn-del.focus, .pub-btn-del:focus, .pub-btn-del:hover{color:#fff}
+.pub-btn-host-etc > button{font-size:12px; padding:3px 12px;}
+.pub-btn-host-etc > .pub-btn-green, .pub-btn-host-etc > .pub-btn-red, .pub-btn-host-etc > .pub-btn-gray{margin-top:3px;}
+/* 마이닷홈 웹/이미지 호스팅 관리 "기타"버튼 3개 끝 */
+
+
+/* 마이닷홈 웹/이미지 호스트 관리 페이지 아래 버튼 8개 */
+.pub-btn-host > .col-md-3 > button{ font-size:12px; margin:5px 0; width:80%;}
+.pub-btn-mail > .col-md-6 > button{width:30%; font-size:12px; margin:5px 0;}
+/* 마이닷홈 웹/이미지 호스트 관리 페이지 아래 버튼 8개 끝*/
+
+
+.p-traffic-alarm-well{border-radius:0px; border:2px solid #e3e3e3 !important;}
+.underline{text-decoration:underline;}
+
+
+/* 이용약관 탭 영역 */
+.pub-rules-tab{border-top: 1px solid #ccc;}
+.pub-rules-tab > .tab-pane{padding:30px 0 0 0;}/* 이용약관 탭 내용 영역 */
+.pub-rules-tab > .tab-pane > pre{padding:25px; background:#fff; border:1px solid #fff; border-radius:0px; line-height: 1.8;}/* 이용약관 탭 내용 pre 영역 */
+.pub-rules-tab > .tab-pane > pre > blockquote {padding: 10px 20px;margin: 0;font-size: 13px;border-left: 0;word-break: keep-all;}
+.nav-pills.nav-service > li.active, .nav-pills.nav-service > li.active:focus, .nav-pills.nav-service > li.active:hover{border-bottom: 4px solid #23ADE3;}/* 이용약관 탭 버튼 */
+.nav-pills.nav-service > li.active a, .nav-pills.nav-service > li.active:focus a, .nav-pills.nav-service > li.active:hover a{background: #ffffff; color: #23ADE3; font-weight: 400;}
+.nav-pills.nav-service a{padding: 10px 2px;}/* 이용약관 탭 메뉴 */
+.nav-pills.nav-service>li>a:hover{background:#fff; color: #23ADE3;}
+.pub-rules-tab p {font-size: 28px;}/*이용약관 내용 제목*/
+
+
+.dh-prgress{position:relative;width:220px;height:60px;margin:0 auto; overflow: hidden}
+.dh-prgress .bars-{height:30px;position:absolute;top:17px;left:0px;z-index:98;}
+.dh-prgress .bar-hdd{background:#80C5FF; opacity: 0.6;}
+.dh-prgress .bar-traffic{background:#80DD7B; opacity: 0.6;}
+.dh-prgress .bar-db{background:#EFAD89; opacity: 0.6;}
+.dh-prgress .bar-txt{height:30px;position:absolute;top:17px;left:0px;font-size: 11px;line-height: 30px;padding-left: 11px;z-index:99;}
+
+
+.pub-myindex-icon5 > .col-md-2{width:20%;} /* /my/index-n.php 페이지에서 두번째줄 */
+.pub-myindex-pwlink{  /* /my/index-n.php 페이지에서 흰색-회색배경의 panel */
+	 /* Safari 4-5, Chrome 1-9 */
+	background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#fff), to(#d8d8d8));
+	/* Safari 5.1, Chrome 10+ */ background: -webkit-linear-gradient(top, #fff, #d8d8d8);
+	/* Firefox 3.6+ */ background: -moz-linear-gradient(top, #fff, #d8d8d8);
+	/* IE 10 */ background: -ms-linear-gradient(top, #fff, #d8d8d8);
+	/* Opera 11.10+ */ background: -o-linear-gradient(top, #fff, #d8d8d8);
+}
+
+.pub-myindex-d-skin{background:#262a2d;}   /* /my/index-n.php 페이지에서 디자인스킨 배너 panel */
+.pub-phone-input .p-phone-num{width:75px;}
+.pub-email-input .p-email{width:130px;}
+.modal{z-index: 99999999;}
+
+/*마이닷홈 호스팅관리 (무제한) 옵션추가 빛 부가서비스 버튼 5개 161201*/
+.btnPlusHDD, .btnBackup, .btnCMS, .btnReset, .btnMigration, .btnSSL, .btnETC {    background-color: #999 !important;
+    border: none !important;
+    border-radius: 9px !important;
+    width: 120px;
+    margin: 0 auto;
+    height: 110px;}
+.btnPlusHDD:hover, .btnBackup:hover, .btnCMS:hover, .btnReset:hover, .btnMigration:hover, .btnSSL:hover, .btnETC:hover {background-color:#666 !important;}
+.btnPlusHDD > span, .btnBackup > span, .btnCMS > span, .btnReset > span, .btnMigration >span, .btnSSL > span, .btnETC > span { line-height: 1.5; font-size: 32px;}
+.my-option{    text-align: center;
+    line-height: 3.5;} /*161201 수정*/
+.my-option > div {margin: 1% 0;
+float: left;}
+
+
+/*마이닷홈 cms 설치 tab 영역*/
+.my_cms_tab .nav-tabs{ border: 0; }
+.my_cms_tab .nav > li > a{    background-color: #999;
+    color: #fff;
+    min-width: 120px;
+    text-align: center;
+    margin-right: 9px;
+    border-radius: 0 !important;
+    border: 0;}
+.my_cms_tab .nav>li>a:focus, .my_cms_tab .nav>li>a:hover{
+    color: #fff;}
+.nav-tabs>li.active>a, .nav-tabs>li.active>a:focus, .nav-tabs>li.active>a:hover{    background-color: #20ade4;
+    border: 0;
+    border-bottom-color: transparent;}
+.my_cms_tab .tab-pane { padding: 10px 0;}
+
+
+/*고객센터 - 현금영수증 자진발급분 등록안내 tab*/
+.receipt .nav-tabs>li.active{ border-bottom: 4px solid #23ADE3;}
+.receipt .nav-tabs>li>a{ border: none; }
+.receipt .nav-tabs>li.active>a, .receipt .nav-tabs>li.active>a:focus, .receipt .nav-tabs>li.active>a:hover { background-color:#fff; }
+.receipt .nav>li>a:focus, .receipt .nav>li>a:hover {background: #ffffff; color: #23ADE3; border: none;}
+
+
+/* 리눅스 호스팅 */
+#btnManualRest{display:none;}
+#btnChangePassword{display:none;}
+#btnAutoReset{display:none;}
+
+
+/*정기결제 영역 200211*/
+#capacityModal .dh-prgress .bars-{max-width:220px;}
+#capacityModal .dh-prgress .bar-txt{width:220px; font-size:14px; left:0px; top:-10px; padding:0;}
+#capacityModal .dh-prgress{margin:20px auto;}
+#modalDescription{margin-bottom:15px;}
+#confirmModal .modal-title, #modalTitle{line-height:32px;}
+.payment-danger{padding:3px 7px; border-radius:10px; background:#ce0003; color:#fff!important; margin-left:5px;}
+.pub-btn-blue, .pub-btn-blue:hover
+.btn_apply{background:#0070c0; color:#fff!important; border-radius:5px;}
+.pTitlep{position:absolute; left:150px; top:28px; display:none;}
+#createCardModal  .modal-dialog{margin:11% auto;}
+#confirmModal  .modal-dialog{margin:19% auto;}
+#createCardModal #btnPaySubmit{background:#0070c0; color:#fff!important; margin:0px; padding:10px 15px; border-radius:5px;}
+#createCardModal .form-horizontal .form-group{margin:0;}
+#createCardModal .pub-date-input .p-year{max-width:75px!important; width:30%!important; display:inline;}
+#createCardModal .emaildot{background:transparent!important; border:0!important;}
+#createCardModal .close, #confirmModal .close{font-size:32px; margin-bottom:10px; opacity:0.5!important;}
+#createCardModal .modal-header, #confirmModal .modal-header{border-bottom:0; padding:20px 30px 30px;}
+#createCardModal .modal-footer{border-top:0;} .modal-footer-addCard{text-align:center!important; padding:5px 15px 20px;}
+#createCardModal .form-inline .form-control{width:27%; max-width:150px; display:inline;}
+.pay-info-table .btn-success2{background:#5cb85c; color:#fff;}
+.pay-info-table .pub-btn-blue, .pay-info-table .btn-success2, .pay-info-table .pub-btn-blue:hover,.pay-info-table .btn-success2:hover{padding:3px 8px; border-radius:5px!important;}
+
+
+#extendModal  .modal-dialog{margin:11% auto;}
+#extendModal #btnPaySubmit{background:#0070c0; color:#fff!important; margin:0px; padding:10px 15px; border-radius:5px;}
+#extendModal .form-horizontal .form-group{margin:0;}
+#extendModal .pub-date-input .p-year{max-width:75px!important; width:30%!important; display:inline;}
+#extendModal .emaildot{background:transparent!important; border:0!important;}
+#extendModal .close, #confirmModal .close{font-size:32px; margin-bottom:10px; opacity:0.5!important;}
+#extendModal .modal-header, #confirmModal .modal-header{border-bottom:0; padding:20px 30px 30px;}
+#extendModal .modal-footer{border-top:0;} .modal-footer-addCard{text-align:center!important; padding:5px 15px 20px;}
+#extendModal .form-inline .form-control{width:27%; max-width:150px; display:inline;}
+
+#billChgModal input{display:inline-block; width:49%; margin:5px 0.5%; float:left;}
+#billChgModal p{margin:0; line-height:1.4;}
+#billChgModal th, #billInsModal th{padding:0.5rem 0; width:40%;}
+#billInsModal input{display:inline-block; width:100%; margin-bottom:5px;}
+#billInsModal table{width:100%; margin:0;}
+#billChgModal .modal-body, #billInsModal .modal-body{padding:10px 25px 20px;}
+#billInsModal .modal-body::after, #billChgModal .modal-body::after{content:''; display:table; clear:both;}
+#billInsBtn, #billChgBtn{padding:5px 25px; margin-top:5px;}
+
+.extend-table{background:#fff; width:90%; margin:10px auto; border:1px solid #ddd;}
+.extend-table th, .extend-list-table th{background:#eee; }
+.extend-table th{width:20%;}
+.extend-table td{width:30%;}
+.extend-list-table{border:1px solid #ddd;}
+
+#btnPay{margin-bottom:3px;}
+
+
+.mb-1{margin-bottom:5px;}
+.btn-link{padding:3px 7px!important; margin:0!important; border-radius:50%!important;  transition:all .3s;}
+.btn-link:hover, .btn-link:active, .btn-link:focus{padding:3px 7px!important; border-radius:50%!important; background:#fff; color:#0070c0!important; border:1px solid #0070c0!important; transition:all .3s;}
+
+#Addopt-section > div{border-radius:10px; padding:10px; box-sizing:border-box; border:1px solid #ddd; width:31.3%!important; margin:10px 1%; cursor:pointer; transition:all .3s; background:#f9f9f9;}
+#Addopt-section > div:hover{border-color:#0070c0; transition:all .3s;}
+#Addopt-section > div > div{margin:0;}
+#Addopt-section > div > div, #Addopt-section > div > div > div{padding:0;}
+#Addopt-section .btn-title{font-size:15px; font-weight:bold; padding-left:0; line-height:50px;}
+
+
+
+
+/* flex 적용 */
+.f-row { display: -ms-flexbox;display: flex; -ms-flex-wrap: wrap; flex-wrap: wrap;}
+.f-row >  .col, .f-row >  .col-1, .f-row >  .col-10, .f-row >  .col-11, .f-row >  .col-12, .f-row >  .col-2, .f-row >  .col-3, .f-row >  .col-4, .f-row >  .col-5, .f-row >  .col-6, .f-row >  .col-7, .f-row >  .col-8, .f-row >  .col-9, .f-row >  .col-auto, .f-row >  .col-lg, .f-row >  .col-lg-1, .f-row >  .col-lg-10, .f-row >  .col-lg-11, .f-row >  .col-lg-12, .f-row >  .col-lg-2, .f-row >  .col-lg-3, .f-row >  .col-lg-4, .f-row >  .col-lg-5, .f-row >  .col-lg-6, .f-row >  .col-lg-7, .f-row >  .col-lg-8, .f-row >  .col-lg-9, .f-row >  .col-lg-auto, .f-row >  .col-md, .f-row >  .col-md-1, .f-row >  .col-md-10, .f-row >  .col-md-11, .f-row >  .col-md-12, .f-row >  .col-md-2, .f-row >  .col-md-3, .f-row >  .col-md-4, .f-row >  .col-md-5, .f-row >  .col-md-6, .f-row >  .col-md-7, .f-row >  .col-md-8, .f-row >  .col-md-9, .f-row >  .col-md-auto, .f-row >  .col-sm, .f-row >  .col-sm-1, .f-row >  .col-sm-10, .f-row >  .col-sm-11, .f-row >  .col-sm-12, .f-row >  .col-sm-2, .f-row >  .col-sm-3, .f-row >  .col-sm-4, .f-row >  .col-sm-5, .f-row >  .col-sm-6, .f-row >  .col-sm-7, .f-row >  .col-sm-8, .f-row >  .col-sm-9, .f-row >  .col-sm-auto, .f-row >  .col-xl, .f-row >  .col-xl-1, .f-row >  .col-xl-10, .f-row >  .col-xl-11, .f-row >  .col-xl-12, .f-row >  .col-xl-2, .f-row >  .col-xl-3, .f-row >  .col-xl-4, .f-row >  .col-xl-5, .f-row >  .col-xl-6, .f-row >  .col-xl-7, .f-row >  .col-xl-8, .f-row >  .col-xl-9, .f-row >  .col-xl-auto {position: relative;  width: 100%; padding-right: 15px; padding-left: 15px;}
+
+
+@media (min-width: 992px){
+    .f-row >  .col-lg-8 {flex: 0 0 66.66666667%; max-width: 66.66666667%;}
+    .f-row >  .col-lg-4 {flex: 0 0 33.33333333%; max-width: 33.33333333%;}
+}
+@media (min-width: 768px){
+    .f-row >  .col-md-8 {flex: 0 0 66.66666667%; max-width: 66.66666667%;}
+    .f-row >  .col-md-4 {flex: 0 0 33.33333333%; max-width: 33.33333333%;}
+}
+
+/* 트래픽 관리 */
+.traffic-info, .mydothome-info{border: 1px solid #FFD3B0; border-radius: 4px; padding: 15px; background: #f9f4f0}
+.traffic-detail-info{border: 1px solid #ddd; border-radius: 4px; padding: 10px; margin-top: 10px; background: rgba(0, 0, 0, .05) }
+.traffic-info .f-row, .traffic-detail .f-row { align-items: center}
+.traffic-info p.title, .mydothome-info p.title{font-size: 18px; font-weight: 600}
+.traffic-detail a.btn{background: #0070c0; color: #fff; border-radius: 4px !important; }
+.traffic-detail a.btn:hover{background: #0D67AB}
+.traffic-detail .detail-title{ display: flex; justify-content: space-between; align-items: center}
+.traffic-detail hr{margin-top: 50px; margin-bottom: 40px; border-color: #ddd}
+.traffic-detail .col-12{margin-bottom: 15px}
+
+ul.dash{list-style: disc; padding-left: 20px}
+ul.lmb-5 li{margin-bottom: 5px}
+@media (max-width: 767px){
+    .traffic-info .f-row img{margin: 0 auto; margin-top: 15px; max-width: 300px; width: 100%}
+    .traffic-detail img{width: 100%; max-width: 210px; margin: 15px auto}
+}
+.grayBtn {padding: 12px; margin: 3px;min-width: 110px; background: #999; color: #fff;   border-radius: 3px !important;  }
+.grayBtn:hover, .grayBtn:active, .grayBtn:focus {padding: 12px;background: #888;  color: #fff; border-radius: 3px !important;}
+.btnBig{padding: 8px 15px }
+
+.panel .traffic-coupon{display: -ms-flexbox;display: flex;  -ms-flex-wrap: wrap; flex-wrap: wrap; align-items: center; justify-content: center; padding: 10px 15px}
+.panel .traffic-coupon span{display: inline-block; font-size: 16px}
+.panel .traffic-coupon > div > span:nth-of-type(2){font-size: 2.5rem; font-weight: 600; margin-right: 15px; color: #0070c0}
+.panel .traffic-coupon > div > span{vertical-align: middle}
+
+@media (max-width: 767px){
+    .panel .traffic-coupon > div{width: 100%}
+    .panel .traffic-coupon > div:first-of-type{margin-bottom: 10px}
+}
+/* 파킹 설정 */
+.mydothome-info .table{margin-bottom: 0; }
+.mydothome-info .table td{background: #fff}
+.parking-setting .design-list {max-height: 500px; overflow-y: scroll; padding:  0 15px}
+.parking-setting .img-wrap .btn-box{position: absolute; top: 0; left: 0; width: 100%; text-align: center; height: 100%; display: none; align-items: center; justify-content: center; background: rgba(0, 0, 0, .7); transition:.2s; opacity:0}
+.parking-setting .img-wrap .btn-box .btn{padding: 8px 18px; border-radius: 4px !important; border: 1px solid #fff; background: rgba(255, 255, 255, .1); color: #fff; transition: .3s}
+.parking-setting .img-wrap .btn-box .btn:hover{ background: rgba(255, 255, 255, .5);}
+.parking-setting .img-wrap {position: relative;  border: 1px solid #ddd; }
+.parking-setting .img-wrap:hover  .btn-box{display: flex;opacity:1 }
+.parking-setting .design-preview .col-md-6{margin-bottom: 30px}
+.parking-setting .design-preview label{cursor: pointer; padding: 8px ; width: 100%; text-align: center; border: 1px solid #ddd; border-top: none}
+.parking-setting .design-preview label:hover{background: #f4f4f4}
+.parking-setting .design-preview label  i{color: #BDBDBD; padding-right: 5px}
+.parking-setting .design-preview label input{    opacity: 0; visibility: hidden; margin-left: -18px}
+.parking-setting .design-preview label:hover i{color: #a2bddc}
+.parking-setting .design-preview label input:checked + i{color: #0075ff}
+.parking-setting .design-preview.old:after{clear: both; content: ""; display: block}
+.parking-setting .design-preview .now{position: absolute; top: 5px; left: 5px; background: rgba(0, 0, 0, .6); color: #fff; font-size: 13px; border-radius: 4px; padding: 5px 10px ; display: none;}
+.parking-setting .design-preview .now.on {display: block}
+
+.r-table-con {border: 1px solid #ddd; padding: 0 15px}
+.r-table-con .row.r-table {display: flex; }
+.r-table-con .row.r-table > div {border-bottom: 1px solid #ddd; padding: 10px; }
+.r-table-con .row.r-table > div:last-of-type{border-right: none}
+
+.r-table-con .s-title{background: rgba(0,  0, 0, .025); display: flex; align-items: center; }
+.r-table-con .s-title span{width: 100%}
+.f-row > .col-xs-6 {flex: 0 0 50%; max-width: 50%;}
+@media (min-width: 992px){
+    .f-row > .col-lg-5 {flex: 0 0 41.66666%; max-width: 41.66666%;}
+    .f-row > .col-lg-7 {flex: 0 0 58.3333333%; max-width: 58.3333333%;}
+}
+@media (min-width: 768px){
+    .f-row > .col-md-9 {flex: 0 0 75%; max-width: 75%;}
+    .f-row > .col-md-3 {flex: 0 0 25%; max-width: 25%;}
+    .f-row > .col-md-6 {flex: 0 0 50%; max-width: 50%;}
+    .r-table-con .row.r-table > div {border-right: 1px solid #ddd6}
+    .r-table-con .row.r-table:last-of-type > div{border-bottom: none}
+}
+
+.my-member .card{border: 1px solid #ddd; border-radius: 4px; padding: 15px 0; height: 100%; background: rgb(219,232,242, .2);}
+.my-member .card .f-row{align-items: center}
+.my-member .card .b-title{font-size: 16px; font-weight: 600; color: #0070c0}
+.my-member .card p{margin-bottom: 5px}
+.my-member .card .b-title + p{font-weight: 600}
+.my-member .card a{display: inline-block; padding: 3px 15px; background: #0070c0; color: #fff;  border-radius: 4px; }
+.my-member .card a:hover{background: #0D67AB}
+.my-member .btn-success{padding:3px 10px; border-radius: 4px !important; font-size: 14px}
+
+@media (max-width: 460px){
+    .f-row > .col-xs-6 {flex: 0 0 100%; max-width: 100%; margin-bottom: 15px}
+    
+}
+
+
+.col-sm-9 .my-con #frmInfo table td > span { margin-right: 12px}
+.col-sm-9 .my-con #frmInfo table td span input[type="radio"] {margin-right: 4px}
+
+/* 마이닷홈 도메인 소유자 인증 안내 추가*/
+.my-con .com-info{font-size: 13px; color:#0070c0; margin-top: 8px; font-weight: 600}
+.my-con .clear:after, .my-con .clear .form-inline:after{content: ""; display: block; clear: both; }
+
+/* 마이닷홈 닷홈빌더 사이트 복제 추가 */
+.prd-list-modal .modal-header{display: flex; justify-content: space-between; background: #0070c0; color: #fff; padding: 8px 15px; align-items: center}
+.prd-list-modal .modal-header button{background: none; border: none; color: #fff}
+.prd-list-modal .service-info {background: #F9F4F0; border: 1px solid #FFD3B0; border-radius: 4px; padding: 15px; text-align: left; margin-bottom: 15px}
+.prd-list-modal .service-info ul{margin-bottom: 0}
+.prd-list-modal .search{display: flex; justify-content: flex-end; margin-bottom: 10px;}
+.prd-list-modal .search select{width: auto; height: auto !important; margin-right: 5px}
+.prd-list-modal .search-box{position: relative; display: flex; align-items: center}
+.prd-list-modal .search-box button{position: absolute; right: 0; border: none; background: none; top: 2px}
+.prd-list-modal table tr td {padding: 7px 5px; border: 1px solid #ddd; }
+.prd-list-modal .select-prd:hover{color: #0070c0}
+.prd-list-modal .pagination {margin-bottom: 0}
+.prd-list-modal .modal-footer{display: flex; padding: 10px 15px;}
+.prd-list-modal .modal-footer .submit-btn{background: #0070c0; color: #fff; border: 1px solid #0070c0; border-radius:4px !important;  min-width: 82px}
+.prd-list-modal .modal-footer .back-btn{background: #fff; border: 1px solid #0070c0; color: #0070c0; border-radius:4px !important; min-width: 82px}
+.prd-list-modal .modal-footer .submit-btn:hover{background: #07538c; border-color:#07538c}
+.prd-list-modal .modal-footer .back-btn:hover{background: #f4f4f4; border-color:#07538c}
+
+.copy-loading{background: rgba(255, 255, 255, .8);display: flex;  justify-content: center; align-items: center;  text-align: center; z-index: 10000;position: fixed; top: 0;  left: 0; right: 0; bottom: 0;}
+.copy-loading .loading .icon{font-size: 40px;}
+
+.alert-modal .modal-dialog {max-width: 420px}
+.alert-modal .modal-header{padding: 8px 15px; display: flex; border-bottom: none;}
+.alert-modal .modal-header button{border: none; background: none;}
+.alert-modal .modal-body{padding: 30px 0 45px}
+.alert-modal .modal-footer{display: flex; padding: 10px 15px;}
+.alert-modal .modal-footer .submit-btn{background: #0070c0; color: #fff; border: 1px solid #0070c0; border-radius:4px !important;  min-width: 82px}

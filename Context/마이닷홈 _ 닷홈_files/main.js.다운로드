@@ -1,0 +1,79 @@
+$(document).ready( function(){
+	//open the lateral panel
+	$('.cd-btn').on('click', function(event){
+		event.preventDefault();
+		$('.cd-panel').addClass('is-visible');
+        $('html, body').on('scroll touchmove mousewheel', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            return false;
+        });
+	});
+	//clode the lateral panel
+	$('.cd-panel').on('click', function(event){
+		if( $(event.target).is('.cd-panel') || $(event.target).is('.cd-panel-close') || $(event.target).is('.cd-panel-close2')) {
+			$('.cd-panel').removeClass('is-visible');
+			event.preventDefault();
+		} else if($(event.target).is('.menu-onlym .list-group .collapse .list-group-item')){
+            $('.cd-panel').removeClass('is-visible');
+        }
+	});
+
+    $(window).resize(function(){
+        var ww = $(window).width();
+        if(ww > 991){
+            $('.cd-panel').removeClass('is-visible');
+        }
+
+    });
+
+    $('.m-title').click(function() {
+        var name_by_class = $('.mmenu-icon',this).attr('name');
+        $('.m-title').removeClass('mmenu-selected')
+        if($('.fa-chevron-down',this).hasClass('rotate')){
+            $('.fa-chevron-down').removeClass('rotate');
+            $(this).removeClass('mmenu-selected');
+
+            if(name_by_class === "mmenu_domain"){
+                $(".mmenu-icon",this).attr("src", "/static/images/menu/gnb_domain.png");
+            } else if(name_by_class === "mmenu_web"){
+                $(".mmenu-icon",this).attr("src", "/static/images/menu/gnb_web.png");
+            } else if(name_by_class === "mmenu_builder"){
+                $(".mmenu-icon",this).attr("src", "/static/images/menu/gnb_builder.png");
+            } else if(name_by_class === "mmenu_server"){
+                $(".mmenu-icon",this).attr("src", "/static/images/menu/gnb_server.png");
+            } else if(name_by_class === "mmenu_mail"){
+                $(".mmenu-icon",this).attr("src", "/static/images/menu/gnb_mail.png");
+            } else if(name_by_class === "mmenu_security"){
+                $(".mmenu-icon",this).attr("src", "/static/images/menu/gnb_security.png");
+            } else if(name_by_class === "mmenu_m_management"){
+                $(".mmenu-icon",this).attr("src", "/static/images/menu/gnb_m_management.png");
+            }else{
+                $(".mmenu-icon",this).attr("src", "/static/images/menu/gnb_m_customer.png");
+            }
+        }else{
+            $('.fa-chevron-down').removeClass('rotate');
+            $('.fa-chevron-down',this).stop().addClass('rotate');
+            $(this).addClass('mmenu-selected')
+            if(name_by_class === "mmenu_domain"){
+                $(".mmenu-icon",this).attr("src", "/static/images/menu/gnb_domain_w.png");
+            } else if(name_by_class === "mmenu_web"){
+                $(".mmenu-icon",this).attr("src", "/static/images/menu/gnb_web_w.png");
+            } else if(name_by_class === "mmenu_builder"){
+                $(".mmenu-icon",this).attr("src", "/static/images/menu/gnb_builder_w.png");
+            } else if(name_by_class === "mmenu_server"){
+                $(".mmenu-icon",this).attr("src", "/static/images/menu/gnb_server_w.png");
+            } else if(name_by_class === "mmenu_mail"){
+                $(".mmenu-icon",this).attr("src", "/static/images/menu/gnb_mail_w.png");
+            } else if(name_by_class === "mmenu_security"){
+                $(".mmenu-icon",this).attr("src", "/static/images/menu/gnb_security_w.png");
+            } else if(name_by_class === "mmenu_m_management"){
+                $(".mmenu-icon",this).attr("src", "/static/images/menu/gnb_m_management_w.png");
+            }else{
+                $(".mmenu-icon",this).attr("src", "/static/images/menu/gnb_m_customer_w.png");
+            }
+        };
+	});
+
+
+});
