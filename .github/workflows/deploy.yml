@@ -1,4 +1,5 @@
 name: Build and Deploy
+# Updated: Fixed PHP syntax validation logic
 
 on:
   push:
