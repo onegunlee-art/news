@@ -38,8 +38,9 @@ const KAKAO_REST_API_KEY = import.meta.env.VITE_KAKAO_REST_API_KEY || '2b4a37bb1
 const KAKAO_JAVASCRIPT_KEY = import.meta.env.VITE_KAKAO_JAVASCRIPT_KEY || '';
 
 // Redirect URI (프론트엔드 콜백 URL)
+// 카카오 개발자 콘솔에 등록된 URI와 정확히 일치해야 합니다
 const REDIRECT_URI = import.meta.env.VITE_KAKAO_REDIRECT_URI || 
-  `${window.location.origin}/auth/callback`;
+  'http://ailand.dothome.co.kr/auth/callback';
 
 /**
  * 카카오 SDK 초기화
