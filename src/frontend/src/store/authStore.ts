@@ -56,9 +56,9 @@ export const useAuthStore = create<AuthState>()(
         localStorage.setItem('refresh_token', refreshToken)
       },
 
-      login: () => {
+      login: async () => {
         // 카카오 JavaScript SDK를 사용한 로그인
-        kakaoLoginService()
+        await kakaoLoginService()
       },
 
       logout: async () => {

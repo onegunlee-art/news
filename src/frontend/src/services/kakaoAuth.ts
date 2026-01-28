@@ -43,11 +43,67 @@ const REDIRECT_URI = import.meta.env.VITE_KAKAO_REDIRECT_URI ||
   'http://ailand.dothome.co.kr/auth/callback';
 
 /**
+ * 카카오 SDK 동적 로드
+ */
+let sdkLoading: Promise<void> | null = null;
+
+const loadKakaoSDK = (): Promise<void> => {
+  if (typeof window === 'undefined') {
+    return Promise.reject(new Error('Window is not available'));
+  }
+
+  // 이미 로드되어 있으면 즉시 반환
+  if (window.Kakao) {
+    return Promise.resolve();
+  }
+
+  // 이미 로딩 중이면 기존 Promise 반환
+  if (sdkLoading) {
+    return sdkLoading;
+  }
+
+  // SDK 로드
+  sdkLoading = new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = 'https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js';
+    script.async = true;
+    script.crossOrigin = 'anonymous';
+    
+    script.onload = () => {
+      console.log('Kakao SDK loaded successfully');
+      resolve();
+    };
+    
+    script.onerror = () => {
+      console.error('Failed to load Kakao SDK');
+      sdkLoading = null;
+      reject(new Error('Failed to load Kakao SDK'));
+    };
+    
+    document.head.appendChild(script);
+  });
+
+  return sdkLoading;
+};
+
+/**
  * 카카오 SDK 초기화
  */
-export const initKakao = (): boolean => {
-  if (typeof window === 'undefined' || !window.Kakao) {
+export const initKakao = async (): Promise<boolean> => {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  try {
+    // SDK 로드 시도
+    await loadKakaoSDK();
+  } catch (error) {
     console.log('Kakao SDK not loaded, using REST API method');
+    return false;
+  }
+
+  if (!window.Kakao) {
+    console.log('Kakao SDK not available, using REST API method');
     return false;
   }
 
@@ -66,13 +122,15 @@ export const initKakao = (): boolean => {
 /**
  * 카카오 로그인 (REST API 방식 - JavaScript 키 불필요)
  */
-export const kakaoLogin = (): void => {
+export const kakaoLogin = async (): Promise<void> => {
   // Redirect URI 확인 (디버깅)
   console.log('Kakao Login - Redirect URI:', REDIRECT_URI);
   console.log('Kakao Login - REST API Key:', KAKAO_REST_API_KEY ? 'Set' : 'Not Set');
   
-  // JavaScript SDK가 초기화되어 있으면 SDK 사용
-  if (initKakao()) {
+  // JavaScript SDK 초기화 시도
+  const sdkInitialized = await initKakao();
+  
+  if (sdkInitialized) {
     console.log('Using Kakao SDK');
     window.Kakao.Auth.authorize({
       redirectUri: REDIRECT_URI,
