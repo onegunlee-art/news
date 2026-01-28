@@ -56,13 +56,34 @@ export default function AuthCallback() {
         })
 
         if (!response.ok) {
-          const errorData = await response.json().catch(() => ({ message: 'Unknown error' }))
+          let errorData;
+          try {
+            errorData = await response.json();
+          } catch (e) {
+            const text = await response.text();
+            errorData = { message: text || 'Unknown error', raw: text };
+          }
+          
           console.error('Token exchange failed:', {
             status: response.status,
             statusText: response.statusText,
             error: errorData,
+            url: response.url,
           })
-          throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`)
+          
+          // 상세한 에러 메시지 구성
+          let errorMessage = errorData.message || `HTTP ${response.status}: ${response.statusText}`;
+          if (errorData.error) {
+            if (typeof errorData.error === 'string') {
+              errorMessage += ` - ${errorData.error}`;
+            } else if (errorData.error.error_description) {
+              errorMessage += ` - ${errorData.error.error_description}`;
+            } else if (errorData.error.error) {
+              errorMessage += ` - ${errorData.error.error}`;
+            }
+          }
+          
+          throw new Error(errorMessage);
         }
 
         const data = await response.json()

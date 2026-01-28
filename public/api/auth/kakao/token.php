@@ -127,9 +127,11 @@ if (empty($kakaoAccessToken)) {
 
 // 사용자 정보 요청
 $userInfoUrl = $config['api']['base_url'] . $config['api']['user_info'];
+$propertyKeys = implode(',', $config['property_keys'] ?? ['kakao_account.profile']);
+
 $ch = curl_init();
 curl_setopt_array($ch, [
-    CURLOPT_URL => $userInfoUrl,
+    CURLOPT_URL => $userInfoUrl . '?property_keys=[' . $propertyKeys . ']',
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_HTTPHEADER => [
         'Authorization: Bearer ' . $kakaoAccessToken,
@@ -139,22 +141,49 @@ curl_setopt_array($ch, [
 
 $userResponse = curl_exec($ch);
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+$curlError = curl_error($ch);
 curl_close($ch);
 
 if ($httpCode !== 200) {
     http_response_code(500);
+    $errorData = json_decode($userResponse, true);
     echo json_encode([
         'success' => false,
         'message' => '사용자 정보 조회 실패',
-        'error' => json_decode($userResponse, true),
+        'error' => $errorData,
+        'http_code' => $httpCode,
+        'curl_error' => $curlError,
+        'response' => $userResponse,
     ], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
 $userData = json_decode($userResponse, true);
 
+if (json_last_error() !== JSON_ERROR_NONE) {
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'message' => '사용자 정보 파싱 실패',
+        'json_error' => json_last_error_msg(),
+        'response' => $userResponse,
+    ], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
 // 사용자 정보 추출
 $kakaoId = $userData['id'] ?? null;
+
+if (empty($kakaoId)) {
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'message' => '카카오 ID를 찾을 수 없습니다.',
+        'user_data' => $userData,
+    ], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
 $kakaoAccount = $userData['kakao_account'] ?? [];
 $profile = $kakaoAccount['profile'] ?? [];
 
