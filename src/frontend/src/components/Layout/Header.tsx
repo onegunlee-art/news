@@ -23,7 +23,7 @@ export default function Header() {
           {/* 로고 */}
           <Link to="/" className="flex items-center gap-2">
             <span className="font-display font-bold text-4xl text-gray-900 tracking-tight">
-              INFER
+              Infer
             </span>
           </Link>
 
