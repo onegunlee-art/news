@@ -22,7 +22,7 @@ export default function Header() {
         <div className="flex items-center justify-between h-16">
           {/* 로고 */}
           <Link to="/" className="flex items-center gap-2">
-            <span className="font-display font-bold text-3xl text-gray-900 tracking-tight">
+            <span className="font-display font-bold text-4xl text-gray-900 tracking-tight">
               INFER
             </span>
           </Link>
@@ -33,19 +33,19 @@ export default function Header() {
               to="/diplomacy" 
               className="text-gray-700 hover:text-primary-600 transition-colors font-medium"
             >
-              외교
+              Foreign Affair
             </Link>
             <Link 
               to="/economy" 
               className="text-gray-700 hover:text-primary-600 transition-colors font-medium"
             >
-              경제
+              Economy
             </Link>
             <Link 
               to="/technology" 
               className="text-gray-700 hover:text-primary-600 transition-colors font-medium"
             >
-              기술
+              Technology
             </Link>
             <Link 
               to="/entertainment" 
@@ -230,21 +230,21 @@ export default function Header() {
                 onClick={() => setIsMenuOpen(false)}
                 className="block py-2 text-gray-700 hover:text-primary-600 transition-colors font-medium"
               >
-                외교
+                Foreign Affair
               </Link>
               <Link
                 to="/economy"
                 onClick={() => setIsMenuOpen(false)}
                 className="block py-2 text-gray-700 hover:text-primary-600 transition-colors font-medium"
               >
-                경제
+                Economy
               </Link>
               <Link
                 to="/technology"
                 onClick={() => setIsMenuOpen(false)}
                 className="block py-2 text-gray-700 hover:text-primary-600 transition-colors font-medium"
               >
-                기술
+                Technology
               </Link>
               <Link
                 to="/entertainment"
