@@ -27,27 +27,27 @@ interface CategoryConfig {
 
 const categories: Record<string, CategoryConfig> = {
   diplomacy: {
-    name: '외교',
-    nameEn: 'Diplomacy',
+    name: 'Foreign Affair',
+    nameEn: 'Foreign Affair',
     emoji: '',
     nytSection: 'world',
-    description: '국제 관계, 외교 정책, 글로벌 뉴스',
+    description: 'International Relations, Diplomacy, Global News',
     gradient: 'from-blue-500 to-cyan-500',
   },
   economy: {
-    name: '경제',
+    name: 'Economy',
     nameEn: 'Economy',
     emoji: '',
     nytSection: 'business',
-    description: '경제 동향, 금융 시장, 비즈니스 뉴스',
+    description: 'Economic Trends, Financial Markets, Business News',
     gradient: 'from-emerald-500 to-green-500',
   },
   technology: {
-    name: '기술',
+    name: 'Technology',
     nameEn: 'Technology',
     emoji: '',
     nytSection: 'technology',
-    description: 'IT, 과학, 혁신, 테크 뉴스',
+    description: 'IT, Science, Innovation, Tech News',
     gradient: 'from-purple-500 to-pink-500',
   },
   entertainment: {
@@ -55,7 +55,7 @@ const categories: Record<string, CategoryConfig> = {
     nameEn: 'Entertainment',
     emoji: '',
     nytSection: 'arts',
-    description: '영화, 음악, 문화, 엔터테인먼트 뉴스',
+    description: 'Movies, Music, Culture, Entertainment News',
     gradient: 'from-orange-500 to-red-500',
   },
 };
@@ -101,8 +101,8 @@ const CategoryPage: React.FC = () => {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-4xl font-bold text-white mb-4">카테고리를 찾을 수 없습니다</h1>
-          <Link to="/" className="text-primary-400 hover:underline">홈으로 돌아가기</Link>
+          <h1 className="text-4xl font-bold text-white mb-4">Category Not Found</h1>
+          <Link to="/" className="text-primary-400 hover:underline">Back to Home</Link>
         </div>
       </div>
     );
@@ -139,7 +139,7 @@ const CategoryPage: React.FC = () => {
           </div>
         ) : news.length === 0 ? (
           <div className="text-center py-20">
-            <p className="text-gray-400">뉴스가 없습니다.</p>
+            <p className="text-gray-400">No news available.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -185,7 +185,7 @@ const CategoryPage: React.FC = () => {
                       rel="noopener noreferrer"
                       className="text-primary-600 text-sm hover:underline"
                     >
-                      자세히 보기 →
+                      Read More →
                     </a>
                   </div>
                 </div>
@@ -198,7 +198,7 @@ const CategoryPage: React.FC = () => {
   );
 };
 
-// 날짜 포맷팅
+// Date formatting
 function formatDate(dateString: string): string {
   if (!dateString) return '';
   const date = new Date(dateString);
@@ -206,10 +206,10 @@ function formatDate(dateString: string): string {
   const diff = now.getTime() - date.getTime();
   const hours = Math.floor(diff / (1000 * 60 * 60));
   
-  if (hours < 1) return '방금 전';
-  if (hours < 24) return `${hours}시간 전`;
-  if (hours < 48) return '어제';
-  return date.toLocaleDateString('ko-KR');
+  if (hours < 1) return 'Just now';
+  if (hours < 24) return `${hours}h ago`;
+  if (hours < 48) return 'Yesterday';
+  return date.toLocaleDateString('en-US');
 }
 
 // 데모 뉴스 데이터
