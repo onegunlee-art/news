@@ -7,49 +7,47 @@ export default {
   theme: {
     extend: {
       colors: {
+        // 빨간색 악센트
         primary: {
-          50: '#e6faff',
-          100: '#b3f0ff',
-          200: '#80e6ff',
-          300: '#4ddbff',
-          400: '#1ad1ff',
-          500: '#00d9ff',
-          600: '#00a8cc',
-          700: '#007a99',
-          800: '#004d66',
-          900: '#002633',
+          50: '#fef2f2',
+          100: '#fee2e2',
+          200: '#fecaca',
+          300: '#fca5a5',
+          400: '#f87171',
+          500: '#c41230',
+          600: '#b91c1c',
+          700: '#991b1b',
+          800: '#7f1d1d',
+          900: '#450a0a',
         },
-        dark: {
-          50: '#e6e6ea',
-          100: '#b3b3bd',
-          200: '#80808f',
-          300: '#4d4d62',
-          400: '#1a1a35',
-          500: '#0a0a0f',
-          600: '#12121a',
-          700: '#16213e',
-          800: '#1a1a2e',
-          900: '#0f0f14',
+        // 그레이 스케일
+        gray: {
+          50: '#fafafa',
+          100: '#f5f5f5',
+          200: '#e5e5e5',
+          300: '#d4d4d4',
+          400: '#a3a3a3',
+          500: '#737373',
+          600: '#525252',
+          700: '#404040',
+          800: '#262626',
+          900: '#171717',
+          950: '#0a0a0a',
         },
-        accent: {
-          purple: '#667eea',
-          pink: '#f093fb',
-          orange: '#ff6b6b',
-          green: '#00d26a',
-          blue: '#4facfe',
-        }
       },
       fontFamily: {
-        sans: ['Petrov Sans', 'Noto Sans KR', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
-        display: ['Petrov Sans', 'Noto Sans KR', 'sans-serif'],
-        mono: ['JetBrains Mono', 'Consolas', 'monospace'],
+        sans: ['Petrov Sans', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+        serif: ['Petrov Sans', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+        display: ['Petrov Sans', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
+      },
+      fontSize: {
+        'hero': ['3.5rem', { lineHeight: '1.1', letterSpacing: '-0.02em' }],
+        'headline': ['2.25rem', { lineHeight: '1.2', letterSpacing: '-0.01em' }],
+        'subheadline': ['1.5rem', { lineHeight: '1.3' }],
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-out',
         'slide-up': 'slideUp 0.5s ease-out',
-        'slide-down': 'slideDown 0.3s ease-out',
-        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'spin-slow': 'spin 3s linear infinite',
       },
       keyframes: {
         fadeIn: {
@@ -60,14 +58,6 @@ export default {
           '0%': { opacity: '0', transform: 'translateY(20px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
-        slideDown: {
-          '0%': { opacity: '0', transform: 'translateY(-10px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
-        },
-      },
-      backgroundImage: {
-        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
       },
     },
   },

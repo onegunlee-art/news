@@ -16,15 +16,10 @@ const LoginPage: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // TODO: 실제 이메일 로그인 API 연동
-      // 현재는 데모용으로 간단한 검증만 수행
       if (!email || !password) {
         throw new Error('이메일과 비밀번호를 입력해주세요.');
       }
-      
-      // 데모: 임시 로그인 처리
       alert('이메일 로그인 기능은 준비 중입니다. 카카오 로그인을 이용해주세요.');
-      
     } catch (err: any) {
       setError(err.message || '로그인에 실패했습니다.');
     } finally {
@@ -37,7 +32,7 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-dark-500 bg-gradient-main flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -47,19 +42,19 @@ const LoginPage: React.FC = () => {
         {/* 로고 */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-block">
-            <h1 className="font-display font-bold text-3xl bg-gradient-to-r from-primary-400 to-primary-600 bg-clip-text text-transparent">
+            <h1 className="font-light text-4xl text-gray-900">
               Infer
             </h1>
           </Link>
-          <p className="text-gray-400 mt-2">AI 뉴스 맥락 분석 서비스</p>
+          <p className="text-gray-500 mt-2">뉴스 맥락 분석</p>
         </div>
 
         {/* 로그인 카드 */}
-        <div className="bg-dark-600/80 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl p-8">
-          <h2 className="text-2xl font-bold text-white text-center mb-6">로그인</h2>
+        <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-8">
+          <h2 className="text-2xl font-semibold text-gray-900 text-center mb-6">로그인</h2>
 
           {error && (
-            <div className="mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-400 text-sm text-center">
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm text-center">
               {error}
             </div>
           )}
@@ -67,7 +62,7 @@ const LoginPage: React.FC = () => {
           {/* 이메일 로그인 폼 */}
           <form onSubmit={handleEmailLogin} className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                 이메일
               </label>
               <input
@@ -76,11 +71,11 @@ const LoginPage: React.FC = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="example@email.com"
-                className="w-full p-3 rounded-lg bg-dark-700 border border-white/10 text-white placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                className="w-full p-3 rounded-lg bg-white border border-gray-300 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
               />
             </div>
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-1">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                 비밀번호
               </label>
               <input
@@ -89,14 +84,14 @@ const LoginPage: React.FC = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full p-3 rounded-lg bg-dark-700 border border-white/10 text-white placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                className="w-full p-3 rounded-lg bg-white border border-gray-300 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
               />
             </div>
 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 bg-primary-500 hover:bg-primary-600 text-white font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-3 bg-gray-900 hover:bg-gray-800 text-white font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? '로그인 중...' : '로그인'}
             </button>
@@ -105,10 +100,10 @@ const LoginPage: React.FC = () => {
           {/* 구분선 */}
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-white/10"></div>
+              <div className="w-full border-t border-gray-200"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-dark-600 text-gray-400">또는</span>
+              <span className="px-4 bg-white text-gray-500">또는</span>
             </div>
           </div>
 
@@ -125,10 +120,10 @@ const LoginPage: React.FC = () => {
 
           {/* 회원가입 링크 */}
           <div className="mt-6 text-center">
-            <p className="text-gray-400 text-sm">
+            <p className="text-gray-500 text-sm">
               아직 계정이 없으신가요?{' '}
-              <Link to="/register" className="text-primary-400 hover:text-primary-300 font-medium">
-                회원가입
+              <Link to="/register" className="text-primary-500 hover:text-primary-600 font-medium">
+                구독하기
               </Link>
             </p>
           </div>
@@ -136,7 +131,7 @@ const LoginPage: React.FC = () => {
 
         {/* 홈으로 돌아가기 */}
         <div className="mt-6 text-center">
-          <Link to="/" className="text-gray-400 hover:text-white text-sm transition-colors">
+          <Link to="/" className="text-gray-500 hover:text-gray-700 text-sm transition-colors">
             ← 홈으로 돌아가기
           </Link>
         </div>

@@ -5,6 +5,22 @@
 /* Petrov Sans 폰트 */
 @font-face {
   font-family: 'Petrov Sans';
+  src: url('/fonts/petrov_sans/PetrovSans-Thin.ttf') format('truetype');
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Petrov Sans';
+  src: url('/fonts/petrov_sans/PetrovSans-ExtraLight.ttf') format('truetype');
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Petrov Sans';
   src: url('/fonts/petrov_sans/PetrovSans-Light.ttf') format('truetype');
   font-weight: 300;
   font-style: normal;
@@ -15,6 +31,14 @@
   font-family: 'Petrov Sans';
   src: url('/fonts/petrov_sans/PetrovSans-Regular.ttf') format('truetype');
   font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Petrov Sans';
+  src: url('/fonts/petrov_sans/PetrovSans-Book.ttf') format('truetype');
+  font-weight: 450;
   font-style: normal;
   font-display: swap;
 }
@@ -43,14 +67,48 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: 'Petrov Sans';
+  src: url('/fonts/petrov_sans/PetrovSans-Black.ttf') format('truetype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Italic variants */
+@font-face {
+  font-family: 'Petrov Sans';
+  src: url('/fonts/petrov_sans/PetrovSans-LightItalic.ttf') format('truetype');
+  font-weight: 300;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Petrov Sans';
+  src: url('/fonts/petrov_sans/PetrovSans-RegularItalic.ttf') format('truetype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Petrov Sans';
+  src: url('/fonts/petrov_sans/PetrovSans-SemiBoldItalic.ttf') format('truetype');
+  font-weight: 600;
+  font-style: italic;
+  font-display: swap;
+}
+
 /* 기본 스타일 */
 :root {
-  --primary: #00d9ff;
-  --primary-dark: #00a8cc;
-  --bg-dark: #0a0a0f;
-  --bg-card: #12121a;
-  --text-primary: #ffffff;
-  --text-secondary: #8b8b9a;
+  --primary: #c41230;
+  --primary-dark: #991b1b;
+  --bg-light: #ffffff;
+  --bg-gray: #f5f5f5;
+  --text-primary: #171717;
+  --text-secondary: #525252;
+  --border-color: #e5e5e5;
 }
 
 * {
@@ -64,13 +122,21 @@ html {
 }
 
 body {
-  font-family: 'Petrov Sans', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
-  background: var(--bg-dark);
+  font-family: 'Petrov Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-weight: 400;
+  background: var(--bg-light);
   color: var(--text-primary);
   min-height: 100vh;
-  line-height: 1.6;
+  line-height: 1.7;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* 제목용 폰트 */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Petrov Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-weight: 500;
+  font-style: normal;
 }
 
 /* 스크롤바 스타일 */
@@ -80,22 +146,22 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--bg-dark);
+  background: #f1f1f1;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #333;
+  background: #ccc;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #444;
+  background: #aaa;
 }
 
 /* 선택 영역 스타일 */
 ::selection {
-  background: rgba(0, 217, 255, 0.3);
-  color: white;
+  background: rgba(196, 18, 48, 0.2);
+  color: var(--text-primary);
 }
 
 /* 링크 기본 스타일 */
@@ -126,59 +192,33 @@ input, textarea, select {
 
 /* 유틸리티 클래스 */
 @layer utilities {
+  .font-serif {
+    font-family: 'Petrov Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary-400 to-primary-600;
-  }
-  
-  .bg-glass {
-    @apply bg-dark-600/50 backdrop-blur-md;
-  }
-  
-  .card {
-    @apply bg-dark-600 rounded-2xl border border-white/5 p-6;
-  }
-  
-  .card-hover {
-    @apply transition-all duration-300 hover:border-primary-500/30 hover:shadow-lg hover:shadow-primary-500/10;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary-500 to-primary-700;
   }
 }
 
-/* 애니메이션 */
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
+/* line-clamp 유틸리티 */
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-.animate-float {
-  animation: float 3s ease-in-out infinite;
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-/* 배경 그라디언트 */
-.bg-gradient-main {
-  background: 
-    radial-gradient(ellipse at 20% 80%, rgba(102, 126, 234, 0.15) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 20%, rgba(0, 217, 255, 0.1) 0%, transparent 50%),
-    radial-gradient(ellipse at 40% 40%, rgba(118, 75, 162, 0.1) 0%, transparent 40%);
-}
-
-/* 카드 그림자 */
-.shadow-glow {
-  box-shadow: 0 0 40px rgba(0, 217, 255, 0.15);
-}
-
-/* 감정 색상 */
-.sentiment-positive {
-  color: #00d26a;
-}
-
-.sentiment-negative {
-  color: #ff6b6b;
-}
-
-.sentiment-neutral {
-  color: #95a5a6;
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }

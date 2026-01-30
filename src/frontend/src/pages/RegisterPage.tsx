@@ -24,7 +24,6 @@ const RegisterPage: React.FC = () => {
 
   const handleFreeTrial = async () => {
     if (!isAuthenticated) {
-      // 로그인이 필요한 경우
       if (!formData.email || !formData.password || !formData.nickname) {
         setError('모든 필드를 입력해주세요.');
         return;
@@ -45,13 +44,9 @@ const RegisterPage: React.FC = () => {
     setError('');
 
     try {
-      // 1달 무료 구독 처리
-      await new Promise(resolve => setTimeout(resolve, 1500)); // 시뮬레이션
-      
-      // 구독 상태 업데이트
+      await new Promise(resolve => setTimeout(resolve, 1500));
       setSubscribed(true);
       setShowSuccess(true);
-      
     } catch (err: any) {
       setError(err.message || '처리 중 오류가 발생했습니다.');
     } finally {
@@ -63,37 +58,35 @@ const RegisterPage: React.FC = () => {
     login();
   };
 
-  // 성공 화면
   if (showSuccess) {
     return (
-      <div className="min-h-screen bg-dark-500 bg-gradient-main flex items-center justify-center px-4 py-12">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           className="w-full max-w-md text-center"
         >
-          <div className="bg-dark-600/80 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl p-8">
-            {/* 성공 아이콘 */}
-            <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center">
+          <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-8">
+            <div className="w-20 h-20 mx-auto mb-6 bg-green-500 rounded-full flex items-center justify-center">
               <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
 
-            <h2 className="text-2xl font-bold text-white mb-3">🎉 구독이 시작되었습니다!</h2>
-            <p className="text-gray-400 mb-6">
+            <h2 className="text-2xl font-semibold text-gray-900 mb-3">구독이 시작되었습니다!</h2>
+            <p className="text-gray-600 mb-6">
               1달 무료 체험이 활성화되었습니다.<br />
               모든 심층 분석 서비스를 이용하실 수 있습니다.
             </p>
 
-            <div className="bg-primary-500/10 border border-primary-500/30 rounded-xl p-4 mb-6">
-              <p className="text-primary-400 font-medium">무료 체험 기간</p>
-              <p className="text-white text-lg">오늘 ~ {new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('ko-KR')}</p>
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
+              <p className="text-gray-500 font-medium text-sm">무료 체험 기간</p>
+              <p className="text-gray-900 text-lg">오늘 ~ {new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('ko-KR')}</p>
             </div>
 
             <Link
               to="/"
-              className="block w-full py-3 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-400 hover:to-primary-500 text-white font-semibold rounded-lg transition-all"
+              className="block w-full py-3 bg-gray-900 hover:bg-gray-800 text-white font-semibold rounded-lg transition-all"
             >
               뉴스 보러 가기
             </Link>
@@ -104,35 +97,32 @@ const RegisterPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-dark-500 bg-gradient-main flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-gray-50 py-12 px-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="w-full max-w-4xl"
+        className="max-w-4xl mx-auto"
       >
         {/* 로고 */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-block">
-            <h1 className="font-display font-bold text-3xl bg-gradient-to-r from-primary-400 to-primary-600 bg-clip-text text-transparent">
+            <h1 className="font-light text-4xl text-gray-900">
               Infer
             </h1>
           </Link>
-          <p className="text-gray-400 mt-2">전문가 수준의 뉴스 분석 서비스</p>
+          <p className="text-gray-500 mt-2">전문가 수준의 뉴스 분석</p>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-8">
           {/* 좌측: 구독 플랜 */}
-          <div className="bg-dark-600/80 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl p-8">
-            <h2 className="text-2xl font-bold text-white text-center mb-2">구독 서비스</h2>
-            <p className="text-gray-400 text-center mb-6">뉴스의 본질을 파악하세요</p>
+          <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-8">
+            <h2 className="text-2xl font-semibold text-gray-900 text-center mb-2">구독 서비스</h2>
+            <p className="text-gray-500 text-center mb-6">뉴스의 본질을 파악하세요</p>
 
             {/* 무료 체험 배너 */}
-            <div className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-xl p-4 mb-6 text-center">
-              <div className="flex items-center justify-center gap-2 mb-1">
-                <span className="text-2xl">🎁</span>
-                <span className="text-white font-bold text-lg">1달 무료 체험!</span>
-              </div>
+            <div className="bg-primary-500 rounded-lg p-4 mb-6 text-center">
+              <p className="text-white font-bold text-lg">🎁 1달 무료 체험!</p>
               <p className="text-white/80 text-sm">지금 가입하시면 첫 달은 완전 무료</p>
             </div>
 
@@ -140,36 +130,36 @@ const RegisterPage: React.FC = () => {
             <div className="grid grid-cols-2 gap-3 mb-6">
               <button
                 onClick={() => setSelectedPlan('monthly')}
-                className={`p-4 rounded-xl border-2 transition-all ${
+                className={`p-4 rounded-lg border-2 transition-all ${
                   selectedPlan === 'monthly'
-                    ? 'border-primary-500 bg-primary-500/10'
-                    : 'border-white/10 hover:border-white/20'
+                    ? 'border-primary-500 bg-red-50'
+                    : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
-                <p className="text-white font-semibold">월간</p>
-                <p className="text-2xl font-bold text-primary-400">₩9,900</p>
-                <p className="text-gray-400 text-sm">/월</p>
+                <p className="text-gray-900 font-semibold">월간</p>
+                <p className="text-2xl font-bold text-primary-500">₩9,900</p>
+                <p className="text-gray-500 text-sm">/월</p>
               </button>
               <button
                 onClick={() => setSelectedPlan('yearly')}
-                className={`p-4 rounded-xl border-2 transition-all relative ${
+                className={`p-4 rounded-lg border-2 transition-all relative ${
                   selectedPlan === 'yearly'
-                    ? 'border-primary-500 bg-primary-500/10'
-                    : 'border-white/10 hover:border-white/20'
+                    ? 'border-primary-500 bg-red-50'
+                    : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
                 <span className="absolute -top-2 -right-2 px-2 py-0.5 bg-green-500 text-white text-xs font-bold rounded-full">
                   33% 할인
                 </span>
-                <p className="text-white font-semibold">연간</p>
-                <p className="text-2xl font-bold text-primary-400">₩79,000</p>
-                <p className="text-gray-400 text-sm">/년</p>
+                <p className="text-gray-900 font-semibold">연간</p>
+                <p className="text-2xl font-bold text-primary-500">₩79,000</p>
+                <p className="text-gray-500 text-sm">/년</p>
               </button>
             </div>
 
             {/* 혜택 목록 */}
             <div className="space-y-3 mb-6">
-              <p className="text-white font-medium mb-2">구독 혜택</p>
+              <p className="text-gray-900 font-medium mb-2">구독 혜택:</p>
               {[
                 '이게 왜 중요한대! - 뉴스의 핵심 분석',
                 '빅픽쳐 - 글로벌 트렌드와 큰 그림',
@@ -178,8 +168,8 @@ const RegisterPage: React.FC = () => {
                 '북마크 & 히스토리 저장',
                 '이메일 뉴스레터'
               ].map((benefit, index) => (
-                <div key={index} className="flex items-center gap-3 text-gray-300">
-                  <svg className="w-5 h-5 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div key={index} className="flex items-center gap-3 text-gray-600">
+                  <svg className="w-5 h-5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                   <span>{benefit}</span>
@@ -187,31 +177,29 @@ const RegisterPage: React.FC = () => {
               ))}
             </div>
 
-            {/* 결제 정보 안내 */}
-            <div className="bg-white/5 rounded-lg p-3 text-sm text-gray-400 text-center">
+            <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-500 text-center">
               <p>💳 1달 무료 체험 후 자동 결제됩니다</p>
               <p>언제든지 취소 가능합니다</p>
             </div>
           </div>
 
           {/* 우측: 회원가입 폼 */}
-          <div className="bg-dark-600/80 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl p-8">
-            <h2 className="text-2xl font-bold text-white text-center mb-6">
+          <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-8">
+            <h2 className="text-2xl font-semibold text-gray-900 text-center mb-6">
               {isAuthenticated ? '무료 체험 시작' : '회원가입'}
             </h2>
 
             {error && (
-              <div className="mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-400 text-sm text-center">
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm text-center">
                 {error}
               </div>
             )}
 
             {!isAuthenticated ? (
               <>
-                {/* 회원가입 폼 */}
                 <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); handleFreeTrial(); }}>
                   <div>
-                    <label htmlFor="nickname" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="nickname" className="block text-sm font-medium text-gray-700 mb-1">
                       닉네임
                     </label>
                     <input
@@ -221,12 +209,12 @@ const RegisterPage: React.FC = () => {
                       value={formData.nickname}
                       onChange={handleChange}
                       placeholder="사용할 닉네임"
-                      className="w-full p-3 rounded-lg bg-dark-700 border border-white/10 text-white placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                      className="w-full p-3 rounded-lg bg-white border border-gray-300 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
                       이메일
                     </label>
                     <input
@@ -236,12 +224,12 @@ const RegisterPage: React.FC = () => {
                       value={formData.email}
                       onChange={handleChange}
                       placeholder="example@email.com"
-                      className="w-full p-3 rounded-lg bg-dark-700 border border-white/10 text-white placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                      className="w-full p-3 rounded-lg bg-white border border-gray-300 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                       비밀번호
                     </label>
                     <input
@@ -251,12 +239,12 @@ const RegisterPage: React.FC = () => {
                       value={formData.password}
                       onChange={handleChange}
                       placeholder="6자 이상 입력"
-                      className="w-full p-3 rounded-lg bg-dark-700 border border-white/10 text-white placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                      className="w-full p-3 rounded-lg bg-white border border-gray-300 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                     />
                   </div>
 
                   <div>
-                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
                       비밀번호 확인
                     </label>
                     <input
@@ -266,45 +254,42 @@ const RegisterPage: React.FC = () => {
                       value={formData.confirmPassword}
                       onChange={handleChange}
                       placeholder="비밀번호 재입력"
-                      className="w-full p-3 rounded-lg bg-dark-700 border border-white/10 text-white placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                      className="w-full p-3 rounded-lg bg-white border border-gray-300 text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                     />
                   </div>
 
-                  {/* 이용약관 동의 */}
                   <div className="flex items-start gap-2">
                     <input
                       type="checkbox"
                       id="agreeTerms"
                       checked={agreeTerms}
                       onChange={(e) => setAgreeTerms(e.target.checked)}
-                      className="mt-1 w-4 h-4 rounded border-gray-600 bg-dark-700 text-primary-500 focus:ring-primary-500"
+                      className="mt-1 w-4 h-4 rounded border-gray-300 text-primary-500 focus:ring-primary-500"
                     />
-                    <label htmlFor="agreeTerms" className="text-sm text-gray-400">
-                      <span className="text-primary-400 hover:underline cursor-pointer">이용약관</span> 및{' '}
-                      <span className="text-primary-400 hover:underline cursor-pointer">개인정보처리방침</span>에 동의합니다.
+                    <label htmlFor="agreeTerms" className="text-sm text-gray-600">
+                      <span className="text-primary-500 hover:underline cursor-pointer">이용약관</span> 및{' '}
+                      <span className="text-primary-500 hover:underline cursor-pointer">개인정보처리방침</span>에 동의합니다
                     </label>
                   </div>
 
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full py-3 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-400 hover:to-primary-500 text-white font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full py-3 bg-primary-500 hover:bg-primary-600 text-white font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isLoading ? '처리 중...' : '🎁 1달 무료로 시작하기'}
                   </button>
                 </form>
 
-                {/* 구분선 */}
                 <div className="relative my-6">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-white/10"></div>
+                    <div className="w-full border-t border-gray-200"></div>
                   </div>
                   <div className="relative flex justify-center text-sm">
-                    <span className="px-4 bg-dark-600 text-gray-400">또는</span>
+                    <span className="px-4 bg-white text-gray-500">또는</span>
                   </div>
                 </div>
 
-                {/* 소셜 로그인 */}
                 <button
                   onClick={handleKakaoLogin}
                   className="w-full flex items-center justify-center gap-3 py-3 bg-[#FEE500] hover:bg-[#FDD835] text-[#3C1E1E] font-semibold rounded-lg transition-all"
@@ -315,27 +300,25 @@ const RegisterPage: React.FC = () => {
                   카카오로 시작하기
                 </button>
 
-                {/* 로그인 링크 */}
                 <div className="mt-6 text-center">
-                  <p className="text-gray-400 text-sm">
+                  <p className="text-gray-500 text-sm">
                     이미 계정이 있으신가요?{' '}
-                    <Link to="/login" className="text-primary-400 hover:text-primary-300 font-medium">
+                    <Link to="/login" className="text-primary-500 hover:text-primary-600 font-medium">
                       로그인
                     </Link>
                   </p>
                 </div>
               </>
             ) : (
-              /* 로그인된 사용자용 */
               <div className="text-center">
-                <p className="text-gray-300 mb-6">
+                <p className="text-gray-600 mb-6">
                   이미 로그인되어 있습니다.<br />
                   아래 버튼을 눌러 무료 체험을 시작하세요.
                 </p>
                 <button
                   onClick={handleFreeTrial}
                   disabled={isLoading}
-                  className="w-full py-4 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-400 hover:to-primary-500 text-white font-semibold text-lg rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full py-4 bg-primary-500 hover:bg-primary-600 text-white font-semibold text-lg rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoading ? '처리 중...' : '🎁 1달 무료 체험 시작하기'}
                 </button>
@@ -344,9 +327,8 @@ const RegisterPage: React.FC = () => {
           </div>
         </div>
 
-        {/* 홈으로 돌아가기 */}
         <div className="mt-6 text-center">
-          <Link to="/" className="text-gray-400 hover:text-white text-sm transition-colors">
+          <Link to="/" className="text-gray-500 hover:text-gray-700 text-sm transition-colors">
             ← 홈으로 돌아가기
           </Link>
         </div>
