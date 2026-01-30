@@ -201,7 +201,7 @@ if ($method === 'PUT') {
         
         $stmt = $db->prepare("
             UPDATE news 
-            SET category = ?, title = ?, description = ?, content = ?, updated_at = NOW()
+            SET category = ?, title = ?, description = ?, content = ?
             WHERE id = ?
         ");
         $stmt->execute([$category, $title, $description, $content, $id]);
