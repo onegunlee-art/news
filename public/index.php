@@ -445,7 +445,7 @@ if ($isApiRequest) {
     <header>
         <div class="container">
             <nav>
-                <div class="logo">NEWS CONTEXT</div>
+                <div class="logo">INFER</div>
                 <ul class="nav-links">
                     <li><a href="#">뉴스</a></li>
                     <li><a href="#">분석</a></li>

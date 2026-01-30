@@ -115,7 +115,7 @@ const RegisterPage: React.FC = () => {
         <div className="text-center mb-8">
           <Link to="/" className="inline-block">
             <h1 className="font-display font-bold text-3xl bg-gradient-to-r from-primary-400 to-primary-600 bg-clip-text text-transparent">
-              NEWS CONTEXT
+              INFER
             </h1>
           </Link>
           <p className="text-gray-400 mt-2">전문가 수준의 뉴스 분석 서비스</p>
