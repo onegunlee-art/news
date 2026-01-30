@@ -10,6 +10,9 @@ import {
   ClockIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon,
+  PencilSquareIcon,
+  TrashIcon,
+  XMarkIcon,
 } from '@heroicons/react/24/outline';
 
 interface DashboardStats {
@@ -36,14 +39,16 @@ interface NewsArticle {
   id?: number;
   category: string;
   title: string;
+  description?: string;
   content: string;
+  source?: string;
   created_at?: string;
 }
 
 const categories = [
-  { id: 'diplomacy', name: '외교', color: 'from-blue-500 to-cyan-500' },
-  { id: 'economy', name: '경제', color: 'from-emerald-500 to-green-500' },
-  { id: 'technology', name: '기술', color: 'from-purple-500 to-pink-500' },
+  { id: 'diplomacy', name: 'Foreign Affair', color: 'from-blue-500 to-cyan-500' },
+  { id: 'economy', name: 'Economy', color: 'from-emerald-500 to-green-500' },
+  { id: 'technology', name: 'Technology', color: 'from-purple-500 to-pink-500' },
   { id: 'entertainment', name: 'Entertainment', color: 'from-orange-500 to-red-500' },
 ];
 
@@ -59,6 +64,9 @@ const AdminPage: React.FC = () => {
   const [newsList, setNewsList] = useState<NewsArticle[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [editingNewsId, setEditingNewsId] = useState<number | null>(null);
+  const [isLoadingNews, setIsLoadingNews] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
   
   const [stats, setStats] = useState<DashboardStats>({
     totalUsers: 0,
@@ -84,6 +92,67 @@ const AdminPage: React.FC = () => {
 
     loadDashboardData();
   }, []);
+
+  // 뉴스 탭이 활성화되거나 카테고리가 변경될 때 뉴스 목록 로드
+  useEffect(() => {
+    if (activeTab === 'news') {
+      loadNewsList();
+    }
+  }, [activeTab, selectedCategory]);
+
+  // 기존 뉴스 목록 로드
+  const loadNewsList = async () => {
+    setIsLoadingNews(true);
+    try {
+      const response = await fetch(`/api/admin/news.php?category=${selectedCategory}`);
+      const data = await response.json();
+      if (data.success && data.data?.items) {
+        setNewsList(data.data.items);
+      }
+    } catch (error) {
+      console.error('Failed to load news:', error);
+    } finally {
+      setIsLoadingNews(false);
+    }
+  };
+
+  // 뉴스 수정 시작
+  const handleEditNews = (news: NewsArticle) => {
+    setEditingNewsId(news.id || null);
+    setNewsTitle(news.title);
+    setNewsContent(news.content);
+    // 스크롤을 폼 위치로 이동
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // 수정 취소
+  const handleCancelEdit = () => {
+    setEditingNewsId(null);
+    setNewsTitle('');
+    setNewsContent('');
+    setSaveMessage(null);
+  };
+
+  // 뉴스 삭제
+  const handleDeleteNews = async (id: number) => {
+    try {
+      const response = await fetch(`/api/admin/news.php?id=${id}`, {
+        method: 'DELETE',
+      });
+      const data = await response.json();
+      if (data.success) {
+        setSaveMessage({ type: 'success', text: '뉴스가 삭제되었습니다.' });
+        setNewsList(prev => prev.filter(n => n.id !== id));
+      } else {
+        throw new Error(data.message);
+      }
+    } catch (error) {
+      setSaveMessage({ type: 'error', text: '삭제 실패: ' + (error as Error).message });
+    } finally {
+      setDeleteConfirmId(null);
+      setTimeout(() => setSaveMessage(null), 3000);
+    }
+  };
 
   const loadDashboardData = async () => {
     setLoading(true);
@@ -353,11 +422,25 @@ const AdminPage: React.FC = () => {
                 ))}
               </div>
 
-              {/* 뉴스 작성 폼 */}
-              <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50">
-                <h3 className="text-lg font-semibold text-white mb-4">
-                  {categories.find(c => c.id === selectedCategory)?.name} 뉴스 작성
-                </h3>
+              {/* 뉴스 작성/수정 폼 */}
+              <div className={`bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border ${editingNewsId ? 'border-amber-500/50' : 'border-slate-700/50'}`}>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-white">
+                    {editingNewsId 
+                      ? `뉴스 수정 중 (ID: ${editingNewsId})`
+                      : `${categories.find(c => c.id === selectedCategory)?.name} 뉴스 작성`
+                    }
+                  </h3>
+                  {editingNewsId && (
+                    <button
+                      onClick={handleCancelEdit}
+                      className="flex items-center gap-1 px-3 py-1.5 text-sm text-amber-400 hover:text-amber-300 border border-amber-500/30 rounded-lg hover:bg-amber-500/10 transition"
+                    >
+                      <XMarkIcon className="w-4 h-4" />
+                      수정 취소
+                    </button>
+                  )}
+                </div>
 
                 <div className="space-y-4">
                   {/* 제목 입력 */}
@@ -398,45 +481,36 @@ const AdminPage: React.FC = () => {
                         setSaveMessage(null);
                         
                         try {
-                          // API 호출 (실제 환경)
+                          const isEditing = editingNewsId !== null;
                           const response = await fetch('/api/admin/news.php', {
-                            method: 'POST',
+                            method: isEditing ? 'PUT' : 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
+                              ...(isEditing && { id: editingNewsId }),
                               category: selectedCategory,
                               title: newsTitle,
                               content: newsContent,
                             }),
                           });
                           
-                          if (response.ok) {
-                            setSaveMessage({ type: 'success', text: '뉴스가 성공적으로 저장되었습니다!' });
-                            // 목록에 추가
-                            setNewsList(prev => [{
-                              id: Date.now(),
-                              category: selectedCategory,
-                              title: newsTitle,
-                              content: newsContent,
-                              created_at: new Date().toISOString(),
-                            }, ...prev]);
+                          const data = await response.json();
+                          
+                          if (data.success) {
+                            setSaveMessage({ 
+                              type: 'success', 
+                              text: isEditing ? '뉴스가 수정되었습니다!' : '뉴스가 저장되었습니다!' 
+                            });
+                            // 목록 새로고침
+                            await loadNewsList();
                             // 폼 초기화
                             setNewsTitle('');
                             setNewsContent('');
+                            setEditingNewsId(null);
                           } else {
-                            throw new Error('저장 실패');
+                            throw new Error(data.message || '저장 실패');
                           }
                         } catch (error) {
-                          // 데모 모드: 로컬 저장
-                          setSaveMessage({ type: 'success', text: '뉴스가 저장되었습니다! (데모 모드)' });
-                          setNewsList(prev => [{
-                            id: Date.now(),
-                            category: selectedCategory,
-                            title: newsTitle,
-                            content: newsContent,
-                            created_at: new Date().toISOString(),
-                          }, ...prev]);
-                          setNewsTitle('');
-                          setNewsContent('');
+                          setSaveMessage({ type: 'error', text: '저장 실패: ' + (error as Error).message });
                         } finally {
                           setIsSaving(false);
                           setTimeout(() => setSaveMessage(null), 3000);
@@ -446,13 +520,20 @@ const AdminPage: React.FC = () => {
                       className={`px-6 py-3 rounded-xl font-medium transition-all flex items-center gap-2 ${
                         isSaving || !newsTitle.trim() || !newsContent.trim()
                           ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
-                          : 'bg-gradient-to-r from-cyan-500 to-emerald-500 text-white hover:opacity-90'
+                          : editingNewsId
+                            ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:opacity-90'
+                            : 'bg-gradient-to-r from-cyan-500 to-emerald-500 text-white hover:opacity-90'
                       }`}
                     >
                       {isSaving ? (
                         <>
                           <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
                           저장 중...
+                        </>
+                      ) : editingNewsId ? (
+                        <>
+                          <PencilSquareIcon className="w-5 h-5" />
+                          뉴스 수정
                         </>
                       ) : (
                         <>
@@ -463,11 +544,7 @@ const AdminPage: React.FC = () => {
                     </button>
 
                     <button
-                      onClick={() => {
-                        setNewsTitle('');
-                        setNewsContent('');
-                        setSaveMessage(null);
-                      }}
+                      onClick={handleCancelEdit}
                       className="px-6 py-3 rounded-xl font-medium bg-slate-700/50 text-slate-300 hover:bg-slate-600/50 transition"
                     >
                       초기화
@@ -493,37 +570,113 @@ const AdminPage: React.FC = () => {
               </div>
 
               {/* 저장된 뉴스 목록 */}
-              {newsList.length > 0 && (
-                <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50">
-                  <h3 className="text-lg font-semibold text-white mb-4">최근 작성한 뉴스</h3>
-                  <div className="space-y-3">
-                    {newsList.filter(n => n.category === selectedCategory).map((news) => (
+              <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-white">
+                    {categories.find(c => c.id === selectedCategory)?.name} 뉴스 목록
+                  </h3>
+                  <span className="text-slate-400 text-sm">
+                    총 {newsList.length}개
+                  </span>
+                </div>
+
+                {isLoadingNews ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-4 border-cyan-500 border-t-transparent"></div>
+                  </div>
+                ) : newsList.length === 0 ? (
+                  <p className="text-slate-500 text-center py-8">
+                    이 카테고리에 저장된 뉴스가 없습니다.
+                  </p>
+                ) : (
+                  <div className="space-y-3 max-h-[500px] overflow-y-auto">
+                    {newsList.map((news) => (
                       <div
                         key={news.id}
-                        className="p-4 bg-slate-900/50 rounded-xl border border-slate-700/30"
+                        className={`p-4 bg-slate-900/50 rounded-xl border transition-all ${
+                          editingNewsId === news.id 
+                            ? 'border-amber-500/50 bg-amber-500/5' 
+                            : 'border-slate-700/30 hover:border-slate-600/50'
+                        }`}
                       >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <h4 className="text-white font-medium">{news.title}</h4>
-                            <p className="text-slate-400 text-sm mt-1 line-clamp-2">{news.content}</p>
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-xs px-2 py-0.5 bg-slate-700 text-slate-300 rounded">
+                                ID: {news.id}
+                              </span>
+                              {news.source && news.source !== 'Admin' && (
+                                <span className="text-xs px-2 py-0.5 bg-blue-500/20 text-blue-400 rounded">
+                                  {news.source}
+                                </span>
+                              )}
+                            </div>
+                            <h4 className="text-white font-medium truncate">{news.title}</h4>
+                            <p className="text-slate-400 text-sm mt-1 line-clamp-2">
+                              {news.description || news.content}
+                            </p>
                             <p className="text-slate-500 text-xs mt-2">
-                              {new Date(news.created_at || '').toLocaleString('ko-KR')}
+                              {news.created_at ? new Date(news.created_at).toLocaleString('ko-KR') : ''}
                             </p>
                           </div>
-                          <button
-                            onClick={() => setNewsList(prev => prev.filter(n => n.id !== news.id))}
-                            className="text-red-400 hover:text-red-300 text-sm"
-                          >
-                            삭제
-                          </button>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <button
+                              onClick={() => handleEditNews(news)}
+                              disabled={editingNewsId === news.id}
+                              className={`p-2 rounded-lg transition ${
+                                editingNewsId === news.id
+                                  ? 'bg-amber-500/20 text-amber-400 cursor-not-allowed'
+                                  : 'text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10'
+                              }`}
+                              title="수정"
+                            >
+                              <PencilSquareIcon className="w-5 h-5" />
+                            </button>
+                            <button
+                              onClick={() => setDeleteConfirmId(news.id || null)}
+                              className="p-2 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition"
+                              title="삭제"
+                            >
+                              <TrashIcon className="w-5 h-5" />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ))}
-                    {newsList.filter(n => n.category === selectedCategory).length === 0 && (
-                      <p className="text-slate-500 text-center py-4">
-                        이 카테고리에 작성된 뉴스가 없습니다.
-                      </p>
-                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* 삭제 확인 다이얼로그 */}
+              {deleteConfirmId && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+                  <div className="bg-slate-800 rounded-2xl p-6 border border-slate-700 max-w-md w-full mx-4 shadow-2xl">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="p-3 bg-red-500/20 rounded-full">
+                        <TrashIcon className="w-6 h-6 text-red-400" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-white">뉴스 삭제</h3>
+                        <p className="text-slate-400 text-sm">이 작업은 되돌릴 수 없습니다.</p>
+                      </div>
+                    </div>
+                    <p className="text-slate-300 mb-6">
+                      ID {deleteConfirmId} 뉴스를 정말 삭제하시겠습니까?
+                    </p>
+                    <div className="flex gap-3 justify-end">
+                      <button
+                        onClick={() => setDeleteConfirmId(null)}
+                        className="px-4 py-2 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 transition"
+                      >
+                        취소
+                      </button>
+                      <button
+                        onClick={() => handleDeleteNews(deleteConfirmId)}
+                        className="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition"
+                      >
+                        삭제
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
