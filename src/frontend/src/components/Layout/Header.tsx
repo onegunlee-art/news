@@ -22,7 +22,7 @@ export default function Header() {
         <div className="flex items-center justify-between h-16">
           {/* 로고 */}
           <Link to="/" className="flex items-center gap-2">
-            <span className="font-display font-bold text-xl text-gray-900">
+            <span className="font-display font-bold text-3xl text-gray-900 tracking-tight">
               INFER
             </span>
           </Link>
