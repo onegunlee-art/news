@@ -2,6 +2,47 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Petrov Sans 폰트 */
+@font-face {
+  font-family: 'Petrov Sans';
+  src: url('/fonts/petrov_sans/PetrovSans-Light.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Petrov Sans';
+  src: url('/fonts/petrov_sans/PetrovSans-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Petrov Sans';
+  src: url('/fonts/petrov_sans/PetrovSans-SemiBold.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Petrov Sans';
+  src: url('/fonts/petrov_sans/PetrovSans-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Petrov Sans';
+  src: url('/fonts/petrov_sans/PetrovSans-ExtraBold.ttf') format('truetype');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* 기본 스타일 */
 :root {
   --primary: #00d9ff;
@@ -23,7 +64,7 @@ html {
 }
 
 body {
-  font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Petrov Sans', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
   background: var(--bg-dark);
   color: var(--text-primary);
   min-height: 100vh;

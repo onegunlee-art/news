@@ -40,8 +40,8 @@ export default {
         }
       },
       fontFamily: {
-        sans: ['Noto Sans KR', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
-        display: ['Space Grotesk', 'Noto Sans KR', 'sans-serif'],
+        sans: ['Petrov Sans', 'Noto Sans KR', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        display: ['Petrov Sans', 'Noto Sans KR', 'sans-serif'],
         mono: ['JetBrains Mono', 'Consolas', 'monospace'],
       },
       animation: {
