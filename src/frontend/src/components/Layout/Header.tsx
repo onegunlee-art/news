@@ -49,7 +49,7 @@ export default function Header() {
               to="/diplomacy" 
               className="text-sm font-medium text-gray-700 hover:text-primary-500 transition-colors uppercase tracking-wide"
             >
-              Foreign Affair
+              Foreign Affairs
             </Link>
             <Link 
               to="/economy" 
@@ -104,7 +104,7 @@ export default function Header() {
                 onClick={() => setIsMenuOpen(false)}
                 className="block py-2 text-sm font-medium text-gray-700 uppercase tracking-wide"
               >
-                Foreign Affair
+                Foreign Affairs
               </Link>
               <Link
                 to="/economy"

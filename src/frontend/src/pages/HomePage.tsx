@@ -105,7 +105,7 @@ export default function HomePage() {
       <section className="py-12 border-t border-gray-200">
         <div className="max-w-7xl mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <CategorySection title="Foreign Affair" link="/diplomacy" />
+            <CategorySection title="Foreign Affairs" link="/diplomacy" />
             <CategorySection title="Economy" link="/economy" />
             <CategorySection title="Technology" link="/technology" />
             <CategorySection title="Entertainment" link="/entertainment" />
@@ -250,7 +250,7 @@ function ArticleCard({ article }: { article: NewsItem }) {
 // 카테고리 섹션
 function CategorySection({ title, link }: { title: string; link: string }) {
   const descriptions: Record<string, string> = {
-    'Foreign Affair': '국제 관계와 외교 정책에 대한 전문 분석',
+    'Foreign Affairs': '국제 관계와 외교 정책에 대한 전문 분석',
     'Economy': '경제 동향과 금융 시장에 대한 심층 분석',
     'Technology': '기술 혁신과 IT 산업에 대한 전문 분석',
     'Entertainment': '문화와 엔터테인먼트 산업에 대한 분석',

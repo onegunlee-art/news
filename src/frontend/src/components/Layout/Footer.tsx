@@ -26,7 +26,7 @@ export default function Footer() {
             <ul className="space-y-3">
               <li>
                 <Link to="/diplomacy" className="text-sm text-gray-300 hover:text-white transition-colors">
-                  Foreign Affair
+                  Foreign Affairs
                 </Link>
               </li>
               <li>

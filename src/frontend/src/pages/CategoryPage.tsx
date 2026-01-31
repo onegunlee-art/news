@@ -23,7 +23,7 @@ interface CategoryConfig {
 
 const categories: Record<string, CategoryConfig> = {
   diplomacy: {
-    name: 'Foreign Affair',
+    name: 'Foreign Affairs',
     description: '국제 관계, 외교 정책, 글로벌 이슈에 대한 전문 분석',
   },
   economy: {

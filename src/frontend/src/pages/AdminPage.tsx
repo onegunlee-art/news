@@ -46,7 +46,7 @@ interface NewsArticle {
 }
 
 const categories = [
-  { id: 'diplomacy', name: 'Foreign Affair', color: 'from-blue-500 to-cyan-500' },
+  { id: 'diplomacy', name: 'Foreign Affairs', color: 'from-blue-500 to-cyan-500' },
   { id: 'economy', name: 'Economy', color: 'from-emerald-500 to-green-500' },
   { id: 'technology', name: 'Technology', color: 'from-purple-500 to-pink-500' },
   { id: 'entertainment', name: 'Entertainment', color: 'from-orange-500 to-red-500' },
