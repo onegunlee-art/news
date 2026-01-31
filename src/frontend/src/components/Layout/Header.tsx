@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useAuthStore } from '../../store/authStore'
 
 export default function Header() {
-  const { user, isAuthenticated, login, logout } = useAuthStore()
+  const { isAuthenticated, login, logout } = useAuthStore()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isLoginOpen, setIsLoginOpen] = useState(false)
   const navigate = useNavigate()
