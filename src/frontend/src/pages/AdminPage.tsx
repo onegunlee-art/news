@@ -468,15 +468,14 @@ const AdminPage: React.FC = () => {
                           
                           try {
                             // CORS 프록시를 통해 외부 URL 가져오기
-                            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(articleUrl)}`;
+                            const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(articleUrl)}`;
                             const response = await fetch(proxyUrl);
-                            const proxyData = await response.json();
                             
-                            if (!proxyData.contents) {
+                            if (!response.ok) {
                               throw new Error('URL에서 콘텐츠를 가져올 수 없습니다.');
                             }
                             
-                            const html = proxyData.contents;
+                            const html = await response.text();
                             
                             // 메타데이터 추출
                             let title = '';
