@@ -35,7 +35,7 @@ export default function Header() {
         {/* 로고 */}
         <div className="flex justify-center py-6 border-b border-gray-100">
           <Link to="/" className="text-center">
-            <h1 className="text-4xl md:text-5xl font-normal text-gray-900 tracking-wide" style={{ fontStyle: 'normal', letterSpacing: '0.05em' }}>
+            <h1 className="text-4xl md:text-5xl text-gray-900" style={{ fontFamily: "'Petrov Sans', sans-serif", fontWeight: 400, fontStyle: 'normal', fontSynthesis: 'none' }}>
               Infer
             </h1>
             <p className="text-xs text-gray-500 mt-1 tracking-widest uppercase">News Analysis</p>
