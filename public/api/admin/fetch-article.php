@@ -20,7 +20,7 @@ if (empty($url)) {
     echo json_encode([
         'success' => false,
         'message' => 'URL이 필요합니다.'
-    ]);
+    ], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
@@ -29,33 +29,78 @@ if (!filter_var($url, FILTER_VALIDATE_URL)) {
     echo json_encode([
         'success' => false,
         'message' => '유효한 URL이 아닙니다.'
-    ]);
+    ], JSON_UNESCAPED_UNICODE);
     exit;
+}
+
+/**
+ * cURL을 사용하여 URL에서 HTML 가져오기
+ */
+function fetchUrl($url) {
+    // cURL 사용 가능 여부 확인
+    if (!function_exists('curl_init')) {
+        // cURL 없으면 file_get_contents 시도
+        $context = stream_context_create([
+            'http' => [
+                'method' => 'GET',
+                'header' => "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36\r\n",
+                'timeout' => 15,
+                'ignore_errors' => true
+            ],
+            'ssl' => [
+                'verify_peer' => false,
+                'verify_peer_name' => false
+            ]
+        ]);
+        
+        $html = @file_get_contents($url, false, $context);
+        if ($html === false) {
+            throw new Exception('URL에서 콘텐츠를 가져올 수 없습니다. (file_get_contents 실패)');
+        }
+        return $html;
+    }
+    
+    // cURL 사용
+    $ch = curl_init();
+    curl_setopt_array($ch, [
+        CURLOPT_URL => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_MAXREDIRS => 5,
+        CURLOPT_TIMEOUT => 15,
+        CURLOPT_CONNECTTIMEOUT => 10,
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_SSL_VERIFYHOST => false,
+        CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        CURLOPT_HTTPHEADER => [
+            'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language: ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7'
+        ],
+        CURLOPT_ENCODING => '' // Accept all encodings
+    ]);
+    
+    $html = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error = curl_error($ch);
+    curl_close($ch);
+    
+    if ($html === false || !empty($error)) {
+        throw new Exception('URL에서 콘텐츠를 가져올 수 없습니다: ' . $error);
+    }
+    
+    if ($httpCode >= 400) {
+        throw new Exception('HTTP 오류: ' . $httpCode);
+    }
+    
+    return $html;
 }
 
 try {
     // URL에서 HTML 가져오기
-    $context = stream_context_create([
-        'http' => [
-            'method' => 'GET',
-            'header' => [
-                'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                'Accept-Language: ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7'
-            ],
-            'timeout' => 10,
-            'ignore_errors' => true
-        ],
-        'ssl' => [
-            'verify_peer' => false,
-            'verify_peer_name' => false
-        ]
-    ]);
-
-    $html = @file_get_contents($url, false, $context);
+    $html = fetchUrl($url);
     
-    if ($html === false) {
-        throw new Exception('URL에서 콘텐츠를 가져올 수 없습니다.');
+    if (empty($html)) {
+        throw new Exception('빈 응답을 받았습니다.');
     }
 
     // 인코딩 처리
