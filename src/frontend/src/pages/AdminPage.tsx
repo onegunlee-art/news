@@ -67,6 +67,8 @@ const AdminPage: React.FC = () => {
   const [editingNewsId, setEditingNewsId] = useState<number | null>(null);
   const [isLoadingNews, setIsLoadingNews] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
+  const [articleUrl, setArticleUrl] = useState('');
+  const [isFetchingUrl, setIsFetchingUrl] = useState(false);
   
   const [stats, setStats] = useState<DashboardStats>({
     totalUsers: 0,
@@ -443,6 +445,58 @@ const AdminPage: React.FC = () => {
                 </div>
 
                 <div className="space-y-4">
+                  {/* URL 자동 추출 */}
+                  <div>
+                    <label className="block text-slate-300 mb-2 text-sm font-medium">기사 URL (선택사항)</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="url"
+                        value={articleUrl}
+                        onChange={(e) => setArticleUrl(e.target.value)}
+                        placeholder="https://example.com/article..."
+                        className="flex-1 bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition"
+                      />
+                      <button
+                        onClick={async () => {
+                          if (!articleUrl.trim()) {
+                            setSaveMessage({ type: 'error', text: 'URL을 입력해주세요.' });
+                            return;
+                          }
+                          
+                          setIsFetchingUrl(true);
+                          setSaveMessage(null);
+                          
+                          try {
+                            const response = await fetch(`/api/admin/fetch-article.php?url=${encodeURIComponent(articleUrl)}`);
+                            const data = await response.json();
+                            
+                            if (data.success && data.data) {
+                              setNewsTitle(data.data.title || '');
+                              setNewsContent(data.data.content || data.data.description || '');
+                              setSaveMessage({ type: 'success', text: '기사 정보를 가져왔습니다!' });
+                            } else {
+                              throw new Error(data.message || '기사 정보를 가져올 수 없습니다.');
+                            }
+                          } catch (error) {
+                            setSaveMessage({ type: 'error', text: '오류: ' + (error as Error).message });
+                          } finally {
+                            setIsFetchingUrl(false);
+                            setTimeout(() => setSaveMessage(null), 3000);
+                          }
+                        }}
+                        disabled={isFetchingUrl || !articleUrl.trim()}
+                        className={`px-5 py-3 rounded-xl font-medium transition-all whitespace-nowrap ${
+                          isFetchingUrl || !articleUrl.trim()
+                            ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
+                            : 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:opacity-90'
+                        }`}
+                      >
+                        {isFetchingUrl ? '가져오는 중...' : '자동 추출'}
+                      </button>
+                    </div>
+                    <p className="text-slate-500 text-sm mt-1">기사 URL을 입력하면 제목과 내용을 자동으로 가져옵니다.</p>
+                  </div>
+
                   {/* 제목 입력 */}
                   <div>
                     <label className="block text-slate-300 mb-2 text-sm font-medium">뉴스 제목</label>
