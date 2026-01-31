@@ -48,6 +48,7 @@ if ($method === 'POST') {
     $category = $input['category'] ?? '';
     $title = $input['title'] ?? '';
     $content = $input['content'] ?? '';
+    $sourceUrl = $input['source_url'] ?? null;
     
     // 유효성 검사
     if (empty($title) || empty($content)) {
@@ -64,14 +65,15 @@ if ($method === 'POST') {
     }
     
     try {
-        $uniqueUrl = 'admin://news/' . uniqid() . '-' . time();
+        // source_url이 있으면 그것을 사용, 없으면 admin:// URL 생성
+        $url = $sourceUrl ? $sourceUrl : 'admin://news/' . uniqid() . '-' . time();
         $description = mb_substr(strip_tags($content), 0, 300);
         
         $stmt = $db->prepare("
-            INSERT INTO news (category, title, description, content, source, url, created_at)
-            VALUES (?, ?, ?, ?, 'Admin', ?, NOW())
+            INSERT INTO news (category, title, description, content, source, url, source_url, created_at)
+            VALUES (?, ?, ?, ?, 'Admin', ?, ?, NOW())
         ");
-        $stmt->execute([$category, $title, $description, $content, $uniqueUrl]);
+        $stmt->execute([$category, $title, $description, $content, $url, $sourceUrl]);
         
         $newsId = $db->lastInsertId();
         
@@ -82,7 +84,8 @@ if ($method === 'POST') {
             'data' => [
                 'id' => (int)$newsId,
                 'category' => $category,
-                'title' => $title
+                'title' => $title,
+                'source_url' => $sourceUrl
             ]
         ]);
     } catch (PDOException $e) {
@@ -128,7 +131,7 @@ if ($method === 'GET') {
         
         // 뉴스 목록 (LIMIT과 OFFSET은 직접 쿼리에 삽입)
         $stmt = $db->prepare("
-            SELECT id, category, title, description, content, source, created_at
+            SELECT id, category, title, description, content, source, source_url, created_at
             FROM news 
             $where
             ORDER BY created_at DESC 
@@ -166,6 +169,7 @@ if ($method === 'PUT') {
     $category = $input['category'] ?? '';
     $title = $input['title'] ?? '';
     $content = $input['content'] ?? '';
+    $sourceUrl = $input['source_url'] ?? null;
     
     // 유효성 검사
     if (!$id) {
@@ -201,10 +205,10 @@ if ($method === 'PUT') {
         
         $stmt = $db->prepare("
             UPDATE news 
-            SET category = ?, title = ?, description = ?, content = ?
+            SET category = ?, title = ?, description = ?, content = ?, source_url = ?
             WHERE id = ?
         ");
-        $stmt->execute([$category, $title, $description, $content, $id]);
+        $stmt->execute([$category, $title, $description, $content, $sourceUrl, $id]);
         
         echo json_encode([
             'success' => true,
@@ -212,7 +216,8 @@ if ($method === 'PUT') {
             'data' => [
                 'id' => (int)$id,
                 'category' => $category,
-                'title' => $title
+                'title' => $title,
+                'source_url' => $sourceUrl
             ]
         ]);
     } catch (PDOException $e) {

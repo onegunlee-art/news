@@ -42,6 +42,7 @@ interface NewsArticle {
   description?: string;
   content: string;
   source?: string;
+  source_url?: string;
   created_at?: string;
 }
 
@@ -132,6 +133,7 @@ const AdminPage: React.FC = () => {
     setEditingNewsId(null);
     setNewsTitle('');
     setNewsContent('');
+    setArticleUrl('');
     setSaveMessage(null);
   };
 
@@ -620,6 +622,7 @@ const AdminPage: React.FC = () => {
                               category: selectedCategory,
                               title: newsTitle,
                               content: newsContent,
+                              source_url: articleUrl.trim() || null,
                             }),
                           });
                           
@@ -635,6 +638,7 @@ const AdminPage: React.FC = () => {
                             // 폼 초기화
                             setNewsTitle('');
                             setNewsContent('');
+                            setArticleUrl('');
                             setEditingNewsId(null);
                           } else {
                             throw new Error(data.message || '저장 실패');
@@ -745,9 +749,21 @@ const AdminPage: React.FC = () => {
                             <p className="text-slate-400 text-sm mt-1 line-clamp-2">
                               {news.description || news.content}
                             </p>
-                            <p className="text-slate-500 text-xs mt-2">
-                              {news.created_at ? new Date(news.created_at).toLocaleString('ko-KR') : ''}
-                            </p>
+                            <div className="flex items-center gap-3 mt-2">
+                              <p className="text-slate-500 text-xs">
+                                {news.created_at ? new Date(news.created_at).toLocaleString('ko-KR') : ''}
+                              </p>
+                              {news.source_url && !news.source_url.startsWith('admin://') && (
+                                <a
+                                  href={news.source_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-xs text-cyan-400 hover:text-cyan-300 hover:underline"
+                                >
+                                  원문 보기 →
+                                </a>
+                              )}
+                            </div>
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
                             <button
