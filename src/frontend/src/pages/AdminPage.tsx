@@ -466,25 +466,32 @@ const AdminPage: React.FC = () => {
                           setIsFetchingUrl(true);
                           setSaveMessage(null);
                           
-                          try {
-                            // CORS 프록시를 통해 외부 URL 가져오기
-                            const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(articleUrl)}`;
-                            const response = await fetch(proxyUrl);
-                            
-                            if (!response.ok) {
-                              throw new Error('URL에서 콘텐츠를 가져올 수 없습니다.');
-                            }
-                            
-                            const html = await response.text();
-                            
-                            // 메타데이터 추출
+                          // 여러 CORS 프록시를 순차적으로 시도
+                          const corsProxies = [
+                            (url: string) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+                            (url: string) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+                            (url: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+                          ];
+                          
+                          // HTML에서 메타데이터 추출하는 함수
+                          const extractMetadata = (html: string) => {
                             let title = '';
                             let description = '';
                             
-                            // og:title
-                            const ogTitleMatch = html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i) ||
-                                                 html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:title["']/i);
-                            if (ogTitleMatch) title = ogTitleMatch[1];
+                            // og:title (다양한 패턴 지원)
+                            const ogTitlePatterns = [
+                              /<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i,
+                              /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:title["']/i,
+                              /<meta[^>]*property="og:title"[^>]*content="([^"]*)"/i,
+                              /<meta[^>]*content="([^"]*)"[^>]*property="og:title"/i,
+                            ];
+                            for (const pattern of ogTitlePatterns) {
+                              const match = html.match(pattern);
+                              if (match && match[1]) {
+                                title = match[1];
+                                break;
+                              }
+                            }
                             
                             // title 태그 fallback
                             if (!title) {
@@ -492,16 +499,34 @@ const AdminPage: React.FC = () => {
                               if (titleMatch) title = titleMatch[1].trim();
                             }
                             
-                            // og:description
-                            const ogDescMatch = html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i) ||
-                                                html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:description["']/i);
-                            if (ogDescMatch) description = ogDescMatch[1];
+                            // og:description (다양한 패턴 지원)
+                            const ogDescPatterns = [
+                              /<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i,
+                              /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:description["']/i,
+                              /<meta[^>]*property="og:description"[^>]*content="([^"]*)"/i,
+                              /<meta[^>]*content="([^"]*)"[^>]*property="og:description"/i,
+                            ];
+                            for (const pattern of ogDescPatterns) {
+                              const match = html.match(pattern);
+                              if (match && match[1]) {
+                                description = match[1];
+                                break;
+                              }
+                            }
                             
                             // description 메타태그 fallback
                             if (!description) {
-                              const descMatch = html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i) ||
-                                               html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["']description["']/i);
-                              if (descMatch) description = descMatch[1];
+                              const descPatterns = [
+                                /<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i,
+                                /<meta[^>]+content=["']([^"']+)["'][^>]+name=["']description["']/i,
+                              ];
+                              for (const pattern of descPatterns) {
+                                const match = html.match(pattern);
+                                if (match && match[1]) {
+                                  description = match[1];
+                                  break;
+                                }
+                              }
                             }
                             
                             // HTML 엔티티 디코딩
@@ -511,21 +536,66 @@ const AdminPage: React.FC = () => {
                               return textarea.value;
                             };
                             
-                            title = decodeHtml(title);
-                            description = decodeHtml(description);
+                            return {
+                              title: decodeHtml(title),
+                              description: decodeHtml(description),
+                            };
+                          };
+                          
+                          try {
+                            let html = '';
+                            let lastError = null;
+                            
+                            // 각 프록시를 순차적으로 시도
+                            for (let i = 0; i < corsProxies.length; i++) {
+                              try {
+                                const proxyUrl = corsProxies[i](articleUrl);
+                                console.log(`Trying proxy ${i + 1}:`, proxyUrl);
+                                
+                                const controller = new AbortController();
+                                const timeoutId = setTimeout(() => controller.abort(), 10000); // 10초 타임아웃
+                                
+                                const response = await fetch(proxyUrl, {
+                                  signal: controller.signal,
+                                  headers: {
+                                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                                  },
+                                });
+                                clearTimeout(timeoutId);
+                                
+                                if (response.ok) {
+                                  html = await response.text();
+                                  if (html && html.length > 100) {
+                                    console.log(`Proxy ${i + 1} succeeded, got ${html.length} characters`);
+                                    break;
+                                  }
+                                }
+                              } catch (proxyError) {
+                                console.log(`Proxy ${i + 1} failed:`, proxyError);
+                                lastError = proxyError;
+                                continue;
+                              }
+                            }
+                            
+                            if (!html || html.length < 100) {
+                              throw new Error('모든 프록시에서 콘텐츠를 가져올 수 없습니다.');
+                            }
+                            
+                            const { title, description } = extractMetadata(html);
                             
                             if (title || description) {
                               setNewsTitle(title);
                               setNewsContent(description);
                               setSaveMessage({ type: 'success', text: '기사 정보를 가져왔습니다!' });
                             } else {
-                              throw new Error('메타데이터를 추출할 수 없습니다.');
+                              throw new Error('메타데이터를 추출할 수 없습니다. 직접 입력해주세요.');
                             }
                           } catch (error) {
+                            console.error('URL fetch error:', error);
                             setSaveMessage({ type: 'error', text: '오류: ' + (error as Error).message });
                           } finally {
                             setIsFetchingUrl(false);
-                            setTimeout(() => setSaveMessage(null), 3000);
+                            setTimeout(() => setSaveMessage(null), 5000);
                           }
                         }}
                         disabled={isFetchingUrl || !articleUrl.trim()}
