@@ -11,7 +11,7 @@ export default function Footer() {
           {/* 브랜드 */}
           <div className="md:col-span-1">
             <Link to="/" className="block mb-4">
-              <h2 className="text-2xl font-light">Infer</h2>
+              <h2 className="text-2xl font-light">The Gist</h2>
             </Link>
             <p className="text-gray-400 text-sm leading-relaxed">
               전문가가 직접 짚어주는 뉴스의 이면과 우리에게 전달될 파급력을 전해 드립니다.
@@ -89,7 +89,7 @@ export default function Footer() {
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-xs text-gray-500">
-              &copy; {currentYear} Infer. All rights reserved.
+              &copy; {currentYear} The Gist. All rights reserved.
             </p>
             <div className="flex items-center gap-6">
               <Link to="/privacy" className="text-xs text-gray-500 hover:text-gray-300 transition-colors">

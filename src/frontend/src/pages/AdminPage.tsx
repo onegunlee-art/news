@@ -245,7 +245,7 @@ const AdminPage: React.FC = () => {
             <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-emerald-400 bg-clip-text text-transparent">
               Admin Panel
             </h1>
-            <p className="text-slate-500 text-sm mt-1">Infer</p>
+            <p className="text-slate-500 text-sm mt-1">The Gist</p>
           </div>
 
           <nav className="space-y-2">
