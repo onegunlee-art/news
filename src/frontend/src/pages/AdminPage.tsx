@@ -467,15 +467,60 @@ const AdminPage: React.FC = () => {
                           setSaveMessage(null);
                           
                           try {
-                            const response = await fetch(`/api/admin/fetch-article.php?url=${encodeURIComponent(articleUrl)}`);
-                            const data = await response.json();
+                            // CORS 프록시를 통해 외부 URL 가져오기
+                            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(articleUrl)}`;
+                            const response = await fetch(proxyUrl);
+                            const proxyData = await response.json();
                             
-                            if (data.success && data.data) {
-                              setNewsTitle(data.data.title || '');
-                              setNewsContent(data.data.content || data.data.description || '');
+                            if (!proxyData.contents) {
+                              throw new Error('URL에서 콘텐츠를 가져올 수 없습니다.');
+                            }
+                            
+                            const html = proxyData.contents;
+                            
+                            // 메타데이터 추출
+                            let title = '';
+                            let description = '';
+                            
+                            // og:title
+                            const ogTitleMatch = html.match(/<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i) ||
+                                                 html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:title["']/i);
+                            if (ogTitleMatch) title = ogTitleMatch[1];
+                            
+                            // title 태그 fallback
+                            if (!title) {
+                              const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+                              if (titleMatch) title = titleMatch[1].trim();
+                            }
+                            
+                            // og:description
+                            const ogDescMatch = html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i) ||
+                                                html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:description["']/i);
+                            if (ogDescMatch) description = ogDescMatch[1];
+                            
+                            // description 메타태그 fallback
+                            if (!description) {
+                              const descMatch = html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i) ||
+                                               html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["']description["']/i);
+                              if (descMatch) description = descMatch[1];
+                            }
+                            
+                            // HTML 엔티티 디코딩
+                            const decodeHtml = (text: string) => {
+                              const textarea = document.createElement('textarea');
+                              textarea.innerHTML = text;
+                              return textarea.value;
+                            };
+                            
+                            title = decodeHtml(title);
+                            description = decodeHtml(description);
+                            
+                            if (title || description) {
+                              setNewsTitle(title);
+                              setNewsContent(description);
                               setSaveMessage({ type: 'success', text: '기사 정보를 가져왔습니다!' });
                             } else {
-                              throw new Error(data.message || '기사 정보를 가져올 수 없습니다.');
+                              throw new Error('메타데이터를 추출할 수 없습니다.');
                             }
                           } catch (error) {
                             setSaveMessage({ type: 'error', text: '오류: ' + (error as Error).message });
