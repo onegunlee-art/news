@@ -201,6 +201,34 @@ input, textarea, select {
   .text-gradient {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-primary-500 to-primary-700;
   }
+  
+  /* 부드러운 트랜지션 기본값 */
+  .transition-smooth {
+    @apply transition-all duration-300 ease-out;
+  }
+  
+  /* 커스텀 shadow 유틸리티 */
+  .shadow-soft {
+    box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.08), 0 4px 16px -4px rgba(0, 0, 0, 0.04);
+  }
+  
+  .shadow-soft-lg {
+    box-shadow: 0 4px 16px -4px rgba(0, 0, 0, 0.1), 0 8px 32px -8px rgba(0, 0, 0, 0.06);
+  }
+  
+  /* 이미지 hover 줌 효과 */
+  .img-zoom {
+    @apply transition-transform duration-500 ease-out;
+  }
+  
+  .img-zoom:hover {
+    @apply scale-[1.03];
+  }
+  
+  /* 텍스트 타이트한 letter-spacing */
+  .tracking-tight-custom {
+    letter-spacing: -0.02em;
+  }
 }
 
 /* line-clamp 유틸리티 */

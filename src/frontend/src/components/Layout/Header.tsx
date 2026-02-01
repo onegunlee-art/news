@@ -17,15 +17,15 @@ export default function Header() {
   return (
     <header className="bg-white border-b border-gray-200">
       {/* 상단 바 */}
-      <div className="bg-gray-900 text-white text-xs py-2">
+      <div className="bg-black text-white text-xs py-2.5">
         <div className="max-w-7xl mx-auto px-4 flex justify-end items-center">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-6">
             {isAuthenticated ? (
-              <button onClick={handleLogout} className="hover:text-gray-300">로그아웃</button>
+              <button onClick={handleLogout} className="text-gray-300 hover:text-white transition-colors duration-200">로그아웃</button>
             ) : (
-              <button onClick={() => setIsLoginOpen(true)} className="hover:text-gray-300">로그인</button>
+              <button onClick={() => setIsLoginOpen(true)} className="text-gray-300 hover:text-white transition-colors duration-200">로그인</button>
             )}
-            <Link to="/subscribe" className="text-primary-500 hover:text-primary-400 font-semibold">구독하기</Link>
+            <Link to="/subscribe" className="text-primary-400 hover:text-primary-300 font-semibold transition-colors duration-200">구독하기</Link>
           </div>
         </div>
       </div>
@@ -33,39 +33,39 @@ export default function Header() {
       {/* 메인 헤더 */}
       <div className="max-w-7xl mx-auto px-4">
         {/* 로고 */}
-        <div className="flex justify-center py-6 border-b border-gray-100">
-          <Link to="/" className="text-center">
-            <h1 className="text-4xl md:text-5xl text-gray-900" style={{ fontFamily: "'Petrov Sans', sans-serif", fontWeight: 400, fontStyle: 'normal', fontSynthesis: 'none' }}>
+        <div className="flex justify-center py-8 border-b border-gray-100">
+          <Link to="/" className="text-center group">
+            <h1 className="text-4xl md:text-5xl text-gray-900 transition-colors duration-300 group-hover:text-gray-700" style={{ fontFamily: "'Petrov Sans', sans-serif", fontWeight: 400, fontStyle: 'normal', fontSynthesis: 'none', letterSpacing: '-0.02em' }}>
               The Gist
             </h1>
-            <p className="text-xs text-gray-500 mt-1 tracking-widest uppercase">News Analysis</p>
+            <p className="text-[10px] text-gray-400 mt-2 tracking-[0.3em] uppercase font-light">News Analysis</p>
           </Link>
         </div>
 
         {/* 네비게이션 */}
-        <nav className="hidden md:flex justify-center py-4">
-          <div className="flex items-center gap-8">
+        <nav className="hidden md:flex justify-center py-5">
+          <div className="flex items-center gap-10">
             <Link 
               to="/diplomacy" 
-              className="text-sm font-medium text-gray-700 hover:text-primary-500 transition-colors uppercase tracking-wide"
+              className="relative text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors duration-200 uppercase tracking-wider py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[1px] after:bg-gray-900 after:transition-all after:duration-300 hover:after:w-full"
             >
               Foreign Affairs
             </Link>
             <Link 
               to="/economy" 
-              className="text-sm font-medium text-gray-700 hover:text-primary-500 transition-colors uppercase tracking-wide"
+              className="relative text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors duration-200 uppercase tracking-wider py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[1px] after:bg-gray-900 after:transition-all after:duration-300 hover:after:w-full"
             >
               Economy
             </Link>
             <Link 
               to="/technology" 
-              className="text-sm font-medium text-gray-700 hover:text-primary-500 transition-colors uppercase tracking-wide"
+              className="relative text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors duration-200 uppercase tracking-wider py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[1px] after:bg-gray-900 after:transition-all after:duration-300 hover:after:w-full"
             >
               Technology
             </Link>
             <Link 
               to="/entertainment" 
-              className="text-sm font-medium text-gray-700 hover:text-primary-500 transition-colors uppercase tracking-wide"
+              className="relative text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors duration-200 uppercase tracking-wider py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[1px] after:bg-gray-900 after:transition-all after:duration-300 hover:after:w-full"
             >
               Entertainment
             </Link>
