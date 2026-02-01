@@ -69,11 +69,26 @@ if ($method === 'POST') {
         $url = $sourceUrl ? $sourceUrl : 'admin://news/' . uniqid() . '-' . time();
         $description = mb_substr(strip_tags($content), 0, 300);
         
-        $stmt = $db->prepare("
-            INSERT INTO news (category, title, description, content, source, url, source_url, created_at)
-            VALUES (?, ?, ?, ?, 'Admin', ?, ?, NOW())
-        ");
-        $stmt->execute([$category, $title, $description, $content, $url, $sourceUrl]);
+        // source_url 컬럼 존재 여부 확인
+        $hasSourceUrl = false;
+        try {
+            $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'source_url'");
+            $hasSourceUrl = $checkCol->rowCount() > 0;
+        } catch (Exception $e) {}
+        
+        if ($hasSourceUrl) {
+            $stmt = $db->prepare("
+                INSERT INTO news (category, title, description, content, source, url, source_url, created_at)
+                VALUES (?, ?, ?, ?, 'Admin', ?, ?, NOW())
+            ");
+            $stmt->execute([$category, $title, $description, $content, $url, $sourceUrl]);
+        } else {
+            $stmt = $db->prepare("
+                INSERT INTO news (category, title, description, content, source, url, created_at)
+                VALUES (?, ?, ?, ?, 'Admin', ?, NOW())
+            ");
+            $stmt->execute([$category, $title, $description, $content, $url]);
+        }
         
         $newsId = $db->lastInsertId();
         
@@ -130,8 +145,19 @@ if ($method === 'GET') {
         $total = (int) $stmt->fetchColumn();
         
         // 뉴스 목록 (LIMIT과 OFFSET은 직접 쿼리에 삽입)
+        // source_url 컬럼 존재 여부 확인
+        $hasSourceUrl = false;
+        try {
+            $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'source_url'");
+            $hasSourceUrl = $checkCol->rowCount() > 0;
+        } catch (Exception $e) {}
+        
+        $selectColumns = $hasSourceUrl 
+            ? 'id, category, title, description, content, source, source_url, created_at'
+            : 'id, category, title, description, content, source, NULL as source_url, created_at';
+        
         $stmt = $db->prepare("
-            SELECT id, category, title, description, content, source, source_url, created_at
+            SELECT $selectColumns
             FROM news 
             $where
             ORDER BY created_at DESC 
@@ -203,12 +229,28 @@ if ($method === 'PUT') {
         
         $description = mb_substr(strip_tags($content), 0, 300);
         
-        $stmt = $db->prepare("
-            UPDATE news 
-            SET category = ?, title = ?, description = ?, content = ?, source_url = ?
-            WHERE id = ?
-        ");
-        $stmt->execute([$category, $title, $description, $content, $sourceUrl, $id]);
+        // source_url 컬럼 존재 여부 확인
+        $hasSourceUrl = false;
+        try {
+            $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'source_url'");
+            $hasSourceUrl = $checkCol->rowCount() > 0;
+        } catch (Exception $e) {}
+        
+        if ($hasSourceUrl) {
+            $stmt = $db->prepare("
+                UPDATE news 
+                SET category = ?, title = ?, description = ?, content = ?, source_url = ?
+                WHERE id = ?
+            ");
+            $stmt->execute([$category, $title, $description, $content, $sourceUrl, $id]);
+        } else {
+            $stmt = $db->prepare("
+                UPDATE news 
+                SET category = ?, title = ?, description = ?, content = ?
+                WHERE id = ?
+            ");
+            $stmt->execute([$category, $title, $description, $content, $id]);
+        }
         
         echo json_encode([
             'success' => true,
