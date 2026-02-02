@@ -30,15 +30,15 @@ $dbConfig = [
 // 고정 이미지 URL 매핑 (Unsplash 직접 링크 - 저작권 무료)
 $imageMap = [
     'trump' => [
-        'https://images.unsplash.com/photo-1580128660010-fd027e1e587a?w=800&h=500&fit=crop',
-        'https://images.unsplash.com/photo-1569863959165-56dae551d4fc?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1585581934192-d2e99e5f0cc0?w=800&h=500&fit=crop', // 백악관
+        'https://images.unsplash.com/photo-1540910419892-4a36d2c3266c?w=800&h=500&fit=crop', // 미국 국기
     ],
     '트럼프' => [
-        'https://images.unsplash.com/photo-1580128660010-fd027e1e587a?w=800&h=500&fit=crop',
-        'https://images.unsplash.com/photo-1569863959165-56dae551d4fc?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1585581934192-d2e99e5f0cc0?w=800&h=500&fit=crop', // 백악관
+        'https://images.unsplash.com/photo-1540910419892-4a36d2c3266c?w=800&h=500&fit=crop', // 미국 국기
     ],
-    'greenland' => ['https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=800&h=500&fit=crop'],
-    '그린란드' => ['https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=800&h=500&fit=crop'],
+    'greenland' => ['https://images.unsplash.com/photo-1517783999520-f068f9e28a51?w=800&h=500&fit=crop'], // 북극 빙하
+    '그린란드' => ['https://images.unsplash.com/photo-1517783999520-f068f9e28a51?w=800&h=500&fit=crop'], // 북극 빙하
     'biden' => ['https://images.unsplash.com/photo-1604859628564-26f78352400d?w=800&h=500&fit=crop'],
     '바이든' => ['https://images.unsplash.com/photo-1604859628564-26f78352400d?w=800&h=500&fit=crop'],
     'openai' => [

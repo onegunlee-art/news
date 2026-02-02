@@ -35,24 +35,24 @@ try {
 // 고정 이미지 URL 매핑 (Unsplash 직접 링크 - 저작권 무료)
 // 형식: 키워드 => [이미지 URL 배열]
 $imageMap = [
-    // 인물/정치 - 트럼프
+    // 인물/정치 - 트럼프 (백악관/미국 정치 이미지)
     'trump' => [
-        'https://images.unsplash.com/photo-1580128660010-fd027e1e587a?w=800&h=500&fit=crop',
-        'https://images.unsplash.com/photo-1569863959165-56dae551d4fc?w=800&h=500&fit=crop',
-        'https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1585581934192-d2e99e5f0cc0?w=800&h=500&fit=crop', // 백악관
+        'https://images.unsplash.com/photo-1540910419892-4a36d2c3266c?w=800&h=500&fit=crop', // 미국 국기
+        'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&h=500&fit=crop', // 워싱턴DC
     ],
     '트럼프' => [
-        'https://images.unsplash.com/photo-1580128660010-fd027e1e587a?w=800&h=500&fit=crop',
-        'https://images.unsplash.com/photo-1569863959165-56dae551d4fc?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1585581934192-d2e99e5f0cc0?w=800&h=500&fit=crop', // 백악관
+        'https://images.unsplash.com/photo-1540910419892-4a36d2c3266c?w=800&h=500&fit=crop', // 미국 국기
     ],
-    // 그린란드
+    // 그린란드 (북극/얼음/빙하 이미지)
     'greenland' => [
-        'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=800&h=500&fit=crop',
-        'https://images.unsplash.com/photo-1476610182048-b716b8518aae?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1517783999520-f068f9e28a51?w=800&h=500&fit=crop', // 북극 빙하
+        'https://images.unsplash.com/photo-1489549132488-d00b7eee80f1?w=800&h=500&fit=crop', // 빙산
     ],
     '그린란드' => [
-        'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=800&h=500&fit=crop',
-        'https://images.unsplash.com/photo-1476610182048-b716b8518aae?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1517783999520-f068f9e28a51?w=800&h=500&fit=crop', // 북극 빙하
+        'https://images.unsplash.com/photo-1489549132488-d00b7eee80f1?w=800&h=500&fit=crop', // 빙산
     ],
     // 바이든
     'biden' => [
