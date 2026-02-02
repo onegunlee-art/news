@@ -801,20 +801,44 @@ const AdminPage: React.FC = () => {
                         
                         try {
                           const isEditing = editingNewsId !== null;
-                          const response = await fetch('/api/admin/news.php', {
+                          const requestBody = {
+                            ...(isEditing && { id: editingNewsId }),
+                            category: selectedCategory,
+                            title: newsTitle,
+                            content: newsContent,
+                            why_important: newsWhyImportant.trim() || null,
+                            source_url: articleUrl.trim() || null,
+                          };
+                          
+                          console.log('Sending request:', { 
                             method: isEditing ? 'PUT' : 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                              ...(isEditing && { id: editingNewsId }),
-                              category: selectedCategory,
-                              title: newsTitle,
-                              content: newsContent,
-                              why_important: newsWhyImportant.trim() || null,
-                              source_url: articleUrl.trim() || null,
-                            }),
+                            contentLength: newsContent.length,
+                            bodySize: JSON.stringify(requestBody).length 
                           });
                           
-                          const data = await response.json();
+                          const response = await fetch('/api/admin/news.php', {
+                            method: isEditing ? 'PUT' : 'POST',
+                            headers: { 'Content-Type': 'application/json; charset=utf-8' },
+                            body: JSON.stringify(requestBody),
+                          });
+                          
+                          // 응답 텍스트 먼저 가져오기
+                          const responseText = await response.text();
+                          console.log('Response status:', response.status, 'Response length:', responseText.length);
+                          
+                          // 응답이 비어있으면 에러
+                          if (!responseText) {
+                            throw new Error('서버에서 빈 응답을 반환했습니다. (status: ' + response.status + ')');
+                          }
+                          
+                          // JSON 파싱 시도
+                          let data;
+                          try {
+                            data = JSON.parse(responseText);
+                          } catch (parseError) {
+                            console.error('JSON parse error:', parseError, 'Response:', responseText.substring(0, 500));
+                            throw new Error('서버 응답 파싱 실패. 서버 오류 발생.');
+                          }
                           
                           if (data.success) {
                             setSaveMessage({ 
@@ -833,10 +857,11 @@ const AdminPage: React.FC = () => {
                             throw new Error(data.message || '저장 실패');
                           }
                         } catch (error) {
+                          console.error('Save error:', error);
                           setSaveMessage({ type: 'error', text: '저장 실패: ' + (error as Error).message });
                         } finally {
                           setIsSaving(false);
-                          setTimeout(() => setSaveMessage(null), 3000);
+                          setTimeout(() => setSaveMessage(null), 5000);
                         }
                       }}
                       disabled={isSaving || !newsTitle.trim() || !newsContent.trim()}

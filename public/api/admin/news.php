@@ -7,6 +7,27 @@
  * DELETE: 뉴스 삭제
  */
 
+// 에러 리포팅 설정 - JSON 응답만 출력하도록
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+
+// 출력 버퍼링 시작 - PHP 경고 메시지가 JSON을 오염시키지 않도록
+ob_start();
+
+// 종료 시 에러 체크
+register_shutdown_function(function() {
+    $error = error_get_last();
+    if ($error && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
+        ob_clean();
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode([
+            'success' => false,
+            'message' => 'PHP Fatal Error: ' . $error['message']
+        ]);
+    }
+});
+
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
@@ -16,6 +37,39 @@ header('Access-Control-Allow-Headers: Content-Type');
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
+}
+
+// 에러 로깅 함수
+function logError($message, $data = null) {
+    $logFile = __DIR__ . '/news_error.log';
+    $timestamp = date('Y-m-d H:i:s');
+    $logMessage = "[$timestamp] $message";
+    if ($data) {
+        $logMessage .= " | Data: " . json_encode($data, JSON_UNESCAPED_UNICODE);
+    }
+    $logMessage .= "\n";
+    file_put_contents($logFile, $logMessage, FILE_APPEND | LOCK_EX);
+}
+
+// JSON 입력 안전하게 읽기
+function getJsonInput() {
+    $rawInput = file_get_contents('php://input');
+    
+    // 빈 입력 체크
+    if (empty($rawInput)) {
+        return ['error' => 'Empty request body'];
+    }
+    
+    // JSON 디코딩
+    $input = json_decode($rawInput, true);
+    
+    // JSON 디코딩 에러 체크
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        logError('JSON decode error: ' . json_last_error_msg(), ['raw_length' => strlen($rawInput)]);
+        return ['error' => 'Invalid JSON: ' . json_last_error_msg()];
+    }
+    
+    return $input;
 }
 
 // 데이터베이스 설정
@@ -121,13 +175,41 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 // POST: 뉴스 저장
 if ($method === 'POST') {
-    $input = json_decode(file_get_contents('php://input'), true);
+    // 버퍼 클리어
+    ob_clean();
+    
+    // 요청 크기 체크
+    $contentLength = isset($_SERVER['CONTENT_LENGTH']) ? (int)$_SERVER['CONTENT_LENGTH'] : 0;
+    logError('POST content length: ' . $contentLength);
+    
+    // 최대 요청 크기 체크 (10MB)
+    if ($contentLength > 10 * 1024 * 1024) {
+        http_response_code(413);
+        echo json_encode(['success' => false, 'message' => '요청이 너무 큽니다. (최대 10MB)']);
+        exit;
+    }
+    
+    $input = getJsonInput();
+    
+    // JSON 파싱 에러 체크
+    if (isset($input['error'])) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'JSON 파싱 실패: ' . $input['error']]);
+        exit;
+    }
     
     $category = $input['category'] ?? '';
     $title = $input['title'] ?? '';
     $content = $input['content'] ?? '';
     $whyImportant = $input['why_important'] ?? null;
     $sourceUrl = $input['source_url'] ?? null;
+    
+    // 디버그 로깅
+    logError('POST request received', [
+        'category' => $category,
+        'title_length' => strlen($title),
+        'content_length' => strlen($content)
+    ]);
     
     // 유효성 검사
     if (empty($title) || empty($content)) {
@@ -302,7 +384,17 @@ if ($method === 'GET') {
 
 // PUT: 뉴스 수정
 if ($method === 'PUT') {
-    $input = json_decode(file_get_contents('php://input'), true);
+    // 버퍼 클리어
+    ob_clean();
+    
+    $input = getJsonInput();
+    
+    // JSON 파싱 에러 체크
+    if (isset($input['error'])) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'JSON 파싱 실패: ' . $input['error']]);
+        exit;
+    }
     
     $id = $input['id'] ?? 0;
     $category = $input['category'] ?? '';
@@ -310,6 +402,14 @@ if ($method === 'PUT') {
     $content = $input['content'] ?? '';
     $whyImportant = $input['why_important'] ?? null;
     $sourceUrl = $input['source_url'] ?? null;
+    
+    // 디버그 로깅
+    logError('PUT request received', [
+        'id' => $id,
+        'category' => $category,
+        'title_length' => strlen($title),
+        'content_length' => strlen($content)
+    ]);
     
     // 유효성 검사
     if (!$id) {
