@@ -126,6 +126,7 @@ if ($method === 'POST') {
     $category = $input['category'] ?? '';
     $title = $input['title'] ?? '';
     $content = $input['content'] ?? '';
+    $whyImportant = $input['why_important'] ?? null;
     $sourceUrl = $input['source_url'] ?? null;
     
     // 유효성 검사
@@ -157,7 +158,20 @@ if ($method === 'POST') {
         // 자동 이미지 URL 생성 (저작권 무료 - Unsplash 고정 링크)
         $imageUrl = generateImageUrl($title, $category, $imageMap, $categoryDefaults, $defaultImages);
         
-        if ($hasSourceUrl) {
+        // why_important 컬럼 존재 여부 확인
+        $hasWhyImportant = false;
+        try {
+            $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'why_important'");
+            $hasWhyImportant = $checkCol->rowCount() > 0;
+        } catch (Exception $e) {}
+        
+        if ($hasSourceUrl && $hasWhyImportant) {
+            $stmt = $db->prepare("
+                INSERT INTO news (category, title, description, content, why_important, source, url, source_url, image_url, created_at)
+                VALUES (?, ?, ?, ?, ?, 'Admin', ?, ?, ?, NOW())
+            ");
+            $stmt->execute([$category, $title, $description, $content, $whyImportant, $url, $sourceUrl, $imageUrl]);
+        } else if ($hasSourceUrl) {
             $stmt = $db->prepare("
                 INSERT INTO news (category, title, description, content, source, url, source_url, image_url, created_at)
                 VALUES (?, ?, ?, ?, 'Admin', ?, ?, ?, NOW())
@@ -233,9 +247,20 @@ if ($method === 'GET') {
             $hasSourceUrl = $checkCol->rowCount() > 0;
         } catch (Exception $e) {}
         
-        $selectColumns = $hasSourceUrl 
-            ? 'id, category, title, description, content, source, source_url, image_url, created_at'
-            : 'id, category, title, description, content, source, NULL as source_url, image_url, created_at';
+        // why_important 컬럼 존재 여부 확인
+        $hasWhyImportant = false;
+        try {
+            $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'why_important'");
+            $hasWhyImportant = $checkCol->rowCount() > 0;
+        } catch (Exception $e) {}
+        
+        $selectColumns = 'id, category, title, description, content, source, image_url, created_at';
+        if ($hasSourceUrl) {
+            $selectColumns = 'id, category, title, description, content, source, source_url, image_url, created_at';
+        }
+        if ($hasWhyImportant) {
+            $selectColumns = str_replace('content,', 'content, why_important,', $selectColumns);
+        }
         
         $stmt = $db->prepare("
             SELECT $selectColumns
@@ -276,6 +301,7 @@ if ($method === 'PUT') {
     $category = $input['category'] ?? '';
     $title = $input['title'] ?? '';
     $content = $input['content'] ?? '';
+    $whyImportant = $input['why_important'] ?? null;
     $sourceUrl = $input['source_url'] ?? null;
     
     // 유효성 검사
@@ -320,7 +346,21 @@ if ($method === 'PUT') {
             $hasSourceUrl = $checkCol->rowCount() > 0;
         } catch (Exception $e) {}
         
-        if ($hasSourceUrl) {
+        // why_important 컬럼 존재 여부 확인
+        $hasWhyImportant = false;
+        try {
+            $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'why_important'");
+            $hasWhyImportant = $checkCol->rowCount() > 0;
+        } catch (Exception $e) {}
+        
+        if ($hasSourceUrl && $hasWhyImportant) {
+            $stmt = $db->prepare("
+                UPDATE news 
+                SET category = ?, title = ?, description = ?, content = ?, why_important = ?, source_url = ?, image_url = ?
+                WHERE id = ?
+            ");
+            $stmt->execute([$category, $title, $description, $content, $whyImportant, $sourceUrl, $imageUrl, $id]);
+        } else if ($hasSourceUrl) {
             $stmt = $db->prepare("
                 UPDATE news 
                 SET category = ?, title = ?, description = ?, content = ?, source_url = ?, image_url = ?
@@ -343,6 +383,7 @@ if ($method === 'PUT') {
                 'id' => (int)$id,
                 'category' => $category,
                 'title' => $title,
+                'why_important' => $whyImportant,
                 'source_url' => $sourceUrl
             ]
         ]);

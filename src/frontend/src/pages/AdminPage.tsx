@@ -46,6 +46,7 @@ interface NewsArticle {
   title: string;
   description?: string;
   content: string;
+  why_important?: string;
   source?: string;
   source_url?: string;
   created_at?: string;
@@ -154,6 +155,7 @@ const AdminPage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('diplomacy');
   const [newsTitle, setNewsTitle] = useState('');
   const [newsContent, setNewsContent] = useState('');
+  const [newsWhyImportant, setNewsWhyImportant] = useState('');
   const [newsList, setNewsList] = useState<NewsArticle[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -216,6 +218,7 @@ const AdminPage: React.FC = () => {
     setEditingNewsId(news.id || null);
     setNewsTitle(news.title);
     setNewsContent(news.content);
+    setNewsWhyImportant(news.why_important || '');
     // 스크롤을 폼 위치로 이동
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -225,6 +228,7 @@ const AdminPage: React.FC = () => {
     setEditingNewsId(null);
     setNewsTitle('');
     setNewsContent('');
+    setNewsWhyImportant('');
     setArticleUrl('');
     setSaveMessage(null);
   };
@@ -721,6 +725,21 @@ const AdminPage: React.FC = () => {
                     <p className="text-slate-500 text-sm mt-1">{newsContent.length} / 10,000자</p>
                   </div>
 
+                  {/* 이게 왜 중요한가? 입력 */}
+                  <div>
+                    <label className="block text-slate-300 mb-2 text-sm font-medium">
+                      <span className="text-amber-400">이게 왜 중요한가?</span>
+                    </label>
+                    <textarea
+                      value={newsWhyImportant}
+                      onChange={(e) => setNewsWhyImportant(e.target.value)}
+                      placeholder="이 뉴스가 왜 중요한지, 독자에게 어떤 영향을 미치는지 분석해주세요..."
+                      rows={5}
+                      className="w-full bg-slate-900/50 border border-amber-700/50 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none transition resize-none"
+                    />
+                    <p className="text-slate-500 text-sm mt-1">{newsWhyImportant.length} / 5,000자</p>
+                  </div>
+
                   {/* 저장 버튼 */}
                   <div className="flex items-center gap-4">
                     <button
@@ -743,6 +762,7 @@ const AdminPage: React.FC = () => {
                               category: selectedCategory,
                               title: newsTitle,
                               content: newsContent,
+                              why_important: newsWhyImportant.trim() || null,
                               source_url: articleUrl.trim() || null,
                             }),
                           });
@@ -759,6 +779,7 @@ const AdminPage: React.FC = () => {
                             // 폼 초기화
                             setNewsTitle('');
                             setNewsContent('');
+                            setNewsWhyImportant('');
                             setArticleUrl('');
                             setEditingNewsId(null);
                           } else {

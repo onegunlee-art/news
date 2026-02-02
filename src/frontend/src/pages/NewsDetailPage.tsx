@@ -11,6 +11,7 @@ interface NewsDetail {
   title: string
   description: string | null
   content: string | null
+  why_important: string | null
   source: string | null
   url: string
   published_at: string | null
@@ -79,7 +80,10 @@ export default function NewsDetailPage() {
   // 기사 전체 읽기
   const speakArticle = () => {
     if (!news) return
-    const text = `${news.title}. ${news.content || news.description || ''}`
+    let text = `${news.title}. ${news.content || news.description || ''}`
+    if (news.why_important) {
+      text += ` 이게 왜 중요한가? ${news.why_important}`
+    }
     speakText(text)
   }
 
@@ -230,6 +234,21 @@ export default function NewsDetailPage() {
         ) : news.description ? (
           <p className="text-gray-300 leading-relaxed mb-6">{news.description}</p>
         ) : null}
+
+        {/* 이게 왜 중요한가? 섹션 */}
+        {news.why_important && (
+          <div className="bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border border-amber-500/30 rounded-xl p-6 mb-6">
+            <div className="flex items-center gap-2 mb-4">
+              <svg className="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <h3 className="text-lg font-bold text-amber-400">이게 왜 중요한가?</h3>
+            </div>
+            <p className="text-gray-200 leading-relaxed whitespace-pre-wrap">
+              {news.why_important}
+            </p>
+          </div>
+        )}
 
         {/* AI 음성 읽기 */}
         <div className="bg-gradient-to-r from-orange-500/10 to-red-500/10 border border-orange-500/20 rounded-xl p-4 mb-6">
