@@ -44,6 +44,7 @@ export default function NewsDetailPage() {
   const [isBookmarked, setIsBookmarked] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showSubscribeModal, setShowSubscribeModal] = useState(false)
+  const [freeAccessGranted, setFreeAccessGranted] = useState(false)
   
   // TTS 상태
   const [isSpeaking, setIsSpeaking] = useState(false)
@@ -116,8 +117,8 @@ export default function NewsDetailPage() {
   const handleAnalyze = async () => {
     if (!id || isAnalyzing) return
 
-    // 구독 상태 확인
-    const hasSubscription = checkSubscription() || isSubscribed
+    // 구독 상태 확인 (무료 체험 포함)
+    const hasSubscription = checkSubscription() || isSubscribed || freeAccessGranted
     
     if (!hasSubscription) {
       // 구독하지 않은 사용자에게 구독 안내 모달 표시
@@ -421,7 +422,10 @@ export default function NewsDetailPage() {
                 닫기
               </button>
               <button
-                onClick={() => navigate('/register')}
+                onClick={() => {
+                  setFreeAccessGranted(true)
+                  setShowSubscribeModal(false)
+                }}
                 className="flex-1 px-4 py-3 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-400 hover:to-primary-500 text-white font-semibold rounded-xl transition-all"
               >
                 무료로 시작하기
