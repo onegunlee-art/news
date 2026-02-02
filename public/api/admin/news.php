@@ -230,7 +230,35 @@ if ($method === 'POST') {
         
         // source_url이 있으면 그것을 사용, 없으면 admin:// URL 생성
         $url = $sourceUrl ? $sourceUrl : 'admin://news/' . uniqid() . '-' . time();
-        $description = substr(strip_tags($content), 0, 300);
+        
+        // UTF-8 안전한 description 생성 (300자 제한, 문자 기반)
+        $cleanContent = strip_tags($content);
+        $description = '';
+        $charCount = 0;
+        $len = strlen($cleanContent);
+        for ($i = 0; $i < $len && $charCount < 300; ) {
+            $byte = ord($cleanContent[$i]);
+            if ($byte < 128) {
+                // ASCII
+                $description .= $cleanContent[$i];
+                $i++;
+            } elseif (($byte & 0xE0) == 0xC0) {
+                // 2-byte UTF-8
+                $description .= substr($cleanContent, $i, 2);
+                $i += 2;
+            } elseif (($byte & 0xF0) == 0xE0) {
+                // 3-byte UTF-8 (한글 포함)
+                $description .= substr($cleanContent, $i, 3);
+                $i += 3;
+            } elseif (($byte & 0xF8) == 0xF0) {
+                // 4-byte UTF-8
+                $description .= substr($cleanContent, $i, 4);
+                $i += 4;
+            } else {
+                $i++;
+            }
+            $charCount++;
+        }
         
         logError('Generated URL and description', [
             'url_length' => strlen($url),
@@ -461,7 +489,30 @@ if ($method === 'PUT') {
             exit;
         }
         
-        $description = substr(strip_tags($content), 0, 300);
+        // UTF-8 안전한 description 생성 (300자 제한, 문자 기반)
+        $cleanContent = strip_tags($content);
+        $description = '';
+        $charCount = 0;
+        $len = strlen($cleanContent);
+        for ($i = 0; $i < $len && $charCount < 300; ) {
+            $byte = ord($cleanContent[$i]);
+            if ($byte < 128) {
+                $description .= $cleanContent[$i];
+                $i++;
+            } elseif (($byte & 0xE0) == 0xC0) {
+                $description .= substr($cleanContent, $i, 2);
+                $i += 2;
+            } elseif (($byte & 0xF0) == 0xE0) {
+                $description .= substr($cleanContent, $i, 3);
+                $i += 3;
+            } elseif (($byte & 0xF8) == 0xF0) {
+                $description .= substr($cleanContent, $i, 4);
+                $i += 4;
+            } else {
+                $i++;
+            }
+            $charCount++;
+        }
         
         // 자동 이미지 URL 생성 (저작권 무료 - Unsplash 고정 링크)
         $imageUrl = generateImageUrl($title, $category, $imageMap, $categoryDefaults, $defaultImages);
