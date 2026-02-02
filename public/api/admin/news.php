@@ -226,16 +226,25 @@ if ($method === 'POST') {
     }
     
     try {
+        logError('Starting database insert process');
+        
         // source_url이 있으면 그것을 사용, 없으면 admin:// URL 생성
         $url = $sourceUrl ? $sourceUrl : 'admin://news/' . uniqid() . '-' . time();
         $description = substr(strip_tags($content), 0, 300);
+        
+        logError('Generated URL and description', [
+            'url_length' => strlen($url),
+            'desc_length' => strlen($description)
+        ]);
         
         // source_url 컬럼 존재 여부 확인
         $hasSourceUrl = false;
         try {
             $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'source_url'");
             $hasSourceUrl = $checkCol->rowCount() > 0;
-        } catch (Exception $e) {}
+        } catch (Exception $e) {
+            logError('Error checking source_url column: ' . $e->getMessage());
+        }
         
         // 자동 이미지 URL 생성 (저작권 무료 - Unsplash 고정 링크)
         $imageUrl = generateImageUrl($title, $category, $imageMap, $categoryDefaults, $defaultImages);
@@ -247,13 +256,17 @@ if ($method === 'POST') {
             $hasWhyImportant = $checkCol->rowCount() > 0;
         } catch (Exception $e) {}
         
+        logError('Column check results', ['hasSourceUrl' => $hasSourceUrl, 'hasWhyImportant' => $hasWhyImportant]);
+        
         if ($hasSourceUrl && $hasWhyImportant) {
+            logError('Using INSERT branch: hasSourceUrl && hasWhyImportant');
             $stmt = $db->prepare("
                 INSERT INTO news (category, title, description, content, why_important, source, url, source_url, image_url, created_at)
                 VALUES (?, ?, ?, ?, ?, 'Admin', ?, ?, ?, NOW())
             ");
             $stmt->execute([$category, $title, $description, $content, $whyImportant, $url, $sourceUrl, $imageUrl]);
         } else if ($hasWhyImportant) {
+            logError('Using INSERT branch: hasWhyImportant only');
             // why_important만 있는 경우
             $stmt = $db->prepare("
                 INSERT INTO news (category, title, description, content, why_important, source, url, image_url, created_at)
@@ -276,6 +289,8 @@ if ($method === 'POST') {
         
         $newsId = $db->lastInsertId();
         
+        logError('Insert successful', ['news_id' => $newsId]);
+        
         http_response_code(201);
         echo json_encode([
             'success' => true,
@@ -288,8 +303,13 @@ if ($method === 'POST') {
             ]
         ]);
     } catch (PDOException $e) {
+        logError('Database error during insert', ['error' => $e->getMessage(), 'code' => $e->getCode()]);
         http_response_code(500);
         echo json_encode(['success' => false, 'message' => '뉴스 저장 실패: ' . $e->getMessage()]);
+    } catch (Exception $e) {
+        logError('General error during insert', ['error' => $e->getMessage()]);
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => '오류 발생: ' . $e->getMessage()]);
     }
     exit;
 }
