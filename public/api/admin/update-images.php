@@ -163,8 +163,8 @@ $imageMap = [
 $categoryDefaults = [
     'diplomacy' => [
         'https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=800&h=500&fit=crop',
-        'https://images.unsplash.com/photo-1577415124269-fc1140815970?w=800&h=500&fit=crop',
-        'https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=800&h=500&fit=crop',
     ],
     'economy' => [
         'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&h=500&fit=crop',

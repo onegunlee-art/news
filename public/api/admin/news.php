@@ -70,7 +70,7 @@ $imageMap = [
 ];
 
 $categoryDefaults = [
-    'diplomacy' => ['https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=800&h=500&fit=crop'],
+    'diplomacy' => ['https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&h=500&fit=crop'],
     'economy' => ['https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&h=500&fit=crop'],
     'technology' => ['https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&h=500&fit=crop'],
     'entertainment' => ['https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=500&fit=crop'],
