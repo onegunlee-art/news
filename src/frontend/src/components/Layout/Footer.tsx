@@ -58,15 +58,17 @@ export default function Footer() {
                   로그인
                 </Link>
               </li>
+{/* 구독 버튼 임시 비활성화 - 정책 변경 시 복원 예정
               <li>
                 <Link to="/register" className="text-sm text-gray-400 hover:text-white transition-colors duration-200 relative inline-block after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[1px] after:bg-white after:transition-all after:duration-300 hover:after:w-full">
                   구독하기
                 </Link>
               </li>
+*/}
             </ul>
           </div>
 
-          {/* 구독 */}
+{/* 구독 섹션 임시 비활성화 - 정책 변경 시 복원 예정
           <div>
             <h3 className="text-[10px] font-semibold uppercase tracking-[0.2em] text-gray-500 mb-5">
               구독
@@ -81,6 +83,7 @@ export default function Footer() {
               구독하기
             </Link>
           </div>
+*/}
         </div>
       </div>
 

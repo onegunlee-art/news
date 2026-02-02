@@ -25,7 +25,9 @@ export default function Header() {
             ) : (
               <button onClick={() => setIsLoginOpen(true)} className="text-gray-300 hover:text-white transition-colors duration-200">로그인</button>
             )}
+{/* 구독 버튼 임시 비활성화 - 정책 변경 시 복원 예정
             <Link to="/subscribe" className="text-primary-400 hover:text-primary-300 font-semibold transition-colors duration-200">구독하기</Link>
+*/}
           </div>
         </div>
       </div>
@@ -185,13 +187,13 @@ export default function Header() {
                   }}
                   className="text-primary-500 hover:underline font-medium"
                 >
-                  구독하기
-                </button>
-              </div>
-            </motion.div>
+                회원가입
+              </button>
+            </div>
           </motion.div>
-        )}
-      </AnimatePresence>
+        </motion.div>
+      )}
+    </AnimatePresence>
     </header>
   )
 }

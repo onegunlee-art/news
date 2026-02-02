@@ -36,16 +36,18 @@ interface AnalysisData {
 
 export default function NewsDetailPage() {
   const { id } = useParams<{ id: string }>()
-  // useNavigate는 필요시 사용
-  const { isAuthenticated, isSubscribed, checkSubscription } = useAuthStore()
+  // 구독 관련 변수 임시 비활성화 - 정책 변경 시 복원 예정
+  const { isAuthenticated } = useAuthStore()
+  // const { isSubscribed, checkSubscription } = useAuthStore()
   const [news, setNews] = useState<NewsDetail | null>(null)
   const [analysis, setAnalysis] = useState<AnalysisData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [isBookmarked, setIsBookmarked] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [showSubscribeModal, setShowSubscribeModal] = useState(false)
-  const [freeAccessGranted, setFreeAccessGranted] = useState(false)
+  // 구독 모달 관련 상태 임시 비활성화
+  // const [showSubscribeModal, setShowSubscribeModal] = useState(false)
+  // const [freeAccessGranted, setFreeAccessGranted] = useState(false)
   
   // TTS 상태
   const [isSpeaking, setIsSpeaking] = useState(false)
@@ -121,14 +123,12 @@ export default function NewsDetailPage() {
   const handleAnalyze = async () => {
     if (!id || isAnalyzing) return
 
-    // 구독 상태 확인 (무료 체험 포함)
-    const hasSubscription = checkSubscription() || isSubscribed || freeAccessGranted
-    
-    if (!hasSubscription) {
-      // 구독하지 않은 사용자에게 구독 안내 모달 표시
-      setShowSubscribeModal(true)
-      return
-    }
+    // 구독 체크 임시 비활성화 - 정책 변경 시 복원 예정
+    // const hasSubscription = checkSubscription() || isSubscribed || freeAccessGranted
+    // if (!hasSubscription) {
+    //   setShowSubscribeModal(true)
+    //   return
+    // }
 
     setIsAnalyzing(true)
     setError(null)
@@ -366,7 +366,7 @@ export default function NewsDetailPage() {
         </div>
       )}
 
-      {/* 구독 안내 모달 */}
+{/* 구독 안내 모달 - 임시 비활성화 (정책 변경 시 복원 예정)
       {showSubscribeModal && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -380,7 +380,6 @@ export default function NewsDetailPage() {
             className="bg-dark-800 rounded-2xl p-8 max-w-md mx-4 border border-white/10"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* 아이콘 */}
             <div className="flex justify-center mb-6">
               <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center">
                 <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -388,19 +387,13 @@ export default function NewsDetailPage() {
                 </svg>
               </div>
             </div>
-
-            {/* 제목 */}
             <h3 className="text-2xl font-bold text-white text-center mb-3">
               구독이 필요합니다
             </h3>
-
-            {/* 설명 */}
             <p className="text-gray-400 text-center mb-6 leading-relaxed">
               전문가의 심층 분석을 확인하시려면<br />
               구독 서비스에 가입해주세요.
             </p>
-
-            {/* 혜택 */}
             <div className="bg-gradient-to-r from-primary-500/10 to-primary-600/10 border border-primary-500/20 rounded-xl p-4 mb-6">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-10 h-10 bg-primary-500/20 rounded-full flex items-center justify-center">
@@ -434,8 +427,6 @@ export default function NewsDetailPage() {
                 </li>
               </ul>
             </div>
-
-            {/* 버튼들 */}
             <div className="flex gap-3">
               <button
                 onClick={() => setShowSubscribeModal(false)}
@@ -449,8 +440,6 @@ export default function NewsDetailPage() {
                   e.stopPropagation()
                   setFreeAccessGranted(true)
                   setShowSubscribeModal(false)
-                  
-                  // 자동으로 분석 실행
                   if (id && !isAnalyzing) {
                     setIsAnalyzing(true)
                     setError(null)
@@ -474,6 +463,7 @@ export default function NewsDetailPage() {
           </motion.div>
         </motion.div>
       )}
+*/}
     </div>
   )
 }

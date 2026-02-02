@@ -87,9 +87,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 구독 CTA */}
+{/* 구독 CTA 섹션 임시 비활성화 - 정책 변경 시 복원 예정
       <section className="relative bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 py-20 overflow-hidden">
-        {/* 배경 패턴 */}
         <div className="absolute inset-0 opacity-5">
           <div className="absolute top-0 left-0 w-96 h-96 bg-primary-500 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
           <div className="absolute bottom-0 right-0 w-96 h-96 bg-primary-500 rounded-full blur-3xl translate-x-1/2 translate-y-1/2" />
@@ -110,6 +109,7 @@ export default function HomePage() {
           </Link>
         </div>
       </section>
+*/}
 
       {/* 카테고리 섹션 */}
       <section className="py-12 border-t border-gray-200">
