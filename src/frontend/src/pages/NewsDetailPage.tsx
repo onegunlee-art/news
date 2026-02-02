@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { newsApi, analysisApi } from '../services/api'
+import { newsApi } from '../services/api'
 import { useAuthStore } from '../store/authStore'
 import LoadingSpinner from '../components/Common/LoadingSpinner'
-import AnalysisResult from '../components/Analysis/AnalysisResult'
+// API 분석 기능 임시 비활성화 - 정책 변경 시 복원 예정
+// import { analysisApi } from '../services/api'
+// import AnalysisResult from '../components/Analysis/AnalysisResult'
 
 interface NewsDetail {
   id: number
@@ -19,20 +21,15 @@ interface NewsDetail {
   is_bookmarked?: boolean
 }
 
-interface AnalysisData {
-  id: number
-  keywords: Array<{ keyword: string; score: number; count: number }>
-  sentiment: {
-    type: string
-    label: string
-    score: number
-    color: string
-    details: any
-  }
-  summary: string
-  status: string
-  processing_time_ms: number
-}
+// API 분석 인터페이스 임시 비활성화
+// interface AnalysisData {
+//   id: number
+//   keywords: Array<{ keyword: string; score: number; count: number }>
+//   sentiment: { type: string; label: string; score: number; color: string; details: any }
+//   summary: string
+//   status: string
+//   processing_time_ms: number
+// }
 
 export default function NewsDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -40,11 +37,13 @@ export default function NewsDetailPage() {
   const { isAuthenticated } = useAuthStore()
   // const { isSubscribed, checkSubscription } = useAuthStore()
   const [news, setNews] = useState<NewsDetail | null>(null)
-  const [analysis, setAnalysis] = useState<AnalysisData | null>(null)
+  // API 분석 상태 임시 비활성화
+  // const [analysis, setAnalysis] = useState<AnalysisData | null>(null)
+  // const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
-  const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [isBookmarked, setIsBookmarked] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showWhyImportant, setShowWhyImportant] = useState(false) // "이게 왜 중요한가?" 표시 토글
   // 구독 모달 관련 상태 임시 비활성화
   // const [showSubscribeModal, setShowSubscribeModal] = useState(false)
   // const [freeAccessGranted, setFreeAccessGranted] = useState(false)
@@ -120,30 +119,22 @@ export default function NewsDetailPage() {
     }
   }
 
-  const handleAnalyze = async () => {
-    if (!id || isAnalyzing) return
-
-    // 구독 체크 임시 비활성화 - 정책 변경 시 복원 예정
-    // const hasSubscription = checkSubscription() || isSubscribed || freeAccessGranted
-    // if (!hasSubscription) {
-    //   setShowSubscribeModal(true)
-    //   return
-    // }
-
-    setIsAnalyzing(true)
-    setError(null)
-
-    try {
-      const response = await analysisApi.analyzeNews(parseInt(id))
-      if (response.data.success) {
-        setAnalysis(response.data.data)
-      }
-    } catch (error: any) {
-      setError(error.response?.data?.message || '분석에 실패했습니다.')
-    } finally {
-      setIsAnalyzing(false)
-    }
-  }
+  // API 분석 함수 임시 비활성화 - 정책 변경 시 복원 예정
+  // const handleAnalyze = async () => {
+  //   if (!id || isAnalyzing) return
+  //   setIsAnalyzing(true)
+  //   setError(null)
+  //   try {
+  //     const response = await analysisApi.analyzeNews(parseInt(id))
+  //     if (response.data.success) {
+  //       setAnalysis(response.data.data)
+  //     }
+  //   } catch (error: any) {
+  //     setError(error.response?.data?.message || '분석에 실패했습니다.')
+  //   } finally {
+  //     setIsAnalyzing(false)
+  //   }
+  // }
 
   const handleBookmark = async () => {
     if (!isAuthenticated || !id) return
@@ -235,9 +226,13 @@ export default function NewsDetailPage() {
           <p className="text-gray-300 leading-relaxed mb-6">{news.description}</p>
         ) : null}
 
-        {/* 이게 왜 중요한가? 섹션 */}
-        {news.why_important && (
-          <div className="bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border border-amber-500/30 rounded-xl p-6 mb-6">
+        {/* 이게 왜 중요한가? 섹션 - 버튼 클릭 시에만 표시 */}
+        {showWhyImportant && news.why_important && (
+          <motion.div 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border border-amber-500/30 rounded-xl p-6 mb-6"
+          >
             <div className="flex items-center gap-2 mb-4">
               <svg className="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -247,7 +242,26 @@ export default function NewsDetailPage() {
             <p className="text-gray-200 leading-relaxed whitespace-pre-wrap">
               {news.why_important}
             </p>
-          </div>
+          </motion.div>
+        )}
+        
+        {/* why_important 내용이 없을 때 */}
+        {showWhyImportant && !news.why_important && (
+          <motion.div 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-gradient-to-r from-gray-500/10 to-gray-600/10 border border-gray-500/30 rounded-xl p-6 mb-6"
+          >
+            <div className="flex items-center gap-2 mb-2">
+              <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <h3 className="text-lg font-bold text-gray-400">이게 왜 중요한가?</h3>
+            </div>
+            <p className="text-gray-400">
+              아직 분석 내용이 등록되지 않았습니다.
+            </p>
+          </motion.div>
         )}
 
         {/* AI 음성 읽기 */}
@@ -328,28 +342,22 @@ export default function NewsDetailPage() {
           )}
 
           <button
-            onClick={handleAnalyze}
-            disabled={isAnalyzing}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-400 hover:to-primary-500 text-white rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={() => setShowWhyImportant(!showWhyImportant)}
+            className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
+              showWhyImportant 
+                ? 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 border border-amber-500/30' 
+                : 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white'
+            }`}
           >
-            {isAnalyzing ? (
-              <>
-                <LoadingSpinner size="small" />
-                분석 중...
-              </>
-            ) : (
-              <>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                </svg>
-                이게 왜 중요한대!
-              </>
-            )}
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {showWhyImportant ? '접기' : '이게 왜 중요한대!'}
           </button>
         </div>
       </motion.article>
 
-      {/* 분석 결과 */}
+{/* API 분석 결과 - 임시 비활성화 (정책 변경 시 복원 예정)
       {analysis && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -359,8 +367,9 @@ export default function NewsDetailPage() {
           <AnalysisResult analysis={analysis} />
         </motion.div>
       )}
+*/}
 
-      {error && analysis === null && (
+      {error && (
         <div className="text-center py-8 text-red-400">
           <p>{error}</p>
         </div>
