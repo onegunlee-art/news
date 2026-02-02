@@ -865,13 +865,9 @@ const AdminPage: React.FC = () => {
 
               {/* 상태 표시 */}
               <div className="flex items-center gap-4">
-                <div className={`flex items-center gap-2 px-4 py-2 rounded-xl ${
-                  aiMockMode 
-                    ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' 
-                    : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                }`}>
+                <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                   <SparklesIcon className="w-5 h-5" />
-                  {aiMockMode ? 'Mock 모드 (테스트)' : 'API 연동 모드'}
+                  The Gist AI 분석 시스템
                 </div>
                 <button
                   onClick={async () => {

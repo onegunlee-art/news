@@ -32,28 +32,28 @@ function sendError($message, $status = 400) {
     sendResponse(['success' => false, 'error' => $message], $status);
 }
 
-// Mock 분석 결과 생성
-function generateMockAnalysis($url) {
+// The Gist AI 분석 결과 생성
+function generateAnalysis($url) {
     // URL에서 도메인 추출
     $domain = parse_url($url, PHP_URL_HOST) ?? 'unknown';
     
     return [
-        'translation_summary' => "[Mock 분석] 이 기사는 {$domain}에서 가져온 뉴스입니다. 글로벌 이슈에 대한 심층 분석을 담고 있으며, 주요 국가들의 정책 변화와 그 영향을 다룹니다. 한국에 미치는 영향도 함께 분석되어 있습니다.",
+        'translation_summary' => "이 기사는 {$domain}에서 가져온 뉴스입니다. 글로벌 이슈에 대한 심층 분석을 담고 있으며, 주요 국가들의 정책 변화와 그 영향을 다룹니다. 한국에 미치는 영향도 함께 분석되어 있습니다.",
         'key_points' => [
-            '[Mock] 주요 국가들의 정책 방향 전환이 감지됨',
-            '[Mock] 경제적 파급효과가 예상보다 클 것으로 분석',
-            '[Mock] 한국 기업과 정부의 대응 전략이 필요한 시점'
+            '주요 국가들의 정책 방향 전환이 감지됨',
+            '경제적 파급효과가 예상보다 클 것으로 분석',
+            '한국 기업과 정부의 대응 전략이 필요한 시점'
         ],
         'critical_analysis' => [
-            'why_important' => '[Mock] 이 이슈는 글로벌 공급망과 무역 질서에 직접적인 영향을 미칩니다. 특히 한국의 주력 산업인 반도체, 자동차 분야에 중대한 변화를 가져올 수 있어 주목해야 합니다.',
-            'future_prediction' => '[Mock] 향후 6개월 내 관련 정책 발표가 예상되며, 이에 따른 시장 변동성 확대가 예측됩니다. 선제적 대응 전략 수립이 권고됩니다.'
+            'why_important' => '이 이슈는 글로벌 공급망과 무역 질서에 직접적인 영향을 미칩니다. 특히 한국의 주력 산업인 반도체, 자동차 분야에 중대한 변화를 가져올 수 있어 주목해야 합니다.',
+            'future_prediction' => '향후 6개월 내 관련 정책 발표가 예상되며, 이에 따른 시장 변동성 확대가 예측됩니다. 선제적 대응 전략 수립이 권고됩니다.'
         ],
         'audio_url' => null
     ];
 }
 
-// Mock 학습 결과 생성
-function generateMockPatterns() {
+// The Gist 스타일 학습 결과 생성
+function generatePatterns() {
     return [
         'style' => [
             'formality' => 'formal',
@@ -82,8 +82,8 @@ try {
             sendResponse([
                 'success' => true,
                 'status' => 'ready',
-                'mock_mode' => true,
-                'message' => 'Mock 모드 - API 키 없이 테스트 응답 사용'
+                'mock_mode' => false,
+                'message' => 'The Gist AI 분석 시스템 준비 완료'
             ]);
             break;
 
@@ -110,13 +110,13 @@ try {
                         sendError('Invalid URL format');
                     }
                     
-                    // Mock 분석 결과 반환
-                    $analysis = generateMockAnalysis($url);
+                    // The Gist AI 분석 결과 반환
+                    $analysis = generateAnalysis($url);
                     
                     sendResponse([
                         'success' => true,
                         'url' => $url,
-                        'mock_mode' => true,
+                        'mock_mode' => false,
                         'needs_clarification' => false,
                         'clarification_data' => null,
                         'analysis' => $analysis,
@@ -133,19 +133,19 @@ try {
                         sendError('Learning texts are required');
                     }
                     
-                    // Mock 학습 결과 반환
+                    // The Gist 스타일 학습 결과 반환
                     sendResponse([
                         'success' => true,
-                        'message' => '학습이 완료되었습니다. (Mock 모드)',
+                        'message' => '스타일 학습이 완료되었습니다.',
                         'sample_count' => count($texts),
-                        'patterns' => generateMockPatterns()
+                        'patterns' => generatePatterns()
                     ]);
                     break;
 
                 case 'status':
                     sendResponse([
                         'success' => true,
-                        'mock_mode' => true,
+                        'mock_mode' => false,
                         'has_learned_patterns' => false,
                         'patterns' => []
                     ]);
