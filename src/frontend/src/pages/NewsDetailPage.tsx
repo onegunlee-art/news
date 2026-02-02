@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { newsApi, analysisApi } from '../services/api'
 import { useAuthStore } from '../store/authStore'
@@ -35,7 +35,7 @@ interface AnalysisData {
 
 export default function NewsDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const _navigate = useNavigate() // 향후 네비게이션용
+  // useNavigate는 필요시 사용
   const { isAuthenticated, isSubscribed, checkSubscription } = useAuthStore()
   const [news, setNews] = useState<NewsDetail | null>(null)
   const [analysis, setAnalysis] = useState<AnalysisData | null>(null)

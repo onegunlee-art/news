@@ -935,20 +935,7 @@ const AdminPage: React.FC = () => {
                   <SparklesIcon className="w-5 h-5" />
                   The Gist AI 분석 시스템
                 </div>
-                <button
-                  onClick={async () => {
-                    try {
-                      const response = await fetch('/api/admin/ai-analyze.php');
-                      const data = await response.json();
-                      setAiMockMode(data.mock_mode);
-                    } catch (error) {
-                      console.error('Status check failed:', error);
-                    }
-                  }}
-                  className="text-slate-400 hover:text-white text-sm underline"
-                >
-                  상태 새로고침
-                </button>
+{/* 상태 새로고침 버튼 제거 - The Gist AI로 통합 */}
               </div>
 
               {/* URL 분석 섹션 */}
@@ -993,7 +980,6 @@ const AdminPage: React.FC = () => {
                           
                           if (data.success && data.analysis) {
                             setAiResult(data.analysis);
-                            setAiMockMode(data.mock_mode);
                           } else {
                             setAiError(data.error || '분석 실패');
                           }
