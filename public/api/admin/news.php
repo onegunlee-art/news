@@ -27,45 +27,45 @@ $dbConfig = [
     'charset' => 'utf8mb4'
 ];
 
-// 고정 이미지 URL 매핑 (Unsplash 직접 링크 - 저작권 무료)
+// 고정 이미지 URL 매핑 (Wikimedia Commons / Public Domain / Unsplash)
 $imageMap = [
-    'trump' => [
-        'https://images.unsplash.com/photo-1585581934192-d2e99e5f0cc0?w=800&h=500&fit=crop', // 백악관
-        'https://images.unsplash.com/photo-1540910419892-4a36d2c3266c?w=800&h=500&fit=crop', // 미국 국기
-    ],
-    '트럼프' => [
-        'https://images.unsplash.com/photo-1585581934192-d2e99e5f0cc0?w=800&h=500&fit=crop', // 백악관
-        'https://images.unsplash.com/photo-1540910419892-4a36d2c3266c?w=800&h=500&fit=crop', // 미국 국기
-    ],
-    'greenland' => ['https://images.unsplash.com/photo-1517783999520-f068f9e28a51?w=800&h=500&fit=crop'], // 북극 빙하
-    '그린란드' => ['https://images.unsplash.com/photo-1517783999520-f068f9e28a51?w=800&h=500&fit=crop'], // 북극 빙하
-    'biden' => ['https://images.unsplash.com/photo-1604859628564-26f78352400d?w=800&h=500&fit=crop'],
-    '바이든' => ['https://images.unsplash.com/photo-1604859628564-26f78352400d?w=800&h=500&fit=crop'],
-    'openai' => [
-        'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=500&fit=crop',
-        'https://images.unsplash.com/photo-1684163362235-0d2e2b2c7c64?w=800&h=500&fit=crop',
-    ],
-    'ai' => [
-        'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=500&fit=crop',
-        'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&h=500&fit=crop',
-    ],
+    // 실제 정치인 사진 (Wikimedia Commons - Public Domain / CC)
+    'trump' => ['https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Donald_Trump_official_portrait.jpg/800px-Donald_Trump_official_portrait.jpg'],
+    '트럼프' => ['https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Donald_Trump_official_portrait.jpg/800px-Donald_Trump_official_portrait.jpg'],
+    'biden' => ['https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/Joe_Biden_presidential_portrait.jpg/800px-Joe_Biden_presidential_portrait.jpg'],
+    '바이든' => ['https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/Joe_Biden_presidential_portrait.jpg/800px-Joe_Biden_presidential_portrait.jpg'],
+    'putin' => ['https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/Vladimir_Putin_%282020-02-20%29.jpg/800px-Vladimir_Putin_%282020-02-20%29.jpg'],
+    '푸틴' => ['https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/Vladimir_Putin_%282020-02-20%29.jpg/800px-Vladimir_Putin_%282020-02-20%29.jpg'],
+    '시진핑' => ['https://upload.wikimedia.org/wikipedia/commons/thumb/3/32/Xi_Jinping_2019.jpg/800px-Xi_Jinping_2019.jpg'],
+    'xi' => ['https://upload.wikimedia.org/wikipedia/commons/thumb/3/32/Xi_Jinping_2019.jpg/800px-Xi_Jinping_2019.jpg'],
+    '윤석열' => ['https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Yoon_Suk-yeol_May_2022.jpg/800px-Yoon_Suk-yeol_May_2022.jpg'],
+    '김정은' => ['https://upload.wikimedia.org/wikipedia/commons/thumb/2/21/Kim_Jong-un_at_the_2019_Russia%E2%80%93North_Korea_summit_%28cropped%29.jpg/800px-Kim_Jong-un_at_the_2019_Russia%E2%80%93North_Korea_summit_%28cropped%29.jpg'],
+    '머스크' => ['https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/Elon_Musk_Royal_Society_%28crop2%29.jpg/800px-Elon_Musk_Royal_Society_%28crop2%29.jpg'],
+    'musk' => ['https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/Elon_Musk_Royal_Society_%28crop2%29.jpg/800px-Elon_Musk_Royal_Society_%28crop2%29.jpg'],
+    'elon' => ['https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/Elon_Musk_Royal_Society_%28crop2%29.jpg/800px-Elon_Musk_Royal_Society_%28crop2%29.jpg'],
+    // 지역/장소
+    'greenland' => ['https://images.unsplash.com/photo-1517783999520-f068f9e28a51?w=800&h=500&fit=crop'],
+    '그린란드' => ['https://images.unsplash.com/photo-1517783999520-f068f9e28a51?w=800&h=500&fit=crop'],
+    // 기술/AI
+    'openai' => ['https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=500&fit=crop'],
+    'ai' => ['https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=500&fit=crop'],
     '인공지능' => ['https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=500&fit=crop'],
-    'k-pop' => [
-        'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=500&fit=crop',
-        'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&h=500&fit=crop',
-    ],
+    // 엔터테인먼트
+    'k-pop' => ['https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=500&fit=crop'],
     'kpop' => ['https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=500&fit=crop'],
     '케이팝' => ['https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=500&fit=crop'],
+    // 경제
     '경제' => ['https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&h=500&fit=crop'],
     '주식' => ['https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&h=500&fit=crop'],
     '비트코인' => ['https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=800&h=500&fit=crop'],
     '반도체' => ['https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&h=500&fit=crop'],
+    // 외교
     '외교' => ['https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=800&h=500&fit=crop'],
     '한미' => ['https://images.unsplash.com/photo-1508433957232-3107f5fd5995?w=800&h=500&fit=crop'],
+    // 기타
     '구독자' => ['https://images.unsplash.com/photo-1533227268428-f9ed0900fb3b?w=800&h=500&fit=crop'],
     '축하' => ['https://images.unsplash.com/photo-1533227268428-f9ed0900fb3b?w=800&h=500&fit=crop'],
     '테스트' => ['https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&h=500&fit=crop'],
-    '머스크' => ['https://images.unsplash.com/photo-1620891499292-74ecc6905d3b?w=800&h=500&fit=crop'],
     '광고' => ['https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&h=500&fit=crop'],
 ];
 

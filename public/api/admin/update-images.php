@@ -32,35 +32,65 @@ try {
     exit;
 }
 
-// 고정 이미지 URL 매핑 (Unsplash 직접 링크 - 저작권 무료)
+// 고정 이미지 URL 매핑 (Wikimedia Commons / Public Domain / Unsplash)
 // 형식: 키워드 => [이미지 URL 배열]
 $imageMap = [
-    // 인물/정치 - 트럼프 (백악관/미국 정치 이미지)
+    // ========== 실제 정치인 사진 (Wikimedia Commons - Public Domain / CC) ==========
+    // 트럼프 - 백악관 공식 초상화 (Public Domain)
     'trump' => [
-        'https://images.unsplash.com/photo-1585581934192-d2e99e5f0cc0?w=800&h=500&fit=crop', // 백악관
-        'https://images.unsplash.com/photo-1540910419892-4a36d2c3266c?w=800&h=500&fit=crop', // 미국 국기
-        'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&h=500&fit=crop', // 워싱턴DC
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Donald_Trump_official_portrait.jpg/800px-Donald_Trump_official_portrait.jpg',
     ],
     '트럼프' => [
-        'https://images.unsplash.com/photo-1585581934192-d2e99e5f0cc0?w=800&h=500&fit=crop', // 백악관
-        'https://images.unsplash.com/photo-1540910419892-4a36d2c3266c?w=800&h=500&fit=crop', // 미국 국기
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Donald_Trump_official_portrait.jpg/800px-Donald_Trump_official_portrait.jpg',
     ],
-    // 그린란드 (북극/얼음/빙하 이미지)
-    'greenland' => [
-        'https://images.unsplash.com/photo-1517783999520-f068f9e28a51?w=800&h=500&fit=crop', // 북극 빙하
-        'https://images.unsplash.com/photo-1489549132488-d00b7eee80f1?w=800&h=500&fit=crop', // 빙산
-    ],
-    '그린란드' => [
-        'https://images.unsplash.com/photo-1517783999520-f068f9e28a51?w=800&h=500&fit=crop', // 북극 빙하
-        'https://images.unsplash.com/photo-1489549132488-d00b7eee80f1?w=800&h=500&fit=crop', // 빙산
-    ],
-    // 바이든
+    // 바이든 - 백악관 공식 초상화 (Public Domain)
     'biden' => [
-        'https://images.unsplash.com/photo-1604859628564-26f78352400d?w=800&h=500&fit=crop',
-        'https://images.unsplash.com/photo-1612831197310-ff5cf7a211b6?w=800&h=500&fit=crop',
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/Joe_Biden_presidential_portrait.jpg/800px-Joe_Biden_presidential_portrait.jpg',
     ],
     '바이든' => [
-        'https://images.unsplash.com/photo-1604859628564-26f78352400d?w=800&h=500&fit=crop',
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/Joe_Biden_presidential_portrait.jpg/800px-Joe_Biden_presidential_portrait.jpg',
+    ],
+    // 푸틴 - Kremlin.ru (CC BY 4.0)
+    'putin' => [
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/Vladimir_Putin_%282020-02-20%29.jpg/800px-Vladimir_Putin_%282020-02-20%29.jpg',
+    ],
+    '푸틴' => [
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/Vladimir_Putin_%282020-02-20%29.jpg/800px-Vladimir_Putin_%282020-02-20%29.jpg',
+    ],
+    // 시진핑 - Wikimedia Commons
+    '시진핑' => [
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/3/32/Xi_Jinping_2019.jpg/800px-Xi_Jinping_2019.jpg',
+    ],
+    'xi' => [
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/3/32/Xi_Jinping_2019.jpg/800px-Xi_Jinping_2019.jpg',
+    ],
+    // 윤석열 - 대한민국 정부 공식 (Public Domain)
+    '윤석열' => [
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Yoon_Suk-yeol_May_2022.jpg/800px-Yoon_Suk-yeol_May_2022.jpg',
+    ],
+    // 김정은 - Wikimedia Commons
+    '김정은' => [
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/2/21/Kim_Jong-un_at_the_2019_Russia%E2%80%93North_Korea_summit_%28cropped%29.jpg/800px-Kim_Jong-un_at_the_2019_Russia%E2%80%93North_Korea_summit_%28cropped%29.jpg',
+    ],
+    // 일론 머스크 - Wikimedia Commons (CC BY 2.0)
+    '머스크' => [
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/Elon_Musk_Royal_Society_%28crop2%29.jpg/800px-Elon_Musk_Royal_Society_%28crop2%29.jpg',
+    ],
+    'musk' => [
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/Elon_Musk_Royal_Society_%28crop2%29.jpg/800px-Elon_Musk_Royal_Society_%28crop2%29.jpg',
+    ],
+    'elon' => [
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/Elon_Musk_Royal_Society_%28crop2%29.jpg/800px-Elon_Musk_Royal_Society_%28crop2%29.jpg',
+    ],
+    // ========== 지역/장소 이미지 (Unsplash) ==========
+    // 그린란드 (북극/얼음/빙하 이미지)
+    'greenland' => [
+        'https://images.unsplash.com/photo-1517783999520-f068f9e28a51?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1489549132488-d00b7eee80f1?w=800&h=500&fit=crop',
+    ],
+    '그린란드' => [
+        'https://images.unsplash.com/photo-1517783999520-f068f9e28a51?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1489549132488-d00b7eee80f1?w=800&h=500&fit=crop',
     ],
     // AI/OpenAI
     'openai' => [
