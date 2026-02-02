@@ -79,7 +79,7 @@ const AdminPage: React.FC = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [aiResult, setAiResult] = useState<AIAnalysisResult | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
-  const [aiMockMode, setAiMockMode] = useState(true);
+  // aiMockMode 제거됨 - The Gist AI 시스템으로 통합
   const [learningTexts, setLearningTexts] = useState('');
   const [isLearning, setIsLearning] = useState(false);
   const [learnedPatterns, setLearnedPatterns] = useState<any>(null);

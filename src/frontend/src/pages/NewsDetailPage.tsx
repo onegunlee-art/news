@@ -35,7 +35,7 @@ interface AnalysisData {
 
 export default function NewsDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const navigate = useNavigate()
+  const _navigate = useNavigate() // 향후 네비게이션용
   const { isAuthenticated, isSubscribed, checkSubscription } = useAuthStore()
   const [news, setNews] = useState<NewsDetail | null>(null)
   const [analysis, setAnalysis] = useState<AnalysisData | null>(null)
