@@ -11,6 +11,28 @@
 
 declare(strict_types=1);
 
+// 에러 출력 억제 (JSON 응답만 반환)
+error_reporting(E_ALL);
+ini_set('display_errors', '0');
+ini_set('log_errors', '1');
+
+// 전역 에러 핸들러
+set_error_handler(function($severity, $message, $file, $line) {
+    throw new ErrorException($message, 0, $severity, $file, $line);
+});
+
+set_exception_handler(function($e) {
+    http_response_code(500);
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode([
+        'success' => false,
+        'error' => 'Server error: ' . $e->getMessage(),
+        'file' => basename($e->getFile()),
+        'line' => $e->getLine()
+    ], JSON_UNESCAPED_UNICODE);
+    exit();
+});
+
 // CORS 설정
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');

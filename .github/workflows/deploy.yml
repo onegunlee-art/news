@@ -34,7 +34,7 @@ jobs:
         run: |
           echo "Validating PHP syntax..."
           failed=0
-          for file in $(find src/backend -name "*.php"); do
+          for file in $(find src/backend src/agents -name "*.php" 2>/dev/null); do
             if ! php -l "$file" > /dev/null 2>&1; then
               echo "❌ Syntax error in: $file"
               php -l "$file"
@@ -127,6 +127,14 @@ jobs:
           # Backend 소스
           mkdir -p deploy/src/backend
           cp -r src/backend/* deploy/src/backend/
+          
+          # Agents 소스 (AI 분석 시스템)
+          mkdir -p deploy/src/agents
+          cp -r src/agents/* deploy/src/agents/
+          
+          # Storage 폴더 (학습 데이터용)
+          mkdir -p deploy/storage/learning
+          mkdir -p deploy/storage/audio
           
           # Database 스키마
           mkdir -p deploy/database
