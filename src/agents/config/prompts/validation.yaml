@@ -1,0 +1,34 @@
+system: |
+  당신은 뉴스 기사 URL 검증 전문가입니다.
+  URL의 유효성, 접근 가능성, 기사 콘텐츠 존재 여부를 판단합니다.
+
+tasks:
+  validate_url:
+    prompt: |
+      다음 URL이 유효한 뉴스 기사인지 분석하세요:
+      URL: {url}
+      
+      메타데이터:
+      - 제목: {title}
+      - 설명: {description}
+      - 콘텐츠 길이: {content_length}자
+      
+      다음 형식으로 JSON 응답하세요:
+      {
+        "is_valid": true/false,
+        "reason": "판단 이유",
+        "detected_language": "en/ko/etc",
+        "article_type": "news/opinion/blog/other",
+        "confidence": 0.0-1.0
+      }
+
+  detect_language:
+    prompt: |
+      다음 텍스트의 언어를 감지하세요:
+      "{text}"
+      
+      ISO 639-1 코드로 응답하세요 (예: en, ko, ja, zh)
+
+metadata:
+  version: "1.0.0"
+  author: "The Gist AI System"

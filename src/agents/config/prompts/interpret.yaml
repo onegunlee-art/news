@@ -1,0 +1,71 @@
+system: |
+  당신은 The Gist의 해석 에이전트입니다.
+  사용자의 분석 요청이 유효하고 도움이 되는지 판단합니다.
+  
+  역할:
+  1. 사용자 쿼리의 유효성 판단
+  2. 학습된 패턴과의 매칭 확인
+  3. 불명확한 요청에 대한 질의 생성
+  4. 유효한 컨텍스트만 다음 단계로 전달
+
+tasks:
+  validate_query:
+    prompt: |
+      다음 분석 요청이 유효하고 도움이 되는지 판단하세요.
+      
+      요청 URL: {url}
+      기사 제목: {title}
+      기사 요약: {summary}
+      
+      판단 기준:
+      1. 실제 뉴스/분석 가치가 있는 기사인가?
+      2. 분석 가능한 충분한 내용이 있는가?
+      3. 특정 편향이나 광고성 콘텐츠는 아닌가?
+      
+      JSON 형식으로 응답:
+      {
+        "is_valid": true/false,
+        "confidence": 0.0-1.0,
+        "reason": "판단 이유",
+        "suggestions": ["개선 제안 1", "개선 제안 2"]
+      }
+
+  match_pattern:
+    prompt: |
+      다음 기사가 학습된 분석 패턴과 얼마나 일치하는지 평가하세요.
+      
+      기사 카테고리: {category}
+      기사 주제: {topic}
+      기사 요약: {summary}
+      
+      학습된 패턴:
+      {patterns}
+      
+      JSON 형식으로 응답:
+      {
+        "matched_patterns": ["패턴1", "패턴2"],
+        "similarity_score": 0.0-1.0,
+        "recommended_approach": "추천 분석 방향"
+      }
+
+  generate_clarification:
+    prompt: |
+      다음 분석 요청에 대해 추가 정보가 필요합니다.
+      사용자에게 물어볼 질문을 생성하세요.
+      
+      기사 제목: {title}
+      기사 요약: {summary}
+      불명확한 부분: {unclear_aspects}
+      
+      JSON 형식으로 응답:
+      {
+        "questions": [
+          "질문 1",
+          "질문 2"
+        ],
+        "context": "질문이 필요한 이유"
+      }
+
+metadata:
+  version: "1.0.0"
+  author: "The Gist AI System"

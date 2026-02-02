@@ -13,6 +13,11 @@ import {
   PencilSquareIcon,
   TrashIcon,
   XMarkIcon,
+  SparklesIcon,
+  PlayIcon,
+  DocumentTextIcon,
+  SpeakerWaveIcon,
+  AcademicCapIcon,
 } from '@heroicons/react/24/outline';
 
 interface DashboardStats {
@@ -53,10 +58,31 @@ const categories = [
   { id: 'entertainment', name: 'Entertainment', color: 'from-orange-500 to-red-500' },
 ];
 
+// AI 분석 결과 인터페이스
+interface AIAnalysisResult {
+  translation_summary?: string;
+  key_points?: string[];
+  critical_analysis?: {
+    why_important?: string;
+    future_prediction?: string;
+  };
+  audio_url?: string;
+}
+
 const AdminPage: React.FC = () => {
   const navigate = useNavigate();
   const { } = useAuthStore(); // 권한 체크용 (추후 활성화)
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'news' | 'settings'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'news' | 'ai' | 'settings'>('dashboard');
+  
+  // AI 분석 상태
+  const [aiUrl, setAiUrl] = useState('');
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [aiResult, setAiResult] = useState<AIAnalysisResult | null>(null);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [aiMockMode, setAiMockMode] = useState(true);
+  const [learningTexts, setLearningTexts] = useState('');
+  const [isLearning, setIsLearning] = useState(false);
+  const [learnedPatterns, setLearnedPatterns] = useState<any>(null);
   
   // 뉴스 관리 상태
   const [selectedCategory, setSelectedCategory] = useState<string>('diplomacy');
@@ -237,6 +263,7 @@ const AdminPage: React.FC = () => {
     { id: 'dashboard', name: '대시보드', icon: ChartBarIcon },
     { id: 'users', name: '사용자 관리', icon: UsersIcon },
     { id: 'news', name: '뉴스 관리', icon: NewspaperIcon },
+    { id: 'ai', name: 'AI 분석', icon: SparklesIcon },
     { id: 'settings', name: '설정', icon: CogIcon },
   ] as const;
 
@@ -826,6 +853,310 @@ const AdminPage: React.FC = () => {
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {activeTab === 'ai' && (
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-2xl font-bold text-white mb-2">AI 뉴스 분석</h2>
+                <p className="text-slate-400">URL을 입력하면 AI가 기사를 분석, 요약, 번역합니다</p>
+              </div>
+
+              {/* 상태 표시 */}
+              <div className="flex items-center gap-4">
+                <div className={`flex items-center gap-2 px-4 py-2 rounded-xl ${
+                  aiMockMode 
+                    ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' 
+                    : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                }`}>
+                  <SparklesIcon className="w-5 h-5" />
+                  {aiMockMode ? 'Mock 모드 (테스트)' : 'API 연동 모드'}
+                </div>
+                <button
+                  onClick={async () => {
+                    try {
+                      const response = await fetch('/api/admin/ai-analyze.php');
+                      const data = await response.json();
+                      setAiMockMode(data.mock_mode);
+                    } catch (error) {
+                      console.error('Status check failed:', error);
+                    }
+                  }}
+                  className="text-slate-400 hover:text-white text-sm underline"
+                >
+                  상태 새로고침
+                </button>
+              </div>
+
+              {/* URL 분석 섹션 */}
+              <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50">
+                <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                  <DocumentTextIcon className="w-5 h-5 text-cyan-400" />
+                  기사 URL 분석
+                </h3>
+                
+                <div className="space-y-4">
+                  <div className="flex gap-3">
+                    <input
+                      type="url"
+                      value={aiUrl}
+                      onChange={(e) => setAiUrl(e.target.value)}
+                      placeholder="https://www.reuters.com/article/..."
+                      className="flex-1 bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition"
+                    />
+                    <button
+                      onClick={async () => {
+                        if (!aiUrl.trim()) {
+                          setAiError('URL을 입력해주세요.');
+                          return;
+                        }
+                        
+                        setIsAnalyzing(true);
+                        setAiError(null);
+                        setAiResult(null);
+                        
+                        try {
+                          const response = await fetch('/api/admin/ai-analyze.php', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              action: 'analyze',
+                              url: aiUrl,
+                              enable_tts: false
+                            })
+                          });
+                          
+                          const data = await response.json();
+                          
+                          if (data.success && data.analysis) {
+                            setAiResult(data.analysis);
+                            setAiMockMode(data.mock_mode);
+                          } else {
+                            setAiError(data.error || '분석 실패');
+                          }
+                        } catch (error) {
+                          setAiError('서버 오류: ' + (error as Error).message);
+                        } finally {
+                          setIsAnalyzing(false);
+                        }
+                      }}
+                      disabled={isAnalyzing || !aiUrl.trim()}
+                      className={`px-6 py-3 rounded-xl font-medium transition-all flex items-center gap-2 ${
+                        isAnalyzing || !aiUrl.trim()
+                          ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
+                          : 'bg-gradient-to-r from-cyan-500 to-emerald-500 text-white hover:opacity-90'
+                      }`}
+                    >
+                      {isAnalyzing ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                          분석 중...
+                        </>
+                      ) : (
+                        <>
+                          <PlayIcon className="w-5 h-5" />
+                          AI 분석 실행
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* 에러 메시지 */}
+                  {aiError && (
+                    <div className="p-4 rounded-xl bg-red-500/20 text-red-400 border border-red-500/30 flex items-center gap-2">
+                      <ExclamationTriangleIcon className="w-5 h-5" />
+                      {aiError}
+                    </div>
+                  )}
+
+                  {/* 분석 결과 */}
+                  {aiResult && (
+                    <div className="space-y-4 pt-4 border-t border-slate-700/50">
+                      {/* 요약 */}
+                      {aiResult.translation_summary && (
+                        <div className="p-4 bg-slate-900/50 rounded-xl">
+                          <h4 className="text-cyan-400 font-medium mb-2 flex items-center gap-2">
+                            <DocumentTextIcon className="w-4 h-4" />
+                            번역 및 요약
+                          </h4>
+                          <p className="text-slate-300 leading-relaxed">{aiResult.translation_summary}</p>
+                        </div>
+                      )}
+
+                      {/* 주요 포인트 */}
+                      {aiResult.key_points && aiResult.key_points.length > 0 && (
+                        <div className="p-4 bg-slate-900/50 rounded-xl">
+                          <h4 className="text-emerald-400 font-medium mb-2">📌 주요 포인트</h4>
+                          <ul className="space-y-2">
+                            {aiResult.key_points.map((point, i) => (
+                              <li key={i} className="text-slate-300 flex items-start gap-2">
+                                <span className="text-emerald-400 mt-1">•</span>
+                                {point}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* 크리티컬 분석 */}
+                      {aiResult.critical_analysis && (
+                        <div className="p-4 bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-xl border border-purple-500/20">
+                          <h4 className="text-purple-400 font-medium mb-3">🔥 이게 왜 중요한대!</h4>
+                          
+                          {aiResult.critical_analysis.why_important && (
+                            <div className="mb-3">
+                              <p className="text-slate-400 text-sm mb-1">중요성</p>
+                              <p className="text-slate-200">{aiResult.critical_analysis.why_important}</p>
+                            </div>
+                          )}
+                          
+                          {aiResult.critical_analysis.future_prediction && (
+                            <div>
+                              <p className="text-slate-400 text-sm mb-1">미래 전망</p>
+                              <p className="text-slate-200">{aiResult.critical_analysis.future_prediction}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* 오디오 (있는 경우) */}
+                      {aiResult.audio_url && (
+                        <div className="p-4 bg-slate-900/50 rounded-xl">
+                          <h4 className="text-orange-400 font-medium mb-2 flex items-center gap-2">
+                            <SpeakerWaveIcon className="w-4 h-4" />
+                            오디오 분석
+                          </h4>
+                          <audio controls className="w-full">
+                            <source src={aiResult.audio_url} type="audio/mpeg" />
+                          </audio>
+                        </div>
+                      )}
+
+                      {/* 뉴스로 저장 버튼 */}
+                      <button
+                        onClick={() => {
+                          setActiveTab('news');
+                          setNewsTitle(aiResult.translation_summary?.substring(0, 100) || '');
+                          setNewsContent(
+                            (aiResult.translation_summary || '') + '\n\n' +
+                            '## 주요 포인트\n' + 
+                            (aiResult.key_points?.map(p => `- ${p}`).join('\n') || '') + '\n\n' +
+                            '## 분석\n' +
+                            (aiResult.critical_analysis?.why_important || '') + '\n\n' +
+                            '## 전망\n' +
+                            (aiResult.critical_analysis?.future_prediction || '')
+                          );
+                          setArticleUrl(aiUrl);
+                        }}
+                        className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-medium hover:opacity-90 transition flex items-center justify-center gap-2"
+                      >
+                        <NewspaperIcon className="w-5 h-5" />
+                        이 분석을 뉴스로 저장
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 학습 섹션 */}
+              <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50">
+                <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                  <AcademicCapIcon className="w-5 h-5 text-purple-400" />
+                  스타일 학습
+                </h3>
+                <p className="text-slate-400 text-sm mb-4">
+                  당신이 작성한 글을 입력하면 AI가 스타일을 학습하여 분석에 적용합니다.
+                </p>
+
+                <div className="space-y-4">
+                  <textarea
+                    value={learningTexts}
+                    onChange={(e) => setLearningTexts(e.target.value)}
+                    placeholder="학습시킬 글을 입력하세요... (여러 글은 --- 로 구분)"
+                    rows={6}
+                    className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none transition resize-none"
+                  />
+                  
+                  <div className="flex items-center gap-4">
+                    <button
+                      onClick={async () => {
+                        if (!learningTexts.trim()) return;
+                        
+                        setIsLearning(true);
+                        try {
+                          const texts = learningTexts.split('---').map(t => t.trim()).filter(t => t);
+                          const response = await fetch('/api/admin/ai-analyze.php', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              action: 'learn',
+                              texts
+                            })
+                          });
+                          
+                          const data = await response.json();
+                          if (data.success) {
+                            setLearnedPatterns(data.patterns);
+                            setLearningTexts('');
+                          }
+                        } catch (error) {
+                          console.error('Learning failed:', error);
+                        } finally {
+                          setIsLearning(false);
+                        }
+                      }}
+                      disabled={isLearning || !learningTexts.trim()}
+                      className={`px-6 py-3 rounded-xl font-medium transition-all flex items-center gap-2 ${
+                        isLearning || !learningTexts.trim()
+                          ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
+                          : 'bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:opacity-90'
+                      }`}
+                    >
+                      {isLearning ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                          학습 중...
+                        </>
+                      ) : (
+                        <>
+                          <AcademicCapIcon className="w-5 h-5" />
+                          스타일 학습
+                        </>
+                      )}
+                    </button>
+
+                    <button
+                      onClick={async () => {
+                        try {
+                          const response = await fetch('/api/admin/ai-analyze.php', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ action: 'status' })
+                          });
+                          const data = await response.json();
+                          setLearnedPatterns(data.patterns);
+                        } catch (error) {
+                          console.error('Status check failed:', error);
+                        }
+                      }}
+                      className="text-slate-400 hover:text-white text-sm underline"
+                    >
+                      학습 현황 확인
+                    </button>
+                  </div>
+
+                  {/* 학습된 패턴 표시 */}
+                  {learnedPatterns && Object.keys(learnedPatterns).length > 0 && (
+                    <div className="p-4 bg-purple-500/10 rounded-xl border border-purple-500/20">
+                      <h4 className="text-purple-400 font-medium mb-2">학습된 스타일</h4>
+                      <pre className="text-slate-300 text-sm overflow-x-auto">
+                        {JSON.stringify(learnedPatterns, null, 2)}
+                      </pre>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           )}
 
