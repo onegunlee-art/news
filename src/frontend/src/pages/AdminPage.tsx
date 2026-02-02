@@ -84,7 +84,7 @@ const AdminPage: React.FC = () => {
   const [isLearning, setIsLearning] = useState(false);
   const [learnedPatterns, setLearnedPatterns] = useState<any>(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [speechRate, setSpeechRate] = useState(1.0);
+  const [speechRate, setSpeechRate] = useState(1.2); // 기본: 약간 빠름
 
   // TTS 음성 읽기 함수
   const speakText = (text: string) => {
@@ -1095,10 +1095,13 @@ const AdminPage: React.FC = () => {
                               onChange={(e) => setSpeechRate(parseFloat(e.target.value))}
                               className="bg-slate-800 text-white text-sm rounded px-2 py-1 border border-slate-700"
                             >
-                              <option value="0.7">느리게</option>
-                              <option value="1.0">보통</option>
-                              <option value="1.3">빠르게</option>
-                              <option value="1.5">매우 빠르게</option>
+                              <option value="0.7">느리게 (0.7x)</option>
+                              <option value="0.85">조금 느리게</option>
+                              <option value="1.0">보통 (1.0x)</option>
+                              <option value="1.2">약간 빠름 ✓</option>
+                              <option value="1.4">빠르게</option>
+                              <option value="1.6">매우 빠르게</option>
+                              <option value="2.0">최고속도 (2.0x)</option>
                             </select>
                           </div>
                         </div>
