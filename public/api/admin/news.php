@@ -171,6 +171,13 @@ if ($method === 'POST') {
                 VALUES (?, ?, ?, ?, ?, 'Admin', ?, ?, ?, NOW())
             ");
             $stmt->execute([$category, $title, $description, $content, $whyImportant, $url, $sourceUrl, $imageUrl]);
+        } else if ($hasWhyImportant) {
+            // why_important만 있는 경우
+            $stmt = $db->prepare("
+                INSERT INTO news (category, title, description, content, why_important, source, url, image_url, created_at)
+                VALUES (?, ?, ?, ?, ?, 'Admin', ?, ?, NOW())
+            ");
+            $stmt->execute([$category, $title, $description, $content, $whyImportant, $url, $imageUrl]);
         } else if ($hasSourceUrl) {
             $stmt = $db->prepare("
                 INSERT INTO news (category, title, description, content, source, url, source_url, image_url, created_at)
@@ -360,6 +367,14 @@ if ($method === 'PUT') {
                 WHERE id = ?
             ");
             $stmt->execute([$category, $title, $description, $content, $whyImportant, $sourceUrl, $imageUrl, $id]);
+        } else if ($hasWhyImportant) {
+            // why_important만 있는 경우
+            $stmt = $db->prepare("
+                UPDATE news 
+                SET category = ?, title = ?, description = ?, content = ?, why_important = ?, image_url = ?
+                WHERE id = ?
+            ");
+            $stmt->execute([$category, $title, $description, $content, $whyImportant, $imageUrl, $id]);
         } else if ($hasSourceUrl) {
             $stmt = $db->prepare("
                 UPDATE news 
