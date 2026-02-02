@@ -23,9 +23,61 @@ $dbConfig = [
     'host' => 'localhost',
     'dbname' => 'ailand',
     'username' => 'ailand',
-    'password' => 'romi4120!',
+    'password' => 'ektlf1212',
     'charset' => 'utf8mb4'
 ];
+
+// 이미지 자동 매칭용 키워드 맵
+$keywordMap = [
+    '트럼프' => 'trump,president,politics', 'trump' => 'trump,president,politics',
+    '바이든' => 'biden,president,whitehouse', 'biden' => 'biden,president,whitehouse',
+    '시진핑' => 'china,politics,beijing', '푸틴' => 'russia,kremlin,politics',
+    '윤석열' => 'korea,seoul,politics', '김정은' => 'northkorea,politics',
+    '일론' => 'tesla,spacex,technology', '머스크' => 'tesla,spacex,technology',
+    'openai' => 'artificial-intelligence,robot,technology',
+    'ai' => 'artificial-intelligence,robot,technology',
+    '인공지능' => 'artificial-intelligence,robot,future',
+    '반도체' => 'semiconductor,chip,technology', '배터리' => 'battery,electric,energy',
+    '전기차' => 'electric-car,tesla,automotive', '비트코인' => 'bitcoin,cryptocurrency',
+    '주식' => 'stock-market,trading,finance', '경제' => 'economy,business,finance',
+    '외교' => 'diplomacy,handshake,politics', '전쟁' => 'war,military,conflict',
+    '그린란드' => 'greenland,arctic,ice', 'k-pop' => 'kpop,concert,music',
+    '케이팝' => 'kpop,concert,music', 'kpop' => 'kpop,concert,music',
+];
+
+$categoryDefaults = [
+    'diplomacy' => 'diplomacy,politics,globe,summit',
+    'economy' => 'economy,business,finance,stock-market',
+    'technology' => 'technology,innovation,future,digital',
+    'entertainment' => 'entertainment,music,movie,celebrity',
+];
+
+// 이미지 URL 생성 함수
+function generateImageUrl($title, $category, $keywordMap, $categoryDefaults) {
+    $title = mb_strtolower($title);
+    $foundKeywords = [];
+    
+    foreach ($keywordMap as $keyword => $searchTerms) {
+        if (mb_strpos($title, mb_strtolower($keyword)) !== false) {
+            $foundKeywords[] = $searchTerms;
+            if (count($foundKeywords) >= 2) break;
+        }
+    }
+    
+    if (empty($foundKeywords)) {
+        $category = strtolower($category ?? '');
+        $keywords = $categoryDefaults[$category] ?? 'news,newspaper,global';
+    } else {
+        $allKw = [];
+        foreach ($foundKeywords as $kw) {
+            $allKw = array_merge($allKw, explode(',', $kw));
+        }
+        $keywords = implode(',', array_unique($allKw));
+    }
+    
+    $seed = substr(md5($title . time()), 0, 8);
+    return "https://source.unsplash.com/800x500/?{$keywords}&sig={$seed}";
+}
 
 try {
     $dsn = "mysql:host={$dbConfig['host']};dbname={$dbConfig['dbname']};charset={$dbConfig['charset']}";
@@ -76,18 +128,21 @@ if ($method === 'POST') {
             $hasSourceUrl = $checkCol->rowCount() > 0;
         } catch (Exception $e) {}
         
+        // 자동 이미지 URL 생성 (저작권 무료 - Unsplash)
+        $imageUrl = generateImageUrl($title, $category, $keywordMap, $categoryDefaults);
+        
         if ($hasSourceUrl) {
             $stmt = $db->prepare("
-                INSERT INTO news (category, title, description, content, source, url, source_url, created_at)
-                VALUES (?, ?, ?, ?, 'Admin', ?, ?, NOW())
+                INSERT INTO news (category, title, description, content, source, url, source_url, image_url, created_at)
+                VALUES (?, ?, ?, ?, 'Admin', ?, ?, ?, NOW())
             ");
-            $stmt->execute([$category, $title, $description, $content, $url, $sourceUrl]);
+            $stmt->execute([$category, $title, $description, $content, $url, $sourceUrl, $imageUrl]);
         } else {
             $stmt = $db->prepare("
-                INSERT INTO news (category, title, description, content, source, url, created_at)
-                VALUES (?, ?, ?, ?, 'Admin', ?, NOW())
+                INSERT INTO news (category, title, description, content, source, url, image_url, created_at)
+                VALUES (?, ?, ?, ?, 'Admin', ?, ?, NOW())
             ");
-            $stmt->execute([$category, $title, $description, $content, $url]);
+            $stmt->execute([$category, $title, $description, $content, $url, $imageUrl]);
         }
         
         $newsId = $db->lastInsertId();
@@ -229,6 +284,9 @@ if ($method === 'PUT') {
         
         $description = mb_substr(strip_tags($content), 0, 300);
         
+        // 자동 이미지 URL 생성 (저작권 무료 - Unsplash)
+        $imageUrl = generateImageUrl($title, $category, $keywordMap, $categoryDefaults);
+        
         // source_url 컬럼 존재 여부 확인
         $hasSourceUrl = false;
         try {
@@ -239,17 +297,17 @@ if ($method === 'PUT') {
         if ($hasSourceUrl) {
             $stmt = $db->prepare("
                 UPDATE news 
-                SET category = ?, title = ?, description = ?, content = ?, source_url = ?
+                SET category = ?, title = ?, description = ?, content = ?, source_url = ?, image_url = ?
                 WHERE id = ?
             ");
-            $stmt->execute([$category, $title, $description, $content, $sourceUrl, $id]);
+            $stmt->execute([$category, $title, $description, $content, $sourceUrl, $imageUrl, $id]);
         } else {
             $stmt = $db->prepare("
                 UPDATE news 
-                SET category = ?, title = ?, description = ?, content = ?
+                SET category = ?, title = ?, description = ?, content = ?, image_url = ?
                 WHERE id = ?
             ");
-            $stmt->execute([$category, $title, $description, $content, $id]);
+            $stmt->execute([$category, $title, $description, $content, $imageUrl, $id]);
         }
         
         echo json_encode([
