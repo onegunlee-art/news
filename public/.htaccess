@@ -15,6 +15,9 @@
     RewriteRule ^api/auth/kakao$ api/auth/kakao.php [L]
     RewriteRule ^api/auth/kakao/callback$ api/auth/kakao/callback.php [QSA,L]
     RewriteRule ^api/auth/kakao/token$ api/auth/kakao/token.php [QSA,L]
+    
+    # 분석 API 직접 처리
+    RewriteRule ^api/analysis/news/([0-9]+)$ api/analysis/news.php [QSA,L]
 
     # 정적 파일은 직접 제공 (PHP 파일 포함)
     RewriteCond %{REQUEST_FILENAME} -f
