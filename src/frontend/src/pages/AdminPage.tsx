@@ -70,6 +70,31 @@ interface AIAnalysisResult {
   audio_url?: string;
 }
 
+// 텍스트 정제 함수 - 복사/붙여넣기 시 문제 될 수 있는 문자 변환
+const sanitizeText = (text: string): string => {
+  return text
+    // 스마트 따옴표 → 일반 따옴표
+    .replace(/[\u201C\u201D\u201E\u201F\u2033\u2036]/g, '"')  // 큰따옴표
+    .replace(/[\u2018\u2019\u201A\u201B\u2032\u2035]/g, "'")  // 작은따옴표
+    // 특수 대시 → 일반 하이픈
+    .replace(/[\u2013\u2014\u2015\u2212]/g, '-')              // em-dash, en-dash
+    // 특수 공백 → 일반 공백
+    .replace(/[\u00A0\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u202F\u205F\u3000]/g, ' ')
+    // Zero-width 문자 제거
+    .replace(/[\u200B\u200C\u200D\uFEFF]/g, '')
+    // 특수 줄바꿈 문자 정규화
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
+    // 연속된 공백 정리 (줄바꿈 제외)
+    .replace(/[^\S\n]+/g, ' ')
+    // 각 줄의 앞뒤 공백 제거
+    .split('\n')
+    .map(line => line.trim())
+    .join('\n')
+    // 연속된 빈 줄 → 하나로
+    .replace(/\n{3,}/g, '\n\n');
+};
+
 const AdminPage: React.FC = () => {
   const navigate = useNavigate();
   const { } = useAuthStore(); // 권한 체크용 (추후 활성화)
@@ -707,6 +732,12 @@ const AdminPage: React.FC = () => {
                       type="text"
                       value={newsTitle}
                       onChange={(e) => setNewsTitle(e.target.value)}
+                      onPaste={(e) => {
+                        e.preventDefault();
+                        const pastedText = e.clipboardData.getData('text');
+                        const sanitized = sanitizeText(pastedText).replace(/\n/g, ' ');
+                        setNewsTitle(sanitized);
+                      }}
                       placeholder="뉴스 제목을 입력하세요"
                       className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition"
                     />
@@ -714,10 +745,19 @@ const AdminPage: React.FC = () => {
 
                   {/* 내용 입력 */}
                   <div>
-                    <label className="block text-slate-300 mb-2 text-sm font-medium">뉴스 내용</label>
+                    <label className="block text-slate-300 mb-2 text-sm font-medium">
+                      뉴스 내용
+                      <span className="ml-2 text-xs text-cyan-400">(붙여넣기 시 자동 정제)</span>
+                    </label>
                     <textarea
                       value={newsContent}
                       onChange={(e) => setNewsContent(e.target.value)}
+                      onPaste={(e) => {
+                        e.preventDefault();
+                        const pastedText = e.clipboardData.getData('text');
+                        const sanitized = sanitizeText(pastedText);
+                        setNewsContent(sanitized);
+                      }}
                       placeholder="뉴스 본문을 작성하세요..."
                       rows={8}
                       className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition resize-none"
@@ -729,10 +769,17 @@ const AdminPage: React.FC = () => {
                   <div>
                     <label className="block text-slate-300 mb-2 text-sm font-medium">
                       <span className="text-amber-400">이게 왜 중요한가?</span>
+                      <span className="ml-2 text-xs text-amber-400/70">(붙여넣기 시 자동 정제)</span>
                     </label>
                     <textarea
                       value={newsWhyImportant}
                       onChange={(e) => setNewsWhyImportant(e.target.value)}
+                      onPaste={(e) => {
+                        e.preventDefault();
+                        const pastedText = e.clipboardData.getData('text');
+                        const sanitized = sanitizeText(pastedText);
+                        setNewsWhyImportant(sanitized);
+                      }}
                       placeholder="이 뉴스가 왜 중요한지, 독자에게 어떤 영향을 미치는지 분석해주세요..."
                       rows={5}
                       className="w-full bg-slate-900/50 border border-amber-700/50 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none transition resize-none"
