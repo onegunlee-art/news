@@ -422,11 +422,27 @@ export default function NewsDetailPage() {
                 닫기
               </button>
               <button
-                onClick={(e) => {
+                onClick={async (e) => {
                   e.preventDefault()
                   e.stopPropagation()
                   setFreeAccessGranted(true)
                   setShowSubscribeModal(false)
+                  
+                  // 자동으로 분석 실행
+                  if (id && !isAnalyzing) {
+                    setIsAnalyzing(true)
+                    setError(null)
+                    try {
+                      const response = await analysisApi.analyzeNews(parseInt(id))
+                      if (response.data.success) {
+                        setAnalysis(response.data.data)
+                      }
+                    } catch (err: any) {
+                      setError(err.response?.data?.message || '분석에 실패했습니다.')
+                    } finally {
+                      setIsAnalyzing(false)
+                    }
+                  }
                 }}
                 className="flex-1 px-4 py-3 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-400 hover:to-primary-500 text-white font-semibold rounded-xl transition-all"
               >
