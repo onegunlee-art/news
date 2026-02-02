@@ -83,6 +83,72 @@ const AdminPage: React.FC = () => {
   const [learningTexts, setLearningTexts] = useState('');
   const [isLearning, setIsLearning] = useState(false);
   const [learnedPatterns, setLearnedPatterns] = useState<any>(null);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [speechRate, setSpeechRate] = useState(1.0);
+
+  // TTS 음성 읽기 함수
+  const speakText = (text: string) => {
+    if ('speechSynthesis' in window) {
+      // 기존 음성 중지
+      window.speechSynthesis.cancel();
+      
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'ko-KR';
+      utterance.rate = speechRate;
+      utterance.pitch = 1.0;
+      
+      // 한국어 음성 찾기
+      const voices = window.speechSynthesis.getVoices();
+      const koreanVoice = voices.find(voice => voice.lang.includes('ko'));
+      if (koreanVoice) {
+        utterance.voice = koreanVoice;
+      }
+      
+      utterance.onstart = () => setIsSpeaking(true);
+      utterance.onend = () => setIsSpeaking(false);
+      utterance.onerror = () => setIsSpeaking(false);
+      
+      window.speechSynthesis.speak(utterance);
+    } else {
+      alert('이 브라우저는 음성 합성을 지원하지 않습니다.');
+    }
+  };
+
+  // 전체 분석 결과 읽기
+  const speakFullAnalysis = () => {
+    if (!aiResult) return;
+    
+    let fullText = '';
+    
+    if (aiResult.translation_summary) {
+      fullText += '요약입니다. ' + aiResult.translation_summary + ' ';
+    }
+    
+    if (aiResult.key_points && aiResult.key_points.length > 0) {
+      fullText += '주요 포인트입니다. ';
+      aiResult.key_points.forEach((point, i) => {
+        fullText += `${i + 1}번. ${point}. `;
+      });
+    }
+    
+    if (aiResult.critical_analysis?.why_important) {
+      fullText += '이게 왜 중요한가. ' + aiResult.critical_analysis.why_important + ' ';
+    }
+    
+    if (aiResult.critical_analysis?.future_prediction) {
+      fullText += '미래 전망입니다. ' + aiResult.critical_analysis.future_prediction;
+    }
+    
+    speakText(fullText);
+  };
+
+  // 음성 중지
+  const stopSpeaking = () => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+    }
+  };
   
   // 뉴스 관리 상태
   const [selectedCategory, setSelectedCategory] = useState<string>('diplomacy');
@@ -1028,6 +1094,80 @@ const AdminPage: React.FC = () => {
                           </audio>
                         </div>
                       )}
+
+                      {/* 음성 읽기 컨트롤 */}
+                      <div className="p-4 bg-slate-900/50 rounded-xl">
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="text-orange-400 font-medium flex items-center gap-2">
+                            <SpeakerWaveIcon className="w-4 h-4" />
+                            AI 음성 읽기
+                          </h4>
+                          <div className="flex items-center gap-2">
+                            <span className="text-slate-400 text-sm">속도:</span>
+                            <select
+                              value={speechRate}
+                              onChange={(e) => setSpeechRate(parseFloat(e.target.value))}
+                              className="bg-slate-800 text-white text-sm rounded px-2 py-1 border border-slate-700"
+                            >
+                              <option value="0.7">느리게</option>
+                              <option value="1.0">보통</option>
+                              <option value="1.3">빠르게</option>
+                              <option value="1.5">매우 빠르게</option>
+                            </select>
+                          </div>
+                        </div>
+                        
+                        <div className="flex gap-2">
+                          <button
+                            onClick={isSpeaking ? stopSpeaking : speakFullAnalysis}
+                            className={`flex-1 py-3 rounded-xl font-medium transition flex items-center justify-center gap-2 ${
+                              isSpeaking
+                                ? 'bg-red-500 text-white hover:bg-red-600'
+                                : 'bg-gradient-to-r from-orange-500 to-red-500 text-white hover:opacity-90'
+                            }`}
+                          >
+                            {isSpeaking ? (
+                              <>
+                                <XMarkIcon className="w-5 h-5" />
+                                읽기 중지
+                              </>
+                            ) : (
+                              <>
+                                <SpeakerWaveIcon className="w-5 h-5" />
+                                전체 분석 읽어주기
+                              </>
+                            )}
+                          </button>
+                        </div>
+                        
+                        {/* 개별 섹션 읽기 */}
+                        <div className="flex gap-2 mt-2">
+                          <button
+                            onClick={() => speakText(aiResult.translation_summary || '')}
+                            disabled={isSpeaking}
+                            className="flex-1 py-2 text-sm rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition disabled:opacity-50"
+                          >
+                            요약만
+                          </button>
+                          <button
+                            onClick={() => speakText(aiResult.key_points?.join('. ') || '')}
+                            disabled={isSpeaking}
+                            className="flex-1 py-2 text-sm rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition disabled:opacity-50"
+                          >
+                            포인트만
+                          </button>
+                          <button
+                            onClick={() => speakText(
+                              (aiResult.critical_analysis?.why_important || '') + ' ' +
+                              (aiResult.critical_analysis?.future_prediction || '')
+                            )}
+                            disabled={isSpeaking}
+                            className="flex-1 py-2 text-sm rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition disabled:opacity-50"
+                          >
+                            분석만
+                          </button>
+                        </div>
+                      </div>
 
                       {/* 뉴스로 저장 버튼 */}
                       <button
