@@ -2,103 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Petrov Sans 폰트 */
-@font-face {
-  font-family: 'Petrov Sans';
-  src: url('/fonts/petrov_sans/PetrovSans-Thin.ttf') format('truetype');
-  font-weight: 100;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Petrov Sans';
-  src: url('/fonts/petrov_sans/PetrovSans-ExtraLight.ttf') format('truetype');
-  font-weight: 200;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Petrov Sans';
-  src: url('/fonts/petrov_sans/PetrovSans-Light.ttf') format('truetype');
-  font-weight: 300;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Petrov Sans';
-  src: url('/fonts/petrov_sans/PetrovSans-Regular.ttf') format('truetype');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Petrov Sans';
-  src: url('/fonts/petrov_sans/PetrovSans-Book.ttf') format('truetype');
-  font-weight: 450;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Petrov Sans';
-  src: url('/fonts/petrov_sans/PetrovSans-SemiBold.ttf') format('truetype');
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Petrov Sans';
-  src: url('/fonts/petrov_sans/PetrovSans-Bold.ttf') format('truetype');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Petrov Sans';
-  src: url('/fonts/petrov_sans/PetrovSans-ExtraBold.ttf') format('truetype');
-  font-weight: 800;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Petrov Sans';
-  src: url('/fonts/petrov_sans/PetrovSans-Black.ttf') format('truetype');
-  font-weight: 900;
-  font-style: normal;
-  font-display: swap;
-}
-
-/* Italic variants */
-@font-face {
-  font-family: 'Petrov Sans';
-  src: url('/fonts/petrov_sans/PetrovSans-LightItalic.ttf') format('truetype');
-  font-weight: 300;
-  font-style: italic;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Petrov Sans';
-  src: url('/fonts/petrov_sans/PetrovSans-RegularItalic.ttf') format('truetype');
-  font-weight: 400;
-  font-style: italic;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Petrov Sans';
-  src: url('/fonts/petrov_sans/PetrovSans-SemiBoldItalic.ttf') format('truetype');
-  font-weight: 600;
-  font-style: italic;
-  font-display: swap;
-}
+/* Google Fonts Import */
+@import url('https://fonts.googleapis.com/css2?family=Lobster&family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
 
 /* 기본 스타일 */
 :root {
@@ -109,6 +14,8 @@
   --text-primary: #171717;
   --text-secondary: #525252;
   --border-color: #e5e5e5;
+  --font-korean: 'Noto Sans KR', sans-serif;
+  --font-english: 'Lobster', cursive;
 }
 
 * {
@@ -122,10 +29,9 @@ html {
 }
 
 body {
-  font-family: 'Petrov Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: var(--font-korean);
   font-weight: 400;
   font-style: normal;
-  font-synthesis: none;
   background: var(--bg-light);
   color: var(--text-primary);
   min-height: 100vh;
@@ -134,11 +40,16 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* 제목용 폰트 */
+/* 제목용 폰트 - 한글은 Noto Sans KR, 영문은 Lobster */
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Petrov Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: var(--font-korean);
   font-weight: 500;
   font-style: normal;
+}
+
+/* 영문 로고/브랜드명 전용 */
+.font-logo {
+  font-family: var(--font-english);
 }
 
 /* 스크롤바 스타일 */
@@ -195,7 +106,11 @@ input, textarea, select {
 /* 유틸리티 클래스 */
 @layer utilities {
   .font-serif {
-    font-family: 'Petrov Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: var(--font-korean);
+  }
+  
+  .font-english {
+    font-family: var(--font-english);
   }
   
   .text-gradient {

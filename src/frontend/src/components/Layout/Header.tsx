@@ -35,7 +35,7 @@ export default function Header() {
         {/* 로고 */}
         <div className="flex justify-center py-8 border-b border-gray-100">
           <Link to="/" className="text-center group">
-            <h1 className="text-4xl md:text-5xl text-gray-900 transition-colors duration-300 group-hover:text-gray-700" style={{ fontFamily: "'Petrov Sans', sans-serif", fontWeight: 400, fontStyle: 'normal', fontSynthesis: 'none', letterSpacing: '-0.02em' }}>
+            <h1 className="text-4xl md:text-5xl text-gray-900 transition-colors duration-300 group-hover:text-gray-700" style={{ fontFamily: "'Lobster', cursive", fontWeight: 400, letterSpacing: '0.01em' }}>
               The Gist
             </h1>
             <p className="text-[10px] text-gray-400 mt-2 tracking-[0.3em] uppercase font-light">News Analysis</p>

@@ -11,7 +11,7 @@ export default function Footer() {
           {/* 브랜드 */}
           <div className="md:col-span-1">
             <Link to="/" className="inline-block mb-5 group">
-              <h2 className="text-2xl text-white group-hover:text-gray-300 transition-colors duration-200" style={{ fontFamily: "'Petrov Sans', sans-serif", fontWeight: 400, letterSpacing: '-0.02em' }}>The Gist</h2>
+              <h2 className="text-2xl text-white group-hover:text-gray-300 transition-colors duration-200" style={{ fontFamily: "'Lobster', cursive", fontWeight: 400, letterSpacing: '0.01em' }}>The Gist</h2>
             </Link>
             <p className="text-gray-400 text-sm leading-relaxed">
               전문가가 직접 짚어주는 뉴스의 이면과 우리에게 전달될 파급력을 전해 드립니다.
