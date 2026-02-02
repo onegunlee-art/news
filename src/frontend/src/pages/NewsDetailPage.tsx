@@ -44,6 +44,51 @@ export default function NewsDetailPage() {
   const [isBookmarked, setIsBookmarked] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showSubscribeModal, setShowSubscribeModal] = useState(false)
+  
+  // TTS 상태
+  const [isSpeaking, setIsSpeaking] = useState(false)
+  const [speechRate, setSpeechRate] = useState(1.0)
+
+  // TTS 음성 읽기 함수
+  const speakText = (text: string) => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel()
+      
+      const utterance = new SpeechSynthesisUtterance(text)
+      utterance.lang = 'ko-KR'
+      utterance.rate = speechRate
+      utterance.pitch = 1.0
+      
+      const voices = window.speechSynthesis.getVoices()
+      const koreanVoice = voices.find(voice => voice.lang.includes('ko'))
+      if (koreanVoice) {
+        utterance.voice = koreanVoice
+      }
+      
+      utterance.onstart = () => setIsSpeaking(true)
+      utterance.onend = () => setIsSpeaking(false)
+      utterance.onerror = () => setIsSpeaking(false)
+      
+      window.speechSynthesis.speak(utterance)
+    } else {
+      alert('이 브라우저는 음성 합성을 지원하지 않습니다.')
+    }
+  }
+
+  // 기사 전체 읽기
+  const speakArticle = () => {
+    if (!news) return
+    const text = `${news.title}. ${news.content || news.description || ''}`
+    speakText(text)
+  }
+
+  // 음성 중지
+  const stopSpeaking = () => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel()
+      setIsSpeaking(false)
+    }
+  }
 
   useEffect(() => {
     if (id) {
@@ -184,6 +229,57 @@ export default function NewsDetailPage() {
         ) : news.description ? (
           <p className="text-gray-300 leading-relaxed mb-6">{news.description}</p>
         ) : null}
+
+        {/* AI 음성 읽기 */}
+        <div className="bg-gradient-to-r from-orange-500/10 to-red-500/10 border border-orange-500/20 rounded-xl p-4 mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+              </svg>
+              <span className="text-orange-400 font-medium">AI 음성으로 듣기</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-gray-400 text-sm">속도:</span>
+              <select
+                value={speechRate}
+                onChange={(e) => setSpeechRate(parseFloat(e.target.value))}
+                className="bg-dark-700 text-white text-sm rounded px-2 py-1 border border-white/10"
+              >
+                <option value="0.7">느리게</option>
+                <option value="1.0">보통</option>
+                <option value="1.3">빠르게</option>
+                <option value="1.5">매우 빠르게</option>
+              </select>
+            </div>
+          </div>
+          
+          <button
+            onClick={isSpeaking ? stopSpeaking : speakArticle}
+            className={`w-full py-3 rounded-lg font-medium transition flex items-center justify-center gap-2 ${
+              isSpeaking
+                ? 'bg-red-500 text-white hover:bg-red-600'
+                : 'bg-gradient-to-r from-orange-500 to-red-500 text-white hover:opacity-90'
+            }`}
+          >
+            {isSpeaking ? (
+              <>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                읽기 중지
+              </>
+            ) : (
+              <>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                기사 읽어주기
+              </>
+            )}
+          </button>
+        </div>
 
         {/* 액션 버튼들 */}
         <div className="flex flex-wrap items-center gap-4 pt-6 border-t border-white/10">
