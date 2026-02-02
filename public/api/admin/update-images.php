@@ -1,7 +1,7 @@
 <?php
 /**
  * 뉴스 이미지 자동 매칭 API
- * 저작권 무료 이미지 (Unsplash) 자동 적용
+ * 저작권 무료 이미지 - 고정 Unsplash URL 사용 (API 불필요)
  */
 
 header('Content-Type: application/json; charset=utf-8');
@@ -32,113 +32,200 @@ try {
     exit;
 }
 
-// 키워드 매핑
-$keywordMap = [
-    // 인물
-    '트럼프' => 'trump,president,politics',
-    'trump' => 'trump,president,politics',
-    '바이든' => 'biden,president,whitehouse',
-    'biden' => 'biden,president,whitehouse',
-    '시진핑' => 'china,politics,beijing',
-    '푸틴' => 'russia,kremlin,politics',
-    '윤석열' => 'korea,seoul,politics',
-    '김정은' => 'northkorea,politics',
-    '일론' => 'tesla,spacex,technology',
-    '머스크' => 'tesla,spacex,technology',
-    'elon' => 'tesla,spacex,technology',
-    'musk' => 'tesla,spacex,technology',
-    'openai' => 'artificial-intelligence,robot,technology',
-    'chatgpt' => 'artificial-intelligence,chat,technology',
-    'gpt' => 'artificial-intelligence,technology',
-    
+// 고정 이미지 URL 매핑 (Unsplash 직접 링크 - 저작권 무료)
+// 형식: 키워드 => [이미지 URL 배열]
+$imageMap = [
+    // 인물/정치 - 트럼프
+    'trump' => [
+        'https://images.unsplash.com/photo-1580128660010-fd027e1e587a?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1569863959165-56dae551d4fc?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=800&h=500&fit=crop',
+    ],
+    '트럼프' => [
+        'https://images.unsplash.com/photo-1580128660010-fd027e1e587a?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1569863959165-56dae551d4fc?w=800&h=500&fit=crop',
+    ],
+    // 그린란드
+    'greenland' => [
+        'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1476610182048-b716b8518aae?w=800&h=500&fit=crop',
+    ],
+    '그린란드' => [
+        'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1476610182048-b716b8518aae?w=800&h=500&fit=crop',
+    ],
+    // 바이든
+    'biden' => [
+        'https://images.unsplash.com/photo-1604859628564-26f78352400d?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1612831197310-ff5cf7a211b6?w=800&h=500&fit=crop',
+    ],
+    '바이든' => [
+        'https://images.unsplash.com/photo-1604859628564-26f78352400d?w=800&h=500&fit=crop',
+    ],
+    // AI/OpenAI
+    'openai' => [
+        'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1684163362235-0d2e2b2c7c64?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1676573409967-986dcf64d35a?w=800&h=500&fit=crop',
+    ],
+    'ai' => [
+        'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1555255707-c07966088b7b?w=800&h=500&fit=crop',
+    ],
+    '인공지능' => [
+        'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&h=500&fit=crop',
+    ],
+    'chatgpt' => [
+        'https://images.unsplash.com/photo-1684163362235-0d2e2b2c7c64?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1676573409967-986dcf64d35a?w=800&h=500&fit=crop',
+    ],
+    // K-POP/엔터테인먼트
+    'k-pop' => [
+        'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800&h=500&fit=crop',
+    ],
+    'kpop' => [
+        'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&h=500&fit=crop',
+    ],
+    '케이팝' => [
+        'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&h=500&fit=crop',
+    ],
     // 경제/금융
-    '주식' => 'stock-market,trading,finance',
-    '증시' => 'stock-market,wall-street,finance',
-    '금리' => 'bank,finance,money',
-    '환율' => 'currency,money,exchange',
-    '비트코인' => 'bitcoin,cryptocurrency,blockchain',
-    '코인' => 'cryptocurrency,bitcoin,blockchain',
-    '부동산' => 'real-estate,building,city',
-    '경제' => 'economy,business,finance',
-    '무역' => 'trade,shipping,container',
-    '관세' => 'trade,customs,shipping',
-    
-    // 기술
-    'ai' => 'artificial-intelligence,robot,technology',
-    '인공지능' => 'artificial-intelligence,robot,future',
-    '반도체' => 'semiconductor,chip,technology',
-    '배터리' => 'battery,electric,energy',
-    '전기차' => 'electric-car,tesla,automotive',
-    '자율주행' => 'self-driving,car,technology',
-    '로봇' => 'robot,automation,technology',
-    '우주' => 'space,rocket,nasa',
-    
-    // 외교/정치
-    '외교' => 'diplomacy,handshake,politics',
-    '정상회담' => 'summit,diplomacy,politics',
-    'nato' => 'nato,military,alliance',
-    '유엔' => 'united-nations,diplomacy,global',
-    '전쟁' => 'war,military,conflict',
-    '우크라이나' => 'ukraine,europe,politics',
-    '대만' => 'taiwan,asia,politics',
-    '북한' => 'northkorea,military,politics',
-    '핵' => 'nuclear,energy,military',
-    '그린란드' => 'greenland,arctic,ice',
-    
-    // 엔터테인먼트
-    'k-pop' => 'kpop,concert,music',
-    '케이팝' => 'kpop,concert,music',
-    'kpop' => 'kpop,concert,music',
-    'bts' => 'concert,music,performance',
-    '영화' => 'movie,cinema,film',
-    '드라마' => 'television,drama,entertainment',
-    
-    // 기타
-    '기후' => 'climate,environment,nature',
-    '환경' => 'environment,nature,green',
-    '에너지' => 'energy,solar,windmill',
+    '경제' => [
+        'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=800&h=500&fit=crop',
+    ],
+    '주식' => [
+        'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1642543492481-44e81e3914a7?w=800&h=500&fit=crop',
+    ],
+    '비트코인' => [
+        'https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1622630998477-20aa696ecb05?w=800&h=500&fit=crop',
+    ],
+    'bitcoin' => [
+        'https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1622630998477-20aa696ecb05?w=800&h=500&fit=crop',
+    ],
+    // 반도체/기술
+    '반도체' => [
+        'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=800&h=500&fit=crop',
+    ],
+    'semiconductor' => [
+        'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&h=500&fit=crop',
+    ],
+    // 외교
+    '외교' => [
+        'https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1577415124269-fc1140815970?w=800&h=500&fit=crop',
+    ],
+    '한미' => [
+        'https://images.unsplash.com/photo-1508433957232-3107f5fd5995?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1569863959165-56dae551d4fc?w=800&h=500&fit=crop',
+    ],
+    // 구독자/축하
+    '구독자' => [
+        'https://images.unsplash.com/photo-1533227268428-f9ed0900fb3b?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1504805572947-34fad45aed93?w=800&h=500&fit=crop',
+    ],
+    '축하' => [
+        'https://images.unsplash.com/photo-1533227268428-f9ed0900fb3b?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1513151233558-d860c5398176?w=800&h=500&fit=crop',
+    ],
+    // 테스트/기타
+    '테스트' => [
+        'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800&h=500&fit=crop',
+    ],
+    // 일론 머스크/테슬라
+    '머스크' => [
+        'https://images.unsplash.com/photo-1620891499292-74ecc6905d3b?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1560958089-b8a1929cea89?w=800&h=500&fit=crop',
+    ],
+    'tesla' => [
+        'https://images.unsplash.com/photo-1620891499292-74ecc6905d3b?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1560958089-b8a1929cea89?w=800&h=500&fit=crop',
+    ],
+    // 광고
+    '광고' => [
+        'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=500&fit=crop',
+    ],
 ];
 
-// 카테고리별 기본값
+// 카테고리별 기본 이미지
 $categoryDefaults = [
-    'diplomacy' => 'diplomacy,politics,globe,summit',
-    'economy' => 'economy,business,finance,stock-market',
-    'technology' => 'technology,innovation,future,digital',
-    'entertainment' => 'entertainment,music,movie,celebrity',
+    'diplomacy' => [
+        'https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1577415124269-fc1140815970?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=800&h=500&fit=crop',
+    ],
+    'economy' => [
+        'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1642543492481-44e81e3914a7?w=800&h=500&fit=crop',
+    ],
+    'technology' => [
+        'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=500&fit=crop',
+    ],
+    'entertainment' => [
+        'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800&h=500&fit=crop',
+    ],
 ];
 
-function extractKeywords($title, $category, $keywordMap, $categoryDefaults) {
-    $title = strtolower($title);
+// 범용 뉴스 이미지
+$defaultImages = [
+    'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&h=500&fit=crop',
+    'https://images.unsplash.com/photo-1495020689067-958852a7765e?w=800&h=500&fit=crop',
+    'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=800&h=500&fit=crop',
+];
+
+function extractMatchedKeyword($title, $imageMap) {
+    $titleLower = strtolower($title);
     $foundKeywords = [];
     
-    foreach ($keywordMap as $keyword => $searchTerms) {
-        if (strpos($title, strtolower($keyword)) !== false) {
-            $foundKeywords[] = $searchTerms;
-            if (count($foundKeywords) >= 2) {
-                break;
-            }
+    foreach ($imageMap as $keyword => $urls) {
+        if (strpos($titleLower, strtolower($keyword)) !== false) {
+            $foundKeywords[] = $keyword;
         }
     }
     
-    if (empty($foundKeywords)) {
-        $category = strtolower($category ?? '');
-        if (isset($categoryDefaults[$category])) {
-            return $categoryDefaults[$category];
-        }
-        return 'news,newspaper,global';
-    }
-    
-    $allKeywords = [];
-    foreach ($foundKeywords as $kw) {
-        $allKeywords = array_merge($allKeywords, explode(',', $kw));
-    }
-    return implode(',', array_unique($allKeywords));
+    return $foundKeywords;
 }
 
-function getImageUrl($title, $category, $keywordMap, $categoryDefaults, $width = 800, $height = 500) {
-    $keywords = extractKeywords($title, $category, $keywordMap, $categoryDefaults);
-    $seed = substr(md5($title . time()), 0, 8);
-    return "https://source.unsplash.com/{$width}x{$height}/?{$keywords}&sig={$seed}";
+function getImageUrl($title, $category, $imageMap, $categoryDefaults, $defaultImages) {
+    $titleLower = strtolower($title);
+    
+    // 1. 제목에서 키워드 매칭 시도
+    foreach ($imageMap as $keyword => $urls) {
+        if (strpos($titleLower, strtolower($keyword)) !== false) {
+            // 제목 해시 기반으로 일관된 이미지 선택
+            $index = abs(crc32($title)) % count($urls);
+            return $urls[$index];
+        }
+    }
+    
+    // 2. 카테고리 기반 이미지 선택
+    $cat = strtolower($category ?? '');
+    if (isset($categoryDefaults[$cat])) {
+        $urls = $categoryDefaults[$cat];
+        $index = abs(crc32($title)) % count($urls);
+        return $urls[$index];
+    }
+    
+    // 3. 기본 뉴스 이미지
+    $index = abs(crc32($title)) % count($defaultImages);
+    return $defaultImages[$index];
 }
 
 // API 동작
@@ -152,15 +239,17 @@ if ($action === 'update_all') {
     $updated = [];
     
     foreach ($newsList as $news) {
-        $newImageUrl = getImageUrl($news['title'], $news['category'] ?? '', $keywordMap, $categoryDefaults);
+        $newImageUrl = getImageUrl($news['title'], $news['category'] ?? '', $imageMap, $categoryDefaults, $defaultImages);
         
         $updateStmt = $pdo->prepare("UPDATE news SET image_url = ? WHERE id = ?");
         $updateStmt->execute([$newImageUrl, $news['id']]);
         
+        $matchedKeywords = extractMatchedKeyword($news['title'], $imageMap);
+        
         $updated[] = [
             'id' => $news['id'],
-            'title' => mb_substr($news['title'], 0, 50) . '...',
-            'keywords' => extractKeywords($news['title'], $news['category'] ?? '', $keywordMap, $categoryDefaults),
+            'title' => substr($news['title'], 0, 50) . '...',
+            'matched_keywords' => $matchedKeywords,
             'new_image' => $newImageUrl
         ];
     }
@@ -190,16 +279,18 @@ if ($action === 'update_all') {
         exit;
     }
     
-    $newImageUrl = getImageUrl($news['title'], $news['category'] ?? '', $keywordMap, $categoryDefaults);
+    $newImageUrl = getImageUrl($news['title'], $news['category'] ?? '', $imageMap, $categoryDefaults, $defaultImages);
     
     $updateStmt = $pdo->prepare("UPDATE news SET image_url = ? WHERE id = ?");
     $updateStmt->execute([$newImageUrl, $newsId]);
+    
+    $matchedKeywords = extractMatchedKeyword($news['title'], $imageMap);
     
     echo json_encode([
         'success' => true,
         'id' => $newsId,
         'title' => $news['title'],
-        'keywords' => extractKeywords($news['title'], $news['category'] ?? '', $keywordMap, $categoryDefaults),
+        'matched_keywords' => $matchedKeywords,
         'new_image' => $newImageUrl
     ], JSON_UNESCAPED_UNICODE);
     
@@ -213,14 +304,14 @@ if ($action === 'update_all') {
         exit;
     }
     
-    $keywords = extractKeywords($title, $category, $keywordMap, $categoryDefaults);
-    $imageUrl = getImageUrl($title, $category, $keywordMap, $categoryDefaults);
+    $matchedKeywords = extractMatchedKeyword($title, $imageMap);
+    $imageUrl = getImageUrl($title, $category, $imageMap, $categoryDefaults, $defaultImages);
     
     echo json_encode([
         'success' => true,
         'title' => $title,
         'category' => $category,
-        'keywords' => $keywords,
+        'matched_keywords' => $matchedKeywords,
         'image_url' => $imageUrl
     ], JSON_UNESCAPED_UNICODE);
 }

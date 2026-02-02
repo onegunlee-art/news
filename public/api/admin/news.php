@@ -27,58 +27,82 @@ $dbConfig = [
     'charset' => 'utf8mb4'
 ];
 
-// 이미지 자동 매칭용 키워드 맵
-$keywordMap = [
-    '트럼프' => 'trump,president,politics', 'trump' => 'trump,president,politics',
-    '바이든' => 'biden,president,whitehouse', 'biden' => 'biden,president,whitehouse',
-    '시진핑' => 'china,politics,beijing', '푸틴' => 'russia,kremlin,politics',
-    '윤석열' => 'korea,seoul,politics', '김정은' => 'northkorea,politics',
-    '일론' => 'tesla,spacex,technology', '머스크' => 'tesla,spacex,technology',
-    'openai' => 'artificial-intelligence,robot,technology',
-    'ai' => 'artificial-intelligence,robot,technology',
-    '인공지능' => 'artificial-intelligence,robot,future',
-    '반도체' => 'semiconductor,chip,technology', '배터리' => 'battery,electric,energy',
-    '전기차' => 'electric-car,tesla,automotive', '비트코인' => 'bitcoin,cryptocurrency',
-    '주식' => 'stock-market,trading,finance', '경제' => 'economy,business,finance',
-    '외교' => 'diplomacy,handshake,politics', '전쟁' => 'war,military,conflict',
-    '그린란드' => 'greenland,arctic,ice', 'k-pop' => 'kpop,concert,music',
-    '케이팝' => 'kpop,concert,music', 'kpop' => 'kpop,concert,music',
+// 고정 이미지 URL 매핑 (Unsplash 직접 링크 - 저작권 무료)
+$imageMap = [
+    'trump' => [
+        'https://images.unsplash.com/photo-1580128660010-fd027e1e587a?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1569863959165-56dae551d4fc?w=800&h=500&fit=crop',
+    ],
+    '트럼프' => [
+        'https://images.unsplash.com/photo-1580128660010-fd027e1e587a?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1569863959165-56dae551d4fc?w=800&h=500&fit=crop',
+    ],
+    'greenland' => ['https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=800&h=500&fit=crop'],
+    '그린란드' => ['https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=800&h=500&fit=crop'],
+    'biden' => ['https://images.unsplash.com/photo-1604859628564-26f78352400d?w=800&h=500&fit=crop'],
+    '바이든' => ['https://images.unsplash.com/photo-1604859628564-26f78352400d?w=800&h=500&fit=crop'],
+    'openai' => [
+        'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1684163362235-0d2e2b2c7c64?w=800&h=500&fit=crop',
+    ],
+    'ai' => [
+        'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&h=500&fit=crop',
+    ],
+    '인공지능' => ['https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=500&fit=crop'],
+    'k-pop' => [
+        'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=500&fit=crop',
+        'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&h=500&fit=crop',
+    ],
+    'kpop' => ['https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=500&fit=crop'],
+    '케이팝' => ['https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=500&fit=crop'],
+    '경제' => ['https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&h=500&fit=crop'],
+    '주식' => ['https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&h=500&fit=crop'],
+    '비트코인' => ['https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=800&h=500&fit=crop'],
+    '반도체' => ['https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&h=500&fit=crop'],
+    '외교' => ['https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=800&h=500&fit=crop'],
+    '한미' => ['https://images.unsplash.com/photo-1508433957232-3107f5fd5995?w=800&h=500&fit=crop'],
+    '구독자' => ['https://images.unsplash.com/photo-1533227268428-f9ed0900fb3b?w=800&h=500&fit=crop'],
+    '축하' => ['https://images.unsplash.com/photo-1533227268428-f9ed0900fb3b?w=800&h=500&fit=crop'],
+    '테스트' => ['https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&h=500&fit=crop'],
+    '머스크' => ['https://images.unsplash.com/photo-1620891499292-74ecc6905d3b?w=800&h=500&fit=crop'],
+    '광고' => ['https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&h=500&fit=crop'],
 ];
 
 $categoryDefaults = [
-    'diplomacy' => 'diplomacy,politics,globe,summit',
-    'economy' => 'economy,business,finance,stock-market',
-    'technology' => 'technology,innovation,future,digital',
-    'entertainment' => 'entertainment,music,movie,celebrity',
+    'diplomacy' => ['https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=800&h=500&fit=crop'],
+    'economy' => ['https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&h=500&fit=crop'],
+    'technology' => ['https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&h=500&fit=crop'],
+    'entertainment' => ['https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=500&fit=crop'],
 ];
 
-// 이미지 URL 생성 함수 (mbstring 없이도 동작)
-function generateImageUrl($title, $category, $keywordMap, $categoryDefaults) {
-    // strtolower 사용 (mbstring 필요 없음)
+$defaultImages = [
+    'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&h=500&fit=crop',
+    'https://images.unsplash.com/photo-1495020689067-958852a7765e?w=800&h=500&fit=crop',
+];
+
+// 고정 이미지 URL 생성 함수
+function generateImageUrl($title, $category, $imageMap, $categoryDefaults, $defaultImages) {
     $titleLower = strtolower($title);
-    $foundKeywords = [];
     
-    foreach ($keywordMap as $keyword => $searchTerms) {
-        // strpos 사용 (mbstring 필요 없음)
+    // 1. 제목에서 키워드 매칭
+    foreach ($imageMap as $keyword => $urls) {
         if (strpos($titleLower, strtolower($keyword)) !== false) {
-            $foundKeywords[] = $searchTerms;
-            if (count($foundKeywords) >= 2) break;
+            $index = abs(crc32($title)) % count($urls);
+            return $urls[$index];
         }
     }
     
-    if (empty($foundKeywords)) {
-        $cat = strtolower($category ?? '');
-        $keywords = isset($categoryDefaults[$cat]) ? $categoryDefaults[$cat] : 'news,newspaper,global';
-    } else {
-        $allKw = [];
-        foreach ($foundKeywords as $kw) {
-            $allKw = array_merge($allKw, explode(',', $kw));
-        }
-        $keywords = implode(',', array_unique($allKw));
+    // 2. 카테고리 기반
+    $cat = strtolower($category ?? '');
+    if (isset($categoryDefaults[$cat])) {
+        $urls = $categoryDefaults[$cat];
+        return $urls[0];
     }
     
-    $seed = substr(md5($title . time()), 0, 8);
-    return "https://source.unsplash.com/800x500/?{$keywords}&sig={$seed}";
+    // 3. 기본 이미지
+    $index = abs(crc32($title)) % count($defaultImages);
+    return $defaultImages[$index];
 }
 
 try {
@@ -130,8 +154,8 @@ if ($method === 'POST') {
             $hasSourceUrl = $checkCol->rowCount() > 0;
         } catch (Exception $e) {}
         
-        // 자동 이미지 URL 생성 (저작권 무료 - Unsplash)
-        $imageUrl = generateImageUrl($title, $category, $keywordMap, $categoryDefaults);
+        // 자동 이미지 URL 생성 (저작권 무료 - Unsplash 고정 링크)
+        $imageUrl = generateImageUrl($title, $category, $imageMap, $categoryDefaults, $defaultImages);
         
         if ($hasSourceUrl) {
             $stmt = $db->prepare("
@@ -286,8 +310,8 @@ if ($method === 'PUT') {
         
         $description = substr(strip_tags($content), 0, 300);
         
-        // 자동 이미지 URL 생성 (저작권 무료 - Unsplash)
-        $imageUrl = generateImageUrl($title, $category, $keywordMap, $categoryDefaults);
+        // 자동 이미지 URL 생성 (저작권 무료 - Unsplash 고정 링크)
+        $imageUrl = generateImageUrl($title, $category, $imageMap, $categoryDefaults, $defaultImages);
         
         // source_url 컬럼 존재 여부 확인
         $hasSourceUrl = false;
