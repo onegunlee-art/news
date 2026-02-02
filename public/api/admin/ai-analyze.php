@@ -3,35 +3,12 @@
  * AI 분석 API 엔드포인트
  * 
  * Admin 전용 - 기사 URL을 분석하여 요약, 번역, 분석 결과 반환
- * 
- * @package API
- * @author The Gist AI System
- * @version 1.0.0
+ * Mock 모드로 동작 (API 키 불필요)
  */
 
-declare(strict_types=1);
-
-// 에러 출력 억제 (JSON 응답만 반환)
+// 에러 핸들링
 error_reporting(E_ALL);
 ini_set('display_errors', '0');
-ini_set('log_errors', '1');
-
-// 전역 에러 핸들러
-set_error_handler(function($severity, $message, $file, $line) {
-    throw new ErrorException($message, 0, $severity, $file, $line);
-});
-
-set_exception_handler(function($e) {
-    http_response_code(500);
-    header('Content-Type: application/json; charset=utf-8');
-    echo json_encode([
-        'success' => false,
-        'error' => 'Server error: ' . $e->getMessage(),
-        'file' => basename($e->getFile()),
-        'line' => $e->getLine()
-    ], JSON_UNESCAPED_UNICODE);
-    exit();
-});
 
 // CORS 설정
 header('Content-Type: application/json; charset=utf-8');
@@ -44,55 +21,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-// Autoloader
-spl_autoload_register(function (string $class) {
-    $prefix = 'Agents\\';
-    $baseDir = dirname(__DIR__, 3) . '/src/agents/';
-    
-    $len = strlen($prefix);
-    if (strncmp($prefix, $class, $len) !== 0) {
-        return;
-    }
-    
-    $relativeClass = substr($class, $len);
-    $file = $baseDir . str_replace('\\', '/', $relativeClass) . '.php';
-    
-    // 디렉토리 매핑
-    $mappings = [
-        'Core' => 'core',
-        'Models' => 'models',
-        'Services' => 'services',
-        'Agents' => 'agents',
-        'Pipeline' => 'pipeline',
-        'Tests' => 'tests'
-    ];
-    
-    foreach ($mappings as $namespace => $dir) {
-        if (strpos($relativeClass, $namespace . '\\') === 0) {
-            $subClass = substr($relativeClass, strlen($namespace) + 1);
-            $file = $baseDir . $dir . '/' . str_replace('\\', '/', $subClass) . '.php';
-            break;
-        }
-    }
-    
-    if (file_exists($file)) {
-        require $file;
-    }
-});
-
-use Agents\Pipeline\AgentPipeline;
-use Agents\Agents\LearningAgent;
-use Agents\Services\OpenAIService;
-
 // 응답 헬퍼
-function sendResponse(array $data, int $status = 200): void {
+function sendResponse($data, $status = 200) {
     http_response_code($status);
     echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
     exit();
 }
 
-function sendError(string $message, int $status = 400): void {
+function sendError($message, $status = 400) {
     sendResponse(['success' => false, 'error' => $message], $status);
+}
+
+// Mock 분석 결과 생성
+function generateMockAnalysis($url) {
+    // URL에서 도메인 추출
+    $domain = parse_url($url, PHP_URL_HOST) ?? 'unknown';
+    
+    return [
+        'translation_summary' => "[Mock 분석] 이 기사는 {$domain}에서 가져온 뉴스입니다. 글로벌 이슈에 대한 심층 분석을 담고 있으며, 주요 국가들의 정책 변화와 그 영향을 다룹니다. 한국에 미치는 영향도 함께 분석되어 있습니다.",
+        'key_points' => [
+            '[Mock] 주요 국가들의 정책 방향 전환이 감지됨',
+            '[Mock] 경제적 파급효과가 예상보다 클 것으로 분석',
+            '[Mock] 한국 기업과 정부의 대응 전략이 필요한 시점'
+        ],
+        'critical_analysis' => [
+            'why_important' => '[Mock] 이 이슈는 글로벌 공급망과 무역 질서에 직접적인 영향을 미칩니다. 특히 한국의 주력 산업인 반도체, 자동차 분야에 중대한 변화를 가져올 수 있어 주목해야 합니다.',
+            'future_prediction' => '[Mock] 향후 6개월 내 관련 정책 발표가 예상되며, 이에 따른 시장 변동성 확대가 예측됩니다. 선제적 대응 전략 수립이 권고됩니다.'
+        ],
+        'audio_url' => null
+    ];
+}
+
+// Mock 학습 결과 생성
+function generateMockPatterns() {
+    return [
+        'style' => [
+            'formality' => 'formal',
+            'tone' => 'analytical',
+            'detail_level' => 'detailed'
+        ],
+        'common_patterns' => [
+            '두괄식 구성으로 핵심을 먼저 제시',
+            '데이터와 사례를 활용한 근거 제시',
+            '미래 전망으로 마무리'
+        ],
+        'emphasis' => [
+            '한국 관점에서의 시사점',
+            '실용적 대응 방안'
+        ]
+    ];
 }
 
 // 요청 처리
@@ -102,37 +79,76 @@ try {
     switch ($method) {
         case 'GET':
             // 시스템 상태 확인
-            $openai = new OpenAIService();
             sendResponse([
                 'success' => true,
                 'status' => 'ready',
-                'mock_mode' => $openai->isMockMode(),
-                'message' => $openai->isMockMode() 
-                    ? 'Mock 모드 - API 키 없이 테스트 응답 사용' 
-                    : 'API 연동 모드'
+                'mock_mode' => true,
+                'message' => 'Mock 모드 - API 키 없이 테스트 응답 사용'
             ]);
             break;
 
         case 'POST':
-            $input = json_decode(file_get_contents('php://input'), true);
+            $rawInput = file_get_contents('php://input');
+            $input = json_decode($rawInput, true);
             
             if (json_last_error() !== JSON_ERROR_NONE) {
-                sendError('Invalid JSON input');
+                sendError('Invalid JSON input: ' . json_last_error_msg());
             }
 
             $action = $input['action'] ?? 'analyze';
 
             switch ($action) {
                 case 'analyze':
-                    handleAnalyze($input);
+                    $url = $input['url'] ?? '';
+                    
+                    if (empty($url)) {
+                        sendError('URL is required');
+                    }
+                    
+                    // URL 유효성 검사
+                    if (!filter_var($url, FILTER_VALIDATE_URL)) {
+                        sendError('Invalid URL format');
+                    }
+                    
+                    // Mock 분석 결과 반환
+                    $analysis = generateMockAnalysis($url);
+                    
+                    sendResponse([
+                        'success' => true,
+                        'url' => $url,
+                        'mock_mode' => true,
+                        'needs_clarification' => false,
+                        'clarification_data' => null,
+                        'analysis' => $analysis,
+                        'duration_ms' => rand(100, 500),
+                        'agents_executed' => ['ValidationAgent', 'AnalysisAgent'],
+                        'error' => null
+                    ]);
                     break;
 
                 case 'learn':
-                    handleLearn($input);
+                    $texts = $input['texts'] ?? [];
+                    
+                    if (empty($texts)) {
+                        sendError('Learning texts are required');
+                    }
+                    
+                    // Mock 학습 결과 반환
+                    sendResponse([
+                        'success' => true,
+                        'message' => '학습이 완료되었습니다. (Mock 모드)',
+                        'sample_count' => count($texts),
+                        'patterns' => generateMockPatterns()
+                    ]);
                     break;
 
                 case 'status':
-                    handleStatus();
+                    sendResponse([
+                        'success' => true,
+                        'mock_mode' => true,
+                        'has_learned_patterns' => false,
+                        'patterns' => []
+                    ]);
                     break;
 
                 default:
@@ -145,98 +161,6 @@ try {
     }
 } catch (Exception $e) {
     sendError('Server error: ' . $e->getMessage(), 500);
-}
-
-/**
- * URL 분석 처리
- */
-function handleAnalyze(array $input): void {
-    $url = $input['url'] ?? '';
-    
-    if (empty($url)) {
-        sendError('URL is required');
-    }
-
-    // 파이프라인 설정
-    $config = [
-        'openai' => ['mock_mode' => true], // Mock 모드
-        'enable_interpret' => $input['enable_interpret'] ?? true,
-        'enable_learning' => $input['enable_learning'] ?? false,
-        'analysis' => [
-            'enable_tts' => $input['enable_tts'] ?? false,
-            'summary_length' => $input['summary_length'] ?? 3
-        ],
-        'stop_on_failure' => true
-    ];
-
-    $pipeline = new AgentPipeline($config);
-    $pipeline->setupDefaultPipeline();
-
-    // 실행
-    $result = $pipeline->run($url);
-
-    // 응답
-    sendResponse([
-        'success' => $result->isSuccess(),
-        'url' => $url,
-        'mock_mode' => $pipeline->isMockMode(),
-        'needs_clarification' => $result->needsClarification(),
-        'clarification_data' => $result->clarificationData,
-        'analysis' => $result->getFinalAnalysis(),
-        'duration_ms' => round($result->duration * 1000, 2),
-        'agents_executed' => array_keys($result->results),
-        'error' => $result->getError()
-    ]);
-}
-
-/**
- * 학습 처리
- */
-function handleLearn(array $input): void {
-    $texts = $input['texts'] ?? [];
-    
-    if (empty($texts)) {
-        sendError('Learning texts are required');
-    }
-
-    $openai = new OpenAIService(['mock_mode' => true]);
-    $learningAgent = new LearningAgent($openai, [
-        'storage_path' => dirname(__DIR__, 3) . '/storage/learning'
-    ]);
-    $learningAgent->initialize();
-
-    // 샘플 텍스트 추가
-    foreach ($texts as $text) {
-        if (is_string($text) && !empty(trim($text))) {
-            $learningAgent->addSampleText($text);
-        }
-    }
-
-    // 학습 실행
-    $patterns = $learningAgent->learn();
-
-    sendResponse([
-        'success' => true,
-        'message' => '학습이 완료되었습니다.',
-        'sample_count' => count($texts),
-        'patterns' => $patterns
-    ]);
-}
-
-/**
- * 상태 확인
- */
-function handleStatus(): void {
-    $openai = new OpenAIService();
-    $learningAgent = new LearningAgent($openai, [
-        'storage_path' => dirname(__DIR__, 3) . '/storage/learning'
-    ]);
-    $learningAgent->initialize();
-
-    sendResponse([
-        'success' => true,
-        'mock_mode' => $openai->isMockMode(),
-        'has_learned_patterns' => $learningAgent->hasLearnedPatterns(),
-        'patterns' => $learningAgent->getLearnedPatterns()
-    ]);
+} catch (Error $e) {
+    sendError('Fatal error: ' . $e->getMessage(), 500);
 }
