@@ -23,7 +23,7 @@ $dbConfig = [
     'host' => 'localhost',
     'dbname' => 'ailand',
     'username' => 'ailand',
-    'password' => 'ektlf1212',
+    'password' => 'romi4120!',
     'charset' => 'utf8mb4'
 ];
 

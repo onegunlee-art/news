@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 $host = 'localhost';
 $dbname = 'ailand';
 $username = 'ailand';
-$password = 'ektlf1212';
+$password = 'romi4120!';
 
 try {
     $pdo = new PDO(
