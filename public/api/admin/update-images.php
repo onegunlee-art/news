@@ -108,11 +108,11 @@ $categoryDefaults = [
 ];
 
 function extractKeywords($title, $category, $keywordMap, $categoryDefaults) {
-    $title = mb_strtolower($title);
+    $title = strtolower($title);
     $foundKeywords = [];
     
     foreach ($keywordMap as $keyword => $searchTerms) {
-        if (mb_strpos($title, mb_strtolower($keyword)) !== false) {
+        if (strpos($title, strtolower($keyword)) !== false) {
             $foundKeywords[] = $searchTerms;
             if (count($foundKeywords) >= 2) {
                 break;

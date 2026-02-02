@@ -52,21 +52,23 @@ $categoryDefaults = [
     'entertainment' => 'entertainment,music,movie,celebrity',
 ];
 
-// 이미지 URL 생성 함수
+// 이미지 URL 생성 함수 (mbstring 없이도 동작)
 function generateImageUrl($title, $category, $keywordMap, $categoryDefaults) {
-    $title = mb_strtolower($title);
+    // strtolower 사용 (mbstring 필요 없음)
+    $titleLower = strtolower($title);
     $foundKeywords = [];
     
     foreach ($keywordMap as $keyword => $searchTerms) {
-        if (mb_strpos($title, mb_strtolower($keyword)) !== false) {
+        // strpos 사용 (mbstring 필요 없음)
+        if (strpos($titleLower, strtolower($keyword)) !== false) {
             $foundKeywords[] = $searchTerms;
             if (count($foundKeywords) >= 2) break;
         }
     }
     
     if (empty($foundKeywords)) {
-        $category = strtolower($category ?? '');
-        $keywords = $categoryDefaults[$category] ?? 'news,newspaper,global';
+        $cat = strtolower($category ?? '');
+        $keywords = isset($categoryDefaults[$cat]) ? $categoryDefaults[$cat] : 'news,newspaper,global';
     } else {
         $allKw = [];
         foreach ($foundKeywords as $kw) {
@@ -119,7 +121,7 @@ if ($method === 'POST') {
     try {
         // source_url이 있으면 그것을 사용, 없으면 admin:// URL 생성
         $url = $sourceUrl ? $sourceUrl : 'admin://news/' . uniqid() . '-' . time();
-        $description = mb_substr(strip_tags($content), 0, 300);
+        $description = substr(strip_tags($content), 0, 300);
         
         // source_url 컬럼 존재 여부 확인
         $hasSourceUrl = false;
@@ -282,7 +284,7 @@ if ($method === 'PUT') {
             exit;
         }
         
-        $description = mb_substr(strip_tags($content), 0, 300);
+        $description = substr(strip_tags($content), 0, 300);
         
         // 자동 이미지 URL 생성 (저작권 무료 - Unsplash)
         $imageUrl = generateImageUrl($title, $category, $keywordMap, $categoryDefaults);
