@@ -234,8 +234,8 @@ if ($method === 'GET') {
         } catch (Exception $e) {}
         
         $selectColumns = $hasSourceUrl 
-            ? 'id, category, title, description, content, source, source_url, created_at'
-            : 'id, category, title, description, content, source, NULL as source_url, created_at';
+            ? 'id, category, title, description, content, source, source_url, image_url, created_at'
+            : 'id, category, title, description, content, source, NULL as source_url, image_url, created_at';
         
         $stmt = $db->prepare("
             SELECT $selectColumns

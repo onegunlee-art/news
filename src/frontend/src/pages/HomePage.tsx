@@ -13,6 +13,7 @@ interface NewsItem {
   published_at: string | null
   time_ago?: string
   category?: string
+  image_url?: string | null
 }
 
 export default function HomePage() {
@@ -127,8 +128,9 @@ export default function HomePage() {
 
 // 메인 피처드 기사
 function FeaturedArticle({ article }: { article: NewsItem }) {
-  const imageId = Math.abs(article.title.split('').reduce((a, b) => a + b.charCodeAt(0), 0) % 1000) + 1
-  const imageUrl = `https://picsum.photos/seed/${imageId}/800/500`
+  // DB에 저장된 image_url 사용, 없으면 fallback
+  const fallbackId = Math.abs(article.title.split('').reduce((a, b) => a + b.charCodeAt(0), 0) % 1000) + 1
+  const imageUrl = article.image_url || `https://picsum.photos/seed/${fallbackId}/800/500`
 
   return (
     <Link to={`/news/${article.id || ''}`} className="group block">
@@ -179,8 +181,9 @@ function FeaturedArticle({ article }: { article: NewsItem }) {
 
 // 사이드 기사
 function SideArticle({ article }: { article: NewsItem }) {
-  const imageId = Math.abs(article.title.split('').reduce((a, b) => a + b.charCodeAt(0), 0) % 1000) + 1
-  const imageUrl = `https://picsum.photos/seed/${imageId}/300/200`
+  // DB에 저장된 image_url 사용, 없으면 fallback
+  const fallbackId = Math.abs(article.title.split('').reduce((a, b) => a + b.charCodeAt(0), 0) % 1000) + 1
+  const imageUrl = article.image_url || `https://picsum.photos/seed/${fallbackId}/300/200`
 
   return (
     <Link to={`/news/${article.id || ''}`} className="group block">
@@ -218,8 +221,9 @@ function SideArticle({ article }: { article: NewsItem }) {
 
 // 기사 카드
 function ArticleCard({ article }: { article: NewsItem }) {
-  const imageId = Math.abs(article.title.split('').reduce((a, b) => a + b.charCodeAt(0), 0) % 1000) + 1
-  const imageUrl = `https://picsum.photos/seed/${imageId}/400/250`
+  // DB에 저장된 image_url 사용, 없으면 fallback
+  const fallbackId = Math.abs(article.title.split('').reduce((a, b) => a + b.charCodeAt(0), 0) % 1000) + 1
+  const imageUrl = article.image_url || `https://picsum.photos/seed/${fallbackId}/400/250`
 
   return (
     <Link to={`/news/${article.id || ''}`} className="group block">
