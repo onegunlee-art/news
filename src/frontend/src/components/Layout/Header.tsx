@@ -36,7 +36,7 @@ export default function Header() {
         <div className="flex justify-center py-8 border-b border-gray-100">
           <Link to="/" className="text-center group">
             <h1 className="text-4xl md:text-5xl text-gray-900 transition-colors duration-300 group-hover:text-gray-700" style={{ fontFamily: "'Lobster', cursive", fontWeight: 400, letterSpacing: '0.01em' }}>
-              The Gist
+              The GIst
             </h1>
             <p className="text-[10px] text-gray-400 mt-2 tracking-[0.3em] uppercase font-light">News Analysis</p>
           </Link>
