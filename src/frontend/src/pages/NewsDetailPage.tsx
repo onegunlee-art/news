@@ -215,16 +215,20 @@ export default function NewsDetailPage() {
           {news.title}
         </h1>
 
-        {/* 본문 */}
-        {news.content ? (
-          <div className="prose prose-invert max-w-none mb-6">
-            <p className="text-gray-300 leading-relaxed whitespace-pre-wrap">
-              {news.content}
-            </p>
-          </div>
-        ) : news.description ? (
-          <p className="text-gray-300 leading-relaxed mb-6">{news.description}</p>
-        ) : null}
+        {/* 본문 - 뚜렷하게 표시 */}
+        <div className="bg-slate-800/50 rounded-xl p-6 mb-6 border border-slate-700/50">
+          {news.content ? (
+            <div className="prose prose-invert prose-lg max-w-none">
+              <p className="text-gray-100 text-lg leading-relaxed whitespace-pre-wrap">
+                {news.content}
+              </p>
+            </div>
+          ) : news.description ? (
+            <p className="text-gray-100 text-lg leading-relaxed">{news.description}</p>
+          ) : (
+            <p className="text-gray-400 italic">본문 내용이 없습니다.</p>
+          )}
+        </div>
 
         {/* 이게 왜 중요한가? 섹션 - 버튼 클릭 시에만 표시 */}
         {showWhyImportant && news.why_important && (

@@ -74,7 +74,7 @@ export const newsApi = {
     api.get('/admin/news.php', { params: { query, page, per_page: perPage } }),
   
   getDetail: (id: number) =>
-    api.get(`/news/${id}`),
+    api.get('/news/detail.php', { params: { id } }),
   
   bookmark: (id: number, memo?: string) =>
     api.post(`/news/${id}/bookmark`, { memo }),
