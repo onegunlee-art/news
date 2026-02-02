@@ -422,7 +422,9 @@ export default function NewsDetailPage() {
                 닫기
               </button>
               <button
-                onClick={() => {
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
                   setFreeAccessGranted(true)
                   setShowSubscribeModal(false)
                 }}
