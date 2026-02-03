@@ -4,7 +4,7 @@ export default function Footer() {
   const currentYear = new Date().getFullYear()
 
   return (
-    <footer className="bg-gray-50 border-t border-gray-100 hidden md:block pb-20 md:pb-0">
+    <footer className="bg-gray-50 border-t border-gray-100 pb-20 md:pb-0">
       {/* 메인 푸터 - 데스크톱만, 콘텐츠와 동일 max-width */}
       <div className="max-w-lg md:max-w-4xl lg:max-w-6xl mx-auto px-4 py-12">
         <div className="flex flex-col md:flex-row justify-between items-center gap-8">

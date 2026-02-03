@@ -49,6 +49,21 @@
 
 ---
 
+## ⚠️ 배포가 적용되지 않을 때 (GitHub 자동 배포)
+
+GitHub에서 **main 브랜치에 push**하면 자동으로 빌드 후 FTP로 배포됩니다. 변경사항이 사이트에 안 보이면 아래를 확인하세요.
+
+| 확인 항목 | 설명 |
+|----------|------|
+| **1. main에 push했는지** | 다른 브랜치에만 push하면 배포가 안 됩니다. `git push origin main` |
+| **2. GitHub Actions 성공 여부** | 저장소 → Actions 탭에서 최근 "Build and Deploy" 워크플로가 초록색(성공)인지 확인 |
+| **3. FTP 시크릿 설정** | Settings → Secrets and variables → Actions에 `FTP_SERVER`, `FTP_USERNAME`, `FTP_PASSWORD`가 있어야 deploy 단계가 성공합니다 |
+| **4. 브라우저 캐시** | 사이트가 예전 버전을 캐시하고 있을 수 있습니다. **강력 새로고침**(Ctrl+Shift+R) 또는 시크릿 창에서 접속 |
+
+로컬에서만 수정하고 **push를 안 하셨다면** 배포는 실행되지 않습니다. 반드시 `git add` → `git commit` → `git push origin main` 후 Actions에서 배포가 성공했는지 확인하세요.
+
+---
+
 ## 🔧 배포 방법
 
 ### 방법 1: FileZilla 사용 (권장)

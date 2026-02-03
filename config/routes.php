@@ -74,11 +74,20 @@ $router->group(['prefix' => '/news'], function (Router $router) {
 
 // ==================== 분석 라우트 ====================
 $router->group(['prefix' => '/analysis'], function (Router $router) {
+    // URL 기반 AI 분석 (Agent Pipeline)
+    $router->post('/url', [AnalysisController::class, 'analyzeUrl']);
+    
+    // Agent Pipeline 상태 확인
+    $router->get('/pipeline/status', [AnalysisController::class, 'pipelineStatus']);
+    
     // 뉴스 분석 요청
     $router->post('/news/{id}', [AnalysisController::class, 'analyzeNews']);
     
     // 텍스트 분석 요청
     $router->post('/text', [AnalysisController::class, 'analyzeText']);
+    
+    // 분석 통계 조회
+    $router->get('/stats', [AnalysisController::class, 'stats']);
     
     // 분석 결과 조회
     $router->get('/{id}', [AnalysisController::class, 'show']);

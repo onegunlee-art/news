@@ -1,5 +1,5 @@
 name: Build and Deploy
-# Updated: Fixed PHP syntax validation logic
+# 배포는 main 브랜치에 push할 때만 실행됩니다. 변경사항이 반영되려면 반드시 main에 push하세요.
 
 on:
   push:
@@ -86,6 +86,12 @@ jobs:
         env:
           VITE_API_URL: /api
 
+      - name: List built files (배포될 프론트엔드 파일 확인)
+        run: |
+          echo "=== public/ 내용 (배포 대상) ==="
+          ls -la public/
+          ls -la public/assets/ 2>/dev/null || true
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -111,6 +117,13 @@ jobs:
         with:
           name: frontend-build
           path: public/
+
+      - name: Verify deploy package
+        run: |
+          echo "=== 배포 패키지에 포함될 항목 ==="
+          ls -la public/
+          test -f public/index.html && echo "OK: index.html 있음" || echo "WARN: index.html 없음"
+          ls public/assets/ 2>/dev/null | head -5 || true
 
       - name: Create deployment package
         run: |

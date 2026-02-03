@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { newsApi } from '../services/api'
 import LoadingSpinner from '../components/Common/LoadingSpinner'
+import { getPlaceholderImageUrl } from '../utils/imagePolicy'
 
 interface NewsItem {
   id?: number
@@ -110,15 +111,6 @@ export default function HomePage() {
         )}
       </div>
 
-      {/* 더 보기 섹션 */}
-      {!isLoading && news.length > 0 && (
-        <div className="max-w-lg md:max-w-4xl lg:max-w-6xl mx-auto px-4 py-8">
-          <div className="border-t border-gray-100 pt-6">
-            <h3 className="text-sm font-medium text-gray-900 mb-4">무엇이 처음부터 왔었</h3>
-            {/* 추가 콘텐츠 영역 */}
-          </div>
-        </div>
-      )}
 
       {/* 하단 네비게이션 - 모바일만 표시, PC는 헤더에 링크 */}
       <BottomNav />
@@ -126,10 +118,13 @@ export default function HomePage() {
   )
 }
 
-// 기사 카드 - 왼쪽 텍스트 + 오른쪽 이미지
+// 기사 카드 - 왼쪽 텍스트 + 오른쪽 이미지 (기사별 고유 이미지, 중복 없음)
 function ArticleCard({ article }: { article: NewsItem }) {
-  const fallbackId = Math.abs(article.title.split('').reduce((a, b) => a + b.charCodeAt(0), 0) % 1000) + 1
-  const imageUrl = article.image_url || `https://picsum.photos/seed/${fallbackId}/200/200`
+  const imageUrl = article.image_url || getPlaceholderImageUrl(
+    { id: article.id, title: article.title, description: article.description, published_at: article.published_at, category: article.category },
+    200,
+    200
+  )
 
   // 날짜 포맷팅
   const formatDate = () => {
@@ -180,7 +175,11 @@ function ArticleCard({ article }: { article: NewsItem }) {
               alt={article.title}
               className="w-full h-full object-cover"
               onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none'
+                (e.target as HTMLImageElement).src = getPlaceholderImageUrl(
+                  { id: article.id, title: article.title, description: article.description, published_at: article.published_at, category: article.category, url: article.url, source: article.source },
+                  200,
+                  200
+                )
               }}
             />
           </div>

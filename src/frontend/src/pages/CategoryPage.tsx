@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { newsApi } from '../services/api';
+import { getPlaceholderImageUrl } from '../utils/imagePolicy';
 
 interface NewsItem {
   id: string;
@@ -140,8 +141,16 @@ const CategoryPage: React.FC = () => {
 };
 
 function ArticleCard({ article, index }: { article: NewsItem; index: number }) {
-  const imageId = Math.abs(article.title.split('').reduce((a, b) => a + b.charCodeAt(0), 0) % 1000) + 1;
-  const imageUrl = article.image || `https://picsum.photos/seed/${imageId}/400/250`;
+  const articleForImage = {
+    id: parseInt(article.id, 10) || undefined,
+    title: article.title,
+    description: article.description,
+    published_at: article.published_at,
+    category: article.section,
+    url: article.url,
+    source: article.source,
+  };
+  const imageUrl = article.image || getPlaceholderImageUrl(articleForImage, 400, 250);
 
   return (
     <motion.article
@@ -151,14 +160,14 @@ function ArticleCard({ article, index }: { article: NewsItem; index: number }) {
       className="group"
     >
       <a href={article.url} target="_blank" rel="noopener noreferrer" className="block">
-        {/* 이미지 */}
+        {/* 이미지 (기사별 고유 시드, 중복 없음) */}
         <div className="aspect-[16/10] overflow-hidden mb-4">
           <img
             src={imageUrl}
             alt={article.title}
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
             onError={(e) => {
-              (e.target as HTMLImageElement).src = `https://picsum.photos/seed/${imageId}/400/250`;
+              (e.target as HTMLImageElement).src = getPlaceholderImageUrl(articleForImage, 400, 250);
             }}
           />
         </div>

@@ -199,4 +199,75 @@ final class AnalysisController
         
         return Response::success($stats, '통계 조회 성공');
     }
+
+    /**
+     * URL 기반 AI 분석 요청 (Agent Pipeline)
+     * 
+     * POST /api/analysis/url
+     */
+    public function analyzeUrl(Request $request): Response
+    {
+        $url = $request->json('url', '');
+        
+        if (empty(trim($url))) {
+            return Response::error('분석할 URL을 입력해주세요.', 400);
+        }
+        
+        if (!filter_var($url, FILTER_VALIDATE_URL)) {
+            return Response::error('유효하지 않은 URL 형식입니다.', 400);
+        }
+        
+        // 사용자 ID 추출 (선택적)
+        $userId = null;
+        $accessToken = $request->bearerToken();
+        
+        if ($accessToken) {
+            $userId = $this->authService->getAuthenticatedUserId($accessToken);
+            
+            // 일일 분석 제한 확인
+            if ($userId && !$this->analysisService->checkDailyLimit($userId)) {
+                return Response::error('일일 분석 제한을 초과했습니다.', 429);
+            }
+        }
+        
+        // 분석 옵션
+        $options = [
+            'enable_tts' => $request->json('enable_tts', false),
+            'enable_interpret' => $request->json('enable_interpret', true),
+            'enable_learning' => $request->json('enable_learning', true)
+        ];
+        
+        try {
+            $result = $this->analysisService->analyzeUrl($url, $userId, $options);
+            
+            // 명확화 필요한 경우
+            if (isset($result['needs_clarification']) && $result['needs_clarification']) {
+                return Response::json([
+                    'success' => false,
+                    'needs_clarification' => true,
+                    'clarification_data' => $result['clarification_data'],
+                    'message' => '추가 정보가 필요합니다.'
+                ], 202);
+            }
+            
+            return Response::success($result, 'URL 분석 완료');
+        } catch (RuntimeException $e) {
+            return Response::error($e->getMessage(), 400);
+        }
+    }
+
+    /**
+     * Agent Pipeline 상태 확인
+     * 
+     * GET /api/analysis/pipeline/status
+     */
+    public function pipelineStatus(Request $request): Response
+    {
+        try {
+            $status = $this->analysisService->getPipelineStatus();
+            return Response::success($status, 'Pipeline 상태 조회 성공');
+        } catch (RuntimeException $e) {
+            return Response::error($e->getMessage(), 500);
+        }
+    }
 }

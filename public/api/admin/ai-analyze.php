@@ -3,7 +3,7 @@
  * AI 분석 API 엔드포인트
  * 
  * Admin 전용 - 기사 URL을 분석하여 요약, 번역, 분석 결과 반환
- * Mock 모드로 동작 (API 키 불필요)
+ * Agent Pipeline (ValidationAgent, AnalysisAgent, InterpretAgent, LearningAgent) 사용
  */
 
 // 에러 핸들링
@@ -21,6 +21,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
+// Agent System 로드
+require_once __DIR__ . '/../../../src/agents/autoload.php';
+
+use Agents\Pipeline\AgentPipeline;
+use Agents\Agents\LearningAgent;
+use Agents\Services\OpenAIService;
+
 // 응답 헬퍼
 function sendResponse($data, $status = 200) {
     http_response_code($status);
@@ -32,43 +39,126 @@ function sendError($message, $status = 400) {
     sendResponse(['success' => false, 'error' => $message], $status);
 }
 
-// The Gist AI 분석 결과 생성
-function generateAnalysis($url) {
-    // URL에서 도메인 추출
-    $domain = parse_url($url, PHP_URL_HOST) ?? 'unknown';
+// URL 분석 실행
+function analyzeUrl(string $url, array $options = []): array {
+    $startTime = microtime(true);
     
+    // Pipeline 설정
+    $pipelineConfig = [
+        'openai' => [],
+        'enable_interpret' => $options['enable_interpret'] ?? true,
+        'enable_learning' => $options['enable_learning'] ?? true,
+        'analysis' => [
+            'enable_tts' => $options['enable_tts'] ?? false,
+            'summary_length' => 3,
+            'key_points_count' => 3
+        ],
+        'stop_on_failure' => true
+    ];
+    
+    $pipeline = new AgentPipeline($pipelineConfig);
+    $pipeline->setupDefaultPipeline();
+    
+    // 실행
+    $result = $pipeline->run($url);
+    
+    $durationMs = round((microtime(true) - $startTime) * 1000, 2);
+    
+    // 결과 처리
+    if ($result->isSuccess()) {
+        $finalAnalysis = $result->getFinalAnalysis();
+        
+        return [
+            'success' => true,
+            'url' => $url,
+            'mock_mode' => $pipeline->isMockMode(),
+            'needs_clarification' => false,
+            'clarification_data' => null,
+            'analysis' => [
+                'translation_summary' => $finalAnalysis['translation_summary'] ?? '',
+                'key_points' => $finalAnalysis['key_points'] ?? [],
+                'critical_analysis' => $finalAnalysis['critical_analysis'] ?? [
+                    'why_important' => '',
+                    'future_prediction' => ''
+                ],
+                'audio_url' => $finalAnalysis['audio_url'] ?? null
+            ],
+            'duration_ms' => $durationMs,
+            'agents_executed' => array_keys($result->results),
+            'error' => null
+        ];
+    }
+    
+    // 명확화 필요
+    if ($result->needsClarification()) {
+        return [
+            'success' => false,
+            'url' => $url,
+            'mock_mode' => $pipeline->isMockMode(),
+            'needs_clarification' => true,
+            'clarification_data' => $result->clarificationData,
+            'analysis' => null,
+            'duration_ms' => $durationMs,
+            'agents_executed' => array_keys($result->results),
+            'error' => null
+        ];
+    }
+    
+    // 실패
     return [
-        'translation_summary' => "이 기사는 {$domain}에서 가져온 뉴스입니다. 글로벌 이슈에 대한 심층 분석을 담고 있으며, 주요 국가들의 정책 변화와 그 영향을 다룹니다. 한국에 미치는 영향도 함께 분석되어 있습니다.",
-        'key_points' => [
-            '주요 국가들의 정책 방향 전환이 감지됨',
-            '경제적 파급효과가 예상보다 클 것으로 분석',
-            '한국 기업과 정부의 대응 전략이 필요한 시점'
-        ],
-        'critical_analysis' => [
-            'why_important' => '이 이슈는 글로벌 공급망과 무역 질서에 직접적인 영향을 미칩니다. 특히 한국의 주력 산업인 반도체, 자동차 분야에 중대한 변화를 가져올 수 있어 주목해야 합니다.',
-            'future_prediction' => '향후 6개월 내 관련 정책 발표가 예상되며, 이에 따른 시장 변동성 확대가 예측됩니다. 선제적 대응 전략 수립이 권고됩니다.'
-        ],
-        'audio_url' => null
+        'success' => false,
+        'url' => $url,
+        'mock_mode' => $pipeline->isMockMode(),
+        'needs_clarification' => false,
+        'clarification_data' => null,
+        'analysis' => null,
+        'duration_ms' => $durationMs,
+        'agents_executed' => array_keys($result->results),
+        'error' => $result->getError()
     ];
 }
 
-// The Gist 스타일 학습 결과 생성
-function generatePatterns() {
+// 스타일 학습
+function learnStyle(array $texts): array {
+    $openai = new OpenAIService(['mock_mode' => true]);
+    $learningAgent = new LearningAgent($openai, [
+        'storage_path' => __DIR__ . '/../../../storage/learning'
+    ]);
+    
+    $learningAgent->initialize();
+    
+    // 샘플 텍스트 추가
+    foreach ($texts as $text) {
+        if (!empty(trim($text))) {
+            $learningAgent->addSampleText($text, ['source' => 'admin']);
+        }
+    }
+    
+    // 학습 실행
+    $patterns = $learningAgent->learn();
+    
     return [
-        'style' => [
-            'formality' => 'formal',
-            'tone' => 'analytical',
-            'detail_level' => 'detailed'
-        ],
-        'common_patterns' => [
-            '두괄식 구성으로 핵심을 먼저 제시',
-            '데이터와 사례를 활용한 근거 제시',
-            '미래 전망으로 마무리'
-        ],
-        'emphasis' => [
-            '한국 관점에서의 시사점',
-            '실용적 대응 방안'
-        ]
+        'success' => true,
+        'message' => '스타일 학습이 완료되었습니다.',
+        'sample_count' => count($texts),
+        'patterns' => $patterns
+    ];
+}
+
+// 학습 상태 확인
+function getStatus(): array {
+    $openai = new OpenAIService([]);
+    $learningAgent = new LearningAgent($openai, [
+        'storage_path' => __DIR__ . '/../../../storage/learning'
+    ]);
+    
+    $learningAgent->initialize();
+    
+    return [
+        'success' => true,
+        'mock_mode' => $openai->isMockMode(),
+        'has_learned_patterns' => $learningAgent->hasLearnedPatterns(),
+        'patterns' => $learningAgent->getLearnedPatterns()
     ];
 }
 
@@ -79,10 +169,14 @@ try {
     switch ($method) {
         case 'GET':
             // 시스템 상태 확인
+            $pipeline = new AgentPipeline([]);
+            $pipeline->setupDefaultPipeline();
+            
             sendResponse([
                 'success' => true,
                 'status' => 'ready',
-                'mock_mode' => false,
+                'mock_mode' => $pipeline->isMockMode(),
+                'agents' => $pipeline->getAgentNames(),
                 'message' => 'The Gist AI 분석 시스템 준비 완료'
             ]);
             break;
@@ -110,20 +204,16 @@ try {
                         sendError('Invalid URL format');
                     }
                     
-                    // The Gist AI 분석 결과 반환
-                    $analysis = generateAnalysis($url);
+                    // 옵션
+                    $options = [
+                        'enable_tts' => $input['enable_tts'] ?? false,
+                        'enable_interpret' => $input['enable_interpret'] ?? true,
+                        'enable_learning' => $input['enable_learning'] ?? true
+                    ];
                     
-                    sendResponse([
-                        'success' => true,
-                        'url' => $url,
-                        'mock_mode' => false,
-                        'needs_clarification' => false,
-                        'clarification_data' => null,
-                        'analysis' => $analysis,
-                        'duration_ms' => rand(100, 500),
-                        'agents_executed' => ['ValidationAgent', 'AnalysisAgent'],
-                        'error' => null
-                    ]);
+                    // Agent Pipeline 분석 실행
+                    $result = analyzeUrl($url, $options);
+                    sendResponse($result);
                     break;
 
                 case 'learn':
@@ -133,22 +223,13 @@ try {
                         sendError('Learning texts are required');
                     }
                     
-                    // The Gist 스타일 학습 결과 반환
-                    sendResponse([
-                        'success' => true,
-                        'message' => '스타일 학습이 완료되었습니다.',
-                        'sample_count' => count($texts),
-                        'patterns' => generatePatterns()
-                    ]);
+                    $result = learnStyle($texts);
+                    sendResponse($result);
                     break;
 
                 case 'status':
-                    sendResponse([
-                        'success' => true,
-                        'mock_mode' => false,
-                        'has_learned_patterns' => false,
-                        'patterns' => []
-                    ]);
+                    $result = getStatus();
+                    sendResponse($result);
                     break;
 
                 default:
@@ -160,7 +241,9 @@ try {
             sendError('Method not allowed', 405);
     }
 } catch (Exception $e) {
+    error_log("AI Analyze Error: " . $e->getMessage() . "\n" . $e->getTraceAsString());
     sendError('Server error: ' . $e->getMessage(), 500);
 } catch (Error $e) {
+    error_log("AI Analyze Fatal: " . $e->getMessage() . "\n" . $e->getTraceAsString());
     sendError('Fatal error: ' . $e->getMessage(), 500);
 }

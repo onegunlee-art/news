@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { newsApi } from '../services/api'
 import { useAuthStore } from '../store/authStore'
 import LoadingSpinner from '../components/Common/LoadingSpinner'
+import { getPlaceholderImageUrl } from '../utils/imagePolicy'
 
 interface NewsDetail {
   id: number
@@ -129,11 +130,14 @@ export default function NewsDetailPage() {
     return news?.source || 'Foreign Affairs'
   }
 
-  // 이미지 URL
+  // 이미지 URL (기사별 고유 시드, 중복 없음)
   const getImageUrl = () => {
     if (news?.image_url) return news.image_url
-    const fallbackId = news?.title.split('').reduce((a, b) => a + b.charCodeAt(0), 0) || 1
-    return `https://picsum.photos/seed/${Math.abs(fallbackId % 1000) + 1}/800/400`
+    return getPlaceholderImageUrl(
+      { id: news.id, title: news.title, description: news.description, published_at: news.published_at, url: news.url, source: news.source },
+      800,
+      400
+    )
   }
 
   if (isLoading) {
@@ -223,7 +227,11 @@ export default function NewsDetailPage() {
             alt={news.title}
             className="w-full h-full object-cover"
             onError={(e) => {
-              (e.target as HTMLImageElement).src = 'https://via.placeholder.com/800x400/f3f4f6/9ca3af?text=No+Image'
+              (e.target as HTMLImageElement).src = getPlaceholderImageUrl(
+                { id: news.id, title: news.title, description: news.description, published_at: news.published_at, url: news.url, source: news.source },
+                800,
+                400
+              )
             }}
           />
         </div>

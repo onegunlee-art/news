@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useMemo } from 'react'
+import { getPlaceholderImageUrl } from '../../utils/imagePolicy'
 
 interface NewsItem {
   id?: number
@@ -19,32 +20,16 @@ interface NewsCardProps {
   index?: number
 }
 
-// 제목/카테고리에서 이미지 ID 생성 (일관된 이미지 표시를 위해)
-function getImageId(title: string, category?: string | null): number {
-  // 문자열의 해시값을 기반으로 1-1000 사이의 숫자 생성
-  let hash = 0
-  const str = title + (category || '')
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i)
-    hash = ((hash << 5) - hash) + char
-    hash = hash & hash
-  }
-  return Math.abs(hash % 1000) + 1
-}
-
-// 카테고리별 이미지 색상/스타일 (Lorem Picsum 사용)
-function getPlaceholderImageUrl(title: string, category?: string | null): string {
-  const id = getImageId(title, category)
-  // Lorem Picsum - 무료 랜덤 이미지 서비스
-  return `https://picsum.photos/seed/${id}/400/250`
-}
-
 export default function NewsCard({ news, index = 0 }: NewsCardProps) {
-  // 이미지 URL 생성 (메모이제이션)
+  // 이미지 URL: 저장된 image_url 우선, 없으면 기사별 고유 시드로 placeholder (중복 없음)
   const imageUrl = useMemo(() => {
     if (news.image_url) return news.image_url
-    return getPlaceholderImageUrl(news.title, news.category)
-  }, [news.title, news.image_url, news.category])
+    return getPlaceholderImageUrl(
+      { id: news.id, title: news.title, description: news.description, published_at: news.published_at, category: news.category },
+      400,
+      250
+    )
+  }, [news.id, news.title, news.description, news.published_at, news.category, news.image_url])
 
   const content = (
     <motion.article
@@ -61,8 +46,11 @@ export default function NewsCard({ news, index = 0 }: NewsCardProps) {
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
           loading="lazy"
           onError={(e) => {
-            // 이미지 로드 실패 시 기본 이미지
-            (e.target as HTMLImageElement).src = 'https://picsum.photos/400/250?grayscale'
+            (e.target as HTMLImageElement).src = getPlaceholderImageUrl(
+              { id: news.id, title: news.title, description: news.description, published_at: news.published_at, category: news.category, url: news.url, source: news.source },
+              400,
+              250
+            )
           }}
         />
         {/* 출처 배지 */}

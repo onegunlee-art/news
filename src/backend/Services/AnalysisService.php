@@ -18,6 +18,10 @@ use App\Repositories\AnalysisRepository;
 use App\Repositories\NewsRepository;
 use RuntimeException;
 
+// Agent Pipeline
+require_once dirname(__DIR__, 2) . '/agents/autoload.php';
+use Agents\Pipeline\AgentPipeline;
+
 /**
  * AnalysisService 클래스
  * 
@@ -364,6 +368,140 @@ final class AnalysisService implements AnalysisInterface
         $todayCount = $this->analysisRepository->countTodayByUserId($userId);
         
         return $todayCount < $limit;
+    }
+
+    /**
+     * URL 기반 AI 분석 (Agent Pipeline 사용)
+     * 
+     * 4개 Agent (Validation, Analysis, Interpret, Learning) 파이프라인을 통한 심층 분석
+     * 
+     * @param string $url 분석할 기사 URL
+     * @param int|null $userId 사용자 ID (선택)
+     * @param array $options 분석 옵션
+     * @return array 분석 결과
+     */
+    public function analyzeUrl(string $url, ?int $userId = null, array $options = []): array
+    {
+        if (empty(trim($url))) {
+            throw new RuntimeException('분석할 URL을 입력해주세요.');
+        }
+
+        if (!filter_var($url, FILTER_VALIDATE_URL)) {
+            throw new RuntimeException('유효하지 않은 URL 형식입니다.');
+        }
+
+        $startTime = microtime(true);
+
+        // Agent Pipeline 생성 및 설정
+        $pipelineConfig = [
+            'openai' => $options['openai'] ?? [],
+            'enable_interpret' => $options['enable_interpret'] ?? true,
+            'enable_learning' => $options['enable_learning'] ?? true,
+            'analysis' => [
+                'enable_tts' => $options['enable_tts'] ?? false,
+                'summary_length' => $options['summary_length'] ?? 3,
+                'key_points_count' => $options['key_points_count'] ?? 3
+            ],
+            'stop_on_failure' => true
+        ];
+
+        $pipeline = new AgentPipeline($pipelineConfig);
+        $pipeline->setupDefaultPipeline();
+
+        // 파이프라인 실행
+        $pipelineResult = $pipeline->run($url);
+
+        $processingTime = (int) ((microtime(true) - $startTime) * 1000);
+
+        // 결과 처리
+        if (!$pipelineResult->isSuccess()) {
+            // 명확화 필요한 경우
+            if ($pipelineResult->needsClarification()) {
+                return [
+                    'success' => false,
+                    'needs_clarification' => true,
+                    'clarification_data' => $pipelineResult->clarificationData,
+                    'processing_time_ms' => $processingTime
+                ];
+            }
+
+            throw new RuntimeException($pipelineResult->getError() ?? 'URL 분석 중 오류가 발생했습니다.');
+        }
+
+        // 최종 분석 결과 추출
+        $finalAnalysis = $pipelineResult->getFinalAnalysis();
+
+        // 결과 포맷팅
+        $result = [
+            'success' => true,
+            'url' => $url,
+            'translation_summary' => $finalAnalysis['translation_summary'] ?? '',
+            'key_points' => $finalAnalysis['key_points'] ?? [],
+            'critical_analysis' => $finalAnalysis['critical_analysis'] ?? [
+                'why_important' => '',
+                'future_prediction' => ''
+            ],
+            'audio_url' => $finalAnalysis['audio_url'] ?? null,
+            'metadata' => [
+                'source_url' => $url,
+                'processed_at' => date('c'),
+                'agents_used' => array_keys($pipelineResult->results),
+                'mock_mode' => $pipeline->isMockMode()
+            ],
+            'processing_time_ms' => $processingTime
+        ];
+
+        // DB에 분석 결과 저장 (선택적)
+        if ($userId !== null) {
+            $this->saveUrlAnalysis($url, $result, $userId);
+        }
+
+        return $result;
+    }
+
+    /**
+     * URL 분석 결과 저장
+     */
+    private function saveUrlAnalysis(string $url, array $result, int $userId): void
+    {
+        try {
+            $analysis = new Analysis();
+            $analysis->setUserId($userId)
+                     ->setInputText("URL: {$url}")
+                     ->setKeywords([])
+                     ->setSentiment('neutral')
+                     ->setSentimentScore(0)
+                     ->setSentimentDetails([
+                         'ai_analysis' => true,
+                         'translation_summary' => $result['translation_summary'],
+                         'key_points' => $result['key_points'],
+                         'critical_analysis' => $result['critical_analysis']
+                     ])
+                     ->setSummary($result['translation_summary'])
+                     ->setProcessingTimeMs($result['processing_time_ms'])
+                     ->setStatus('completed')
+                     ->setCompletedAt(new \DateTimeImmutable());
+            
+            $this->analysisRepository->saveAnalysis($analysis);
+        } catch (\Exception $e) {
+            // 저장 실패해도 분석 결과는 반환
+            error_log("Failed to save URL analysis: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Agent Pipeline 상태 확인
+     */
+    public function getPipelineStatus(): array
+    {
+        $pipeline = new AgentPipeline(['openai' => []]);
+        $pipeline->setupDefaultPipeline();
+
+        return [
+            'agents' => $pipeline->getAgentNames(),
+            'mock_mode' => $pipeline->isMockMode(),
+            'ready' => true
+        ];
     }
 
     /**
