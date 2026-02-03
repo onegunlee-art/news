@@ -15,19 +15,16 @@ export default function ProfilePage() {
   const [analyses, setAnalyses] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(false)
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/login')
-    }
-  }, [isAuthenticated, navigate])
+  // 로그인 없이도 '들었던 오디오'(LocalStorage)는 볼 수 있음 — 리다이렉트 제거
 
   useEffect(() => {
+    if (!isAuthenticated) return
     if (activeTab === 'bookmarks') {
       fetchBookmarks()
     } else if (activeTab === 'analyses') {
       fetchAnalyses()
     }
-  }, [activeTab])
+  }, [activeTab, isAuthenticated])
 
   const fetchBookmarks = async () => {
     setIsLoading(true)
@@ -62,8 +59,6 @@ export default function ProfilePage() {
     navigate('/')
   }
 
-  if (!user) return null
-
   return (
     <div className="min-h-screen bg-white pb-20 md:pb-8">
       {/* 페이지 헤더 */}
@@ -79,53 +74,62 @@ export default function ProfilePage() {
       </div>
 
       <div className="max-w-lg md:max-w-4xl lg:max-w-6xl mx-auto px-4 -mt-10">
-        {/* 프로필 카드 */}
+        {/* 프로필 카드 — 로그인 시에만 프로필 표시 */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="bg-white rounded-2xl shadow-lg p-6 mb-6"
         >
           <div className="flex flex-col sm:flex-row items-center gap-6">
-            {/* 프로필 이미지 */}
-            <div className="relative">
-              {user.profile_image ? (
-                <img
-                  src={user.profile_image}
-                  alt={user.nickname}
-                  className="w-20 h-20 rounded-full object-cover ring-4 ring-primary-500/30"
-                />
-              ) : (
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center ring-4 ring-primary-500/30">
-                  <span className="text-2xl font-bold text-white">
-                    {user.nickname.charAt(0)}
-                  </span>
+            {user ? (
+              <>
+                <div className="relative">
+                  {user.profile_image ? (
+                    <img
+                      src={user.profile_image}
+                      alt={user.nickname}
+                      className="w-20 h-20 rounded-full object-cover ring-4 ring-primary-500/30"
+                    />
+                  ) : (
+                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center ring-4 ring-primary-500/30">
+                      <span className="text-2xl font-bold text-white">
+                        {user.nickname.charAt(0)}
+                      </span>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-
-            {/* 사용자 정보 */}
-            <div className="flex-1 text-center sm:text-left">
-              <h2 className="text-xl font-bold text-gray-900 mb-1">{user.nickname}</h2>
-              {user.email && (
-                <p className="text-gray-500 text-sm mb-2">{user.email}</p>
-              )}
-              <div className="flex flex-wrap justify-center sm:justify-start gap-3 text-xs">
-                <span className="px-3 py-1 bg-primary-50 text-primary-600 rounded-full font-medium">
-                  {user.role === 'admin' ? '관리자' : '회원'}
-                </span>
-                <span className="text-gray-400">
-                  가입일: {new Date(user.created_at).toLocaleDateString('ko-KR')}
-                </span>
+                <div className="flex-1 text-center sm:text-left">
+                  <h2 className="text-xl font-bold text-gray-900 mb-1">{user.nickname}</h2>
+                  {user.email && (
+                    <p className="text-gray-500 text-sm mb-2">{user.email}</p>
+                  )}
+                  <div className="flex flex-wrap justify-center sm:justify-start gap-3 text-xs">
+                    <span className="px-3 py-1 bg-primary-50 text-primary-600 rounded-full font-medium">
+                      {user.role === 'admin' ? '관리자' : '회원'}
+                    </span>
+                    <span className="text-gray-400">
+                      가입일: {new Date(user.created_at).toLocaleDateString('ko-KR')}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="px-4 py-2 text-sm text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                >
+                  로그아웃
+                </button>
+              </>
+            ) : (
+              <div className="flex-1 text-center py-2">
+                <p className="text-gray-600 mb-3">로그인하면 즐겨찾기와 분석 내역을 볼 수 있어요.</p>
+                <Link
+                  to="/login"
+                  className="inline-block px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors text-sm"
+                >
+                  로그인
+                </Link>
               </div>
-            </div>
-
-            {/* 로그아웃 버튼 */}
-            <button
-              onClick={handleLogout}
-              className="px-4 py-2 text-sm text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-            >
-              로그아웃
-            </button>
+            )}
           </div>
         </motion.div>
 
@@ -175,6 +179,13 @@ export default function ProfilePage() {
         {/* 콘텐츠 */}
         {activeTab === 'audio' ? (
           <AudioList items={audioItems} />
+        ) : !isAuthenticated && (activeTab === 'bookmarks' || activeTab === 'analyses') ? (
+          <div className="text-center py-12">
+            <p className="text-gray-500 mb-4">로그인하면 볼 수 있어요.</p>
+            <Link to="/login" className="inline-block px-6 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors">
+              로그인
+            </Link>
+          </div>
         ) : isLoading ? (
           <div className="flex justify-center py-12">
             <LoadingSpinner size="large" />

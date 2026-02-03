@@ -20,7 +20,7 @@ const MAX_ITEMS = 100
 
 export const useAudioListStore = create<AudioListState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       items: [],
 
       addItem: (item) => {
