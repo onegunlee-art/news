@@ -113,6 +113,14 @@ GitHub에서 **main 브랜치에 push**하면 자동으로 빌드 후 FTP로 배
 1. https://ailand.dothome.co.kr/myadmin 접속
 2. `database/schema.sql` 파일 내용 실행
 
+**즐겨찾기(북마크) 테이블이 없다는 오류가 나는 경우:**
+
+- **방법 A**: 브라우저에서 한 번만 접속  
+  `https://ailand.dothome.co.kr/setup_bookmarks.php`  
+  → `bookmarks` 테이블이 생성됩니다. 완료 후 해당 파일 삭제 권장.
+- **방법 B**: phpMyAdmin에서 `ailand` DB 선택 → SQL 탭 →  
+  `database/migrations/add_bookmarks_table.sql` 내용 붙여넣기 후 실행
+
 ### 3. API 키 설정
 
 **카카오 API** (`config/kakao.php`):
