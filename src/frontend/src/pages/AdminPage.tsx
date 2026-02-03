@@ -371,7 +371,7 @@ const AdminPage: React.FC = () => {
             <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-emerald-400 bg-clip-text text-transparent">
               Admin Panel
             </h1>
-            <p className="text-slate-500 text-sm mt-1">The GIst</p>
+            <p className="text-slate-500 text-sm mt-1">The gist</p>
           </div>
 
           <nav className="space-y-2">
@@ -1054,7 +1054,7 @@ const AdminPage: React.FC = () => {
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                   <SparklesIcon className="w-5 h-5" />
-                  The GIst AI 분석 시스템
+                  The Gist AI 분석 시스템
                 </div>
 {/* 상태 새로고침 버튼 제거 - The Gist AI로 통합 */}
               </div>

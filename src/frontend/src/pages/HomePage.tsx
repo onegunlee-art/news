@@ -128,8 +128,8 @@ function ArticleCard({ article }: { article: NewsItem }) {
 
   // 소스 이름 매핑
   const getSourceName = () => {
-    if (article.source === 'Admin') return 'The Gist'
-    return article.source || 'The Gist'
+    if (article.source === 'Admin') return 'The gist'
+    return article.source || 'The gist'
   }
 
   return (
