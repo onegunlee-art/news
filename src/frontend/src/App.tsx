@@ -2,6 +2,7 @@ import { Routes, Route } from 'react-router-dom'
 import { useEffect } from 'react'
 import { useAuthStore } from './store/authStore'
 import Layout from './components/Layout/Layout'
+import AudioPlayerPopup from './components/AudioPlayer/AudioPlayerPopup'
 import HomePage from './pages/HomePage'
 import AllNewsPage from './pages/AllNewsPage'
 import NewsDetailPage from './pages/NewsDetailPage'
@@ -23,6 +24,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-dark-500 bg-gradient-main">
+      <AudioPlayerPopup />
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<HomePage />} />

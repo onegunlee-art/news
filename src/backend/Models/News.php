@@ -83,28 +83,6 @@ final class News
         return $news;
     }
 
-    /**
-     * 네이버 뉴스 API 응답으로부터 News 객체 생성
-     */
-    public static function fromNaverApi(array $item): self
-    {
-        $news = new self(
-            strip_tags($item['title'] ?? ''),
-            $item['originallink'] ?? $item['link'] ?? ''
-        );
-        
-        $news->description = strip_tags($item['description'] ?? '');
-        $news->source = $item['source'] ?? null;
-        
-        if (isset($item['pubDate'])) {
-            $news->publishedAt = new \DateTimeImmutable($item['pubDate']);
-        }
-        
-        $news->fetchedAt = new \DateTimeImmutable();
-        
-        return $news;
-    }
-
     // ==================== Getters ====================
 
     public function getId(): ?int

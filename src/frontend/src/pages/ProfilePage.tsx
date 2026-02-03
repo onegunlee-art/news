@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuthStore } from '../store/authStore'
@@ -14,8 +14,10 @@ export default function ProfilePage() {
   const [bookmarks, setBookmarks] = useState<any[]>([])
   const [analyses, setAnalyses] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const activeTabRef = useRef(activeTab)
+  activeTabRef.current = activeTab
 
-  // 로그인 없이도 '들었던 오디오'(LocalStorage)는 볼 수 있음 — 리다이렉트 제거
+  // 로그인 없이도 '들었던 오디오'(LocalStorage)는 볼 수 있음
 
   useEffect(() => {
     if (!isAuthenticated) return
@@ -30,13 +32,13 @@ export default function ProfilePage() {
     setIsLoading(true)
     try {
       const response = await newsApi.getBookmarks(1, 20)
-      if (response.data.success) {
+      if (activeTabRef.current === 'bookmarks' && response.data.success) {
         setBookmarks(response.data.data.items || [])
       }
     } catch (error) {
       console.error('Failed to fetch bookmarks:', error)
     } finally {
-      setIsLoading(false)
+      if (activeTabRef.current === 'bookmarks') setIsLoading(false)
     }
   }
 
@@ -44,13 +46,13 @@ export default function ProfilePage() {
     setIsLoading(true)
     try {
       const response = await analysisApi.getHistory(1, 20)
-      if (response.data.success) {
+      if (activeTabRef.current === 'analyses' && response.data.success) {
         setAnalyses(response.data.data.items || [])
       }
     } catch (error) {
       console.error('Failed to fetch analyses:', error)
     } finally {
-      setIsLoading(false)
+      if (activeTabRef.current === 'analyses') setIsLoading(false)
     }
   }
 
@@ -178,7 +180,7 @@ export default function ProfilePage() {
 
         {/* 콘텐츠 */}
         {activeTab === 'audio' ? (
-          <AudioList items={audioItems} />
+          <AudioList items={Array.isArray(audioItems) ? audioItems : []} />
         ) : !isAuthenticated && (activeTab === 'bookmarks' || activeTab === 'analyses') ? (
           <div className="text-center py-12">
             <p className="text-gray-500 mb-4">로그인하면 볼 수 있어요.</p>
@@ -228,7 +230,8 @@ export default function ProfilePage() {
 }
 
 function AudioList({ items }: { items: AudioListItem[] }) {
-  if (items.length === 0) {
+  const safeItems = Array.isArray(items) ? items.filter((i) => i != null && Number.isFinite(i.id)) : []
+  if (safeItems.length === 0) {
     return (
       <div className="text-center py-12">
         <div className="text-gray-300 mb-4">
@@ -244,9 +247,9 @@ function AudioList({ items }: { items: AudioListItem[] }) {
 
   return (
     <div className="space-y-0 divide-y divide-gray-100">
-      {items.map((item, index) => (
+      {safeItems.map((item, index) => (
         <motion.div
-          key={`${item.id}-${item.listenedAt}`}
+          key={item.listenedAt ? `${item.id}-${item.listenedAt}` : `audio-${item.id}-${index}`}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: index * 0.05 }}

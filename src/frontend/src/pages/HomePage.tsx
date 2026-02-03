@@ -4,6 +4,7 @@ import { newsApi } from '../services/api'
 import { shareToKakao } from '../services/kakaoAuth'
 import { useAuthStore } from '../store/authStore'
 import { useAudioListStore } from '../store/audioListStore'
+import { useAudioPlayerStore } from '../store/audioPlayerStore'
 import LoadingSpinner from '../components/Common/LoadingSpinner'
 import { getPlaceholderImageUrl } from '../utils/imagePolicy'
 
@@ -137,7 +138,7 @@ function ArticleCard({ article }: { article: NewsItem }) {
   const navigate = useNavigate()
   const { isAuthenticated } = useAuthStore()
   const addAudioItem = useAudioListStore((s) => s.addItem)
-  const [isPlaying, setIsPlaying] = useState(false)
+  const openAndPlay = useAudioPlayerStore((s) => s.openAndPlay)
   const [isBookmarked, setIsBookmarked] = useState(false)
   const [isBookmarking, setIsBookmarking] = useState(false)
 
@@ -163,45 +164,26 @@ function ArticleCard({ article }: { article: NewsItem }) {
     return article.source || 'The Gist'
   }
 
-  // 오디오 재생 핸들러
+  // 오디오 재생: 전역 팝업 플레이어에서 재생 (다른 페이지 이동해도 계속 재생)
   const handlePlayAudio = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    
     if (!('speechSynthesis' in window)) {
       alert('이 브라우저는 음성 재생을 지원하지 않습니다.')
       return
     }
-
-    if (isPlaying) {
-      window.speechSynthesis.cancel()
-      setIsPlaying(false)
-      return
+    const text = `${article.title}. ${article.description || ''}`.trim()
+    if (!text) return
+    const idForList = article.id ?? (article as any).news_id
+    if (idForList) {
+      addAudioItem({
+        id: Number(idForList),
+        title: article.title,
+        description: article.description ?? null,
+        source: article.source ?? null,
+      })
     }
-
-    window.speechSynthesis.cancel()
-    const text = `${article.title}. ${article.description || ''}`
-    const utterance = new SpeechSynthesisUtterance(text)
-    utterance.lang = 'ko-KR'
-    utterance.rate = 1.0
-    utterance.pitch = 1.0
-    
-    utterance.onstart = () => {
-      setIsPlaying(true)
-      const newsId = article.id ?? (article as any).news_id
-      if (newsId) {
-        addAudioItem({
-          id: Number(newsId),
-          title: article.title,
-          description: article.description ?? null,
-          source: article.source ?? null,
-        })
-      }
-    }
-    utterance.onend = () => setIsPlaying(false)
-    utterance.onerror = () => setIsPlaying(false)
-    
-    window.speechSynthesis.speak(utterance)
+    openAndPlay(article.title, text, 1.0)
   }
 
   // 카카오톡 공유 핸들러
@@ -307,15 +289,12 @@ function ArticleCard({ article }: { article: NewsItem }) {
           <button
             type="button"
             onClick={handlePlayAudio}
-            className={`p-1 transition-colors ${isPlaying ? 'text-primary-500' : 'text-gray-300 hover:text-gray-500'}`}
+            className="p-1 transition-colors text-gray-300 hover:text-gray-500"
             title="음성으로 듣기"
+            aria-label="재생"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              {isPlaying ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z M10 9v6 M14 9v6" />
-              ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M12 18.75a.75.75 0 01-.75-.75V6a.75.75 0 011.5 0v12a.75.75 0 01-.75.75zM8.25 15V9a.75.75 0 011.5 0v6a.75.75 0 01-1.5 0zM5.25 12.75v-1.5a.75.75 0 011.5 0v1.5a.75.75 0 01-1.5 0z" />
-              )}
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M12 18.75a.75.75 0 01-.75-.75V6a.75.75 0 011.5 0v12a.75.75 0 01-.75.75zM8.25 15V9a.75.75 0 011.5 0v6a.75.75 0 01-1.5 0zM5.25 12.75v-1.5a.75.75 0 011.5 0v1.5a.75.75 0 01-1.5 0z" />
             </svg>
           </button>
           

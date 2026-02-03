@@ -5,6 +5,7 @@ import { newsApi } from '../services/api'
 import { shareToKakao } from '../services/kakaoAuth'
 import { useAuthStore } from '../store/authStore'
 import { useAudioListStore } from '../store/audioListStore'
+import { useAudioPlayerStore } from '../store/audioPlayerStore'
 import LoadingSpinner from '../components/Common/LoadingSpinner'
 import { getPlaceholderImageUrl } from '../utils/imagePolicy'
 
@@ -28,43 +29,16 @@ export default function NewsDetailPage() {
   const navigate = useNavigate()
   const { isAuthenticated } = useAuthStore()
   const addAudioItem = useAudioListStore((s) => s.addItem)
+  const openAndPlay = useAudioPlayerStore((s) => s.openAndPlay)
   const [news, setNews] = useState<NewsDetail | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isBookmarked, setIsBookmarked] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  
-  // TTS 상태
-  const [isSpeaking, setIsSpeaking] = useState(false)
   const [speechRate, setSpeechRate] = useState(1.2)
 
-  // TTS 음성 읽기 함수
-  const speakText = (text: string) => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel()
-      
-      const utterance = new SpeechSynthesisUtterance(text)
-      utterance.lang = 'ko-KR'
-      utterance.rate = speechRate
-      utterance.pitch = 1.0
-      
-      const voices = window.speechSynthesis.getVoices()
-      const koreanVoice = voices.find(voice => voice.lang.includes('ko'))
-      if (koreanVoice) {
-        utterance.voice = koreanVoice
-      }
-      
-      utterance.onstart = () => setIsSpeaking(true)
-      utterance.onend = () => setIsSpeaking(false)
-      utterance.onerror = () => setIsSpeaking(false)
-      
-      window.speechSynthesis.speak(utterance)
-    } else {
-      alert('이 브라우저는 음성 합성을 지원하지 않습니다.')
-    }
-  }
-
-  const speakArticle = () => {
-    if (!news) return
+  // 전역 팝업 플레이어에서 재생 (다른 페이지 이동해도 계속 재생)
+  const playArticle = () => {
+    if (!news || !('speechSynthesis' in window)) return
     addAudioItem({
       id: news.id,
       title: news.title,
@@ -75,14 +49,7 @@ export default function NewsDetailPage() {
     if (news.why_important) {
       text += ` The Gist's Critics. ${news.why_important}`
     }
-    speakText(text)
-  }
-
-  const stopSpeaking = () => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel()
-      setIsSpeaking(false)
-    }
+    openAndPlay(news.title, text.trim(), speechRate)
   }
 
   useEffect(() => {
@@ -199,18 +166,15 @@ export default function NewsDetailPage() {
 
             {/* 오른쪽 액션 버튼들 */}
             <div className="flex items-center gap-4">
-              {/* 오디오 재생 */}
+              {/* 오디오 재생 (팝업 플레이어) */}
               <button 
-                onClick={isSpeaking ? stopSpeaking : speakArticle}
-                className={`p-1 transition-colors ${isSpeaking ? 'text-primary-500' : 'text-gray-400 hover:text-gray-600'}`}
+                onClick={playArticle}
+                className="p-1 transition-colors text-gray-400 hover:text-gray-600"
                 title="음성으로 듣기"
+                aria-label="재생"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  {isSpeaking ? (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z M10 9v6 M14 9v6" />
-                  ) : (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M12 18.75a.75.75 0 01-.75-.75V6a.75.75 0 011.5 0v12a.75.75 0 01-.75.75zM8.25 15V9a.75.75 0 011.5 0v6a.75.75 0 01-1.5 0zM5.25 12.75v-1.5a.75.75 0 011.5 0v1.5a.75.75 0 01-1.5 0z" />
-                  )}
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M12 18.75a.75.75 0 01-.75-.75V6a.75.75 0 011.5 0v12a.75.75 0 01-.75.75zM8.25 15V9a.75.75 0 011.5 0v6a.75.75 0 01-1.5 0zM5.25 12.75v-1.5a.75.75 0 011.5 0v1.5a.75.75 0 01-1.5 0z" />
                 </svg>
               </button>
               {/* 카카오톡 공유 */}
@@ -366,29 +330,16 @@ export default function NewsDetailPage() {
             </div>
             
             <button
-              onClick={isSpeaking ? stopSpeaking : speakArticle}
-              className={`w-full py-3 rounded-xl font-medium transition flex items-center justify-center gap-2 ${
-                isSpeaking
-                  ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  : 'bg-primary-500 text-white hover:bg-primary-600'
-              }`}
+              onClick={playArticle}
+              className="w-full py-3 rounded-xl font-medium transition flex items-center justify-center gap-2 bg-primary-500 text-white hover:bg-primary-600"
             >
-              {isSpeaking ? (
-                <>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                  읽기 중지
-                </>
-              ) : (
-                <>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  기사 읽어주기
-                </>
-              )}
+              <>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                기사 읽어주기
+              </>
             </button>
           </div>
 

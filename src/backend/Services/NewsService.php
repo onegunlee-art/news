@@ -22,7 +22,6 @@ use RuntimeException;
 final class NewsService
 {
     private NewsRepository $newsRepository;
-    private NaverNewsService $naverNewsService;
 
     /**
      * 생성자
@@ -30,76 +29,33 @@ final class NewsService
     public function __construct()
     {
         $this->newsRepository = new NewsRepository();
-        $this->naverNewsService = new NaverNewsService();
     }
 
     /**
-     * 뉴스 검색
+     * 뉴스 검색 (DB)
      */
     public function search(string $query, int $page = 1, int $perPage = 20): array
     {
-        // 1. 먼저 네이버 API에서 검색
-        $start = (($page - 1) * $perPage) + 1;
-        
-        try {
-            $apiResult = $this->naverNewsService->search($query, $perPage, $start, 'date');
-            
-            // 2. 검색 결과를 DB에 저장 (중복 제외)
-            foreach ($apiResult['items'] as $item) {
-                $news = News::fromArray($item);
-                $this->newsRepository->saveNews($news);
-            }
-            
-            return [
-                'items' => $apiResult['items'],
-                'total' => $apiResult['total'],
-                'page' => $page,
-                'per_page' => $perPage,
-                'total_pages' => (int) ceil($apiResult['total'] / $perPage),
-                'source' => 'naver_api',
-            ];
-        } catch (RuntimeException $e) {
-            // API 실패 시 DB에서 검색
-            $dbResult = $this->newsRepository->paginate($page, $perPage, [], 'published_at', 'DESC');
-            
-            // LIKE 검색으로 필터링
-            $items = $this->newsRepository->searchLike($query, $perPage, ($page - 1) * $perPage);
-            $total = $this->newsRepository->countSearch($query);
-            
-            return [
-                'items' => array_map(fn($item) => News::fromArray($item)->toJson(), $items),
-                'total' => $total,
-                'page' => $page,
-                'per_page' => $perPage,
-                'total_pages' => (int) ceil($total / $perPage),
-                'source' => 'database',
-                'api_error' => $e->getMessage(),
-            ];
-        }
+        $items = $this->newsRepository->searchLike($query, $perPage, ($page - 1) * $perPage);
+        $total = $this->newsRepository->countSearch($query);
+
+        return [
+            'items' => array_map(fn($item) => News::fromArray($item)->toJson(), $items),
+            'total' => $total,
+            'page' => $page,
+            'per_page' => $perPage,
+            'total_pages' => (int) ceil($total / $perPage),
+            'source' => 'database',
+        ];
     }
 
     /**
-     * 최신 뉴스 목록 조회
+     * 최신 뉴스 목록 조회 (DB)
      */
     public function getLatestNews(int $limit = 20): array
     {
-        try {
-            // 네이버 API에서 최신 뉴스 가져오기
-            $items = $this->naverNewsService->getLatest($limit);
-            
-            // DB에 저장
-            foreach ($items as $item) {
-                $news = News::fromArray($item);
-                $this->newsRepository->saveNews($news);
-            }
-            
-            return $items;
-        } catch (RuntimeException) {
-            // API 실패 시 DB에서 조회
-            $dbItems = $this->newsRepository->findLatest($limit);
-            
-            return array_map(fn($item) => News::fromArray($item)->toJson(), $dbItems);
-        }
+        $dbItems = $this->newsRepository->findLatest($limit);
+        return array_map(fn($item) => News::fromArray($item)->toJson(), $dbItems);
     }
 
     /**
@@ -141,56 +97,21 @@ final class NewsService
     }
 
     /**
-     * 카테고리별 뉴스 조회
+     * 카테고리별 뉴스 조회 (DB)
      */
     public function getNewsByCategory(string $category, int $limit = 20): array
     {
-        try {
-            // 네이버 API에서 카테고리별 뉴스 가져오기
-            $items = $this->naverNewsService->getByCategory($category, $limit);
-            
-            // DB에 저장
-            foreach ($items as $item) {
-                $item['category'] = $category;
-                $news = News::fromArray($item);
-                $this->newsRepository->saveNews($news);
-            }
-            
-            return $items;
-        } catch (RuntimeException) {
-            // API 실패 시 DB에서 조회
-            $dbItems = $this->newsRepository->findByCategory($category, $limit);
-            
-            return array_map(fn($item) => News::fromArray($item)->toJson(), $dbItems);
-        }
+        $dbItems = $this->newsRepository->findByCategory($category, $limit);
+        return array_map(fn($item) => News::fromArray($item)->toJson(), $dbItems);
     }
 
     /**
-     * 트렌딩 뉴스 조회 (여러 키워드로)
+     * 트렌딩 뉴스 조회 (DB 최신 목록)
      */
     public function getTrendingNews(int $limit = 20): array
     {
-        $keywords = ['속보', '이슈', '화제'];
-        
-        try {
-            $items = $this->naverNewsService->searchMultiple($keywords, (int) ceil($limit / count($keywords)));
-            
-            // 중복 제거 (URL 기준)
-            $unique = [];
-            $urls = [];
-            
-            foreach ($items as $item) {
-                $url = $item['url'] ?? '';
-                if (!in_array($url, $urls)) {
-                    $urls[] = $url;
-                    $unique[] = $item;
-                }
-            }
-            
-            return array_slice($unique, 0, $limit);
-        } catch (RuntimeException) {
-            return $this->newsRepository->findLatest($limit);
-        }
+        $dbItems = $this->newsRepository->findLatest($limit);
+        return array_map(fn($item) => News::fromArray($item)->toJson(), $dbItems);
     }
 
     /**
