@@ -7,6 +7,10 @@
     RewriteEngine On
     RewriteBase /
 
+    # Authorization 헤더를 PHP로 전달 (CGI에서 제거되는 경우 대비)
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
     # HTTPS 리다이렉트 (옵션)
     # RewriteCond %{HTTPS} off
     # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]

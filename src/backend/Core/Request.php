@@ -295,13 +295,20 @@ final class Request
 
     /**
      * Bearer 토큰 추출
+     * Apache/CGI에서 Authorization이 제거되는 경우 REDIRECT_HTTP_AUTHORIZATION, X-Authorization 폴백
      */
     public function bearerToken(): ?string
     {
         $header = $this->getHeader('Authorization');
+        if (!$header && isset($this->server['REDIRECT_HTTP_AUTHORIZATION'])) {
+            $header = $this->server['REDIRECT_HTTP_AUTHORIZATION'];
+        }
+        if (!$header) {
+            $header = $this->getHeader('X-Authorization');
+        }
         
         if ($header && preg_match('/Bearer\s+(.+)/i', $header, $matches)) {
-            return $matches[1];
+            return trim($matches[1]);
         }
         
         return null;

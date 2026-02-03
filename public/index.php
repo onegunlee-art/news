@@ -21,12 +21,21 @@ date_default_timezone_set('Asia/Seoul');
 // CORS 설정
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
+header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Authorization, X-Requested-With');
 
 // Preflight 요청 처리
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(204);
     exit;
+}
+
+// Apache/CGI에서 Authorization 헤더가 제거되는 경우 대비 (RewriteRule E= / X-Authorization 폴백)
+if (empty($_SERVER['HTTP_AUTHORIZATION'])) {
+    if (!empty($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+        $_SERVER['HTTP_AUTHORIZATION'] = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
+    } elseif (!empty($_SERVER['HTTP_X_AUTHORIZATION'])) {
+        $_SERVER['HTTP_AUTHORIZATION'] = $_SERVER['HTTP_X_AUTHORIZATION'];
+    }
 }
 
 // 프로젝트 루트 (배포 시 __DIR__에 config·src가 있음, 로컬은 상위)

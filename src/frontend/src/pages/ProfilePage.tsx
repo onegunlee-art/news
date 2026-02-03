@@ -3,29 +3,22 @@ import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuthStore } from '../store/authStore'
 import { useAudioListStore, type AudioListItem } from '../store/audioListStore'
-import { newsApi, analysisApi } from '../services/api'
+import { newsApi } from '../services/api'
 import LoadingSpinner from '../components/Common/LoadingSpinner'
 
 export default function ProfilePage() {
   const { user, isAuthenticated, logout } = useAuthStore()
   const navigate = useNavigate()
-  const [activeTab, setActiveTab] = useState<'bookmarks' | 'audio' | 'analyses'>('bookmarks')
+  const [activeTab, setActiveTab] = useState<'bookmarks' | 'audio'>('bookmarks')
   const audioItems = useAudioListStore((s) => s.items)
   const [bookmarks, setBookmarks] = useState<any[]>([])
-  const [analyses, setAnalyses] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const activeTabRef = useRef(activeTab)
   activeTabRef.current = activeTab
 
-  // 로그인 없이도 '들었던 오디오'(LocalStorage)는 볼 수 있음
-
   useEffect(() => {
     if (!isAuthenticated) return
-    if (activeTab === 'bookmarks') {
-      fetchBookmarks()
-    } else if (activeTab === 'analyses') {
-      fetchAnalyses()
-    }
+    if (activeTab === 'bookmarks') fetchBookmarks()
   }, [activeTab, isAuthenticated])
 
   const fetchBookmarks = async () => {
@@ -39,20 +32,6 @@ export default function ProfilePage() {
       console.error('Failed to fetch bookmarks:', error)
     } finally {
       if (activeTabRef.current === 'bookmarks') setIsLoading(false)
-    }
-  }
-
-  const fetchAnalyses = async () => {
-    setIsLoading(true)
-    try {
-      const response = await analysisApi.getHistory(1, 20)
-      if (activeTabRef.current === 'analyses' && response.data.success) {
-        setAnalyses(response.data.data.items || [])
-      }
-    } catch (error) {
-      console.error('Failed to fetch analyses:', error)
-    } finally {
-      if (activeTabRef.current === 'analyses') setIsLoading(false)
     }
   }
 
@@ -123,7 +102,7 @@ export default function ProfilePage() {
               </>
             ) : (
               <div className="flex-1 text-center py-2">
-                <p className="text-gray-600 mb-3">로그인하면 즐겨찾기와 분석 내역을 볼 수 있어요.</p>
+                <p className="text-gray-600 mb-3">로그인하면 즐겨찾기를 볼 수 있어요.</p>
                 <Link
                   to="/login"
                   className="inline-block px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors text-sm"
@@ -163,25 +142,12 @@ export default function ProfilePage() {
               <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-500" />
             )}
           </button>
-          <button
-            onClick={() => setActiveTab('analyses')}
-            className={`flex-1 py-3 text-sm font-medium transition-colors relative ${
-              activeTab === 'analyses'
-                ? 'text-primary-500'
-                : 'text-gray-500 hover:text-gray-900'
-            }`}
-          >
-            분석 내역
-            {activeTab === 'analyses' && (
-              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-500" />
-            )}
-          </button>
         </div>
 
         {/* 콘텐츠 */}
         {activeTab === 'audio' ? (
           <AudioList items={Array.isArray(audioItems) ? audioItems : []} />
-        ) : !isAuthenticated && (activeTab === 'bookmarks' || activeTab === 'analyses') ? (
+        ) : !isAuthenticated && activeTab === 'bookmarks' ? (
           <div className="text-center py-12">
             <p className="text-gray-500 mb-4">로그인하면 볼 수 있어요.</p>
             <Link to="/login" className="inline-block px-6 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors">
@@ -192,10 +158,8 @@ export default function ProfilePage() {
           <div className="flex justify-center py-12">
             <LoadingSpinner size="large" />
           </div>
-        ) : activeTab === 'bookmarks' ? (
-          <BookmarkList bookmarks={bookmarks} />
         ) : (
-          <AnalysisList analyses={analyses} />
+          <BookmarkList bookmarks={bookmarks} />
         )}
       </div>
 
@@ -321,79 +285,6 @@ function BookmarkList({ bookmarks }: { bookmarks: any[] }) {
               )}
             </div>
           </Link>
-        </motion.div>
-      ))}
-    </div>
-  )
-}
-
-function AnalysisList({ analyses }: { analyses: any[] }) {
-  if (analyses.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <div className="text-gray-300 mb-4">
-          <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-          </svg>
-        </div>
-        <p className="text-gray-500 mb-4">분석 내역이 없습니다.</p>
-        <Link
-          to="/admin"
-          className="inline-block px-6 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
-        >
-          텍스트 분석하기
-        </Link>
-      </div>
-    )
-  }
-
-  return (
-    <div className="space-y-0 divide-y divide-gray-100">
-      {analyses.map((item, index) => (
-        <motion.div
-          key={item.id}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: index * 0.05 }}
-          className="py-4"
-        >
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1 min-w-0">
-              {item.news_title ? (
-                <h3 className="font-bold text-gray-900 mb-2">{item.news_title}</h3>
-              ) : (
-                <p className="text-gray-600 text-sm line-clamp-2 mb-2">
-                  {item.summary || '텍스트 분석'}
-                </p>
-              )}
-              <div className="flex flex-wrap items-center gap-2 text-xs">
-                {item.sentiment?.label && (
-                  <span
-                    className="px-2 py-1 rounded font-medium"
-                    style={{ 
-                      backgroundColor: `${item.sentiment?.color}15`,
-                      color: item.sentiment?.color 
-                    }}
-                  >
-                    {item.sentiment.label}
-                  </span>
-                )}
-                <span className="text-gray-400">
-                  {new Date(item.created_at).toLocaleDateString('ko-KR')}
-                </span>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-1 max-w-[120px]">
-              {item.keywords?.slice(0, 3).map((kw: any, i: number) => (
-                <span
-                  key={i}
-                  className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded"
-                >
-                  {kw.keyword}
-                </span>
-              ))}
-            </div>
-          </div>
         </motion.div>
       ))}
     </div>

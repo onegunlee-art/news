@@ -34,9 +34,8 @@ export default function NewsDetailPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isBookmarked, setIsBookmarked] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [speechRate, setSpeechRate] = useState(1.2)
 
-  // 전역 팝업 플레이어에서 재생 (다른 페이지 이동해도 계속 재생)
+  // 전역 팝업 플레이어에서 재생 (속도 기본 보통 1.0)
   const playArticle = () => {
     if (!news || !('speechSynthesis' in window)) return
     addAudioItem({
@@ -49,7 +48,7 @@ export default function NewsDetailPage() {
     if (news.why_important) {
       text += ` The Gist's Critics. ${news.why_important}`
     }
-    openAndPlay(news.title, text.trim(), speechRate)
+    openAndPlay(news.title, text.trim(), 1.0)
   }
 
   useEffect(() => {
@@ -306,29 +305,14 @@ export default function NewsDetailPage() {
             </div>
           )}
 
-          {/* AI 음성 읽기 */}
+          {/* AI 음성 읽기 (속도 고정: 보통) */}
           <div className="border-t border-gray-100 pt-6 mt-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <svg className="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-                </svg>
-                <span className="text-gray-900 font-medium">음성으로 듣기</span>
-              </div>
-              <select
-                value={speechRate}
-                onChange={(e) => setSpeechRate(parseFloat(e.target.value))}
-                className="text-sm bg-gray-100 text-gray-700 rounded-lg px-3 py-1.5 border-0 focus:ring-2 focus:ring-primary-500"
-              >
-                <option value="0.7">느리게</option>
-                <option value="0.85">조금 느리게</option>
-                <option value="1.0">보통</option>
-                <option value="1.2">약간 빠름</option>
-                <option value="1.4">빠르게</option>
-                <option value="2.0">최고속도</option>
-              </select>
+            <div className="flex items-center gap-2 mb-4">
+              <svg className="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+              </svg>
+              <span className="text-gray-900 font-medium">음성으로 듣기</span>
             </div>
-            
             <button
               onClick={playArticle}
               className="w-full py-3 rounded-xl font-medium transition flex items-center justify-center gap-2 bg-primary-500 text-white hover:bg-primary-600"

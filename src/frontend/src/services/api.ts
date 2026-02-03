@@ -10,12 +10,14 @@ export const api = axios.create({
   },
 })
 
-// 요청 인터셉터
+// 요청 인터셉터 (Authorization + X-Authorization: 일부 호스팅에서 Authorization 헤더가 제거되는 경우 대비)
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('access_token')
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`
+      const bearer = `Bearer ${token}`
+      config.headers.Authorization = bearer
+      config.headers['X-Authorization'] = bearer
     }
     return config
   },
@@ -46,7 +48,9 @@ api.interceptors.response.use(
             localStorage.setItem('access_token', access_token)
             localStorage.setItem('refresh_token', refresh_token)
 
-            originalRequest.headers.Authorization = `Bearer ${access_token}`
+            const bearer = `Bearer ${access_token}`
+            originalRequest.headers.Authorization = bearer
+            originalRequest.headers['X-Authorization'] = bearer
             return api(originalRequest)
           }
         } catch (refreshError) {
