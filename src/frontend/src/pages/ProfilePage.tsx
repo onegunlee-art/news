@@ -2,13 +2,15 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuthStore } from '../store/authStore'
+import { useAudioListStore, type AudioListItem } from '../store/audioListStore'
 import { newsApi, analysisApi } from '../services/api'
 import LoadingSpinner from '../components/Common/LoadingSpinner'
 
 export default function ProfilePage() {
   const { user, isAuthenticated, logout } = useAuthStore()
   const navigate = useNavigate()
-  const [activeTab, setActiveTab] = useState<'bookmarks' | 'analyses'>('bookmarks')
+  const [activeTab, setActiveTab] = useState<'bookmarks' | 'audio' | 'analyses'>('bookmarks')
+  const audioItems = useAudioListStore((s) => s.items)
   const [bookmarks, setBookmarks] = useState<any[]>([])
   const [analyses, setAnalyses] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -22,7 +24,7 @@ export default function ProfilePage() {
   useEffect(() => {
     if (activeTab === 'bookmarks') {
       fetchBookmarks()
-    } else {
+    } else if (activeTab === 'analyses') {
       fetchAnalyses()
     }
   }, [activeTab])
@@ -143,6 +145,19 @@ export default function ProfilePage() {
             )}
           </button>
           <button
+            onClick={() => setActiveTab('audio')}
+            className={`flex-1 py-3 text-sm font-medium transition-colors relative ${
+              activeTab === 'audio'
+                ? 'text-primary-500'
+                : 'text-gray-500 hover:text-gray-900'
+            }`}
+          >
+            들었던 오디오
+            {activeTab === 'audio' && (
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-500" />
+            )}
+          </button>
+          <button
             onClick={() => setActiveTab('analyses')}
             className={`flex-1 py-3 text-sm font-medium transition-colors relative ${
               activeTab === 'analyses'
@@ -158,7 +173,9 @@ export default function ProfilePage() {
         </div>
 
         {/* 콘텐츠 */}
-        {isLoading ? (
+        {activeTab === 'audio' ? (
+          <AudioList items={audioItems} />
+        ) : isLoading ? (
           <div className="flex justify-center py-12">
             <LoadingSpinner size="large" />
           </div>
@@ -195,6 +212,51 @@ export default function ProfilePage() {
           </div>
         </div>
       </nav>
+    </div>
+  )
+}
+
+function AudioList({ items }: { items: AudioListItem[] }) {
+  if (items.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <div className="text-gray-300 mb-4">
+          <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+          </svg>
+        </div>
+        <p className="text-gray-500 mb-4">들었던 오디오가 없습니다.</p>
+        <p className="text-gray-400 text-sm">기사에서 음성 재생 버튼을 누르면 여기에 기록됩니다.</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-0 divide-y divide-gray-100">
+      {items.map((item, index) => (
+        <motion.div
+          key={`${item.id}-${item.listenedAt}`}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: index * 0.05 }}
+        >
+          <Link to={`/news/${item.id}`} className="block py-4 hover:bg-gray-50 transition-colors -mx-4 px-4">
+            <h3 className="font-bold text-gray-900 mb-2 line-clamp-2 hover:text-primary-500 transition-colors">
+              {item.title}
+            </h3>
+            {item.description && (
+              <p className="text-sm text-gray-500 line-clamp-2 mb-2">
+                {item.description}
+              </p>
+            )}
+            <div className="flex items-center gap-2 text-xs">
+              <span className="text-primary-500 font-medium">{item.source || 'The Gist'}</span>
+              <span className="text-gray-300">/</span>
+              <span className="text-gray-400">들은 날짜: {new Date(item.listenedAt).toLocaleDateString('ko-KR')}</span>
+            </div>
+          </Link>
+        </motion.div>
+      ))}
     </div>
   )
 }

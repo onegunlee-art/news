@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { newsApi } from '../services/api'
 import { shareToKakao } from '../services/kakaoAuth'
 import { useAuthStore } from '../store/authStore'
+import { useAudioListStore } from '../store/audioListStore'
 import LoadingSpinner from '../components/Common/LoadingSpinner'
 import { getPlaceholderImageUrl } from '../utils/imagePolicy'
 
@@ -135,8 +136,10 @@ export default function HomePage() {
 function ArticleCard({ article }: { article: NewsItem }) {
   const navigate = useNavigate()
   const { isAuthenticated } = useAuthStore()
+  const addAudioItem = useAudioListStore((s) => s.addItem)
   const [isPlaying, setIsPlaying] = useState(false)
   const [isBookmarked, setIsBookmarked] = useState(false)
+  const [isBookmarking, setIsBookmarking] = useState(false)
 
   const imageUrl = article.image_url || getPlaceholderImageUrl(
     { id: article.id, title: article.title, description: article.description, published_at: article.published_at, category: article.category },
@@ -183,7 +186,18 @@ function ArticleCard({ article }: { article: NewsItem }) {
     utterance.rate = 1.0
     utterance.pitch = 1.0
     
-    utterance.onstart = () => setIsPlaying(true)
+    utterance.onstart = () => {
+      setIsPlaying(true)
+      const newsId = article.id ?? (article as any).news_id
+      if (newsId) {
+        addAudioItem({
+          id: Number(newsId),
+          title: article.title,
+          description: article.description ?? null,
+          source: article.source ?? null,
+        })
+      }
+    }
     utterance.onend = () => setIsPlaying(false)
     utterance.onerror = () => setIsPlaying(false)
     
@@ -209,6 +223,12 @@ function ArticleCard({ article }: { article: NewsItem }) {
     e.preventDefault()
     e.stopPropagation()
     
+    const newsId = article.id ?? (article as any).news_id
+    if (!newsId) {
+      alert('이 기사는 즐겨찾기에 추가할 수 없습니다.')
+      return
+    }
+
     if (!isAuthenticated) {
       if (confirm('로그인이 필요합니다. 로그인 페이지로 이동하시겠습니까?')) {
         navigate('/login')
@@ -216,12 +236,7 @@ function ArticleCard({ article }: { article: NewsItem }) {
       return
     }
 
-    const newsId = article.id ?? (article as any).news_id
-    if (!newsId) {
-      alert('이 기사는 즐겨찾기에 추가할 수 없습니다.')
-      return
-    }
-
+    setIsBookmarking(true)
     try {
       if (isBookmarked) {
         await newsApi.removeBookmark(Number(newsId))
@@ -231,9 +246,10 @@ function ArticleCard({ article }: { article: NewsItem }) {
         setIsBookmarked(true)
       }
     } catch (err: any) {
-      console.error('Bookmark error:', err)
       const msg = err.response?.data?.message ?? err.message ?? '즐겨찾기 처리에 실패했습니다.'
       alert(msg)
+    } finally {
+      setIsBookmarking(false)
     }
   }
 
@@ -319,12 +335,18 @@ function ArticleCard({ article }: { article: NewsItem }) {
           <button
             type="button"
             onClick={handleBookmark}
-            className={`p-1 transition-colors ${isBookmarked ? 'text-primary-500' : 'text-gray-300 hover:text-gray-500'}`}
+            disabled={isBookmarking}
+            className={`p-1 transition-colors ${isBookmarked ? 'text-primary-500' : 'text-gray-300 hover:text-gray-500'} ${isBookmarking ? 'opacity-60 cursor-wait' : ''}`}
             title="즐겨찾기"
+            aria-label={isBookmarked ? '즐겨찾기 해제' : '즐겨찾기 추가'}
           >
-            <svg className="w-5 h-5" fill={isBookmarked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-            </svg>
+            {isBookmarking ? (
+              <span className="inline-block w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <svg className="w-5 h-5" fill={isBookmarked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+              </svg>
+            )}
           </button>
         </div>
     </article>

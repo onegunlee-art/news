@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { newsApi } from '../services/api'
 import { shareToKakao } from '../services/kakaoAuth'
 import { useAuthStore } from '../store/authStore'
+import { useAudioListStore } from '../store/audioListStore'
 import LoadingSpinner from '../components/Common/LoadingSpinner'
 import { getPlaceholderImageUrl } from '../utils/imagePolicy'
 
@@ -26,6 +27,7 @@ export default function NewsDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { isAuthenticated } = useAuthStore()
+  const addAudioItem = useAudioListStore((s) => s.addItem)
   const [news, setNews] = useState<NewsDetail | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isBookmarked, setIsBookmarked] = useState(false)
@@ -63,6 +65,12 @@ export default function NewsDetailPage() {
 
   const speakArticle = () => {
     if (!news) return
+    addAudioItem({
+      id: news.id,
+      title: news.title,
+      description: news.description ?? news.content ?? null,
+      source: news.source ?? null,
+    })
     let text = `${news.title}. ${news.content || news.description || ''}`
     if (news.why_important) {
       text += ` The Gist's Critics. ${news.why_important}`
