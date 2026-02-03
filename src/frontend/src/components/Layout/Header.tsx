@@ -64,8 +64,8 @@ export default function Header() {
               <Link to="/" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
                 최신
               </Link>
-              <Link to="/bookmarks" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-                즐겨찾기
+              <Link to="/profile" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                My Page
               </Link>
               <Link to="/settings" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
                 설정

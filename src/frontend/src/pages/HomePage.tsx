@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { newsApi } from '../services/api'
+import { shareToKakao } from '../services/kakaoAuth'
+import { useAuthStore } from '../store/authStore'
 import LoadingSpinner from '../components/Common/LoadingSpinner'
 import { getPlaceholderImageUrl } from '../utils/imagePolicy'
 
@@ -131,6 +133,11 @@ export default function HomePage() {
 
 // 기사 카드 - 왼쪽 텍스트 + 오른쪽 이미지 (기사별 고유 이미지, 중복 없음)
 function ArticleCard({ article }: { article: NewsItem }) {
+  const navigate = useNavigate()
+  const { isAuthenticated } = useAuthStore()
+  const [isPlaying, setIsPlaying] = useState(false)
+  const [isBookmarked, setIsBookmarked] = useState(false)
+
   const imageUrl = article.image_url || getPlaceholderImageUrl(
     { id: article.id, title: article.title, description: article.description, published_at: article.published_at, category: article.category },
     200,
@@ -151,6 +158,77 @@ function ArticleCard({ article }: { article: NewsItem }) {
   const getSourceName = () => {
     if (article.source === 'Admin') return 'The Gist'
     return article.source || 'The Gist'
+  }
+
+  // 오디오 재생 핸들러
+  const handlePlayAudio = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    
+    if (!('speechSynthesis' in window)) {
+      alert('이 브라우저는 음성 재생을 지원하지 않습니다.')
+      return
+    }
+
+    if (isPlaying) {
+      window.speechSynthesis.cancel()
+      setIsPlaying(false)
+      return
+    }
+
+    window.speechSynthesis.cancel()
+    const text = `${article.title}. ${article.description || ''}`
+    const utterance = new SpeechSynthesisUtterance(text)
+    utterance.lang = 'ko-KR'
+    utterance.rate = 1.0
+    utterance.pitch = 1.0
+    
+    utterance.onstart = () => setIsPlaying(true)
+    utterance.onend = () => setIsPlaying(false)
+    utterance.onerror = () => setIsPlaying(false)
+    
+    window.speechSynthesis.speak(utterance)
+  }
+
+  // 카카오톡 공유 핸들러
+  const handleShare = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    
+    const webUrl = `${window.location.origin}/news/${article.id}`
+    await shareToKakao({
+      title: article.title,
+      description: article.description || '',
+      imageUrl: imageUrl,
+      webUrl: webUrl,
+    })
+  }
+
+  // 즐겨찾기 핸들러
+  const handleBookmark = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    
+    if (!isAuthenticated) {
+      if (confirm('로그인이 필요합니다. 로그인 페이지로 이동하시겠습니까?')) {
+        navigate('/login')
+      }
+      return
+    }
+
+    if (!article.id) return
+
+    try {
+      if (isBookmarked) {
+        await newsApi.removeBookmark(article.id)
+        setIsBookmarked(false)
+      } else {
+        await newsApi.bookmark(article.id)
+        setIsBookmarked(true)
+      }
+    } catch (error) {
+      console.error('Bookmark error:', error)
+    }
   }
 
   return (
@@ -198,18 +276,39 @@ function ArticleCard({ article }: { article: NewsItem }) {
 
         {/* 액션 버튼들 */}
         <div className="flex flex-col justify-between py-1">
-          <button className="p-1 text-gray-300 hover:text-gray-500 transition-colors">
+          {/* 오디오 재생 버튼 */}
+          <button 
+            onClick={handlePlayAudio}
+            className={`p-1 transition-colors ${isPlaying ? 'text-primary-500' : 'text-gray-300 hover:text-gray-500'}`}
+            title="음성으로 듣기"
+          >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              {isPlaying ? (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z M10 9v6 M14 9v6" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M12 18.75a.75.75 0 01-.75-.75V6a.75.75 0 011.5 0v12a.75.75 0 01-.75.75zM8.25 15V9a.75.75 0 011.5 0v6a.75.75 0 01-1.5 0zM5.25 12.75v-1.5a.75.75 0 011.5 0v1.5a.75.75 0 01-1.5 0z" />
+              )}
             </svg>
           </button>
-          <button className="p-1 text-gray-300 hover:text-gray-500 transition-colors">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+          
+          {/* 카카오톡 공유 버튼 */}
+          <button 
+            onClick={handleShare}
+            className="p-1 text-gray-300 hover:text-yellow-500 transition-colors"
+            title="카카오톡으로 공유"
+          >
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 3C6.5 3 2 6.58 2 11c0 2.83 1.82 5.32 4.56 6.74-.2.74-.73 2.68-.84 3.1-.13.53.19.52.41.38.17-.11 2.74-1.87 3.85-2.63.65.09 1.32.14 2.02.14 5.5 0 10-3.58 10-8s-4.5-8-10-8z"/>
             </svg>
           </button>
-          <button className="p-1 text-gray-300 hover:text-gray-500 transition-colors">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          
+          {/* 즐겨찾기 버튼 */}
+          <button 
+            onClick={handleBookmark}
+            className={`p-1 transition-colors ${isBookmarked ? 'text-primary-500' : 'text-gray-300 hover:text-gray-500'}`}
+            title="즐겨찾기"
+          >
+            <svg className="w-5 h-5" fill={isBookmarked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
             </svg>
           </button>
@@ -233,12 +332,12 @@ function BottomNav() {
             <span className="text-xs font-medium">최신</span>
           </Link>
 
-          {/* 즐겨찾기 */}
-          <Link to="/bookmarks" className="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-900 transition-colors">
+          {/* My Page */}
+          <Link to="/profile" className="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-900 transition-colors">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
             </svg>
-            <span className="text-xs">즐겨찾기</span>
+            <span className="text-xs">My Page</span>
           </Link>
 
           {/* 설정 */}

@@ -27,6 +27,27 @@ declare global {
           fail?: (error: any) => void;
         }) => Promise<any>;
       };
+      Share: {
+        sendDefault: (settings: {
+          objectType: 'feed' | 'list' | 'location' | 'commerce' | 'text';
+          content: {
+            title: string;
+            description?: string;
+            imageUrl?: string;
+            link: {
+              mobileWebUrl?: string;
+              webUrl?: string;
+            };
+          };
+          buttons?: Array<{
+            title: string;
+            link: {
+              mobileWebUrl?: string;
+              webUrl?: string;
+            };
+          }>;
+        }) => void;
+      };
     };
   }
 }
@@ -236,6 +257,57 @@ export const getAuthErrorFromUrl = (): { error: string; description: string } | 
   return null;
 };
 
+/**
+ * 카카오톡으로 기사 공유
+ */
+export const shareToKakao = async (article: {
+  title: string;
+  description: string;
+  imageUrl?: string;
+  webUrl: string;
+}): Promise<boolean> => {
+  // SDK 초기화 확인
+  const sdkInitialized = await initKakao();
+  
+  if (!sdkInitialized || !window.Kakao?.Share) {
+    // SDK 사용 불가 시 카카오톡 공유 URL 스킴 사용
+    const shareUrl = `https://story.kakao.com/share?url=${encodeURIComponent(article.webUrl)}`;
+    window.open(shareUrl, '_blank', 'width=600,height=400');
+    return true;
+  }
+
+  try {
+    window.Kakao.Share.sendDefault({
+      objectType: 'feed',
+      content: {
+        title: article.title,
+        description: article.description || '',
+        imageUrl: article.imageUrl || 'https://picsum.photos/seed/thegist/400/200',
+        link: {
+          webUrl: article.webUrl,
+          mobileWebUrl: article.webUrl,
+        },
+      },
+      buttons: [
+        {
+          title: '자세히 보기',
+          link: {
+            webUrl: article.webUrl,
+            mobileWebUrl: article.webUrl,
+          },
+        },
+      ],
+    });
+    return true;
+  } catch (error) {
+    console.error('Kakao share failed:', error);
+    // 폴백: 일반 공유 창 열기
+    const shareUrl = `https://story.kakao.com/share?url=${encodeURIComponent(article.webUrl)}`;
+    window.open(shareUrl, '_blank', 'width=600,height=400');
+    return false;
+  }
+};
+
 export default {
   initKakao,
   kakaoLogin,
@@ -244,4 +316,5 @@ export default {
   exchangeCodeForToken,
   getAuthCodeFromUrl,
   getAuthErrorFromUrl,
+  shareToKakao,
 };
