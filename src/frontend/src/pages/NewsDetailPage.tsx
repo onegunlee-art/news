@@ -86,7 +86,8 @@ export default function NewsDetailPage() {
         setIsBookmarked(true)
       }
     } catch (error: any) {
-      console.error('Bookmark error:', error)
+      const msg = error.response?.data?.message ?? error.message ?? '즐겨찾기 처리에 실패했습니다.'
+      alert(msg)
     }
   }
 
@@ -193,7 +194,10 @@ export default function NewsDetailPage() {
               </button>
               {/* 즐겨찾기 */}
               <button
-                onClick={() => {
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
                   if (!isAuthenticated) {
                     if (confirm('로그인이 필요합니다. 로그인 페이지로 이동하시겠습니까?')) {
                       navigate('/login')
@@ -204,6 +208,7 @@ export default function NewsDetailPage() {
                 }}
                 className={`p-1 transition-colors ${isBookmarked ? 'text-primary-500' : 'text-gray-400 hover:text-gray-600'}`}
                 title="즐겨찾기"
+                aria-label={isBookmarked ? '즐겨찾기 해제' : '즐겨찾기 추가'}
               >
                 <svg className="w-5 h-5" fill={isBookmarked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />

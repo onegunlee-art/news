@@ -81,10 +81,10 @@ export const newsApi = {
     api.get('/news/detail.php', { params: { id } }),
   
   bookmark: (id: number, memo?: string) =>
-    api.post(`/news/${id}/bookmark`, { memo }),
+    api.post('/news/bookmark', { id, memo }),
   
   removeBookmark: (id: number) =>
-    api.delete(`/news/${id}/bookmark`),
+    api.delete('/news/bookmark', { params: { id } }),
   
   getBookmarks: (page = 1, perPage = 20) =>
     api.get('/user/bookmarks', { params: { page, per_page: perPage } }),

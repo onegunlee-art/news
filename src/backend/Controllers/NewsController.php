@@ -126,6 +126,18 @@ final class NewsController
     }
 
     /**
+     * 북마크 추가 (body 기반 - POST /api/news/bookmark, id in body)
+     * 라우팅/호스팅 이슈 시 대체용
+     */
+    public function bookmarkByBody(Request $request): Response
+    {
+        $newsId = (int) ($request->json('id') ?? $request->query('id', 0));
+        $memo = $request->json('memo');
+        $request->setRouteParams(['id' => (string) $newsId]);
+        return $this->bookmark($request);
+    }
+
+    /**
      * 북마크 추가
      * 
      * POST /api/news/{id}/bookmark
@@ -144,7 +156,7 @@ final class NewsController
             return Response::unauthorized('유효하지 않은 토큰입니다.');
         }
         
-        $newsId = (int) $request->param('id');
+        $newsId = (int) ($request->param('id') ?? $request->json('id') ?? 0);
         
         if ($newsId <= 0) {
             return Response::error('유효하지 않은 뉴스 ID입니다.', 400);
@@ -159,6 +171,16 @@ final class NewsController
         } catch (RuntimeException $e) {
             return Response::error($e->getMessage(), 400);
         }
+    }
+
+    /**
+     * 북마크 삭제 (body/query 기반 - DELETE /api/news/bookmark?id=)
+     */
+    public function removeBookmarkByBody(Request $request): Response
+    {
+        $newsId = (int) ($request->json('id') ?? $request->query('id', 0));
+        $request->setRouteParams(['id' => (string) $newsId]);
+        return $this->removeBookmark($request);
     }
 
     /**
@@ -180,7 +202,7 @@ final class NewsController
             return Response::unauthorized('유효하지 않은 토큰입니다.');
         }
         
-        $newsId = (int) $request->param('id');
+        $newsId = (int) ($request->param('id') ?? $request->json('id') ?? $request->query('id', 0));
         
         if ($newsId <= 0) {
             return Response::error('유효하지 않은 뉴스 ID입니다.', 400);

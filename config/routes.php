@@ -112,10 +112,12 @@ $router->group(['prefix' => '/news'], function (Router $router) {
     // 뉴스 상세 조회
     $router->get('/{id}', [NewsController::class, 'show']);
     
-    // 뉴스 저장 (북마크)
+    // 뉴스 저장 (북마크) - body 기반 (id in body, 라우팅 이슈 방지)
+    $router->post('/bookmark', [NewsController::class, 'bookmarkByBody']);
     $router->post('/{id}/bookmark', [NewsController::class, 'bookmark']);
     
     // 북마크 삭제
+    $router->delete('/bookmark', [NewsController::class, 'removeBookmarkByBody']);
     $router->delete('/{id}/bookmark', [NewsController::class, 'removeBookmark']);
 });
 
