@@ -5,8 +5,9 @@ import { useAuthStore } from '../../store/authStore'
 
 export default function Header() {
   const { isAuthenticated, login, logout } = useAuthStore()
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isLoginOpen, setIsLoginOpen] = useState(false)
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
   const navigate = useNavigate()
 
   const handleLogout = async () => {
@@ -14,123 +15,95 @@ export default function Header() {
     navigate('/')
   }
 
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
+      setIsSearchOpen(false)
+      setSearchQuery('')
+    }
+  }
+
   return (
-    <header className="bg-white border-b border-gray-200">
-      {/* 상단 바 */}
-      <div className="bg-black text-white text-xs py-2.5">
-        <div className="max-w-7xl mx-auto px-4 flex justify-end items-center">
-          <div className="flex items-center gap-6">
-            {isAuthenticated ? (
-              <button onClick={handleLogout} className="text-gray-300 hover:text-white transition-colors duration-200">로그아웃</button>
-            ) : (
-              <button onClick={() => setIsLoginOpen(true)} className="text-gray-300 hover:text-white transition-colors duration-200">로그인</button>
-            )}
-{/* 구독 버튼 임시 비활성화 - 정책 변경 시 복원 예정
-            <Link to="/subscribe" className="text-primary-400 hover:text-primary-300 font-semibold transition-colors duration-200">구독하기</Link>
-*/}
-          </div>
-        </div>
-      </div>
-
+    <header className="bg-white sticky top-0 z-40 border-b border-gray-100">
       {/* 메인 헤더 */}
-      <div className="max-w-7xl mx-auto px-4">
-        {/* 로고 */}
-        <div className="flex justify-center py-8 border-b border-gray-100">
-          <Link to="/" className="text-center group">
-            <h1 className="text-4xl md:text-5xl text-gray-900 transition-colors duration-300 group-hover:text-gray-700" style={{ fontFamily: "'Lobster', cursive", fontWeight: 400, letterSpacing: '0.01em' }}>
-              The GIst
-            </h1>
-            <p className="text-[10px] text-gray-400 mt-2 tracking-[0.3em] uppercase font-light">News Analysis</p>
-          </Link>
-        </div>
-
-        {/* 네비게이션 */}
-        <nav className="hidden md:flex justify-center py-5">
-          <div className="flex items-center gap-10">
-            <Link 
-              to="/diplomacy" 
-              className="relative text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors duration-200 uppercase tracking-wider py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[1px] after:bg-gray-900 after:transition-all after:duration-300 hover:after:w-full"
-            >
-              Foreign Affairs
-            </Link>
-            <Link 
-              to="/economy" 
-              className="relative text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors duration-200 uppercase tracking-wider py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[1px] after:bg-gray-900 after:transition-all after:duration-300 hover:after:w-full"
-            >
-              Economy
-            </Link>
-            <Link 
-              to="/technology" 
-              className="relative text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors duration-200 uppercase tracking-wider py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[1px] after:bg-gray-900 after:transition-all after:duration-300 hover:after:w-full"
-            >
-              Technology
-            </Link>
-            <Link 
-              to="/entertainment" 
-              className="relative text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors duration-200 uppercase tracking-wider py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[1px] after:bg-gray-900 after:transition-all after:duration-300 hover:after:w-full"
-            >
-              Entertainment
-            </Link>
+      <div className="max-w-lg mx-auto px-4">
+        <div className="flex items-center justify-between h-14">
+          {/* 왼쪽 - 로그인/로그아웃 */}
+          <div className="w-16">
+            {isAuthenticated ? (
+              <button 
+                onClick={handleLogout} 
+                className="text-xs text-gray-500 hover:text-gray-900 transition-colors"
+              >
+                로그아웃
+              </button>
+            ) : (
+              <button 
+                onClick={() => setIsLoginOpen(true)} 
+                className="text-xs text-gray-500 hover:text-gray-900 transition-colors"
+              >
+                로그인
+              </button>
+            )}
           </div>
-        </nav>
 
-        {/* 모바일 메뉴 버튼 */}
-        <div className="md:hidden flex justify-end py-4">
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="p-2 text-gray-700"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              {isMenuOpen ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              )}
-            </svg>
-          </button>
+          {/* 중앙 - 로고 */}
+          <Link to="/" className="flex-1 text-center">
+            <h1 
+              className="text-2xl text-gray-900" 
+              style={{ fontFamily: "'Lobster', cursive", fontWeight: 400 }}
+            >
+              The Gist
+            </h1>
+          </Link>
+
+          {/* 오른쪽 - 검색 아이콘 */}
+          <div className="w-16 flex justify-end">
+            <button
+              onClick={() => setIsSearchOpen(true)}
+              className="p-2 text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* 모바일 메뉴 */}
+      {/* 검색 모달 */}
       <AnimatePresence>
-        {isMenuOpen && (
-          <motion.nav
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="md:hidden border-t border-gray-200 bg-white"
+        {isSearchOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-white z-50"
           >
-            <div className="max-w-7xl mx-auto px-4 py-4 space-y-3">
-              <Link
-                to="/diplomacy"
-                onClick={() => setIsMenuOpen(false)}
-                className="block py-2 text-sm font-medium text-gray-700 uppercase tracking-wide"
-              >
-                Foreign Affairs
-              </Link>
-              <Link
-                to="/economy"
-                onClick={() => setIsMenuOpen(false)}
-                className="block py-2 text-sm font-medium text-gray-700 uppercase tracking-wide"
-              >
-                Economy
-              </Link>
-              <Link
-                to="/technology"
-                onClick={() => setIsMenuOpen(false)}
-                className="block py-2 text-sm font-medium text-gray-700 uppercase tracking-wide"
-              >
-                Technology
-              </Link>
-              <Link
-                to="/entertainment"
-                onClick={() => setIsMenuOpen(false)}
-                className="block py-2 text-sm font-medium text-gray-700 uppercase tracking-wide"
-              >
-                Entertainment
-              </Link>
+            <div className="max-w-lg mx-auto px-4 pt-4">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setIsSearchOpen(false)}
+                  className="p-2 text-gray-600"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <form onSubmit={handleSearch} className="flex-1">
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="검색어를 입력하세요"
+                    autoFocus
+                    className="w-full px-4 py-3 bg-gray-100 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  />
+                </form>
+              </div>
             </div>
-          </motion.nav>
+          </motion.div>
         )}
       </AnimatePresence>
 
@@ -148,10 +121,10 @@ export default function Header() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-lg p-8 max-w-md w-full mx-4 shadow-2xl"
+              className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
-              <h2 className="text-2xl font-semibold text-gray-900 text-center mb-6">로그인</h2>
+              <h2 className="text-xl font-semibold text-gray-900 text-center mb-5">로그인</h2>
               
               {/* 카카오 로그인 */}
               <button
@@ -159,7 +132,7 @@ export default function Header() {
                   login()
                   setIsLoginOpen(false)
                 }}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#FEE500] hover:bg-[#FDD835] text-[#3C1E1E] font-semibold rounded-lg transition-all mb-3"
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#FEE500] hover:bg-[#FDD835] text-[#3C1E1E] font-semibold rounded-xl transition-all mb-3"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 3C6.48 3 2 6.48 2 10.8c0 2.76 1.84 5.17 4.6 6.53-.2.75-.73 2.72-.84 3.14-.13.51.19.5.4.37.16-.1 2.59-1.76 3.64-2.48.72.1 1.47.16 2.2.16 5.52 0 10-3.48 10-7.72S17.52 3 12 3z"/>
@@ -173,7 +146,7 @@ export default function Header() {
                   navigate('/login')
                   setIsLoginOpen(false)
                 }}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 border border-gray-300 hover:border-gray-400 text-gray-700 font-semibold rounded-lg transition-all mb-6"
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 border border-gray-200 hover:border-gray-300 text-gray-700 font-medium rounded-xl transition-all mb-5"
               >
                 이메일로 로그인
               </button>
@@ -187,13 +160,13 @@ export default function Header() {
                   }}
                   className="text-primary-500 hover:underline font-medium"
                 >
-                회원가입
-              </button>
-            </div>
+                  회원가입
+                </button>
+              </div>
+            </motion.div>
           </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+        )}
+      </AnimatePresence>
     </header>
   )
 }

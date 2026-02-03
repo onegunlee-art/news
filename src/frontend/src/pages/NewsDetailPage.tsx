@@ -1,12 +1,9 @@
 import { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { newsApi } from '../services/api'
 import { useAuthStore } from '../store/authStore'
 import LoadingSpinner from '../components/Common/LoadingSpinner'
-// API 분석 기능 임시 비활성화 - 정책 변경 시 복원 예정
-// import { analysisApi } from '../services/api'
-// import AnalysisResult from '../components/Analysis/AnalysisResult'
 
 interface NewsDetail {
   id: number
@@ -19,38 +16,22 @@ interface NewsDetail {
   published_at: string | null
   time_ago: string | null
   is_bookmarked?: boolean
+  image_url?: string | null
+  author?: string | null
 }
-
-// API 분석 인터페이스 임시 비활성화
-// interface AnalysisData {
-//   id: number
-//   keywords: Array<{ keyword: string; score: number; count: number }>
-//   sentiment: { type: string; label: string; score: number; color: string; details: any }
-//   summary: string
-//   status: string
-//   processing_time_ms: number
-// }
 
 export default function NewsDetailPage() {
   const { id } = useParams<{ id: string }>()
-  // 구독 관련 변수 임시 비활성화 - 정책 변경 시 복원 예정
+  const navigate = useNavigate()
   const { isAuthenticated } = useAuthStore()
-  // const { isSubscribed, checkSubscription } = useAuthStore()
   const [news, setNews] = useState<NewsDetail | null>(null)
-  // API 분석 상태 임시 비활성화
-  // const [analysis, setAnalysis] = useState<AnalysisData | null>(null)
-  // const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [isBookmarked, setIsBookmarked] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [showWhyImportant, setShowWhyImportant] = useState(false) // "이게 왜 중요한가?" 표시 토글
-  // 구독 모달 관련 상태 임시 비활성화
-  // const [showSubscribeModal, setShowSubscribeModal] = useState(false)
-  // const [freeAccessGranted, setFreeAccessGranted] = useState(false)
   
   // TTS 상태
   const [isSpeaking, setIsSpeaking] = useState(false)
-  const [speechRate, setSpeechRate] = useState(1.2) // 기본: 약간 빠름
+  const [speechRate, setSpeechRate] = useState(1.2)
 
   // TTS 음성 읽기 함수
   const speakText = (text: string) => {
@@ -78,17 +59,15 @@ export default function NewsDetailPage() {
     }
   }
 
-  // 기사 전체 읽기
   const speakArticle = () => {
     if (!news) return
     let text = `${news.title}. ${news.content || news.description || ''}`
     if (news.why_important) {
-      text += ` 이게 왜 중요한가? ${news.why_important}`
+      text += ` The Gist's Critics. ${news.why_important}`
     }
     speakText(text)
   }
 
-  // 음성 중지
   const stopSpeaking = () => {
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel()
@@ -119,23 +98,6 @@ export default function NewsDetailPage() {
     }
   }
 
-  // API 분석 함수 임시 비활성화 - 정책 변경 시 복원 예정
-  // const handleAnalyze = async () => {
-  //   if (!id || isAnalyzing) return
-  //   setIsAnalyzing(true)
-  //   setError(null)
-  //   try {
-  //     const response = await analysisApi.analyzeNews(parseInt(id))
-  //     if (response.data.success) {
-  //       setAnalysis(response.data.data)
-  //     }
-  //   } catch (error: any) {
-  //     setError(error.response?.data?.message || '분석에 실패했습니다.')
-  //   } finally {
-  //     setIsAnalyzing(false)
-  //   }
-  // }
-
   const handleBookmark = async () => {
     if (!isAuthenticated || !id) return
 
@@ -152,6 +114,28 @@ export default function NewsDetailPage() {
     }
   }
 
+  // 날짜 포맷팅
+  const formatDate = () => {
+    if (news?.published_at) {
+      const date = new Date(news.published_at)
+      return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`
+    }
+    return news?.time_ago || ''
+  }
+
+  // 소스 이름 매핑
+  const getSourceName = () => {
+    if (news?.source === 'Admin') return 'The Gist'
+    return news?.source || 'Foreign Affairs'
+  }
+
+  // 이미지 URL
+  const getImageUrl = () => {
+    if (news?.image_url) return news.image_url
+    const fallbackId = news?.title.split('').reduce((a, b) => a + b.charCodeAt(0), 0) || 1
+    return `https://picsum.photos/seed/${Math.abs(fallbackId % 1000) + 1}/800/400`
+  }
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[60vh]">
@@ -162,14 +146,14 @@ export default function NewsDetailPage() {
 
   if (error && !news) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-16 text-center">
-        <div className="text-red-400 mb-4">
+      <div className="max-w-lg mx-auto px-4 py-16 text-center">
+        <div className="text-gray-400 mb-4">
           <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
         </div>
-        <h2 className="text-xl font-bold text-white mb-2">오류 발생</h2>
-        <p className="text-gray-400 mb-6">{error}</p>
+        <h2 className="text-xl font-bold text-gray-900 mb-2">오류 발생</h2>
+        <p className="text-gray-500 mb-6">{error}</p>
         <Link
           to="/"
           className="inline-block px-6 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors"
@@ -183,300 +167,238 @@ export default function NewsDetailPage() {
   if (!news) return null
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      {/* 뒤로가기 */}
-      <Link
-        to="/"
-        className="inline-flex items-center gap-2 text-gray-400 hover:text-white mb-6 transition-colors"
-      >
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-        </svg>
-        목록으로
-      </Link>
+    <div className="min-h-screen bg-white pb-20">
+      {/* 상단 헤더 */}
+      <div className="sticky top-0 bg-white z-40 border-b border-gray-100">
+        <div className="max-w-lg mx-auto px-4">
+          <div className="flex items-center justify-between h-12">
+            {/* 뒤로가기 */}
+            <button
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-1 text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              <span className="text-sm">최신</span>
+            </button>
+
+            {/* 오른쪽 액션 버튼들 */}
+            <div className="flex items-center gap-4">
+              {/* 댓글 */}
+              <button className="p-1 text-gray-400 hover:text-gray-600">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+              </button>
+              {/* 공유 */}
+              <button className="p-1 text-gray-400 hover:text-gray-600">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+              </button>
+              {/* 북마크 */}
+              <button
+                onClick={handleBookmark}
+                className={`p-1 transition-colors ${isBookmarked ? 'text-primary-500' : 'text-gray-400 hover:text-gray-600'}`}
+              >
+                <svg className="w-5 h-5" fill={isBookmarked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <motion.article
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="card mb-8"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="max-w-lg mx-auto"
       >
-        {/* 메타 정보 */}
-        <div className="flex items-center gap-4 text-sm text-gray-400 mb-4">
-          {news.source && (
-            <span className="px-2 py-1 bg-primary-500/10 text-primary-400 rounded">
-              {news.source}
-            </span>
-          )}
-          {news.time_ago && <span>{news.time_ago}</span>}
+        {/* 대표 이미지 */}
+        <div className="aspect-video bg-gray-100 overflow-hidden">
+          <img
+            src={getImageUrl()}
+            alt={news.title}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = 'https://via.placeholder.com/800x400/f3f4f6/9ca3af?text=No+Image'
+            }}
+          />
         </div>
 
-        {/* 제목 */}
-        <h1 className="text-2xl lg:text-3xl font-bold text-white mb-6 leading-tight">
-          {news.title}
-        </h1>
+        <div className="px-4 pt-5 pb-8">
+          {/* 소스 및 날짜 */}
+          <div className="flex items-center gap-2 text-sm mb-4">
+            <span className="text-primary-500 font-medium">{getSourceName()}</span>
+            <span className="text-gray-300">/</span>
+            <span className="text-gray-400">{formatDate()}</span>
+          </div>
 
-        {/* 본문 - 뚜렷하게 표시 */}
-        <div className="bg-slate-800/50 rounded-xl p-6 mb-6 border border-slate-700/50">
-          {news.content ? (
-            <div className="prose prose-invert prose-lg max-w-none">
-              <p className="text-gray-100 text-lg leading-relaxed whitespace-pre-wrap">
+          {/* 제목 */}
+          <h1 className="text-2xl font-bold text-gray-900 leading-snug mb-6">
+            {news.title}
+          </h1>
+
+          {/* 저자 정보 (있을 경우) */}
+          {news.author && (
+            <div className="text-sm text-gray-500 mb-6">
+              <span className="font-medium text-gray-700">{news.author}</span> 씀
+            </div>
+          )}
+
+          {/* 본문 내용 */}
+          <div className="prose prose-lg max-w-none mb-8">
+            {news.content ? (
+              <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
                 {news.content}
               </p>
+            ) : news.description ? (
+              <p className="text-gray-700 leading-relaxed">{news.description}</p>
+            ) : (
+              <p className="text-gray-400 italic">본문 내용이 없습니다.</p>
+            )}
+          </div>
+
+          {/* The Gist's Critics 섹션 */}
+          {news.why_important && (
+            <div className="border-t border-gray-100 pt-6 mt-6">
+              <h2 
+                className="text-xl font-medium mb-4"
+                style={{ fontFamily: "'Lobster', cursive", color: '#FF6F00' }}
+              >
+                The Gist's Critics
+              </h2>
+              <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                {/* 중요 문구 강조 (bold 처리) */}
+                {news.why_important.split(/(\*\*[^*]+\*\*)/).map((part, index) => {
+                  if (part.startsWith('**') && part.endsWith('**')) {
+                    return (
+                      <span key={index} className="font-bold text-gray-900">
+                        {part.slice(2, -2)}
+                      </span>
+                    )
+                  }
+                  // 오렌지 하이라이트 (밑줄 텍스트)
+                  const underlineRegex = /__([^_]+)__/g
+                  const parts = part.split(underlineRegex)
+                  return parts.map((subPart, subIndex) => {
+                    if (subIndex % 2 === 1) {
+                      return (
+                        <span key={`${index}-${subIndex}`} className="text-primary-500 font-medium underline decoration-primary-500">
+                          {subPart}
+                        </span>
+                      )
+                    }
+                    return subPart
+                  })
+                })}
+              </div>
             </div>
-          ) : news.description ? (
-            <p className="text-gray-100 text-lg leading-relaxed">{news.description}</p>
-          ) : (
-            <p className="text-gray-400 italic">본문 내용이 없습니다.</p>
           )}
-        </div>
 
-        {/* 이게 왜 중요한가? 섹션 - 버튼 클릭 시에만 표시 */}
-        {showWhyImportant && news.why_important && (
-          <motion.div 
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border border-amber-500/30 rounded-xl p-6 mb-6"
-          >
-            <div className="flex items-center gap-2 mb-4">
-              <svg className="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <h3 className="text-lg font-bold text-amber-400">이게 왜 중요한가?</h3>
-            </div>
-            <p className="text-gray-200 leading-relaxed whitespace-pre-wrap">
-              {news.why_important}
-            </p>
-          </motion.div>
-        )}
-        
-        {/* why_important 내용이 없을 때 */}
-        {showWhyImportant && !news.why_important && (
-          <motion.div 
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-gradient-to-r from-gray-500/10 to-gray-600/10 border border-gray-500/30 rounded-xl p-6 mb-6"
-          >
-            <div className="flex items-center gap-2 mb-2">
-              <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <h3 className="text-lg font-bold text-gray-400">이게 왜 중요한가?</h3>
-            </div>
-            <p className="text-gray-400">
-              아직 분석 내용이 등록되지 않았습니다.
-            </p>
-          </motion.div>
-        )}
-
-        {/* AI 음성 읽기 */}
-        <div className="bg-gradient-to-r from-orange-500/10 to-red-500/10 border border-orange-500/20 rounded-xl p-4 mb-6">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <svg className="w-5 h-5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-              </svg>
-              <span className="text-orange-400 font-medium">AI 음성으로 듣기</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-gray-400 text-sm">속도:</span>
+          {/* AI 음성 읽기 */}
+          <div className="border-t border-gray-100 pt-6 mt-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                </svg>
+                <span className="text-gray-900 font-medium">음성으로 듣기</span>
+              </div>
               <select
                 value={speechRate}
                 onChange={(e) => setSpeechRate(parseFloat(e.target.value))}
-                className="bg-dark-700 text-white text-sm rounded px-2 py-1 border border-white/10"
+                className="text-sm bg-gray-100 text-gray-700 rounded-lg px-3 py-1.5 border-0 focus:ring-2 focus:ring-primary-500"
               >
-                <option value="0.7">느리게 (0.7x)</option>
+                <option value="0.7">느리게</option>
                 <option value="0.85">조금 느리게</option>
-                <option value="1.0">보통 (1.0x)</option>
-                <option value="1.2">약간 빠름 ✓</option>
+                <option value="1.0">보통</option>
+                <option value="1.2">약간 빠름</option>
                 <option value="1.4">빠르게</option>
-                <option value="1.6">매우 빠르게</option>
-                <option value="2.0">최고속도 (2.0x)</option>
+                <option value="2.0">최고속도</option>
               </select>
             </div>
-          </div>
-          
-          <button
-            onClick={isSpeaking ? stopSpeaking : speakArticle}
-            className={`w-full py-3 rounded-lg font-medium transition flex items-center justify-center gap-2 ${
-              isSpeaking
-                ? 'bg-red-500 text-white hover:bg-red-600'
-                : 'bg-gradient-to-r from-orange-500 to-red-500 text-white hover:opacity-90'
-            }`}
-          >
-            {isSpeaking ? (
-              <>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-                읽기 중지
-              </>
-            ) : (
-              <>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                기사 읽어주기
-              </>
-            )}
-          </button>
-        </div>
-
-        {/* 액션 버튼들 */}
-        <div className="flex flex-wrap items-center gap-4 pt-6 border-t border-white/10">
-          {isAuthenticated && (
+            
             <button
-              onClick={handleBookmark}
-              className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                isBookmarked
-                  ? 'bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30'
-                  : 'bg-white/5 text-gray-300 hover:bg-white/10'
+              onClick={isSpeaking ? stopSpeaking : speakArticle}
+              className={`w-full py-3 rounded-xl font-medium transition flex items-center justify-center gap-2 ${
+                isSpeaking
+                  ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  : 'bg-primary-500 text-white hover:bg-primary-600'
               }`}
             >
-              <svg
-                className="w-5 h-5"
-                fill={isBookmarked ? 'currentColor' : 'none'}
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-              </svg>
-              {isBookmarked ? '북마크됨' : '북마크'}
+              {isSpeaking ? (
+                <>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  읽기 중지
+                </>
+              ) : (
+                <>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  기사 읽어주기
+                </>
+              )}
             </button>
-          )}
+          </div>
 
-          <button
-            onClick={() => setShowWhyImportant(!showWhyImportant)}
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-              showWhyImportant 
-                ? 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 border border-amber-500/30' 
-                : 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white'
-            }`}
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            {showWhyImportant ? '접기' : '이게 왜 중요한대!'}
-          </button>
+          {/* 원문 링크 */}
+          {news.url && news.url !== '#' && (
+            <div className="border-t border-gray-100 pt-6 mt-6">
+              <a
+                href={news.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 text-sm text-gray-500 hover:text-primary-500 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+                원문 보기
+              </a>
+            </div>
+          )}
         </div>
       </motion.article>
 
-{/* API 분석 결과 - 임시 비활성화 (정책 변경 시 복원 예정)
-      {analysis && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          <AnalysisResult analysis={analysis} />
-        </motion.div>
-      )}
-*/}
+      {/* 하단 네비게이션 */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-40">
+        <div className="max-w-lg mx-auto px-4">
+          <div className="flex items-center justify-around h-16">
+            <Link to="/" className="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-900 transition-colors">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="text-xs">최신</span>
+            </Link>
+            <Link to="/bookmarks" className="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-900 transition-colors">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+              </svg>
+              <span className="text-xs">즐겨찾기</span>
+            </Link>
+            <Link to="/settings" className="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-900 transition-colors">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <span className="text-xs">설정</span>
+            </Link>
+          </div>
+        </div>
+      </nav>
 
       {error && (
-        <div className="text-center py-8 text-red-400">
-          <p>{error}</p>
+        <div className="fixed bottom-20 left-4 right-4 max-w-lg mx-auto bg-red-50 text-red-600 px-4 py-3 rounded-lg text-center text-sm">
+          {error}
         </div>
       )}
-
-{/* 구독 안내 모달 - 임시 비활성화 (정책 변경 시 복원 예정)
-      {showSubscribeModal && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
-          onClick={() => setShowSubscribeModal(false)}
-        >
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="bg-dark-800 rounded-2xl p-8 max-w-md mx-4 border border-white/10"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex justify-center mb-6">
-              <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-              </div>
-            </div>
-            <h3 className="text-2xl font-bold text-white text-center mb-3">
-              구독이 필요합니다
-            </h3>
-            <p className="text-gray-400 text-center mb-6 leading-relaxed">
-              전문가의 심층 분석을 확인하시려면<br />
-              구독 서비스에 가입해주세요.
-            </p>
-            <div className="bg-gradient-to-r from-primary-500/10 to-primary-600/10 border border-primary-500/20 rounded-xl p-4 mb-6">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 bg-primary-500/20 rounded-full flex items-center justify-center">
-                  <svg className="w-5 h-5 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
-                  </svg>
-                </div>
-                <div>
-                  <p className="text-primary-400 font-semibold">🎉 1달 무료 체험!</p>
-                  <p className="text-gray-400 text-sm">지금 가입하시면 첫 달은 무료입니다</p>
-                </div>
-              </div>
-              <ul className="space-y-2 text-sm text-gray-300">
-                <li className="flex items-center gap-2">
-                  <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  "이게 왜 중요한대!" 심층 분석
-                </li>
-                <li className="flex items-center gap-2">
-                  <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  빅픽쳐 - 글로벌 트렌드 분석
-                </li>
-                <li className="flex items-center gap-2">
-                  <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  "그래서 우리에겐?" 영향 분석
-                </li>
-              </ul>
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowSubscribeModal(false)}
-                className="flex-1 px-4 py-3 bg-white/5 hover:bg-white/10 text-gray-300 rounded-xl transition-colors"
-              >
-                닫기
-              </button>
-              <button
-                onClick={async (e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  setFreeAccessGranted(true)
-                  setShowSubscribeModal(false)
-                  if (id && !isAnalyzing) {
-                    setIsAnalyzing(true)
-                    setError(null)
-                    try {
-                      const response = await analysisApi.analyzeNews(parseInt(id))
-                      if (response.data.success) {
-                        setAnalysis(response.data.data)
-                      }
-                    } catch (err: any) {
-                      setError(err.response?.data?.message || '분석에 실패했습니다.')
-                    } finally {
-                      setIsAnalyzing(false)
-                    }
-                  }
-                }}
-                className="flex-1 px-4 py-3 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-400 hover:to-primary-500 text-white font-semibold rounded-xl transition-all"
-              >
-                무료로 시작하기
-              </button>
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
-*/}
     </div>
   )
 }

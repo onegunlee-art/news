@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
 import { newsApi } from '../services/api'
 import LoadingSpinner from '../components/Common/LoadingSpinner'
 
@@ -16,18 +15,29 @@ interface NewsItem {
   image_url?: string | null
 }
 
+type TabType = '최신' | '외교' | '금융' | '인기'
+
+const tabToCategory: Record<TabType, string | null> = {
+  '최신': null,
+  '외교': 'diplomacy',
+  '금융': 'economy',
+  '인기': null,
+}
+
 export default function HomePage() {
   const [news, setNews] = useState<NewsItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState<TabType>('최신')
 
   useEffect(() => {
     fetchNews()
-  }, [])
+  }, [activeTab])
 
   const fetchNews = async () => {
     setIsLoading(true)
     try {
-      const response = await newsApi.getList(1, 20)
+      const category = tabToCategory[activeTab]
+      const response = await newsApi.getList(1, 20, category || undefined)
       if (response.data.success) {
         setNews(response.data.data.items || [])
       }
@@ -38,257 +48,184 @@ export default function HomePage() {
     }
   }
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <LoadingSpinner size="large" />
-      </div>
-    )
-  }
+  const tabs: TabType[] = ['최신', '외교', '금융', '인기']
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* 메인 히어로 섹션 */}
-      <section className="border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            {/* 메인 기사 */}
-            {news[0] && (
-              <div className="lg:col-span-7">
-                <FeaturedArticle article={news[0]} />
-              </div>
-            )}
-            
-            {/* 사이드 기사들 */}
-            <div className="lg:col-span-5 space-y-6">
-              {news.slice(1, 4).map((item, index) => (
-                <SideArticle key={item.id || index} article={item} />
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 최신 기사 그리드 */}
-      <section className="py-16">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex items-center gap-4 mb-10">
-            <div className="w-1 h-8 bg-primary-500 rounded-full" />
-            <h2 className="text-2xl font-semibold text-gray-900 tracking-tight">
-              최신 분석
-            </h2>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
-            {news.slice(4, 10).map((item, index) => (
-              <ArticleCard key={item.id || index} article={item} />
+    <div className="min-h-screen bg-white pb-20">
+      {/* 탭 네비게이션 */}
+      <div className="sticky top-14 bg-white z-30 border-b border-gray-100">
+        <div className="max-w-lg mx-auto px-4">
+          <div className="flex">
+            {tabs.map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`flex-1 py-3 text-sm font-medium transition-colors relative ${
+                  activeTab === tab 
+                    ? 'text-primary-500' 
+                    : 'text-gray-500 hover:text-gray-900'
+                }`}
+              >
+                {tab}
+                {activeTab === tab && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-500" />
+                )}
+              </button>
             ))}
           </div>
         </div>
-      </section>
+      </div>
 
-{/* 구독 CTA 섹션 임시 비활성화 - 정책 변경 시 복원 예정
-      <section className="relative bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 py-20 overflow-hidden">
-        <div className="absolute inset-0 opacity-5">
-          <div className="absolute top-0 left-0 w-96 h-96 bg-primary-500 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-primary-500 rounded-full blur-3xl translate-x-1/2 translate-y-1/2" />
-        </div>
-        
-        <div className="relative max-w-4xl mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-4xl font-semibold text-white mb-5" style={{ letterSpacing: '-0.02em' }}>
-            뉴스의 본질을 파악하세요
-          </h2>
-          <p className="text-gray-400 text-lg mb-10 max-w-2xl mx-auto leading-relaxed">
-            전문가가 직접 짚어주는 뉴스의 이면과 우리에게 전달될 파급력을 전해 드립니다.
-          </p>
-          <Link
-            to="/subscribe"
-            className="inline-block px-10 py-4 bg-primary-500 hover:bg-primary-400 text-white font-semibold rounded-sm transition-all duration-300 hover:shadow-lg hover:shadow-primary-500/25 hover:-translate-y-0.5"
-          >
-            구독하기
-          </Link>
-        </div>
-      </section>
-*/}
+      {/* 기사 목록 */}
+      <div className="max-w-lg mx-auto px-4 pt-4">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-20">
+            <LoadingSpinner size="large" />
+          </div>
+        ) : news.length === 0 ? (
+          <div className="text-center py-20 text-gray-500">
+            기사가 없습니다.
+          </div>
+        ) : (
+          <div className="space-y-0">
+            {news.map((item, index) => (
+              <ArticleCard key={item.id || index} article={item} />
+            ))}
+          </div>
+        )}
+      </div>
 
-      {/* 카테고리 섹션 */}
-      <section className="py-12 border-t border-gray-200">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <CategorySection title="Foreign Affairs" link="/diplomacy" />
-            <CategorySection title="Economy" link="/economy" />
-            <CategorySection title="Technology" link="/technology" />
-            <CategorySection title="Entertainment" link="/entertainment" />
+      {/* 더 보기 섹션 */}
+      {!isLoading && news.length > 0 && (
+        <div className="max-w-lg mx-auto px-4 py-8">
+          <div className="border-t border-gray-100 pt-6">
+            <h3 className="text-sm font-medium text-gray-900 mb-4">무엇이 처음부터 왔었</h3>
+            {/* 추가 콘텐츠 영역 */}
           </div>
         </div>
-      </section>
+      )}
+
+      {/* 하단 네비게이션 */}
+      <BottomNav />
     </div>
   )
 }
 
-// 메인 피처드 기사
-function FeaturedArticle({ article }: { article: NewsItem }) {
-  // DB에 저장된 image_url 사용, 없으면 fallback
+// 기사 카드 - 왼쪽 텍스트 + 오른쪽 이미지
+function ArticleCard({ article }: { article: NewsItem }) {
   const fallbackId = Math.abs(article.title.split('').reduce((a, b) => a + b.charCodeAt(0), 0) % 1000) + 1
-  const imageUrl = article.image_url || `https://picsum.photos/seed/${fallbackId}/800/500`
+  const imageUrl = article.image_url || `https://picsum.photos/seed/${fallbackId}/200/200`
+
+  // 날짜 포맷팅
+  const formatDate = () => {
+    if (article.time_ago) return article.time_ago
+    if (article.published_at) {
+      const date = new Date(article.published_at)
+      return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`
+    }
+    return ''
+  }
+
+  // 소스 이름 매핑
+  const getSourceName = () => {
+    if (article.source === 'Admin') return 'The Gist'
+    return article.source || 'The Gist'
+  }
 
   return (
-    <Link to={`/news/${article.id || ''}`} className="group block">
-      <motion.article
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
-        className="relative"
-      >
-        {/* 이미지 */}
-        <div className="aspect-[16/10] overflow-hidden mb-6 relative rounded-sm shadow-sm">
-          <img
-            src={imageUrl}
-            alt={article.title}
-            className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
-          />
-          {/* 하단 그라데이션 오버레이 */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-        </div>
-        
-        {/* 콘텐츠 */}
-        <div>
-          {article.source && (
-            <span className="text-[11px] font-semibold text-primary-500 uppercase tracking-[0.15em]">
-              {article.source}
-            </span>
-          )}
-          <h2 className="text-3xl md:text-4xl font-semibold text-gray-900 mt-2 mb-4 leading-tight group-hover:text-gray-700 transition-colors duration-300" style={{ letterSpacing: '-0.02em' }}>
+    <Link to={`/news/${article.id || ''}`} className="block py-5 border-b border-gray-100 last:border-0">
+      <article className="flex gap-4">
+        {/* 왼쪽 - 텍스트 콘텐츠 */}
+        <div className="flex-1 min-w-0">
+          {/* 제목 */}
+          <h2 className="text-lg font-bold text-gray-900 leading-snug mb-2 line-clamp-2">
             {article.title}
           </h2>
+          
+          {/* 설명 */}
           {article.description && (
-            <p className="text-gray-500 text-lg leading-relaxed line-clamp-3">
+            <p className="text-sm text-gray-500 leading-relaxed mb-3 line-clamp-2">
               {article.description}
             </p>
           )}
-          <p className="text-xs text-gray-400 mt-5 uppercase tracking-wide">
-            {article.time_ago || (article.published_at && new Date(article.published_at).toLocaleDateString('en-US', { 
-              month: 'long', 
-              day: 'numeric', 
-              year: 'numeric' 
-            }))}
-          </p>
+          
+          {/* 소스 및 날짜 */}
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-primary-500 font-medium">{getSourceName()}</span>
+            <span className="text-gray-300">/</span>
+            <span className="text-gray-400">{formatDate()}</span>
+          </div>
         </div>
-      </motion.article>
-    </Link>
-  )
-}
 
-// 사이드 기사
-function SideArticle({ article }: { article: NewsItem }) {
-  // DB에 저장된 image_url 사용, 없으면 fallback
-  const fallbackId = Math.abs(article.title.split('').reduce((a, b) => a + b.charCodeAt(0), 0) % 1000) + 1
-  const imageUrl = article.image_url || `https://picsum.photos/seed/${fallbackId}/300/200`
-
-  return (
-    <Link to={`/news/${article.id || ''}`} className="group block">
-      <article className="flex gap-5 pb-6 border-b border-gray-50 last:border-0 transition-transform duration-300 group-hover:translate-x-1">
-        {/* 썸네일 */}
-        <div className="w-32 h-24 flex-shrink-0 overflow-hidden rounded-sm shadow-sm">
-          <img
-            src={imageUrl}
-            alt={article.title}
-            className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.05]"
-          />
+        {/* 오른쪽 - 이미지 */}
+        <div className="w-24 h-24 flex-shrink-0">
+          <div className="w-full h-full bg-gray-100 rounded-lg overflow-hidden">
+            <img
+              src={imageUrl}
+              alt={article.title}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = 'none'
+              }}
+            />
+          </div>
         </div>
-        
-        {/* 콘텐츠 */}
-        <div className="flex-1 min-w-0 flex flex-col justify-center">
-          {article.source && (
-            <span className="text-[10px] font-semibold text-primary-500 uppercase tracking-[0.12em]">
-              {article.source}
-            </span>
-          )}
-          <h3 className="text-base font-medium text-gray-900 leading-snug mt-1 group-hover:text-gray-700 transition-colors duration-200 line-clamp-2" style={{ letterSpacing: '-0.01em' }}>
-            {article.title}
-          </h3>
-          <p className="text-[10px] text-gray-400 mt-2 uppercase tracking-wide">
-            {article.time_ago || (article.published_at && new Date(article.published_at).toLocaleDateString('en-US', { 
-              month: 'short', 
-              day: 'numeric'
-            }))}
-          </p>
+
+        {/* 액션 버튼들 */}
+        <div className="flex flex-col justify-between py-1">
+          <button className="p-1 text-gray-300 hover:text-gray-500 transition-colors">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+          </button>
+          <button className="p-1 text-gray-300 hover:text-gray-500 transition-colors">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+            </svg>
+          </button>
+          <button className="p-1 text-gray-300 hover:text-gray-500 transition-colors">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+            </svg>
+          </button>
         </div>
       </article>
     </Link>
   )
 }
 
-// 기사 카드
-function ArticleCard({ article }: { article: NewsItem }) {
-  // DB에 저장된 image_url 사용, 없으면 fallback
-  const fallbackId = Math.abs(article.title.split('').reduce((a, b) => a + b.charCodeAt(0), 0) % 1000) + 1
-  const imageUrl = article.image_url || `https://picsum.photos/seed/${fallbackId}/400/250`
-
+// 하단 네비게이션
+function BottomNav() {
   return (
-    <Link to={`/news/${article.id || ''}`} className="group block">
-      <motion.article
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        whileHover={{ y: -6 }}
-        transition={{ duration: 0.4, ease: 'easeOut' }}
-        className="bg-white rounded-sm border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300"
-      >
-        {/* 이미지 */}
-        <div className="aspect-[16/10] overflow-hidden">
-          <img
-            src={imageUrl}
-            alt={article.title}
-            className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
-          />
-        </div>
-        
-        {/* 콘텐츠 */}
-        <div className="p-5">
-          {article.source && (
-            <span className="text-[10px] font-semibold text-primary-500 uppercase tracking-[0.12em]">
-              {article.source}
-            </span>
-          )}
-          <h3 className="text-lg font-semibold text-gray-900 mt-2 mb-2 leading-snug group-hover:text-gray-700 transition-colors duration-200 line-clamp-2" style={{ letterSpacing: '-0.01em' }}>
-            {article.title}
-          </h3>
-          {article.description && (
-            <p className="text-gray-500 text-sm leading-relaxed line-clamp-2">
-              {article.description}
-            </p>
-          )}
-        </div>
-      </motion.article>
-    </Link>
-  )
-}
+    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-40">
+      <div className="max-w-lg mx-auto px-4">
+        <div className="flex items-center justify-around h-16">
+          {/* 최신 */}
+          <Link to="/" className="flex flex-col items-center gap-1 text-gray-900">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="text-xs font-medium">최신</span>
+          </Link>
 
-// 카테고리 섹션
-function CategorySection({ title, link }: { title: string; link: string }) {
-  const descriptions: Record<string, string> = {
-    'Foreign Affairs': '국제 관계와 외교 정책에 대한 전문 분석',
-    'Economy': '경제 동향과 금융 시장에 대한 심층 분석',
-    'Technology': '기술 혁신과 IT 산업에 대한 전문 분석',
-    'Entertainment': '문화와 엔터테인먼트 산업에 대한 분석',
-  }
-  
-  return (
-    <div>
-      <Link 
-        to={link}
-        className="flex items-center justify-between pb-3 border-b-2 border-gray-900 mb-4 group"
-      >
-        <h3 className="text-lg font-medium text-gray-900 group-hover:text-primary-500 transition-colors">
-          {title}
-        </h3>
-        <svg className="w-5 h-5 text-gray-400 group-hover:text-primary-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-        </svg>
-      </Link>
-      <p className="text-sm text-gray-500">
-        {descriptions[title] || '전문가 분석과 인사이트'}
-      </p>
-    </div>
+          {/* 즐겨찾기 */}
+          <Link to="/bookmarks" className="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-900 transition-colors">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+            </svg>
+            <span className="text-xs">즐겨찾기</span>
+          </Link>
+
+          {/* 설정 */}
+          <Link to="/settings" className="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-900 transition-colors">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span className="text-xs">설정</span>
+          </Link>
+        </div>
+      </div>
+    </nav>
   )
 }
