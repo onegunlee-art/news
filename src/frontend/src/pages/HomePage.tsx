@@ -71,7 +71,7 @@ export default function HomePage() {
             className="text-4xl md:text-5xl lg:text-6xl text-black"
             style={{ fontFamily: "'Lobster', cursive", fontWeight: 400 }}
           >
-            The gist
+            The Gist
           </h2>
           <p className="text-black/90 text-base md:text-lg mt-3 md:mt-4 font-medium">
             가볍게 접하는 글로벌 저널
@@ -149,8 +149,8 @@ function ArticleCard({ article }: { article: NewsItem }) {
 
   // 소스 이름 매핑
   const getSourceName = () => {
-    if (article.source === 'Admin') return 'The gist'
-    return article.source || 'The gist'
+    if (article.source === 'Admin') return 'The Gist'
+    return article.source || 'The Gist'
   }
 
   return (

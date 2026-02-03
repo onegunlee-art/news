@@ -43,7 +43,7 @@ const LoginPage: React.FC = () => {
         <div className="text-center mb-8">
           <Link to="/" className="inline-block">
             <h1 className="text-4xl text-gray-900" style={{ fontFamily: "'Lobster', cursive" }}>
-              The gist
+              The Gist
             </h1>
           </Link>
           <p className="text-gray-500 mt-2">뉴스 맥락 분석</p>

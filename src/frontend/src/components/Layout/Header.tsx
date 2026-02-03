@@ -54,7 +54,7 @@ export default function Header() {
               className="text-2xl md:text-3xl text-gray-900" 
               style={{ fontFamily: "'Lobster', cursive", fontWeight: 400 }}
             >
-              The gist
+              The Gist
             </h1>
           </Link>
 

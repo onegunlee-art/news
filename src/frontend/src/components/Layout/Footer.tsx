@@ -15,7 +15,7 @@ export default function Footer() {
                 className="text-2xl text-gray-900 group-hover:text-primary-500 transition-colors duration-200" 
                 style={{ fontFamily: "'Lobster', cursive", fontWeight: 400 }}
               >
-                The gist
+                The Gist
               </h2>
             </Link>
             <p className="text-gray-500 text-sm mt-2">
@@ -52,7 +52,7 @@ export default function Footer() {
         <div className="max-w-lg md:max-w-4xl lg:max-w-6xl mx-auto px-4 py-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-xs text-gray-400">
-              &copy; {currentYear} The gist. All rights reserved.
+              &copy; {currentYear} The Gist. All rights reserved.
             </p>
             <div className="flex items-center gap-6">
               <Link to="/privacy" className="text-xs text-gray-400 hover:text-gray-600 transition-colors">

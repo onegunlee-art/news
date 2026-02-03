@@ -64,7 +64,7 @@ export default function NewsDetailPage() {
     if (!news) return
     let text = `${news.title}. ${news.content || news.description || ''}`
     if (news.why_important) {
-      text += ` The gist's Critics. ${news.why_important}`
+      text += ` The Gist's Critics. ${news.why_important}`
     }
     speakText(text)
   }
@@ -126,7 +126,7 @@ export default function NewsDetailPage() {
 
   // 소스 이름 매핑
   const getSourceName = () => {
-    if (news?.source === 'Admin') return 'The gist'
+    if (news?.source === 'Admin') return 'The Gist'
     return news?.source || 'Foreign Affairs'
   }
 
@@ -270,14 +270,14 @@ export default function NewsDetailPage() {
             )}
           </div>
 
-          {/* The gist's Critics 섹션 */}
+          {/* The Gist's Critics 섹션 */}
           {news.why_important && (
             <div className="border-t border-gray-100 pt-6 mt-6">
               <h2 
                 className="text-xl font-medium mb-4"
                 style={{ fontFamily: "'Lobster', cursive", color: '#FF6F00' }}
               >
-                The gist's Critics
+                The Gist's Critics
               </h2>
               <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
                 {/* 중요 문구 강조 (bold 처리) */}
