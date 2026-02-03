@@ -5,8 +5,8 @@ export default function Footer() {
 
   return (
     <footer className="bg-gray-50 border-t border-gray-100 hidden md:block pb-20 md:pb-0">
-      {/* 메인 푸터 - 데스크톱만 */}
-      <div className="max-w-7xl mx-auto px-4 py-12">
+      {/* 메인 푸터 - 데스크톱만, 콘텐츠와 동일 max-width */}
+      <div className="max-w-lg md:max-w-4xl lg:max-w-6xl mx-auto px-4 py-12">
         <div className="flex flex-col md:flex-row justify-between items-center gap-8">
           {/* 브랜드 */}
           <div className="text-center md:text-left">
@@ -49,7 +49,7 @@ export default function Footer() {
 
       {/* 하단 바 */}
       <div className="border-t border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 py-4">
+        <div className="max-w-lg md:max-w-4xl lg:max-w-6xl mx-auto px-4 py-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-xs text-gray-400">
               &copy; {currentYear} The gist. All rights reserved.

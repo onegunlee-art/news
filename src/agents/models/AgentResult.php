@@ -19,7 +19,8 @@ final class AgentResult
         private readonly bool $success,
         private readonly array $data,
         private readonly array $errors = [],
-        private readonly array $metadata = []
+        private readonly array $metadata = [],
+        private readonly bool $partial = false
     ) {}
 
     /**
@@ -28,6 +29,14 @@ final class AgentResult
     public function isSuccess(): bool
     {
         return $this->success;
+    }
+
+    /**
+     * 부분 완료 여부 (명확화 필요 등)
+     */
+    public function isPartial(): bool
+    {
+        return $this->partial;
     }
 
     /**
@@ -77,6 +86,7 @@ final class AgentResult
     {
         return [
             'success' => $this->success,
+            'partial' => $this->partial,
             'data' => $this->data,
             'errors' => $this->errors,
             'metadata' => $this->metadata
@@ -114,6 +124,20 @@ final class AgentResult
             data: [],
             errors: [['message' => $error, 'agent' => $agent, 'timestamp' => date('c')]],
             metadata: $metadata
+        );
+    }
+
+    /**
+     * 부분 완료 결과 생성 팩토리 (명확화 필요 등)
+     */
+    public static function partial(array $data, array $metadata = []): self
+    {
+        return new self(
+            success: false,
+            data: $data,
+            errors: [],
+            metadata: $metadata,
+            partial: true
         );
     }
 }

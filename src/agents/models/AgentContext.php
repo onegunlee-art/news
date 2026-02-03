@@ -17,6 +17,7 @@ namespace Agents\Models;
 final class AgentContext
 {
     private string $url;
+    private ?string $query = null;
     private ?ArticleData $articleData = null;
     private ?AnalysisResult $analysisResult = null;
     private array $metadata = [];
@@ -25,9 +26,10 @@ final class AgentContext
     private array $processedBy = [];
     private float $startTime;
 
-    public function __construct(string $url)
+    public function __construct(string $url, ?string $query = null)
     {
         $this->url = $url;
+        $this->query = $query;
         $this->startTime = microtime(true);
         $this->metadata['created_at'] = date('c');
     }
@@ -38,6 +40,24 @@ final class AgentContext
     public function getUrl(): string
     {
         return $this->url;
+    }
+
+    /**
+     * Query 반환
+     */
+    public function getQuery(): ?string
+    {
+        return $this->query;
+    }
+
+    /**
+     * Query 설정
+     */
+    public function withQuery(string $query): self
+    {
+        $clone = clone $this;
+        $clone->query = $query;
+        return $clone;
     }
 
     /**

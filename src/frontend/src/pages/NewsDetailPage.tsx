@@ -146,7 +146,7 @@ export default function NewsDetailPage() {
 
   if (error && !news) {
     return (
-      <div className="max-w-lg mx-auto px-4 py-16 text-center">
+      <div className="max-w-lg md:max-w-4xl lg:max-w-6xl mx-auto px-4 py-16 text-center">
         <div className="text-gray-400 mb-4">
           <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -167,10 +167,10 @@ export default function NewsDetailPage() {
   if (!news) return null
 
   return (
-    <div className="min-h-screen bg-white pb-20">
+    <div className="min-h-screen bg-white pb-20 md:pb-8">
       {/* 상단 헤더 */}
       <div className="sticky top-0 bg-white z-40 border-b border-gray-100">
-        <div className="max-w-lg mx-auto px-4">
+        <div className="max-w-lg md:max-w-4xl lg:max-w-6xl mx-auto px-4">
           <div className="flex items-center justify-between h-12">
             {/* 뒤로가기 */}
             <button
@@ -214,7 +214,7 @@ export default function NewsDetailPage() {
       <motion.article
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="max-w-lg mx-auto"
+        className="max-w-lg md:max-w-4xl lg:max-w-6xl mx-auto"
       >
         {/* 대표 이미지 */}
         <div className="aspect-video bg-gray-100 overflow-hidden">
@@ -367,9 +367,9 @@ export default function NewsDetailPage() {
         </div>
       </motion.article>
 
-      {/* 하단 네비게이션 */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-40">
-        <div className="max-w-lg mx-auto px-4">
+      {/* 하단 네비게이션 - 모바일만, PC는 헤더에 링크 */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-40">
+        <div className="max-w-lg md:max-w-4xl lg:max-w-6xl mx-auto px-4">
           <div className="flex items-center justify-around h-16">
             <Link to="/" className="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-900 transition-colors">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -395,7 +395,7 @@ export default function NewsDetailPage() {
       </nav>
 
       {error && (
-        <div className="fixed bottom-20 left-4 right-4 max-w-lg mx-auto bg-red-50 text-red-600 px-4 py-3 rounded-lg text-center text-sm">
+        <div className="fixed bottom-20 md:bottom-4 left-4 right-4 max-w-lg md:max-w-4xl lg:max-w-6xl mx-auto bg-red-50 text-red-600 px-4 py-3 rounded-lg text-center text-sm">
           {error}
         </div>
       )}

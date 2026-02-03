@@ -51,10 +51,25 @@ export default function HomePage() {
   const tabs: TabType[] = ['최신', '외교', '금융', '인기']
 
   return (
-    <div className="min-h-screen bg-white pb-20">
+    <div className="min-h-screen bg-white pb-20 md:pb-8">
+      {/* 표지 (Cover) - 오렌지 배경 + 로고 + 서브타이틀 */}
+      <section className="bg-primary-500 w-full min-h-[280px] md:min-h-[320px] lg:min-h-[360px] flex items-center justify-center py-12 md:py-16 lg:py-20">
+        <div className="max-w-lg md:max-w-4xl lg:max-w-6xl mx-auto px-4 text-center">
+          <h2
+            className="text-4xl md:text-5xl lg:text-6xl text-black"
+            style={{ fontFamily: "'Lobster', cursive", fontWeight: 400 }}
+          >
+            The gist
+          </h2>
+          <p className="text-black/90 text-base md:text-lg mt-3 md:mt-4 font-medium">
+            가볍게 접하는 글로벌 저널
+          </p>
+        </div>
+      </section>
+
       {/* 탭 네비게이션 */}
       <div className="sticky top-14 bg-white z-30 border-b border-gray-100">
-        <div className="max-w-lg mx-auto px-4">
+        <div className="max-w-lg md:max-w-4xl lg:max-w-6xl mx-auto px-4">
           <div className="flex">
             {tabs.map((tab) => (
               <button
@@ -76,8 +91,8 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* 기사 목록 */}
-      <div className="max-w-lg mx-auto px-4 pt-4">
+      {/* 기사 목록 - PC에서는 2열 그리드 */}
+      <div className="max-w-lg md:max-w-4xl lg:max-w-6xl mx-auto px-4 pt-4">
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
             <LoadingSpinner size="large" />
@@ -87,7 +102,7 @@ export default function HomePage() {
             기사가 없습니다.
           </div>
         ) : (
-          <div className="space-y-0">
+          <div className="space-y-0 lg:grid lg:grid-cols-2 lg:gap-x-8 lg:gap-y-0 lg:border-t lg:border-gray-100">
             {news.map((item, index) => (
               <ArticleCard key={item.id || index} article={item} />
             ))}
@@ -97,7 +112,7 @@ export default function HomePage() {
 
       {/* 더 보기 섹션 */}
       {!isLoading && news.length > 0 && (
-        <div className="max-w-lg mx-auto px-4 py-8">
+        <div className="max-w-lg md:max-w-4xl lg:max-w-6xl mx-auto px-4 py-8">
           <div className="border-t border-gray-100 pt-6">
             <h3 className="text-sm font-medium text-gray-900 mb-4">무엇이 처음부터 왔었</h3>
             {/* 추가 콘텐츠 영역 */}
@@ -105,7 +120,7 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* 하단 네비게이션 */}
+      {/* 하단 네비게이션 - 모바일만 표시, PC는 헤더에 링크 */}
       <BottomNav />
     </div>
   )
@@ -133,7 +148,7 @@ function ArticleCard({ article }: { article: NewsItem }) {
   }
 
   return (
-    <Link to={`/news/${article.id || ''}`} className="block py-5 border-b border-gray-100 last:border-0">
+    <Link to={`/news/${article.id || ''}`} className="block py-5 border-b border-gray-100 last:border-0 lg:border-b lg:border-gray-100">
       <article className="flex gap-4">
         {/* 왼쪽 - 텍스트 콘텐츠 */}
         <div className="flex-1 min-w-0">
@@ -194,10 +209,10 @@ function ArticleCard({ article }: { article: NewsItem }) {
   )
 }
 
-// 하단 네비게이션
+// 하단 네비게이션 - 모바일만 표시, PC는 헤더에 최신/즐겨찾기/설정 링크
 function BottomNav() {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-40">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-40">
       <div className="max-w-lg mx-auto px-4">
         <div className="flex items-center justify-around h-16">
           {/* 최신 */}

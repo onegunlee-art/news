@@ -26,11 +26,11 @@ export default function Header() {
 
   return (
     <header className="bg-white sticky top-0 z-40 border-b border-gray-100">
-      {/* 메인 헤더 */}
-      <div className="max-w-lg mx-auto px-4">
+      {/* 메인 헤더 - PC에서 넓은 max-width */}
+      <div className="max-w-lg md:max-w-4xl lg:max-w-6xl mx-auto px-4">
         <div className="flex items-center justify-between h-14">
           {/* 왼쪽 - 로그인/로그아웃 */}
-          <div className="w-16">
+          <div className="w-16 md:w-auto">
             {isAuthenticated ? (
               <button 
                 onClick={handleLogout} 
@@ -51,15 +51,26 @@ export default function Header() {
           {/* 중앙 - 로고 */}
           <Link to="/" className="flex-1 text-center">
             <h1 
-              className="text-2xl text-gray-900" 
+              className="text-2xl md:text-3xl text-gray-900" 
               style={{ fontFamily: "'Lobster', cursive", fontWeight: 400 }}
             >
               The gist
             </h1>
           </Link>
 
-          {/* 오른쪽 - 검색 아이콘 */}
-          <div className="w-16 flex justify-end">
+          {/* 오른쪽 - PC: 최신/즐겨찾기/설정 + 검색 */}
+          <div className="w-16 md:w-auto flex justify-end items-center gap-2 md:gap-6">
+            <nav className="hidden md:flex items-center gap-6">
+              <Link to="/" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                최신
+              </Link>
+              <Link to="/bookmarks" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                즐겨찾기
+              </Link>
+              <Link to="/settings" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                설정
+              </Link>
+            </nav>
             <button
               onClick={() => setIsSearchOpen(true)}
               className="p-2 text-gray-600 hover:text-gray-900 transition-colors"
@@ -81,7 +92,7 @@ export default function Header() {
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-white z-50"
           >
-            <div className="max-w-lg mx-auto px-4 pt-4">
+            <div className="max-w-lg md:max-w-4xl lg:max-w-6xl mx-auto px-4 pt-4">
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => setIsSearchOpen(false)}

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The gist - 디자인 미리보기</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Noto Sans KR', sans-serif; background: #fff; color: #1a1a1a; }
+    .primary { background: #FF6F00; }
+    .header { display: flex; align-items: center; justify-content: space-between; height: 56px; padding: 0 16px; max-width: 1152px; margin: 0 auto; border-bottom: 1px solid #eee; }
+    .logo { font-family: 'Lobster', cursive; font-size: 1.5rem; color: #1a1a1a; }
+    .cover { background: #FF6F00; min-height: 280px; display: flex; align-items: center; justify-content: center; padding: 48px 16px; }
+    .cover-inner { text-align: center; max-width: 1152px; margin: 0 auto; }
+    .cover h1 { font-family: 'Lobster', cursive; font-size: 3rem; color: #000; }
+    .cover p { color: rgba(0,0,0,0.9); font-size: 1rem; margin-top: 12px; font-weight: 500; }
+    .tabs { display: flex; border-bottom: 1px solid #eee; max-width: 1152px; margin: 0 auto; }
+    .tabs button { flex: 1; padding: 12px; font-size: 14px; background: none; border: none; cursor: pointer; color: #666; }
+    .tabs button.active { color: #FF6F00; font-weight: 500; border-bottom: 2px solid #FF6F00; }
+    .content { max-width: 512px; margin: 0 auto; padding: 16px; }
+    @media (min-width: 1024px) { .content { max-width: 1152px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; } }
+    .card { display: flex; gap: 16px; padding: 20px 0; border-bottom: 1px solid #f5f5f5; }
+    .card-text { flex: 1; min-width: 0; }
+    .card h2 { font-size: 1.125rem; font-weight: 700; line-height: 1.4; margin-bottom: 8px; }
+    .card .desc { font-size: 14px; color: #666; margin-bottom: 12px; }
+    .card .meta { font-size: 12px; color: #FF6F00; }
+    .card .meta span { color: #999; }
+    .card-img { width: 96px; height: 96px; flex-shrink: 0; background: #eee; border-radius: 8px; }
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid #eee; display: flex; justify-content: space-around; padding: 16px; max-width: 512px; margin: 0 auto; }
+    @media (min-width: 768px) { .bottom-nav { display: none; } }
+    .bottom-nav a { text-align: center; font-size: 12px; color: #666; text-decoration: none; }
+    .bottom-nav a span { display: block; margin-top: 4px; }
+    .pb { padding-bottom: 80px; }
+    @media (min-width: 768px) { .pb { padding-bottom: 24px; } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <span style="font-size:12px;color:#666">로그인</span>
+    <a href="#" class="logo">The gist</a>
+    <span style="font-size:20px;color:#666">🔍</span>
+  </div>
+
+  <section class="cover">
+    <div class="cover-inner">
+      <h1>The gist</h1>
+      <p>가볍게 접하는 글로벌 저널</p>
+    </div>
+  </section>
+
+  <div class="tabs">
+    <button class="active">최신</button>
+    <button>외교</button>
+    <button>금융</button>
+    <button>인기</button>
+  </div>
+
+  <div class="content pb">
+    <div class="card">
+      <div class="card-text">
+        <h2>일본 혼자서는 아무 것도 할 수 없다</h2>
+        <p class="desc">도쿄가 중국에 대한 압박을 강화했다. 이제 워싱턴의 차례다.</p>
+        <p class="meta">The gist <span>/</span> 2026년 1월 30일</p>
+      </div>
+      <div class="card-img"></div>
+    </div>
+    <div class="card">
+      <div class="card-text">
+        <h2>시진핑의 군사 숙청이 의미하는 불안한 미...</h2>
+        <p class="desc">시진핑의 중국 군 지휘관에 대한 인내심과 미국 정책 입안자들.</p>
+        <p class="meta">Foreign Affairs <span>/</span> 2026년 1월 30일</p>
+      </div>
+      <div class="card-img"></div>
+    </div>
+    <div class="card">
+      <div class="card-text">
+        <h2>미 연준 금리 인상이 어제 전격 발표되었다</h2>
+        <p class="desc">협력이 금리 인상으로 이어졌다.</p>
+        <p class="meta">Financial Times <span>/</span> 2026년 1월 29일</p>
+      </div>
+      <div class="card-img"></div>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="#"><span>🕐</span> 최신</a>
+    <a href="#"><span>📑</span> 즐겨찾기</a>
+    <a href="#"><span>⚙</span> 설정</a>
+  </nav>
+</body>
+</html>
