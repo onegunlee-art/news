@@ -216,24 +216,34 @@ function ArticleCard({ article }: { article: NewsItem }) {
       return
     }
 
-    if (!article.id) return
+    const newsId = article.id ?? (article as any).news_id
+    if (!newsId) {
+      alert('이 기사는 즐겨찾기에 추가할 수 없습니다.')
+      return
+    }
 
     try {
       if (isBookmarked) {
-        await newsApi.removeBookmark(article.id)
+        await newsApi.removeBookmark(Number(newsId))
         setIsBookmarked(false)
       } else {
-        await newsApi.bookmark(article.id)
+        await newsApi.bookmark(Number(newsId))
         setIsBookmarked(true)
       }
-    } catch (error) {
-      console.error('Bookmark error:', error)
+    } catch (err: any) {
+      console.error('Bookmark error:', err)
+      const msg = err.response?.data?.message ?? err.message ?? '즐겨찾기 처리에 실패했습니다.'
+      alert(msg)
     }
   }
 
+  const newsId = article.id ?? (article as any).news_id
+  const detailUrl = `/news/${newsId || ''}`
+
   return (
-    <Link to={`/news/${article.id || ''}`} className="block py-5 border-b border-gray-100 last:border-0 lg:border-b lg:border-gray-100">
-      <article className="flex gap-4">
+    <article className="flex gap-4 py-5 border-b border-gray-100 last:border-0 lg:border-b lg:border-gray-100">
+      {/* 클릭 시 상세로 이동하는 영역만 Link */}
+      <Link to={detailUrl} className="flex-1 min-w-0 flex gap-4">
         {/* 왼쪽 - 텍스트 콘텐츠 */}
         <div className="flex-1 min-w-0">
           {/* 제목 */}
@@ -273,11 +283,13 @@ function ArticleCard({ article }: { article: NewsItem }) {
             />
           </div>
         </div>
+      </Link>
 
-        {/* 액션 버튼들 */}
-        <div className="flex flex-col justify-between py-1">
+      {/* 액션 버튼들 - Link 밖에 두어 클릭 시 상세 이동 안 함 */}
+      <div className="flex flex-col justify-between py-1" role="group" aria-label="기사 액션">
           {/* 오디오 재생 버튼 */}
-          <button 
+          <button
+            type="button"
             onClick={handlePlayAudio}
             className={`p-1 transition-colors ${isPlaying ? 'text-primary-500' : 'text-gray-300 hover:text-gray-500'}`}
             title="음성으로 듣기"
@@ -292,7 +304,8 @@ function ArticleCard({ article }: { article: NewsItem }) {
           </button>
           
           {/* 카카오톡 공유 버튼 */}
-          <button 
+          <button
+            type="button"
             onClick={handleShare}
             className="p-1 text-gray-300 hover:text-yellow-500 transition-colors"
             title="카카오톡으로 공유"
@@ -303,7 +316,8 @@ function ArticleCard({ article }: { article: NewsItem }) {
           </button>
           
           {/* 즐겨찾기 버튼 */}
-          <button 
+          <button
+            type="button"
             onClick={handleBookmark}
             className={`p-1 transition-colors ${isBookmarked ? 'text-primary-500' : 'text-gray-300 hover:text-gray-500'}`}
             title="즐겨찾기"
@@ -313,8 +327,7 @@ function ArticleCard({ article }: { article: NewsItem }) {
             </svg>
           </button>
         </div>
-      </article>
-    </Link>
+    </article>
   )
 }
 
