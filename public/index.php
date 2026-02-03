@@ -29,32 +29,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-// Autoloader 설정
-spl_autoload_register(function (string $class): void {
-    // 네임스페이스를 파일 경로로 변환
-    $prefix = 'App\\';
-    $baseDir = dirname(__DIR__) . '/src/backend/';
+// 프로젝트 루트 (배포 시 __DIR__에 config·src가 있음, 로컬은 상위)
+$projectRoot = file_exists(__DIR__ . '/config/routes.php') ? __DIR__ : dirname(__DIR__);
 
-    // 클래스가 우리의 네임스페이스 prefix를 사용하지 않으면 스킵
+// Autoloader 설정
+spl_autoload_register(function (string $class) use ($projectRoot): void {
+    $prefix = 'App\\';
+    $baseDir = $projectRoot . '/src/backend/';
     $len = strlen($prefix);
     if (strncmp($prefix, $class, $len) !== 0) {
         return;
     }
-
-    // 상대적인 클래스 이름 가져오기
     $relativeClass = substr($class, $len);
-
-    // 파일 경로 생성
     $file = $baseDir . str_replace('\\', '/', $relativeClass) . '.php';
-
-    // 파일이 존재하면 로드
     if (file_exists($file)) {
         require $file;
     }
 });
 
 // 설정 파일 로드
-$configPath = dirname(__DIR__) . '/config/app.php';
+$configPath = $projectRoot . '/config/app.php';
 $config = file_exists($configPath) ? require $configPath : [];
 
 // 요청 URI 파싱
@@ -70,17 +64,14 @@ if ($isApiRequest) {
     header('Content-Type: application/json; charset=UTF-8');
     
     try {
-        // Core 클래스들이 존재하는지 확인
-        $routerPath = dirname(__DIR__) . '/src/backend/Core/Router.php';
+        $routerPath = $projectRoot . '/src/backend/Core/Router.php';
         
         if (file_exists($routerPath)) {
             require_once $routerPath;
             
-            // Router 인스턴스 생성 및 요청 처리
             $router = new App\Core\Router();
             
-            // 라우트 정의 파일 로드
-            $routesPath = dirname(__DIR__) . '/config/routes.php';
+            $routesPath = $projectRoot . '/config/routes.php';
             if (file_exists($routesPath)) {
                 require $routesPath;
             }
