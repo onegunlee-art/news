@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuthStore } from '../store/authStore';
+import { authApi } from '../services/api';
 
 const LoginPage: React.FC = () => {
-  const { login } = useAuthStore();
+  const navigate = useNavigate();
+  const { login, setTokens, setUser } = useAuthStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -19,9 +21,19 @@ const LoginPage: React.FC = () => {
       if (!email || !password) {
         throw new Error('이메일과 비밀번호를 입력해주세요.');
       }
-      alert('이메일 로그인 기능은 준비 중입니다. 카카오 로그인을 이용해주세요.');
+      const res = await authApi.login(email, password);
+      if (res.data.success && res.data.data) {
+        const { user, access_token, refresh_token } = res.data.data;
+        setTokens(access_token, refresh_token);
+        setUser(user);
+        localStorage.setItem('user', JSON.stringify(user));
+        navigate('/', { replace: true });
+      } else {
+        throw new Error(res.data.message || '로그인에 실패했습니다.');
+      }
     } catch (err: any) {
-      setError(err.message || '로그인에 실패했습니다.');
+      const msg = err.response?.data?.message ?? err.message ?? '로그인에 실패했습니다.';
+      setError(msg);
     } finally {
       setIsLoading(false);
     }

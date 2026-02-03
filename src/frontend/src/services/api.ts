@@ -114,6 +114,14 @@ export const analysisApi = {
 }
 
 export const authApi = {
+  /** 이메일/비밀번호 로그인 */
+  login: (email: string, password: string) =>
+    api.post('/auth/login', { email, password }),
+  
+  /** 이메일/비밀번호 회원가입 */
+  register: (email: string, password: string, nickname: string) =>
+    api.post('/auth/register', { email, password, nickname }),
+  
   getMe: () =>
     api.get('/auth/me'),
   

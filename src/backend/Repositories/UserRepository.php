@@ -38,6 +38,21 @@ final class UserRepository extends BaseRepository
     }
 
     /**
+     * 이메일/비밀번호로 사용자 생성 (회원가입)
+     */
+    public function createWithPassword(string $email, string $passwordHash, string $nickname): int
+    {
+        $userData = [
+            'email' => $email,
+            'password_hash' => $passwordHash,
+            'nickname' => $nickname,
+            'role' => 'user',
+            'status' => 'active',
+        ];
+        return $this->create($userData);
+    }
+
+    /**
      * 카카오 로그인으로 사용자 생성 또는 업데이트
      */
     public function createOrUpdateFromKakao(array $kakaoData): int

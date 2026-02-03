@@ -32,6 +32,53 @@ $router->get('/health', function (Request $request): Response {
 
 // ==================== 인증 라우트 ====================
 $router->group(['prefix' => '/auth'], function (Router $router) {
+    // 테스트 계정 생성 (1회 실행용, 완료 후 라우트 제거 권장)
+    $router->get('/seed-test-user', function (Request $request): Response {
+        $messages = [];
+        try {
+            $db = \App\Core\Database::getInstance();
+        } catch (Throwable $e) {
+            return Response::error('DB 연결 실패: ' . $e->getMessage(), 500);
+        }
+        try {
+            $db->executeQuery("ALTER TABLE `users` ADD COLUMN `password_hash` VARCHAR(255) NULL COMMENT '비밀번호 해시' AFTER `profile_image`");
+            $messages[] = 'password_hash 컬럼 추가됨';
+        } catch (Throwable $e) {
+            if (strpos($e->getMessage(), 'Duplicate column') === false) {
+                $messages[] = 'ALTER: ' . $e->getMessage();
+            }
+        }
+        $email = 'test@test.com';
+        $password = 'Test1234!';
+        $nickname = '테스트유저';
+        $existing = $db->fetchOne("SELECT id FROM users WHERE email = :email", ['email' => $email]);
+        if ($existing) {
+            $messages[] = '이미 test@test.com 계정이 존재합니다.';
+        } else {
+            $hash = password_hash($password, PASSWORD_DEFAULT);
+            $db->insert('users', [
+                'email' => $email,
+                'password_hash' => $hash,
+                'nickname' => $nickname,
+                'role' => 'user',
+                'status' => 'active',
+            ]);
+            $messages[] = '테스트 계정이 생성되었습니다.';
+        }
+        return Response::success([
+            'messages' => $messages,
+            'email' => $email,
+            'password' => $password,
+            'login_url' => '/login',
+        ], '테스트 계정 준비 완료');
+    });
+
+    // 이메일/비밀번호 로그인
+    $router->post('/login', [AuthController::class, 'login']);
+    
+    // 이메일/비밀번호 회원가입
+    $router->post('/register', [AuthController::class, 'register']);
+    
     // 카카오 로그인 URL 리다이렉트
     $router->get('/kakao', [AuthController::class, 'kakaoLogin']);
     

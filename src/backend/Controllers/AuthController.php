@@ -128,6 +128,59 @@ final class AuthController
     }
 
     /**
+     * 이메일/비밀번호 로그인
+     * 
+     * POST /api/auth/login
+     */
+    public function login(Request $request): Response
+    {
+        $email = $request->json('email');
+        $password = $request->json('password');
+        
+        if (!$email || !$password) {
+            return Response::error('이메일과 비밀번호를 입력해주세요.', 400);
+        }
+        
+        try {
+            $result = $this->authService->loginWithEmail($email, $password);
+            return Response::success($result, '로그인되었습니다.');
+        } catch (RuntimeException $e) {
+            return Response::unauthorized($e->getMessage());
+        }
+    }
+
+    /**
+     * 이메일/비밀번호 회원가입
+     * 
+     * POST /api/auth/register
+     */
+    public function register(Request $request): Response
+    {
+        $email = $request->json('email');
+        $password = $request->json('password');
+        $nickname = $request->json('nickname') ?? trim($email ? explode('@', $email)[0] : '');
+        
+        if (!$email || !$password) {
+            return Response::error('이메일과 비밀번호를 입력해주세요.', 400);
+        }
+        
+        if (strlen($password) < 6) {
+            return Response::error('비밀번호는 6자 이상이어야 합니다.', 400);
+        }
+        
+        if (empty($nickname)) {
+            $nickname = 'User';
+        }
+        
+        try {
+            $result = $this->authService->registerWithEmail($email, $password, $nickname);
+            return Response::success($result, '회원가입이 완료되었습니다.');
+        } catch (RuntimeException $e) {
+            return Response::error($e->getMessage(), 400);
+        }
+    }
+
+    /**
      * 현재 사용자 정보 조회
      * 
      * GET /api/auth/me

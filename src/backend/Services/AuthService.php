@@ -256,4 +256,82 @@ final class AuthService
         
         return User::fromArray($userData)->toJson();
     }
+
+    /**
+     * 이메일/비밀번호 로그인
+     */
+    public function loginWithEmail(string $email, string $password): array
+    {
+        $userData = $this->userRepository->findByEmail($email);
+        
+        if (!$userData || $userData['status'] !== 'active') {
+            throw new RuntimeException('이메일 또는 비밀번호가 올바르지 않습니다.');
+        }
+        
+        $passwordHash = $userData['password_hash'] ?? null;
+        if (!$passwordHash || !password_verify($password, $passwordHash)) {
+            throw new RuntimeException('이메일 또는 비밀번호가 올바르지 않습니다.');
+        }
+        
+        $userId = (int) $userData['id'];
+        $this->userRepository->updateLastLogin($userId);
+        
+        $accessToken = $this->jwt->createAccessToken($userId, [
+            'nickname' => $userData['nickname'],
+            'role' => $userData['role'],
+        ]);
+        $refreshToken = $this->jwt->createRefreshToken($userId);
+        $refreshExpiry = new \DateTimeImmutable('+7 days');
+        $this->userRepository->saveRefreshToken($userId, $refreshToken, $refreshExpiry);
+        
+        $user = User::fromArray($userData)->toJson();
+        
+        return [
+            'user' => $user,
+            'access_token' => $accessToken,
+            'refresh_token' => $refreshToken,
+            'token_type' => 'Bearer',
+            'expires_in' => 86400,
+        ];
+    }
+
+    /**
+     * 이메일/비밀번호 회원가입
+     */
+    public function registerWithEmail(string $email, string $password, string $nickname): array
+    {
+        if ($this->userRepository->findByEmail($email)) {
+            throw new RuntimeException('이미 사용 중인 이메일입니다.');
+        }
+        
+        $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+        if ($passwordHash === false) {
+            throw new RuntimeException('비밀번호 처리 중 오류가 발생했습니다.');
+        }
+        
+        $userId = $this->userRepository->createWithPassword($email, $passwordHash, $nickname);
+        $userData = $this->userRepository->findById($userId);
+        
+        if (!$userData) {
+            throw new RuntimeException('회원가입 처리 중 오류가 발생했습니다.');
+        }
+        
+        $accessToken = $this->jwt->createAccessToken($userId, [
+            'nickname' => $userData['nickname'],
+            'role' => $userData['role'],
+        ]);
+        $refreshToken = $this->jwt->createRefreshToken($userId);
+        $refreshExpiry = new \DateTimeImmutable('+7 days');
+        $this->userRepository->saveRefreshToken($userId, $refreshToken, $refreshExpiry);
+        
+        $user = User::fromArray($userData)->toJson();
+        
+        return [
+            'user' => $user,
+            'access_token' => $accessToken,
+            'refresh_token' => $refreshToken,
+            'token_type' => 'Bearer',
+            'expires_in' => 86400,
+        ];
+    }
 }
