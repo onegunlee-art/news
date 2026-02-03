@@ -133,6 +133,7 @@ export default function NewsDetailPage() {
   // 이미지 URL (기사별 고유 시드, 중복 없음)
   const getImageUrl = () => {
     if (news?.image_url) return news.image_url
+    if (!news) return 'https://picsum.photos/seed/default/800/400'
     return getPlaceholderImageUrl(
       { id: news.id, title: news.title, description: news.description, published_at: news.published_at, url: news.url, source: news.source },
       800,

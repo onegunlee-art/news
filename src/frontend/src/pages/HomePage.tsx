@@ -40,7 +40,18 @@ export default function HomePage() {
       const category = tabToCategory[activeTab]
       const response = await newsApi.getList(1, 20, category || undefined)
       if (response.data.success) {
-        setNews(response.data.data.items || [])
+        const items = response.data.data.items || []
+        // placeholder/잘못된 기사 제거 (예: "무엇이 처음부터 왔었" 등)
+        const placeholderPhrases = ['무엇이 처음부터 왔었']
+        const filtered = items.filter(
+          (item: NewsItem) =>
+            !placeholderPhrases.some(
+              (phrase) =>
+                (item.title && item.title.includes(phrase)) ||
+                (item.description && item.description.includes(phrase))
+            )
+        )
+        setNews(filtered)
       }
     } catch (error) {
       console.error('Failed to fetch news:', error)
