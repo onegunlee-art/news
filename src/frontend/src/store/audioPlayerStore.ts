@@ -9,6 +9,8 @@ interface AudioPlayerState {
   title: string
   fullText: string
   rate: number
+  /** 썸네일 이미지 URL */
+  imageUrl: string
   /** 재생 진행 0~1 */
   progress: number
   /** 현재 재생이 시작된 위치(문자 인덱스) */
@@ -23,13 +25,15 @@ interface AudioPlayerState {
 
 interface AudioPlayerActions {
   /** 팝업 열고 텍스트 재생 시작 */
-  openAndPlay: (title: string, text: string, rate?: number) => void
+  openAndPlay: (title: string, text: string, rate?: number, imageUrl?: string) => void
   /** 재생 / 일시정지 토글 */
   togglePlay: () => void
   /** 일시정지(취소) */
   pause: () => void
   /** 진행 위치 이동 (0~1), 해당 위치부터 재생 */
   seek: (progress: number) => void
+  /** 15초 뒤로 이동 */
+  skipBack: (seconds?: number) => void
   /** 팝업 닫기 및 재생 중지 */
   close: () => void
   /** 진행률만 갱신 (내부용) */
@@ -44,6 +48,7 @@ const initial: AudioPlayerState = {
   title: '',
   fullText: '',
   rate: 1.0,
+  imageUrl: '',
   progress: 0,
   startCharIndex: 0,
   startTime: 0,
@@ -80,7 +85,7 @@ export const useAudioPlayerStore = create<AudioPlayerState & AudioPlayerActions>
   setProgress: (progress) => set({ progress }),
   setProgressTimerId: (progressTimerId) => set({ progressTimerId }),
 
-  openAndPlay: (title, text, rate = 1.0) => {
+  openAndPlay: (title, text, rate = 1.0, imageUrl = '') => {
     const fullText = (text || '').trim()
     if (!fullText || !('speechSynthesis' in window)) return
     window.speechSynthesis.cancel()
@@ -91,6 +96,7 @@ export const useAudioPlayerStore = create<AudioPlayerState & AudioPlayerActions>
       title,
       fullText,
       rate,
+      imageUrl,
       progress: 0,
       startCharIndex: 0,
       startTime: 0,
@@ -213,6 +219,18 @@ export const useAudioPlayerStore = create<AudioPlayerState & AudioPlayerActions>
     }
     set({ _utterance: utterance })
     window.speechSynthesis.speak(utterance)
+  },
+
+  skipBack: (seconds = 15) => {
+    const state = get()
+    if (!state.fullText) return
+    // 15초에 해당하는 글자 수 계산
+    const charsToSkip = seconds * CHARS_PER_SEC * state.rate
+    const currentCharIndex = Math.floor(state.progress * state.fullText.length)
+    const newCharIndex = Math.max(0, currentCharIndex - charsToSkip)
+    const newProgress = newCharIndex / state.fullText.length
+    // seek 함수로 이동
+    get().seek(newProgress)
   },
 
   close: () => {

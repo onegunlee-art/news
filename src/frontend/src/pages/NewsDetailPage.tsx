@@ -46,18 +46,29 @@ export default function NewsDetailPage() {
 
   // 전역 팝업 플레이어에서 재생 (속도 기본 보통 1.0)
   const playArticle = () => {
-    if (!news || !('speechSynthesis' in window)) return
+    if (!news) return
+    if (!('speechSynthesis' in window)) {
+      alert('이 브라우저에서는 음성 읽기를 지원하지 않습니다.')
+      return
+    }
+    const rawText = `${news.title}. ${news.content || news.description || ''}`
+    const text = (rawText + (news.why_important ? ` The Gist's Critics. ${news.why_important}` : '')).trim()
+    if (!text) {
+      alert('재생할 본문 내용이 없습니다.')
+      return
+    }
     addAudioItem({
       id: news.id,
       title: news.title,
       description: news.description ?? news.content ?? null,
       source: news.source ?? null,
     })
-    let text = `${news.title}. ${news.content || news.description || ''}`
-    if (news.why_important) {
-      text += ` The Gist's Critics. ${news.why_important}`
-    }
-    openAndPlay(news.title, text.trim(), 1.0)
+    const imageUrl = news.image_url || getPlaceholderImageUrl(
+      { id: news.id, title: news.title, description: news.description, published_at: news.published_at, url: news.url, source: news.source },
+      800,
+      400
+    )
+    openAndPlay(news.title, text, 1.0, imageUrl)
   }
 
   useEffect(() => {
@@ -278,10 +289,21 @@ export default function NewsDetailPage() {
 
           {/* 저자 정보 (있을 경우) */}
           {news.author && (
-            <div className="text-sm text-gray-500 mb-6">
+            <div className="text-sm text-gray-500 mb-4">
               <span className="font-medium text-gray-700">{news.author}</span> 씀
             </div>
           )}
+
+          {/* 오디오 재생 버튼 - 제목 아래 배치 */}
+          <button
+            onClick={playArticle}
+            className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition-colors mb-6 pb-6 border-b border-gray-100 w-full"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+            </svg>
+            <span className="font-medium">Listen to audio</span>
+          </button>
 
           {/* 본문 내용 */}
           <div className="prose prose-lg max-w-none mb-8">
@@ -332,28 +354,6 @@ export default function NewsDetailPage() {
               </div>
             </div>
           )}
-
-          {/* AI 음성 읽기 (속도 고정: 보통) */}
-          <div className="border-t border-gray-100 pt-6 mt-6">
-            <div className="flex items-center gap-2 mb-4">
-              <svg className="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-              </svg>
-              <span className="text-gray-900 font-medium">음성으로 듣기</span>
-            </div>
-            <button
-              onClick={playArticle}
-              className="w-full py-3 rounded-xl font-medium transition flex items-center justify-center gap-2 bg-primary-500 text-white hover:bg-primary-600"
-            >
-              <>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                기사 읽어주기
-              </>
-            </button>
-          </div>
 
           {/* 원문 링크 */}
           {news.url && news.url !== '#' && (
