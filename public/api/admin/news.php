@@ -207,8 +207,22 @@ if ($method === 'POST') {
     // 추가 메타데이터 필드
     $originalSource = $input['source'] ?? null;  // 원본 출처 (예: Financial Times)
     $author = $input['author'] ?? null;  // 원본 작성자
-    $publishedAt = $input['published_at'] ?? null;  // 원본 발행일
     $customImageUrl = $input['image_url'] ?? null;  // 사용자 지정 이미지 URL
+    
+    // published_at 처리: 빈 문자열이면 null, 그렇지 않으면 날짜 형식 변환 시도
+    $publishedAtRaw = $input['published_at'] ?? null;
+    $publishedAt = null;
+    if (!empty($publishedAtRaw)) {
+        try {
+            // 다양한 날짜 형식 지원
+            $date = new DateTime($publishedAtRaw);
+            $publishedAt = $date->format('Y-m-d H:i:s');
+        } catch (Exception $e) {
+            // 날짜 파싱 실패시 null
+            $publishedAt = null;
+            logError('Failed to parse published_at: ' . $publishedAtRaw);
+        }
+    }
     
     // 디버그 로깅
     logError('POST request received', [
@@ -524,8 +538,19 @@ if ($method === 'PUT') {
     // 추가 메타데이터 필드
     $originalSource = $input['source'] ?? null;
     $author = $input['author'] ?? null;
-    $publishedAt = $input['published_at'] ?? null;
     $customImageUrl = $input['image_url'] ?? null;
+    
+    // published_at 처리: 빈 문자열이면 null, 그렇지 않으면 날짜 형식 변환 시도
+    $publishedAtRaw = $input['published_at'] ?? null;
+    $publishedAt = null;
+    if (!empty($publishedAtRaw)) {
+        try {
+            $date = new DateTime($publishedAtRaw);
+            $publishedAt = $date->format('Y-m-d H:i:s');
+        } catch (Exception $e) {
+            $publishedAt = null;
+        }
+    }
     
     // 디버그 로깅
     logError('PUT request received', [
