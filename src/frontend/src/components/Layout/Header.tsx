@@ -27,7 +27,7 @@ export default function Header() {
   return (
     <header className="bg-white sticky top-0 z-40 border-b border-gray-100">
       {/* 메인 헤더 - PC에서 넓은 max-width */}
-      <div className="max-w-lg md:max-w-4xl lg:max-w-6xl mx-auto px-4">
+      <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 md:px-6">
         <div className="flex items-center justify-between h-14">
           {/* 왼쪽 - 로그인/로그아웃 */}
           <div className="w-16 md:w-auto">
@@ -48,9 +48,9 @@ export default function Header() {
             )}
           </div>
 
-          {/* 중앙 - 로고 (Foreign Affairs 스타일: 심플 타이포) */}
+          {/* 중앙 - 로고 (Lobster 폰트, 크게) */}
           <Link to="/" className="flex-1 text-center">
-            <h1 className="text-xl md:text-2xl font-semibold text-gray-900 tracking-tight">
+            <h1 className="text-2xl md:text-4xl font-normal text-gray-900 tracking-tight" style={{ fontFamily: "'Lobster', cursive" }}>
               The Gist
             </h1>
           </Link>
@@ -89,7 +89,7 @@ export default function Header() {
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-white z-50"
           >
-            <div className="max-w-lg md:max-w-4xl lg:max-w-6xl mx-auto px-4 pt-4">
+            <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 md:px-6 pt-4">
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => setIsSearchOpen(false)}

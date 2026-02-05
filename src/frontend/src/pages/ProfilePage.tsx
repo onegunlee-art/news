@@ -44,7 +44,7 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-white pb-20 md:pb-8">
       {/* 페이지 헤더 */}
       <div className="bg-primary-500 pt-8 pb-16">
-        <div className="max-w-lg md:max-w-4xl lg:max-w-6xl mx-auto px-4">
+        <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4">
           <h1 
             className="text-3xl text-black text-center"
             style={{ fontFamily: "'Lobster', cursive", fontWeight: 400 }}
@@ -54,7 +54,7 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      <div className="max-w-lg md:max-w-4xl lg:max-w-6xl mx-auto px-4 -mt-10">
+      <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 -mt-10">
         {/* 프로필 카드 — 로그인 시에만 프로필 표시 */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

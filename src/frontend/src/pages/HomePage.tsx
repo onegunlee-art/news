@@ -68,9 +68,9 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-white pb-20 md:pb-8">
-      {/* 탭 네비게이션 - Foreign Affairs 스타일: 표지 제거, 상단부터 목록 */}
+      {/* 탭 네비게이션 - PC: Foreign Affairs 스타일 넓은 레이아웃 */}
       <div className="sticky top-14 bg-white z-30 border-b border-gray-200">
-        <div className="max-w-lg md:max-w-4xl lg:max-w-6xl mx-auto px-4">
+        <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 md:px-6">
           <div className="flex">
             {tabs.map((tab) => (
               <button
@@ -92,8 +92,8 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* 기사 목록 - PC에서는 2열 그리드 */}
-      <div className="max-w-lg md:max-w-4xl lg:max-w-6xl mx-auto px-4 pt-4">
+      {/* 기사 목록 - 모바일: 1열 / PC: Foreign Affairs 스타일 넓은 2열 */}
+      <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 md:px-6 pt-6 md:pt-8">
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
             <LoadingSpinner size="large" />
@@ -103,7 +103,7 @@ export default function HomePage() {
             기사가 없습니다.
           </div>
         ) : (
-          <div className="space-y-0 lg:grid lg:grid-cols-2 lg:gap-x-8 lg:gap-y-0 lg:border-t lg:border-gray-100">
+          <div className="space-y-0 lg:grid lg:grid-cols-2 lg:gap-x-12 lg:gap-y-0 lg:border-t lg:border-gray-100">
             {news.map((item, index) => (
               <ArticleCard key={item.id || index} article={item} />
             ))}
