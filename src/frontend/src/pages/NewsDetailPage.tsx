@@ -22,6 +22,15 @@ interface NewsDetail {
   is_bookmarked?: boolean
   image_url?: string | null
   author?: string | null
+  category?: string | null
+}
+
+/** API category 값 → 목록 라벨 (외교, 금융 등) */
+const categoryToLabel: Record<string, string> = {
+  diplomacy: '외교',
+  economy: '금융',
+  technology: '기술',
+  entertainment: '엔터테인먼트',
 }
 
 export default function NewsDetailPage() {
@@ -106,6 +115,12 @@ export default function NewsDetailPage() {
     return news?.source || 'Foreign Affairs'
   }
 
+  // 글 목록 라벨 (카테고리 → 외교, 금융 등; 없으면 최신)
+  const getListLabel = () => {
+    if (!news?.category) return '최신'
+    return categoryToLabel[news.category] ?? news.category
+  }
+
   // 이미지 URL (기사별 고유 시드, 중복 없음)
   const getImageUrl = () => {
     if (news?.image_url) return news.image_url
@@ -161,7 +176,7 @@ export default function NewsDetailPage() {
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
-              <span className="text-sm">최신</span>
+              <span className="text-sm">{getListLabel()}</span>
             </button>
 
             {/* 오른쪽 액션 버튼들 */}
