@@ -204,11 +204,19 @@ if ($method === 'POST') {
     $whyImportant = $input['why_important'] ?? null;
     $sourceUrl = $input['source_url'] ?? null;
     
+    // 추가 메타데이터 필드
+    $originalSource = $input['source'] ?? null;  // 원본 출처 (예: Financial Times)
+    $author = $input['author'] ?? null;  // 원본 작성자
+    $publishedAt = $input['published_at'] ?? null;  // 원본 발행일
+    $customImageUrl = $input['image_url'] ?? null;  // 사용자 지정 이미지 URL
+    
     // 디버그 로깅
     logError('POST request received', [
         'category' => $category,
         'title_length' => strlen($title),
-        'content_length' => strlen($content)
+        'content_length' => strlen($content),
+        'original_source' => $originalSource,
+        'author' => $author
     ]);
     
     // 유효성 검사
@@ -274,8 +282,26 @@ if ($method === 'POST') {
             logError('Error checking source_url column: ' . $e->getMessage());
         }
         
-        // 자동 이미지 URL 생성 (저작권 무료 - Unsplash 고정 링크)
-        $imageUrl = generateImageUrl($title, $category, $imageMap, $categoryDefaults, $defaultImages);
+        // 이미지 URL: 사용자 지정 URL이 있으면 그것을 사용, 없으면 자동 생성
+        $imageUrl = !empty($customImageUrl) ? $customImageUrl : generateImageUrl($title, $category, $imageMap, $categoryDefaults, $defaultImages);
+        
+        // source 값: 원본 출처가 있으면 그것을 사용, 없으면 'Admin'
+        $sourceValue = !empty($originalSource) ? $originalSource : 'Admin';
+        
+        // 추가 메타데이터 컬럼 존재 여부 확인
+        $hasOriginalSource = false;
+        $hasAuthor = false;
+        $hasPublishedAt = false;
+        try {
+            $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'original_source'");
+            $hasOriginalSource = $checkCol->rowCount() > 0;
+            $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'author'");
+            $hasAuthor = $checkCol->rowCount() > 0;
+            $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'published_at'");
+            $hasPublishedAt = $checkCol->rowCount() > 0;
+        } catch (Exception $e) {
+            logError('Error checking metadata columns: ' . $e->getMessage());
+        }
         
         // why_important 컬럼 존재 여부 확인
         $hasWhyImportant = false;
@@ -286,34 +312,53 @@ if ($method === 'POST') {
         
         logError('Column check results', ['hasSourceUrl' => $hasSourceUrl, 'hasWhyImportant' => $hasWhyImportant]);
         
-        if ($hasSourceUrl && $hasWhyImportant) {
-            logError('Using INSERT branch: hasSourceUrl && hasWhyImportant');
-            $stmt = $db->prepare("
-                INSERT INTO news (category, title, description, content, why_important, source, url, source_url, image_url, created_at)
-                VALUES (?, ?, ?, ?, ?, 'Admin', ?, ?, ?, NOW())
-            ");
-            $stmt->execute([$category, $title, $description, $content, $whyImportant, $url, $sourceUrl, $imageUrl]);
-        } else if ($hasWhyImportant) {
-            logError('Using INSERT branch: hasWhyImportant only');
-            // why_important만 있는 경우
-            $stmt = $db->prepare("
-                INSERT INTO news (category, title, description, content, why_important, source, url, image_url, created_at)
-                VALUES (?, ?, ?, ?, ?, 'Admin', ?, ?, NOW())
-            ");
-            $stmt->execute([$category, $title, $description, $content, $whyImportant, $url, $imageUrl]);
-        } else if ($hasSourceUrl) {
-            $stmt = $db->prepare("
-                INSERT INTO news (category, title, description, content, source, url, source_url, image_url, created_at)
-                VALUES (?, ?, ?, ?, 'Admin', ?, ?, ?, NOW())
-            ");
-            $stmt->execute([$category, $title, $description, $content, $url, $sourceUrl, $imageUrl]);
-        } else {
-            $stmt = $db->prepare("
-                INSERT INTO news (category, title, description, content, source, url, image_url, created_at)
-                VALUES (?, ?, ?, ?, 'Admin', ?, ?, NOW())
-            ");
-            $stmt->execute([$category, $title, $description, $content, $url, $imageUrl]);
+        // 동적 INSERT 쿼리 생성
+        $columns = ['category', 'title', 'description', 'content', 'source', 'url', 'image_url', 'created_at'];
+        $values = [$category, $title, $description, $content, $sourceValue, $url, $imageUrl];
+        $placeholders = ['?', '?', '?', '?', '?', '?', '?', 'NOW()'];
+        
+        if ($hasWhyImportant) {
+            $columns[] = 'why_important';
+            $values[] = $whyImportant;
+            $placeholders[] = '?';
         }
+        
+        if ($hasSourceUrl) {
+            $columns[] = 'source_url';
+            $values[] = $sourceUrl;
+            $placeholders[] = '?';
+        }
+        
+        if ($hasOriginalSource) {
+            $columns[] = 'original_source';
+            $values[] = $originalSource;
+            $placeholders[] = '?';
+        }
+        
+        if ($hasAuthor) {
+            $columns[] = 'author';
+            $values[] = $author;
+            $placeholders[] = '?';
+        }
+        
+        if ($hasPublishedAt) {
+            $columns[] = 'published_at';
+            $values[] = $publishedAt;
+            $placeholders[] = '?';
+        }
+        
+        $columnStr = implode(', ', $columns);
+        $placeholderStr = implode(', ', $placeholders);
+        
+        logError('Dynamic INSERT', [
+            'columns' => $columnStr,
+            'hasOriginalSource' => $hasOriginalSource,
+            'hasAuthor' => $hasAuthor,
+            'hasPublishedAt' => $hasPublishedAt
+        ]);
+        
+        $stmt = $db->prepare("INSERT INTO news ($columnStr) VALUES ($placeholderStr)");
+        $stmt->execute($values);
         
         $newsId = $db->lastInsertId();
         
@@ -391,12 +436,37 @@ if ($method === 'GET') {
             $hasWhyImportant = $checkCol->rowCount() > 0;
         } catch (Exception $e) {}
         
+        // 추가 메타데이터 컬럼 존재 여부 확인
+        $hasOriginalSource = false;
+        $hasAuthor = false;
+        $hasPublishedAt = false;
+        try {
+            $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'original_source'");
+            $hasOriginalSource = $checkCol->rowCount() > 0;
+            $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'author'");
+            $hasAuthor = $checkCol->rowCount() > 0;
+            $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'published_at'");
+            $hasPublishedAt = $checkCol->rowCount() > 0;
+        } catch (Exception $e) {}
+        
         $selectColumns = 'id, category, title, description, content, source, image_url, created_at';
         if ($hasSourceUrl) {
             $selectColumns = 'id, category, title, description, content, source, source_url, image_url, created_at';
         }
         if ($hasWhyImportant) {
             $selectColumns = str_replace('content,', 'content, why_important,', $selectColumns);
+        }
+        if ($hasOriginalSource) {
+            $selectColumns = str_replace('source,', 'source, original_source,', $selectColumns);
+        }
+        if ($hasAuthor) {
+            $selectColumns = str_replace('original_source,', 'original_source, author,', $selectColumns);
+            if (!$hasOriginalSource) {
+                $selectColumns = str_replace('source,', 'source, author,', $selectColumns);
+            }
+        }
+        if ($hasPublishedAt) {
+            $selectColumns .= ', published_at';
         }
         
         $stmt = $db->prepare("
@@ -451,12 +521,20 @@ if ($method === 'PUT') {
     $whyImportant = $input['why_important'] ?? null;
     $sourceUrl = $input['source_url'] ?? null;
     
+    // 추가 메타데이터 필드
+    $originalSource = $input['source'] ?? null;
+    $author = $input['author'] ?? null;
+    $publishedAt = $input['published_at'] ?? null;
+    $customImageUrl = $input['image_url'] ?? null;
+    
     // 디버그 로깅
     logError('PUT request received', [
         'id' => $id,
         'category' => $category,
         'title_length' => strlen($title),
-        'content_length' => strlen($content)
+        'content_length' => strlen($content),
+        'original_source' => $originalSource,
+        'author' => $author
     ]);
     
     // 유효성 검사
@@ -514,53 +592,71 @@ if ($method === 'PUT') {
             $charCount++;
         }
         
-        // 자동 이미지 URL 생성 (저작권 무료 - Unsplash 고정 링크)
-        $imageUrl = generateImageUrl($title, $category, $imageMap, $categoryDefaults, $defaultImages);
+        // 이미지 URL: 사용자 지정 URL이 있으면 그것을 사용, 없으면 자동 생성
+        $imageUrl = !empty($customImageUrl) ? $customImageUrl : generateImageUrl($title, $category, $imageMap, $categoryDefaults, $defaultImages);
         
-        // source_url 컬럼 존재 여부 확인
+        // source 값: 원본 출처가 있으면 그것을 사용
+        $sourceValue = !empty($originalSource) ? $originalSource : null;
+        
+        // 컬럼 존재 여부 확인
         $hasSourceUrl = false;
+        $hasWhyImportant = false;
+        $hasOriginalSource = false;
+        $hasAuthor = false;
+        $hasPublishedAt = false;
         try {
             $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'source_url'");
             $hasSourceUrl = $checkCol->rowCount() > 0;
-        } catch (Exception $e) {}
-        
-        // why_important 컬럼 존재 여부 확인
-        $hasWhyImportant = false;
-        try {
             $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'why_important'");
             $hasWhyImportant = $checkCol->rowCount() > 0;
+            $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'original_source'");
+            $hasOriginalSource = $checkCol->rowCount() > 0;
+            $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'author'");
+            $hasAuthor = $checkCol->rowCount() > 0;
+            $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'published_at'");
+            $hasPublishedAt = $checkCol->rowCount() > 0;
         } catch (Exception $e) {}
         
-        if ($hasSourceUrl && $hasWhyImportant) {
-            $stmt = $db->prepare("
-                UPDATE news 
-                SET category = ?, title = ?, description = ?, content = ?, why_important = ?, source_url = ?, image_url = ?
-                WHERE id = ?
-            ");
-            $stmt->execute([$category, $title, $description, $content, $whyImportant, $sourceUrl, $imageUrl, $id]);
-        } else if ($hasWhyImportant) {
-            // why_important만 있는 경우
-            $stmt = $db->prepare("
-                UPDATE news 
-                SET category = ?, title = ?, description = ?, content = ?, why_important = ?, image_url = ?
-                WHERE id = ?
-            ");
-            $stmt->execute([$category, $title, $description, $content, $whyImportant, $imageUrl, $id]);
-        } else if ($hasSourceUrl) {
-            $stmt = $db->prepare("
-                UPDATE news 
-                SET category = ?, title = ?, description = ?, content = ?, source_url = ?, image_url = ?
-                WHERE id = ?
-            ");
-            $stmt->execute([$category, $title, $description, $content, $sourceUrl, $imageUrl, $id]);
-        } else {
-            $stmt = $db->prepare("
-                UPDATE news 
-                SET category = ?, title = ?, description = ?, content = ?, image_url = ?
-                WHERE id = ?
-            ");
-            $stmt->execute([$category, $title, $description, $content, $imageUrl, $id]);
+        // 동적 UPDATE 쿼리 생성
+        $setClauses = ['category = ?', 'title = ?', 'description = ?', 'content = ?', 'image_url = ?'];
+        $values = [$category, $title, $description, $content, $imageUrl];
+        
+        // source 값 업데이트 (원본 출처가 있으면)
+        if ($sourceValue !== null) {
+            $setClauses[] = 'source = ?';
+            $values[] = $sourceValue;
         }
+        
+        if ($hasWhyImportant) {
+            $setClauses[] = 'why_important = ?';
+            $values[] = $whyImportant;
+        }
+        
+        if ($hasSourceUrl) {
+            $setClauses[] = 'source_url = ?';
+            $values[] = $sourceUrl;
+        }
+        
+        if ($hasOriginalSource) {
+            $setClauses[] = 'original_source = ?';
+            $values[] = $originalSource;
+        }
+        
+        if ($hasAuthor) {
+            $setClauses[] = 'author = ?';
+            $values[] = $author;
+        }
+        
+        if ($hasPublishedAt) {
+            $setClauses[] = 'published_at = ?';
+            $values[] = $publishedAt;
+        }
+        
+        $values[] = $id;  // WHERE 절용
+        $setStr = implode(', ', $setClauses);
+        
+        $stmt = $db->prepare("UPDATE news SET $setStr WHERE id = ?");
+        $stmt->execute($values);
         
         echo json_encode([
             'success' => true,

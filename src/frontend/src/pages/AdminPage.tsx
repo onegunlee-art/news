@@ -190,6 +190,14 @@ const AdminPage: React.FC = () => {
   const [articleUrl, setArticleUrl] = useState('');
   const [isFetchingUrl, setIsFetchingUrl] = useState(false);
   
+  // 추출된 기사 메타데이터 상태
+  const [articleSource, setArticleSource] = useState('');
+  const [articleAuthor, setArticleAuthor] = useState('');
+  const [articlePublishedAt, setArticlePublishedAt] = useState('');
+  const [articleImageUrl, setArticleImageUrl] = useState('');
+  const [articleSummary, setArticleSummary] = useState('');
+  const [showExtractedInfo, setShowExtractedInfo] = useState(false);
+  
   const [stats, setStats] = useState<DashboardStats>({
     totalUsers: 0,
     totalNews: 0,
@@ -628,6 +636,10 @@ const AdminPage: React.FC = () => {
                                 return {
                                   title: data.data.title || '',
                                   description: data.data.description || '',
+                                  source: data.data.publisher || '',
+                                  author: data.data.author || '',
+                                  publishedAt: data.data.date || '',
+                                  imageUrl: data.data.image?.url || data.data.logo?.url || '',
                                 };
                               }
                               throw new Error('Microlink failed');
@@ -640,6 +652,10 @@ const AdminPage: React.FC = () => {
                                 return {
                                   title: data.title || '',
                                   description: data.description || '',
+                                  source: data.publisher || data.site_name || '',
+                                  author: data.author || '',
+                                  publishedAt: data.published || data.date || '',
+                                  imageUrl: data.images?.[0] || data.image || '',
                                 };
                               }
                               throw new Error('JSONLink failed');
@@ -654,6 +670,10 @@ const AdminPage: React.FC = () => {
                                 return {
                                   title: data.title || '',
                                   description: data.description || '',
+                                  source: data.siteName || '',
+                                  author: '',
+                                  publishedAt: '',
+                                  imageUrl: data.image || '',
                                 };
                               }
                               throw new Error('LinkPreview failed');
@@ -700,6 +720,15 @@ const AdminPage: React.FC = () => {
                               
                               setNewsTitle(decodeHtml(result.title));
                               setNewsContent(decodeHtml(result.description));
+                              
+                              // 추가 메타데이터 저장
+                              setArticleSource(result.source || '');
+                              setArticleAuthor(result.author || '');
+                              setArticlePublishedAt(result.publishedAt || '');
+                              setArticleImageUrl(result.imageUrl || '');
+                              setArticleSummary(decodeHtml(result.description));
+                              setShowExtractedInfo(true);
+                              
                               setSaveMessage({ type: 'success', text: '기사 정보를 가져왔습니다!' });
                             } else {
                               throw new Error('기사 정보를 가져올 수 없습니다. URL을 확인하거나 직접 입력해주세요.');
@@ -724,6 +753,106 @@ const AdminPage: React.FC = () => {
                     </div>
                     <p className="text-slate-500 text-sm mt-1">기사 URL을 입력하면 제목과 내용을 자동으로 가져옵니다.</p>
                   </div>
+
+                  {/* 추출된 정보 섹션 (편집 가능) */}
+                  {showExtractedInfo && (
+                    <div className="bg-slate-900/30 border border-slate-700/50 rounded-xl p-5 space-y-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="text-slate-300 font-medium flex items-center gap-2">
+                          <svg className="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          추출된 정보 (편집 가능)
+                        </h4>
+                        <button
+                          type="button"
+                          onClick={() => setShowExtractedInfo(false)}
+                          className="text-slate-500 hover:text-slate-300 text-sm"
+                        >
+                          접기
+                        </button>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* 출처 */}
+                        <div>
+                          <label className="block text-slate-400 text-sm mb-1">출처 (Source)</label>
+                          <input
+                            type="text"
+                            value={articleSource}
+                            onChange={(e) => setArticleSource(e.target.value)}
+                            placeholder="예: Financial Times, Reuters..."
+                            className="w-full bg-slate-800/50 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-500 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition"
+                          />
+                        </div>
+                        
+                        {/* 작성자 */}
+                        <div>
+                          <label className="block text-slate-400 text-sm mb-1">작성자 (Author)</label>
+                          <input
+                            type="text"
+                            value={articleAuthor}
+                            onChange={(e) => setArticleAuthor(e.target.value)}
+                            placeholder="예: John Smith"
+                            className="w-full bg-slate-800/50 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-500 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition"
+                          />
+                        </div>
+                        
+                        {/* 작성일 */}
+                        <div>
+                          <label className="block text-slate-400 text-sm mb-1">작성일 (Published Date)</label>
+                          <input
+                            type="text"
+                            value={articlePublishedAt}
+                            onChange={(e) => setArticlePublishedAt(e.target.value)}
+                            placeholder="예: 2026-02-03"
+                            className="w-full bg-slate-800/50 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-500 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition"
+                          />
+                        </div>
+                        
+                        {/* 썸네일 URL */}
+                        <div>
+                          <label className="block text-slate-400 text-sm mb-1">썸네일 URL</label>
+                          <input
+                            type="text"
+                            value={articleImageUrl}
+                            onChange={(e) => setArticleImageUrl(e.target.value)}
+                            placeholder="이미지 URL을 입력하세요"
+                            className="w-full bg-slate-800/50 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-500 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition"
+                          />
+                        </div>
+                      </div>
+                      
+                      {/* 썸네일 미리보기 */}
+                      {articleImageUrl && (
+                        <div className="mt-3">
+                          <label className="block text-slate-400 text-sm mb-2">썸네일 미리보기</label>
+                          <div className="relative w-40 h-24 bg-slate-800 rounded-lg overflow-hidden border border-slate-600">
+                            <img
+                              src={articleImageUrl}
+                              alt="Thumbnail preview"
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none';
+                              }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* 요약 */}
+                      <div>
+                        <label className="block text-slate-400 text-sm mb-1">요약 (Summary)</label>
+                        <textarea
+                          value={articleSummary}
+                          onChange={(e) => setArticleSummary(e.target.value)}
+                          placeholder="기사 요약 내용..."
+                          rows={3}
+                          className="w-full bg-slate-800/50 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-500 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition resize-none"
+                        />
+                      </div>
+                    </div>
+                  )}
 
                   {/* 제목 입력 */}
                   <div>
@@ -808,6 +937,10 @@ const AdminPage: React.FC = () => {
                             content: newsContent,
                             why_important: newsWhyImportant.trim() || null,
                             source_url: articleUrl.trim() || null,
+                            source: articleSource.trim() || null,
+                            author: articleAuthor.trim() || null,
+                            published_at: articlePublishedAt.trim() || null,
+                            image_url: articleImageUrl.trim() || null,
                           };
                           
                           console.log('Sending request:', { 
@@ -853,6 +986,13 @@ const AdminPage: React.FC = () => {
                             setNewsWhyImportant('');
                             setArticleUrl('');
                             setEditingNewsId(null);
+                            // 추출 정보 초기화
+                            setArticleSource('');
+                            setArticleAuthor('');
+                            setArticlePublishedAt('');
+                            setArticleImageUrl('');
+                            setArticleSummary('');
+                            setShowExtractedInfo(false);
                           } else {
                             throw new Error(data.message || '저장 실패');
                           }

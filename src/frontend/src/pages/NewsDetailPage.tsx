@@ -16,6 +16,7 @@ interface NewsDetail {
   content: string | null
   why_important: string | null
   source: string | null
+  original_source?: string | null  // 추출된 원본 출처 (예: Financial Times)
   url: string
   published_at: string | null
   time_ago: string | null
@@ -110,9 +111,17 @@ export default function NewsDetailPage() {
   }
 
   // 소스 이름 매핑
+  // 원본 출처(original_source)가 있으면 그것을 표시
+  // 없고 source가 'Admin'이면 'The Gist' 표시
   const getSourceName = () => {
+    // 1. original_source가 있으면 그것을 우선 사용
+    if (news?.original_source && news.original_source.trim()) {
+      return news.original_source
+    }
+    // 2. source가 'Admin'이면 'The Gist' 표시
     if (news?.source === 'Admin') return 'The Gist'
-    return news?.source || 'Foreign Affairs'
+    // 3. 그 외에는 source 값 사용
+    return news?.source || 'The Gist'
   }
 
   // 글 목록 라벨 (카테고리 → 외교, 금융 등; 없으면 최신)
