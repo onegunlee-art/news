@@ -106,7 +106,7 @@ export default function ShareMenu({ title, description = '', imageUrl, webUrl, c
             </svg>
             링크 복사
           </button>
-          {typeof navigator !== 'undefined' && navigator.share && (
+          {typeof navigator !== 'undefined' && 'share' in navigator && typeof navigator.share === 'function' && (
             <button
               type="button"
               role="menuitem"
