@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { newsApi } from '../services/api'
-import { shareToKakao } from '../services/kakaoAuth'
+import ShareMenu from '../components/Common/ShareMenu'
 import { useAuthStore } from '../store/authStore'
 import { useAudioListStore } from '../store/audioListStore'
 import { useAudioPlayerStore } from '../store/audioPlayerStore'
@@ -211,21 +211,17 @@ export default function NewsDetailPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M12 18.75a.75.75 0 01-.75-.75V6a.75.75 0 011.5 0v12a.75.75 0 01-.75.75zM8.25 15V9a.75.75 0 011.5 0v6a.75.75 0 01-1.5 0zM5.25 12.75v-1.5a.75.75 0 011.5 0v1.5a.75.75 0 01-1.5 0z" />
                 </svg>
               </button>
-              {/* 카카오톡 공유 */}
-              <button 
-                onClick={() => news && shareToKakao({
-                  title: news.title,
-                  description: news.description || '',
-                  imageUrl: getImageUrl(),
-                  webUrl: window.location.href,
-                })}
-                className="p-1 text-gray-400 hover:text-yellow-500 transition-colors"
-                title="카카오톡으로 공유"
-              >
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 3C6.5 3 2 6.58 2 11c0 2.83 1.82 5.32 4.56 6.74-.2.74-.73 2.68-.84 3.1-.13.53.19.52.41.38.17-.11 2.74-1.87 3.85-2.63.65.09 1.32.14 2.02.14 5.5 0 10-3.58 10-8s-4.5-8-10-8z"/>
-                </svg>
-              </button>
+              {/* 공유하기 (메뉴: 카카오톡 / 링크 복사 / 시스템 공유) */}
+              {news && (
+                <ShareMenu
+                  title={news.title}
+                  description={news.description || ''}
+                  imageUrl={getImageUrl()}
+                  webUrl={window.location.href}
+                  className="text-gray-400 hover:text-gray-600"
+                  titleAttr="공유하기"
+                />
+              )}
               {/* 즐겨찾기 */}
               <button
                 type="button"
