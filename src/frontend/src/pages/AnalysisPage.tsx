@@ -128,12 +128,6 @@ export default function AnalysisPage() {
               >
                 경제 뉴스 샘플
               </button>
-              <button
-                onClick={() => setText('최근 인공지능 기술의 발전이 가속화되면서 다양한 산업 분야에서 AI 도입이 확대되고 있다. 하지만 일부 전문가들은 AI의 급속한 발전이 일자리 감소와 윤리적 문제를 야기할 수 있다고 우려를 표명했다.')}
-                className="text-xs px-3 py-1 bg-white/5 hover:bg-white/10 text-gray-400 rounded-full transition-colors"
-              >
-                기술 뉴스 샘플
-              </button>
             </div>
           </div>
         )}

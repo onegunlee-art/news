@@ -14,6 +14,7 @@ import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import AuthCallback from './pages/AuthCallback'
 import NotFoundPage from './pages/NotFoundPage'
+import SearchPage from './pages/SearchPage'
 
 function App() {
   const { initializeAuth } = useAuthStore()
@@ -34,8 +35,8 @@ function App() {
           <Route path="profile" element={<ProfilePage />} />
           <Route path="diplomacy" element={<CategoryPage />} />
           <Route path="economy" element={<CategoryPage />} />
-          <Route path="technology" element={<CategoryPage />} />
           <Route path="entertainment" element={<CategoryPage />} />
+          <Route path="search" element={<SearchPage />} />
         </Route>
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/admin" element={<AdminPage />} />

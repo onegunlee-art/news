@@ -99,15 +99,22 @@ export default function Header() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                   </svg>
                 </button>
-                <form onSubmit={handleSearch} className="flex-1">
+                <form onSubmit={handleSearch} className="flex-1 flex gap-2">
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="검색어를 입력하세요"
+                    placeholder="키워드 검색 (제목·내용·요약)"
                     autoFocus
-                    className="w-full px-4 py-3 bg-gray-100 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="flex-1 px-4 py-3 bg-gray-100 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
                   />
+                  <button
+                    type="submit"
+                    disabled={!searchQuery.trim()}
+                    className="px-4 py-3 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+                  >
+                    검색하기
+                  </button>
                 </form>
               </div>
             </div>

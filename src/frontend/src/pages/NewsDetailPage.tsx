@@ -30,7 +30,6 @@ interface NewsDetail {
 const categoryToLabel: Record<string, string> = {
   diplomacy: '외교',
   economy: '금융',
-  technology: '기술',
   entertainment: '엔터테인먼트',
 }
 

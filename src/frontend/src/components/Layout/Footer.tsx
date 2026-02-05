@@ -38,10 +38,10 @@ export default function Footer() {
               Economy
             </Link>
             <Link 
-              to="/technology" 
+              to="/entertainment" 
               className="text-sm text-gray-500 hover:text-gray-900 transition-colors"
             >
-              Technology
+              Entertainment
             </Link>
           </div>
         </div>

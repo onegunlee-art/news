@@ -31,10 +31,6 @@ const categories: Record<string, CategoryConfig> = {
     name: 'Economy',
     description: '경제 동향, 금융 시장, 비즈니스 뉴스에 대한 심층 분석',
   },
-  technology: {
-    name: 'Technology',
-    description: '기술 혁신, 디지털 트랜스포메이션, IT 산업에 대한 분석',
-  },
   entertainment: {
     name: 'Entertainment',
     description: '영화, 음악, 문화, 엔터테인먼트 산업에 대한 분석',
@@ -61,7 +57,6 @@ const CategoryPage: React.FC = () => {
         const nytSections: Record<string, string> = {
           diplomacy: 'world',
           economy: 'business',
-          technology: 'technology',
           entertainment: 'arts',
         };
         const response = await newsApi.nytTop(nytSections[category] || 'world');
@@ -215,11 +210,6 @@ function getDemoNews(category: string): NewsItem[] {
       { id: '1', title: 'Federal Reserve Holds Interest Rates Steady', description: 'The central bank maintains rates amid inflation concerns, markets respond positively.', url: '#', image: null, source: 'Analysis', section: 'Business', author: '', published_at: new Date().toISOString(), keywords: ['Fed', 'Interest Rates'] },
       { id: '2', title: 'Global Semiconductor Demand Surges', description: 'AI boom drives explosive growth in chip demand, reshaping supply chains.', url: '#', image: null, source: 'Analysis', section: 'Business', author: '', published_at: new Date().toISOString(), keywords: ['Semiconductors', 'AI'] },
       { id: '3', title: 'Oil Prices Rise on Middle East Tensions', description: 'Regional instability pushes crude prices higher, affecting global energy markets.', url: '#', image: null, source: 'Analysis', section: 'Business', author: '', published_at: new Date().toISOString(), keywords: ['Oil', 'Energy'] },
-    ],
-    technology: [
-      { id: '1', title: 'OpenAI Announces GPT-5 Launch Timeline', description: 'Next-generation AI model promises enhanced reasoning capabilities.', url: '#', image: null, source: 'Analysis', section: 'Technology', author: '', published_at: new Date().toISOString(), keywords: ['AI', 'GPT'] },
-      { id: '2', title: 'Apple Unveils Next-Generation Mixed Reality Headset', description: 'Vision Pro successor launches with improved features at lower price point.', url: '#', image: null, source: 'Analysis', section: 'Technology', author: '', published_at: new Date().toISOString(), keywords: ['Apple', 'VR'] },
-      { id: '3', title: 'Quantum Computing Reaches Commercial Milestone', description: 'Major tech companies begin offering quantum computing services.', url: '#', image: null, source: 'Analysis', section: 'Technology', author: '', published_at: new Date().toISOString(), keywords: ['Quantum'] },
     ],
     entertainment: [
       { id: '1', title: 'Korean Cinema Dominates International Awards Season', description: 'K-content continues global expansion with multiple prestigious wins.', url: '#', image: null, source: 'Analysis', section: 'Arts', author: '', published_at: new Date().toISOString(), keywords: ['Film', 'Korea'] },
