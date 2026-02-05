@@ -48,12 +48,9 @@ export default function Header() {
             )}
           </div>
 
-          {/* 중앙 - 로고 */}
+          {/* 중앙 - 로고 (Foreign Affairs 스타일: 심플 타이포) */}
           <Link to="/" className="flex-1 text-center">
-            <h1 
-              className="text-2xl md:text-3xl text-gray-900" 
-              style={{ fontFamily: "'Lobster', cursive", fontWeight: 400 }}
-            >
+            <h1 className="text-xl md:text-2xl font-semibold text-gray-900 tracking-tight">
               The Gist
             </h1>
           </Link>

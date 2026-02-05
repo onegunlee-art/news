@@ -68,23 +68,8 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-white pb-20 md:pb-8">
-      {/* 표지 (Cover) - 오렌지 배경 + 로고 + 서브타이틀 */}
-      <section className="bg-primary-500 w-full min-h-[280px] md:min-h-[320px] lg:min-h-[360px] flex items-center justify-center py-12 md:py-16 lg:py-20">
-        <div className="max-w-lg md:max-w-4xl lg:max-w-6xl mx-auto px-4 text-center">
-          <h2
-            className="text-4xl md:text-5xl lg:text-6xl text-black"
-            style={{ fontFamily: "'Lobster', cursive", fontWeight: 400 }}
-          >
-            The Gist
-          </h2>
-          <p className="text-black/90 text-base md:text-lg mt-3 md:mt-4 font-medium">
-            가볍게 접하는 글로벌 저널
-          </p>
-        </div>
-      </section>
-
-      {/* 탭 네비게이션 */}
-      <div className="sticky top-14 bg-white z-30 border-b border-gray-100">
+      {/* 탭 네비게이션 - Foreign Affairs 스타일: 표지 제거, 상단부터 목록 */}
+      <div className="sticky top-14 bg-white z-30 border-b border-gray-200">
         <div className="max-w-lg md:max-w-4xl lg:max-w-6xl mx-auto px-4">
           <div className="flex">
             {tabs.map((tab) => (
@@ -92,14 +77,14 @@ export default function HomePage() {
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`flex-1 py-3 text-sm font-medium transition-colors relative ${
-                  activeTab === tab 
-                    ? 'text-primary-500' 
+                  activeTab === tab
+                    ? 'text-gray-900'
                     : 'text-gray-500 hover:text-gray-900'
                 }`}
               >
                 {tab}
                 {activeTab === tab && (
-                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-500" />
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900" />
                 )}
               </button>
             ))}
@@ -244,23 +229,23 @@ function ArticleCard({ article }: { article: NewsItem }) {
       <Link to={detailUrl} className="flex-1 min-w-0 flex gap-4">
         {/* 왼쪽 - 텍스트 콘텐츠 */}
         <div className="flex-1 min-w-0">
-          {/* 제목 */}
-          <h2 className="text-lg font-bold text-gray-900 leading-snug mb-2 line-clamp-2">
+          {/* 제목 - Foreign Affairs 스타일: 굵은 헤드라인 */}
+          <h2 className="text-lg font-bold text-gray-900 leading-snug mb-1.5 line-clamp-2">
             {article.title}
           </h2>
           
-          {/* 설명 */}
+          {/* 설명 - 서브헤드라인 */}
           {article.description && (
-            <p className="text-sm text-gray-500 leading-relaxed mb-3 line-clamp-2">
+            <p className="text-sm text-gray-600 leading-relaxed mb-2 line-clamp-2">
               {article.description}
             </p>
           )}
           
-          {/* 소스 및 날짜 */}
-          <div className="flex items-center gap-2 text-xs">
-            <span className="text-primary-500 font-medium">{getSourceName()}</span>
+          {/* 소스 및 날짜 - Foreign Affairs 스타일: 저자/출처 라인 */}
+          <div className="flex items-center gap-2 text-xs text-gray-500">
+            <span className="font-medium text-gray-600">{getSourceName()}</span>
             <span className="text-gray-300">/</span>
-            <span className="text-gray-400">{formatDate()}</span>
+            <span>{formatDate()}</span>
           </div>
         </div>
 
