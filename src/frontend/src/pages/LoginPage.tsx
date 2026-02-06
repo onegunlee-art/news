@@ -58,7 +58,7 @@ const LoginPage: React.FC = () => {
               The Gist
             </h1>
           </Link>
-          <p className="text-gray-500 mt-2">뉴스 맥락 분석</p>
+          <p className="text-gray-500 mt-2">Gisters, Becoming Leaders</p>
         </div>
 
         {/* 로그인 카드 */}
