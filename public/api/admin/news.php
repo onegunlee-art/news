@@ -202,6 +202,7 @@ if ($method === 'POST') {
     $title = $input['title'] ?? '';
     $content = $input['content'] ?? '';
     $whyImportant = $input['why_important'] ?? null;
+    $narration = $input['narration'] ?? null;
     $sourceUrl = $input['source_url'] ?? null;
     
     // 추가 메타데이터 필드
@@ -324,7 +325,14 @@ if ($method === 'POST') {
             $hasWhyImportant = $checkCol->rowCount() > 0;
         } catch (Exception $e) {}
         
-        logError('Column check results', ['hasSourceUrl' => $hasSourceUrl, 'hasWhyImportant' => $hasWhyImportant]);
+        // narration 컬럼 존재 여부 확인
+        $hasNarration = false;
+        try {
+            $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'narration'");
+            $hasNarration = $checkCol->rowCount() > 0;
+        } catch (Exception $e) {}
+        
+        logError('Column check results', ['hasSourceUrl' => $hasSourceUrl, 'hasWhyImportant' => $hasWhyImportant, 'hasNarration' => $hasNarration]);
         
         // 동적 INSERT 쿼리 생성
         $columns = ['category', 'title', 'description', 'content', 'source', 'url', 'image_url', 'created_at'];
@@ -334,6 +342,12 @@ if ($method === 'POST') {
         if ($hasWhyImportant) {
             $columns[] = 'why_important';
             $values[] = $whyImportant;
+            $placeholders[] = '?';
+        }
+        
+        if ($hasNarration) {
+            $columns[] = 'narration';
+            $values[] = $narration;
             $placeholders[] = '?';
         }
         
@@ -450,6 +464,13 @@ if ($method === 'GET') {
             $hasWhyImportant = $checkCol->rowCount() > 0;
         } catch (Exception $e) {}
         
+        // narration 컬럼 존재 여부 확인
+        $hasNarration = false;
+        try {
+            $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'narration'");
+            $hasNarration = $checkCol->rowCount() > 0;
+        } catch (Exception $e) {}
+        
         // 추가 메타데이터 컬럼 존재 여부 확인
         $hasOriginalSource = false;
         $hasAuthor = false;
@@ -469,6 +490,12 @@ if ($method === 'GET') {
         }
         if ($hasWhyImportant) {
             $selectColumns = str_replace('content,', 'content, why_important,', $selectColumns);
+        }
+        if ($hasNarration) {
+            $selectColumns = str_replace('why_important,', 'why_important, narration,', $selectColumns);
+            if (!$hasWhyImportant) {
+                $selectColumns = str_replace('content,', 'content, narration,', $selectColumns);
+            }
         }
         if ($hasOriginalSource) {
             $selectColumns = str_replace('source,', 'source, original_source,', $selectColumns);
@@ -533,6 +560,7 @@ if ($method === 'PUT') {
     $title = $input['title'] ?? '';
     $content = $input['content'] ?? '';
     $whyImportant = $input['why_important'] ?? null;
+    $narration = $input['narration'] ?? null;
     $sourceUrl = $input['source_url'] ?? null;
     
     // 추가 메타데이터 필드
@@ -626,6 +654,7 @@ if ($method === 'PUT') {
         // 컬럼 존재 여부 확인
         $hasSourceUrl = false;
         $hasWhyImportant = false;
+        $hasNarration = false;
         $hasOriginalSource = false;
         $hasAuthor = false;
         $hasPublishedAt = false;
@@ -634,6 +663,8 @@ if ($method === 'PUT') {
             $hasSourceUrl = $checkCol->rowCount() > 0;
             $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'why_important'");
             $hasWhyImportant = $checkCol->rowCount() > 0;
+            $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'narration'");
+            $hasNarration = $checkCol->rowCount() > 0;
             $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'original_source'");
             $hasOriginalSource = $checkCol->rowCount() > 0;
             $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'author'");
@@ -655,6 +686,11 @@ if ($method === 'PUT') {
         if ($hasWhyImportant) {
             $setClauses[] = 'why_important = ?';
             $values[] = $whyImportant;
+        }
+        
+        if ($hasNarration) {
+            $setClauses[] = 'narration = ?';
+            $values[] = $narration;
         }
         
         if ($hasSourceUrl) {

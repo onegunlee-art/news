@@ -48,6 +48,7 @@ interface NewsArticle {
   description?: string;
   content: string;
   why_important?: string;
+  narration?: string;
   source?: string;
   source_url?: string;
   created_at?: string;
@@ -181,6 +182,7 @@ const AdminPage: React.FC = () => {
   const [newsTitle, setNewsTitle] = useState('');
   const [newsContent, setNewsContent] = useState('');
   const [newsWhyImportant, setNewsWhyImportant] = useState('');
+  const [newsNarration, setNewsNarration] = useState('');
   const [newsList, setNewsList] = useState<NewsArticle[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -252,6 +254,7 @@ const AdminPage: React.FC = () => {
     setNewsTitle(news.title);
     setNewsContent(news.content);
     setNewsWhyImportant(news.why_important || '');
+    setNewsNarration(news.narration || '');
     // 스크롤을 폼 위치로 이동
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -262,6 +265,7 @@ const AdminPage: React.FC = () => {
     setNewsTitle('');
     setNewsContent('');
     setNewsWhyImportant('');
+    setNewsNarration('');
     setArticleUrl('');
     setSaveMessage(null);
   };
@@ -872,10 +876,10 @@ const AdminPage: React.FC = () => {
                     />
                   </div>
 
-                  {/* 내용 입력 */}
+                  {/* gpt 요약 입력 */}
                   <div>
                     <label className="block text-slate-300 mb-2 text-sm font-medium">
-                      뉴스 내용
+                      gpt 요약
                       <span className="ml-2 text-xs text-cyan-400">(붙여넣기 시 자동 정제)</span>
                     </label>
                     <textarea
@@ -894,10 +898,32 @@ const AdminPage: React.FC = () => {
                     <p className="text-slate-500 text-sm mt-1">{newsContent.length} / 10,000자</p>
                   </div>
 
-                  {/* 이게 왜 중요한가? 입력 */}
+                  {/* 내레이션 톤 입력 */}
                   <div>
                     <label className="block text-slate-300 mb-2 text-sm font-medium">
-                      <span className="text-amber-400">이게 왜 중요한가?</span>
+                      <span className="text-emerald-400">내레이션 톤</span>
+                      <span className="ml-2 text-xs text-emerald-400/70">(붙여넣기 시 자동 정제)</span>
+                    </label>
+                    <textarea
+                      value={newsNarration}
+                      onChange={(e) => setNewsNarration(e.target.value)}
+                      onPaste={(e) => {
+                        e.preventDefault();
+                        const pastedText = e.clipboardData.getData('text');
+                        const sanitized = sanitizeText(pastedText);
+                        setNewsNarration(sanitized);
+                      }}
+                      placeholder="내레이션 스타일로 작성하세요..."
+                      rows={6}
+                      className="w-full bg-slate-900/50 border border-emerald-700/50 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition resize-none"
+                    />
+                    <p className="text-slate-500 text-sm mt-1">{newsNarration.length} / 10,000자</p>
+                  </div>
+
+                  {/* Gister 행간 입력 */}
+                  <div>
+                    <label className="block text-slate-300 mb-2 text-sm font-medium">
+                      <span className="text-amber-400">Gister 행간</span>
                       <span className="ml-2 text-xs text-amber-400/70">(붙여넣기 시 자동 정제)</span>
                     </label>
                     <textarea
@@ -909,7 +935,7 @@ const AdminPage: React.FC = () => {
                         const sanitized = sanitizeText(pastedText);
                         setNewsWhyImportant(sanitized);
                       }}
-                      placeholder="이 뉴스가 왜 중요한지, 독자에게 어떤 영향을 미치는지 분석해주세요..."
+                      placeholder="Gister 행간을 작성해주세요..."
                       rows={5}
                       className="w-full bg-slate-900/50 border border-amber-700/50 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none transition resize-none"
                     />
@@ -936,6 +962,7 @@ const AdminPage: React.FC = () => {
                             title: newsTitle,
                             content: newsContent,
                             why_important: newsWhyImportant.trim() || null,
+                            narration: newsNarration.trim() || null,
                             source_url: articleUrl.trim() || null,
                             source: articleSource.trim() || null,
                             author: articleAuthor.trim() || null,
@@ -984,6 +1011,7 @@ const AdminPage: React.FC = () => {
                             setNewsTitle('');
                             setNewsContent('');
                             setNewsWhyImportant('');
+                            setNewsNarration('');
                             setArticleUrl('');
                             setEditingNewsId(null);
                             // 추출 정보 초기화
