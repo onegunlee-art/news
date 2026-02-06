@@ -12,14 +12,14 @@ export default function Footer() {
           <div className="text-center md:text-left">
             <Link to="/" className="inline-block group">
               <h2 
-                className="text-2xl text-gray-900 group-hover:text-primary-500 transition-colors duration-200" 
+                className="text-2xl text-primary-500 group-hover:text-primary-600 transition-colors duration-200" 
                 style={{ fontFamily: "'Lobster', cursive", fontWeight: 400 }}
               >
                 The Gist
               </h2>
             </Link>
             <p className="text-gray-500 text-sm mt-2">
-              가볍게 접하는 글로벌 저널
+              Gisters, Becoming Leaders
             </p>
           </div>
 

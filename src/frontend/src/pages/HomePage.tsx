@@ -232,7 +232,7 @@ function ArticleCard({ article }: { article: NewsItem }) {
           
           {/* 소스 및 날짜 - Foreign Affairs 스타일: 저자/출처 라인 */}
           <div className="flex items-center gap-2 text-xs text-gray-500">
-            <span className="font-medium text-gray-600">{getSourceName()}</span>
+            <span className="font-medium text-primary-500">{getSourceName()}</span>
             <span className="text-gray-300">/</span>
             <span>{formatDate()}</span>
           </div>

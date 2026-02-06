@@ -191,7 +191,7 @@ function SearchArticleCard({ article }: { article: NewsItem }) {
             <p className="text-sm text-gray-600 leading-relaxed mb-2 line-clamp-2">{article.description}</p>
           )}
           <div className="flex items-center gap-2 text-xs text-gray-500">
-            <span className="font-medium text-gray-600">{getSourceName()}</span>
+            <span className="font-medium text-primary-500">{getSourceName()}</span>
             <span className="text-gray-300">/</span>
             <span>{formatDate()}</span>
           </div>

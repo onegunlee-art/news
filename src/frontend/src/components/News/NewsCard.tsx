@@ -56,7 +56,7 @@ export default function NewsCard({ news, index = 0 }: NewsCardProps) {
         />
         {/* 출처 배지 */}
         {news.source && (
-          <span className="absolute top-3 left-3 px-2 py-1 bg-black/70 text-white text-xs font-medium rounded">
+          <span className="absolute top-3 left-3 px-2 py-1 bg-primary-500/95 text-white text-xs font-medium rounded">
             {formatSourceDisplayName(news.source)}
           </span>
         )}

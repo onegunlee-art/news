@@ -107,7 +107,7 @@ const RegisterPage: React.FC = () => {
         {/* 로고 */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-block">
-            <h1 className="text-4xl text-gray-900" style={{ fontFamily: "'Lobster', cursive" }}>
+            <h1 className="text-4xl text-primary-500" style={{ fontFamily: "'Lobster', cursive" }}>
               The Gist
             </h1>
           </Link>

@@ -7,9 +7,12 @@
 
 /* 기본 스타일 - The Gist 디자인 시스템 */
 :root {
-  --primary: #FF6F00;
-  --primary-dark: #E65100;
-  --primary-light: #FF8F00;
+  /* 키 컬러: 오렌지(메인), 퍼플, 그린 */
+  --primary: #f05123;
+  --primary-dark: #e03a19;
+  --primary-light: #f36b42;
+  --key-purple: #590054;
+  --key-green: #125607;
   --bg-light: #ffffff;
   --bg-gray: #f8f8f8;
   --text-primary: #1a1a1a;
