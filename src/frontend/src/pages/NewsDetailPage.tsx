@@ -280,9 +280,14 @@ export default function NewsDetailPage() {
           </div>
 
           {/* 제목 */}
-          <h1 className="text-2xl font-bold text-gray-900 leading-snug mb-6">
+          <h1 className="text-2xl font-bold text-gray-900 leading-snug mb-2">
             {news.title}
           </h1>
+
+          {/* 디폴트 출처 문구: * 0000년 00월 00일자 OOO 저널의 "원제목"을 AI 번역, 요약하고 The Gist에서 일부 편집한 글입니다. */}
+          <p className="text-sm text-gray-500 mb-6">
+            * {formatDate()}자 {getSourceName()} 저널의 &quot;{news.title}&quot;을 AI 번역, 요약하고 The Gist에서 일부 편집한 글입니다.
+          </p>
 
           {/* 저자 정보 (있을 경우) */}
           {news.author && (

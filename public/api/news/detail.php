@@ -84,6 +84,13 @@ try {
         $hasPublishedAt = $checkCol->rowCount() > 0;
     } catch (Exception $e) {}
     
+    // original_source 컬럼 존재 여부 확인 (원본 출처, 예: Foreign Affairs)
+    $hasOriginalSource = false;
+    try {
+        $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'original_source'");
+        $hasOriginalSource = $checkCol->rowCount() > 0;
+    } catch (Exception $e) {}
+    
     // 기본 컬럼
     $columns = 'id, category, title, description, content, source, image_url, created_at';
     
@@ -109,6 +116,9 @@ try {
     if ($hasPublishedAt) {
         $columns .= ', published_at';
     }
+    if ($hasOriginalSource) {
+        $columns .= ', original_source';
+    }
     
     // 뉴스 조회
     $stmt = $db->prepare("SELECT $columns FROM news WHERE id = ?");
@@ -122,11 +132,8 @@ try {
         exit;
     }
     
-    // 기사 날짜: URL에서 추출한 기사등록일(published_at) 우선, 없으면 created_at
+    // 표시용 날짜: 우리가 포스팅한 날짜(created_at)로 통일
     $dateForDisplay = $news['created_at'];
-    if ($hasPublishedAt && !empty($news['published_at'])) {
-        $dateForDisplay = $news['published_at'];
-    }
     
     // time_ago 계산 (표시용 날짜 기준)
     $refDate = new DateTime($dateForDisplay);
@@ -153,7 +160,7 @@ try {
         }
     } catch (Exception $e) { /* bookmarks 테이블 없을 수 있음 */ }
 
-    // 응답 데이터 구성 (published_at = 기사 등록일로 통일)
+    // 응답 데이터 구성 (published_at = 포스팅 날짜로 표시)
     $responseData = [
         'id' => (int)$news['id'],
         'title' => $news['title'],
@@ -162,9 +169,11 @@ try {
         'why_important' => $hasWhyImportant ? ($news['why_important'] ?? null) : null,
         'narration' => $hasNarration ? ($news['narration'] ?? null) : null,
         'source' => $news['source'],
+        'original_source' => $hasOriginalSource ? ($news['original_source'] ?? null) : null,
         'url' => $hasSourceUrl ? ($news['source_url'] ?? '') : '',
         'image_url' => $news['image_url'],
         'published_at' => $dateForDisplay,
+        'created_at' => $news['created_at'],
         'time_ago' => $timeAgo,
         'is_bookmarked' => $isBookmarked,
     ];
