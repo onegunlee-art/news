@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from 'react'
-import { shareToKakao } from '../../services/kakaoAuth'
 
 export interface ShareMenuProps {
   title: string
@@ -12,7 +11,7 @@ export interface ShareMenuProps {
   titleAttr?: string
 }
 
-/** 공유하기 버튼: 클릭 시 카카오톡 / 링크 복사 / (지원 시) 시스템 공유 메뉴 */
+/** 공유하기 버튼: 클릭 시 링크 복사 / (지원 시) 시스템 공유 메뉴 */
 export default function ShareMenu({ title, description = '', imageUrl, webUrl, className = '', titleAttr = '공유하기' }: ShareMenuProps) {
   const [open, setOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
@@ -27,13 +26,6 @@ export default function ShareMenu({ title, description = '', imageUrl, webUrl, c
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [open])
-
-  const article = { title, description, imageUrl, webUrl }
-
-  const handleKakao = async () => {
-    setOpen(false)
-    await shareToKakao(article)
-  }
 
   const handleCopyLink = async () => {
     setOpen(false)
@@ -86,15 +78,6 @@ export default function ShareMenu({ title, description = '', imageUrl, webUrl, c
           className="absolute right-0 top-full mt-1 py-1 min-w-[160px] bg-white rounded-lg shadow-lg border border-gray-200 z-50"
           role="menu"
         >
-          <button
-            type="button"
-            role="menuitem"
-            onClick={handleKakao}
-            className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-          >
-            <span className="text-yellow-500">💬</span>
-            카카오톡으로 공유
-          </button>
           <button
             type="button"
             role="menuitem"
