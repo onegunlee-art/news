@@ -91,12 +91,22 @@ try {
         $hasOriginalSource = $checkCol->rowCount() > 0;
     } catch (Exception $e) {}
     
-    // 기본 컬럼 (updated_at = admin에서 업데이트한 날짜)
-    $columns = 'id, category, title, description, content, source, image_url, created_at, updated_at';
+    // updated_at 컬럼 존재 여부 확인 (admin에서 업데이트한 날짜; 없을 수 있음)
+    $hasUpdatedAt = false;
+    try {
+        $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'updated_at'");
+        $hasUpdatedAt = $checkCol->rowCount() > 0;
+    } catch (Exception $e) {}
+    
+    // 기본 컬럼 (updated_at은 있을 때만 포함)
+    $columns = 'id, category, title, description, content, source, image_url, created_at';
+    if ($hasUpdatedAt) {
+        $columns .= ', updated_at';
+    }
     
     // why_important 추가
     if ($hasWhyImportant) {
-        $columns = 'id, category, title, description, content, why_important, source, image_url, created_at, updated_at';
+        $columns = str_replace('content,', 'content, why_important,', $columns);
     }
     
     // narration 추가
