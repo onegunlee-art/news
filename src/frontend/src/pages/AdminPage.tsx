@@ -51,6 +51,10 @@ interface NewsArticle {
   narration?: string;
   source?: string;
   source_url?: string;
+  original_source?: string;
+  author?: string;
+  published_at?: string;
+  image_url?: string;
   created_at?: string;
 }
 
@@ -255,6 +259,14 @@ const AdminPage: React.FC = () => {
     setNewsContent(news.content);
     setNewsWhyImportant(news.why_important || '');
     setNewsNarration(news.narration || '');
+    // 추가 메타데이터 (출처, 작성자, 작성일, 사진)
+    setArticleUrl(news.source_url || '');
+    setArticleSource(news.original_source || news.source || '');
+    setArticleAuthor(news.author || '');
+    setArticlePublishedAt(news.published_at || '');
+    setArticleImageUrl(news.image_url || '');
+    setArticleSummary(news.description || '');
+    setShowExtractedInfo(true); // 메타데이터 섹션 펼치기
     // 스크롤을 폼 위치로 이동
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -267,6 +279,13 @@ const AdminPage: React.FC = () => {
     setNewsWhyImportant('');
     setNewsNarration('');
     setArticleUrl('');
+    // 메타데이터 필드 초기화
+    setArticleSource('');
+    setArticleAuthor('');
+    setArticlePublishedAt('');
+    setArticleImageUrl('');
+    setArticleSummary('');
+    setShowExtractedInfo(false);
     setSaveMessage(null);
   };
 
