@@ -74,6 +74,13 @@ try {
         $hasSourceUrl = $checkCol->rowCount() > 0;
     } catch (Exception $e) {}
     
+    // published_at 컬럼 존재 여부 확인 (기사 등록일 = URL에서 추출한 날짜)
+    $hasPublishedAt = false;
+    try {
+        $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'published_at'");
+        $hasPublishedAt = $checkCol->rowCount() > 0;
+    } catch (Exception $e) {}
+    
     // 기본 컬럼
     $columns = 'id, category, title, description, content, source, image_url, created_at';
     
@@ -95,6 +102,11 @@ try {
         $columns .= ', source_url';
     }
     
+    // published_at 추가 (기사 등록일)
+    if ($hasPublishedAt) {
+        $columns .= ', published_at';
+    }
+    
     // 뉴스 조회
     $stmt = $db->prepare("SELECT $columns FROM news WHERE id = ?");
     $stmt->execute([$id]);
@@ -106,10 +118,16 @@ try {
         exit;
     }
     
-    // 시간 계산
-    $createdAt = new DateTime($news['created_at']);
+    // 기사 날짜: URL에서 추출한 기사등록일(published_at) 우선, 없으면 created_at
+    $dateForDisplay = $news['created_at'];
+    if ($hasPublishedAt && !empty($news['published_at'])) {
+        $dateForDisplay = $news['published_at'];
+    }
+    
+    // time_ago 계산 (표시용 날짜 기준)
+    $refDate = new DateTime($dateForDisplay);
     $now = new DateTime();
-    $diff = $now->diff($createdAt);
+    $diff = $now->diff($refDate);
     
     if ($diff->days > 0) {
         $timeAgo = $diff->days . '일 전';
@@ -121,7 +139,7 @@ try {
         $timeAgo = '방금 전';
     }
     
-    // 응답 데이터 구성
+    // 응답 데이터 구성 (published_at = 기사 등록일로 통일)
     $responseData = [
         'id' => (int)$news['id'],
         'title' => $news['title'],
@@ -132,7 +150,7 @@ try {
         'source' => $news['source'],
         'url' => $hasSourceUrl ? ($news['source_url'] ?? '') : '',
         'image_url' => $news['image_url'],
-        'published_at' => $news['created_at'],
+        'published_at' => $dateForDisplay,
         'time_ago' => $timeAgo,
         'is_bookmarked' => false, // 추후 로그인 사용자용 구현
     ];

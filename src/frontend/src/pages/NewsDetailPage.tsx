@@ -57,7 +57,7 @@ export default function NewsDetailPage() {
     // 내레이션 우선, 없으면 content, 그것도 없으면 description
     const mainContent = news.narration || news.content || news.description || ''
     const rawText = `${news.title}. ${mainContent}`
-    const text = (rawText + (news.why_important ? ` The Gist's Critics. ${news.why_important}` : '')).trim()
+    const text = (rawText + (news.why_important ? ` Gisters 행간. ${news.why_important}` : '')).trim()
     if (!text) {
       alert('재생할 본문 내용이 없습니다.')
       return
@@ -346,14 +346,14 @@ export default function NewsDetailPage() {
             </div>
           )}
 
-          {/* The Gist's Critics (Gister 행간) 섹션 */}
+          {/* Gisters 행간 섹션 */}
           {news.why_important && (
             <div className="border-t border-gray-100 pt-6 mt-6">
               <h2 
                 className="text-xl font-medium mb-4"
                 style={{ fontFamily: "'Lobster', cursive", color: '#FF6F00' }}
               >
-                The Gist's Critics
+                Gisters 행간
               </h2>
               <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
                 {/* 중요 문구 강조 (bold 처리) */}
