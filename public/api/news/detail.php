@@ -91,12 +91,12 @@ try {
         $hasOriginalSource = $checkCol->rowCount() > 0;
     } catch (Exception $e) {}
     
-    // 기본 컬럼
-    $columns = 'id, category, title, description, content, source, image_url, created_at';
+    // 기본 컬럼 (updated_at = admin에서 업데이트한 날짜)
+    $columns = 'id, category, title, description, content, source, image_url, created_at, updated_at';
     
     // why_important 추가
     if ($hasWhyImportant) {
-        $columns = 'id, category, title, description, content, why_important, source, image_url, created_at';
+        $columns = 'id, category, title, description, content, why_important, source, image_url, created_at, updated_at';
     }
     
     // narration 추가
@@ -177,6 +177,7 @@ try {
         'image_url' => $news['image_url'],
         'published_at' => $dateForDisplay,
         'created_at' => $news['created_at'],
+        'updated_at' => $news['updated_at'] ?? null,
         'time_ago' => $timeAgo,
         'is_bookmarked' => $isBookmarked,
     ];

@@ -21,6 +21,8 @@ interface NewsDetail {
   original_source?: string | null  // 추출된 원본 출처 (예: Financial Times)
   url: string
   published_at: string | null
+  created_at?: string | null
+  updated_at?: string | null
   time_ago: string | null
   is_bookmarked?: boolean
   image_url?: string | null
@@ -117,10 +119,20 @@ export default function NewsDetailPage() {
     }
   }
 
-  // 날짜 포맷팅
+  // 원문 게재일 (URL에서 추출) → 제목 밑 출처 문구용
   const formatDate = () => {
     if (news?.published_at) {
       const date = new Date(news.published_at)
+      return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`
+    }
+    return news?.time_ago || ''
+  }
+
+  // admin에서 업데이트한 날짜 → 사진 밑 매체 옆 표시용
+  const formatHeaderDate = () => {
+    const dateStr = news?.updated_at || news?.created_at
+    if (dateStr) {
+      const date = new Date(dateStr)
       return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`
     }
     return news?.time_ago || ''
@@ -272,11 +284,11 @@ export default function NewsDetailPage() {
         </div>
 
         <div className="px-4 pt-5 pb-8">
-          {/* 소스 및 날짜 */}
+          {/* 소스 및 날짜 (매체 옆 = admin에서 업데이트한 날짜) */}
           <div className="flex items-center gap-2 text-sm mb-4">
             <span className="text-primary-500 font-medium">{getSourceName()}</span>
             <span className="text-gray-300">/</span>
-            <span className="text-gray-400">{formatDate()}</span>
+            <span className="text-gray-400">{formatHeaderDate()}</span>
           </div>
 
           {/* 제목 */}
