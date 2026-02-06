@@ -1,6 +1,8 @@
 # ===========================================
 # News 맥락 분석 - Apache 설정
 # ===========================================
+# SPA: /news/123 등 존재하지 않는 경로 접속 시에도 index.php로 HTML 제공
+ErrorDocument 404 /index.php
 
 # Rewrite 엔진 활성화
 <IfModule mod_rewrite.c>

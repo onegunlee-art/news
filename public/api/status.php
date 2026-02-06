@@ -9,8 +9,22 @@ $base = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'htt
     . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost');
 $baseUrl = rtrim($base, '/') . '/api';
 
+// 뉴스 상세 테스트용 id: 목록에서 첫 번째 id 사용 (id=1이 없을 수 있음)
+$detailId = 1;
+$listUrl = $baseUrl . '/admin/news.php?page=1&per_page=1';
+$chList = curl_init($listUrl);
+curl_setopt_array($chList, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 5]);
+$listJson = curl_exec($chList);
+curl_close($chList);
+if ($listJson) {
+    $list = @json_decode($listJson, true);
+    if (!empty($list['data']['items'][0]['id'])) {
+        $detailId = (int) $list['data']['items'][0]['id'];
+    }
+}
+
 $endpoints = [
-    ['GET', '뉴스 상세', $baseUrl . '/news/detail.php?id=1'],
+    ['GET', '뉴스 상세', $baseUrl . '/news/detail.php?id=' . $detailId],
     ['GET', '뉴스 목록(Admin)', $baseUrl . '/admin/news.php?category=diplomacy&page=1&per_page=5'],
     ['GET', '즐겨찾기 목록', $baseUrl . '/user/bookmarks.php?page=1&per_page=5'],
     ['OPTIONS', '즐겨찾기 추가/삭제', $baseUrl . '/news/bookmark.php'],
