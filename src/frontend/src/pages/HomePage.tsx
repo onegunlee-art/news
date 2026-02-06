@@ -7,6 +7,7 @@ import { useAudioListStore } from '../store/audioListStore'
 import { useAudioPlayerStore } from '../store/audioPlayerStore'
 import LoadingSpinner from '../components/Common/LoadingSpinner'
 import { getPlaceholderImageUrl } from '../utils/imagePolicy'
+import { formatSourceDisplayName } from '../utils/formatSource'
 
 interface NewsItem {
   id?: number
@@ -146,7 +147,7 @@ function ArticleCard({ article }: { article: NewsItem }) {
   // 소스 이름 매핑
   const getSourceName = () => {
     if (article.source === 'Admin') return 'The Gist'
-    return article.source || 'The Gist'
+    return formatSourceDisplayName(article.source) || 'The Gist'
   }
 
   // 오디오 재생: 전역 팝업 플레이어에서 재생 (다른 페이지 이동해도 계속 재생)

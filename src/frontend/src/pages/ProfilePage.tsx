@@ -5,6 +5,7 @@ import { useAuthStore } from '../store/authStore'
 import { useAudioListStore, type AudioListItem } from '../store/audioListStore'
 import { newsApi } from '../services/api'
 import LoadingSpinner from '../components/Common/LoadingSpinner'
+import { formatSourceDisplayName } from '../utils/formatSource'
 
 export default function ProfilePage() {
   const { user, isAuthenticated, logout } = useAuthStore()
@@ -228,7 +229,7 @@ function AudioList({ items }: { items: AudioListItem[] }) {
               </p>
             )}
             <div className="flex items-center gap-2 text-xs">
-              <span className="text-primary-500 font-medium">{item.source || 'The Gist'}</span>
+              <span className="text-primary-500 font-medium">{formatSourceDisplayName(item.source) || 'The Gist'}</span>
               <span className="text-gray-300">/</span>
               <span className="text-gray-400">들은 날짜: {new Date(item.listenedAt).toLocaleDateString('ko-KR')}</span>
             </div>
@@ -278,7 +279,7 @@ function BookmarkList({ bookmarks }: { bookmarks: any[] }) {
               </p>
             )}
             <div className="flex items-center gap-2 text-xs">
-              <span className="text-primary-500 font-medium">{item.source || 'The Gist'}</span>
+              <span className="text-primary-500 font-medium">{formatSourceDisplayName(item.source) || 'The Gist'}</span>
               <span className="text-gray-300">/</span>
               {item.bookmarked_at && (
                 <span className="text-gray-400">저장일: {new Date(item.bookmarked_at).toLocaleDateString('ko-KR')}</span>

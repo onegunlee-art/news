@@ -3,6 +3,7 @@ import { useLocation, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { newsApi } from '../services/api';
 import { getPlaceholderImageUrl } from '../utils/imagePolicy';
+import { formatSourceDisplayName } from '../utils/formatSource';
 
 interface NewsItem {
   id: string;
@@ -170,7 +171,7 @@ function ArticleCard({ article, index }: { article: NewsItem; index: number }) {
         {/* 콘텐츠 */}
         <div>
           <span className="text-xs font-semibold text-primary-500 uppercase tracking-wider">
-            {article.source || 'News'}
+            {formatSourceDisplayName(article.source) || 'News'}
           </span>
           <h2 className="text-xl font-medium text-gray-900 mt-2 mb-2 leading-snug group-hover:text-primary-500 transition-colors line-clamp-2">
             {article.title}

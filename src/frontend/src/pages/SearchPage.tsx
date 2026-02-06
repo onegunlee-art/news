@@ -7,6 +7,7 @@ import { useAudioListStore } from '../store/audioListStore'
 import { useAudioPlayerStore } from '../store/audioPlayerStore'
 import LoadingSpinner from '../components/Common/LoadingSpinner'
 import { getPlaceholderImageUrl } from '../utils/imagePolicy'
+import { formatSourceDisplayName } from '../utils/formatSource'
 
 interface NewsItem {
   id?: number
@@ -121,9 +122,11 @@ function SearchArticleCard({ article }: { article: NewsItem }) {
   }
 
   const getSourceName = () => {
-    if (article.original_source && String(article.original_source).trim()) return article.original_source
-    if (article.source === 'Admin') return 'The Gist'
-    return article.source || 'The Gist'
+    let raw: string
+    if (article.original_source && String(article.original_source).trim()) raw = article.original_source
+    else if (article.source === 'Admin') return 'The Gist'
+    else raw = article.source || 'The Gist'
+    return formatSourceDisplayName(raw) || 'The Gist'
   }
 
   const handlePlayAudio = (e: React.MouseEvent) => {

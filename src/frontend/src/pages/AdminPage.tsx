@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
+import { formatSourceDisplayName } from '../utils/formatSource';
 import {
   ChartBarIcon,
   UsersIcon,
@@ -1094,7 +1095,7 @@ const AdminPage: React.FC = () => {
                               </span>
                               {news.source && news.source !== 'Admin' && (
                                 <span className="text-xs px-2 py-0.5 bg-blue-500/20 text-blue-400 rounded">
-                                  {news.source}
+                                  {formatSourceDisplayName(news.source)}
                                 </span>
                               )}
                             </div>

@@ -8,6 +8,7 @@ import { useAudioListStore } from '../store/audioListStore'
 import { useAudioPlayerStore } from '../store/audioPlayerStore'
 import LoadingSpinner from '../components/Common/LoadingSpinner'
 import { getPlaceholderImageUrl } from '../utils/imagePolicy'
+import { formatSourceDisplayName } from '../utils/formatSource'
 
 interface NewsDetail {
   id: number
@@ -120,18 +121,13 @@ export default function NewsDetailPage() {
     return news?.time_ago || ''
   }
 
-  // 소스 이름 매핑
-  // 원본 출처(original_source)가 있으면 그것을 표시
-  // 없고 source가 'Admin'이면 'The Gist' 표시
+  // 소스 이름 매핑 (표시 시 " Magazine" 제거, e.g. Foreign Affairs Magazine → Foreign Affairs)
   const getSourceName = () => {
-    // 1. original_source가 있으면 그것을 우선 사용
-    if (news?.original_source && news.original_source.trim()) {
-      return news.original_source
-    }
-    // 2. source가 'Admin'이면 'The Gist' 표시
-    if (news?.source === 'Admin') return 'The Gist'
-    // 3. 그 외에는 source 값 사용
-    return news?.source || 'The Gist'
+    let raw: string
+    if (news?.original_source && news.original_source.trim()) raw = news.original_source
+    else if (news?.source === 'Admin') return 'The Gist'
+    else raw = news?.source || 'The Gist'
+    return formatSourceDisplayName(raw) || 'The Gist'
   }
 
   // 글 목록 라벨 (카테고리 → 외교, 금융 등; 없으면 최신)

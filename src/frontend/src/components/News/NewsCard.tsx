@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useMemo } from 'react'
 import { getPlaceholderImageUrl } from '../../utils/imagePolicy'
+import { formatSourceDisplayName } from '../../utils/formatSource'
 
 interface NewsItem {
   id?: number
@@ -56,7 +57,7 @@ export default function NewsCard({ news, index = 0 }: NewsCardProps) {
         {/* 출처 배지 */}
         {news.source && (
           <span className="absolute top-3 left-3 px-2 py-1 bg-black/70 text-white text-xs font-medium rounded">
-            {news.source}
+            {formatSourceDisplayName(news.source)}
           </span>
         )}
       </div>
