@@ -60,6 +60,13 @@ try {
         $hasWhyImportant = $checkCol->rowCount() > 0;
     } catch (Exception $e) {}
     
+    // narration 컬럼 존재 여부 확인
+    $hasNarration = false;
+    try {
+        $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'narration'");
+        $hasNarration = $checkCol->rowCount() > 0;
+    } catch (Exception $e) {}
+    
     // source_url 컬럼 존재 여부 확인
     $hasSourceUrl = false;
     try {
@@ -73,6 +80,14 @@ try {
     // why_important 추가
     if ($hasWhyImportant) {
         $columns = 'id, category, title, description, content, why_important, source, image_url, created_at';
+    }
+    
+    // narration 추가
+    if ($hasNarration) {
+        $columns = str_replace('why_important,', 'why_important, narration,', $columns);
+        if (!$hasWhyImportant) {
+            $columns = str_replace('content,', 'content, narration,', $columns);
+        }
     }
     
     // source_url 추가
@@ -113,6 +128,7 @@ try {
         'description' => $news['description'],
         'content' => $news['content'],
         'why_important' => $hasWhyImportant ? ($news['why_important'] ?? null) : null,
+        'narration' => $hasNarration ? ($news['narration'] ?? null) : null,
         'source' => $news['source'],
         'url' => $hasSourceUrl ? ($news['source_url'] ?? '') : '',
         'image_url' => $news['image_url'],

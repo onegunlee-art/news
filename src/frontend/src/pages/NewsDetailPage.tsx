@@ -16,6 +16,7 @@ interface NewsDetail {
   description: string | null
   content: string | null
   why_important: string | null
+  narration: string | null
   source: string | null
   original_source?: string | null  // 추출된 원본 출처 (예: Financial Times)
   url: string
@@ -44,6 +45,7 @@ export default function NewsDetailPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isBookmarked, setIsBookmarked] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showGptSummary, setShowGptSummary] = useState(false)
 
   // 전역 팝업 플레이어에서 재생 (속도 기본 보통 1.0)
   const playArticle = () => {
@@ -52,7 +54,9 @@ export default function NewsDetailPage() {
       alert('이 브라우저에서는 음성 읽기를 지원하지 않습니다.')
       return
     }
-    const rawText = `${news.title}. ${news.content || news.description || ''}`
+    // 내레이션 우선, 없으면 content, 그것도 없으면 description
+    const mainContent = news.narration || news.content || news.description || ''
+    const rawText = `${news.title}. ${mainContent}`
     const text = (rawText + (news.why_important ? ` The Gist's Critics. ${news.why_important}` : '')).trim()
     if (!text) {
       alert('재생할 본문 내용이 없습니다.')
@@ -297,20 +301,52 @@ export default function NewsDetailPage() {
             <span className="font-medium">Listen to audio</span>
           </button>
 
-          {/* 본문 내용 */}
-          <div className="prose prose-lg max-w-none mb-8">
-            {news.content ? (
+          {/* 내레이션 (The Gist's Take) - 메인 콘텐츠 */}
+          {news.narration && (
+            <div className="prose prose-lg max-w-none mb-8">
               <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                {news.content}
+                {news.narration}
               </p>
-            ) : news.description ? (
-              <p className="text-gray-700 leading-relaxed">{news.description}</p>
-            ) : (
-              <p className="text-gray-400 italic">본문 내용이 없습니다.</p>
-            )}
-          </div>
+            </div>
+          )}
 
-          {/* The Gist's Critics 섹션 */}
+          {/* GPT 요약 (접이식) */}
+          {news.content && (
+            <div className="mb-8">
+              <button
+                type="button"
+                onClick={() => setShowGptSummary(!showGptSummary)}
+                className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                <svg 
+                  className={`w-4 h-4 transition-transform ${showGptSummary ? 'rotate-90' : ''}`} 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+                일반 AI 요약 보기
+              </button>
+              {showGptSummary && (
+                <div className="mt-3 p-4 bg-gray-50 rounded-lg border border-gray-100">
+                  <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">
+                    {news.content}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 내레이션이 없고 GPT 요약도 없는 경우: description 표시 */}
+          {!news.narration && !news.content && news.description && (
+            <div className="prose prose-lg max-w-none mb-8">
+              <p className="text-gray-700 leading-relaxed">{news.description}</p>
+            </div>
+          )}
+
+          {/* The Gist's Critics (Gister 행간) 섹션 */}
           {news.why_important && (
             <div className="border-t border-gray-100 pt-6 mt-6">
               <h2 

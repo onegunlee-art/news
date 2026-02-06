@@ -643,7 +643,7 @@ const AdminPage: React.FC = () => {
                                   source: data.data.publisher || '',
                                   author: data.data.author || '',
                                   publishedAt: data.data.date || '',
-                                  imageUrl: data.data.image?.url || data.data.logo?.url || '',
+                                  imageUrl: '', // 썸네일은 키워드 기반으로 서버에서 자동 생성
                                 };
                               }
                               throw new Error('Microlink failed');
@@ -659,7 +659,7 @@ const AdminPage: React.FC = () => {
                                   source: data.publisher || data.site_name || '',
                                   author: data.author || '',
                                   publishedAt: data.published || data.date || '',
-                                  imageUrl: data.images?.[0] || data.image || '',
+                                  imageUrl: '', // 썸네일은 키워드 기반으로 서버에서 자동 생성
                                 };
                               }
                               throw new Error('JSONLink failed');
@@ -677,7 +677,7 @@ const AdminPage: React.FC = () => {
                                   source: data.siteName || '',
                                   author: '',
                                   publishedAt: '',
-                                  imageUrl: data.image || '',
+                                  imageUrl: '', // 썸네일은 키워드 기반으로 서버에서 자동 생성
                                 };
                               }
                               throw new Error('LinkPreview failed');
@@ -817,13 +817,24 @@ const AdminPage: React.FC = () => {
                         {/* 썸네일 URL */}
                         <div>
                           <label className="block text-slate-400 text-sm mb-1">썸네일 URL</label>
-                          <input
-                            type="text"
-                            value={articleImageUrl}
-                            onChange={(e) => setArticleImageUrl(e.target.value)}
-                            placeholder="이미지 URL을 입력하세요"
-                            className="w-full bg-slate-800/50 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-500 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition"
-                          />
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              value={articleImageUrl}
+                              onChange={(e) => setArticleImageUrl(e.target.value)}
+                              placeholder="비워두면 키워드 기반 자동 생성"
+                              className="flex-1 bg-slate-800/50 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-500 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setArticleImageUrl('')}
+                              className="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs rounded-lg transition-colors whitespace-nowrap"
+                              title="썸네일을 비워두면 저장 시 제목 키워드 기반으로 자동 생성됩니다"
+                            >
+                              자동 생성
+                            </button>
+                          </div>
+                          <p className="text-slate-500 text-xs mt-1">비워두면 제목 키워드 기반으로 썸네일이 자동 생성됩니다</p>
                         </div>
                       </div>
                       
