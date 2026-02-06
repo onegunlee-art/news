@@ -223,8 +223,12 @@ class OpenAIService
         return "[Mock 분석]\n\n이것은 Mock 모드에서 생성된 분석입니다.\n\n실제 OpenAI API 키를 설정하면 GPT-4.1을 활용한 심층 분석이 제공됩니다.\n\n현재 시스템은 정상 작동 중입니다.";
     }
 
+    /** OpenAI TTS API 요청당 최대 문자 수 (문서 기준 4096, 여유 두고 4000) */
+    private const TTS_MAX_CHARS = 4000;
+
     /**
      * TTS (Text-to-Speech) 호출
+     * 4096자 초과 시 청크로 나누어 요청 후 오디오를 이어붙여 전체 재생 가능하게 함.
      */
     public function textToSpeech(string $text, array $options = []): ?string
     {
@@ -232,16 +236,80 @@ class OpenAIService
             return $this->generateMockAudio($text);
         }
 
+        $text = trim($text);
+        if ($text === '') {
+            return null;
+        }
+
         return $this->callTTSAPI($text, $options);
     }
 
     /**
-     * 실제 TTS API 호출
+     * 실제 TTS API 호출 (전체 텍스트 지원: 초과 시 청크 분할 후 병합)
      */
     private function callTTSAPI(string $text, array $options = []): string
     {
+        $len = mb_strlen($text);
+        if ($len <= self::TTS_MAX_CHARS) {
+            $audioData = $this->callTTSAPISingleRaw($text, $options);
+            return $this->saveAudioFile($audioData);
+        }
+
+        // 청크 분할 (문장 경계 우선, 그 다음 4000자 단위)
+        $chunks = $this->splitTextForTTS($text, self::TTS_MAX_CHARS);
+        $audioParts = [];
+        foreach ($chunks as $chunk) {
+            $audioParts[] = $this->callTTSAPISingleRaw($chunk, $options);
+        }
+        $combined = implode('', $audioParts);
+        return $this->saveAudioFile($combined);
+    }
+
+    /**
+     * TTS용 텍스트를 최대 길이 이하로 분할 (문장 경계 우선)
+     */
+    private function splitTextForTTS(string $text, int $maxLen): array
+    {
+        $chunks = [];
+        $offset = 0;
+        $len = mb_strlen($text);
+
+        while ($offset < $len) {
+            $remain = mb_substr($text, $offset, $maxLen + 1);
+            $take = mb_strlen($remain);
+            if ($take <= $maxLen) {
+                $chunks[] = $remain;
+                $offset += $take;
+                continue;
+            }
+            // 문장 끝(. ! ?) 찾기 (위치는 0일 수 있으므로 !== false 로 비교)
+            $search = mb_substr($remain, 0, $maxLen);
+            $lastDot = -1;
+            foreach (['。', '.', '!', '?'] as $sep) {
+                $p = mb_strrpos($search, $sep);
+                if ($p !== false && $p > $lastDot) {
+                    $lastDot = $p;
+                }
+            }
+            if ($lastDot >= (int)($maxLen * 0.5)) {
+                $chunk = mb_substr($remain, 0, $lastDot + 1);
+                $chunks[] = $chunk;
+                $offset += mb_strlen($chunk);
+            } else {
+                $chunks[] = mb_substr($remain, 0, $maxLen);
+                $offset += $maxLen;
+            }
+        }
+
+        return $chunks;
+    }
+
+    /**
+     * 단일 TTS API 요청 후 오디오 바이너리 반환
+     */
+    private function callTTSAPISingleRaw(string $text, array $options = []): string
+    {
         $ttsConfig = $this->config['tts'];
-        
         $payload = [
             'model' => $options['model'] ?? $ttsConfig['model'],
             'voice' => $options['voice'] ?? $ttsConfig['voice'],
@@ -270,10 +338,17 @@ class OpenAIService
             throw new \RuntimeException("OpenAI TTS API error: HTTP {$httpCode}");
         }
 
-        // 오디오 파일 저장
+        return $audioData;
+    }
+
+    /**
+     * 오디오 바이너리를 파일로 저장하고 URL 반환
+     */
+    private function saveAudioFile(string $audioData): string
+    {
         $filename = 'analysis_' . uniqid() . '.mp3';
         $storagePath = $this->config['output']['audio_storage_path'] ?? dirname(__DIR__, 3) . '/storage/audio';
-        
+
         if (!is_dir($storagePath)) {
             mkdir($storagePath, 0755, true);
         }

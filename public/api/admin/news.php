@@ -165,13 +165,32 @@ try {
     $dsn = "mysql:host={$dbConfig['host']};dbname={$dbConfig['dbname']};charset={$dbConfig['charset']}";
     $db = new PDO($dsn, $dbConfig['username'], $dbConfig['password'], [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_TIMEOUT => 10,
+        PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci",
     ]);
 } catch (PDOException $e) {
     http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Database connection failed']);
+    echo json_encode(['success' => false, 'message' => 'Database connection failed: ' . $e->getMessage()]);
     exit;
 }
+
+// ── 컬럼 존재 여부를 한 번만 확인 (SHOW COLUMNS x6 → DESCRIBE x1) ──
+$newsColumns = [];
+try {
+    $colStmt = $db->query("DESCRIBE news");
+    while ($row = $colStmt->fetch()) {
+        $newsColumns[$row['Field']] = true;
+    }
+} catch (Exception $e) {
+    logError('DESCRIBE news failed: ' . $e->getMessage());
+}
+$hasSourceUrl      = isset($newsColumns['source_url']);
+$hasWhyImportant   = isset($newsColumns['why_important']);
+$hasNarration      = isset($newsColumns['narration']);
+$hasOriginalSource = isset($newsColumns['original_source']);
+$hasAuthor         = isset($newsColumns['author']);
+$hasPublishedAt    = isset($newsColumns['published_at']);
 
 $method = $_SERVER['REQUEST_METHOD'];
 
@@ -254,50 +273,21 @@ if ($method === 'POST') {
         logError('Starting database insert process');
         
         // source_url이 있으면 그것을 사용, 없으면 admin:// URL 생성
-        $url = $sourceUrl ? $sourceUrl : 'admin://news/' . uniqid() . '-' . time();
+        // ★ url 컬럼에 UNIQUE(255) 제약이 있으므로 항상 고유하게 생성
+        $url = $sourceUrl ? $sourceUrl : 'admin://news/' . uniqid('', true) . '-' . time();
         
-        // UTF-8 안전한 description 생성 (300자 제한, 문자 기반)
-        $cleanContent = strip_tags($content);
-        $description = '';
-        $charCount = 0;
-        $len = strlen($cleanContent);
-        for ($i = 0; $i < $len && $charCount < 300; ) {
-            $byte = ord($cleanContent[$i]);
-            if ($byte < 128) {
-                // ASCII
-                $description .= $cleanContent[$i];
-                $i++;
-            } elseif (($byte & 0xE0) == 0xC0) {
-                // 2-byte UTF-8
-                $description .= substr($cleanContent, $i, 2);
-                $i += 2;
-            } elseif (($byte & 0xF0) == 0xE0) {
-                // 3-byte UTF-8 (한글 포함)
-                $description .= substr($cleanContent, $i, 3);
-                $i += 3;
-            } elseif (($byte & 0xF8) == 0xF0) {
-                // 4-byte UTF-8
-                $description .= substr($cleanContent, $i, 4);
-                $i += 4;
-            } else {
-                $i++;
+        // ★ 같은 source_url로 이미 저장된 뉴스가 있는지 확인 → 있으면 고유 접미사 추가
+        if ($sourceUrl) {
+            $chk = $db->prepare("SELECT id FROM news WHERE url = ? LIMIT 1");
+            $chk->execute([$url]);
+            if ($chk->fetch()) {
+                // 이미 동일 URL 존재 → 접미사를 붙여 유니크하게
+                $url = $sourceUrl . '#dup-' . uniqid('', true);
             }
-            $charCount++;
         }
         
-        logError('Generated URL and description', [
-            'url_length' => strlen($url),
-            'desc_length' => strlen($description)
-        ]);
-        
-        // source_url 컬럼 존재 여부 확인
-        $hasSourceUrl = false;
-        try {
-            $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'source_url'");
-            $hasSourceUrl = $checkCol->rowCount() > 0;
-        } catch (Exception $e) {
-            logError('Error checking source_url column: ' . $e->getMessage());
-        }
+        // UTF-8 안전한 description 생성 (300자)
+        $description = mb_substr(strip_tags($content), 0, 300, 'UTF-8');
         
         // 이미지 URL: 사용자 지정 URL이 있으면 그것을 사용, 없으면 자동 생성
         $imageUrl = !empty($customImageUrl) ? $customImageUrl : generateImageUrl($title, $category, $imageMap, $categoryDefaults, $defaultImages);
@@ -305,36 +295,7 @@ if ($method === 'POST') {
         // source 값: 원본 출처가 있으면 그것을 사용, 없으면 'Admin'
         $sourceValue = !empty($originalSource) ? $originalSource : 'Admin';
         
-        // 추가 메타데이터 컬럼 존재 여부 확인
-        $hasOriginalSource = false;
-        $hasAuthor = false;
-        $hasPublishedAt = false;
-        try {
-            $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'original_source'");
-            $hasOriginalSource = $checkCol->rowCount() > 0;
-            $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'author'");
-            $hasAuthor = $checkCol->rowCount() > 0;
-            $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'published_at'");
-            $hasPublishedAt = $checkCol->rowCount() > 0;
-        } catch (Exception $e) {
-            logError('Error checking metadata columns: ' . $e->getMessage());
-        }
-        
-        // why_important 컬럼 존재 여부 확인
-        $hasWhyImportant = false;
-        try {
-            $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'why_important'");
-            $hasWhyImportant = $checkCol->rowCount() > 0;
-        } catch (Exception $e) {}
-        
-        // narration 컬럼 존재 여부 확인
-        $hasNarration = false;
-        try {
-            $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'narration'");
-            $hasNarration = $checkCol->rowCount() > 0;
-        } catch (Exception $e) {}
-        
-        logError('Column check results', ['hasSourceUrl' => $hasSourceUrl, 'hasWhyImportant' => $hasWhyImportant, 'hasNarration' => $hasNarration]);
+        // ★ 컬럼 존재 여부는 이미 상단 DESCRIBE에서 한 번만 조회 → SHOW COLUMNS 제거
         
         // 동적 INSERT 쿼리 생성
         $columns = ['category', 'title', 'description', 'content', 'source', 'url', 'image_url', 'created_at'];
@@ -382,9 +343,7 @@ if ($method === 'POST') {
         
         logError('Dynamic INSERT', [
             'columns' => $columnStr,
-            'hasOriginalSource' => $hasOriginalSource,
-            'hasAuthor' => $hasAuthor,
-            'hasPublishedAt' => $hasPublishedAt
+            'url' => mb_substr($url, 0, 80),
         ]);
         
         $stmt = $db->prepare("INSERT INTO news ($columnStr) VALUES ($placeholderStr)");
@@ -406,9 +365,36 @@ if ($method === 'POST') {
             ]
         ]);
     } catch (PDOException $e) {
-        logError('Database error during insert', ['error' => $e->getMessage(), 'code' => $e->getCode()]);
+        $code = $e->getCode();
+        $msg = $e->getMessage();
+        logError('Database error during insert', ['error' => $msg, 'code' => $code]);
+
+        // ★ UNIQUE 제약 위반(23000)이면 재시도 1회
+        if ($code == 23000 || stripos($msg, 'Duplicate') !== false) {
+            try {
+                // url에 타임스탬프 접미사 추가해서 재시도
+                $url .= '#retry-' . uniqid('', true);
+                // values 배열에서 url 위치(인덱스 5) 갱신
+                $values[5] = $url;
+                logError('Retrying INSERT with unique url', ['url' => mb_substr($url, 0, 80)]);
+                $stmt = $db->prepare("INSERT INTO news ($columnStr) VALUES ($placeholderStr)");
+                $stmt->execute($values);
+                $newsId = $db->lastInsertId();
+                logError('Retry insert successful', ['news_id' => $newsId]);
+                http_response_code(201);
+                echo json_encode([
+                    'success' => true,
+                    'message' => '뉴스가 저장되었습니다.',
+                    'data' => ['id' => (int)$newsId, 'category' => $category, 'title' => $title, 'source_url' => $sourceUrl]
+                ]);
+                exit;
+            } catch (PDOException $e2) {
+                logError('Retry also failed', ['error' => $e2->getMessage()]);
+            }
+        }
+
         http_response_code(500);
-        echo json_encode(['success' => false, 'message' => '뉴스 저장 실패: ' . $e->getMessage()]);
+        echo json_encode(['success' => false, 'message' => '뉴스 저장 실패: ' . $msg]);
     } catch (Exception $e) {
         logError('General error during insert', ['error' => $e->getMessage()]);
         http_response_code(500);
@@ -451,41 +437,7 @@ if ($method === 'GET') {
         $stmt->execute($params);
         $total = (int) $stmt->fetchColumn();
         
-        // 뉴스 목록 (LIMIT과 OFFSET은 직접 쿼리에 삽입)
-        // source_url 컬럼 존재 여부 확인
-        $hasSourceUrl = false;
-        try {
-            $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'source_url'");
-            $hasSourceUrl = $checkCol->rowCount() > 0;
-        } catch (Exception $e) {}
-        
-        // why_important 컬럼 존재 여부 확인
-        $hasWhyImportant = false;
-        try {
-            $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'why_important'");
-            $hasWhyImportant = $checkCol->rowCount() > 0;
-        } catch (Exception $e) {}
-        
-        // narration 컬럼 존재 여부 확인
-        $hasNarration = false;
-        try {
-            $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'narration'");
-            $hasNarration = $checkCol->rowCount() > 0;
-        } catch (Exception $e) {}
-        
-        // 추가 메타데이터 컬럼 존재 여부 확인
-        $hasOriginalSource = false;
-        $hasAuthor = false;
-        $hasPublishedAt = false;
-        try {
-            $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'original_source'");
-            $hasOriginalSource = $checkCol->rowCount() > 0;
-            $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'author'");
-            $hasAuthor = $checkCol->rowCount() > 0;
-            $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'published_at'");
-            $hasPublishedAt = $checkCol->rowCount() > 0;
-        } catch (Exception $e) {}
-        
+        // ★ 컬럼 존재 여부는 상단 DESCRIBE에서 이미 조회됨 (SHOW COLUMNS 제거)
         $selectColumns = 'id, category, title, description, content, source, image_url, created_at';
         if ($hasSourceUrl) {
             $selectColumns = 'id, category, title, description, content, source, source_url, image_url, created_at';
@@ -654,27 +606,7 @@ if ($method === 'PUT') {
         // source 값: 원본 출처가 있으면 그것을 사용
         $sourceValue = !empty($originalSource) ? $originalSource : null;
         
-        // 컬럼 존재 여부 확인
-        $hasSourceUrl = false;
-        $hasWhyImportant = false;
-        $hasNarration = false;
-        $hasOriginalSource = false;
-        $hasAuthor = false;
-        $hasPublishedAt = false;
-        try {
-            $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'source_url'");
-            $hasSourceUrl = $checkCol->rowCount() > 0;
-            $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'why_important'");
-            $hasWhyImportant = $checkCol->rowCount() > 0;
-            $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'narration'");
-            $hasNarration = $checkCol->rowCount() > 0;
-            $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'original_source'");
-            $hasOriginalSource = $checkCol->rowCount() > 0;
-            $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'author'");
-            $hasAuthor = $checkCol->rowCount() > 0;
-            $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'published_at'");
-            $hasPublishedAt = $checkCol->rowCount() > 0;
-        } catch (Exception $e) {}
+        // ★ 컬럼 존재 여부는 상단 DESCRIBE에서 이미 조회됨 (SHOW COLUMNS 제거)
         
         // 동적 UPDATE 쿼리 생성
         $setClauses = ['category = ?', 'title = ?', 'description = ?', 'content = ?', 'image_url = ?'];
