@@ -72,7 +72,7 @@ if (!file_exists($configPath)) {
 $config = require $configPath;
 
 // Redirect URI 설정 (프론트엔드 콜백 URL)
-$redirectUri = 'http://ailand.dothome.co.kr/auth/callback';
+$redirectUri = 'https://www.thegist.com/api/auth/kakao/callback';
 
 // 액세스 토큰 요청
 $tokenUrl = $config['oauth']['token_url'];

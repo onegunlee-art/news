@@ -950,10 +950,10 @@ const AdminPage: React.FC = () => {
                     <p className="text-slate-500 text-sm mt-1">{newsNarration.length} / 10,000자</p>
                   </div>
 
-                  {/* Gister 행간 입력 */}
+                  {/* The Gist's Critique 입력 */}
                   <div>
                     <label className="block text-slate-300 mb-2 text-sm font-medium">
-                      <span className="text-amber-400">Gister 행간</span>
+                      <span className="text-amber-400">The Gist's Critique</span>
                       <span className="ml-2 text-xs text-amber-400/70">(붙여넣기 시 자동 정제)</span>
                     </label>
                     <textarea
@@ -965,7 +965,7 @@ const AdminPage: React.FC = () => {
                         const sanitized = sanitizeText(pastedText);
                         setNewsWhyImportant(sanitized);
                       }}
-                      placeholder="Gister 행간을 작성해주세요..."
+                      placeholder="The Gist's Critique를 작성해주세요..."
                       rows={5}
                       className="w-full bg-slate-900/50 border border-amber-700/50 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none transition resize-none"
                     />

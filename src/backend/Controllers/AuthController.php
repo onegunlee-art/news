@@ -208,7 +208,7 @@ final class AuthController
     private function redirectToFrontendWithToken(array $result): Response
     {
         $config = require dirname(__DIR__, 3) . '/config/app.php';
-        $frontendUrl = $config['url'] ?? 'http://ailand.dothome.co.kr';
+        $frontendUrl = $config['url'] ?? 'https://www.thegist.com';
         
         // 토큰을 URL fragment로 전달 (보안상 query string보다 안전)
         $params = http_build_query([
@@ -229,7 +229,7 @@ final class AuthController
     private function redirectToFrontendWithError(string $error): Response
     {
         $config = require dirname(__DIR__, 3) . '/config/app.php';
-        $frontendUrl = $config['url'] ?? 'http://ailand.dothome.co.kr';
+        $frontendUrl = $config['url'] ?? 'https://www.thegist.com';
         
         $redirectUrl = $frontendUrl . '/auth/callback?error=' . urlencode($error);
         
