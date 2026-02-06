@@ -12,7 +12,7 @@ export interface ShareMenuProps {
 }
 
 /** 공유하기 버튼: 클릭 시 링크 복사 / (지원 시) 시스템 공유 메뉴 */
-export default function ShareMenu({ title, description = '', imageUrl, webUrl, className = '', titleAttr = '공유하기' }: ShareMenuProps) {
+export default function ShareMenu({ title, description = '', webUrl, className = '', titleAttr = '공유하기' }: ShareMenuProps) {
   const [open, setOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
