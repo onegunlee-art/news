@@ -33,6 +33,9 @@ if (!$id) {
     exit;
 }
 
+require __DIR__ . '/../lib/auth.php';
+require __DIR__ . '/../lib/log.php';
+
 // 데이터베이스 설정
 $dbConfig = [
     'host' => 'localhost',
@@ -113,6 +116,7 @@ try {
     $news = $stmt->fetch();
     
     if (!$news) {
+        api_log('news/detail', 'GET', 404);
         http_response_code(404);
         echo json_encode(['success' => false, 'message' => '뉴스를 찾을 수 없습니다.']);
         exit;
@@ -139,6 +143,16 @@ try {
         $timeAgo = '방금 전';
     }
     
+    $isBookmarked = false;
+    try {
+        $authUserId = getAuthUserId($db);
+        if ($authUserId !== null) {
+            $chk = $db->prepare("SELECT 1 FROM bookmarks WHERE user_id = ? AND news_id = ?");
+            $chk->execute([$authUserId, $news['id']]);
+            $isBookmarked = (bool) $chk->fetch();
+        }
+    } catch (Exception $e) { /* bookmarks 테이블 없을 수 있음 */ }
+
     // 응답 데이터 구성 (published_at = 기사 등록일로 통일)
     $responseData = [
         'id' => (int)$news['id'],
@@ -152,9 +166,9 @@ try {
         'image_url' => $news['image_url'],
         'published_at' => $dateForDisplay,
         'time_ago' => $timeAgo,
-        'is_bookmarked' => false, // 추후 로그인 사용자용 구현
+        'is_bookmarked' => $isBookmarked,
     ];
-    
+    api_log('news/detail', 'GET', 200);
     echo json_encode([
         'success' => true,
         'message' => '뉴스 조회 성공',
@@ -162,6 +176,7 @@ try {
     ]);
     
 } catch (PDOException $e) {
+    api_log('news/detail', 'GET', 500, $e->getMessage());
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => '데이터베이스 오류: ' . $e->getMessage()]);
 }

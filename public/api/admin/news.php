@@ -7,6 +7,8 @@
  * DELETE: 뉴스 삭제
  */
 
+require __DIR__ . '/../lib/log.php';
+
 // 에러 리포팅 설정 - JSON 응답만 출력하도록
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
@@ -519,7 +521,7 @@ if ($method === 'GET') {
         ");
         $stmt->execute($params);
         $news = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
+        api_log('admin/news', 'GET', 200);
         echo json_encode([
             'success' => true,
             'message' => $query ? '검색 결과' : '뉴스 목록 조회 성공',
@@ -535,6 +537,7 @@ if ($method === 'GET') {
             ]
         ]);
     } catch (PDOException $e) {
+        api_log('admin/news', 'GET', 500, $e->getMessage());
         http_response_code(500);
         echo json_encode(['success' => false, 'message' => '뉴스 조회 실패: ' . $e->getMessage()]);
     }

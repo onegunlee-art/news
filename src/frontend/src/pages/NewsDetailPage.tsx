@@ -89,8 +89,9 @@ export default function NewsDetailPage() {
     try {
       const response = await newsApi.getDetail(newsId)
       if (response.data.success) {
-        setNews(response.data.data)
-        setIsBookmarked(response.data.data.is_bookmarked || false)
+        const d = response.data.data
+        setNews(d)
+        setIsBookmarked(d.is_bookmarked || false)
       }
     } catch (error: any) {
       setError(error.response?.data?.message || '뉴스를 불러올 수 없습니다.')
