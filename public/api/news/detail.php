@@ -2,8 +2,9 @@
 /**
  * 뉴스 상세 조회 API
  * GET: /api/news/detail.php?id=123
- * 
- * why_important 필드를 포함한 뉴스 상세 정보 반환
+ *
+ * 선택 컬럼(DB에 없을 수 있음): why_important, narration, source_url, published_at, original_source, updated_at
+ * 새 선택 컬럼 추가 시 반드시: 1) SHOW COLUMNS 존재 여부 확인 추가 2) $columns 조합에 조건부 추가 3) 응답 data에 조건부 추가
  */
 
 header('Content-Type: application/json; charset=utf-8');
@@ -26,6 +27,17 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 
 // 뉴스 ID 확인
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+// #region agent log
+$debugLogPaths = [__DIR__ . '/debug_detail.log', __DIR__ . '/../../../.cursor/debug.log', __DIR__ . '/../../../storage/logs/debug.log'];
+$debugPayload = function ($location, $message, $data, $hypothesisId) use ($debugLogPaths) {
+    $line = json_encode(['timestamp' => round(microtime(true) * 1000), 'location' => $location, 'message' => $message, 'data' => $data, 'sessionId' => 'debug-session', 'runId' => isset($_GET['runId']) ? $_GET['runId'] : 'run1', 'hypothesisId' => $hypothesisId]) . "\n";
+    foreach ($debugLogPaths as $p) {
+        if (!is_dir(dirname($p))) @mkdir(dirname($p), 0755, true);
+        @file_put_contents($p, $line, FILE_APPEND | LOCK_EX);
+    }
+};
+$debugPayload('detail.php:entry', 'detail API called', ['id' => $id], 'H5');
+// #endregion
 
 if (!$id) {
     http_response_code(400);
@@ -130,10 +142,20 @@ try {
         $columns .= ', original_source';
     }
     
+    // #region agent log
+    $debugPayload('detail.php:columns', 'optional columns built', ['hasWhyImportant' => $hasWhyImportant, 'hasNarration' => $hasNarration, 'hasSourceUrl' => $hasSourceUrl, 'hasPublishedAt' => $hasPublishedAt, 'hasOriginalSource' => $hasOriginalSource, 'hasUpdatedAt' => $hasUpdatedAt, 'columns' => $columns], 'H1');
+    // #endregion
+    
     // 뉴스 조회
+    // #region agent log
+    $debugPayload('detail.php:beforeExecute', 'SELECT about to run', ['id' => $id, 'columns' => $columns], 'H3');
+    // #endregion
     $stmt = $db->prepare("SELECT $columns FROM news WHERE id = ?");
     $stmt->execute([$id]);
     $news = $stmt->fetch();
+    // #region agent log
+    $debugPayload('detail.php:afterFetch', 'SELECT result', ['hasRow' => (bool)$news, 'rowKeys' => $news ? array_keys($news) : null], 'H4');
+    // #endregion
     
     if (!$news) {
         api_log('news/detail', 'GET', 404);
@@ -199,7 +221,13 @@ try {
     ]);
     
 } catch (PDOException $e) {
+    // #region agent log
+    if (isset($debugPayload)) {
+        $debugPayload('detail.php:catch', 'PDOException', ['message' => $e->getMessage(), 'columns' => isset($columns) ? $columns : '(not built)'], 'H3');
+    }
+    // #endregion
     api_log('news/detail', 'GET', 500, $e->getMessage());
     http_response_code(500);
-    echo json_encode(['success' => false, 'message' => '데이터베이스 오류: ' . $e->getMessage()]);
+    // 클라이언트에는 상세 메시지 노출하지 않음 (스키마/테이블 정보 유출 방지)
+    echo json_encode(['success' => false, 'message' => '일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.']);
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { formatSourceDisplayName } from '../utils/formatSource';
@@ -20,6 +20,7 @@ import {
   SpeakerWaveIcon,
   AcademicCapIcon,
 } from '@heroicons/react/24/outline';
+import RichTextToolbar from '../components/Common/RichTextToolbar';
 
 interface DashboardStats {
   totalUsers: number;
@@ -203,6 +204,10 @@ const AdminPage: React.FC = () => {
   const [articleImageUrl, setArticleImageUrl] = useState('');
   const [articleSummary, setArticleSummary] = useState('');
   const [showExtractedInfo, setShowExtractedInfo] = useState(false);
+  const refArticleSummary = useRef<HTMLTextAreaElement>(null);
+  const refNewsContent = useRef<HTMLTextAreaElement>(null);
+  const refNewsNarration = useRef<HTMLTextAreaElement>(null);
+  const refNewsWhyImportant = useRef<HTMLTextAreaElement>(null);
   
   const [stats, setStats] = useState<DashboardStats>({
     totalUsers: 0,
@@ -557,37 +562,9 @@ const AdminPage: React.FC = () => {
 
           {activeTab === 'news' && (
             <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-bold text-white mb-2">뉴스 관리</h2>
-                  <p className="text-slate-400">카테고리별 뉴스를 작성하고 관리하세요</p>
-                </div>
-                <button
-                  onClick={async () => {
-                    if (!confirm('모든 뉴스의 이미지를 관련 키워드 기반으로 업데이트합니다.\n계속하시겠습니까?')) return;
-                    
-                    try {
-                      setSaveMessage({ type: 'success', text: '이미지 업데이트 중...' });
-                      const response = await fetch('/api/admin/update-images.php?action=update_all');
-                      const data = await response.json();
-                      
-                      if (data.success) {
-                        setSaveMessage({ type: 'success', text: `${data.total}개 뉴스 이미지가 업데이트되었습니다!` });
-                        loadNewsList(); // 목록 새로고침
-                      } else {
-                        setSaveMessage({ type: 'error', text: data.error || '업데이트 실패' });
-                      }
-                    } catch (error) {
-                      setSaveMessage({ type: 'error', text: '이미지 업데이트 실패' });
-                    }
-                  }}
-                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:opacity-90 transition"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  이미지 일괄 업데이트
-                </button>
+              <div>
+                <h2 className="text-2xl font-bold text-white mb-2">뉴스 관리</h2>
+                <p className="text-slate-400">카테고리별 뉴스를 작성하고 관리하세요</p>
               </div>
 
               {/* 카테고리 선택 네비게이션 */}
@@ -877,7 +854,9 @@ const AdminPage: React.FC = () => {
                       {/* 요약 */}
                       <div>
                         <label className="block text-slate-400 text-sm mb-1">요약 (Summary)</label>
+                        <RichTextToolbar textareaRef={refArticleSummary} value={articleSummary} onChange={setArticleSummary} />
                         <textarea
+                          ref={refArticleSummary}
                           value={articleSummary}
                           onChange={(e) => setArticleSummary(e.target.value)}
                           placeholder="기사 요약 내용..."
@@ -912,7 +891,9 @@ const AdminPage: React.FC = () => {
                       gpt 요약
                       <span className="ml-2 text-xs text-cyan-400">(붙여넣기 시 자동 정제)</span>
                     </label>
+                    <RichTextToolbar textareaRef={refNewsContent} value={newsContent} onChange={setNewsContent} />
                     <textarea
+                      ref={refNewsContent}
                       value={newsContent}
                       onChange={(e) => setNewsContent(e.target.value)}
                       onPaste={(e) => {
@@ -934,7 +915,9 @@ const AdminPage: React.FC = () => {
                       <span className="text-emerald-400">내레이션 톤</span>
                       <span className="ml-2 text-xs text-emerald-400/70">(붙여넣기 시 자동 정제)</span>
                     </label>
+                    <RichTextToolbar textareaRef={refNewsNarration} value={newsNarration} onChange={setNewsNarration} />
                     <textarea
+                      ref={refNewsNarration}
                       value={newsNarration}
                       onChange={(e) => setNewsNarration(e.target.value)}
                       onPaste={(e) => {
@@ -956,7 +939,9 @@ const AdminPage: React.FC = () => {
                       <span className="text-amber-400">The Gist's Critique</span>
                       <span className="ml-2 text-xs text-amber-400/70">(붙여넣기 시 자동 정제)</span>
                     </label>
+                    <RichTextToolbar textareaRef={refNewsWhyImportant} value={newsWhyImportant} onChange={setNewsWhyImportant} />
                     <textarea
+                      ref={refNewsWhyImportant}
                       value={newsWhyImportant}
                       onChange={(e) => setNewsWhyImportant(e.target.value)}
                       onPaste={(e) => {

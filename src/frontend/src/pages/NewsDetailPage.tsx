@@ -9,6 +9,7 @@ import { useAudioPlayerStore } from '../store/audioPlayerStore'
 import LoadingSpinner from '../components/Common/LoadingSpinner'
 import { getPlaceholderImageUrl } from '../utils/imagePolicy'
 import { formatSourceDisplayName } from '../utils/formatSource'
+import { formatContentHtml } from '../utils/sanitizeHtml'
 
 interface NewsDetail {
   id: number
@@ -322,9 +323,10 @@ export default function NewsDetailPage() {
           {/* 내레이션 (The Gist's Take) - 메인 콘텐츠 */}
           {news.narration && (
             <div className="prose prose-lg max-w-none mb-8">
-              <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                {news.narration}
-              </p>
+              <p
+                className="text-gray-700 leading-relaxed whitespace-pre-wrap [&_mark]:rounded-sm [&_mark]:px-0.5"
+                dangerouslySetInnerHTML={{ __html: formatContentHtml(news.narration) }}
+              />
             </div>
           )}
 
@@ -349,9 +351,10 @@ export default function NewsDetailPage() {
               </button>
               {showGptSummary && (
                 <div className="mt-3 p-4 bg-gray-50 rounded-lg border border-gray-100">
-                  <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">
-                    {news.content}
-                  </p>
+                  <p
+                    className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap [&_mark]:rounded-sm [&_mark]:px-0.5"
+                    dangerouslySetInnerHTML={{ __html: formatContentHtml(news.content) }}
+                  />
                 </div>
               )}
             </div>
@@ -360,7 +363,10 @@ export default function NewsDetailPage() {
           {/* 내레이션이 없고 GPT 요약도 없는 경우: description 표시 */}
           {!news.narration && !news.content && news.description && (
             <div className="prose prose-lg max-w-none mb-8">
-              <p className="text-gray-700 leading-relaxed">{news.description}</p>
+              <p
+                className="text-gray-700 leading-relaxed [&_mark]:rounded-sm [&_mark]:px-0.5"
+                dangerouslySetInnerHTML={{ __html: formatContentHtml(news.description) }}
+              />
             </div>
           )}
 
@@ -373,31 +379,10 @@ export default function NewsDetailPage() {
               >
                 The Gist's Critique
               </h2>
-              <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                {/* 중요 문구 강조 (bold 처리) */}
-                {news.why_important.split(/(\*\*[^*]+\*\*)/).map((part, index) => {
-                  if (part.startsWith('**') && part.endsWith('**')) {
-                    return (
-                      <span key={index} className="font-bold text-gray-900">
-                        {part.slice(2, -2)}
-                      </span>
-                    )
-                  }
-                  // 오렌지 하이라이트 (밑줄 텍스트)
-                  const underlineRegex = /__([^_]+)__/g
-                  const parts = part.split(underlineRegex)
-                  return parts.map((subPart, subIndex) => {
-                    if (subIndex % 2 === 1) {
-                      return (
-                        <span key={`${index}-${subIndex}`} className="text-primary-500 font-medium underline decoration-primary-500">
-                          {subPart}
-                        </span>
-                      )
-                    }
-                    return subPart
-                  })
-                })}
-              </div>
+              <div
+                className="text-gray-700 leading-relaxed whitespace-pre-wrap [&_mark]:rounded-sm [&_mark]:px-0.5"
+                dangerouslySetInnerHTML={{ __html: formatContentHtml(news.why_important) }}
+              />
             </div>
           )}
 
