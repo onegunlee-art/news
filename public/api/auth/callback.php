@@ -14,7 +14,7 @@ if (isset($_GET['error'])) {
     $errorDescription = $_GET['error_description'] ?? '알 수 없는 오류';
     
     // 프론트엔드로 에러 전달
-    $frontendUrl = 'https://www.thegist.com/auth/callback?error=' . urlencode($errorCode) . '&error_description=' . urlencode($errorDescription);
+    $frontendUrl = 'https://www.thegist.co.kr/auth/callback?error=' . urlencode($errorCode) . '&error_description=' . urlencode($errorDescription);
     header('Location: ' . $frontendUrl);
     exit;
 }
@@ -140,7 +140,7 @@ $refreshTokenJwt = base64_encode(json_encode([
 ]));
 
 // 프론트엔드로 리다이렉트 (토큰을 URL 프래그먼트로 전달)
-$frontendUrl = 'https://www.thegist.com/auth/callback';
+$frontendUrl = 'https://www.thegist.co.kr/auth/callback';
 $fragment = http_build_query([
     'access_token' => $accessTokenJwt,
     'refresh_token' => $refreshTokenJwt,

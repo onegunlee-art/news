@@ -1,6 +1,6 @@
 # News 맥락 분석 홈페이지
 
-**공식 사이트**: **https://www.thegist.com**
+**공식 사이트**: **https://www.thegist.co.kr**
 
 Gisters, Becoming Leaders - 키워드 추출, 감정 분석, 맥락 요약
 

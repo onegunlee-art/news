@@ -1,12 +1,12 @@
 # 🚀 배포 가이드
 
-**공식 사이트**: **https://www.thegist.com**
+**공식 사이트**: **https://www.thegist.co.kr**
 
 ## 📋 호스팅 정보 (예: dothome)
 
 | 항목 | 값 |
 |------|-----|
-| 공식 도메인 | www.thegist.com |
+| 공식 도메인 | www.thegist.co.kr |
 | (기존) 도메인 | ailand.dothome.co.kr |
 | FTP 서버 | ftp.dothome.co.kr |
 | FTP 아이디 | ailand |
@@ -144,9 +144,9 @@ GitHub에서 **main 브랜치에 push**하면 자동으로 빌드 후 FTP로 배
 
 배포 완료 후 다음 URL에서 확인:
 
-- 🌐 **메인 페이지**: https://www.thegist.com
-- 🔧 **서버 상태**: https://www.thegist.com/test_connection.php
-- 📊 **API 확인**: https://www.thegist.com/api
+- 🌐 **메인 페이지**: https://www.thegist.co.kr
+- 🔧 **서버 상태**: https://www.thegist.co.kr/test_connection.php
+- 📊 **API 확인**: https://www.thegist.co.kr/api
 - 🗄️ **DB 관리**: (호스팅 제공자 phpMyAdmin 등)
 
 ---

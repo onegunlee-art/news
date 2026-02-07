@@ -176,7 +176,7 @@ jobs:
       - name: Deployment notification
         run: |
           echo "✅ Deployment completed successfully!"
-          echo "🌐 Site URL: http://ailand.dothome.co.kr"
+          echo "🌐 Site URL: https://www.thegist.co.kr"
 
   # ========================================
   # 배포 후 검증 (실패 시 워크플로우 실패)
@@ -187,7 +187,7 @@ jobs:
     needs: deploy
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     env:
-      SITE_URL: http://ailand.dothome.co.kr
+      SITE_URL: https://www.thegist.co.kr
 
     steps:
       - name: Wait for deployment

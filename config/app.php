@@ -17,7 +17,7 @@ return [
     'version' => '1.0.0',
     'env' => getenv('APP_ENV') ?: 'production',
     'debug' => (bool) (getenv('APP_DEBUG') ?: false),
-    'url' => getenv('APP_URL') ?: 'https://www.thegist.com',
+    'url' => getenv('APP_URL') ?: 'https://www.thegist.co.kr',
     'timezone' => 'Asia/Seoul',
     'locale' => 'ko',
     

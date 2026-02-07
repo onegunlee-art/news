@@ -285,12 +285,12 @@ final class AdminController
     public function getSettings(Request $request): Response
     {
         try {
-            $stmt = $this->db->query("SELECT setting_key, setting_value FROM settings");
+            $stmt = $this->db->query("SELECT `key`, `value` FROM settings");
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
             $settings = [];
             foreach ($rows as $row) {
-                $settings[$row['setting_key']] = $row['setting_value'];
+                $settings[$row['key']] = $row['value'];
             }
             
             return Response::success($settings, '설정 조회 성공');
@@ -315,12 +315,13 @@ final class AdminController
         
         try {
             foreach ($settings as $key => $value) {
+                $valueStr = is_scalar($value) ? (string) $value : json_encode($value);
                 $stmt = $this->db->prepare("
-                    INSERT INTO settings (setting_key, setting_value) 
-                    VALUES (?, ?) 
-                    ON DUPLICATE KEY UPDATE setting_value = ?
+                    INSERT INTO settings (`key`, `value`, `type`) 
+                    VALUES (?, ?, 'string') 
+                    ON DUPLICATE KEY UPDATE `value` = ?
                 ");
-                $stmt->execute([$key, $value, $value]);
+                $stmt->execute([$key, $valueStr, $valueStr]);
             }
             
             return Response::success(null, '설정이 저장되었습니다.');

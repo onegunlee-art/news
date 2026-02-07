@@ -21,6 +21,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
+// .env 로드 (GOOGLE_TTS_API_KEY 등)
+$projectRoot = __DIR__ . '/../../../';
+$envFile = $projectRoot . '.env';
+if (is_file($envFile) && is_readable($envFile)) {
+    foreach (file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
+        $line = trim($line);
+        if ($line === '' || $line[0] === '#') continue;
+        if (strpos($line, '=') !== false) {
+            [$name, $value] = explode('=', $line, 2);
+            $name = trim($name);
+            $value = trim($value, " \t\"'");
+            if ($name !== '') {
+                putenv("$name=$value");
+                $_ENV[$name] = $value;
+            }
+        }
+    }
+}
+
 // Agent System 로드
 require_once __DIR__ . '/../../../src/agents/autoload.php';
 
@@ -42,20 +61,27 @@ function sendError($message, $status = 400) {
 // URL 분석 실행
 function analyzeUrl(string $url, array $options = []): array {
     $startTime = microtime(true);
-    
-    // Pipeline 설정
+
+    $projectRoot = __DIR__ . '/../../../';
+    $googleTtsConfig = file_exists($projectRoot . 'config/google_tts.php')
+        ? require $projectRoot . 'config/google_tts.php'
+        : [];
+    $ttsVoice = $googleTtsConfig['default_voice'] ?? 'ko-KR-Standard-A';
+
     $pipelineConfig = [
         'openai' => [],
         'enable_interpret' => $options['enable_interpret'] ?? true,
         'enable_learning' => $options['enable_learning'] ?? true,
+        'google_tts' => $googleTtsConfig,
         'analysis' => [
             'enable_tts' => $options['enable_tts'] ?? false,
             'summary_length' => 3,
-            'key_points_count' => 3
+            'key_points_count' => 3,
+            'tts_voice' => $ttsVoice,
         ],
         'stop_on_failure' => true
     ];
-    
+
     $pipeline = new AgentPipeline($pipelineConfig);
     $pipeline->setupDefaultPipeline();
     

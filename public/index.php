@@ -41,6 +41,26 @@ if (empty($_SERVER['HTTP_AUTHORIZATION'])) {
 // 프로젝트 루트 (배포 시 __DIR__에 config·src가 있음, 로컬은 상위)
 $projectRoot = file_exists(__DIR__ . '/config/routes.php') ? __DIR__ : dirname(__DIR__);
 
+// .env 로드 (GOOGLE_TTS_API_KEY 등 - getenv() 사용 전에 실행)
+$envFile = $projectRoot . '/.env';
+if (is_file($envFile) && is_readable($envFile)) {
+    foreach (file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
+        $line = trim($line);
+        if ($line === '' || $line[0] === '#') {
+            continue;
+        }
+        if (strpos($line, '=') !== false) {
+            [$name, $value] = explode('=', $line, 2);
+            $name = trim($name);
+            $value = trim($value, " \t\"'");
+            if ($name !== '') {
+                putenv("$name=$value");
+                $_ENV[$name] = $value;
+            }
+        }
+    }
+}
+
 // Autoloader 설정
 spl_autoload_register(function (string $class) use ($projectRoot): void {
     $prefix = 'App\\';

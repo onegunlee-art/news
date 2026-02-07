@@ -61,7 +61,7 @@ const KAKAO_JAVASCRIPT_KEY = import.meta.env.VITE_KAKAO_JAVASCRIPT_KEY || '';
 // Redirect URI (프론트엔드 콜백 URL)
 // 카카오 개발자 콘솔에 등록된 URI와 정확히 일치해야 합니다
 const REDIRECT_URI = import.meta.env.VITE_KAKAO_REDIRECT_URI ||
-  'https://www.thegist.com/api/auth/kakao/callback';
+  'https://www.thegist.co.kr/api/auth/kakao/callback';
 
 /**
  * 카카오 SDK 동적 로드

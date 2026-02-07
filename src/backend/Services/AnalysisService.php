@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Core\Database;
 use App\Interfaces\AnalysisInterface;
 use App\Models\Analysis;
 use App\Repositories\AnalysisRepository;
@@ -392,15 +393,22 @@ final class AnalysisService implements AnalysisInterface
 
         $startTime = microtime(true);
 
-        // Agent Pipeline 생성 및 설정
+        $projectRoot = dirname(__DIR__, 3);
+        $googleTtsConfig = file_exists($projectRoot . '/config/google_tts.php')
+            ? require $projectRoot . '/config/google_tts.php'
+            : [];
+        $ttsVoice = $this->getSetting('tts_voice') ?? $googleTtsConfig['default_voice'] ?? 'ko-KR-Standard-A';
+
         $pipelineConfig = [
             'openai' => $options['openai'] ?? [],
             'enable_interpret' => $options['enable_interpret'] ?? true,
             'enable_learning' => $options['enable_learning'] ?? true,
+            'google_tts' => $googleTtsConfig,
             'analysis' => [
                 'enable_tts' => $options['enable_tts'] ?? false,
                 'summary_length' => $options['summary_length'] ?? 3,
-                'key_points_count' => $options['key_points_count'] ?? 3
+                'key_points_count' => $options['key_points_count'] ?? 3,
+                'tts_voice' => $ttsVoice,
             ],
             'stop_on_failure' => true
         ];
@@ -576,5 +584,21 @@ final class AnalysisService implements AnalysisInterface
         }
         
         return min($score, 1.0);
+    }
+
+    /**
+     * settings 테이블에서 단일 설정값 조회
+     */
+    private function getSetting(string $key): ?string
+    {
+        try {
+            $db = Database::getInstance();
+            $stmt = $db->prepare("SELECT `value` FROM settings WHERE `key` = ?");
+            $stmt->execute([$key]);
+            $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+            return $row ? (string) $row['value'] : null;
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 }

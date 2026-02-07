@@ -24,19 +24,22 @@ use Agents\Models\AgentResult;
 use Agents\Models\ArticleData;
 use Agents\Models\AnalysisResult;
 use Agents\Services\OpenAIService;
+use Agents\Services\GoogleTTSService;
 
 class AnalysisAgent extends BaseAgent
 {
     private int $summaryLength = 3; // 문장 수
     private int $keyPointsCount = 3;
     private bool $enableTTS = true;
+    private ?GoogleTTSService $googleTts = null;
 
-    public function __construct(OpenAIService $openai, array $config = [])
+    public function __construct(OpenAIService $openai, array $config = [], ?GoogleTTSService $googleTts = null)
     {
         parent::__construct($openai, $config);
         $this->summaryLength = $config['summary_length'] ?? 3;
         $this->keyPointsCount = $config['key_points_count'] ?? 3;
         $this->enableTTS = $config['enable_tts'] ?? true;
+        $this->googleTts = $googleTts;
     }
 
     /**
@@ -244,11 +247,16 @@ PROMPT;
      */
     private function generateTTS(AnalysisResult $analysis): string
     {
-        // TTS용 텍스트 생성
         $ttsText = $this->buildTTSText($analysis);
-        
+
         try {
-            $audioUrl = $this->openai->textToSpeech($ttsText);
+            if ($this->googleTts !== null) {
+                $voice = $this->config['tts_voice'] ?? null;
+                $options = $voice !== null ? ['voice' => $voice] : [];
+                $audioUrl = $this->googleTts->textToSpeech($ttsText, $options);
+            } else {
+                $audioUrl = $this->openai->textToSpeech($ttsText);
+            }
             return $audioUrl ?? '';
         } catch (\Exception $e) {
             $this->log("TTS generation failed: " . $e->getMessage(), 'warning');

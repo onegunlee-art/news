@@ -21,6 +21,23 @@ import {
   AcademicCapIcon,
 } from '@heroicons/react/24/outline';
 import RichTextToolbar from '../components/Common/RichTextToolbar';
+import { adminSettingsApi } from '../services/api';
+
+/** Google TTS 한국어 보이스 목록 (Admin에서 선택용) */
+const GOOGLE_TTS_VOICES = [
+  { value: 'ko-KR-Standard-A', label: 'Standard A (여성)' },
+  { value: 'ko-KR-Standard-B', label: 'Standard B (남성)' },
+  { value: 'ko-KR-Standard-C', label: 'Standard C (여성)' },
+  { value: 'ko-KR-Standard-D', label: 'Standard D (남성)' },
+  { value: 'ko-KR-Wavenet-A', label: 'Wavenet A (여성)' },
+  { value: 'ko-KR-Wavenet-B', label: 'Wavenet B (남성)' },
+  { value: 'ko-KR-Wavenet-C', label: 'Wavenet C (여성)' },
+  { value: 'ko-KR-Wavenet-D', label: 'Wavenet D (남성)' },
+  { value: 'ko-KR-Neural2-A', label: 'Neural2 A (여성)' },
+  { value: 'ko-KR-Neural2-B', label: 'Neural2 B (남성)' },
+  { value: 'ko-KR-Neural2-C', label: 'Neural2 C (여성)' },
+  { value: 'ko-KR-Neural2-D', label: 'Neural2 D (남성)' },
+];
 
 interface DashboardStats {
   totalUsers: number;
@@ -117,6 +134,41 @@ const AdminPage: React.FC = () => {
   const [learnedPatterns, setLearnedPatterns] = useState<any>(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [speechRate, setSpeechRate] = useState(1.2); // 기본: 약간 빠름
+
+  // Admin 설정 (TTS Voice)
+  const [ttsVoice, setTtsVoice] = useState<string>('ko-KR-Standard-A');
+  const [settingsLoading, setSettingsLoading] = useState(false);
+  const [settingsSaving, setSettingsSaving] = useState(false);
+  const [settingsError, setSettingsError] = useState<string | null>(null);
+
+  // 설정 탭 활성 시 설정 로드
+  useEffect(() => {
+    if (activeTab !== 'settings') return;
+    setSettingsLoading(true);
+    setSettingsError(null);
+    adminSettingsApi
+      .getSettings()
+      .then((res) => {
+        if (res.data?.success && res.data?.data) {
+          const v = res.data.data.tts_voice;
+          if (v && GOOGLE_TTS_VOICES.some((o) => o.value === v)) setTtsVoice(v);
+        }
+      })
+      .catch((err) => setSettingsError(err.response?.data?.message || '설정을 불러올 수 없습니다.'))
+      .finally(() => setSettingsLoading(false));
+  }, [activeTab]);
+
+  const saveTtsVoice = () => {
+    setSettingsSaving(true);
+    setSettingsError(null);
+    adminSettingsApi
+      .updateSettings({ tts_voice: ttsVoice })
+      .then(() => {
+        setSettingsError(null);
+      })
+      .catch((err) => setSettingsError(err.response?.data?.message || '저장에 실패했습니다.'))
+      .finally(() => setSettingsSaving(false));
+  };
 
   // TTS 음성 읽기 함수
   const speakText = (text: string) => {
@@ -1619,6 +1671,44 @@ const AdminPage: React.FC = () => {
           {activeTab === 'settings' && (
             <div className="space-y-6">
               <h2 className="text-2xl font-bold text-white">설정</h2>
+
+              {/* TTS / Voice */}
+              <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 space-y-4">
+                <h3 className="text-lg font-semibold text-slate-200">TTS / Voice</h3>
+                <p className="text-slate-400 text-sm">분석 결과 음성 읽기에 사용할 Google TTS 보이스를 선택하세요.</p>
+                {settingsLoading ? (
+                  <p className="text-slate-400">설정 불러오는 중...</p>
+                ) : (
+                  <>
+                    <div>
+                      <label className="block text-slate-300 mb-2">보이스</label>
+                      <select
+                        value={ttsVoice}
+                        onChange={(e) => setTtsVoice(e.target.value)}
+                        className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-cyan-500"
+                      >
+                        {GOOGLE_TTS_VOICES.map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    {settingsError && (
+                      <p className="text-red-400 text-sm">{settingsError}</p>
+                    )}
+                    <button
+                      type="button"
+                      onClick={saveTtsVoice}
+                      disabled={settingsSaving}
+                      className="bg-gradient-to-r from-cyan-500 to-emerald-500 text-white px-6 py-2 rounded-lg hover:opacity-90 transition disabled:opacity-50"
+                    >
+                      {settingsSaving ? '저장 중...' : 'Voice 설정 저장'}
+                    </button>
+                  </>
+                )}
+              </div>
+
               <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 space-y-4">
                 <div>
                   <label className="block text-slate-300 mb-2">NYT API Key</label>

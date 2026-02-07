@@ -27,6 +27,7 @@ use Agents\Agents\AnalysisAgent;
 use Agents\Agents\InterpretAgent;
 use Agents\Agents\LearningAgent;
 use Agents\Services\OpenAIService;
+use Agents\Services\GoogleTTSService;
 use Agents\Services\WebScraperService;
 
 class AgentPipeline
@@ -56,8 +57,11 @@ class AgentPipeline
         $scraper = new WebScraperService($this->config['scraper'] ?? []);
         $this->addAgent(new ValidationAgent($this->openai, $scraper, $this->config['validation'] ?? []));
 
-        // 2. Analysis Agent
-        $this->addAgent(new AnalysisAgent($this->openai, $this->config['analysis'] ?? []));
+        // 2. Analysis Agent (Google TTS 사용 시 주입)
+        $googleTts = isset($this->config['google_tts']) && is_array($this->config['google_tts'])
+            ? new GoogleTTSService($this->config['google_tts'])
+            : null;
+        $this->addAgent(new AnalysisAgent($this->openai, $this->config['analysis'] ?? [], $googleTts));
 
         // 3. Interpret Agent (옵션)
         if ($this->config['enable_interpret'] ?? true) {

@@ -3,7 +3,7 @@
  * 기존 기사 썸네일 일괄 갱신 (한 번 실행용)
  *
  * 브라우저에서 아래 주소로 접속하면 전체 기사 사진이 새 규칙으로 바뀝니다.
- * https://www.thegist.com/run-thumbnail-update.php?run=1
+ * https://www.thegist.co.kr/run-thumbnail-update.php?run=1
  *
  * 실행 후 보안을 위해 이 파일을 삭제하세요.
  */

@@ -63,6 +63,7 @@ $coreFiles = [
     __DIR__ . '/models/ArticleData.php',
     __DIR__ . '/models/AnalysisResult.php',
     __DIR__ . '/services/OpenAIService.php',
+    __DIR__ . '/services/GoogleTTSService.php',
     __DIR__ . '/services/WebScraperService.php',
     __DIR__ . '/agents/ValidationAgent.php',
     __DIR__ . '/agents/AnalysisAgent.php',

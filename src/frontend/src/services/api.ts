@@ -117,6 +117,13 @@ export const analysisApi = {
     api.get('/analysis/user/history', { params: { page, per_page: perPage } }),
 }
 
+/** Admin 설정 (Router: GET/PUT /api/admin/settings) */
+export const adminSettingsApi = {
+  getSettings: () => api.get<{ success: boolean; data: Record<string, string> }>('/admin/settings'),
+  updateSettings: (settings: Record<string, string>) =>
+    api.put('/admin/settings', settings),
+}
+
 export const authApi = {
   /** 이메일/비밀번호 로그인 */
   login: (email: string, password: string) =>

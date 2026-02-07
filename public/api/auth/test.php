@@ -295,7 +295,7 @@ $loginUrl = $kakaoConfig['oauth']['authorize_url'] . '?' . http_build_query([
                         <pre style="background:#1a1a2e; padding:12px; border-radius:8px; margin-top:8px; overflow-x:auto;">
 'rest_api_key' => 'YOUR_REST_API_KEY_HERE',</pre>
                     </li>
-                    <li>플랫폼 → Web → 사이트 도메인 추가: <code>https://www.thegist.com</code></li>
+                    <li>플랫폼 → Web → 사이트 도메인 추가: <code>https://www.thegist.co.kr</code></li>
                     <li>카카오 로그인 → 활성화 설정: ON</li>
                     <li>Redirect URI 등록: <code><?= htmlspecialchars($redirectUri) ?></code></li>
                     <li>동의항목 → 필수 항목 설정</li>
