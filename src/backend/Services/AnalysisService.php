@@ -593,9 +593,7 @@ final class AnalysisService implements AnalysisInterface
     {
         try {
             $db = Database::getInstance();
-            $stmt = $db->prepare("SELECT `value` FROM settings WHERE `key` = ?");
-            $stmt->execute([$key]);
-            $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+            $row = $db->fetchOne("SELECT `value` FROM settings WHERE `key` = ?", [$key]);
             return $row ? (string) $row['value'] : null;
         } catch (\Throwable $e) {
             return null;

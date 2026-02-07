@@ -33,7 +33,7 @@ final class AdminController
     public function __construct()
     {
         $this->authService = new AuthService();
-        $this->db = Database::getInstance();
+        $this->db = Database::getInstance()->getConnection();
     }
 
     /**
