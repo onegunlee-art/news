@@ -140,6 +140,7 @@ const AdminPage: React.FC = () => {
   const [settingsLoading, setSettingsLoading] = useState(false);
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [settingsError, setSettingsError] = useState<string | null>(null);
+  const [settingsSuccess, setSettingsSuccess] = useState<string | null>(null);
 
   // 설정 탭 활성 시 설정 로드
   useEffect(() => {
@@ -161,10 +162,13 @@ const AdminPage: React.FC = () => {
   const saveTtsVoice = () => {
     setSettingsSaving(true);
     setSettingsError(null);
+    setSettingsSuccess(null);
     adminSettingsApi
       .updateSettings({ tts_voice: ttsVoice })
       .then(() => {
         setSettingsError(null);
+        setSettingsSuccess('보이스 설정이 저장되었습니다. 다음 AI 분석부터 적용됩니다.');
+        setTimeout(() => setSettingsSuccess(null), 4000);
       })
       .catch((err) => setSettingsError(err.response?.data?.message || '저장에 실패했습니다.'))
       .finally(() => setSettingsSaving(false));
@@ -1696,6 +1700,9 @@ const AdminPage: React.FC = () => {
                     </div>
                     {settingsError && (
                       <p className="text-red-400 text-sm">{settingsError}</p>
+                    )}
+                    {settingsSuccess && (
+                      <p className="text-emerald-400 text-sm">{settingsSuccess}</p>
                     )}
                     <button
                       type="button"

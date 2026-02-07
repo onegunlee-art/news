@@ -67,6 +67,21 @@ function analyzeUrl(string $url, array $options = []): array {
         ? require $projectRoot . 'config/google_tts.php'
         : [];
     $ttsVoice = $googleTtsConfig['default_voice'] ?? 'ko-KR-Standard-A';
+    // Admin에서 저장한 보이스 사용 (DB에서 조회)
+    if (file_exists($projectRoot . 'src/backend/Core/Database.php')) {
+        require_once $projectRoot . 'src/backend/Core/Database.php';
+        try {
+            $db = \App\Core\Database::getInstance()->getConnection();
+            $stmt = $db->prepare("SELECT `value` FROM settings WHERE `key` = ?");
+            $stmt->execute(['tts_voice']);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($row && $row['value'] !== '') {
+                $ttsVoice = $row['value'];
+            }
+        } catch (Throwable $e) {
+            // DB 조회 실패 시 config 기본값 유지
+        }
+    }
 
     $pipelineConfig = [
         'openai' => [],
