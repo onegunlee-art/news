@@ -83,83 +83,8 @@ $dbConfig = [
     'charset' => 'utf8mb4'
 ];
 
-// 고정 이미지 URL 매핑 (Wikimedia Commons / Public Domain / Unsplash)
-$imageMap = [
-    // 실제 정치인 사진 (Wikimedia Commons - Public Domain / CC)
-    'trump' => ['https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Donald_Trump_official_portrait.jpg/800px-Donald_Trump_official_portrait.jpg'],
-    '트럼프' => ['https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Donald_Trump_official_portrait.jpg/800px-Donald_Trump_official_portrait.jpg'],
-    'biden' => ['https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/Joe_Biden_presidential_portrait.jpg/800px-Joe_Biden_presidential_portrait.jpg'],
-    '바이든' => ['https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/Joe_Biden_presidential_portrait.jpg/800px-Joe_Biden_presidential_portrait.jpg'],
-    'putin' => ['https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/Vladimir_Putin_%282020-02-20%29.jpg/800px-Vladimir_Putin_%282020-02-20%29.jpg'],
-    '푸틴' => ['https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/Vladimir_Putin_%282020-02-20%29.jpg/800px-Vladimir_Putin_%282020-02-20%29.jpg'],
-    '시진핑' => ['https://upload.wikimedia.org/wikipedia/commons/thumb/3/32/Xi_Jinping_2019.jpg/800px-Xi_Jinping_2019.jpg'],
-    'xi' => ['https://upload.wikimedia.org/wikipedia/commons/thumb/3/32/Xi_Jinping_2019.jpg/800px-Xi_Jinping_2019.jpg'],
-    '윤석열' => ['https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Yoon_Suk-yeol_May_2022.jpg/800px-Yoon_Suk-yeol_May_2022.jpg'],
-    '김정은' => ['https://upload.wikimedia.org/wikipedia/commons/thumb/2/21/Kim_Jong-un_at_the_2019_Russia%E2%80%93North_Korea_summit_%28cropped%29.jpg/800px-Kim_Jong-un_at_the_2019_Russia%E2%80%93North_Korea_summit_%28cropped%29.jpg'],
-    '머스크' => ['https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/Elon_Musk_Royal_Society_%28crop2%29.jpg/800px-Elon_Musk_Royal_Society_%28crop2%29.jpg'],
-    'musk' => ['https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/Elon_Musk_Royal_Society_%28crop2%29.jpg/800px-Elon_Musk_Royal_Society_%28crop2%29.jpg'],
-    'elon' => ['https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/Elon_Musk_Royal_Society_%28crop2%29.jpg/800px-Elon_Musk_Royal_Society_%28crop2%29.jpg'],
-    // 지역/장소
-    'greenland' => ['https://images.unsplash.com/photo-1517783999520-f068f9e28a51?w=800&h=500&fit=crop'],
-    '그린란드' => ['https://images.unsplash.com/photo-1517783999520-f068f9e28a51?w=800&h=500&fit=crop'],
-    // 기술/AI
-    'openai' => ['https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=500&fit=crop'],
-    'ai' => ['https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=500&fit=crop'],
-    '인공지능' => ['https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=500&fit=crop'],
-    // 엔터테인먼트
-    'k-pop' => ['https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=500&fit=crop'],
-    'kpop' => ['https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=500&fit=crop'],
-    '케이팝' => ['https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=500&fit=crop'],
-    // 경제
-    '경제' => ['https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&h=500&fit=crop'],
-    '주식' => ['https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&h=500&fit=crop'],
-    '비트코인' => ['https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=800&h=500&fit=crop'],
-    '반도체' => ['https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&h=500&fit=crop'],
-    // 외교
-    '외교' => ['https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=800&h=500&fit=crop'],
-    '한미' => ['https://images.unsplash.com/photo-1508433957232-3107f5fd5995?w=800&h=500&fit=crop'],
-    // 기타
-    '구독자' => ['https://images.unsplash.com/photo-1533227268428-f9ed0900fb3b?w=800&h=500&fit=crop'],
-    '축하' => ['https://images.unsplash.com/photo-1533227268428-f9ed0900fb3b?w=800&h=500&fit=crop'],
-    '테스트' => ['https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&h=500&fit=crop'],
-    '광고' => ['https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800&h=500&fit=crop'],
-];
-
-$categoryDefaults = [
-    'diplomacy' => ['https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&h=500&fit=crop'],
-    'economy' => ['https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&h=500&fit=crop'],
-    'technology' => ['https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&h=500&fit=crop'],
-    'entertainment' => ['https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=500&fit=crop'],
-];
-
-$defaultImages = [
-    'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&h=500&fit=crop',
-    'https://images.unsplash.com/photo-1495020689067-958852a7765e?w=800&h=500&fit=crop',
-];
-
-// 고정 이미지 URL 생성 함수
-function generateImageUrl($title, $category, $imageMap, $categoryDefaults, $defaultImages) {
-    $titleLower = strtolower($title);
-    
-    // 1. 제목에서 키워드 매칭
-    foreach ($imageMap as $keyword => $urls) {
-        if (strpos($titleLower, strtolower($keyword)) !== false) {
-            $index = abs(crc32($title)) % count($urls);
-            return $urls[$index];
-        }
-    }
-    
-    // 2. 카테고리 기반
-    $cat = strtolower($category ?? '');
-    if (isset($categoryDefaults[$cat])) {
-        $urls = $categoryDefaults[$cat];
-        return $urls[0];
-    }
-    
-    // 3. 기본 이미지
-    $index = abs(crc32($title)) % count($defaultImages);
-    return $defaultImages[$index];
-}
+// 이미지 매핑 통합 파일 + API 검색 로직 로드
+require_once __DIR__ . '/../lib/imageSearch.php';
 
 try {
     $dsn = "mysql:host={$dbConfig['host']};dbname={$dbConfig['dbname']};charset={$dbConfig['charset']}";
@@ -290,7 +215,7 @@ if ($method === 'POST') {
         $description = mb_substr(strip_tags($content), 0, 300, 'UTF-8');
         
         // 이미지 URL: 사용자 지정 URL이 있으면 그것을 사용, 없으면 자동 생성
-        $imageUrl = !empty($customImageUrl) ? $customImageUrl : generateImageUrl($title, $category, $imageMap, $categoryDefaults, $defaultImages);
+        $imageUrl = !empty($customImageUrl) ? $customImageUrl : smartImageUrl($title, $category, $db);
         
         // source 값: 원본 출처가 있으면 그것을 사용, 없으면 'Admin'
         $sourceValue = !empty($originalSource) ? $originalSource : 'Admin';
@@ -601,7 +526,7 @@ if ($method === 'PUT') {
         }
         
         // 이미지 URL: 사용자 지정 URL이 있으면 그것을 사용, 없으면 자동 생성
-        $imageUrl = !empty($customImageUrl) ? $customImageUrl : generateImageUrl($title, $category, $imageMap, $categoryDefaults, $defaultImages);
+        $imageUrl = !empty($customImageUrl) ? $customImageUrl : smartImageUrl($title, $category, $db);
         
         // source 값: 원본 출처가 있으면 그것을 사용
         $sourceValue = !empty($originalSource) ? $originalSource : null;
