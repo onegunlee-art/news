@@ -129,21 +129,38 @@ function SearchArticleCard({ article }: { article: NewsItem }) {
     return formatSourceDisplayName(raw) || 'The Gist'
   }
 
-  const handlePlayAudio = (e: React.MouseEvent) => {
+  // 오디오 재생: 기사 상세를 먼저 가져와서 내레이션 + The Gist's Critique 전부 읽기
+  const handlePlayAudio = async (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
+    const newsId = article.id
+    if (!newsId) return
+
+    addAudioItem({
+      id: Number(newsId),
+      title: article.title,
+      description: article.description ?? null,
+      source: article.source ?? null,
+    })
+
+    try {
+      const res = await newsApi.getDetail(Number(newsId))
+      const detail = res.data?.data
+      if (detail) {
+        const parts: string[] = [detail.title || article.title]
+        const mainContent = detail.narration || detail.content || detail.description || article.description || ''
+        if (mainContent) parts.push(mainContent)
+        if (detail.why_important) parts.push("The Gist's Critique.", detail.why_important)
+        const fullText = parts.join(' ').trim()
+        const img = detail.image_url || article.image_url || ''
+        openAndPlay(article.title, fullText, 1.0, img)
+        return
+      }
+    } catch { /* fallback */ }
+
+    // fallback: 상세 못 가져오면 기존 방식
     const text = `${article.title}. ${article.description || ''}`.trim()
-    if (!text) return
-    const idForList = article.id
-    if (idForList) {
-      addAudioItem({
-        id: Number(idForList),
-        title: article.title,
-        description: article.description ?? null,
-        source: article.source ?? null,
-      })
-    }
-    openAndPlay(article.title, text, 1.0)
+    if (text) openAndPlay(article.title, text, 1.0)
   }
 
   const shareWebUrl = `${window.location.origin}/news/${article.id}`
