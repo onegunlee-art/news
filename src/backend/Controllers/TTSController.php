@@ -28,6 +28,9 @@ final class TTSController
      */
     public function generate(Request $request): Response
     {
+        // 여러 청크 합성 시 시간이 오래 걸릴 수 있으므로 제한 해제
+        set_time_limit(300);
+
         $body = $request->json();
         $text = isset($body['text']) ? trim((string) $body['text']) : '';
 

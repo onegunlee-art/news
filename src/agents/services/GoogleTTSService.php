@@ -2,7 +2,8 @@
 /**
  * Google Cloud Text-to-Speech Service
  *
- * Google TTS REST API 연동. 텍스트를 MP3 오디오로 변환 후 저장하고 URL 반환.
+ * Google TTS REST API 연동. 텍스트를 오디오로 변환 후 저장하고 URL 반환.
+ * 긴 텍스트는 청크 분할 → LINEAR16(PCM) 수신 → 연결 → WAV 파일 저장.
  *
  * @package Agents\Services
  */
@@ -14,13 +15,23 @@ namespace Agents\Services;
 class GoogleTTSService
 {
     private const SYNTHESIZE_URL = 'https://texttospeech.googleapis.com/v1/text:synthesize';
-    /** 요청당 최대 텍스트 바이트 수 (Google 제한 5000, 여유 두고 4500) */
-    private const MAX_INPUT_BYTES = 4500;
+
+    /**
+     * Google TTS 요청당 최대 텍스트 바이트 수.
+     * Google 공식 제한 5000바이트, 여유 두고 4800.
+     */
+    private const MAX_INPUT_BYTES = 4800;
+
+    /** LINEAR16 샘플 레이트 (Hz) */
+    private const SAMPLE_RATE = 24000;
+    /** LINEAR16 비트 깊이 */
+    private const BITS_PER_SAMPLE = 16;
+    /** 모노 채널 */
+    private const NUM_CHANNELS = 1;
 
     private string $apiKey;
     private string $defaultVoice;
     private string $languageCode;
-    private string $audioEncoding;
     private int $timeout;
     private string $audioStoragePath;
 
@@ -35,25 +46,17 @@ class GoogleTTSService
         $this->apiKey = $merged['api_key'] ?? '';
         $this->defaultVoice = $merged['default_voice'] ?? 'ko-KR-Standard-A';
         $this->languageCode = $merged['language_code'] ?? 'ko-KR';
-        $this->audioEncoding = $merged['audio_encoding'] ?? 'MP3';
-        $this->timeout = (int) ($merged['timeout'] ?? 30);
+        $this->timeout = (int) ($merged['timeout'] ?? 60);
         $this->audioStoragePath = $merged['audio_storage_path'] ?? $projectRoot . '/storage/audio';
     }
 
-    /**
-     * API 키 설정 여부
-     */
     public function isConfigured(): bool
     {
         return $this->apiKey !== '';
     }
 
     /**
-     * TTS 생성: 텍스트를 오디오로 변환 후 저장하고 URL 반환.
-     *
-     * @param string $text 변환할 텍스트
-     * @param array $options ['voice' => string (보이스명)]
-     * @return string|null 오디오 URL 또는 실패 시 null
+     * TTS 생성: 텍스트 → WAV 오디오 파일 URL
      */
     public function textToSpeech(string $text, array $options = []): ?string
     {
@@ -68,7 +71,7 @@ class GoogleTTSService
         }
 
         try {
-            return $this->callTTSApi($text, $options);
+            return $this->generateAudio($text, $options);
         } catch (\Throwable $e) {
             error_log('Google TTS error: ' . $e->getMessage());
             return null;
@@ -76,30 +79,31 @@ class GoogleTTSService
     }
 
     /**
-     * API 호출 (긴 텍스트는 청크 분할 후 병합)
+     * 텍스트를 청크로 분할 → 각 청크를 LINEAR16(PCM)으로 합성 → 연결 → WAV 파일 저장
      */
-    private function callTTSApi(string $text, array $options): string
+    private function generateAudio(string $text, array $options): string
     {
         $voice = $options['voice'] ?? $this->defaultVoice;
-        $lenBytes = strlen($text);
+        $chunks = $this->splitText($text);
 
-        if ($lenBytes <= self::MAX_INPUT_BYTES) {
-            $audioData = $this->synthesizeChunk($text, $voice);
-            return $this->saveAudioFile($audioData);
+        error_log("[GoogleTTS] voice={$voice}, chunks=" . count($chunks) . ", totalBytes=" . strlen($text));
+
+        $pcmData = '';
+        foreach ($chunks as $i => $chunk) {
+            error_log("[GoogleTTS] Synthesizing chunk " . ($i + 1) . "/" . count($chunks) . " (" . strlen($chunk) . " bytes)");
+            $pcmData .= $this->synthesizeChunkLinear16($chunk, $voice);
         }
 
-        $chunks = $this->splitTextForTTS($text, self::MAX_INPUT_BYTES);
-        $audioParts = [];
-        foreach ($chunks as $chunk) {
-            $audioParts[] = $this->synthesizeChunk($chunk, $voice);
-        }
-        return $this->saveAudioFile(implode('', $audioParts));
+        // PCM 데이터에 WAV 헤더를 붙여서 완전한 WAV 파일 생성
+        $wavData = $this->createWavFile($pcmData);
+
+        return $this->saveFile($wavData, 'wav');
     }
 
     /**
-     * 단일 청크 synthesize 요청 후 바이너리 오디오 반환
+     * 단일 청크를 LINEAR16(PCM)으로 합성하여 raw PCM 바이트 반환
      */
-    private function synthesizeChunk(string $text, string $voiceName): string
+    private function synthesizeChunkLinear16(string $text, string $voiceName): string
     {
         $payload = [
             'input' => ['text' => $text],
@@ -108,7 +112,8 @@ class GoogleTTSService
                 'name' => $voiceName,
             ],
             'audioConfig' => [
-                'audioEncoding' => $this->audioEncoding,
+                'audioEncoding' => 'LINEAR16',
+                'sampleRateHertz' => self::SAMPLE_RATE,
             ],
         ];
 
@@ -124,10 +129,18 @@ class GoogleTTSService
 
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch);
         curl_close($ch);
 
         if ($httpCode !== 200) {
-            throw new \RuntimeException("Google TTS API error: HTTP {$httpCode}. " . (is_string($response) ? $response : ''));
+            $msg = "Google TTS API error: HTTP {$httpCode}";
+            if ($curlError) {
+                $msg .= " curl: {$curlError}";
+            }
+            if (is_string($response)) {
+                $msg .= " response: " . substr($response, 0, 500);
+            }
+            throw new \RuntimeException($msg);
         }
 
         $data = json_decode($response, true);
@@ -141,61 +154,149 @@ class GoogleTTSService
             throw new \RuntimeException('Google TTS: invalid base64 audioContent');
         }
 
+        // LINEAR16 응답에는 WAV 헤더(44 bytes)가 포함될 수 있음 → 제거
+        // WAV 헤더는 "RIFF"로 시작
+        if (strlen($decoded) > 44 && substr($decoded, 0, 4) === 'RIFF') {
+            // "data" 청크 위치 찾기
+            $dataPos = strpos($decoded, 'data');
+            if ($dataPos !== false) {
+                // "data" + 4바이트(크기) 이후가 실제 PCM
+                $decoded = substr($decoded, $dataPos + 8);
+            }
+        }
+
         return $decoded;
     }
 
     /**
-     * 텍스트를 바이트 제한에 맞게 분할 (문장 경계 우선)
+     * Raw PCM 데이터로 WAV 파일 바이너리 생성
+     *
+     * WAV (RIFF) 형식:
+     *   RIFF header (12 bytes)
+     *   fmt  chunk  (24 bytes)
+     *   data chunk  (8 + PCM data bytes)
      */
-    private function splitTextForTTS(string $text, int $maxBytes): array
+    private function createWavFile(string $pcmData): string
     {
+        $dataSize = strlen($pcmData);
+        $byteRate = self::SAMPLE_RATE * self::NUM_CHANNELS * (self::BITS_PER_SAMPLE / 8);
+        $blockAlign = self::NUM_CHANNELS * (self::BITS_PER_SAMPLE / 8);
+
+        $header = '';
+        // RIFF header
+        $header .= 'RIFF';
+        $header .= pack('V', 36 + $dataSize);   // 파일 크기 - 8
+        $header .= 'WAVE';
+        // fmt sub-chunk
+        $header .= 'fmt ';
+        $header .= pack('V', 16);               // fmt chunk size
+        $header .= pack('v', 1);                // PCM format (1)
+        $header .= pack('v', self::NUM_CHANNELS);
+        $header .= pack('V', self::SAMPLE_RATE);
+        $header .= pack('V', (int) $byteRate);
+        $header .= pack('v', (int) $blockAlign);
+        $header .= pack('v', self::BITS_PER_SAMPLE);
+        // data sub-chunk
+        $header .= 'data';
+        $header .= pack('V', $dataSize);
+
+        return $header . $pcmData;
+    }
+
+    /**
+     * 텍스트를 바이트 제한에 맞게 분할 (UTF-8 안전, 문장 경계 우선)
+     */
+    private function splitText(string $text): array
+    {
+        $textBytes = strlen($text);
+        if ($textBytes <= self::MAX_INPUT_BYTES) {
+            return [$text];
+        }
+
         $chunks = [];
         $offset = 0;
-        $len = strlen($text);
 
-        while ($offset < $len) {
-            $remain = substr($text, $offset, $maxBytes + 1);
-            $take = strlen($remain);
-            if ($take <= $maxBytes) {
-                $chunks[] = $remain;
-                $offset += $take;
-                continue;
+        while ($offset < $textBytes) {
+            $remaining = $textBytes - $offset;
+
+            if ($remaining <= self::MAX_INPUT_BYTES) {
+                $chunks[] = substr($text, $offset);
+                break;
             }
-            $search = substr($remain, 0, $maxBytes);
-            $lastSep = -1;
-            foreach (['。', '.', '!', '?', "\n"] as $sep) {
-                $p = strrpos($search, $sep);
-                if ($p !== false && $p > $lastSep) {
-                    $lastSep = $p;
+
+            // maxBytes 범위 내에서 문장 경계를 찾음
+            $window = substr($text, $offset, self::MAX_INPUT_BYTES);
+
+            // 문장 구분자 (한국어 마침표, 영어 마침표, 느낌표, 물음표, 줄바꿈)
+            $bestCut = -1;
+            foreach (['. ', '? ', '! ', ".\n", "?\n", "!\n", "\n"] as $sep) {
+                $p = strrpos($window, $sep);
+                if ($p !== false && $p > $bestCut) {
+                    $bestCut = $p + strlen($sep);
                 }
             }
-            if ($lastSep >= (int) ($maxBytes * 0.5)) {
-                $chunk = substr($remain, 0, $lastSep + 1);
-                $chunks[] = $chunk;
-                $offset += strlen($chunk);
-            } else {
-                $chunks[] = substr($remain, 0, $maxBytes);
-                $offset += $maxBytes;
+
+            // 문장 경계를 못 찾으면 쉼표/공백에서 자르기
+            if ($bestCut < (int) (self::MAX_INPUT_BYTES * 0.3)) {
+                foreach ([', ', ' '] as $sep) {
+                    $p = strrpos($window, $sep);
+                    if ($p !== false && $p > $bestCut) {
+                        $bestCut = $p + strlen($sep);
+                    }
+                }
             }
+
+            // 그래도 못 찾으면 UTF-8 안전하게 자르기
+            if ($bestCut <= 0) {
+                $bestCut = $this->utf8SafeCut($window, self::MAX_INPUT_BYTES);
+            }
+
+            $chunk = substr($text, $offset, $bestCut);
+            $chunks[] = $chunk;
+            $offset += strlen($chunk);
         }
 
         return $chunks;
     }
 
-    private function saveAudioFile(string $audioData): string
+    /**
+     * UTF-8 멀티바이트 문자 중간에서 자르지 않도록 바이트 위치 조정
+     */
+    private function utf8SafeCut(string $str, int $maxBytes): int
     {
-        $filename = 'analysis_' . uniqid() . '.mp3';
+        if (strlen($str) <= $maxBytes) {
+            return strlen($str);
+        }
+
+        // maxBytes 위치에서 뒤로 내려가면서 유효한 UTF-8 문자 경계 찾기
+        $cut = $maxBytes;
+        while ($cut > 0) {
+            $byte = ord($str[$cut]);
+            // UTF-8 시작 바이트 또는 ASCII: 0xxxxxxx 또는 11xxxxxx
+            if (($byte & 0x80) === 0 || ($byte & 0xC0) === 0xC0) {
+                break;
+            }
+            $cut--;
+        }
+
+        return $cut > 0 ? $cut : $maxBytes;
+    }
+
+    /**
+     * 오디오 파일 저장 후 URL 반환
+     */
+    private function saveFile(string $data, string $ext): string
+    {
+        $filename = 'tts_' . uniqid() . '.' . $ext;
         if (!is_dir($this->audioStoragePath)) {
             mkdir($this->audioStoragePath, 0755, true);
         }
         $filePath = $this->audioStoragePath . '/' . $filename;
-        file_put_contents($filePath, $audioData);
-        return '/storage/audio/' . $filename;
-    }
+        file_put_contents($filePath, $data);
 
-    private function generateMockAudioUrl(string $text): string
-    {
-        $filename = 'mock_audio_' . substr(md5($text), 0, 8) . '.mp3';
-        return '/storage/audio/' . $filename . '?mock=true';
+        $sizeMB = round(strlen($data) / 1024 / 1024, 2);
+        error_log("[GoogleTTS] Saved {$filename} ({$sizeMB} MB)");
+
+        return '/storage/audio/' . $filename;
     }
 }

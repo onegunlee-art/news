@@ -43,6 +43,20 @@ ErrorDocument 404 /index.php
     RewriteRule ^ index.php [QSA,L]
 </IfModule>
 
+# 오디오 파일 MIME 타입 및 CORS
+<IfModule mod_mime.c>
+    AddType audio/wav .wav
+    AddType audio/mpeg .mp3
+</IfModule>
+
+# storage/audio 디렉토리의 오디오 파일에 CORS 허용
+<IfModule mod_headers.c>
+    <FilesMatch "\.(wav|mp3|ogg)$">
+        Header set Access-Control-Allow-Origin "*"
+        Header set Accept-Ranges "bytes"
+    </FilesMatch>
+</IfModule>
+
 # 보안 헤더
 <IfModule mod_headers.c>
     Header set X-Content-Type-Options "nosniff"
