@@ -39,6 +39,17 @@ return [
     'endpoints' => [
         'chat' => 'https://api.openai.com/v1/chat/completions',
         'tts' => 'https://api.openai.com/v1/audio/speech',
-        'embeddings' => 'https://api.openai.com/v1/embeddings'
+        'embeddings' => 'https://api.openai.com/v1/embeddings',
+        'images' => 'https://api.openai.com/v1/images/generations'
+    ],
+
+    // 이미지 생성 (DALL·E 3) - 썸네일용
+    'images' => [
+        'model' => 'dall-e-3',
+        'size' => '1024x1024',
+        'quality' => 'standard',
+        'response_format' => 'url',
+        'style' => 'vivid',
+        'storage_path' => null, // null이면 프로젝트 storage/thumbnails 사용
     ]
 ];

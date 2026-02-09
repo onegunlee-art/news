@@ -407,4 +407,75 @@ class OpenAIService
         $data = json_decode($response, true);
         return $data['data'][0]['embedding'] ?? [];
     }
+
+    /**
+     * DALL·E 3로 썸네일 이미지 생성. 생성된 이미지는 저장 후 URL 반환.
+     * API URL은 만료되므로 다운로드해 storage에 저장한다.
+     *
+     * @param string $prompt 영문 이미지 설명 (예: "Editorial illustration for news about...")
+     * @param array $options model, size, quality 등 오버라이드
+     * @return string|null 저장된 이미지 URL 경로 (/storage/thumbnails/xxx.png) 또는 실패 시 null
+     */
+    public function createImage(string $prompt, array $options = []): ?string
+    {
+        if ($this->mockMode || $prompt === '') {
+            return null;
+        }
+
+        $imgConfig = $this->config['images'] ?? [];
+        $payload = [
+            'model' => $options['model'] ?? $imgConfig['model'] ?? 'dall-e-3',
+            'prompt' => $prompt,
+            'n' => 1,
+            'size' => $options['size'] ?? $imgConfig['size'] ?? '1024x1024',
+            'quality' => $options['quality'] ?? $imgConfig['quality'] ?? 'standard',
+            'response_format' => $options['response_format'] ?? $imgConfig['response_format'] ?? 'url',
+            'style' => $options['style'] ?? $imgConfig['style'] ?? 'vivid',
+        ];
+
+        $endpoint = $this->config['endpoints']['images'] ?? 'https://api.openai.com/v1/images/generations';
+        $ch = curl_init($endpoint);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => json_encode($payload),
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/json',
+                'Authorization: Bearer ' . $this->apiKey,
+            ],
+            CURLOPT_TIMEOUT => (int) ($options['timeout'] ?? $this->config['timeout'] ?? 60),
+        ]);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($httpCode !== 200) {
+            error_log('OpenAI Images API error: HTTP ' . $httpCode . ' ' . substr($response, 0, 500));
+            return null;
+        }
+
+        $data = json_decode($response, true);
+        $imageUrl = $data['data'][0]['url'] ?? null;
+        if ($imageUrl === null) {
+            return null;
+        }
+
+        // 만료되는 URL에서 다운로드 후 저장
+        $storagePath = $imgConfig['storage_path'] ?? dirname(__DIR__, 3) . '/storage/thumbnails';
+        if (!is_dir($storagePath)) {
+            mkdir($storagePath, 0755, true);
+        }
+        $filename = 'dalle_' . uniqid() . '.png';
+        $filePath = $storagePath . '/' . $filename;
+
+        $imgData = @file_get_contents($imageUrl);
+        if ($imgData === false || strlen($imgData) === 0) {
+            error_log('OpenAI Images: failed to download generated image from URL');
+            return null;
+        }
+        file_put_contents($filePath, $imgData);
+
+        return '/storage/thumbnails/' . $filename;
+    }
 }

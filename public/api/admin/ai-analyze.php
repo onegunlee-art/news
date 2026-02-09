@@ -26,7 +26,7 @@ set_time_limit(300);
 
 // .env 로드 (GOOGLE_TTS_API_KEY 등)
 $projectRoot = __DIR__ . '/../../../';
-$envFile = $projectRoot . '.env';
+$envFile = $projectRoot . '/.env';
 if (is_file($envFile) && is_readable($envFile)) {
     foreach (file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
         $line = trim($line);

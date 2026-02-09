@@ -1367,7 +1367,7 @@ const AdminPage: React.FC = () => {
                             body: JSON.stringify({
                               action: 'analyze',
                               url: aiUrl,
-                              enable_tts: false
+                              enable_tts: true
                             })
                           });
                           

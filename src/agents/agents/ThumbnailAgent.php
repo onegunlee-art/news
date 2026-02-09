@@ -51,6 +51,21 @@ class ThumbnailAgent extends BaseAgent
         return false;
     }
 
+    /**
+     * DALL·E 3용 영문 프롬프트 생성. 기사 제목/요약을 바탕으로 에디토리얼 일러스트 설명.
+     */
+    private function buildImagePrompt(string $title, string $description, string $category): string
+    {
+        $text = trim($title . ' ' . $description);
+        if (mb_strlen($text) > 800) {
+            $text = mb_substr($text, 0, 800);
+        }
+        $prompt = 'Editorial, professional illustration for a news article. Style: clean, modern, no realistic faces. ';
+        $prompt .= 'Topic or mood suggested by the following (use only as inspiration, do not copy text): ';
+        $prompt .= $text;
+        return $prompt;
+    }
+
     public function process(AgentContext $context): AgentResult
     {
         $this->ensureInitialized();
@@ -63,25 +78,33 @@ class ThumbnailAgent extends BaseAgent
             );
         }
 
-        $projectRoot = $this->projectRoot ?? dirname(__DIR__, 3);
-        $imageSearchPath = $projectRoot . '/public/api/lib/imageSearch.php';
-        if (!is_file($imageSearchPath)) {
-            $this->log("imageSearch.php not found: {$imageSearchPath}", 'warning');
-            return AgentResult::success(
-                ['article' => $article->toArray()],
-                ['agent' => $this->getName(), 'unchanged' => true]
-            );
-        }
-
-        require_once $projectRoot . '/public/api/lib/imageConfig.php';
-        require_once $imageSearchPath;
-
         $title = $article->getTitle();
         $description = $article->getDescription() ?? '';
         $category = $article->getMetadata()['category'] ?? '';
 
-        $pdo = $this->config['thumbnail']['pdo'] ?? $this->config['pdo'] ?? null;
-        $newImageUrl = getIllustrationImageUrl($title, $description, $category, $pdo);
+        $newImageUrl = null;
+
+        // 1) OpenAI DALL·E 3로 썸네일 생성 (API 키가 있고 mock 아님)
+        if ($this->openai->isConfigured()) {
+            $prompt = $this->buildImagePrompt($title, $description, $category);
+            $generated = $this->openai->createImage($prompt);
+            if ($generated !== null && $generated !== '') {
+                $newImageUrl = $generated;
+                $this->log('Thumbnail generated with DALL·E 3: ' . $newImageUrl, 'info');
+            }
+        }
+
+        // 2) 실패 시 기존 일러스트 검색(Unsplash/Pexels 등)
+        if ($newImageUrl === null || $newImageUrl === '') {
+            $projectRoot = $this->projectRoot ?? dirname(__DIR__, 3);
+            $imageSearchPath = $projectRoot . '/public/api/lib/imageSearch.php';
+            if (is_file($imageSearchPath)) {
+                require_once $projectRoot . '/public/api/lib/imageConfig.php';
+                require_once $imageSearchPath;
+                $pdo = $this->config['thumbnail']['pdo'] ?? $this->config['pdo'] ?? null;
+                $newImageUrl = getIllustrationImageUrl($title, $description, $category, $pdo);
+            }
+        }
 
         if ($newImageUrl === null || $newImageUrl === '') {
             $newImageUrl = 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&h=500&fit=crop';
