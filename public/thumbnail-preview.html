@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>썸네일 미리보기 · ThumbnailAgent</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            margin: 0;
+            padding: 2rem;
+            background: #1a1a2e;
+            color: #eee;
+            min-height: 100vh;
+        }
+        .container { max-width: 720px; margin: 0 auto; }
+        h1 { font-size: 1.5rem; margin-bottom: 0.5rem; color: #a8d8ea; }
+        .meta { font-size: 0.875rem; color: #888; margin-bottom: 1.5rem; }
+        .card {
+            background: #16213e;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
+        .card img {
+            width: 100%;
+            height: auto;
+            display: block;
+            min-height: 280px;
+            object-fit: cover;
+        }
+        .card-body { padding: 1.25rem 1.5rem; }
+        .card-title { font-size: 1.125rem; line-height: 1.4; margin: 0 0 0.75rem; }
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .badge.ok { background: #0f3460; color: #a8d8ea; }
+        .url { font-size: 0.8rem; color: #6a8ea8; word-break: break-all; margin-top: 0.5rem; }
+        .note { margin-top: 1.5rem; padding: 1rem; background: #0f3460; border-radius: 8px; font-size: 0.875rem; color: #a8d8ea; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>썸네일 미리보기 (일러스트)</h1>
+        <p class="meta">Foreign Affairs 기사 · 저작권 회피용 일러스트 썸네일</p>
+
+        <div class="card">
+            <img src="https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=800&h=500&fit=crop" alt="The Real Risks of the Saudi-UAE Feud">
+            <div class="card-body">
+                <span class="badge ok">illustration</span>
+                <p class="card-title">The Real Risks of the Saudi-UAE Feud — Regional Rivalry Will Raise Tensions Far Beyond the Gulf</p>
+                <p class="url">https://www.foreignaffairs.com/united-states/real-risks-saudi-uae-feud</p>
+            </div>
+        </div>
+
+        <p class="note">
+            이 페이지는 정적 미리보기입니다. 파이프라인으로 실시간 생성하려면 PHP 서버에서 <strong>thumbnail-preview.php</strong> 를 실행하세요.<br>
+            터미널에서: <code>php -S localhost:8080 -t public</code> 후 브라우저에서 <code>http://localhost:8080/thumbnail-preview.php</code> 접속
+        </p>
+    </div>
+</body>
+</html>

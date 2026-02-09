@@ -104,6 +104,76 @@ function buildSearchQuery(string $title): string {
     return implode(' ', array_slice($parts, 0, 4)) ?: 'news';
 }
 
+// 영문 뉴스 주제 → 일러스트 검색어 (기사와 어울리는 이미지용)
+$illustrationTopicMap = [
+    'saudi' => 'middle east diplomacy', 'uae' => 'middle east diplomacy', 'gulf' => 'middle east',
+    'feud' => 'diplomacy conflict', 'rivalry' => 'diplomacy', 'yemen' => 'middle east',
+    'iran' => 'middle east', 'syria' => 'middle east', 'israel' => 'diplomacy',
+    'russia' => 'europe diplomacy', 'ukraine' => 'europe conflict', 'china' => 'asia global',
+    'trump' => 'politics', 'biden' => 'politics', 'election' => 'politics',
+];
+
+/**
+ * 일러스트/캐리커처 스타일 검색용 쿼리 (제목+설명에서 키워드 추출 후 "illustration" 추가)
+ */
+function buildSearchQueryForIllustration(string $title, string $description = ''): string {
+    global $illustrationTopicMap;
+    $combined = mb_strtolower($title . ' ' . mb_substr($description, 0, 200, 'UTF-8'));
+
+    // 영문 주제 키워드가 있으면 그에 맞는 검색어 우선 (Saudi-UAE, Gulf 등)
+    foreach ($illustrationTopicMap as $keyword => $searchPhrase) {
+        if (mb_strpos($combined, $keyword) !== false) {
+            return $searchPhrase . ' illustration';
+        }
+    }
+
+    $base = buildSearchQuery($title . ' ' . $description);
+    if ($base === 'news') {
+        return 'editorial illustration';
+    }
+    return trim($base) . ' illustration';
+}
+
+/**
+ * 저작권 회피용: 일러스트/캐리커처 스타일 썸네일 URL 반환.
+ * (og:image 대신 사용하여 원본 기사 이미지 저작권 이슈 회피)
+ */
+function getIllustrationImageUrl(string $title, string $description = '', string $category = '', ?PDO $pdo = null): string {
+    global $illustrationDefaults;
+    if (!isset($illustrationDefaults) || !is_array($illustrationDefaults) || empty($illustrationDefaults)) {
+        $illustrationDefaults = [
+            'https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?w=800&h=500&fit=crop',
+            'https://images.unsplash.com/photo-1561070791-2526d31fe5e6?w=800&h=500&fit=crop',
+        ];
+    }
+
+    $usedUrls = [];
+    if ($pdo) {
+        try {
+            $usedUrls = $pdo->query("SELECT DISTINCT image_url FROM news WHERE image_url IS NOT NULL AND image_url != ''")->fetchAll(PDO::FETCH_COLUMN);
+        } catch (Exception $e) {
+            $usedUrls = [];
+        }
+    }
+
+    $query = buildSearchQueryForIllustration($title, $description);
+
+    $urls = searchUnsplash($query, 8);
+    if ($urls) {
+        $pick = pickUnused($urls, $usedUrls, $title);
+        if ($pick) return $pick;
+    }
+
+    $urls = searchPexels($query, 8);
+    if ($urls) {
+        $pick = pickUnused($urls, $usedUrls, $title);
+        if ($pick) return $pick;
+    }
+
+    $pick = pickUnused($illustrationDefaults, $usedUrls, $title);
+    return ($pick !== null && $pick !== '') ? $pick : $illustrationDefaults[0];
+}
+
 /**
  * Unsplash API 검색. 성공 시 이미지 URL 배열 반환, 실패 시 빈 배열.
  */

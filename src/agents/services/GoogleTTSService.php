@@ -83,6 +83,7 @@ class GoogleTTSService
      */
     private function generateAudio(string $text, array $options): string
     {
+        set_time_limit(300);
         $voice = $options['voice'] ?? $this->defaultVoice;
         $chunks = $this->splitText($text);
 

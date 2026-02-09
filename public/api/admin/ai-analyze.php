@@ -21,6 +21,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
+// TTS 여러 청크 생성 시 60초 제한에 걸리지 않도록 실행 시간 연장 (보이스 전체 재생)
+set_time_limit(300);
+
 // .env 로드 (GOOGLE_TTS_API_KEY 등)
 $projectRoot = __DIR__ . '/../../../';
 $envFile = $projectRoot . '.env';
@@ -84,6 +87,7 @@ function analyzeUrl(string $url, array $options = []): array {
     }
 
     $pipelineConfig = [
+        'project_root' => rtrim($projectRoot, '/\\'),
         'openai' => [],
         'enable_interpret' => $options['enable_interpret'] ?? true,
         'enable_learning' => $options['enable_learning'] ?? true,
@@ -108,13 +112,16 @@ function analyzeUrl(string $url, array $options = []): array {
     // 결과 처리
     if ($result->isSuccess()) {
         $finalAnalysis = $result->getFinalAnalysis();
-        
+        $articleData = $result->context?->getArticleData();
+        $article = $articleData ? $articleData->toArray() : null;
+
         return [
             'success' => true,
             'url' => $url,
             'mock_mode' => $pipeline->isMockMode(),
             'needs_clarification' => false,
             'clarification_data' => null,
+            'article' => $article,
             'analysis' => [
                 'translation_summary' => $finalAnalysis['translation_summary'] ?? '',
                 'key_points' => $finalAnalysis['key_points'] ?? [],

@@ -6,9 +6,10 @@
  * 
  * 실행 순서:
  * 1. ValidationAgent - URL 검증 및 콘텐츠 추출
- * 2. AnalysisAgent - 분석, 요약, 번역
- * 3. InterpretAgent - RAG 기반 해석
- * 4. LearningAgent - 스타일 적용
+ * 2. ThumbnailAgent - 썸네일을 일러스트/캐리커처 스타일로 교체 (저작권 회피)
+ * 3. AnalysisAgent - 분석, 요약, 번역
+ * 4. InterpretAgent - RAG 기반 해석
+ * 5. LearningAgent - 스타일 적용
  * 
  * @package Agents\Pipeline
  * @author The Gist AI System
@@ -22,7 +23,9 @@ namespace Agents\Pipeline;
 use Agents\Core\AgentInterface;
 use Agents\Models\AgentContext;
 use Agents\Models\AgentResult;
+use Agents\Models\ArticleData;
 use Agents\Agents\ValidationAgent;
+use Agents\Agents\ThumbnailAgent;
 use Agents\Agents\AnalysisAgent;
 use Agents\Agents\InterpretAgent;
 use Agents\Agents\LearningAgent;
@@ -57,18 +60,21 @@ class AgentPipeline
         $scraper = new WebScraperService($this->config['scraper'] ?? []);
         $this->addAgent(new ValidationAgent($this->openai, $scraper, $this->config['validation'] ?? []));
 
-        // 2. Analysis Agent (Google TTS 사용 시 주입)
+        // 2. Thumbnail Agent (저작권 회피: og:image → 일러스트 스타일)
+        $this->addAgent(new ThumbnailAgent($this->openai, $this->config));
+
+        // 3. Analysis Agent (Google TTS 사용 시 주입)
         $googleTts = isset($this->config['google_tts']) && is_array($this->config['google_tts'])
             ? new GoogleTTSService($this->config['google_tts'])
             : null;
         $this->addAgent(new AnalysisAgent($this->openai, $this->config['analysis'] ?? [], $googleTts));
 
-        // 3. Interpret Agent (옵션)
+        // 4. Interpret Agent (옵션)
         if ($this->config['enable_interpret'] ?? true) {
             $this->addAgent(new InterpretAgent($this->openai, $this->config['interpret'] ?? []));
         }
 
-        // 4. Learning Agent (옵션)
+        // 5. Learning Agent (옵션)
         if ($this->config['enable_learning'] ?? true) {
             $this->addAgent(new LearningAgent($this->openai, $this->config['learning'] ?? []));
         }
@@ -149,10 +155,11 @@ class AgentPipeline
                     );
                 }
 
-                // 컨텍스트 업데이트 (Agent에서 수정된 경우)
-                // 실제로는 Agent가 새 Context를 반환해야 하지만, 
-                // 여기서는 결과 데이터를 기반으로 컨텍스트 유지
-
+                // 컨텍스트 업데이트: Agent가 'article'을 반환하면 다음 Agent에 전달
+                $articleData = $result->get('article');
+                if (is_array($articleData)) {
+                    $context = $context->withArticleData(ArticleData::fromArray($articleData));
+                }
             } catch (\Exception $e) {
                 $this->lastError = "[{$agentName}] " . $e->getMessage();
                 $this->results[$agentName] = AgentResult::failure($e->getMessage(), $agentName);

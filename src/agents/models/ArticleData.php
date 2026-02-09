@@ -62,6 +62,24 @@ final class ArticleData
         return $this->imageUrl;
     }
 
+    /**
+     * 이미지 URL만 변경한 새 인스턴스 반환 (불변 객체)
+     */
+    public function withImageUrl(?string $imageUrl): self
+    {
+        return new self(
+            url: $this->url,
+            title: $this->title,
+            content: $this->content,
+            description: $this->description,
+            author: $this->author,
+            publishedAt: $this->publishedAt,
+            imageUrl: $imageUrl,
+            language: $this->language,
+            metadata: $this->metadata
+        );
+    }
+
     public function getLanguage(): ?string
     {
         return $this->language;

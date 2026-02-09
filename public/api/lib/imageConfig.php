@@ -442,6 +442,21 @@ $categoryDefaults = [
 ];
 
 // =====================================================================
+// 저작권 회피용: 일러스트/캐리커처 스타일 기본 이미지 (ThumbnailAgent fallback)
+// 뉴스/편집 느낌 위주 (물결·풍경 등 회피)
+// =====================================================================
+$illustrationDefaults = [
+    'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800&h=500&fit=crop', // newspaper/news
+    'https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=800&h=500&fit=crop', // diplomacy
+    'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=800&h=500&fit=crop', // globe
+    'https://images.unsplash.com/photo-1577415124269-fc1140815970?w=800&h=500&fit=crop', // meeting
+    'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800&h=500&fit=crop', // global/earth
+    'https://images.unsplash.com/photo-1495020689067-958852a7765e?w=800&h=500&fit=crop', // news/reading
+    'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=800&h=500&fit=crop', // newspaper
+    'https://images.unsplash.com/photo-1557992260-ec58e38d363c?w=800&h=500&fit=crop', // document/editorial
+];
+
+// =====================================================================
 // 범용 기본 이미지 (최종 fallback)
 // =====================================================================
 $defaultImages = [

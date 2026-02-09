@@ -113,6 +113,7 @@ try {
 $hasSourceUrl      = isset($newsColumns['source_url']);
 $hasWhyImportant   = isset($newsColumns['why_important']);
 $hasNarration      = isset($newsColumns['narration']);
+$hasFuturePrediction = isset($newsColumns['future_prediction']);
 $hasOriginalSource = isset($newsColumns['original_source']);
 $hasAuthor         = isset($newsColumns['author']);
 $hasPublishedAt    = isset($newsColumns['published_at']);
@@ -149,6 +150,7 @@ if ($method === 'POST') {
     $content = $input['content'] ?? '';
     $whyImportant = $input['why_important'] ?? null;
     $narration = $input['narration'] ?? null;
+    $futurePrediction = $input['future_prediction'] ?? null;
     $sourceUrl = $input['source_url'] ?? null;
     
     // 추가 메타데이터 필드
@@ -236,6 +238,12 @@ if ($method === 'POST') {
         if ($hasNarration) {
             $columns[] = 'narration';
             $values[] = $narration;
+            $placeholders[] = '?';
+        }
+        
+        if ($hasFuturePrediction) {
+            $columns[] = 'future_prediction';
+            $values[] = $futurePrediction;
             $placeholders[] = '?';
         }
         
@@ -376,6 +384,15 @@ if ($method === 'GET') {
                 $selectColumns = str_replace('content,', 'content, narration,', $selectColumns);
             }
         }
+        if ($hasFuturePrediction) {
+            if ($hasNarration) {
+                $selectColumns = str_replace('narration,', 'narration, future_prediction,', $selectColumns);
+            } elseif ($hasWhyImportant) {
+                $selectColumns = str_replace('why_important,', 'why_important, future_prediction,', $selectColumns);
+            } else {
+                $selectColumns = str_replace('content,', 'content, future_prediction,', $selectColumns);
+            }
+        }
         if ($hasOriginalSource) {
             $selectColumns = str_replace('source,', 'source, original_source,', $selectColumns);
         }
@@ -441,6 +458,7 @@ if ($method === 'PUT') {
     $content = $input['content'] ?? '';
     $whyImportant = $input['why_important'] ?? null;
     $narration = $input['narration'] ?? null;
+    $futurePrediction = $input['future_prediction'] ?? null;
     $sourceUrl = $input['source_url'] ?? null;
     
     // 추가 메타데이터 필드
@@ -551,6 +569,11 @@ if ($method === 'PUT') {
         if ($hasNarration) {
             $setClauses[] = 'narration = ?';
             $values[] = $narration;
+        }
+        
+        if ($hasFuturePrediction) {
+            $setClauses[] = 'future_prediction = ?';
+            $values[] = $futurePrediction;
         }
         
         if ($hasSourceUrl) {

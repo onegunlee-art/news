@@ -82,6 +82,13 @@ try {
         $hasNarration = $checkCol->rowCount() > 0;
     } catch (Exception $e) {}
     
+    // future_prediction 컬럼 존재 여부 확인 (지스트 크리티크 미래 전망)
+    $hasFuturePrediction = false;
+    try {
+        $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'future_prediction'");
+        $hasFuturePrediction = $checkCol->rowCount() > 0;
+    } catch (Exception $e) {}
+    
     // source_url 컬럼 존재 여부 확인
     $hasSourceUrl = false;
     try {
@@ -126,6 +133,17 @@ try {
         $columns = str_replace('why_important,', 'why_important, narration,', $columns);
         if (!$hasWhyImportant) {
             $columns = str_replace('content,', 'content, narration,', $columns);
+        }
+    }
+    
+    // future_prediction 추가
+    if ($hasFuturePrediction) {
+        if ($hasNarration) {
+            $columns = str_replace('narration,', 'narration, future_prediction,', $columns);
+        } elseif ($hasWhyImportant) {
+            $columns = str_replace('why_important,', 'why_important, future_prediction,', $columns);
+        } else {
+            $columns = str_replace('content,', 'content, future_prediction,', $columns);
         }
     }
     
@@ -203,6 +221,7 @@ try {
         'content' => $news['content'],
         'why_important' => $hasWhyImportant ? ($news['why_important'] ?? null) : null,
         'narration' => $hasNarration ? ($news['narration'] ?? null) : null,
+        'future_prediction' => $hasFuturePrediction ? ($news['future_prediction'] ?? null) : null,
         'source' => $news['source'],
         'original_source' => $hasOriginalSource ? ($news['original_source'] ?? null) : null,
         'url' => $hasSourceUrl ? ($news['source_url'] ?? '') : '',

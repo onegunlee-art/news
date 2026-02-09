@@ -67,6 +67,7 @@ interface NewsArticle {
   content: string;
   why_important?: string;
   narration?: string;
+  future_prediction?: string;
   source?: string;
   source_url?: string;
   original_source?: string;
@@ -255,6 +256,7 @@ const AdminPage: React.FC = () => {
   const [newsContent, setNewsContent] = useState('');
   const [newsWhyImportant, setNewsWhyImportant] = useState('');
   const [newsNarration, setNewsNarration] = useState('');
+  const [newsFuturePrediction, setNewsFuturePrediction] = useState('');
   const [newsList, setNewsList] = useState<NewsArticle[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -275,6 +277,7 @@ const AdminPage: React.FC = () => {
   const refNewsContent = useRef<HTMLTextAreaElement>(null);
   const refNewsNarration = useRef<HTMLTextAreaElement>(null);
   const refNewsWhyImportant = useRef<HTMLTextAreaElement>(null);
+  const refNewsFuturePrediction = useRef<HTMLTextAreaElement>(null);
   
   const [stats, setStats] = useState<DashboardStats>({
     totalUsers: 0,
@@ -331,6 +334,7 @@ const AdminPage: React.FC = () => {
     setNewsContent(news.content);
     setNewsWhyImportant(news.why_important || '');
     setNewsNarration(news.narration || '');
+    setNewsFuturePrediction(news.future_prediction || '');
     // 추가 메타데이터 (출처, 작성자, 작성일, 사진)
     setArticleUrl(news.source_url || '');
     setArticleSource(news.original_source || news.source || '');
@@ -350,6 +354,7 @@ const AdminPage: React.FC = () => {
     setNewsContent('');
     setNewsWhyImportant('');
     setNewsNarration('');
+    setNewsFuturePrediction('');
     setArticleUrl('');
     // 메타데이터 필드 초기화
     setArticleSource('');
@@ -1051,6 +1056,21 @@ const AdminPage: React.FC = () => {
                     <p className="text-slate-500 text-sm mt-1">{newsWhyImportant.length} / 5,000자</p>
                   </div>
 
+                  {/* 미래 전망 (오디오에서 전부 읽음) */}
+                  <div>
+                    <label className="block text-slate-300 mb-2 text-sm font-medium">
+                      미래 전망
+                    </label>
+                    <textarea
+                      ref={refNewsFuturePrediction}
+                      value={newsFuturePrediction}
+                      onChange={(e) => setNewsFuturePrediction(e.target.value)}
+                      placeholder="미래 전망을 입력하세요. Listen 시 내레이션·크리티크와 함께 전부 읽힙니다."
+                      rows={3}
+                      className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:border-slate-500 focus:ring-1 focus:ring-slate-500 outline-none transition resize-none"
+                    />
+                  </div>
+
                   {/* 저장 버튼 */}
                   <div className="flex items-center gap-4">
                     <button
@@ -1072,6 +1092,7 @@ const AdminPage: React.FC = () => {
                             content: newsContent,
                             why_important: newsWhyImportant.trim() || null,
                             narration: newsNarration.trim() || null,
+                            future_prediction: newsFuturePrediction.trim() || null,
                             source_url: articleUrl.trim() || null,
                             source: articleSource.trim() || null,
                             author: articleAuthor.trim() || null,
@@ -1378,6 +1399,13 @@ const AdminPage: React.FC = () => {
                           
                           if (data.success && data.analysis) {
                             setAiResult(data.analysis);
+                            if (data.article) {
+                              setArticleImageUrl(data.article.image_url || '');
+                              setNewsTitle(data.article.title || '');
+                              setArticleSummary(data.article.description || '');
+                              if (data.article.published_at) setArticlePublishedAt(data.article.published_at);
+                              if (data.article.author) setArticleAuthor(data.article.author);
+                            }
                           } else {
                             setAiError(data.error || '분석 실패');
                           }
@@ -1570,6 +1598,12 @@ const AdminPage: React.FC = () => {
                             '## 전망\n' +
                             (aiResult.critical_analysis?.future_prediction || '')
                           );
+                          setNewsNarration(
+                            (aiResult.translation_summary || '') + ' ' +
+                            (aiResult.key_points?.map((p, i) => `${i + 1}번. ${p}`).join(' ') || '')
+                          );
+                          setNewsWhyImportant(aiResult.critical_analysis?.why_important || '');
+                          setNewsFuturePrediction(aiResult.critical_analysis?.future_prediction || '');
                           setArticleUrl(aiUrl);
                         }}
                         className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-medium hover:opacity-90 transition flex items-center justify-center gap-2"

@@ -383,6 +383,7 @@ final class AnalysisService implements AnalysisInterface
      */
     public function analyzeUrl(string $url, ?int $userId = null, array $options = []): array
     {
+        set_time_limit(300);
         if (empty(trim($url))) {
             throw new RuntimeException('분석할 URL을 입력해주세요.');
         }
@@ -400,6 +401,7 @@ final class AnalysisService implements AnalysisInterface
         $ttsVoice = $this->getSetting('tts_voice') ?? $googleTtsConfig['default_voice'] ?? 'ko-KR-Standard-A';
 
         $pipelineConfig = [
+            'project_root' => $projectRoot,
             'openai' => $options['openai'] ?? [],
             'enable_interpret' => $options['enable_interpret'] ?? true,
             'enable_learning' => $options['enable_learning'] ?? true,

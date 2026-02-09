@@ -266,6 +266,8 @@ PROMPT;
 
     /**
      * TTS용 텍스트 생성
+     * - 오디오를 특정 시간(예: 42초)에 맞추기 위해 요약·자르기 하지 않음.
+     * - 내레이션(요약·주요포인트)과 지스트 크리티크(왜 중요한가·미래 전망) 전부 포함하여 전체 읽음.
      */
     private function buildTTSText(AnalysisResult $analysis): string
     {
