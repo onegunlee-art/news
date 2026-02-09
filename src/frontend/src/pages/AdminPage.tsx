@@ -21,7 +21,7 @@ import {
   AcademicCapIcon,
 } from '@heroicons/react/24/outline';
 import RichTextToolbar from '../components/Common/RichTextToolbar';
-import { adminSettingsApi } from '../services/api';
+import { adminSettingsApi, ttsApi } from '../services/api';
 
 /** Google TTS 한국어 보이스 목록 (Admin에서 선택용) */
 const GOOGLE_TTS_VOICES = [
@@ -174,31 +174,40 @@ const AdminPage: React.FC = () => {
       .finally(() => setSettingsSaving(false));
   };
 
-  // TTS 음성 읽기 함수
-  const speakText = (text: string) => {
-    if ('speechSynthesis' in window) {
-      // 기존 음성 중지
-      window.speechSynthesis.cancel();
-      
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'ko-KR';
-      utterance.rate = speechRate;
-      utterance.pitch = 1.0;
-      
-      // 한국어 음성 찾기
-      const voices = window.speechSynthesis.getVoices();
-      const koreanVoice = voices.find(voice => voice.lang.includes('ko'));
-      if (koreanVoice) {
-        utterance.voice = koreanVoice;
+  // Admin 오디오 엘리먼트 ref
+  const adminAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Google TTS 기반 음성 읽기 함수
+  const speakText = async (text: string) => {
+    // 기존 재생 중지
+    if (adminAudioRef.current) {
+      adminAudioRef.current.pause();
+      adminAudioRef.current.src = '';
+    }
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+
+    if (!text.trim()) return;
+    setIsSpeaking(true);
+
+    try {
+      const res = await ttsApi.generate(text);
+      const url = res.data?.data?.url;
+      if (!url) {
+        setIsSpeaking(false);
+        alert('Google TTS 오디오 생성에 실패했습니다.');
+        return;
       }
-      
-      utterance.onstart = () => setIsSpeaking(true);
-      utterance.onend = () => setIsSpeaking(false);
-      utterance.onerror = () => setIsSpeaking(false);
-      
-      window.speechSynthesis.speak(utterance);
-    } else {
-      alert('이 브라우저는 음성 합성을 지원하지 않습니다.');
+      if (!adminAudioRef.current) {
+        adminAudioRef.current = new Audio();
+      }
+      const audio = adminAudioRef.current;
+      audio.src = url;
+      audio.onended = () => setIsSpeaking(false);
+      audio.onerror = () => setIsSpeaking(false);
+      await audio.play();
+    } catch {
+      setIsSpeaking(false);
+      alert('Google TTS 요청에 실패했습니다. 서버 설정을 확인해주세요.');
     }
   };
 
@@ -232,10 +241,12 @@ const AdminPage: React.FC = () => {
 
   // 음성 중지
   const stopSpeaking = () => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      setIsSpeaking(false);
+    if (adminAudioRef.current) {
+      adminAudioRef.current.pause();
+      adminAudioRef.current.src = '';
     }
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    setIsSpeaking(false);
   };
   
   // 뉴스 관리 상태

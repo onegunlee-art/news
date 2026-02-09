@@ -63,7 +63,8 @@ class GoogleTTSService
         }
 
         if (!$this->isConfigured()) {
-            return $this->generateMockAudioUrl($text);
+            error_log('Google TTS: API key not configured. getenv(GOOGLE_TTS_API_KEY)=' . (getenv('GOOGLE_TTS_API_KEY') ?: '(empty)'));
+            return null;
         }
 
         try {

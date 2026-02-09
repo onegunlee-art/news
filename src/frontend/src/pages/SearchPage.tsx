@@ -132,10 +132,6 @@ function SearchArticleCard({ article }: { article: NewsItem }) {
   const handlePlayAudio = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    if (!('speechSynthesis' in window)) {
-      alert('이 브라우저는 음성 재생을 지원하지 않습니다.')
-      return
-    }
     const text = `${article.title}. ${article.description || ''}`.trim()
     if (!text) return
     const idForList = article.id

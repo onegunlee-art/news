@@ -53,10 +53,6 @@ export default function NewsDetailPage() {
   // 전역 팝업 플레이어에서 재생 (속도 기본 보통 1.0)
   const playArticle = () => {
     if (!news) return
-    if (!('speechSynthesis' in window)) {
-      alert('이 브라우저에서는 음성 읽기를 지원하지 않습니다.')
-      return
-    }
     // 내레이션 우선, 없으면 content, 그것도 없으면 description
     const mainContent = news.narration || news.content || news.description || ''
     const rawText = `${news.title}. ${mainContent}`

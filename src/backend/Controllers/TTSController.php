@@ -5,7 +5,7 @@
  * 홈/기사 Listen 재생용 Google TTS 생성. Admin 설정 보이스 사용.
  *
  * @author News Context Analysis Team
- * @version 1.0.0
+ * @version 1.1.0
  */
 
 declare(strict_types=1);
@@ -24,7 +24,7 @@ final class TTSController
     /**
      * POST /api/tts/generate
      * Body: { "text": "..." }
-     * Returns: { "success": true, "data": { "url": "/storage/audio/xxx.mp3" } }
+     * Returns: { "success": true, "data": { "url": "/storage/audio/xxx.mp3", "voice": "ko-KR-Standard-B" } }
      */
     public function generate(Request $request): Response
     {
@@ -40,27 +40,51 @@ final class TTSController
         }
 
         $projectRoot = dirname(__DIR__, 3);
+
+        // 1) DB에서 Admin이 설정한 voice 읽기
         $ttsVoice = $this->getSetting('tts_voice');
+
+        // 2) config 파일 로드
         $config = file_exists($projectRoot . '/config/google_tts.php')
             ? require $projectRoot . '/config/google_tts.php'
             : [];
-        $ttsVoice = $ttsVoice ?? $config['default_voice'] ?? 'ko-KR-Standard-A';
+
+        // 3) voice 결정: DB 설정 > config default > 하드코딩 default
+        $ttsVoice = $ttsVoice ?: ($config['default_voice'] ?? 'ko-KR-Standard-A');
+
+        // 디버그 로그
+        error_log("[TTS] voice from DB: " . ($this->getSetting('tts_voice') ?? 'null') . ", final voice: {$ttsVoice}");
+        error_log("[TTS] API key configured: " . ((!empty($config['api_key'])) ? 'yes' : 'no'));
 
         if (!file_exists($projectRoot . '/src/agents/services/GoogleTTSService.php')) {
-            return Response::error('TTS 서비스를 사용할 수 없습니다.', 503);
+            return Response::error('TTS 서비스 파일을 찾을 수 없습니다.', 503);
         }
 
         require_once $projectRoot . '/src/agents/services/GoogleTTSService.php';
+
+        // config에 voice도 넣어서 GoogleTTSService의 defaultVoice도 올바르게 설정
+        $config['default_voice'] = $ttsVoice;
         $service = new \Agents\Services\GoogleTTSService($config);
+
+        if (!$service->isConfigured()) {
+            return Response::error('Google TTS API 키가 설정되지 않았습니다. 서버 .env 파일을 확인해주세요.', 503);
+        }
+
         $url = $service->textToSpeech($text, ['voice' => $ttsVoice]);
 
         if ($url === null || $url === '') {
-            return Response::error('오디오 생성에 실패했습니다.', 500);
+            return Response::error('오디오 생성에 실패했습니다. 서버 로그를 확인해주세요.', 500);
         }
 
-        return Response::success(['url' => $url], '오디오가 생성되었습니다.');
+        return Response::success([
+            'url' => $url,
+            'voice' => $ttsVoice,
+        ], '오디오가 생성되었습니다.');
     }
 
+    /**
+     * DB settings 테이블에서 값 조회
+     */
     private function getSetting(string $key): ?string
     {
         try {
@@ -70,6 +94,7 @@ final class TTSController
             $row = $stmt->fetch(\PDO::FETCH_ASSOC);
             return $row ? (string) $row['value'] : null;
         } catch (\Throwable $e) {
+            error_log("[TTS] getSetting error: " . $e->getMessage());
             return null;
         }
     }
