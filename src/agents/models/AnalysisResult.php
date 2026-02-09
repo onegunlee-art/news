@@ -6,7 +6,7 @@
  * 
  * @package Agents\Models
  * @author The Gist AI System
- * @version 1.0.0
+ * @version 2.0.0
  */
 
 declare(strict_types=1);
@@ -20,7 +20,9 @@ final class AnalysisResult
         private readonly array $keyPoints,
         private readonly array $criticalAnalysis,
         private readonly ?string $audioUrl = null,
-        private readonly array $metadata = []
+        private readonly array $metadata = [],
+        private readonly ?string $newsTitle = null,
+        private readonly ?string $narration = null
     ) {}
 
     public function getTranslationSummary(): string
@@ -58,6 +60,16 @@ final class AnalysisResult
         return $this->metadata;
     }
 
+    public function getNewsTitle(): ?string
+    {
+        return $this->newsTitle;
+    }
+
+    public function getNarration(): ?string
+    {
+        return $this->narration;
+    }
+
     /**
      * 오디오 URL 추가된 새 인스턴스 반환
      */
@@ -68,7 +80,9 @@ final class AnalysisResult
             keyPoints: $this->keyPoints,
             criticalAnalysis: $this->criticalAnalysis,
             audioUrl: $audioUrl,
-            metadata: $this->metadata
+            metadata: $this->metadata,
+            newsTitle: $this->newsTitle,
+            narration: $this->narration
         );
     }
 
@@ -82,7 +96,9 @@ final class AnalysisResult
             keyPoints: $this->keyPoints,
             criticalAnalysis: $this->criticalAnalysis,
             audioUrl: $this->audioUrl,
-            metadata: array_merge($this->metadata, $metadata)
+            metadata: array_merge($this->metadata, $metadata),
+            newsTitle: $this->newsTitle,
+            narration: $this->narration
         );
     }
 
@@ -92,8 +108,10 @@ final class AnalysisResult
     public function toArray(): array
     {
         return [
+            'news_title' => $this->newsTitle,
             'translation_summary' => $this->translationSummary,
             'key_points' => $this->keyPoints,
+            'narration' => $this->narration,
             'critical_analysis' => $this->criticalAnalysis,
             'audio_url' => $this->audioUrl,
             'metadata' => $this->metadata
@@ -118,7 +136,9 @@ final class AnalysisResult
             keyPoints: $data['key_points'] ?? [],
             criticalAnalysis: $data['critical_analysis'] ?? [],
             audioUrl: $data['audio_url'] ?? null,
-            metadata: $data['metadata'] ?? []
+            metadata: $data['metadata'] ?? [],
+            newsTitle: $data['news_title'] ?? null,
+            narration: $data['narration'] ?? null
         );
     }
 

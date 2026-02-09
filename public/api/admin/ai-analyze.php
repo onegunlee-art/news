@@ -123,11 +123,12 @@ function analyzeUrl(string $url, array $options = []): array {
             'clarification_data' => null,
             'article' => $article,
             'analysis' => [
-                'translation_summary' => $finalAnalysis['translation_summary'] ?? '',
+                'news_title' => $finalAnalysis['news_title'] ?? null,
+                'translation_summary' => $finalAnalysis['translation_summary'] ?? ($finalAnalysis['narration'] ? mb_substr($finalAnalysis['narration'], 0, 200) : ''),
                 'key_points' => $finalAnalysis['key_points'] ?? [],
+                'narration' => $finalAnalysis['narration'] ?? null,
                 'critical_analysis' => $finalAnalysis['critical_analysis'] ?? [
-                    'why_important' => '',
-                    'future_prediction' => ''
+                    'why_important' => ''
                 ],
                 'audio_url' => $finalAnalysis['audio_url'] ?? null
             ],

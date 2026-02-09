@@ -85,11 +85,12 @@ const categories = [
 
 // AI 분석 결과 인터페이스
 interface AIAnalysisResult {
+  news_title?: string;
   translation_summary?: string;
   key_points?: string[];
+  narration?: string;
   critical_analysis?: {
     why_important?: string;
-    future_prediction?: string;
   };
   audio_url?: string;
 }
@@ -216,6 +217,13 @@ const AdminPage: React.FC = () => {
   const speakFullAnalysis = () => {
     if (!aiResult) return;
     
+    // narration이 있으면 그대로 사용 (GPT가 이미 앵커 톤으로 작성)
+    if (aiResult.narration) {
+      speakText(aiResult.narration);
+      return;
+    }
+    
+    // fallback: 기존 방식
     let fullText = '';
     
     if (aiResult.translation_summary) {
@@ -230,7 +238,7 @@ const AdminPage: React.FC = () => {
     }
     
     if (aiResult.critical_analysis?.why_important) {
-      fullText += '이게 왜 중요한가. ' + aiResult.critical_analysis.why_important + ' ';
+      fullText += 'The Gist\'s Critique. ' + aiResult.critical_analysis.why_important + ' ';
     }
     
     speakText(fullText);
@@ -259,7 +267,6 @@ const AdminPage: React.FC = () => {
   const [isLoadingNews, setIsLoadingNews] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
   const [articleUrl, setArticleUrl] = useState('');
-  const [isFetchingUrl, setIsFetchingUrl] = useState(false);
   
   // 추출된 기사 메타데이터 상태
   const [articleSource, setArticleSource] = useState('');
@@ -696,16 +703,16 @@ const AdminPage: React.FC = () => {
                 </div>
 
                 <div className="space-y-4">
-                  {/* URL 자동 추출 */}
+                  {/* URL → GPT 분석 (버튼 1개) */}
                   <div>
-                    <label className="block text-slate-300 mb-2 text-sm font-medium">기사 URL (선택사항)</label>
-                    <div className="flex gap-2 flex-wrap">
+                    <label className="block text-slate-300 mb-2 text-sm font-medium">기사 URL</label>
+                    <div className="flex gap-2">
                       <input
                         type="url"
                         value={articleUrl}
                         onChange={(e) => setArticleUrl(e.target.value)}
                         placeholder="https://example.com/article..."
-                        className="flex-1 min-w-[200px] bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition"
+                        className="flex-1 bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition"
                       />
                       <button
                         onClick={async () => {
@@ -731,182 +738,59 @@ const AdminPage: React.FC = () => {
                             if (data.success && data.analysis) {
                               setAiResult(data.analysis);
                               setAiUrl(articleUrl.trim());
+                              const a = data.analysis;
+                              // 제목: GPT 생성 제목 우선, 없으면 article.title
+                              setNewsTitle(a.news_title || data.article?.title || '');
+                              // 메타데이터
                               if (data.article) {
                                 setArticleImageUrl(data.article.image_url || '');
-                                setNewsTitle(data.article.title || '');
                                 setArticleSummary(data.article.description || '');
                                 setArticleSource(data.article.source || '');
                                 if (data.article.published_at) setArticlePublishedAt(data.article.published_at);
                                 if (data.article.author) setArticleAuthor(data.article.author || '');
                               }
-                              const a = data.analysis;
+                              // 본문: key_points 불렛 + The Gist's Critique
                               setNewsContent(
-                                (a.translation_summary || '') + '\n\n## 주요 포인트\n' +
-                                (a.key_points?.map((p: string) => `- ${p}`).join('\n') || '') + '\n\n## The Gist\'s Critique\n' +
+                                '## 주요 포인트\n' +
+                                (a.key_points?.map((p: string) => `- ${p}`).join('\n') || '') +
+                                '\n\n## The Gist\'s Critique\n' +
                                 (a.critical_analysis?.why_important || '')
                               );
+                              // 내레이션: GPT narration 우선, 없으면 fallback
                               setNewsNarration(
-                                (a.translation_summary || '') + ' ' +
-                                (a.key_points?.map((p: string, i: number) => `${i + 1}번. ${p}`).join(' ') || '')
+                                a.narration ||
+                                ((a.translation_summary || '') + ' ' +
+                                (a.key_points?.map((p: string, i: number) => `${i + 1}번. ${p}`).join(' ') || ''))
                               );
                               setNewsWhyImportant(a.critical_analysis?.why_important || '');
                               setShowExtractedInfo(true);
-                              setSaveMessage({ type: 'success', text: 'GPT 분석이 완료되었습니다. 제목·내용·썸네일·내레이션이 채워졌습니다.' });
+                              setSaveMessage({ type: 'success', text: 'GPT 분석 완료! 제목·내용·내레이션·썸네일이 채워졌습니다.' });
                             } else {
-                              setSaveMessage({ type: 'error', text: data.error || 'AI 분석 실패' });
+                              setSaveMessage({ type: 'error', text: data.error || 'GPT 분석 실패' });
                             }
                           } catch (error) {
                             setSaveMessage({ type: 'error', text: '서버 오류: ' + (error as Error).message });
                           } finally {
                             setIsAnalyzing(false);
-                            setTimeout(() => setSaveMessage(null), 5000);
+                            setTimeout(() => setSaveMessage(null), 8000);
                           }
                         }}
                         disabled={isAnalyzing || !articleUrl.trim()}
-                        className={`px-5 py-3 rounded-xl font-medium transition-all whitespace-nowrap ${
+                        className={`px-6 py-3 rounded-xl font-medium transition-all whitespace-nowrap ${
                           isAnalyzing || !articleUrl.trim()
                             ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
                             : 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white hover:opacity-90'
                         }`}
                       >
-                        {isAnalyzing ? 'GPT 분석 중...' : 'AI 분석'}
-                      </button>
-                      <button
-                        onClick={async () => {
-                          if (!articleUrl.trim()) {
-                            setSaveMessage({ type: 'error', text: 'URL을 입력해주세요.' });
-                            return;
-                          }
-                          
-                          setIsFetchingUrl(true);
-                          setSaveMessage(null);
-                          
-                          // 메타데이터 추출 API 서비스들 (순차적으로 시도)
-                          const metadataApis = [
-                            // Microlink API (무료, 안정적)
-                            async (url: string) => {
-                              const response = await fetch(`https://api.microlink.io?url=${encodeURIComponent(url)}`);
-                              const data = await response.json();
-                              if (data.status === 'success' && data.data) {
-                                return {
-                                  title: data.data.title || '',
-                                  description: data.data.description || '',
-                                  source: data.data.publisher || '',
-                                  author: data.data.author || '',
-                                  publishedAt: data.data.date || '',
-                                  imageUrl: '', // 썸네일은 키워드 기반으로 서버에서 자동 생성
-                                };
-                              }
-                              throw new Error('Microlink failed');
-                            },
-                            // JSONLink API
-                            async (url: string) => {
-                              const response = await fetch(`https://jsonlink.io/api/extract?url=${encodeURIComponent(url)}`);
-                              const data = await response.json();
-                              if (data.title || data.description) {
-                                return {
-                                  title: data.title || '',
-                                  description: data.description || '',
-                                  source: data.publisher || data.site_name || '',
-                                  author: data.author || '',
-                                  publishedAt: data.published || data.date || '',
-                                  imageUrl: '', // 썸네일은 키워드 기반으로 서버에서 자동 생성
-                                };
-                              }
-                              throw new Error('JSONLink failed');
-                            },
-                            // LinkPreview API (백업)
-                            async (url: string) => {
-                              const response = await fetch(`https://api.linkpreview.net/?q=${encodeURIComponent(url)}`, {
-                                headers: { 'X-Linkpreview-Api-Key': 'free' }
-                              });
-                              const data = await response.json();
-                              if (data.title || data.description) {
-                                return {
-                                  title: data.title || '',
-                                  description: data.description || '',
-                                  source: data.siteName || '',
-                                  author: '',
-                                  publishedAt: '',
-                                  imageUrl: '', // 썸네일은 키워드 기반으로 서버에서 자동 생성
-                                };
-                              }
-                              throw new Error('LinkPreview failed');
-                            },
-                          ];
-                          
-                          try {
-                            let result = null;
-                            
-                            // 각 API를 순차적으로 시도
-                            for (let i = 0; i < metadataApis.length; i++) {
-                              try {
-                                console.log(`Trying metadata API ${i + 1}...`);
-                                
-                                const controller = new AbortController();
-                                const timeoutId = setTimeout(() => controller.abort(), 10000);
-                                
-                                result = await Promise.race([
-                                  metadataApis[i](articleUrl),
-                                  new Promise<never>((_, reject) => 
-                                    setTimeout(() => reject(new Error('Timeout')), 10000)
-                                  )
-                                ]);
-                                
-                                clearTimeout(timeoutId);
-                                
-                                if (result && (result.title || result.description)) {
-                                  console.log(`API ${i + 1} succeeded:`, result);
-                                  break;
-                                }
-                              } catch (apiError) {
-                                console.log(`API ${i + 1} failed:`, apiError);
-                                continue;
-                              }
-                            }
-                            
-                            if (result && (result.title || result.description)) {
-                              // HTML 엔티티 디코딩
-                              const decodeHtml = (text: string) => {
-                                const textarea = document.createElement('textarea');
-                                textarea.innerHTML = text;
-                                return textarea.value;
-                              };
-                              
-                              setNewsTitle(decodeHtml(result.title));
-                              setNewsContent(decodeHtml(result.description));
-                              
-                              // 추가 메타데이터 저장
-                              setArticleSource(result.source || '');
-                              setArticleAuthor(result.author || '');
-                              setArticlePublishedAt(result.publishedAt || '');
-                              setArticleImageUrl(result.imageUrl || '');
-                              setArticleSummary(decodeHtml(result.description));
-                              setShowExtractedInfo(true);
-                              
-                              setSaveMessage({ type: 'success', text: '기사 정보를 가져왔습니다!' });
-                            } else {
-                              throw new Error('기사 정보를 가져올 수 없습니다. URL을 확인하거나 직접 입력해주세요.');
-                            }
-                          } catch (error) {
-                            console.error('Metadata fetch error:', error);
-                            setSaveMessage({ type: 'error', text: '오류: ' + (error as Error).message });
-                          } finally {
-                            setIsFetchingUrl(false);
-                            setTimeout(() => setSaveMessage(null), 5000);
-                          }
-                        }}
-                        disabled={isFetchingUrl || !articleUrl.trim()}
-                        className={`px-5 py-3 rounded-xl font-medium transition-all whitespace-nowrap ${
-                          isFetchingUrl || !articleUrl.trim()
-                            ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
-                            : 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:opacity-90'
-                        }`}
-                      >
-                        {isFetchingUrl ? '가져오는 중...' : '자동 추출'}
+                        {isAnalyzing ? (
+                          <span className="flex items-center gap-2">
+                            <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></span>
+                            GPT 분석 중...
+                          </span>
+                        ) : 'GPT 분석'}
                       </button>
                     </div>
-                    <p className="text-slate-500 text-sm mt-1">기사 URL 입력 후 <strong>AI 분석</strong>을 누르면 GPT가 요약·내레이션·썸네일까지 채워줍니다. <strong>자동 추출</strong>은 메타데이터만 가져옵니다.</p>
+                    <p className="text-slate-500 text-sm mt-1">기사 URL을 입력하고 <strong>GPT 분석</strong>을 누르면 제목, 요약, 내레이션, 썸네일이 자동 생성됩니다.</p>
                   </div>
 
                   {/* 추출된 정보 섹션 (편집 가능) */}
@@ -1487,25 +1371,36 @@ const AdminPage: React.FC = () => {
                   {/* 분석 결과 */}
                   {aiResult && (
                     <div className="space-y-4 pt-4 border-t border-slate-700/50">
-                      {/* 요약 */}
-                      {aiResult.translation_summary && (
+                      {/* GPT 생성 제목 */}
+                      {aiResult.news_title && (
+                        <div className="p-4 bg-slate-900/50 rounded-xl">
+                          <h4 className="text-yellow-400 font-medium mb-2 flex items-center gap-2">
+                            <DocumentTextIcon className="w-4 h-4" />
+                            GPT 생성 제목
+                          </h4>
+                          <p className="text-white text-lg font-semibold">{aiResult.news_title}</p>
+                        </div>
+                      )}
+
+                      {/* 내레이션 */}
+                      {(aiResult.narration || aiResult.translation_summary) && (
                         <div className="p-4 bg-slate-900/50 rounded-xl">
                           <h4 className="text-cyan-400 font-medium mb-2 flex items-center gap-2">
                             <DocumentTextIcon className="w-4 h-4" />
-                            번역 및 요약
+                            내레이션
                           </h4>
-                          <p className="text-slate-300 leading-relaxed">{aiResult.translation_summary}</p>
+                          <p className="text-slate-300 leading-relaxed whitespace-pre-line">{aiResult.narration || aiResult.translation_summary}</p>
                         </div>
                       )}
 
                       {/* 주요 포인트 */}
                       {aiResult.key_points && aiResult.key_points.length > 0 && (
                         <div className="p-4 bg-slate-900/50 rounded-xl">
-                          <h4 className="text-emerald-400 font-medium mb-2">📌 주요 포인트</h4>
+                          <h4 className="text-emerald-400 font-medium mb-2">주요 포인트 ({aiResult.key_points.length}개)</h4>
                           <ul className="space-y-2">
                             {aiResult.key_points.map((point, i) => (
                               <li key={i} className="text-slate-300 flex items-start gap-2">
-                                <span className="text-emerald-400 mt-1">•</span>
+                                <span className="text-emerald-400 mt-1 font-bold">{i + 1}.</span>
                                 {point}
                               </li>
                             ))}
@@ -1514,16 +1409,10 @@ const AdminPage: React.FC = () => {
                       )}
 
                       {/* 크리티컬 분석 */}
-                      {aiResult.critical_analysis && (
+                      {aiResult.critical_analysis && aiResult.critical_analysis.why_important && (
                         <div className="p-4 bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-xl border border-purple-500/20">
-                          <h4 className="text-purple-400 font-medium mb-3">🔥 이게 왜 중요한대!</h4>
-                          
-                          {aiResult.critical_analysis.why_important && (
-                            <div>
-                              <p className="text-slate-400 text-sm mb-1">The Gist's Critique</p>
-                              <p className="text-slate-200">{aiResult.critical_analysis.why_important}</p>
-                            </div>
-                          )}
+                          <h4 className="text-purple-400 font-medium mb-3">The Gist's Critique</h4>
+                          <p className="text-slate-200">{aiResult.critical_analysis.why_important}</p>
                         </div>
                       )}
 
@@ -1591,11 +1480,11 @@ const AdminPage: React.FC = () => {
                         {/* 개별 섹션 읽기 */}
                         <div className="flex gap-2 mt-2">
                           <button
-                            onClick={() => speakText(aiResult.translation_summary || '')}
+                            onClick={() => speakText(aiResult.narration || aiResult.translation_summary || '')}
                             disabled={isSpeaking}
                             className="flex-1 py-2 text-sm rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition disabled:opacity-50"
                           >
-                            요약만
+                            내레이션
                           </button>
                           <button
                             onClick={() => speakText(aiResult.key_points?.join('. ') || '')}
@@ -1618,17 +1507,20 @@ const AdminPage: React.FC = () => {
                       <button
                         onClick={() => {
                           setActiveTab('news');
-                          setNewsTitle(aiResult.translation_summary?.substring(0, 100) || '');
+                          // 제목: GPT news_title 우선
+                          setNewsTitle(aiResult.news_title || aiResult.translation_summary?.substring(0, 100) || '');
+                          // 본문: key_points 불렛 + Critique
                           setNewsContent(
-                            (aiResult.translation_summary || '') + '\n\n' +
                             '## 주요 포인트\n' + 
                             (aiResult.key_points?.map(p => `- ${p}`).join('\n') || '') + '\n\n' +
                             '## The Gist\'s Critique\n' +
                             (aiResult.critical_analysis?.why_important || '')
                           );
+                          // 내레이션: GPT narration 우선
                           setNewsNarration(
-                            (aiResult.translation_summary || '') + ' ' +
-                            (aiResult.key_points?.map((p, i) => `${i + 1}번. ${p}`).join(' ') || '')
+                            aiResult.narration ||
+                            ((aiResult.translation_summary || '') + ' ' +
+                            (aiResult.key_points?.map((p, i) => `${i + 1}번. ${p}`).join(' ') || ''))
                           );
                           setNewsWhyImportant(aiResult.critical_analysis?.why_important || '');
                           setArticleUrl(aiUrl);
