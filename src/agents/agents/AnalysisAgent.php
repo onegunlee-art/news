@@ -184,13 +184,12 @@ class AnalysisAgent extends BaseAgent
 기사 본문:
 {content}
 
-다음 항목을 모두 포함하여 JSON으로 응답하세요:
+다음 항목을 모두 포함하여 JSON으로 응답하세요 (The Gist's Critique까지만):
 {
   "translation_summary": "번역된 3문장 요약 (한국어)",
   "key_points": ["주요 포인트 1", "주요 포인트 2", "주요 포인트 3"],
   "critical_analysis": {
-    "why_important": "이게 왜 중요한대! - 핵심 시사점과 영향 설명 (2-3문장)",
-    "future_prediction": "미래 전망 - 이 이슈의 발전 방향 예측 (2-3문장)"
+    "why_important": "이게 왜 중요한대! - 핵심 시사점과 영향 설명 (2-3문장)"
   }
 }
 PROMPT;
@@ -236,8 +235,7 @@ PROMPT;
             'translation_summary' => $response,
             'key_points' => ['분석 결과를 확인하세요.'],
             'critical_analysis' => [
-                'why_important' => '분석 결과를 확인하세요.',
-                'future_prediction' => '추가 분석이 필요합니다.'
+                'why_important' => '분석 결과를 확인하세요.'
             ]
         ];
     }
@@ -266,8 +264,7 @@ PROMPT;
 
     /**
      * TTS용 텍스트 생성
-     * - 오디오를 특정 시간(예: 42초)에 맞추기 위해 요약·자르기 하지 않음.
-     * - 내레이션(요약·주요포인트)과 지스트 크리티크(왜 중요한가·미래 전망) 전부 포함하여 전체 읽음.
+     * - 내레이션(요약·주요포인트) + The Gist's Critique(왜 중요한가)까지만. 미래 전망 없음.
      */
     private function buildTTSText(AnalysisResult $analysis): string
     {
@@ -286,18 +283,11 @@ PROMPT;
             }
         }
 
-        // 중요성 분석
+        // The Gist's Critique
         $whyImportant = $analysis->getWhyImportant();
         if ($whyImportant) {
             $parts[] = "이게 왜 중요한대!";
             $parts[] = $whyImportant;
-        }
-
-        // 미래 전망
-        $prediction = $analysis->getFuturePrediction();
-        if ($prediction) {
-            $parts[] = "앞으로의 전망입니다.";
-            $parts[] = $prediction;
         }
 
         return implode(" ", $parts);

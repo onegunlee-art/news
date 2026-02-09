@@ -51,14 +51,13 @@ export default function NewsDetailPage() {
   const [error, setError] = useState<string | null>(null)
   const [showGptSummary, setShowGptSummary] = useState(false)
 
-  // 전역 팝업 플레이어에서 재생 (내레이션 + 지스트 크리티크 전부 읽기, 시간으로 자르지 않음)
+  // 전역 팝업 플레이어에서 재생 (내레이션 + The Gist's Critique까지만)
   const playArticle = () => {
     if (!news) return
     const parts: string[] = [news.title]
     const mainContent = news.narration || news.content || news.description || ''
     if (mainContent) parts.push(mainContent)
     if (news.why_important) parts.push("The Gist's Critique.", news.why_important)
-    if (news.future_prediction) parts.push("앞으로의 전망입니다.", news.future_prediction)
     const text = parts.join(' ').trim()
     if (!text) {
       alert('재생할 본문 내용이 없습니다.')

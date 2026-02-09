@@ -233,10 +233,6 @@ const AdminPage: React.FC = () => {
       fullText += '이게 왜 중요한가. ' + aiResult.critical_analysis.why_important + ' ';
     }
     
-    if (aiResult.critical_analysis?.future_prediction) {
-      fullText += '미래 전망입니다. ' + aiResult.critical_analysis.future_prediction;
-    }
-    
     speakText(fullText);
   };
 
@@ -256,7 +252,6 @@ const AdminPage: React.FC = () => {
   const [newsContent, setNewsContent] = useState('');
   const [newsWhyImportant, setNewsWhyImportant] = useState('');
   const [newsNarration, setNewsNarration] = useState('');
-  const [newsFuturePrediction, setNewsFuturePrediction] = useState('');
   const [newsList, setNewsList] = useState<NewsArticle[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -277,7 +272,6 @@ const AdminPage: React.FC = () => {
   const refNewsContent = useRef<HTMLTextAreaElement>(null);
   const refNewsNarration = useRef<HTMLTextAreaElement>(null);
   const refNewsWhyImportant = useRef<HTMLTextAreaElement>(null);
-  const refNewsFuturePrediction = useRef<HTMLTextAreaElement>(null);
   
   const [stats, setStats] = useState<DashboardStats>({
     totalUsers: 0,
@@ -334,7 +328,6 @@ const AdminPage: React.FC = () => {
     setNewsContent(news.content);
     setNewsWhyImportant(news.why_important || '');
     setNewsNarration(news.narration || '');
-    setNewsFuturePrediction(news.future_prediction || '');
     // 추가 메타데이터 (출처, 작성자, 작성일, 사진)
     setArticleUrl(news.source_url || '');
     setArticleSource(news.original_source || news.source || '');
@@ -354,7 +347,6 @@ const AdminPage: React.FC = () => {
     setNewsContent('');
     setNewsWhyImportant('');
     setNewsNarration('');
-    setNewsFuturePrediction('');
     setArticleUrl('');
     // 메타데이터 필드 초기화
     setArticleSource('');
@@ -1056,21 +1048,6 @@ const AdminPage: React.FC = () => {
                     <p className="text-slate-500 text-sm mt-1">{newsWhyImportant.length} / 5,000자</p>
                   </div>
 
-                  {/* 미래 전망 (오디오에서 전부 읽음) */}
-                  <div>
-                    <label className="block text-slate-300 mb-2 text-sm font-medium">
-                      미래 전망
-                    </label>
-                    <textarea
-                      ref={refNewsFuturePrediction}
-                      value={newsFuturePrediction}
-                      onChange={(e) => setNewsFuturePrediction(e.target.value)}
-                      placeholder="미래 전망을 입력하세요. Listen 시 내레이션·크리티크와 함께 전부 읽힙니다."
-                      rows={3}
-                      className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:border-slate-500 focus:ring-1 focus:ring-slate-500 outline-none transition resize-none"
-                    />
-                  </div>
-
                   {/* 저장 버튼 */}
                   <div className="flex items-center gap-4">
                     <button
@@ -1092,7 +1069,6 @@ const AdminPage: React.FC = () => {
                             content: newsContent,
                             why_important: newsWhyImportant.trim() || null,
                             narration: newsNarration.trim() || null,
-                            future_prediction: newsFuturePrediction.trim() || null,
                             source_url: articleUrl.trim() || null,
                             source: articleSource.trim() || null,
                             author: articleAuthor.trim() || null,
@@ -1479,16 +1455,9 @@ const AdminPage: React.FC = () => {
                           <h4 className="text-purple-400 font-medium mb-3">🔥 이게 왜 중요한대!</h4>
                           
                           {aiResult.critical_analysis.why_important && (
-                            <div className="mb-3">
-                              <p className="text-slate-400 text-sm mb-1">중요성</p>
-                              <p className="text-slate-200">{aiResult.critical_analysis.why_important}</p>
-                            </div>
-                          )}
-                          
-                          {aiResult.critical_analysis.future_prediction && (
                             <div>
-                              <p className="text-slate-400 text-sm mb-1">미래 전망</p>
-                              <p className="text-slate-200">{aiResult.critical_analysis.future_prediction}</p>
+                              <p className="text-slate-400 text-sm mb-1">The Gist's Critique</p>
+                              <p className="text-slate-200">{aiResult.critical_analysis.why_important}</p>
                             </div>
                           )}
                         </div>
@@ -1572,14 +1541,11 @@ const AdminPage: React.FC = () => {
                             포인트만
                           </button>
                           <button
-                            onClick={() => speakText(
-                              (aiResult.critical_analysis?.why_important || '') + ' ' +
-                              (aiResult.critical_analysis?.future_prediction || '')
-                            )}
+                            onClick={() => speakText(aiResult.critical_analysis?.why_important || '')}
                             disabled={isSpeaking}
                             className="flex-1 py-2 text-sm rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition disabled:opacity-50"
                           >
-                            분석만
+                            크리티크만
                           </button>
                         </div>
                       </div>
@@ -1593,17 +1559,14 @@ const AdminPage: React.FC = () => {
                             (aiResult.translation_summary || '') + '\n\n' +
                             '## 주요 포인트\n' + 
                             (aiResult.key_points?.map(p => `- ${p}`).join('\n') || '') + '\n\n' +
-                            '## 분석\n' +
-                            (aiResult.critical_analysis?.why_important || '') + '\n\n' +
-                            '## 전망\n' +
-                            (aiResult.critical_analysis?.future_prediction || '')
+                            '## The Gist\'s Critique\n' +
+                            (aiResult.critical_analysis?.why_important || '')
                           );
                           setNewsNarration(
                             (aiResult.translation_summary || '') + ' ' +
                             (aiResult.key_points?.map((p, i) => `${i + 1}번. ${p}`).join(' ') || '')
                           );
                           setNewsWhyImportant(aiResult.critical_analysis?.why_important || '');
-                          setNewsFuturePrediction(aiResult.critical_analysis?.future_prediction || '');
                           setArticleUrl(aiUrl);
                         }}
                         className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-medium hover:opacity-90 transition flex items-center justify-center gap-2"
