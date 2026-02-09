@@ -699,14 +699,78 @@ const AdminPage: React.FC = () => {
                   {/* URL 자동 추출 */}
                   <div>
                     <label className="block text-slate-300 mb-2 text-sm font-medium">기사 URL (선택사항)</label>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-wrap">
                       <input
                         type="url"
                         value={articleUrl}
                         onChange={(e) => setArticleUrl(e.target.value)}
                         placeholder="https://example.com/article..."
-                        className="flex-1 bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition"
+                        className="flex-1 min-w-[200px] bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition"
                       />
+                      <button
+                        onClick={async () => {
+                          if (!articleUrl.trim()) {
+                            setSaveMessage({ type: 'error', text: 'URL을 입력해주세요.' });
+                            return;
+                          }
+                          setIsAnalyzing(true);
+                          setSaveMessage(null);
+                          setAiError(null);
+                          setAiResult(null);
+                          try {
+                            const response = await fetch('/api/admin/ai-analyze.php', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                action: 'analyze',
+                                url: articleUrl.trim(),
+                                enable_tts: true
+                              })
+                            });
+                            const data = await response.json();
+                            if (data.success && data.analysis) {
+                              setAiResult(data.analysis);
+                              setAiUrl(articleUrl.trim());
+                              if (data.article) {
+                                setArticleImageUrl(data.article.image_url || '');
+                                setNewsTitle(data.article.title || '');
+                                setArticleSummary(data.article.description || '');
+                                setArticleSource(data.article.source || '');
+                                if (data.article.published_at) setArticlePublishedAt(data.article.published_at);
+                                if (data.article.author) setArticleAuthor(data.article.author || '');
+                              }
+                              const a = data.analysis;
+                              setNewsContent(
+                                (a.translation_summary || '') + '\n\n## 주요 포인트\n' +
+                                (a.key_points?.map((p: string) => `- ${p}`).join('\n') || '') + '\n\n## The Gist\'s Critique\n' +
+                                (a.critical_analysis?.why_important || '')
+                              );
+                              setNewsNarration(
+                                (a.translation_summary || '') + ' ' +
+                                (a.key_points?.map((p: string, i: number) => `${i + 1}번. ${p}`).join(' ') || '')
+                              );
+                              setNewsWhyImportant(a.critical_analysis?.why_important || '');
+                              setShowExtractedInfo(true);
+                              setSaveMessage({ type: 'success', text: 'GPT 분석이 완료되었습니다. 제목·내용·썸네일·내레이션이 채워졌습니다.' });
+                            } else {
+                              setSaveMessage({ type: 'error', text: data.error || 'AI 분석 실패' });
+                            }
+                          } catch (error) {
+                            setSaveMessage({ type: 'error', text: '서버 오류: ' + (error as Error).message });
+                          } finally {
+                            setIsAnalyzing(false);
+                            setTimeout(() => setSaveMessage(null), 5000);
+                          }
+                        }}
+                        disabled={isAnalyzing || !articleUrl.trim()}
+                        className={`px-5 py-3 rounded-xl font-medium transition-all whitespace-nowrap ${
+                          isAnalyzing || !articleUrl.trim()
+                            ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
+                            : 'bg-gradient-to-r from-emerald-500 to-cyan-500 text-white hover:opacity-90'
+                        }`}
+                      >
+                        {isAnalyzing ? 'GPT 분석 중...' : 'AI 분석'}
+                      </button>
                       <button
                         onClick={async () => {
                           if (!articleUrl.trim()) {
@@ -842,7 +906,7 @@ const AdminPage: React.FC = () => {
                         {isFetchingUrl ? '가져오는 중...' : '자동 추출'}
                       </button>
                     </div>
-                    <p className="text-slate-500 text-sm mt-1">기사 URL을 입력하면 제목과 내용을 자동으로 가져옵니다.</p>
+                    <p className="text-slate-500 text-sm mt-1">기사 URL 입력 후 <strong>AI 분석</strong>을 누르면 GPT가 요약·내레이션·썸네일까지 채워줍니다. <strong>자동 추출</strong>은 메타데이터만 가져옵니다.</p>
                   </div>
 
                   {/* 추출된 정보 섹션 (편집 가능) */}
