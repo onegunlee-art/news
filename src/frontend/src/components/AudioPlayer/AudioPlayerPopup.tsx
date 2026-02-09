@@ -1,3 +1,4 @@
+import { useRef, useEffect, useState } from 'react'
 import { useAudioPlayerStore } from '../../store/audioPlayerStore'
 
 /** TTS 예상: 초당 글자 수 (rate 1.0 기준) - store와 동일 */
@@ -17,17 +18,84 @@ export default function AudioPlayerPopup() {
   const progress = useAudioPlayerStore((s) => s.progress)
   const fullText = useAudioPlayerStore((s) => s.fullText)
   const rate = useAudioPlayerStore((s) => s.rate)
+  const audioUrl = useAudioPlayerStore((s) => s.audioUrl)
+  const isTtsLoading = useAudioPlayerStore((s) => s.isTtsLoading)
   const togglePlay = useAudioPlayerStore((s) => s.togglePlay)
   const skipBack = useAudioPlayerStore((s) => s.skipBack)
   const seek = useAudioPlayerStore((s) => s.seek)
   const close = useAudioPlayerStore((s) => s.close)
+  const setProgress = useAudioPlayerStore((s) => s.setProgress)
 
-  const totalSec = fullText.length > 0 ? fullText.length / (CHARS_PER_SEC * rate) : 0
-  const currentSec = progress * totalSec
+  const audioRef = useRef<HTMLAudioElement>(null)
+  const [audioDuration, setAudioDuration] = useState(0)
+
+  const totalSec = audioUrl && audioDuration > 0
+    ? audioDuration
+    : fullText.length > 0
+      ? fullText.length / (CHARS_PER_SEC * rate)
+      : 0
+  const currentSec = audioUrl && audioDuration > 0 ? progress * audioDuration : progress * totalSec
+
+  useEffect(() => {
+    if (!audioUrl || !audioRef.current) return
+    const el = audioRef.current
+    const onTimeUpdate = () => {
+      if (el.duration && isFinite(el.duration)) setProgress(el.currentTime / el.duration)
+    }
+    const onEnded = () => {
+      setProgress(1)
+      useAudioPlayerStore.setState({ isPlaying: false })
+    }
+    const onLoadedMetadata = () => setAudioDuration(el.duration)
+    const onPlay = () => useAudioPlayerStore.setState({ isPlaying: true })
+    const onPause = () => useAudioPlayerStore.setState({ isPlaying: false })
+    el.addEventListener('timeupdate', onTimeUpdate)
+    el.addEventListener('ended', onEnded)
+    el.addEventListener('loadedmetadata', onLoadedMetadata)
+    el.addEventListener('play', onPlay)
+    el.addEventListener('pause', onPause)
+    return () => {
+      el.removeEventListener('timeupdate', onTimeUpdate)
+      el.removeEventListener('ended', onEnded)
+      el.removeEventListener('loadedmetadata', onLoadedMetadata)
+      el.removeEventListener('play', onPlay)
+      el.removeEventListener('pause', onPause)
+    }
+  }, [audioUrl, setProgress])
+
+  useEffect(() => {
+    if (audioUrl && audioRef.current) {
+      audioRef.current.play().catch(() => {})
+    }
+  }, [audioUrl])
 
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = Number(e.target.value)
-    seek(value / 100)
+    if (audioUrl && audioRef.current && audioDuration > 0) {
+      audioRef.current.currentTime = (value / 100) * audioDuration
+      setProgress(value / 100)
+    } else {
+      seek(value / 100)
+    }
+  }
+
+  const handleTogglePlay = () => {
+    if (audioUrl && audioRef.current) {
+      if (isPlaying) audioRef.current.pause()
+      else audioRef.current.play()
+      return
+    }
+    togglePlay()
+  }
+
+  const handleSkipBack = (seconds = 15) => {
+    if (audioUrl && audioRef.current && audioDuration > 0) {
+      const el = audioRef.current
+      el.currentTime = Math.max(0, el.currentTime - seconds)
+      setProgress(el.currentTime / audioDuration)
+      return
+    }
+    skipBack(seconds)
   }
 
   if (!isOpen) return null
@@ -38,7 +106,13 @@ export default function AudioPlayerPopup() {
       role="dialog"
       aria-label="오디오 재생"
     >
+      {audioUrl && (
+        <audio ref={audioRef} src={audioUrl} preload="metadata" />
+      )}
       <div className="max-w-7xl mx-auto px-4 py-3">
+        {isTtsLoading && (
+          <p className="text-sm text-gray-500 mb-2">오디오 생성 중...</p>
+        )}
         {/* 재생 시간 + 진행 바 */}
         <div className="flex items-center gap-2 mb-2">
           <span className="text-xs text-gray-500 tabular-nums w-9">{formatTime(currentSec)}</span>
@@ -76,7 +150,7 @@ export default function AudioPlayerPopup() {
           <div className="flex items-center gap-2 flex-shrink-0">
             <button
               type="button"
-              onClick={() => skipBack(15)}
+              onClick={() => handleSkipBack(15)}
               className="w-10 h-10 flex items-center justify-center text-gray-600 hover:text-gray-900 transition-colors"
               aria-label="15초 뒤로"
             >
@@ -86,7 +160,7 @@ export default function AudioPlayerPopup() {
             </button>
             <button
               type="button"
-              onClick={togglePlay}
+              onClick={handleTogglePlay}
               className="w-10 h-10 flex items-center justify-center text-gray-700 hover:text-gray-900 transition-colors"
               aria-label={isPlaying ? '일시정지' : '재생'}
             >

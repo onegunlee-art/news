@@ -117,6 +117,12 @@ export const analysisApi = {
     api.get('/analysis/user/history', { params: { page, per_page: perPage } }),
 }
 
+/** TTS 생성 (Google 보이스 - Admin 설정 적용) */
+export const ttsApi = {
+  generate: (text: string) =>
+    api.post<{ success: boolean; data: { url: string } }>('/tts/generate', { text }),
+}
+
 /** Admin 설정 (Router: GET/PUT /api/admin/settings) */
 export const adminSettingsApi = {
   getSettings: () => api.get<{ success: boolean; data: Record<string, string> }>('/admin/settings'),

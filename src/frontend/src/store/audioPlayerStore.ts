@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { ttsApi } from '../services/api'
 
 /** 한글 TTS 대략 초당 글자 수 (rate 1.0 기준) */
 const CHARS_PER_SEC = 12
@@ -21,6 +22,10 @@ interface AudioPlayerState {
   progressTimerId: ReturnType<typeof setInterval> | null
   /** 재생 중인 utterance (취소용) */
   _utterance: SpeechSynthesisUtterance | null
+  /** 서버 TTS 오디오 URL (있으면 이걸 재생, 없으면 브라우저 TTS) */
+  audioUrl: string | null
+  /** 서버 TTS 생성 중 */
+  isTtsLoading: boolean
 }
 
 interface AudioPlayerActions {
@@ -54,6 +59,8 @@ const initial: AudioPlayerState = {
   startTime: 0,
   progressTimerId: null,
   _utterance: null,
+  audioUrl: null,
+  isTtsLoading: false,
 }
 
 function clearProgressTimer(get: () => AudioPlayerState & AudioPlayerActions) {
@@ -87,7 +94,7 @@ export const useAudioPlayerStore = create<AudioPlayerState & AudioPlayerActions>
 
   openAndPlay: (title, text, rate = 1.0, imageUrl = '') => {
     const fullText = (text || '').trim()
-    if (!fullText || !('speechSynthesis' in window)) return
+    if (!fullText) return
     window.speechSynthesis.cancel()
     clearProgressTimer(get)
     set({
@@ -102,33 +109,55 @@ export const useAudioPlayerStore = create<AudioPlayerState & AudioPlayerActions>
       startTime: 0,
       progressTimerId: null,
       _utterance: null,
+      audioUrl: null,
+      isTtsLoading: true,
     })
-    const utterance = new SpeechSynthesisUtterance(fullText)
-    utterance.lang = 'ko-KR'
-    utterance.rate = rate
-    utterance.pitch = 1.0
-    const voices = window.speechSynthesis.getVoices()
-    const ko = voices.find((v) => v.lang.includes('ko'))
-    if (ko) utterance.voice = ko
-    utterance.onstart = () => {
-      set({ isPlaying: true, startTime: Date.now() })
-      startProgressTimer(get)
+    const startBrowserTts = () => {
+      if (!('speechSynthesis' in window)) return
+      const utterance = new SpeechSynthesisUtterance(fullText)
+      utterance.lang = 'ko-KR'
+      utterance.rate = rate
+      utterance.pitch = 1.0
+      const voices = window.speechSynthesis.getVoices()
+      const ko = voices.find((v) => v.lang.includes('ko'))
+      if (ko) utterance.voice = ko
+      utterance.onstart = () => {
+        set({ isPlaying: true, startTime: Date.now() })
+        startProgressTimer(get)
+      }
+      utterance.onend = () => {
+        clearProgressTimer(get)
+        set({ isPlaying: false, progress: 1, startCharIndex: get().fullText.length, _utterance: null })
+      }
+      utterance.onerror = () => {
+        clearProgressTimer(get)
+        set({ isPlaying: false, _utterance: null })
+      }
+      set({ _utterance: utterance })
+      window.speechSynthesis.speak(utterance)
     }
-    utterance.onend = () => {
-      clearProgressTimer(get)
-      set({ isPlaying: false, progress: 1, startCharIndex: get().fullText.length, _utterance: null })
-    }
-    utterance.onerror = () => {
-      clearProgressTimer(get)
-      set({ isPlaying: false, _utterance: null })
-    }
-    set({ _utterance: utterance })
-    window.speechSynthesis.speak(utterance)
+    ttsApi
+      .generate(fullText)
+      .then((res) => {
+        const url = res.data?.data?.url
+        if (url) {
+          set({ audioUrl: url, isTtsLoading: false })
+          return
+        }
+        set({ isTtsLoading: false })
+        startBrowserTts()
+      })
+      .catch(() => {
+        set({ isTtsLoading: false })
+        startBrowserTts()
+      })
   },
 
   togglePlay: () => {
     const state = get()
-    if (!state.isOpen || !state.fullText) return
+    if (!state.isOpen) return
+    if (state.audioUrl) return
+    if (!state.fullText) return
     if (state.isPlaying) {
       window.speechSynthesis.cancel()
       clearProgressTimer(get)
@@ -187,6 +216,7 @@ export const useAudioPlayerStore = create<AudioPlayerState & AudioPlayerActions>
 
   seek: (progress) => {
     const state = get()
+    if (state.audioUrl) return
     if (!state.fullText) return
     window.speechSynthesis.cancel()
     clearProgressTimer(get)

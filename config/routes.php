@@ -17,6 +17,7 @@ use App\Controllers\AuthController;
 use App\Controllers\NewsController;
 use App\Controllers\AnalysisController;
 use App\Controllers\AdminController;
+use App\Controllers\TTSController;
 
 /** @var Router $router */
 
@@ -144,6 +145,9 @@ $router->group(['prefix' => '/analysis'], function (Router $router) {
     // 사용자의 분석 내역
     $router->get('/user/history', [AnalysisController::class, 'userHistory']);
 });
+
+// ==================== TTS (기사 Listen용) ====================
+$router->post('/tts/generate', [TTSController::class, 'generate']);
 
 // ==================== 사용자 라우트 ====================
 $router->group(['prefix' => '/user'], function (Router $router) {
