@@ -351,6 +351,57 @@ function getStatus(): array {
     ];
 }
 
+/**
+ * GPT API 호출 단독 테스트 (스크래핑/파이프라인 없이 OpenAI만 호출)
+ * POST action=test_openai → 실제 API 호출 후 성공/실패 반환
+ */
+function testOpenAICall(): array {
+    global $envLoaded, $envTried;
+    $openai = new OpenAIService([]);
+    $debug = [
+        'env_loaded' => $envLoaded ?? false,
+        'env_tried' => $envTried ?? [],
+        'openai_configured' => $openai->isConfigured(),
+        'mock_mode' => $openai->isMockMode(),
+    ];
+    if ($openai->isMockMode()) {
+        return [
+            'success' => false,
+            'message' => 'Mock 모드입니다. API 키가 없어 실제 OpenAI 호출을 하지 않습니다.',
+            'debug' => $debug,
+            'response' => null,
+            'error' => 'OPENAI_API_KEY not set or mock_mode'
+        ];
+    }
+    $start = microtime(true);
+    try {
+        $response = $openai->chat(
+            'You are a test assistant. Reply briefly.',
+            'Say exactly: OK',
+            ['max_tokens' => 10, 'timeout' => 30]
+        );
+        $ms = round((microtime(true) - $start) * 1000, 2);
+        return [
+            'success' => true,
+            'message' => 'GPT API 호출 성공',
+            'debug' => $debug,
+            'response' => $response,
+            'duration_ms' => $ms,
+            'error' => null
+        ];
+    } catch (\Throwable $e) {
+        $ms = round((microtime(true) - $start) * 1000, 2);
+        return [
+            'success' => false,
+            'message' => 'GPT API 호출 실패: ' . $e->getMessage(),
+            'debug' => $debug,
+            'response' => null,
+            'duration_ms' => $ms,
+            'error' => $e->getMessage()
+        ];
+    }
+}
+
 // 요청 처리
 $method = $_SERVER['REQUEST_METHOD'];
 
@@ -418,6 +469,11 @@ try {
 
                 case 'status':
                     $result = getStatus();
+                    sendResponse($result);
+                    break;
+
+                case 'test_openai':
+                    $result = testOpenAICall();
                     sendResponse($result);
                     break;
 

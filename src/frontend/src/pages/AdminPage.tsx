@@ -1738,27 +1738,53 @@ const AdminPage: React.FC = () => {
 
               {/* GPT 분석 API 상태 확인 */}
               <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 space-y-4">
-                <h3 className="text-lg font-semibold text-slate-200">GPT 분석 API 상태</h3>
-                <p className="text-slate-400 text-sm">서버의 OpenAI API 키·env 로딩 여부를 확인합니다. 문제 시 env_tried 등이 콘솔에 출력됩니다.</p>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    try {
-                      const r = await fetch('/api/admin/ai-analyze.php');
-                      const d = await r.json();
-                      const msg = d.success
-                        ? `상태: ${d.status} | Mock: ${d.mock_mode ? '예' : '아니오'} | API키: ${d.openai_key_set ? '설정됨' : '없음'} | env: ${d.env_loaded ? '로드됨' : '없음'} | root: ${(d.project_root || '').slice(-40)}`
-                        : `오류: ${d.error || r.status}`;
-                      setSaveMessage({ type: d.openai_key_set ? 'success' : 'error', text: msg });
-                      if (d.env_tried?.length) console.log('env_tried', d.env_tried);
-                    } catch (e) {
-                      setSaveMessage({ type: 'error', text: '상태 확인 실패: ' + (e as Error).message });
-                    }
-                  }}
-                  className="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg text-sm transition"
-                >
-                  API 상태 확인
-                </button>
+                <h3 className="text-lg font-semibold text-slate-200">GPT 분석 API</h3>
+                <p className="text-slate-400 text-sm">API 키·env 확인 후, 실제 OpenAI 호출이 되는지 테스트합니다.</p>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        const r = await fetch('/api/admin/ai-analyze.php');
+                        const d = await r.json();
+                        const msg = d.success
+                          ? `상태: ${d.status} | Mock: ${d.mock_mode ? '예' : '아니오'} | API키: ${d.openai_key_set ? '설정됨' : '없음'} | env: ${d.env_loaded ? '로드됨' : '없음'} | root: ${(d.project_root || '').slice(-40)}`
+                          : `오류: ${d.error || r.status}`;
+                        setSaveMessage({ type: d.openai_key_set ? 'success' : 'error', text: msg });
+                        if (d.env_tried?.length) console.log('env_tried', d.env_tried);
+                      } catch (e) {
+                        setSaveMessage({ type: 'error', text: '상태 확인 실패: ' + (e as Error).message });
+                      }
+                    }}
+                    className="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg text-sm transition"
+                  >
+                    API 상태 확인
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setSaveMessage({ type: 'info', text: 'GPT API 호출 테스트 중...' });
+                      try {
+                        const r = await fetch('/api/admin/ai-analyze.php', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ action: 'test_openai' })
+                        });
+                        const d = await r.json();
+                        if (d.success) {
+                          setSaveMessage({ type: 'success', text: `GPT API 호출 성공 (${d.duration_ms}ms): ${d.response ?? ''}` });
+                        } else {
+                          setSaveMessage({ type: 'error', text: `${d.message ?? d.error ?? '실패'}${d.debug?.mock_mode ? ' (Mock 모드)' : ''}` });
+                        }
+                      } catch (e) {
+                        setSaveMessage({ type: 'error', text: '테스트 요청 실패: ' + (e as Error).message });
+                      }
+                    }}
+                    className="bg-cyan-600 hover:bg-cyan-500 text-white px-4 py-2 rounded-lg text-sm transition"
+                  >
+                    GPT API 호출 테스트
+                  </button>
+                </div>
               </div>
 
               <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 space-y-4">

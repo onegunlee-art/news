@@ -85,8 +85,8 @@ class OpenAIService
             'max_tokens' => $options['max_tokens'] ?? $this->config['max_tokens']
         ];
 
-        // GPT-4.1은 긴 기사 분석 시 시간이 걸림 → 최소 120초
-        $timeout = max((int)($options['timeout'] ?? $this->config['timeout'] ?? 60), 120);
+        // options에 timeout이 있으면 사용, 없으면 config (긴 분석은 120초 권장)
+        $timeout = (int)($options['timeout'] ?? $this->config['timeout'] ?? 60);
 
         $endpoint = $this->config['endpoints']['chat'] ?? 'https://api.openai.com/v1/chat/completions';
         $ch = curl_init($endpoint);
