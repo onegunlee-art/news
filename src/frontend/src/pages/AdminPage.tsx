@@ -749,7 +749,8 @@ const AdminPage: React.FC = () => {
 
                             // Mock 모드 경고
                             if (data.mock_mode) {
-                              setSaveMessage({ type: 'error', text: '⚠️ Mock 모드: OpenAI API 키가 서버에 설정되지 않았습니다. 실제 GPT 분석이 불가합니다. 서버 .env 파일에 OPENAI_API_KEY를 등록하세요.' });
+                              const debugHint = data.debug?.env_tried?.length ? ` (시도한 env: ${data.debug.env_tried.join(', ')})` : '';
+                              setSaveMessage({ type: 'error', text: `⚠️ Mock 모드: API 키가 서버에서 읽히지 않습니다. GitHub Secrets에 OPENAI_API_KEY 등록 후 재배포하세요. 아래 "API 상태 확인"으로 env 로딩 여부를 확인할 수 있습니다.${debugHint}` });
                               setIsAnalyzing(false);
                               return;
                             }
@@ -814,6 +815,25 @@ const AdminPage: React.FC = () => {
                       </button>
                     </div>
                     <p className="text-slate-500 text-sm mt-1">기사 URL을 입력하고 <strong>GPT 분석</strong>을 누르면 제목, 요약, 내레이션, 썸네일이 자동 생성됩니다.</p>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          const r = await fetch('/api/admin/ai-analyze.php');
+                          const d = await r.json();
+                          const msg = d.success
+                            ? `상태: ${d.status} | Mock: ${d.mock_mode ? '예' : '아니오'} | API키: ${d.openai_key_set ? '설정됨' : '없음'} | env: ${d.env_loaded ? '로드됨' : '없음'} | root: ${(d.project_root || '').slice(-30)}`
+                            : `상태 오류: ${d.error || r.status}`;
+                          setSaveMessage({ type: d.openai_key_set ? 'success' : 'error', text: msg });
+                          if (d.env_tried?.length) console.log('env_tried', d.env_tried);
+                        } catch (e) {
+                          setSaveMessage({ type: 'error', text: '상태 확인 실패: ' + (e as Error).message });
+                        }
+                      }}
+                      className="text-slate-500 hover:text-cyan-400 text-xs mt-1 underline"
+                    >
+                      API 상태 확인
+                    </button>
                   </div>
 
                   {/* 추출된 정보 섹션 (편집 가능) */}
@@ -1703,6 +1723,31 @@ const AdminPage: React.FC = () => {
                     </button>
                   </>
                 )}
+              </div>
+
+              {/* GPT 분석 API 상태 확인 */}
+              <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 space-y-4">
+                <h3 className="text-lg font-semibold text-slate-200">GPT 분석 API 상태</h3>
+                <p className="text-slate-400 text-sm">서버의 OpenAI API 키·env 로딩 여부를 확인합니다. 문제 시 env_tried 등이 콘솔에 출력됩니다.</p>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      const r = await fetch('/api/admin/ai-analyze.php');
+                      const d = await r.json();
+                      const msg = d.success
+                        ? `상태: ${d.status} | Mock: ${d.mock_mode ? '예' : '아니오'} | API키: ${d.openai_key_set ? '설정됨' : '없음'} | env: ${d.env_loaded ? '로드됨' : '없음'} | root: ${(d.project_root || '').slice(-40)}`
+                        : `오류: ${d.error || r.status}`;
+                      setSaveMessage({ type: d.openai_key_set ? 'success' : 'error', text: msg });
+                      if (d.env_tried?.length) console.log('env_tried', d.env_tried);
+                    } catch (e) {
+                      setSaveMessage({ type: 'error', text: '상태 확인 실패: ' + (e as Error).message });
+                    }
+                  }}
+                  className="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg text-sm transition"
+                >
+                  API 상태 확인
+                </button>
               </div>
 
               <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 space-y-4">

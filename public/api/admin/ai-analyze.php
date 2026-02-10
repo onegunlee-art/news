@@ -44,20 +44,21 @@ register_shutdown_function(function() {
 set_time_limit(300);
 
 // ── 프로젝트 루트 자동 탐지 ──
-// 로컬: public/api/admin → 3단계 상위 = project root
-// 서버(dothome): api/admin → 2단계 상위 = html root
 function findProjectRoot(): string {
-    $candidates = [
-        realpath(__DIR__ . '/../../../'),  // 로컬 개발 (public/api/admin → project/)
-        realpath(__DIR__ . '/../../'),      // 서버 배포 (api/admin → html/)
-        realpath(__DIR__ . '/../'),         // 안전 fallback
+    $rawCandidates = [
+        __DIR__ . '/../../../',  // 로컬 (public/api/admin)
+        __DIR__ . '/../../',     // 서버 (api/admin)
+        __DIR__ . '/../',
     ];
-    foreach ($candidates as $path) {
-        if ($path && file_exists($path . '/src/agents/autoload.php')) {
+    foreach ($rawCandidates as $raw) {
+        $path = realpath($raw);
+        if ($path === false) {
+            $path = rtrim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $raw), DIRECTORY_SEPARATOR);
+        }
+        if ($path && file_exists($path . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'agents' . DIRECTORY_SEPARATOR . 'autoload.php')) {
             return rtrim($path, '/\\') . '/';
         }
     }
-    // 최후의 수단: 현재 위치 기준 탐색
     $dir = __DIR__;
     for ($i = 0; $i < 6; $i++) {
         $dir = dirname($dir);
@@ -65,36 +66,57 @@ function findProjectRoot(): string {
             return rtrim($dir, '/\\') . '/';
         }
     }
-    throw new \RuntimeException(
-        'Cannot find project root. Searched from: ' . __DIR__ . 
-        '. Expected src/agents/autoload.php at project root.'
-    );
+    throw new \RuntimeException('Project root not found. __DIR__=' . __DIR__);
 }
 
-$projectRoot = findProjectRoot();
-
-// .env 로드 (OPENAI_API_KEY, GOOGLE_TTS_API_KEY 등)
-$envLoaded = false;
-$envFiles = [
-    $projectRoot . '.env',
-    $projectRoot . '.env.production',
-    dirname($projectRoot) . '/.env',  // 한 단계 위도 확인
-];
-foreach ($envFiles as $envFile) {
-    if (is_file($envFile) && is_readable($envFile)) {
-        foreach (file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
-            $line = trim($line);
-            if ($line === '' || $line[0] === '#') continue;
-            if (strpos($line, '=') !== false) {
-                [$name, $value] = explode('=', $line, 2);
-                $name = trim($name);
-                $value = trim($value, " \t\"'");
-                if ($name !== '') {
-                    putenv("$name=$value");
-                    $_ENV[$name] = $value;
-                }
+// .env / env.txt 로드 (서버는 env.txt 사용 권장 - FTP dotfile 미업로드 대비)
+function loadEnvFile(string $path): bool {
+    if (!is_file($path) || !is_readable($path)) return false;
+    foreach (file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [] as $line) {
+        $line = trim($line);
+        if ($line === '' || $line[0] === '#') continue;
+        if (strpos($line, '=') !== false) {
+            [$name, $value] = explode('=', $line, 2);
+            $name = trim($name);
+            $value = trim($value, " \t\"'");
+            if ($name !== '') {
+                putenv("$name=$value");
+                $_ENV[$name] = $value;
             }
         }
+    }
+    return true;
+}
+
+$projectRoot = null;
+$envLoaded = false;
+$envTried = [];
+
+try {
+    $projectRoot = findProjectRoot();
+} catch (\Throwable $e) {
+    ob_clean();
+    header('Content-Type: application/json; charset=utf-8');
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'error' => 'Project root: ' . $e->getMessage(),
+        'debug' => ['__dir__' => __DIR__, 'tried' => $envTried],
+        'analysis' => null
+    ], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+$envTried = [];
+$envFiles = [
+    $projectRoot . 'env.txt',       // 배포 시 생성 (dotfile 업로드 실패 대비)
+    $projectRoot . '.env',
+    $projectRoot . '.env.production',
+    dirname($projectRoot) . '/.env',
+];
+foreach ($envFiles as $f) {
+    $envTried[] = $f;
+    if (loadEnvFile($f)) {
         $envLoaded = true;
         break;
     }
@@ -121,16 +143,19 @@ function sendError($message, $status = 400, $extra = []) {
 
 // URL 분석 실행
 function analyzeUrl(string $url, array $options = []): array {
-    global $projectRoot, $envLoaded;
+    global $projectRoot, $envLoaded, $envTried;
     $startTime = microtime(true);
 
-    // 디버그 정보 수집
+    // 디버그 정보 수집 ($_ENV 우선 - putenv 미반영 서버 대응)
+    $openaiKey = $_ENV['OPENAI_API_KEY'] ?? getenv('OPENAI_API_KEY');
+    $openaiKey = is_string($openaiKey) ? $openaiKey : '';
     $debug = [
         'project_root' => $projectRoot,
         'env_loaded' => $envLoaded,
-        'openai_key_set' => !empty(getenv('OPENAI_API_KEY')),
-        'openai_key_prefix' => substr(getenv('OPENAI_API_KEY') ?: '', 0, 10) . '...',
-        'google_tts_key_set' => !empty(getenv('GOOGLE_TTS_API_KEY')),
+        'env_tried' => $envTried ?? [],
+        'openai_key_set' => $openaiKey !== '',
+        'openai_key_prefix' => $openaiKey !== '' ? substr($openaiKey, 0, 10) . '...' : '(empty)',
+        'google_tts_key_set' => !empty($_ENV['GOOGLE_TTS_API_KEY'] ?? getenv('GOOGLE_TTS_API_KEY')),
     ];
 
     // Google TTS 설정
@@ -310,8 +335,9 @@ try {
                 'success' => true,
                 'status' => 'ready',
                 'mock_mode' => $pipeline->isMockMode(),
-                'openai_key_set' => !empty(getenv('OPENAI_API_KEY')),
+                'openai_key_set' => !empty($_ENV['OPENAI_API_KEY'] ?? getenv('OPENAI_API_KEY')),
                 'env_loaded' => $envLoaded ?? false,
+                'env_tried' => $envTried ?? [],
                 'project_root' => $projectRoot ?? 'not set',
                 'agents' => $pipeline->getAgentNames(),
                 'message' => 'The Gist AI 분석 시스템 준비 완료'

@@ -7,9 +7,14 @@
  * @package Config
  */
 
+// putenv()가 일부 서버(FastCGI 등)에서 getenv()에 반영되지 않을 수 있음 → $_ENV 우선
+$openaiKey = $_ENV['OPENAI_API_KEY'] ?? getenv('OPENAI_API_KEY');
+if (!is_string($openaiKey)) {
+    $openaiKey = '';
+}
 return [
     // API 인증
-    'api_key' => getenv('OPENAI_API_KEY') ?: '',
+    'api_key' => $openaiKey,
     
     // 기본 모델 설정
     'model' => 'gpt-4.1',
