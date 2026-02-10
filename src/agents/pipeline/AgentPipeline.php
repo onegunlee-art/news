@@ -160,7 +160,7 @@ class AgentPipeline
                 if (is_array($articleData)) {
                     $context = $context->withArticleData(ArticleData::fromArray($articleData));
                 }
-            } catch (\Exception $e) {
+            } catch (\Throwable $e) {
                 $this->lastError = "[{$agentName}] " . $e->getMessage();
                 $this->results[$agentName] = AgentResult::failure($e->getMessage(), $agentName);
                 

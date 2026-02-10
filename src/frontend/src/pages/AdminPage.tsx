@@ -721,9 +721,11 @@ const AdminPage: React.FC = () => {
                             return;
                           }
                           setIsAnalyzing(true);
-                          setSaveMessage({ type: 'info', text: 'GPT 분석 중... (기사 추출 → GPT-4.1 분석 → 내레이션 생성, 최대 2분 소요)' });
+                          setSaveMessage({ type: 'info', text: 'GPT 분석 중... (기사 추출 → GPT-4.1 → 내레이션, 최대 약 3분 소요)' });
                           setAiError(null);
                           setAiResult(null);
+                          const controller = new AbortController();
+                          let timeoutId: ReturnType<typeof setTimeout> | null = setTimeout(() => controller.abort(), 200000); // 200초
                           try {
                             const response = await fetch('/api/admin/ai-analyze.php', {
                               method: 'POST',
@@ -732,15 +734,18 @@ const AdminPage: React.FC = () => {
                                 action: 'analyze',
                                 url: articleUrl.trim(),
                                 enable_tts: true
-                              })
+                              }),
+                              signal: controller.signal
                             });
+                            if (timeoutId) clearTimeout(timeoutId);
+                            timeoutId = null;
 
                             // 서버가 HTML이나 빈 응답을 보내는 경우 처리
                             const contentType = response.headers.get('content-type') || '';
                             if (!contentType.includes('application/json')) {
                               const text = await response.text();
                               console.error('Non-JSON response:', text.substring(0, 500));
-                              setSaveMessage({ type: 'error', text: `서버 오류: JSON 응답이 아닙니다 (HTTP ${response.status}). 서버 설정을 확인하세요.` });
+                              setSaveMessage({ type: 'error', text: `서버 오류: JSON이 아님 (HTTP ${response.status}). 응답 일부: ${text.slice(0, 200)}` });
                               setIsAnalyzing(false);
                               return;
                             }
@@ -788,15 +793,21 @@ const AdminPage: React.FC = () => {
                               setSaveMessage({ type: 'success', text: `GPT 분석 완료!${duration} 제목·내용·내레이션·썸네일이 채워졌습니다.` });
                             } else {
                               const errDetail = data.error || 'GPT 분석 실패';
-                              const debugInfo = data.debug ? ` [env:${data.debug.env_loaded ? 'O' : 'X'}, key:${data.debug.openai_key_set ? 'O' : 'X'}, mock:${data.debug.mock_mode ? 'Y' : 'N'}]` : '';
-                              setSaveMessage({ type: 'error', text: errDetail + debugInfo });
+                              const phaseStep = data.failed_step ? ` | 실패 단계: ${data.failed_step}` : (data.phase ? ` | phase: ${data.phase}` : '');
+                              const debugInfo = data.debug ? ` [env:${data.debug.env_loaded ? 'O' : 'X'}, key:${data.debug.openai_key_set ? 'O' : 'X'}]` : '';
+                              setSaveMessage({ type: 'error', text: errDetail + phaseStep + debugInfo });
                             }
-                          } catch (error) {
+                          } catch (error: unknown) {
+                            if (timeoutId) clearTimeout(timeoutId);
                             console.error('GPT 분석 에러:', error);
-                            setSaveMessage({ type: 'error', text: '서버 오류: ' + (error as Error).message + ' — 서버 로그를 확인하세요.' });
+                            const err = error as Error & { name?: string };
+                            const msg = err.name === 'AbortError'
+                              ? '요청 시간 초과(약 3분 20초). 서버·프록시 타임아웃이거나 URL 접근이 느립니다. 짧은 기사 URL로 다시 시도하거나 서버 로그를 확인하세요.'
+                              : '서버 오류: ' + (err.message || String(error));
+                            setSaveMessage({ type: 'error', text: msg });
                           } finally {
+                            if (timeoutId) clearTimeout(timeoutId);
                             setIsAnalyzing(false);
-                            // 에러 메시지는 사라지지 않게 (성공 메시지만 15초 후 사라짐)
                           }
                         }}
                         disabled={isAnalyzing || !articleUrl.trim()}

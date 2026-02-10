@@ -202,10 +202,31 @@ function analyzeUrl(string $url, array $options = []): array {
     $isMock = $pipeline->isMockMode();
     $debug['mock_mode'] = $isMock;
 
-    // 실행
-    $result = $pipeline->run($url);
+    // 실행 (예외 시에도 JSON 반환)
+    try {
+        $result = $pipeline->run($url);
+    } catch (\Throwable $e) {
+        $durationMs = round((microtime(true) - $startTime) * 1000, 2);
+        return [
+            'success' => false,
+            'url' => $url,
+            'mock_mode' => $isMock,
+            'needs_clarification' => false,
+            'clarification_data' => null,
+            'article' => null,
+            'analysis' => null,
+            'duration_ms' => $durationMs,
+            'agents_executed' => array_keys($pipeline->getResults()),
+            'phase' => 'pipeline_run',
+            'failed_step' => 'exception',
+            'debug' => $debug,
+            'error' => 'Pipeline 예외: ' . $e->getMessage() . ' (파일: ' . basename($e->getFile()) . ':' . $e->getLine() . ')'
+        ];
+    }
 
     $durationMs = round((microtime(true) - $startTime) * 1000, 2);
+    $agentsExecuted = array_keys($result->results);
+    $failedStep = $result->isSuccess() ? null : (end($agentsExecuted) ?: null);
 
     // 결과 처리
     if ($result->isSuccess()) {
@@ -240,7 +261,9 @@ function analyzeUrl(string $url, array $options = []): array {
                 'audio_url' => $finalAnalysis['audio_url'] ?? null
             ],
             'duration_ms' => $durationMs,
-            'agents_executed' => array_keys($result->results),
+            'agents_executed' => $agentsExecuted,
+            'phase' => 'success',
+            'failed_step' => null,
             'debug' => $debug,
             'error' => null
         ];
@@ -254,24 +277,30 @@ function analyzeUrl(string $url, array $options = []): array {
             'mock_mode' => $isMock,
             'needs_clarification' => true,
             'clarification_data' => $result->clarificationData,
+            'article' => null,
             'analysis' => null,
             'duration_ms' => $durationMs,
-            'agents_executed' => array_keys($result->results),
+            'agents_executed' => $agentsExecuted,
+            'phase' => 'clarification',
+            'failed_step' => null,
             'debug' => $debug,
             'error' => null
         ];
     }
 
-    // 실패
+    // 실패 (ValidationAgent/ThumbnailAgent/AnalysisAgent 등에서 실패)
     return [
         'success' => false,
         'url' => $url,
         'mock_mode' => $isMock,
         'needs_clarification' => false,
         'clarification_data' => null,
+        'article' => null,
         'analysis' => null,
         'duration_ms' => $durationMs,
-        'agents_executed' => array_keys($result->results),
+        'agents_executed' => $agentsExecuted,
+        'phase' => 'agent_failure',
+        'failed_step' => $failedStep,
         'debug' => $debug,
         'error' => $result->getError()
     ];
