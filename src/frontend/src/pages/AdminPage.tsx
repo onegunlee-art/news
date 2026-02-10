@@ -262,7 +262,7 @@ const AdminPage: React.FC = () => {
   const [newsNarration, setNewsNarration] = useState('');
   const [newsList, setNewsList] = useState<NewsArticle[]>([]);
   const [isSaving, setIsSaving] = useState(false);
-  const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
   const [editingNewsId, setEditingNewsId] = useState<number | null>(null);
   const [isLoadingNews, setIsLoadingNews] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
@@ -721,7 +721,7 @@ const AdminPage: React.FC = () => {
                             return;
                           }
                           setIsAnalyzing(true);
-                          setSaveMessage(null);
+                          setSaveMessage({ type: 'info', text: 'GPT 분석 중... (기사 추출 → GPT-4.1 분석 → 내레이션 생성, 최대 2분 소요)' });
                           setAiError(null);
                           setAiResult(null);
                           try {
@@ -734,7 +734,26 @@ const AdminPage: React.FC = () => {
                                 enable_tts: true
                               })
                             });
+
+                            // 서버가 HTML이나 빈 응답을 보내는 경우 처리
+                            const contentType = response.headers.get('content-type') || '';
+                            if (!contentType.includes('application/json')) {
+                              const text = await response.text();
+                              console.error('Non-JSON response:', text.substring(0, 500));
+                              setSaveMessage({ type: 'error', text: `서버 오류: JSON 응답이 아닙니다 (HTTP ${response.status}). 서버 설정을 확인하세요.` });
+                              setIsAnalyzing(false);
+                              return;
+                            }
+
                             const data = await response.json();
+
+                            // Mock 모드 경고
+                            if (data.mock_mode) {
+                              setSaveMessage({ type: 'error', text: '⚠️ Mock 모드: OpenAI API 키가 서버에 설정되지 않았습니다. 실제 GPT 분석이 불가합니다. 서버 .env 파일에 OPENAI_API_KEY를 등록하세요.' });
+                              setIsAnalyzing(false);
+                              return;
+                            }
+
                             if (data.success && data.analysis) {
                               setAiResult(data.analysis);
                               setAiUrl(articleUrl.trim());
@@ -764,15 +783,19 @@ const AdminPage: React.FC = () => {
                               );
                               setNewsWhyImportant(a.critical_analysis?.why_important || '');
                               setShowExtractedInfo(true);
-                              setSaveMessage({ type: 'success', text: 'GPT 분석 완료! 제목·내용·내레이션·썸네일이 채워졌습니다.' });
+                              const duration = data.duration_ms ? ` (${(data.duration_ms / 1000).toFixed(1)}초)` : '';
+                              setSaveMessage({ type: 'success', text: `GPT 분석 완료!${duration} 제목·내용·내레이션·썸네일이 채워졌습니다.` });
                             } else {
-                              setSaveMessage({ type: 'error', text: data.error || 'GPT 분석 실패' });
+                              const errDetail = data.error || 'GPT 분석 실패';
+                              const debugInfo = data.debug ? ` [env:${data.debug.env_loaded ? 'O' : 'X'}, key:${data.debug.openai_key_set ? 'O' : 'X'}, mock:${data.debug.mock_mode ? 'Y' : 'N'}]` : '';
+                              setSaveMessage({ type: 'error', text: errDetail + debugInfo });
                             }
                           } catch (error) {
-                            setSaveMessage({ type: 'error', text: '서버 오류: ' + (error as Error).message });
+                            console.error('GPT 분석 에러:', error);
+                            setSaveMessage({ type: 'error', text: '서버 오류: ' + (error as Error).message + ' — 서버 로그를 확인하세요.' });
                           } finally {
                             setIsAnalyzing(false);
-                            setTimeout(() => setSaveMessage(null), 8000);
+                            // 에러 메시지는 사라지지 않게 (성공 메시지만 15초 후 사라짐)
                           }
                         }}
                         disabled={isAnalyzing || !articleUrl.trim()}
@@ -1123,15 +1146,17 @@ const AdminPage: React.FC = () => {
 
                   {/* 저장 메시지 */}
                   {saveMessage && (
-                    <div className={`p-4 rounded-xl flex items-center gap-2 ${
+                    <div className={`p-4 rounded-xl flex items-start gap-2 ${
                       saveMessage.type === 'success' 
                         ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
+                        : saveMessage.type === 'info'
+                        ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
                         : 'bg-red-500/20 text-red-400 border border-red-500/30'
                     }`}>
                       {saveMessage.type === 'success' ? (
-                        <CheckCircleIcon className="w-5 h-5" />
+                        <CheckCircleIcon className="w-5 h-5 flex-shrink-0 mt-0.5" />
                       ) : (
-                        <ExclamationTriangleIcon className="w-5 h-5" />
+                        <ExclamationTriangleIcon className="w-5 h-5 flex-shrink-0 mt-0.5" />
                       )}
                       {saveMessage.text}
                     </div>

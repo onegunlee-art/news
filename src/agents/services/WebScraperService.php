@@ -24,7 +24,9 @@ class WebScraperService
     public function __construct(array $config = [])
     {
         $this->config = $config;
-        $this->userAgent = $config['user_agent'] ?? 'TheGist-NewsBot/1.0 (+https://thegist.ai)';
+        // 실제 브라우저 User-Agent 사용 (봇 차단 우회)
+        $this->userAgent = $config['user_agent']
+            ?? 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
     }
 
     /**
@@ -42,7 +44,7 @@ class WebScraperService
     }
 
     /**
-     * HTML 가져오기
+     * HTML 가져오기 (브라우저 수준 헤더로 페이월/봇 차단 우회)
      */
     private function fetchHtml(string $url): string
     {
@@ -54,10 +56,20 @@ class WebScraperService
             CURLOPT_TIMEOUT => $this->config['timeout'] ?? 30,
             CURLOPT_USERAGENT => $this->userAgent,
             CURLOPT_HTTPHEADER => [
-                'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                'Accept-Language: ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7'
+                'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+                'Accept-Language: en-US,en;q=0.9,ko-KR;q=0.8,ko;q=0.7',
+                'Accept-Encoding: gzip, deflate, br',
+                'Cache-Control: no-cache',
+                'Upgrade-Insecure-Requests: 1',
+                'Sec-Fetch-Dest: document',
+                'Sec-Fetch-Mode: navigate',
+                'Sec-Fetch-Site: none',
+                'Sec-Fetch-User: ?1',
             ],
-            CURLOPT_SSL_VERIFYPEER => $this->config['verify_ssl'] ?? true
+            CURLOPT_ENCODING => '',  // 자동 gzip/deflate 처리
+            CURLOPT_SSL_VERIFYPEER => $this->config['verify_ssl'] ?? true,
+            CURLOPT_COOKIEJAR => '',   // 쿠키 허용
+            CURLOPT_COOKIEFILE => '',
         ]);
 
         $html = curl_exec($ch);
@@ -66,6 +78,10 @@ class WebScraperService
         curl_close($ch);
 
         if ($httpCode !== 200) {
+            // 403/451 등 → 봇 차단 가능성
+            if ($httpCode === 403 || $httpCode === 451) {
+                throw new \RuntimeException("기사 접근이 차단되었습니다 (HTTP {$httpCode}). 페이월이나 봇 차단이 적용된 사이트일 수 있습니다.");
+            }
             throw new \RuntimeException("HTTP error {$httpCode}: {$error}");
         }
 
@@ -77,10 +93,19 @@ class WebScraperService
      */
     private function parseHtml(string $url, string $html): ArticleData
     {
-        // DOM 파싱
+        // DOM 파싱 (PHP 8.2+ 호환: HTML-ENTITIES 사용 안함)
         libxml_use_internal_errors(true);
         $doc = new \DOMDocument();
-        $doc->loadHTML(mb_convert_encoding($html, 'HTML-ENTITIES', 'UTF-8'));
+        // UTF-8 메타 태그 삽입으로 인코딩 지정
+        $htmlWithMeta = '<?xml encoding="UTF-8">' . $html;
+        $doc->loadHTML($htmlWithMeta, LIBXML_NOERROR | LIBXML_NOWARNING);
+        // 삽입한 xml 프로세싱 인스트럭션 제거
+        foreach ($doc->childNodes as $child) {
+            if ($child->nodeType === XML_PI_NODE) {
+                $doc->removeChild($child);
+                break;
+            }
+        }
         libxml_clear_errors();
 
         $xpath = new \DOMXPath($doc);
@@ -238,17 +263,21 @@ class WebScraperService
             }
         }
 
-        // 본문 후보 찾기
+        // 본문 후보 찾기 (Foreign Affairs, NYT, Reuters 등 주요 매체 대응)
         $contentSelectors = [
+            '//*[@itemprop="articleBody"]',
             '//article',
             '//*[contains(@class, "article-body")]',
             '//*[contains(@class, "article-content")]',
+            '//*[contains(@class, "article__body")]',
+            '//*[contains(@class, "article-text")]',
             '//*[contains(@class, "post-content")]',
             '//*[contains(@class, "entry-content")]',
             '//*[contains(@class, "story-body")]',
-            '//*[@itemprop="articleBody"]',
+            '//*[contains(@class, "paywall")]',
             '//main',
-            '//*[contains(@class, "content")]'
+            '//*[contains(@class, "content")]',
+            '//*[@role="main"]',
         ];
 
         foreach ($contentSelectors as $selector) {
@@ -333,23 +362,52 @@ class WebScraperService
     }
 
     /**
-     * URL 접근 가능 여부 확인 (HEAD 요청)
+     * URL 접근 가능 여부 확인 (HEAD → GET fallback)
      */
     public function isAccessible(string $url): bool
     {
+        // HEAD 요청 먼저 시도
         $ch = curl_init($url);
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_NOBODY => true, // HEAD 요청
+            CURLOPT_NOBODY => true,
             CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_TIMEOUT => 10,
-            CURLOPT_USERAGENT => $this->userAgent
+            CURLOPT_TIMEOUT => 15,
+            CURLOPT_USERAGENT => $this->userAgent,
+            CURLOPT_HTTPHEADER => [
+                'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            ],
+            CURLOPT_SSL_VERIFYPEER => $this->config['verify_ssl'] ?? true,
         ]);
 
         curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
 
-        return $httpCode >= 200 && $httpCode < 400;
+        if ($httpCode >= 200 && $httpCode < 400) {
+            return true;
+        }
+
+        // HEAD가 실패하면 GET으로 재시도 (일부 사이트는 HEAD를 차단)
+        if ($httpCode === 403 || $httpCode === 405 || $httpCode === 0) {
+            $ch = curl_init($url);
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_TIMEOUT => 15,
+                CURLOPT_USERAGENT => $this->userAgent,
+                CURLOPT_HTTPHEADER => [
+                    'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                ],
+                CURLOPT_SSL_VERIFYPEER => $this->config['verify_ssl'] ?? true,
+            ]);
+            curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            return $httpCode >= 200 && $httpCode < 400;
+        }
+
+        return false;
     }
 }

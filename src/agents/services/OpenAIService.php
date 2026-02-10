@@ -70,12 +70,13 @@ class OpenAIService
     }
 
     /**
-     * 실제 API 호출
+     * 실제 API 호출 (에러 상세 로깅, 타임아웃 확장)
      */
     private function callChatAPI(string $systemPrompt, string $userPrompt, array $options = []): string
     {
+        $model = $options['model'] ?? $this->model;
         $payload = [
-            'model' => $options['model'] ?? $this->model,
+            'model' => $model,
             'messages' => [
                 ['role' => 'system', 'content' => $systemPrompt],
                 ['role' => 'user', 'content' => $userPrompt]
@@ -84,7 +85,11 @@ class OpenAIService
             'max_tokens' => $options['max_tokens'] ?? $this->config['max_tokens']
         ];
 
-        $ch = curl_init($this->config['endpoints']['chat']);
+        // GPT-4.1은 긴 기사 분석 시 시간이 걸림 → 최소 120초
+        $timeout = max((int)($options['timeout'] ?? $this->config['timeout'] ?? 60), 120);
+
+        $endpoint = $this->config['endpoints']['chat'] ?? 'https://api.openai.com/v1/chat/completions';
+        $ch = curl_init($endpoint);
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_POST => true,
@@ -93,19 +98,49 @@ class OpenAIService
                 'Content-Type: application/json',
                 'Authorization: Bearer ' . $this->apiKey
             ],
-            CURLOPT_TIMEOUT => $this->config['timeout']
+            CURLOPT_TIMEOUT => $timeout,
+            CURLOPT_CONNECTTIMEOUT => 15,
         ]);
 
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch);
+        $curlErrno = curl_errno($ch);
         curl_close($ch);
 
+        // curl 자체 에러 (타임아웃, 연결 실패 등)
+        if ($curlErrno !== 0) {
+            $errMsg = "OpenAI API curl error (errno={$curlErrno}): {$curlError}";
+            if ($curlErrno === CURLE_OPERATION_TIMEDOUT) {
+                $errMsg = "OpenAI API 요청 시간 초과 ({$timeout}초). 기사가 너무 길거나 서버가 느립니다.";
+            }
+            error_log($errMsg);
+            throw new \RuntimeException($errMsg);
+        }
+
+        // HTTP 에러 - 응답 본문에서 상세 원인 추출
         if ($httpCode !== 200) {
-            throw new \RuntimeException("OpenAI API error: HTTP {$httpCode}");
+            $errorDetail = '';
+            if ($response) {
+                $errData = json_decode($response, true);
+                if (isset($errData['error']['message'])) {
+                    $errorDetail = $errData['error']['message'];
+                } else {
+                    $errorDetail = mb_substr($response, 0, 500);
+                }
+            }
+            $errMsg = "OpenAI API error (HTTP {$httpCode}, model={$model}): {$errorDetail}";
+            error_log($errMsg);
+            throw new \RuntimeException($errMsg);
         }
 
         $data = json_decode($response, true);
-        return $data['choices'][0]['message']['content'] ?? '';
+        if (!isset($data['choices'][0]['message']['content'])) {
+            error_log("OpenAI API: unexpected response structure: " . mb_substr($response, 0, 500));
+            throw new \RuntimeException("OpenAI API: 응답에 content가 없습니다.");
+        }
+
+        return $data['choices'][0]['message']['content'];
     }
 
     /**
@@ -136,22 +171,24 @@ class OpenAIService
     }
 
     /**
-     * Mock JSON 응답 생성
+     * Mock JSON 응답 생성 (v2 스키마: news_title, key_points 4+, narration, critical_analysis)
      */
     private function generateMockJsonResponse(string $prompt): string
     {
-        // full_analysis 요청
-        if (strpos($prompt, 'translation_summary') !== false || strpos($prompt, 'key_points') !== false) {
+        // full_analysis 요청 (v2 스키마 포함)
+        if (strpos($prompt, 'key_points') !== false || strpos($prompt, 'narration') !== false || strpos($prompt, 'news_title') !== false || strpos($prompt, 'translation_summary') !== false) {
             return json_encode([
-                'translation_summary' => '[Mock] 이 기사는 글로벌 이슈에 대한 심층 분석을 담고 있습니다. 주요 국가들의 정책 변화와 그 영향을 다루며, 향후 전망을 제시합니다. 한국에 미치는 영향도 함께 분석되어 있습니다.',
+                'news_title' => '[Mock] 글로벌 정책 변화가 한국 경제에 미치는 영향',
+                'translation_summary' => '[Mock] 이 기사는 글로벌 이슈에 대한 심층 분석을 담고 있습니다. 주요 국가들의 정책 변화와 그 영향을 다루며, 향후 전망을 제시합니다.',
                 'key_points' => [
-                    '[Mock] 주요 국가들의 정책 방향 전환이 감지됨',
-                    '[Mock] 경제적 파급효과가 예상보다 클 것으로 분석',
-                    '[Mock] 한국 기업과 정부의 대응 전략이 필요한 시점'
+                    '[Mock] 주요 국가들의 정책 방향 전환이 감지되었으며 이는 글로벌 경제 질서를 변화시킬 수 있습니다.',
+                    '[Mock] 경제적 파급효과가 예상보다 크게 나타날 것으로 분석되었습니다.',
+                    '[Mock] 한국 기업과 정부의 대응 전략이 시급히 필요한 시점입니다.',
+                    '[Mock] 전문가들은 이번 변화가 향후 3~5년간 산업 구조에 영향을 줄 것으로 전망합니다.'
                 ],
+                'narration' => '[Mock 내레이션] 오늘 주목할 뉴스입니다. 글로벌 정책의 대전환이 시작되었습니다. 주요 국가들이 잇따라 새로운 경제 정책을 발표하면서 세계 경제 질서에 큰 변화가 예고되고 있습니다. 특히 이번 정책 변화는 한국의 반도체, 자동차 등 주력 산업에 직접적인 영향을 미칠 것으로 보입니다. 전문가들은 한국 기업들이 선제적으로 대응 전략을 마련해야 한다고 조언합니다. 이것이 중요한 이유는 이번 변화가 단순한 정책 조정이 아닌 글로벌 공급망 재편으로 이어질 가능성이 높기 때문입니다. (이것은 Mock 모드 응답입니다. 실제 OpenAI API 키를 설정하면 GPT-4.1 기반 정밀 분석이 제공됩니다.)',
                 'critical_analysis' => [
-                    'why_important' => '[Mock] 이 이슈는 글로벌 공급망과 무역 질서에 직접적인 영향을 미칩니다. 특히 한국의 주력 산업인 반도체, 자동차 분야에 중대한 변화를 가져올 수 있어 주목해야 합니다.',
-                    'future_prediction' => '[Mock] 향후 6개월 내 관련 정책 발표가 예상되며, 이에 따른 시장 변동성 확대가 예측됩니다. 선제적 대응 전략 수립이 권고됩니다.'
+                    'why_important' => '[Mock] 이 이슈는 글로벌 공급망과 무역 질서에 직접적인 영향을 미칩니다. 특히 한국의 주력 산업인 반도체, 자동차 분야에 중대한 변화를 가져올 수 있어 주목해야 합니다.'
                 ]
             ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
         }

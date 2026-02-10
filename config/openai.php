@@ -18,7 +18,7 @@ return [
     // 요청 제한
     'max_tokens' => 4000,
     'temperature' => 0.7,
-    'timeout' => 60,
+    'timeout' => 120,
     
     // TTS 설정
     'tts' => [
