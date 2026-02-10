@@ -24,6 +24,7 @@ use Agents\Core\AgentInterface;
 use Agents\Models\AgentContext;
 use Agents\Models\AgentResult;
 use Agents\Models\ArticleData;
+use Agents\Models\AnalysisResult;
 use Agents\Agents\ValidationAgent;
 use Agents\Agents\ThumbnailAgent;
 use Agents\Agents\AnalysisAgent;
@@ -159,6 +160,14 @@ class AgentPipeline
                 $articleData = $result->get('article');
                 if (is_array($articleData)) {
                     $context = $context->withArticleData(ArticleData::fromArray($articleData));
+                }
+
+                // AnalysisAgent 성공 시 분석 결과를 context에 넣어 InterpretAgent 등이 사용할 수 있게 함
+                if ($agentName === 'AnalysisAgent' && $result->isSuccess()) {
+                    $data = $result->getData();
+                    if (is_array($data) && (isset($data['key_points']) || isset($data['translation_summary']))) {
+                        $context = $context->withAnalysisResult(AnalysisResult::fromArray($data));
+                    }
                 }
             } catch (\Throwable $e) {
                 $this->lastError = "[{$agentName}] " . $e->getMessage();
