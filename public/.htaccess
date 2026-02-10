@@ -94,11 +94,11 @@ ErrorDocument 404 /index.php
 # 디렉토리 목록 비활성화
 Options -Indexes
 
-# PHP 설정 (dothome 호환)
+# PHP 설정 (dothome 호환, AI 분석 등 장시간 요청 허용)
 <IfModule mod_php.c>
     php_value upload_max_filesize 10M
     php_value post_max_size 10M
-    php_value max_execution_time 60
+    php_value max_execution_time 300
 </IfModule>
 
 # 민감한 파일 접근 차단

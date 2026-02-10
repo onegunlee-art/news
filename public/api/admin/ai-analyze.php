@@ -128,6 +128,7 @@ require_once $projectRoot . 'src/agents/autoload.php';
 use Agents\Pipeline\AgentPipeline;
 use Agents\Agents\LearningAgent;
 use Agents\Services\OpenAIService;
+use Agents\Services\GoogleTTSService;
 
 // 응답 헬퍼
 function sendResponse($data, $status = 200) {
@@ -302,6 +303,57 @@ function analyzeUrl(string $url, array $options = []): array {
     ];
 }
 
+/**
+ * narration 텍스트만으로 TTS 생성 (2단계: 분석 완료 후 호출)
+ * 입력: narration (필수), tts_voice (선택)
+ * 출력: { success, audio_url } 또는 { success: false, error }
+ */
+function generateTtsFromNarration(string $narration, ?string $ttsVoice = null): array {
+    global $projectRoot;
+
+    $narration = trim($narration);
+    if ($narration === '') {
+        return ['success' => false, 'error' => 'narration is required'];
+    }
+
+    $googleTtsConfig = file_exists($projectRoot . 'config/google_tts.php')
+        ? require $projectRoot . 'config/google_tts.php'
+        : [];
+    $voice = $googleTtsConfig['default_voice'] ?? 'ko-KR-Standard-A';
+    if ($ttsVoice !== null && $ttsVoice !== '') {
+        $voice = $ttsVoice;
+    } elseif (file_exists($projectRoot . 'src/backend/Core/Database.php')) {
+        require_once $projectRoot . 'src/backend/Core/Database.php';
+        try {
+            $db = \App\Core\Database::getInstance()->getConnection();
+            $stmt = $db->prepare("SELECT `value` FROM settings WHERE `key` = ?");
+            $stmt->execute(['tts_voice']);
+            $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+            if ($row && $row['value'] !== '') {
+                $voice = $row['value'];
+            }
+        } catch (\Throwable $e) {
+            // DB 실패 시 config 기본값 유지
+        }
+    }
+
+    $audioUrl = null;
+    $googleTtsKey = $_ENV['GOOGLE_TTS_API_KEY'] ?? getenv('GOOGLE_TTS_API_KEY');
+    if (!empty($googleTtsConfig) && is_string($googleTtsKey) && $googleTtsKey !== '') {
+        $googleTts = new GoogleTTSService($googleTtsConfig);
+        $audioUrl = $googleTts->textToSpeech($narration, ['voice' => $voice]);
+    }
+    if ($audioUrl === null || $audioUrl === '') {
+        $openai = new OpenAIService([]);
+        $audioUrl = $openai->textToSpeech($narration);
+    }
+
+    if ($audioUrl !== null && $audioUrl !== '') {
+        return ['success' => true, 'audio_url' => $audioUrl];
+    }
+    return ['success' => false, 'error' => 'TTS 생성 실패. Google TTS 또는 OpenAI TTS 설정을 확인하세요.'];
+}
+
 // 스타일 학습
 function learnStyle(array $texts): array {
     global $projectRoot;
@@ -449,6 +501,13 @@ try {
                     ];
                     
                     $result = analyzeUrl($url, $options);
+                    sendResponse($result);
+                    break;
+
+                case 'generate_tts':
+                    $narration = $input['narration'] ?? '';
+                    $ttsVoice = isset($input['tts_voice']) && is_string($input['tts_voice']) ? $input['tts_voice'] : null;
+                    $result = generateTtsFromNarration($narration, $ttsVoice);
                     sendResponse($result);
                     break;
 

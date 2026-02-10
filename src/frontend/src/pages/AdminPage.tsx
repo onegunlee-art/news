@@ -707,13 +707,13 @@ const AdminPage: React.FC = () => {
                   {/* URL → GPT 분석 (버튼 1개) */}
                   <div>
                     <label className="block text-slate-300 mb-2 text-sm font-medium">기사 URL</label>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-wrap items-center">
                       <input
                         type="url"
                         value={articleUrl}
                         onChange={(e) => setArticleUrl(e.target.value)}
                         placeholder="https://example.com/article..."
-                        className="flex-1 bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition"
+                        className="flex-1 min-w-[200px] bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition"
                       />
                       <button
                         onClick={async () => {
@@ -722,90 +722,114 @@ const AdminPage: React.FC = () => {
                             return;
                           }
                           setIsAnalyzing(true);
-                          setSaveMessage({ type: 'info', text: 'GPT 분석 중... (기사 추출 → GPT-4.1 → 내레이션, 최대 약 3분 소요)' });
+                          setSaveMessage({ type: 'info', text: '1단계: GPT 분석 중... (요약·내레이션 생성)' });
                           setAiError(null);
                           setAiResult(null);
-                          const controller = new AbortController();
-                          let timeoutId: ReturnType<typeof setTimeout> | null = setTimeout(() => controller.abort(), 200000); // 200초
+                          const controller1 = new AbortController();
+                          let timeout1: ReturnType<typeof setTimeout> | null = setTimeout(() => controller1.abort(), 120000);
                           try {
+                            // 1단계: 분석만 (TTS 없음)
                             const response = await fetch('/api/admin/ai-analyze.php', {
                               method: 'POST',
                               headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({
-                                action: 'analyze',
-                                url: articleUrl.trim(),
-                                enable_tts: true
-                              }),
-                              signal: controller.signal
+                              body: JSON.stringify({ action: 'analyze', url: articleUrl.trim(), enable_tts: false }),
+                              signal: controller1.signal
                             });
-                            if (timeoutId) clearTimeout(timeoutId);
-                            timeoutId = null;
+                            if (timeout1) clearTimeout(timeout1);
+                            timeout1 = null;
 
-                            // 서버가 HTML이나 빈 응답을 보내는 경우 처리
+                            if (response.status === 504) {
+                              setSaveMessage({ type: 'error', text: '게이트웨이 타임아웃(504). 잠시 후 다시 시도하거나 짧은 기사 URL로 시도해 주세요.' });
+                              setIsAnalyzing(false);
+                              return;
+                            }
                             const contentType = response.headers.get('content-type') || '';
                             if (!contentType.includes('application/json')) {
                               const text = await response.text();
-                              console.error('Non-JSON response:', text.substring(0, 500));
-                              setSaveMessage({ type: 'error', text: `서버 오류: JSON이 아님 (HTTP ${response.status}). 응답 일부: ${text.slice(0, 200)}` });
+                              setSaveMessage({ type: 'error', text: `서버 오류: JSON이 아님 (HTTP ${response.status}). ${text.slice(0, 150)}` });
                               setIsAnalyzing(false);
                               return;
                             }
 
                             const data = await response.json();
-
-                            // Mock 모드 경고
                             if (data.mock_mode) {
                               const debugHint = data.debug?.env_tried?.length ? ` (시도한 env: ${data.debug.env_tried.join(', ')})` : '';
-                              setSaveMessage({ type: 'error', text: `⚠️ Mock 모드: API 키가 서버에서 읽히지 않습니다. GitHub Secrets에 OPENAI_API_KEY 등록 후 재배포하세요. 아래 "API 상태 확인"으로 env 로딩 여부를 확인할 수 있습니다.${debugHint}` });
+                              setSaveMessage({ type: 'error', text: `⚠️ Mock 모드: API 키가 서버에서 읽히지 않습니다.${debugHint}` });
                               setIsAnalyzing(false);
                               return;
                             }
 
-                            if (data.success && data.analysis) {
-                              setAiResult(data.analysis);
-                              setAiUrl(articleUrl.trim());
-                              const a = data.analysis;
-                              // 제목: GPT 생성 제목 우선, 없으면 article.title
-                              setNewsTitle(a.news_title || data.article?.title || '');
-                              // 메타데이터
-                              if (data.article) {
-                                setArticleImageUrl(data.article.image_url || '');
-                                setArticleSummary(data.article.description || '');
-                                setArticleSource(data.article.source || '');
-                                if (data.article.published_at) setArticlePublishedAt(data.article.published_at);
-                                if (data.article.author) setArticleAuthor(data.article.author || '');
-                              }
-                              // 본문: content_summary 우선, 없으면 key_points 불렛만 (Critique 미사용)
-                              setNewsContent(
-                                a.content_summary ||
-                                ('## 주요 포인트\n' + (a.key_points?.map((p: string) => `- ${p}`).join('\n') || ''))
-                              );
-                              // 내레이션: GPT narration 우선, 없으면 fallback
-                              setNewsNarration(
-                                a.narration ||
-                                ((a.translation_summary || '') + ' ' +
-                                (a.key_points?.map((p: string, i: number) => `${i + 1}번. ${p}`).join(' ') || ''))
-                              );
-                              setNewsWhyImportant('');
-                              setShowExtractedInfo(true);
-                              const duration = data.duration_ms ? ` (${(data.duration_ms / 1000).toFixed(1)}초)` : '';
-                              setSaveMessage({ type: 'success', text: `GPT 분석 완료!${duration} 제목·내용·내레이션·썸네일이 채워졌습니다.` });
-                            } else {
+                            if (!data.success || !data.analysis) {
                               const errDetail = data.error || 'GPT 분석 실패';
-                              const phaseStep = data.failed_step ? ` | 실패 단계: ${data.failed_step}` : (data.phase ? ` | phase: ${data.phase}` : '');
-                              const debugInfo = data.debug ? ` [env:${data.debug.env_loaded ? 'O' : 'X'}, key:${data.debug.openai_key_set ? 'O' : 'X'}]` : '';
-                              setSaveMessage({ type: 'error', text: errDetail + phaseStep + debugInfo });
+                              const phaseStep = data.failed_step ? ` | 실패 단계: ${data.failed_step}` : '';
+                              setSaveMessage({ type: 'error', text: errDetail + phaseStep });
+                              setIsAnalyzing(false);
+                              return;
+                            }
+
+                            const a = data.analysis;
+                            setAiUrl(articleUrl.trim());
+                            setNewsTitle(a.news_title || data.article?.title || '');
+                            if (data.article) {
+                              setArticleImageUrl(data.article.image_url || '');
+                              setArticleSummary(data.article.description || '');
+                              setArticleSource(data.article.source || '');
+                              if (data.article.published_at) setArticlePublishedAt(data.article.published_at);
+                              if (data.article.author) setArticleAuthor(data.article.author || '');
+                            }
+                            setNewsContent(
+                              a.content_summary ||
+                              ('## 주요 포인트\n' + (a.key_points?.map((p: string) => `- ${p}`).join('\n') || ''))
+                            );
+                            setNewsNarration(
+                              a.narration ||
+                              ((a.translation_summary || '') + ' ' + (a.key_points?.map((p: string, i: number) => `${i + 1}번. ${p}`).join(' ') || ''))
+                            );
+                            setNewsWhyImportant('');
+                            setShowExtractedInfo(true);
+
+                            const narrationForTts = a.narration || (a.key_points || []).join(' ');
+                            if (!narrationForTts.trim()) {
+                              setAiResult(data.analysis);
+                              setSaveMessage({ type: 'success', text: 'GPT 분석 완료. (내레이션 없어 TTS 생략)' });
+                              setIsAnalyzing(false);
+                              return;
+                            }
+
+                            // 2단계: TTS 생성
+                            setSaveMessage({ type: 'info', text: '분석 완료. TTS 생성 중...' });
+                            const controller2 = new AbortController();
+                            const timeout2 = setTimeout(() => controller2.abort(), 120000);
+                            try {
+                              const ttsRes = await fetch('/api/admin/ai-analyze.php', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ action: 'generate_tts', narration: narrationForTts }),
+                                signal: controller2.signal
+                              });
+                              clearTimeout(timeout2);
+                              const ttsData = ttsRes.ok ? await ttsRes.json().catch(() => ({})) : {};
+                              const audioUrl = ttsData.success && ttsData.audio_url ? ttsData.audio_url : null;
+                              setAiResult({ ...data.analysis, audio_url: audioUrl ?? undefined });
+                              if (audioUrl) {
+                                const duration = data.duration_ms ? ` (분석 ${(data.duration_ms / 1000).toFixed(1)}초 + TTS)` : '';
+                                setSaveMessage({ type: 'success', text: `GPT 분석·TTS 완료!${duration}` });
+                              } else {
+                                setSaveMessage({ type: 'error', text: 'TTS 생성만 실패. 내레이션은 사용 가능합니다.' });
+                              }
+                            } catch (ttsErr) {
+                              setAiResult(data.analysis);
+                              setSaveMessage({ type: 'error', text: 'TTS 생성만 실패. 내레이션은 사용 가능합니다.' });
                             }
                           } catch (error: unknown) {
-                            if (timeoutId) clearTimeout(timeoutId);
+                            if (timeout1) clearTimeout(timeout1);
                             console.error('GPT 분석 에러:', error);
                             const err = error as Error & { name?: string };
                             const msg = err.name === 'AbortError'
-                              ? '요청 시간 초과(약 3분 20초). 서버·프록시 타임아웃이거나 URL 접근이 느립니다. 짧은 기사 URL로 다시 시도하거나 서버 로그를 확인하세요.'
+                              ? '요청 시간 초과. 서버·프록시 타임아웃이거나 URL 접근이 느립니다.'
                               : '서버 오류: ' + (err.message || String(error));
                             setSaveMessage({ type: 'error', text: msg });
                           } finally {
-                            if (timeoutId) clearTimeout(timeoutId);
                             setIsAnalyzing(false);
                           }
                         }}
@@ -1358,35 +1382,46 @@ const AdminPage: React.FC = () => {
                           setAiError('URL을 입력해주세요.');
                           return;
                         }
-                        
                         setIsAnalyzing(true);
                         setAiError(null);
                         setAiResult(null);
-                        
                         try {
                           const response = await fetch('/api/admin/ai-analyze.php', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                              action: 'analyze',
-                              url: aiUrl,
-                              enable_tts: true
-                            })
+                            body: JSON.stringify({ action: 'analyze', url: aiUrl.trim(), enable_tts: false })
                           });
-                          
                           const data = await response.json();
-                          
-                          if (data.success && data.analysis) {
-                            setAiResult(data.analysis);
-                            if (data.article) {
-                              setArticleImageUrl(data.article.image_url || '');
-                              setNewsTitle(data.article.title || '');
-                              setArticleSummary(data.article.description || '');
-                              if (data.article.published_at) setArticlePublishedAt(data.article.published_at);
-                              if (data.article.author) setArticleAuthor(data.article.author);
-                            }
-                          } else {
+                          if (!data.success || !data.analysis) {
                             setAiError(data.error || '분석 실패');
+                            setIsAnalyzing(false);
+                            return;
+                          }
+                          if (data.article) {
+                            setArticleImageUrl(data.article.image_url || '');
+                            setNewsTitle(data.article.title || '');
+                            setArticleSummary(data.article.description || '');
+                            if (data.article.published_at) setArticlePublishedAt(data.article.published_at);
+                            if (data.article.author) setArticleAuthor(data.article.author);
+                          }
+                          const a = data.analysis;
+                          const narrationForTts = a.narration || (a.key_points || []).join(' ');
+                          if (!narrationForTts.trim()) {
+                            setAiResult(data.analysis);
+                            setIsAnalyzing(false);
+                            return;
+                          }
+                          try {
+                            const ttsRes = await fetch('/api/admin/ai-analyze.php', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ action: 'generate_tts', narration: narrationForTts })
+                            });
+                            const ttsData = ttsRes.ok ? await ttsRes.json().catch(() => ({})) : {};
+                            const audioUrl = ttsData.success && ttsData.audio_url ? ttsData.audio_url : null;
+                            setAiResult({ ...data.analysis, audio_url: audioUrl ?? undefined });
+                          } catch {
+                            setAiResult(data.analysis);
                           }
                         } catch (error) {
                           setAiError('서버 오류: ' + (error as Error).message);
