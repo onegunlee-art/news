@@ -17,7 +17,6 @@ namespace Agents\Core;
 use Agents\Models\AgentContext;
 use Agents\Models\AgentResult;
 use Agents\Services\OpenAIService;
-use Symfony\Component\Yaml\Yaml;
 
 abstract class BaseAgent implements AgentInterface
 {
@@ -63,17 +62,77 @@ abstract class BaseAgent implements AgentInterface
     }
 
     /**
-     * 프롬프트 파일 로드
+     * 프롬프트 파일 로드 (YAML 파일이 있으면 로드, 없거나 파싱 불가 시 기본 프롬프트 사용)
+     * Symfony YAML 의존성 없이 동작하도록 순수 PHP만 사용
      */
     protected function loadPrompts(): void
     {
         $promptFile = $this->getPromptFilePath();
-        
         if (file_exists($promptFile)) {
-            $this->prompts = Yaml::parseFile($promptFile);
-        } else {
-            $this->prompts = $this->getDefaultPrompts();
+            $parsed = $this->parseYamlFile($promptFile);
+            if ($parsed !== null && $parsed !== []) {
+                $this->prompts = $parsed;
+                return;
+            }
         }
+        $this->prompts = $this->getDefaultPrompts();
+    }
+
+    /**
+     * 간단한 YAML 파싱 (Symfony 의존성 없이 prompts/*.yaml 지원)
+     * system, tasks 등 단순 구조만 처리
+     */
+    protected function parseYamlFile(string $path): ?array
+    {
+        $raw = @file_get_contents($path);
+        if ($raw === false || $raw === '') {
+            return null;
+        }
+        $out = [];
+        $currentKey = null;
+        $currentTask = null;
+        $lines = explode("\n", $raw);
+        $buffer = '';
+        foreach ($lines as $line) {
+            $trimmed = rtrim($line);
+            if (preg_match('/^([a-z_]+):\s*\|?\s*$/', $trimmed, $m)) {
+                if ($currentKey !== null && $buffer !== '') {
+                    if ($currentKey === 'tasks' && $currentTask !== null) {
+                        $out['tasks'] = $out['tasks'] ?? [];
+                        $out['tasks'][$currentTask] = ['prompt' => trim($buffer)];
+                    } else {
+                        $out[$currentKey] = trim($buffer);
+                    }
+                    $buffer = '';
+                }
+                $currentKey = $m[1];
+                $currentTask = null;
+                continue;
+            }
+            if (preg_match('/^  ([a-z_]+):\s*\|?\s*$/', $trimmed, $m) && $currentKey === 'tasks') {
+                if ($currentTask !== null && $buffer !== '') {
+                    $out['tasks'] = $out['tasks'] ?? [];
+                    $out['tasks'][$currentTask] = ['prompt' => trim($buffer)];
+                    $buffer = '';
+                }
+                $currentTask = $m[1];
+                continue;
+            }
+            if ($currentKey !== null && ($trimmed === '' || $trimmed[0] === ' ' || $trimmed[0] === "\t" || strpos($trimmed, ':') !== 0)) {
+                if ($trimmed !== '' && $trimmed[0] !== '#') {
+                    $buffer .= $line . "\n";
+                }
+            }
+        }
+        if ($currentKey !== null && $buffer !== '') {
+            if ($currentKey === 'tasks' && $currentTask !== null) {
+                $out['tasks'] = $out['tasks'] ?? [];
+                $out['tasks'][$currentTask] = ['prompt' => trim($buffer)];
+            } else {
+                $out[$currentKey] = trim($buffer);
+            }
+        }
+        return $out ?: null;
     }
 
     /**
