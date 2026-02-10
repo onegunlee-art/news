@@ -22,7 +22,8 @@ final class AnalysisResult
         private readonly ?string $audioUrl = null,
         private readonly array $metadata = [],
         private readonly ?string $newsTitle = null,
-        private readonly ?string $narration = null
+        private readonly ?string $narration = null,
+        private readonly ?string $contentSummary = null
     ) {}
 
     public function getTranslationSummary(): string
@@ -70,6 +71,11 @@ final class AnalysisResult
         return $this->narration;
     }
 
+    public function getContentSummary(): ?string
+    {
+        return $this->contentSummary;
+    }
+
     /**
      * 오디오 URL 추가된 새 인스턴스 반환
      */
@@ -82,7 +88,8 @@ final class AnalysisResult
             audioUrl: $audioUrl,
             metadata: $this->metadata,
             newsTitle: $this->newsTitle,
-            narration: $this->narration
+            narration: $this->narration,
+            contentSummary: $this->contentSummary
         );
     }
 
@@ -98,7 +105,8 @@ final class AnalysisResult
             audioUrl: $this->audioUrl,
             metadata: array_merge($this->metadata, $metadata),
             newsTitle: $this->newsTitle,
-            narration: $this->narration
+            narration: $this->narration,
+            contentSummary: $this->contentSummary
         );
     }
 
@@ -112,6 +120,7 @@ final class AnalysisResult
             'translation_summary' => $this->translationSummary,
             'key_points' => $this->keyPoints,
             'narration' => $this->narration,
+            'content_summary' => $this->contentSummary,
             'critical_analysis' => $this->criticalAnalysis,
             'audio_url' => $this->audioUrl,
             'metadata' => $this->metadata
@@ -138,7 +147,8 @@ final class AnalysisResult
             audioUrl: $data['audio_url'] ?? null,
             metadata: $data['metadata'] ?? [],
             newsTitle: $data['news_title'] ?? null,
-            narration: $data['narration'] ?? null
+            narration: $data['narration'] ?? null,
+            contentSummary: $data['content_summary'] ?? null
         );
     }
 
@@ -150,7 +160,8 @@ final class AnalysisResult
         return new self(
             translationSummary: '',
             keyPoints: [],
-            criticalAnalysis: []
+            criticalAnalysis: [],
+            contentSummary: null
         );
     }
 }

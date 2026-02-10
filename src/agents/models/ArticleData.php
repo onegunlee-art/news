@@ -24,6 +24,7 @@ final class ArticleData
         private readonly ?string $publishedAt = null,
         private readonly ?string $imageUrl = null,
         private readonly ?string $language = null,
+        private readonly ?string $source = null,
         private readonly array $metadata = []
     ) {}
 
@@ -57,6 +58,11 @@ final class ArticleData
         return $this->publishedAt;
     }
 
+    public function getSource(): ?string
+    {
+        return $this->source;
+    }
+
     public function getImageUrl(): ?string
     {
         return $this->imageUrl;
@@ -76,6 +82,7 @@ final class ArticleData
             publishedAt: $this->publishedAt,
             imageUrl: $imageUrl,
             language: $this->language,
+            source: $this->source,
             metadata: $this->metadata
         );
     }
@@ -118,6 +125,7 @@ final class ArticleData
             'description' => $this->description,
             'author' => $this->author,
             'published_at' => $this->publishedAt,
+            'source' => $this->source,
             'image_url' => $this->imageUrl,
             'language' => $this->language,
             'metadata' => $this->metadata,
@@ -140,6 +148,7 @@ final class ArticleData
             publishedAt: $data['published_at'] ?? null,
             imageUrl: $data['image_url'] ?? null,
             language: $data['language'] ?? null,
+            source: $data['source'] ?? null,
             metadata: $data['metadata'] ?? []
         );
     }

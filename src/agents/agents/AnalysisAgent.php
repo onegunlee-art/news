@@ -158,12 +158,13 @@ class AnalysisAgent extends BaseAgent
             keyPoints: $data['key_points'] ?? [],
             criticalAnalysis: $data['critical_analysis'] ?? [],
             newsTitle: $data['news_title'] ?? null,
-            narration: $narration
+            narration: $narration,
+            contentSummary: $data['content_summary'] ?? null
         );
     }
 
     /**
-     * 종합 분석 프롬프트 생성 (v2: news_title, 4+ key_points, narration, why_important)
+     * 종합 분석 프롬프트 생성 (v3: content_summary, 4+ key_points, narration 900자+, Critique 미요청)
      */
     private function buildFullAnalysisPrompt(ArticleData $article): string
     {
@@ -179,16 +180,14 @@ class AnalysisAgent extends BaseAgent
 
 {
   "news_title": "한국 독자가 클릭하고 싶은 한국어 뉴스 제목. 15~30자. 핵심을 담되 임팩트 있게.",
+  "content_summary": "원문의 AI 요약 및 구조 분석. 도입·전개·결론 구조를 유지하며, 핵심 논지·사실·수치를 포함한 상세 요약. 최소 600자 이상, 가능하면 900자 이상 작성. 마크다운 제목(##)과 불렛(-) 사용 가능.",
   "key_points": [
     "기사 본문의 핵심 내용을 최소 4개 이상의 불렛 포인트로 요약. 각 항목은 1~2문장, 구체적 사실과 수치를 포함.",
     "두 번째 핵심 포인트",
     "세 번째 핵심 포인트",
     "네 번째 핵심 포인트"
   ],
-  "narration": "이 기사를 뉴스 앵커가 전달하듯 작성한 내레이션 스크립트. 도입(무슨 일이 있었는지) → 주요 내용(핵심 사실들) → 왜 중요한지를 자연스럽게 이어서 말하듯 작성. 청취자가 귀로만 들어도 기사 전체를 이해할 수 있도록 충분히 상세하게 작성. 최소 300자 이상. The Gist's Critique(왜 중요한지)도 마지막에 자연스럽게 포함.",
-  "critical_analysis": {
-    "why_important": "The Gist's Critique. 이 기사가 왜 중요한지, 한국과 세계에 어떤 영향을 미치는지 2~3문장으로 날카롭게 분석."
-  }
+  "narration": "이 기사를 뉴스 앵커가 전달하듯 작성한 내레이션 스크립트. 도입(무슨 일이 있었는지) → 주요 내용(핵심 사실들)을 자연스럽게 이어서 말하듯 작성. 청취자가 귀로만 들어도 기사 전체를 이해할 수 있도록 충분히 상세하게 작성. 최소 900자 이상."
 }
 PROMPT;
 
@@ -234,9 +233,8 @@ PROMPT;
             'news_title' => null,
             'narration' => trim($response),
             'key_points' => ['분석 결과를 확인하세요.'],
-            'critical_analysis' => [
-                'why_important' => '분석 결과를 확인하세요.'
-            ]
+            'content_summary' => null,
+            'critical_analysis' => []
         ];
     }
 
@@ -290,12 +288,6 @@ PROMPT;
             foreach ($keyPoints as $i => $point) {
                 $parts[] = ($i + 1) . "번. " . $point;
             }
-        }
-
-        $whyImportant = $analysis->getWhyImportant();
-        if ($whyImportant) {
-            $parts[] = "이게 왜 중요한대!";
-            $parts[] = $whyImportant;
         }
 
         return implode(" ", $parts);

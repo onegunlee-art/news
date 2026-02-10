@@ -234,13 +234,10 @@ function analyzeUrl(string $url, array $options = []): array {
         $articleData = $result->context?->getArticleData();
         $article = $articleData ? $articleData->toArray() : null;
 
-        // narration fallback: key_points + why_important 조합
+        // narration fallback: key_points만 사용 (Critique 미사용)
         $narration = $finalAnalysis['narration'] ?? null;
         if (empty($narration) && !empty($finalAnalysis['key_points'])) {
             $narration = implode(' ', $finalAnalysis['key_points']);
-            if (!empty($finalAnalysis['critical_analysis']['why_important'])) {
-                $narration .= ' ' . $finalAnalysis['critical_analysis']['why_important'];
-            }
         }
 
         return [
@@ -254,10 +251,9 @@ function analyzeUrl(string $url, array $options = []): array {
                 'news_title' => $finalAnalysis['news_title'] ?? null,
                 'translation_summary' => $finalAnalysis['translation_summary'] ?? ($narration ? mb_substr($narration, 0, 200) : ''),
                 'key_points' => $finalAnalysis['key_points'] ?? [],
+                'content_summary' => $finalAnalysis['content_summary'] ?? null,
                 'narration' => $narration,
-                'critical_analysis' => $finalAnalysis['critical_analysis'] ?? [
-                    'why_important' => ''
-                ],
+                'critical_analysis' => $finalAnalysis['critical_analysis'] ?? [],
                 'audio_url' => $finalAnalysis['audio_url'] ?? null
             ],
             'duration_ms' => $durationMs,

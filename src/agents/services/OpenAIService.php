@@ -171,25 +171,25 @@ class OpenAIService
     }
 
     /**
-     * Mock JSON 응답 생성 (v2 스키마: news_title, key_points 4+, narration, critical_analysis)
+     * Mock JSON 응답 생성 (v3 스키마: content_summary, key_points 4+, narration 900자+, Critique 미사용)
      */
     private function generateMockJsonResponse(string $prompt): string
     {
-        // full_analysis 요청 (v2 스키마 포함)
-        if (strpos($prompt, 'key_points') !== false || strpos($prompt, 'narration') !== false || strpos($prompt, 'news_title') !== false || strpos($prompt, 'translation_summary') !== false) {
+        // full_analysis 요청 (v3 스키마: content_summary, narration 장문, critical_analysis 비움)
+        if (strpos($prompt, 'key_points') !== false || strpos($prompt, 'narration') !== false || strpos($prompt, 'news_title') !== false || strpos($prompt, 'content_summary') !== false || strpos($prompt, 'translation_summary') !== false) {
+            $longNarration = '[Mock 내레이션] 오늘 주목할 뉴스입니다. 글로벌 정책의 대전환이 시작되었습니다. 주요 국가들이 잇따라 새로운 경제 정책을 발표하면서 세계 경제 질서에 큰 변화가 예고되고 있습니다. 특히 이번 정책 변화는 한국의 반도체, 자동차 등 주력 산업에 직접적인 영향을 미칠 것으로 보입니다. 전문가들은 한국 기업들이 선제적으로 대응 전략을 마련해야 한다고 조언합니다. 구체적으로 살펴보면, 먼저 유럽 연합을 중심으로 한 탄소 국경조정메커니즘 도입이 예정되어 있으며, 이는 수출 의존도가 높은 한국 기업에 추가 비용을 부담시키게 됩니다. 둘째, 미국의 인플레이션 감축법(IRA)과 반도체법(CHIPS)에 따른 보조금 경쟁이 격화되면서 한국 기업의 해외 투자 결정에 영향을 주고 있습니다. 셋째, 중국의 산업 정책 변화와 수요 둔화가 글로벌 공급망 재편을 가속하고 있어, 한국의 중간재 수출 구조 조정이 필요하다는 지적이 나옵니다. 마지막으로, 국제 에너지 기구(IEA) 등은 2030년까지 재생에너지 비중이 크게 높아질 것으로 전망하며, 한국의 에너지 다각화와 원자력·수소 투자가 중요한 변수가 될 것으로 보입니다. (이것은 Mock 모드 응답입니다. 실제 OpenAI API 키를 설정하면 GPT-4.1 기반 정밀 분석이 제공됩니다.)';
             return json_encode([
                 'news_title' => '[Mock] 글로벌 정책 변화가 한국 경제에 미치는 영향',
                 'translation_summary' => '[Mock] 이 기사는 글로벌 이슈에 대한 심층 분석을 담고 있습니다. 주요 국가들의 정책 변화와 그 영향을 다루며, 향후 전망을 제시합니다.',
+                'content_summary' => "## 개요\n[Mock] 본 기사는 글로벌 경제 정책의 전환과 한국 경제에 대한 영향을 다룹니다.\n\n## 도입\n주요 선진국들이 잇따라 새로운 산업·에너지 정책을 발표하면서 세계 경제 질서 재편이 본격화되고 있습니다.\n\n## 전개\n- 유럽의 탄소국경조정제도(CBAM) 도입 시한이 다가오고 있으며, 수출 기업의 탄소 발자국 보고 의무가 강화됩니다.\n- 미국 IRA·CHIPS 법에 따른 보조금 경쟁이 치열해지며, 한국의 배터리·반도체 기업의 현지 투자 결정에 영향을 주고 있습니다.\n- 중국의 산업 구조 조정과 내수 둔화가 글로벌 공급망에 변수를 만들고 있습니다.\n\n## 결론\n전문가들은 한국이 에너지 다각화와 기술 경쟁력 강화에 선제 투자할 필요가 있다고 조언합니다. (Mock 응답)",
                 'key_points' => [
                     '[Mock] 주요 국가들의 정책 방향 전환이 감지되었으며 이는 글로벌 경제 질서를 변화시킬 수 있습니다.',
                     '[Mock] 경제적 파급효과가 예상보다 크게 나타날 것으로 분석되었습니다.',
                     '[Mock] 한국 기업과 정부의 대응 전략이 시급히 필요한 시점입니다.',
                     '[Mock] 전문가들은 이번 변화가 향후 3~5년간 산업 구조에 영향을 줄 것으로 전망합니다.'
                 ],
-                'narration' => '[Mock 내레이션] 오늘 주목할 뉴스입니다. 글로벌 정책의 대전환이 시작되었습니다. 주요 국가들이 잇따라 새로운 경제 정책을 발표하면서 세계 경제 질서에 큰 변화가 예고되고 있습니다. 특히 이번 정책 변화는 한국의 반도체, 자동차 등 주력 산업에 직접적인 영향을 미칠 것으로 보입니다. 전문가들은 한국 기업들이 선제적으로 대응 전략을 마련해야 한다고 조언합니다. 이것이 중요한 이유는 이번 변화가 단순한 정책 조정이 아닌 글로벌 공급망 재편으로 이어질 가능성이 높기 때문입니다. (이것은 Mock 모드 응답입니다. 실제 OpenAI API 키를 설정하면 GPT-4.1 기반 정밀 분석이 제공됩니다.)',
-                'critical_analysis' => [
-                    'why_important' => '[Mock] 이 이슈는 글로벌 공급망과 무역 질서에 직접적인 영향을 미칩니다. 특히 한국의 주력 산업인 반도체, 자동차 분야에 중대한 변화를 가져올 수 있어 주목해야 합니다.'
-                ]
+                'narration' => $longNarration,
+                'critical_analysis' => []
             ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
         }
 

@@ -88,6 +88,7 @@ interface AIAnalysisResult {
   news_title?: string;
   translation_summary?: string;
   key_points?: string[];
+  content_summary?: string;
   narration?: string;
   critical_analysis?: {
     why_important?: string;
@@ -774,12 +775,10 @@ const AdminPage: React.FC = () => {
                                 if (data.article.published_at) setArticlePublishedAt(data.article.published_at);
                                 if (data.article.author) setArticleAuthor(data.article.author || '');
                               }
-                              // 본문: key_points 불렛 + The Gist's Critique
+                              // 본문: content_summary 우선, 없으면 key_points 불렛만 (Critique 미사용)
                               setNewsContent(
-                                '## 주요 포인트\n' +
-                                (a.key_points?.map((p: string) => `- ${p}`).join('\n') || '') +
-                                '\n\n## The Gist\'s Critique\n' +
-                                (a.critical_analysis?.why_important || '')
+                                a.content_summary ||
+                                ('## 주요 포인트\n' + (a.key_points?.map((p: string) => `- ${p}`).join('\n') || ''))
                               );
                               // 내레이션: GPT narration 우선, 없으면 fallback
                               setNewsNarration(
@@ -787,7 +786,7 @@ const AdminPage: React.FC = () => {
                                 ((a.translation_summary || '') + ' ' +
                                 (a.key_points?.map((p: string, i: number) => `${i + 1}번. ${p}`).join(' ') || ''))
                               );
-                              setNewsWhyImportant(a.critical_analysis?.why_important || '');
+                              setNewsWhyImportant('');
                               setShowExtractedInfo(true);
                               const duration = data.duration_ms ? ` (${(data.duration_ms / 1000).toFixed(1)}초)` : '';
                               setSaveMessage({ type: 'success', text: `GPT 분석 완료!${duration} 제목·내용·내레이션·썸네일이 채워졌습니다.` });
@@ -1565,12 +1564,10 @@ const AdminPage: React.FC = () => {
                           setActiveTab('news');
                           // 제목: GPT news_title 우선
                           setNewsTitle(aiResult.news_title || aiResult.translation_summary?.substring(0, 100) || '');
-                          // 본문: key_points 불렛 + Critique
+                          // 본문: content_summary 우선, 없으면 key_points 불렛만 (Critique 미사용)
                           setNewsContent(
-                            '## 주요 포인트\n' + 
-                            (aiResult.key_points?.map(p => `- ${p}`).join('\n') || '') + '\n\n' +
-                            '## The Gist\'s Critique\n' +
-                            (aiResult.critical_analysis?.why_important || '')
+                            aiResult.content_summary ||
+                            ('## 주요 포인트\n' + (aiResult.key_points?.map(p => `- ${p}`).join('\n') || ''))
                           );
                           // 내레이션: GPT narration 우선
                           setNewsNarration(
@@ -1578,7 +1575,7 @@ const AdminPage: React.FC = () => {
                             ((aiResult.translation_summary || '') + ' ' +
                             (aiResult.key_points?.map((p, i) => `${i + 1}번. ${p}`).join(' ') || ''))
                           );
-                          setNewsWhyImportant(aiResult.critical_analysis?.why_important || '');
+                          setNewsWhyImportant('');
                           setArticleUrl(aiUrl);
                         }}
                         className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-medium hover:opacity-90 transition flex items-center justify-center gap-2"

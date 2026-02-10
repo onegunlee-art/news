@@ -113,10 +113,11 @@ class WebScraperService
         // 메타데이터 추출
         $title = $this->extractTitle($xpath);
         $description = $this->extractMetaContent($xpath, 'description');
-        $author = $this->extractMetaContent($xpath, 'author');
-        $publishedAt = $this->extractPublishedDate($xpath);
+        $author = $this->extractAuthor($xpath);
+        $publishedAt = $this->extractPublishedDate($xpath, $html);
         $imageUrl = $this->extractMetaContent($xpath, 'og:image');
         $language = $this->detectLanguage($xpath, $html);
+        $source = $this->extractSource($xpath, $url);
 
         // 본문 추출 (Readability 스타일)
         $content = $this->extractContent($xpath, $doc);
@@ -130,6 +131,7 @@ class WebScraperService
             publishedAt: $publishedAt,
             imageUrl: $imageUrl,
             language: $language,
+            source: $source,
             metadata: [
                 'scraped_at' => date('c'),
                 'content_length' => strlen($content)
@@ -190,9 +192,41 @@ class WebScraperService
     }
 
     /**
-     * 발행일 추출
+     * 출처 추출: og:site_name 우선, 없으면 URL 호스트(도메인)
      */
-    private function extractPublishedDate(\DOMXPath $xpath): ?string
+    private function extractSource(\DOMXPath $xpath, string $url): ?string
+    {
+        $siteName = $this->extractMetaContent($xpath, 'og:site_name');
+        if ($siteName !== null && $siteName !== '') {
+            return $siteName;
+        }
+        $host = parse_url($url, PHP_URL_HOST);
+        if ($host === false || $host === null || trim((string) $host) === '') {
+            return null;
+        }
+        return trim((string) $host);
+    }
+
+    /**
+     * 작성자 추출: author, article:author, byline 순으로 시도
+     */
+    private function extractAuthor(\DOMXPath $xpath): ?string
+    {
+        $author = $this->extractMetaContent($xpath, 'author');
+        if ($author !== null && $author !== '') {
+            return $author;
+        }
+        $author = $this->extractMetaContent($xpath, 'article:author');
+        if ($author !== null && $author !== '') {
+            return $author;
+        }
+        return $this->extractMetaContent($xpath, 'byline');
+    }
+
+    /**
+     * 발행일 추출 (메타/time 우선, JSON-LD datePublished 보강)
+     */
+    private function extractPublishedDate(\DOMXPath $xpath, string $html): ?string
     {
         $dateSelectors = [
             '//meta[@property="article:published_time"]/@content',
@@ -206,8 +240,28 @@ class WebScraperService
             $result = $xpath->query($selector);
             if ($result->length > 0) {
                 $date = trim($result->item(0)->nodeValue);
-                if (!empty($date)) {
+                if ($date !== '') {
                     return $date;
+                }
+            }
+        }
+
+        // JSON-LD에서 datePublished 추출
+        if (preg_match_all('/<script[^>]*type\s*=\s*["\']application\/ld\+json["\'][^>]*>(.*?)<\/script>/is', $html, $matches)) {
+            foreach ($matches[1] as $jsonStr) {
+                $decoded = json_decode(trim($jsonStr), true);
+                if (!is_array($decoded)) {
+                    continue;
+                }
+                $items = isset($decoded['@graph']) ? $decoded['@graph'] : [$decoded];
+                foreach ($items as $item) {
+                    if (isset($item['datePublished']) && is_string($item['datePublished']) && $item['datePublished'] !== '') {
+                        return $item['datePublished'];
+                    }
+                    if (isset($item['@type']) && (strcasecmp((string) $item['@type'], 'NewsArticle') === 0 || strcasecmp((string) $item['@type'], 'Article') === 0)
+                        && isset($item['datePublished']) && is_string($item['datePublished'])) {
+                        return $item['datePublished'];
+                    }
                 }
             }
         }
