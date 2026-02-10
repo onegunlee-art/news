@@ -234,8 +234,9 @@ abstract class BaseAgent implements AgentInterface
             'context' => $context
         ];
         
-        // 실제 환경에서는 PSR-3 Logger 사용
-        error_log(json_encode($logEntry, JSON_UNESCAPED_UNICODE));
+        // 실제 환경에서는 PSR-3 Logger 사용 (PHP 8+: error_log 인자는 string만 허용)
+        $encoded = json_encode($logEntry, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
+        error_log($encoded !== false ? $encoded : sprintf('[%s] %s: %s', $logEntry['timestamp'], $logEntry['agent'], $message));
     }
 
     /**
