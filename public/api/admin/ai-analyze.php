@@ -555,8 +555,10 @@ function regenerateThumbnailDalle(array $input): array {
     if ($openai->isMockMode()) {
         return ['success' => false, 'error' => 'OPENAI_API_KEY not set. DALL-E를 사용할 수 없습니다.', 'image_url' => null];
     }
+    $styleSuffix = '. Style: like a movie or novel cover, bright and vibrant tone, prominently featuring characters or people.';
+    $effectivePrompt = $prompt . $styleSuffix;
     try {
-        $url = $openai->createImage($prompt, ['timeout' => 90]);
+        $url = $openai->createImage($effectivePrompt, ['timeout' => 90]);
         $lastErr = $openai->getLastError();
         if ($url !== null) {
             return ['success' => true, 'image_url' => $url, 'error' => null];
