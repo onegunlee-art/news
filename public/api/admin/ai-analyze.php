@@ -410,7 +410,7 @@ function analyzeUrl(string $url, array $options = []): array {
 function generateTtsFromNarration(string $narration, ?string $ttsVoice = null, ?string $newsTitle = null, ?string $source = null, ?string $author = null, ?string $publishedAt = null): array {
     global $projectRoot;
 
-    set_time_limit(600); // TTS 6청크 + 재시도 고려 10분
+    set_time_limit(1200); // TTS 40청크 + 재시도 고려 20분
 
     $narration = trim($narration);
     if ($narration === '') {
@@ -418,7 +418,7 @@ function generateTtsFromNarration(string $narration, ?string $ttsVoice = null, ?
     }
 
     // 긴 내레이션 시 메모리·타임아웃·Google 청크 수 제한 회피 (UTF-8 경계로 자르기)
-    $maxNarrationBytes = 28800; // 6청크(4800바이트) 분량 → 약 2~3분 분량
+    $maxNarrationBytes = 192000; // 40청크(4800바이트) 분량 → 약 10분 분량
     if (strlen($narration) > $maxNarrationBytes) {
         $narration = mb_strcut($narration, 0, $maxNarrationBytes, 'UTF-8');
     }
@@ -826,7 +826,7 @@ try {
                         }
                     }
 
-                    set_time_limit(600);
+                    set_time_limit(1200);
                     $result = generateTtsFromNarration($narration, $ttsVoice, $newsTitle, $source, $author, $publishedAt);
 
                     // 성공 시 캐시에 저장

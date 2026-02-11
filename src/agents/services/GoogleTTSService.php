@@ -111,7 +111,7 @@ class GoogleTTSService
 
         try {
             $this->lastError = '';
-            set_time_limit(600);
+            set_time_limit(1200);
             $voice = $options['voice'] ?? $this->defaultVoice;
             $pcmData = $this->synthesizeSsmlLinear16($ssml, $voice);
             $wavData = $this->createWavFile($pcmData);
@@ -176,7 +176,7 @@ class GoogleTTSService
      */
     private function generateAudioPcm(string $text, array $options): string
     {
-        set_time_limit(600);
+        set_time_limit(1200);
         $voice = $options['voice'] ?? $this->defaultVoice;
         $chunks = $this->splitText($text);
         $pcmData = '';
@@ -222,7 +222,7 @@ class GoogleTTSService
         }
         try {
             $this->lastError = '';
-            set_time_limit(600);
+            set_time_limit(1200);
             $pcm1 = $this->synthesizeSsmlLinear16($ssmlIntro, $voice);
             if ($narration !== '' && self::CHUNK_DELAY_SEC > 0) {
                 usleep((int) (self::CHUNK_DELAY_SEC * 1000000));
