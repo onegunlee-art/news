@@ -1,10 +1,10 @@
 <?php
 /**
- * 이미지 API 검색 (Unsplash + Pexels)
+ * 이미지 검색 (고정 매핑 전용 - Unsplash/Pexels API 제거됨)
  *
  * 핵심 함수:
  *   smartImageUrl($title, $category, $pdo)
- *     → 인물/국가/주제 고정 매핑 → Unsplash API → Pexels API → fallback
+ *     → 인물/국가/주제 고정 매핑 → fallback (API 없음)
  *     → DB 중복 체크 포함
  *
  * 필요 파일: imageConfig.php (같은 디렉터리에서 require)
@@ -142,8 +142,8 @@ function getIllustrationImageUrl(string $title, string $description = '', string
     global $illustrationDefaults;
     if (!isset($illustrationDefaults) || !is_array($illustrationDefaults) || empty($illustrationDefaults)) {
         $illustrationDefaults = [
-            'https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?w=800&h=500&fit=crop',
-            'https://images.unsplash.com/photo-1561070791-2526d31fe5e6?w=800&h=500&fit=crop',
+            'https://placehold.co/800x500/1e293b/94a3b8?text=The+Gist',
+            'https://placehold.co/800x500/334155/64748b?text=News',
         ];
     }
 
@@ -156,87 +156,8 @@ function getIllustrationImageUrl(string $title, string $description = '', string
         }
     }
 
-    $query = buildSearchQueryForIllustration($title, $description);
-
-    $urls = searchUnsplash($query, 8);
-    if ($urls) {
-        $pick = pickUnused($urls, $usedUrls, $title);
-        if ($pick) return $pick;
-    }
-
-    $urls = searchPexels($query, 8);
-    if ($urls) {
-        $pick = pickUnused($urls, $usedUrls, $title);
-        if ($pick) return $pick;
-    }
-
     $pick = pickUnused($illustrationDefaults, $usedUrls, $title);
     return ($pick !== null && $pick !== '') ? $pick : $illustrationDefaults[0];
-}
-
-/**
- * Unsplash API 검색. 성공 시 이미지 URL 배열 반환, 실패 시 빈 배열.
- */
-function searchUnsplash(string $query, int $count = 10): array {
-    if (empty(UNSPLASH_ACCESS_KEY)) return [];
-
-    $url = 'https://api.unsplash.com/search/photos?' . http_build_query([
-        'query' => $query,
-        'per_page' => $count,
-        'orientation' => 'landscape',
-    ]);
-
-    $ctx = stream_context_create(['http' => [
-        'header' => "Authorization: Client-ID " . UNSPLASH_ACCESS_KEY . "\r\nAccept-Version: v1\r\n",
-        'timeout' => 5,
-    ]]);
-
-    $json = @file_get_contents($url, false, $ctx);
-    if (!$json) return [];
-
-    $data = @json_decode($json, true);
-    if (empty($data['results'])) return [];
-
-    $urls = [];
-    foreach ($data['results'] as $photo) {
-        $raw = $photo['urls']['raw'] ?? $photo['urls']['regular'] ?? null;
-        if ($raw) {
-            // Unsplash 동적 리사이즈
-            $urls[] = $raw . '&w=800&h=500&fit=crop&q=80';
-        }
-    }
-    return $urls;
-}
-
-/**
- * Pexels API 검색. 성공 시 이미지 URL 배열 반환, 실패 시 빈 배열.
- */
-function searchPexels(string $query, int $count = 10): array {
-    if (empty(PEXELS_API_KEY)) return [];
-
-    $url = 'https://api.pexels.com/v1/search?' . http_build_query([
-        'query' => $query,
-        'per_page' => $count,
-        'orientation' => 'landscape',
-    ]);
-
-    $ctx = stream_context_create(['http' => [
-        'header' => "Authorization: " . PEXELS_API_KEY . "\r\n",
-        'timeout' => 5,
-    ]]);
-
-    $json = @file_get_contents($url, false, $ctx);
-    if (!$json) return [];
-
-    $data = @json_decode($json, true);
-    if (empty($data['photos'])) return [];
-
-    $urls = [];
-    foreach ($data['photos'] as $photo) {
-        $src = $photo['src']['landscape'] ?? $photo['src']['large'] ?? null;
-        if ($src) $urls[] = $src;
-    }
-    return $urls;
 }
 
 /**
@@ -263,9 +184,7 @@ function pickUnused(array $urls, array $excludeUrls, string $title): ?string {
  *   1. 인물 키워드 → Wikimedia 고정 URL
  *   2. 국가/분쟁 키워드 → 고정 URL 풀 (중복 체크)
  *   3. 주제 키워드 → 고정 URL 풀 (중복 체크)
- *   4. Unsplash API 검색 (중복 체크)
- *   5. Pexels API 검색 (중복 체크)
- *   6. 카테고리 기본 → 범용 기본
+ *   4. 카테고리 기본 → 범용 기본
  */
 function smartImageUrl(string $title, string $category, ?PDO $pdo = null): string {
     global $personImages, $countryImages, $topicImages, $categoryDefaults, $defaultImages;
@@ -305,28 +224,13 @@ function smartImageUrl(string $title, string $category, ?PDO $pdo = null): strin
         }
     }
 
-    // 4. Unsplash API 검색
-    $query = buildSearchQuery($title);
-    $unsplashResults = searchUnsplash($query);
-    if ($unsplashResults) {
-        $pick = pickUnused($unsplashResults, $usedUrls, $title);
-        if ($pick) return $pick;
-    }
-
-    // 5. Pexels API 검색
-    $pexelsResults = searchPexels($query);
-    if ($pexelsResults) {
-        $pick = pickUnused($pexelsResults, $usedUrls, $title);
-        if ($pick) return $pick;
-    }
-
-    // 6. 카테고리 기본 이미지
+    // 4. 카테고리 기본 이미지
     $cat = strtolower($category ?: '');
     if (isset($categoryDefaults[$cat])) {
         $pick = pickUnused($categoryDefaults[$cat], $usedUrls, $title);
         if ($pick) return $pick;
     }
 
-    // 7. 범용 기본 이미지
+    // 5. 범용 기본 이미지
     return pickUnused($defaultImages, $usedUrls, $title) ?: $defaultImages[0];
 }

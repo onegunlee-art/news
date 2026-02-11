@@ -1,7 +1,7 @@
 <?php
 /**
  * 뉴스 이미지 자동 매칭 API
- * 저작권 무료 이미지 - 고정 Unsplash URL 사용 (API 불필요)
+ * 저작권 무료 이미지 - 고정 placeholder URL 사용 (API 없음)
  * Supabase 설정 시 media_cache로 썸네일 URL 캐시 (동일 기사·제목·카테고리면 재계산 생략)
  */
 
