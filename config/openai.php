@@ -2,7 +2,7 @@
 /**
  * OpenAI API Configuration
  * 
- * GPT-4.1 및 TTS 서비스 설정
+ * GPT-5.2 및 TTS 서비스 설정
  * 
  * @package Config
  */
@@ -17,8 +17,8 @@ return [
     'api_key' => $openaiKey,
     
     // 기본 모델 설정
-    'model' => 'gpt-4.1',
-    'fallback_model' => 'gpt-4-turbo-preview',
+    'model' => 'gpt-5.2',
+    'fallback_model' => 'gpt-5',
     
     // 요청 제한
     'max_tokens' => 4000,
@@ -40,9 +40,9 @@ return [
         'multiplier' => 2
     ],
     
-    // 엔드포인트
+    // 엔드포인트 (Responses API)
     'endpoints' => [
-        'chat' => 'https://api.openai.com/v1/chat/completions',
+        'chat' => 'https://api.openai.com/v1/responses',
         'tts' => 'https://api.openai.com/v1/audio/speech',
         'embeddings' => 'https://api.openai.com/v1/embeddings',
         'images' => 'https://api.openai.com/v1/images/generations'

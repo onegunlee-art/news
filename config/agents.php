@@ -29,7 +29,7 @@ return [
         
         'analysis' => [
             'enabled' => true,
-            'model' => 'gpt-4.1',
+            'model' => 'gpt-5.2',
             'temperature' => 0.7,
             'max_tokens' => 4000,
             'summary_length' => 3, // 문장 수
@@ -39,7 +39,7 @@ return [
         
         'interpret' => [
             'enabled' => true,
-            'model' => 'gpt-4.1',
+            'model' => 'gpt-5.2',
             'temperature' => 0.5,
             'similarity_threshold' => 0.7,
             'max_context_items' => 5,
@@ -47,7 +47,7 @@ return [
         
         'learning' => [
             'enabled' => true,
-            'model' => 'gpt-4.1',
+            'model' => 'gpt-5.2',
             'temperature' => 0.8,
             'pattern_storage_path' => __DIR__ . '/../src/data/patterns',
             'ask_clarification' => true,

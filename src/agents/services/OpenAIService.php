@@ -2,7 +2,7 @@
 /**
  * OpenAI Service
  * 
- * GPT-4.1 API 연동 서비스
+ * GPT-5.2 API 연동 서비스
  * Mock 모드 지원 - API 키 없이도 개발/테스트 가능
  * 
  * @package Agents\Services
@@ -27,7 +27,7 @@ class OpenAIService
         $this->config = array_merge($defaultConfig, $config);
         
         $this->apiKey = $this->config['api_key'] ?? '';
-        $this->model = $this->config['model'] ?? 'gpt-4.1';
+        $this->model = $this->config['model'] ?? 'gpt-5.2';
         
         // API 키가 없으면 자동으로 Mock 모드
         $this->mockMode = empty($this->apiKey) || ($this->config['mock_mode'] ?? false);
@@ -75,20 +75,19 @@ class OpenAIService
     private function callChatAPI(string $systemPrompt, string $userPrompt, array $options = []): string
     {
         $model = $options['model'] ?? $this->model;
+        // Responses API: instructions = system, input = user (string or array)
         $payload = [
             'model' => $model,
-            'messages' => [
-                ['role' => 'system', 'content' => $systemPrompt],
-                ['role' => 'user', 'content' => $userPrompt]
-            ],
+            'instructions' => $systemPrompt,
+            'input' => $userPrompt,
             'temperature' => $options['temperature'] ?? $this->config['temperature'],
-            'max_tokens' => $options['max_tokens'] ?? $this->config['max_tokens']
+            'max_output_tokens' => $options['max_tokens'] ?? $this->config['max_tokens']
         ];
 
         // options에 timeout이 있으면 사용, 없으면 config (긴 분석은 120초 권장)
         $timeout = (int)($options['timeout'] ?? $this->config['timeout'] ?? 60);
 
-        $endpoint = $this->config['endpoints']['chat'] ?? 'https://api.openai.com/v1/chat/completions';
+        $endpoint = $this->config['endpoints']['chat'] ?? 'https://api.openai.com/v1/responses';
         $ch = curl_init($endpoint);
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
@@ -135,12 +134,41 @@ class OpenAIService
         }
 
         $data = json_decode($response, true);
-        if (!isset($data['choices'][0]['message']['content'])) {
+        // Responses API: output[] → message → content[] → output_text.text
+        $text = $this->extractTextFromResponsesOutput($data);
+        if ($text === null) {
             error_log("OpenAI API: unexpected response structure: " . mb_substr($response, 0, 500));
             throw new \RuntimeException("OpenAI API: 응답에 content가 없습니다.");
         }
 
-        return $data['choices'][0]['message']['content'];
+        return $text;
+    }
+
+    /**
+     * Responses API 응답에서 출력 텍스트 추출 (output[].content[].text)
+     */
+    private function extractTextFromResponsesOutput(array $data): ?string
+    {
+        $output = $data['output'] ?? null;
+        if (!is_array($output)) {
+            return null;
+        }
+        $parts = [];
+        foreach ($output as $item) {
+            if (($item['type'] ?? '') !== 'message') {
+                continue;
+            }
+            $content = $item['content'] ?? [];
+            if (!is_array($content)) {
+                continue;
+            }
+            foreach ($content as $block) {
+                if (($block['type'] ?? '') === 'output_text' && isset($block['text'])) {
+                    $parts[] = $block['text'];
+                }
+            }
+        }
+        return $parts === [] ? null : implode('', $parts);
     }
 
     /**
@@ -177,7 +205,7 @@ class OpenAIService
     {
         // full_analysis 요청 (v3 스키마: content_summary, narration 장문, critical_analysis 비움)
         if (strpos($prompt, 'key_points') !== false || strpos($prompt, 'narration') !== false || strpos($prompt, 'news_title') !== false || strpos($prompt, 'content_summary') !== false || strpos($prompt, 'translation_summary') !== false) {
-            $longNarration = '[Mock 내레이션] 오늘 주목할 뉴스입니다. 글로벌 정책의 대전환이 시작되었습니다. 주요 국가들이 잇따라 새로운 경제 정책을 발표하면서 세계 경제 질서에 큰 변화가 예고되고 있습니다. 특히 이번 정책 변화는 한국의 반도체, 자동차 등 주력 산업에 직접적인 영향을 미칠 것으로 보입니다. 전문가들은 한국 기업들이 선제적으로 대응 전략을 마련해야 한다고 조언합니다. 구체적으로 살펴보면, 먼저 유럽 연합을 중심으로 한 탄소 국경조정메커니즘 도입이 예정되어 있으며, 이는 수출 의존도가 높은 한국 기업에 추가 비용을 부담시키게 됩니다. 둘째, 미국의 인플레이션 감축법(IRA)과 반도체법(CHIPS)에 따른 보조금 경쟁이 격화되면서 한국 기업의 해외 투자 결정에 영향을 주고 있습니다. 셋째, 중국의 산업 정책 변화와 수요 둔화가 글로벌 공급망 재편을 가속하고 있어, 한국의 중간재 수출 구조 조정이 필요하다는 지적이 나옵니다. 마지막으로, 국제 에너지 기구(IEA) 등은 2030년까지 재생에너지 비중이 크게 높아질 것으로 전망하며, 한국의 에너지 다각화와 원자력·수소 투자가 중요한 변수가 될 것으로 보입니다. (이것은 Mock 모드 응답입니다. 실제 OpenAI API 키를 설정하면 GPT-4.1 기반 정밀 분석이 제공됩니다.)';
+            $longNarration = '[Mock 내레이션] 오늘 주목할 뉴스입니다. 글로벌 정책의 대전환이 시작되었습니다. 주요 국가들이 잇따라 새로운 경제 정책을 발표하면서 세계 경제 질서에 큰 변화가 예고되고 있습니다. 특히 이번 정책 변화는 한국의 반도체, 자동차 등 주력 산업에 직접적인 영향을 미칠 것으로 보입니다. 전문가들은 한국 기업들이 선제적으로 대응 전략을 마련해야 한다고 조언합니다. 구체적으로 살펴보면, 먼저 유럽 연합을 중심으로 한 탄소 국경조정메커니즘 도입이 예정되어 있으며, 이는 수출 의존도가 높은 한국 기업에 추가 비용을 부담시키게 됩니다. 둘째, 미국의 인플레이션 감축법(IRA)과 반도체법(CHIPS)에 따른 보조금 경쟁이 격화되면서 한국 기업의 해외 투자 결정에 영향을 주고 있습니다. 셋째, 중국의 산업 정책 변화와 수요 둔화가 글로벌 공급망 재편을 가속하고 있어, 한국의 중간재 수출 구조 조정이 필요하다는 지적이 나옵니다. 마지막으로, 국제 에너지 기구(IEA) 등은 2030년까지 재생에너지 비중이 크게 높아질 것으로 전망하며, 한국의 에너지 다각화와 원자력·수소 투자가 중요한 변수가 될 것으로 보입니다. (이것은 Mock 모드 응답입니다. 실제 OpenAI API 키를 설정하면 GPT-5.2 기반 정밀 분석이 제공됩니다.)';
             return json_encode([
                 'news_title' => '[Mock] 글로벌 정책 변화가 한국 경제에 미치는 영향',
                 'translation_summary' => '[Mock] 이 기사는 글로벌 이슈에 대한 심층 분석을 담고 있습니다. 주요 국가들의 정책 변화와 그 영향을 다루며, 향후 전망을 제시합니다.',
@@ -257,7 +285,7 @@ class OpenAIService
      */
     private function generateMockAnalysis(): string
     {
-        return "[Mock 분석]\n\n이것은 Mock 모드에서 생성된 분석입니다.\n\n실제 OpenAI API 키를 설정하면 GPT-4.1을 활용한 심층 분석이 제공됩니다.\n\n현재 시스템은 정상 작동 중입니다.";
+        return "[Mock 분석]\n\n이것은 Mock 모드에서 생성된 분석입니다.\n\n실제 OpenAI API 키를 설정하면 GPT-5.2를 활용한 심층 분석이 제공됩니다.\n\n현재 시스템은 정상 작동 중입니다.";
     }
 
     /** OpenAI TTS API 요청당 최대 문자 수 (문서 기준 4096, 여유 두고 4000) */

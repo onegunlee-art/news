@@ -2,7 +2,7 @@
 /**
  * Analysis Agent
  * 
- * 기사 분석 Agent (GPT-4.1)
+ * 기사 분석 Agent (GPT-5.2)
  * - GPT가 뉴스 제목 생성
  * - 본문 전체를 4개 이상 불렛 포인트로 요약
  * - 뉴스 앵커 스타일 내레이션 스크립트 생성
@@ -135,14 +135,14 @@ class AnalysisAgent extends BaseAgent
     }
 
     /**
-     * 종합 분석 수행 (GPT-4.1 명시)
+     * 종합 분석 수행 (GPT-5.2 명시)
      */
     private function performFullAnalysis(ArticleData $article): AnalysisResult
     {
         $prompt = $this->buildFullAnalysisPrompt($article);
 
-        // GPT-4.1 모델 명시 호출
-        $response = $this->callGPT($prompt, ['model' => 'gpt-4.1']);
+        // GPT-5.2 모델 명시 호출
+        $response = $this->callGPT($prompt, ['model' => 'gpt-5.2']);
         
         $data = $this->parseJsonResponse($response);
 
@@ -195,7 +195,7 @@ PROMPT;
     }
 
     /**
-     * 콘텐츠 길이 제한 (8000자 - GPT-4.1 128K context 안전 범위)
+     * 콘텐츠 길이 제한 (8000자 - GPT-5.2 context 안전 범위)
      */
     private function truncateContent(string $content, int $maxLength = 8000): string
     {

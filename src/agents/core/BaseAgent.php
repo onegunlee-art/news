@@ -158,7 +158,7 @@ abstract class BaseAgent implements AgentInterface
             'timeout' => 60,
             'max_retries' => 3,
             'retry_delay' => 1000, // ms
-            'model' => 'gpt-4.1',
+            'model' => 'gpt-5.2',
             'temperature' => 0.7,
             'max_tokens' => 4000
         ];
