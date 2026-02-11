@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { formatSourceDisplayName } from '../utils/formatSource';
@@ -19,6 +19,11 @@ import {
   DocumentTextIcon,
   SpeakerWaveIcon,
   AcademicCapIcon,
+  BookOpenIcon,
+  ChatBubbleLeftRightIcon,
+  ArrowPathIcon,
+  HandThumbUpIcon,
+  StarIcon,
 } from '@heroicons/react/24/outline';
 import RichTextToolbar from '../components/Common/RichTextToolbar';
 import AIWorkspace from '../components/AIWorkspace/AIWorkspace';
@@ -87,6 +92,43 @@ const categories = [
   { id: 'entertainment', name: 'Entertainment', color: 'from-orange-500 to-red-500' },
 ];
 
+// Feedback / Revision 인터페이스
+interface FeedbackEntry {
+  id: string;
+  article_id?: number;
+  article_url?: string;
+  revision_number: number;
+  admin_comment?: string;
+  score?: number;
+  gpt_analysis?: Record<string, unknown>;
+  gpt_revision?: Record<string, unknown>;
+  revision_prompt?: string;
+  status: string;
+  parent_id?: string;
+  created_at: string;
+}
+
+// Knowledge Library 인터페이스
+interface KnowledgeItem {
+  id: string;
+  category: string;
+  framework_name: string;
+  title: string;
+  content: string;
+  keywords?: string[];
+  source?: string;
+  created_at: string;
+}
+
+const KNOWLEDGE_CATEGORIES = [
+  { value: 'ir_theory', label: '국제정치 이론' },
+  { value: 'geopolitics', label: '지정학' },
+  { value: 'economics', label: '경제/금융' },
+  { value: 'history', label: '역사/유사사례' },
+  { value: 'security', label: '안보/군사' },
+  { value: 'other', label: '기타' },
+];
+
 // AI 분석 결과 인터페이스
 interface AIAnalysisResult {
   news_title?: string;
@@ -128,7 +170,7 @@ const sanitizeText = (text: string): string => {
 const AdminPage: React.FC = () => {
   const navigate = useNavigate();
   const { } = useAuthStore(); // 권한 체크용 (추후 활성화)
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'news' | 'ai' | 'workspace' | 'settings'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'news' | 'ai' | 'workspace' | 'knowledge' | 'settings'>('dashboard');
   
   // AI 분석 상태
   const [aiUrl, setAiUrl] = useState('');
@@ -141,6 +183,28 @@ const AdminPage: React.FC = () => {
   const [learnedPatterns, setLearnedPatterns] = useState<any>(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [speechRate, setSpeechRate] = useState(1.2); // 기본: 약간 빠름
+
+  // 피드백 / 재분석 상태
+  const [feedbackComment, setFeedbackComment] = useState('');
+  const [feedbackScore, setFeedbackScore] = useState(5);
+  const [feedbackHistory, setFeedbackHistory] = useState<FeedbackEntry[]>([]);
+  const [isSavingFeedback, setIsSavingFeedback] = useState(false);
+  const [isRequestingRevision, setIsRequestingRevision] = useState(false);
+  const [isApprovingAnalysis, setIsApprovingAnalysis] = useState(false);
+  const [feedbackMessage, setFeedbackMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // Knowledge Library 상태
+  const [knowledgeItems, setKnowledgeItems] = useState<KnowledgeItem[]>([]);
+  const [knowledgeLoading, setKnowledgeLoading] = useState(false);
+  const [knowledgeCategory, setKnowledgeCategory] = useState('all');
+  const [knFormCategory, setKnFormCategory] = useState('ir_theory');
+  const [knFormFramework, setKnFormFramework] = useState('');
+  const [knFormTitle, setKnFormTitle] = useState('');
+  const [knFormContent, setKnFormContent] = useState('');
+  const [knFormKeywords, setKnFormKeywords] = useState('');
+  const [knFormSource, setKnFormSource] = useState('');
+  const [isAddingKnowledge, setIsAddingKnowledge] = useState(false);
+  const [knowledgeMessage, setKnowledgeMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Admin 설정 (TTS Voice)
   const [ttsVoice, setTtsVoice] = useState<string>('ko-KR-Standard-A');
@@ -180,6 +244,224 @@ const AdminPage: React.FC = () => {
       .catch((err) => setSettingsError(err.response?.data?.message || '저장에 실패했습니다.'))
       .finally(() => setSettingsSaving(false));
   };
+
+  // ── Feedback API helpers ────────────────────────────
+  const loadFeedbackHistory = useCallback(async (articleUrl?: string, articleId?: number) => {
+    if (!articleUrl && !articleId) return;
+    try {
+      const params = articleId ? `article_id=${articleId}` : `article_url=${encodeURIComponent(articleUrl!)}`;
+      const res = await fetch(`/api/admin/feedback-api.php?action=get_history&${params}`);
+      const data = await res.json();
+      if (data.success) {
+        setFeedbackHistory(data.history ?? []);
+      }
+    } catch (e) {
+      console.error('Failed to load feedback history:', e);
+    }
+  }, []);
+
+  const saveFeedback = async () => {
+    if (!feedbackComment.trim()) {
+      setFeedbackMessage({ type: 'error', text: '코멘트를 입력해주세요.' });
+      return;
+    }
+    setIsSavingFeedback(true);
+    setFeedbackMessage(null);
+    try {
+      const res = await fetch('/api/admin/feedback-api.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'save_feedback',
+          article_url: aiUrl || articleUrl || undefined,
+          article_id: editingNewsId ?? undefined,
+          admin_comment: feedbackComment.trim(),
+          score: feedbackScore,
+          gpt_analysis: aiResult ?? {},
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setFeedbackMessage({ type: 'success', text: '피드백이 저장되었습니다.' });
+        setFeedbackComment('');
+        await loadFeedbackHistory(aiUrl || articleUrl, editingNewsId ?? undefined);
+      } else {
+        setFeedbackMessage({ type: 'error', text: data.error || '저장 실패' });
+      }
+    } catch (e) {
+      setFeedbackMessage({ type: 'error', text: '요청 실패: ' + (e as Error).message });
+    } finally {
+      setIsSavingFeedback(false);
+      setTimeout(() => setFeedbackMessage(null), 4000);
+    }
+  };
+
+  const requestRevision = async () => {
+    if (!feedbackComment.trim()) {
+      setFeedbackMessage({ type: 'error', text: '피드백 코멘트를 입력해주세요.' });
+      return;
+    }
+    setIsRequestingRevision(true);
+    setFeedbackMessage(null);
+    try {
+      const res = await fetch('/api/admin/feedback-api.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'request_revision',
+          article_url: aiUrl || articleUrl || undefined,
+          article_id: editingNewsId ?? undefined,
+          admin_comment: feedbackComment.trim(),
+          score: feedbackScore,
+          original_analysis: aiResult ?? {},
+        }),
+      });
+      const data = await res.json();
+      if (data.success && data.revision) {
+        // 재분석 결과를 현재 분석에 반영
+        setAiResult(data.revision as AIAnalysisResult);
+        setFeedbackMessage({ type: 'success', text: 'GPT 재분석 완료! 결과가 업데이트되었습니다.' });
+        setFeedbackComment('');
+        await loadFeedbackHistory(aiUrl || articleUrl, editingNewsId ?? undefined);
+      } else {
+        setFeedbackMessage({ type: 'error', text: data.error || '재분석 실패' });
+      }
+    } catch (e) {
+      setFeedbackMessage({ type: 'error', text: '재분석 요청 실패: ' + (e as Error).message });
+    } finally {
+      setIsRequestingRevision(false);
+      setTimeout(() => setFeedbackMessage(null), 5000);
+    }
+  };
+
+  const approveAnalysis = async () => {
+    const lastFeedback = feedbackHistory[feedbackHistory.length - 1];
+    if (!lastFeedback) {
+      setFeedbackMessage({ type: 'error', text: '피드백을 먼저 저장해주세요.' });
+      return;
+    }
+    setIsApprovingAnalysis(true);
+    setFeedbackMessage(null);
+    try {
+      const res = await fetch('/api/admin/feedback-api.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'approve',
+          feedback_id: lastFeedback.id,
+          article_id: editingNewsId ?? undefined,
+          article_url: aiUrl || articleUrl || undefined,
+          final_analysis: aiResult ?? {},
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setFeedbackMessage({ type: 'success', text: `승인 완료! (${data.embedded_chunks ?? 0}개 임베딩 저장)` });
+        await loadFeedbackHistory(aiUrl || articleUrl, editingNewsId ?? undefined);
+      } else {
+        setFeedbackMessage({ type: 'error', text: data.error || '승인 실패' });
+      }
+    } catch (e) {
+      setFeedbackMessage({ type: 'error', text: '승인 요청 실패: ' + (e as Error).message });
+    } finally {
+      setIsApprovingAnalysis(false);
+      setTimeout(() => setFeedbackMessage(null), 5000);
+    }
+  };
+
+  // ── Knowledge Library API helpers ─────────────────────
+  const loadKnowledgeLibrary = useCallback(async (category = 'all') => {
+    setKnowledgeLoading(true);
+    try {
+      const catParam = category !== 'all' ? `&category=${encodeURIComponent(category)}` : '';
+      const res = await fetch(`/api/admin/knowledge-api.php?action=list${catParam}`);
+      const data = await res.json();
+      if (data.success) {
+        setKnowledgeItems(data.items ?? []);
+      }
+    } catch (e) {
+      console.error('Failed to load knowledge library:', e);
+    } finally {
+      setKnowledgeLoading(false);
+    }
+  }, []);
+
+  const addKnowledgeFramework = async () => {
+    if (!knFormTitle.trim() || !knFormContent.trim() || !knFormFramework.trim()) {
+      setKnowledgeMessage({ type: 'error', text: '제목, 프레임워크명, 내용은 필수입니다.' });
+      return;
+    }
+    setIsAddingKnowledge(true);
+    setKnowledgeMessage(null);
+    try {
+      const keywords = knFormKeywords.split(',').map(k => k.trim()).filter(Boolean);
+      const res = await fetch('/api/admin/knowledge-api.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'add_framework',
+          category: knFormCategory,
+          framework_name: knFormFramework.trim(),
+          title: knFormTitle.trim(),
+          content: knFormContent.trim(),
+          keywords,
+          source: knFormSource.trim() || null,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setKnowledgeMessage({ type: 'success', text: `프레임워크가 추가되었습니다. (임베딩: ${data.has_embedding ? '완료' : '미완료'})` });
+        setKnFormFramework('');
+        setKnFormTitle('');
+        setKnFormContent('');
+        setKnFormKeywords('');
+        setKnFormSource('');
+        await loadKnowledgeLibrary(knowledgeCategory);
+      } else {
+        setKnowledgeMessage({ type: 'error', text: data.error || '추가 실패' });
+      }
+    } catch (e) {
+      setKnowledgeMessage({ type: 'error', text: '요청 실패: ' + (e as Error).message });
+    } finally {
+      setIsAddingKnowledge(false);
+      setTimeout(() => setKnowledgeMessage(null), 4000);
+    }
+  };
+
+  const deleteKnowledgeItem = async (id: string) => {
+    if (!confirm('이 프레임워크를 삭제하시겠습니까?')) return;
+    try {
+      const res = await fetch('/api/admin/knowledge-api.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete', id }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setKnowledgeItems(prev => prev.filter(item => item.id !== id));
+        setKnowledgeMessage({ type: 'success', text: '삭제되었습니다.' });
+      } else {
+        setKnowledgeMessage({ type: 'error', text: data.error || '삭제 실패' });
+      }
+    } catch (e) {
+      setKnowledgeMessage({ type: 'error', text: '삭제 요청 실패' });
+    }
+    setTimeout(() => setKnowledgeMessage(null), 3000);
+  };
+
+  // knowledge 탭 활성화 시 목록 로드
+  useEffect(() => {
+    if (activeTab === 'knowledge') {
+      loadKnowledgeLibrary(knowledgeCategory);
+    }
+  }, [activeTab, knowledgeCategory, loadKnowledgeLibrary]);
+
+  // AI 분석 결과가 나오면 피드백 히스토리 로드
+  useEffect(() => {
+    if (aiResult && (aiUrl || articleUrl)) {
+      loadFeedbackHistory(aiUrl || articleUrl, editingNewsId ?? undefined);
+    }
+  }, [aiResult, aiUrl, articleUrl, editingNewsId, loadFeedbackHistory]);
 
   // Admin 오디오 엘리먼트 ref
   const adminAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -489,6 +771,7 @@ const AdminPage: React.FC = () => {
     { id: 'news', name: '뉴스 관리', icon: NewspaperIcon },
     { id: 'ai', name: 'AI 분석', icon: SparklesIcon },
     { id: 'workspace', name: 'AI Workspace', icon: AcademicCapIcon },
+    { id: 'knowledge', name: '이론 라이브러리', icon: BookOpenIcon },
     { id: 'settings', name: '설정', icon: CogIcon },
   ] as const;
 
@@ -1740,6 +2023,149 @@ body: JSON.stringify({
                         </div>
                       </div>
 
+                      {/* ── 피드백 & 재분석 패널 ─────────────── */}
+                      <div className="p-5 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 rounded-xl border border-indigo-500/20 space-y-4">
+                        <h4 className="text-indigo-400 font-semibold flex items-center gap-2">
+                          <ChatBubbleLeftRightIcon className="w-5 h-5" />
+                          피드백 & 재분석 (학습 루프)
+                        </h4>
+
+                        {/* 코멘트 + 점수 */}
+                        <div className="space-y-3">
+                          <div>
+                            <label className="block text-slate-400 text-sm mb-1">피드백 코멘트</label>
+                            <textarea
+                              value={feedbackComment}
+                              onChange={(e) => setFeedbackComment(e.target.value)}
+                              placeholder="분석에 대한 피드백을 남겨주세요. (예: '현실주의 관점 분석 추가 필요', '수치가 부정확함')"
+                              rows={3}
+                              className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition resize-none"
+                            />
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <label className="text-slate-400 text-sm whitespace-nowrap flex items-center gap-1">
+                              <StarIcon className="w-4 h-4 text-yellow-400" />
+                              품질 점수
+                            </label>
+                            <input
+                              type="range"
+                              min="1"
+                              max="10"
+                              value={feedbackScore}
+                              onChange={(e) => setFeedbackScore(parseInt(e.target.value))}
+                              className="flex-1 accent-indigo-500"
+                            />
+                            <span className="text-white font-bold text-lg min-w-[2.5rem] text-center">
+                              {feedbackScore}
+                              <span className="text-slate-500 text-xs">/10</span>
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* 액션 버튼 */}
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            onClick={saveFeedback}
+                            disabled={isSavingFeedback || !feedbackComment.trim()}
+                            className="px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {isSavingFeedback ? (
+                              <span className="animate-spin rounded-full h-3.5 w-3.5 border-2 border-white border-t-transparent" />
+                            ) : (
+                              <ChatBubbleLeftRightIcon className="w-4 h-4" />
+                            )}
+                            피드백 저장
+                          </button>
+                          <button
+                            onClick={requestRevision}
+                            disabled={isRequestingRevision || !feedbackComment.trim()}
+                            className="px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-1.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {isRequestingRevision ? (
+                              <span className="animate-spin rounded-full h-3.5 w-3.5 border-2 border-white border-t-transparent" />
+                            ) : (
+                              <ArrowPathIcon className="w-4 h-4" />
+                            )}
+                            {isRequestingRevision ? 'GPT 재분석 중...' : 'GPT 재분석 요청'}
+                          </button>
+                          <button
+                            onClick={approveAnalysis}
+                            disabled={isApprovingAnalysis || feedbackHistory.length === 0}
+                            className="px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {isApprovingAnalysis ? (
+                              <span className="animate-spin rounded-full h-3.5 w-3.5 border-2 border-white border-t-transparent" />
+                            ) : (
+                              <HandThumbUpIcon className="w-4 h-4" />
+                            )}
+                            최종 승인
+                          </button>
+                        </div>
+
+                        {/* 피드백 메시지 */}
+                        {feedbackMessage && (
+                          <div className={`p-3 rounded-lg text-sm flex items-center gap-2 ${
+                            feedbackMessage.type === 'success'
+                              ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                              : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                          }`}>
+                            {feedbackMessage.type === 'success' ? <CheckCircleIcon className="w-4 h-4" /> : <ExclamationTriangleIcon className="w-4 h-4" />}
+                            {feedbackMessage.text}
+                          </div>
+                        )}
+
+                        {/* Revision 히스토리 */}
+                        {feedbackHistory.length > 0 && (
+                          <div className="space-y-2">
+                            <h5 className="text-slate-400 text-sm font-medium">Revision 히스토리 ({feedbackHistory.length}개)</h5>
+                            <div className="max-h-48 overflow-y-auto space-y-2">
+                              {feedbackHistory.map((fb) => (
+                                <div key={fb.id} className="p-3 bg-slate-900/50 rounded-lg border border-slate-700/30 text-sm">
+                                  <div className="flex items-center justify-between mb-1">
+                                    <span className="flex items-center gap-2">
+                                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                                        fb.status === 'approved'
+                                          ? 'bg-emerald-500/20 text-emerald-400'
+                                          : fb.status === 'revised'
+                                          ? 'bg-purple-500/20 text-purple-400'
+                                          : fb.status === 'reviewed'
+                                          ? 'bg-indigo-500/20 text-indigo-400'
+                                          : 'bg-slate-700 text-slate-400'
+                                      }`}>
+                                        {fb.status === 'approved' ? '승인됨' : fb.status === 'revised' ? '재분석됨' : fb.status === 'reviewed' ? '리뷰됨' : '초안'}
+                                      </span>
+                                      <span className="text-slate-500">rev #{fb.revision_number}</span>
+                                    </span>
+                                    <div className="flex items-center gap-2">
+                                      {fb.score && (
+                                        <span className="flex items-center gap-0.5 text-yellow-400 text-xs">
+                                          <StarIcon className="w-3 h-3" />
+                                          {fb.score}/10
+                                        </span>
+                                      )}
+                                      <span className="text-slate-600 text-xs">
+                                        {new Date(fb.created_at).toLocaleString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  {fb.admin_comment && (
+                                    <p className="text-slate-300 text-xs mt-1">{fb.admin_comment}</p>
+                                  )}
+                                  {fb.gpt_revision && (
+                                    <button
+                                      className="text-purple-400 text-xs mt-1 hover:underline"
+                                      onClick={() => setAiResult(fb.gpt_revision as unknown as AIAnalysisResult)}
+                                    >
+                                      이 버전으로 복원 →
+                                    </button>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
                       {/* 뉴스로 저장 버튼 */}
                       <button
                         onClick={() => {
@@ -1891,6 +2317,191 @@ body: JSON.stringify({
                 <h3 className="text-lg font-semibold text-white mb-3">RAG 검색 테스트</h3>
                 <p className="text-slate-400 text-sm mb-4">쿼리로 관련 크리틱/분석을 검색하고, 시스템 프롬프트 주입 결과를 확인합니다.</p>
                 <RAGTester />
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'knowledge' && (
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-2xl font-bold text-white mb-2">이론 라이브러리</h2>
+                <p className="text-slate-400">
+                  국제정치 이론, 지정학 프레임워크, 경제/금융 패턴 등을 등록하면 GPT 분석 시 RAG로 자동 참조됩니다.
+                </p>
+              </div>
+
+              {/* 프레임워크 추가 폼 */}
+              <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 space-y-4">
+                <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                  <BookOpenIcon className="w-5 h-5 text-amber-400" />
+                  프레임워크 추가
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-slate-400 text-sm mb-1">카테고리</label>
+                    <select
+                      value={knFormCategory}
+                      onChange={(e) => setKnFormCategory(e.target.value)}
+                      className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:ring-1 focus:ring-amber-500 outline-none"
+                    >
+                      {KNOWLEDGE_CATEGORIES.map(c => (
+                        <option key={c.value} value={c.value}>{c.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-slate-400 text-sm mb-1">프레임워크명</label>
+                    <input
+                      type="text"
+                      value={knFormFramework}
+                      onChange={(e) => setKnFormFramework(e.target.value)}
+                      placeholder="예: realism, liberalism, constructivism..."
+                      className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-500 focus:ring-1 focus:ring-amber-500 outline-none"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-slate-400 text-sm mb-1">제목</label>
+                    <input
+                      type="text"
+                      value={knFormTitle}
+                      onChange={(e) => setKnFormTitle(e.target.value)}
+                      placeholder="예: 현실주의 국제정치 이론 (케네스 왈츠)"
+                      className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-500 focus:ring-1 focus:ring-amber-500 outline-none"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-slate-400 text-sm mb-1">내용 (프레임워크 설명/원칙)</label>
+                    <textarea
+                      value={knFormContent}
+                      onChange={(e) => setKnFormContent(e.target.value)}
+                      placeholder="프레임워크의 핵심 원칙, 주요 개념, 분석 관점 등을 설명하세요..."
+                      rows={5}
+                      className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-500 focus:ring-1 focus:ring-amber-500 outline-none resize-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-400 text-sm mb-1">키워드 (쉼표 구분)</label>
+                    <input
+                      type="text"
+                      value={knFormKeywords}
+                      onChange={(e) => setKnFormKeywords(e.target.value)}
+                      placeholder="예: 현실주의, 세력균형, 안보딜레마"
+                      className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-500 focus:ring-1 focus:ring-amber-500 outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-400 text-sm mb-1">출처 (선택)</label>
+                    <input
+                      type="text"
+                      value={knFormSource}
+                      onChange={(e) => setKnFormSource(e.target.value)}
+                      placeholder="예: Kenneth Waltz, Theory of International Politics"
+                      className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-500 focus:ring-1 focus:ring-amber-500 outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={addKnowledgeFramework}
+                    disabled={isAddingKnowledge || !knFormTitle.trim() || !knFormContent.trim() || !knFormFramework.trim()}
+                    className="px-5 py-2.5 rounded-lg font-medium transition flex items-center gap-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isAddingKnowledge ? (
+                      <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                    ) : (
+                      <BookOpenIcon className="w-5 h-5" />
+                    )}
+                    {isAddingKnowledge ? '추가 중...' : '프레임워크 추가'}
+                  </button>
+                </div>
+
+                {knowledgeMessage && (
+                  <div className={`p-3 rounded-lg text-sm flex items-center gap-2 ${
+                    knowledgeMessage.type === 'success'
+                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                      : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                  }`}>
+                    {knowledgeMessage.type === 'success' ? <CheckCircleIcon className="w-4 h-4" /> : <ExclamationTriangleIcon className="w-4 h-4" />}
+                    {knowledgeMessage.text}
+                  </div>
+                )}
+              </div>
+
+              {/* 카테고리 필터 + 목록 */}
+              <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50">
+                <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+                  <h3 className="text-lg font-semibold text-white">등록된 프레임워크</h3>
+                  <div className="flex gap-2 flex-wrap">
+                    <button
+                      onClick={() => setKnowledgeCategory('all')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+                        knowledgeCategory === 'all' ? 'bg-amber-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                      }`}
+                    >
+                      전체
+                    </button>
+                    {KNOWLEDGE_CATEGORIES.map(c => (
+                      <button
+                        key={c.value}
+                        onClick={() => setKnowledgeCategory(c.value)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+                          knowledgeCategory === c.value ? 'bg-amber-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                        }`}
+                      >
+                        {c.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {knowledgeLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-4 border-amber-500 border-t-transparent"></div>
+                  </div>
+                ) : knowledgeItems.length === 0 ? (
+                  <p className="text-slate-500 text-center py-8">등록된 프레임워크가 없습니다. 위에서 추가해보세요.</p>
+                ) : (
+                  <div className="space-y-3 max-h-[600px] overflow-y-auto">
+                    {knowledgeItems.map((item) => (
+                      <div key={item.id} className="p-4 bg-slate-900/50 rounded-xl border border-slate-700/30 hover:border-amber-500/30 transition">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1 flex-wrap">
+                              <span className="text-xs px-2 py-0.5 bg-amber-500/20 text-amber-400 rounded font-medium">
+                                {KNOWLEDGE_CATEGORIES.find(c => c.value === item.category)?.label || item.category}
+                              </span>
+                              <span className="text-xs px-2 py-0.5 bg-slate-700 text-slate-300 rounded">
+                                {item.framework_name}
+                              </span>
+                              {item.source && (
+                                <span className="text-xs text-slate-500">출처: {item.source}</span>
+                              )}
+                            </div>
+                            <h4 className="text-white font-medium">{item.title}</h4>
+                            <p className="text-slate-400 text-sm mt-1 line-clamp-3">{item.content}</p>
+                            {item.keywords && item.keywords.length > 0 && (
+                              <div className="flex gap-1 mt-2 flex-wrap">
+                                {item.keywords.map((kw, i) => (
+                                  <span key={i} className="text-xs px-1.5 py-0.5 bg-slate-800 text-slate-400 rounded">
+                                    {kw}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => deleteKnowledgeItem(item.id)}
+                            className="p-2 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition shrink-0"
+                            title="삭제"
+                          >
+                            <TrashIcon className="w-5 h-5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )}

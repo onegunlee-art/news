@@ -35,9 +35,9 @@ class RAGService
     // ── Retrieval ───────────────────────────────────────
 
     /**
-     * 쿼리와 관련된 크리틱/분석 컨텍스트를 검색.
+     * 쿼리와 관련된 크리틱/분석/이론 컨텍스트를 검색.
      *
-     * @return array{critiques: array, analyses: array}
+     * @return array{critiques: array, analyses: array, knowledge: array}
      */
     public function retrieveRelevantContext(string $query, int $topK = 5): array
     {
@@ -45,18 +45,20 @@ class RAGService
             $embedding = $this->openai->createEmbedding($query);
         } catch (\Throwable $e) {
             error_log('RAG retrieveRelevantContext embedding error: ' . $e->getMessage());
-            return ['critiques' => [], 'analyses' => []];
+            return ['critiques' => [], 'analyses' => [], 'knowledge' => []];
         }
         if (empty($embedding)) {
-            return ['critiques' => [], 'analyses' => []];
+            return ['critiques' => [], 'analyses' => [], 'knowledge' => []];
         }
 
         $critiques = $this->supabase->vectorSearch('match_critique_embeddings', $embedding, $topK) ?? [];
         $analyses  = $this->supabase->vectorSearch('match_analysis_embeddings', $embedding, $topK) ?? [];
+        $knowledge = $this->supabase->vectorSearch('match_knowledge_library', $embedding, min($topK, 3)) ?? [];
 
         return [
             'critiques' => $critiques,
             'analyses'  => $analyses,
+            'knowledge' => $knowledge,
         ];
     }
 
@@ -92,6 +94,24 @@ class RAGService
             }
             if ($parts !== []) {
                 $sections[] = "## 과거 분석 참고자료\n" . implode("\n", $parts);
+            }
+        }
+
+        if (!empty($ragContext['knowledge'])) {
+            $parts = [];
+            foreach ($ragContext['knowledge'] as $k) {
+                $title = $k['title'] ?? '';
+                $content = $k['content'] ?? '';
+                $category = $k['category'] ?? '';
+                $framework = $k['framework_name'] ?? '';
+                $score = isset($k['similarity']) ? round((float) $k['similarity'], 3) : '?';
+                if ($content !== '') {
+                    $label = $framework !== '' ? "[{$category}/{$framework}]" : "[{$category}]";
+                    $parts[] = "- {$label} {$title} (유사도 {$score}): {$content}";
+                }
+            }
+            if ($parts !== []) {
+                $sections[] = "## 참조 프레임워크 (이론/정책 라이브러리)\n아래 프레임워크를 참고하여 분석의 깊이를 높이세요.\n" . implode("\n", $parts);
             }
         }
 

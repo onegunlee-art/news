@@ -304,6 +304,71 @@ PROMPT;
     }
 
     /**
+     * GPT 재분석 (Admin 피드백 반영)
+     *
+     * Admin이 초안 분석에 코멘트/점수를 남기면,
+     * 그 피드백을 반영하여 GPT가 개선된 분석을 생성합니다.
+     *
+     * @param array  $originalAnalysis 이전 분석 결과 (news_title, content_summary, key_points, narration 등)
+     * @param string $adminFeedback    Admin이 작성한 코멘트
+     * @param int|null $score          품질 점수 (1-10)
+     * @return array 개선된 분석 결과 (동일 JSON 구조)
+     */
+    public function revise(array $originalAnalysis, string $adminFeedback, ?int $score = null): array
+    {
+        $this->ensureInitialized();
+
+        $originalJson = json_encode($originalAnalysis, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+
+        $scoreText = $score !== null ? "현재 품질 점수: {$score}/10\n" : '';
+
+        $prompt = <<<PROMPT
+당신은 이전에 아래와 같은 뉴스 분석을 작성했습니다:
+
+=== 이전 분석 ===
+{$originalJson}
+=== 이전 분석 끝 ===
+
+편집자(Admin)가 다음과 같은 피드백을 남겼습니다:
+
+=== 편집자 피드백 ===
+{$adminFeedback}
+{$scoreText}=== 편집자 피드백 끝 ===
+
+위 피드백을 반영하여 분석을 개선하세요. 반드시 아래 JSON 형식으로만 응답하세요.
+피드백에서 지적된 부분을 수정하고, 더 나은 분석을 작성하세요.
+JSON 외에 다른 텍스트는 절대 포함하지 마세요.
+
+{
+  "news_title": "개선된 한국어 뉴스 제목. 15~30자.",
+  "content_summary": "개선된 AI 요약 및 구조 분석. 최소 600자 이상, 가능하면 900자 이상.",
+  "key_points": [
+    "개선된 핵심 포인트 1",
+    "개선된 핵심 포인트 2",
+    "개선된 핵심 포인트 3",
+    "개선된 핵심 포인트 4"
+  ],
+  "narration": "개선된 뉴스 앵커 내레이션 스크립트. 최소 900자 이상."
+}
+PROMPT;
+
+        $options = ['model' => 'gpt-5.2', 'timeout' => 180, 'max_tokens' => 8000];
+
+        // RAG 컨텍스트 주입 (knowledge_library 포함)
+        if ($this->ragService && $this->ragService->isConfigured()) {
+            $query = ($originalAnalysis['news_title'] ?? '') . ' ' . mb_substr($adminFeedback, 0, 300);
+            $ragContext = $this->ragService->retrieveRelevantContext($query, 3);
+            $basePrompt = $this->prompts['system'] ?? '당신은 "The Gist"의 수석 에디터입니다.';
+            $options['system_prompt'] = $this->ragService->buildSystemPromptWithRAG($basePrompt, $ragContext);
+        }
+
+        $response = $this->callGPT($prompt, $options);
+        $data = $this->parseJsonResponse($response);
+
+        return $data;
+    }
+
+    /**
      * 개별 번역 수행
      */
     public function translate(string $text): string
