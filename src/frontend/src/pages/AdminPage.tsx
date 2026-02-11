@@ -235,6 +235,8 @@ const AdminPage: React.FC = () => {
   const [articleSummary, setArticleSummary] = useState('');
   const [showExtractedInfo, setShowExtractedInfo] = useState(false);
   const [isRegeneratingThumbnail, setIsRegeneratingThumbnail] = useState(false);
+  const [isRegeneratingDalle, setIsRegeneratingDalle] = useState(false);
+  const [dallePrompt, setDallePrompt] = useState('');
   const [isRegeneratingTts, setIsRegeneratingTts] = useState(false);
   const [regeneratedTtsUrl, setRegeneratedTtsUrl] = useState<string | null>(null);
   const refArticleSummary = useRef<HTMLTextAreaElement>(null);
@@ -1314,7 +1316,7 @@ const AdminPage: React.FC = () => {
                       
                       {/* 썸네일 미리보기 */}
                       {articleImageUrl && (
-                        <div className="mt-3">
+                        <div className="mt-3 space-y-3">
                           <label className="block text-slate-400 text-sm mb-2">썸네일 미리보기</label>
                           <div className="relative w-40 h-24 bg-slate-800 rounded-lg overflow-hidden border border-slate-600">
                             <img
@@ -1325,6 +1327,53 @@ const AdminPage: React.FC = () => {
                                 (e.target as HTMLImageElement).style.display = 'none';
                               }}
                             />
+                          </div>
+                          {/* DALL-E로 썸네일 수정 */}
+                          <div className="pt-2 border-t border-slate-700/50">
+                            <label className="block text-slate-400 text-sm mb-1">DALL-E로 썸네일 수정</label>
+                            <p className="text-slate-500 text-xs mb-2">프롬프트를 입력하면 DALL-E로 새 썸네일을 생성합니다 (영문 권장)</p>
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                value={dallePrompt}
+                                onChange={(e) => setDallePrompt(e.target.value)}
+                                placeholder="예: A blue ocean with sailing ships, editorial style"
+                                className="flex-1 bg-slate-800/50 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-500 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none transition"
+                              />
+                              <button
+                                type="button"
+                                disabled={isRegeneratingDalle || !dallePrompt.trim()}
+                                onClick={async () => {
+                                  setIsRegeneratingDalle(true);
+                                  setSaveMessage(null);
+                                  try {
+                                    const res = await fetch('/api/admin/ai-analyze.php', {
+                                      method: 'POST',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({
+                                        action: 'regenerate_thumbnail_dalle',
+                                        prompt: dallePrompt.trim(),
+                                        news_title: newsTitle || undefined
+                                      })
+                                    });
+                                    const data = await res.json();
+                                    if (data.success && data.image_url) {
+                                      setArticleImageUrl(data.image_url);
+                                      setSaveMessage({ type: 'success', text: 'DALL-E로 썸네일이 새로 생성되었습니다.' });
+                                    } else {
+                                      setSaveMessage({ type: 'error', text: data.error || 'DALL-E 썸네일 생성 실패' });
+                                    }
+                                  } catch (e) {
+                                    setSaveMessage({ type: 'error', text: 'DALL-E 요청 실패: ' + (e as Error).message });
+                                  } finally {
+                                    setIsRegeneratingDalle(false);
+                                  }
+                                }}
+                                className="px-3 py-2 bg-purple-600 hover:bg-purple-500 text-white text-xs rounded-lg transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                {isRegeneratingDalle ? '생성 중...' : 'DALL-E로 수정'}
+                              </button>
+                            </div>
                           </div>
                         </div>
                       )}

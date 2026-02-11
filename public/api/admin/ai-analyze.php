@@ -543,6 +543,31 @@ function getStatus(): array {
 }
 
 /**
+ * DALL-E로 썸네일 수정 (Admin에서 직접 프롬프트 입력)
+ * POST action=regenerate_thumbnail_dalle → { prompt (필수), news_title (선택) }
+ */
+function regenerateThumbnailDalle(array $input): array {
+    $prompt = isset($input['prompt']) && is_string($input['prompt']) ? trim($input['prompt']) : '';
+    if ($prompt === '') {
+        return ['success' => false, 'error' => 'prompt is required', 'image_url' => null];
+    }
+    $openai = new OpenAIService([]);
+    if ($openai->isMockMode()) {
+        return ['success' => false, 'error' => 'OPENAI_API_KEY not set. DALL-E를 사용할 수 없습니다.', 'image_url' => null];
+    }
+    try {
+        $url = $openai->createImage($prompt, ['timeout' => 90]);
+        $lastErr = $openai->getLastError();
+        if ($url !== null) {
+            return ['success' => true, 'image_url' => $url, 'error' => null];
+        }
+        return ['success' => false, 'error' => $lastErr ?? 'DALL-E 이미지 생성 실패', 'image_url' => null];
+    } catch (\Throwable $e) {
+        return ['success' => false, 'error' => 'DALL-E 오류: ' . $e->getMessage(), 'image_url' => null];
+    }
+}
+
+/**
  * DALL-E 3 연동 테스트 (썸네일 생성용)
  * POST action=test_dalle → 단순 프롬프트로 이미지 생성 시도
  */
@@ -815,6 +840,11 @@ try {
 
                 case 'test_dalle':
                     $result = testDalleCall();
+                    sendResponse($result);
+                    break;
+
+                case 'regenerate_thumbnail_dalle':
+                    $result = regenerateThumbnailDalle($input);
                     sendResponse($result);
                     break;
 
