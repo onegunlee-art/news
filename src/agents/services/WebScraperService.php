@@ -53,7 +53,7 @@ class WebScraperService
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_MAXREDIRS => 5,
-            CURLOPT_TIMEOUT => $this->config['timeout'] ?? 30,
+            CURLOPT_TIMEOUT => $this->config['timeout'] ?? 60,
             CURLOPT_USERAGENT => $this->userAgent,
             CURLOPT_HTTPHEADER => [
                 'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',

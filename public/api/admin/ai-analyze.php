@@ -263,6 +263,7 @@ function analyzeUrl(string $url, array $options = []): array {
     $pipelineConfig = [
         'project_root' => rtrim($projectRoot, '/\\'),
         'openai' => [],
+        'scraper' => ['timeout' => 60],
         'enable_interpret' => $options['enable_interpret'] ?? true,
         'enable_learning' => $options['enable_learning'] ?? true,
         'google_tts' => $googleTtsConfig,

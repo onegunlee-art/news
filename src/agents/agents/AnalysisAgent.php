@@ -144,7 +144,7 @@ class AnalysisAgent extends BaseAgent
     {
         $prompt = $this->buildFullAnalysisPrompt($article);
 
-        $options = ['model' => 'gpt-5.2'];
+        $options = ['model' => 'gpt-5.2', 'timeout' => 180, 'max_tokens' => 8000];
         if ($this->ragService && $this->ragService->isConfigured()) {
             $query = $article->getTitle() . ' ' . mb_substr($article->getContent(), 0, 500);
             $ragContext = $this->ragService->retrieveRelevantContext($query, 3);
@@ -179,7 +179,7 @@ class AnalysisAgent extends BaseAgent
     private function buildFullAnalysisPrompt(ArticleData $article): string
     {
         $title = $article->getTitle();
-        $content = $this->truncateContent($article->getContent(), 8000);
+        $content = $this->truncateContent($article->getContent(), 40000);
 
         $template = <<<PROMPT
 기사 제목: {$title}
@@ -205,9 +205,9 @@ PROMPT;
     }
 
     /**
-     * 콘텐츠 길이 제한 (8000자 - GPT-5.2 context 안전 범위)
+     * 콘텐츠 길이 제한 (40000자 - 긴 기사 지원)
      */
-    private function truncateContent(string $content, int $maxLength = 8000): string
+    private function truncateContent(string $content, int $maxLength = 40000): string
     {
         if (mb_strlen($content) <= $maxLength) {
             return $content;
