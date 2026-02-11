@@ -38,9 +38,9 @@ class GoogleTTSService
     private string $lastError = '';
 
     /** API 호출 재시도 횟수 (429/503 등 일시적 오류 대응) */
-    private const MAX_RETRIES = 3;
+    private const MAX_RETRIES = 4;
     /** 청크 간 호출 간격(초) - Rate limit 완화 */
-    private const CHUNK_DELAY_SEC = 0.5;
+    private const CHUNK_DELAY_SEC = 1.0;
 
     public function __construct(array $config = [])
     {
@@ -280,7 +280,7 @@ class GoogleTTSService
             $lastException = new \RuntimeException($msg);
 
             if (in_array($httpCode, [429, 500, 502, 503], true) && $attempt <= self::MAX_RETRIES) {
-                $waitSec = $attempt * 3;
+                $waitSec = $attempt * 5;
                 error_log("Google TTS HTTP {$httpCode}, retry {$attempt}/" . self::MAX_RETRIES . " in {$waitSec}s: " . ($lastException->getMessage()));
                 sleep($waitSec);
             } else {

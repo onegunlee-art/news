@@ -418,11 +418,16 @@ function generateTtsFromNarration(string $narration, ?string $ttsVoice = null, ?
     }
 
     // 긴 내레이션 시 메모리·타임아웃·Google 청크 수 제한 회피 (UTF-8 경계로 자르기)
-    $maxNarrationBytes = 24000; // 약 5청크(4800바이트) 분량 → 대략 2~3분 분량
+    $maxNarrationBytes = 12000; // 3청크(4800바이트) 분량 → 약 1분 분량 (오류 최소화)
     if (strlen($narration) > $maxNarrationBytes) {
         $narration = mb_strcut($narration, 0, $maxNarrationBytes, 'UTF-8');
     }
 
+    // 저장 경로 사전 생성 (권한 문제 미리 방지)
+    $storageDir = rtrim($projectRoot, '/') . '/storage/audio';
+    if (!is_dir($storageDir)) {
+        @mkdir($storageDir, 0755, true);
+    }
     $googleTtsConfig = file_exists($projectRoot . 'config/google_tts.php')
         ? require $projectRoot . 'config/google_tts.php'
         : [];
@@ -430,6 +435,7 @@ function generateTtsFromNarration(string $narration, ?string $ttsVoice = null, ?
     if (is_string($googleTtsKey) && $googleTtsKey !== '') {
         $googleTtsConfig['api_key'] = $googleTtsKey;
     }
+    $googleTtsConfig['audio_storage_path'] = $storageDir;
     $voice = $googleTtsConfig['default_voice'] ?? 'ko-KR-Standard-A';
     if ($ttsVoice !== null && $ttsVoice !== '') {
         $voice = $ttsVoice;
@@ -480,6 +486,9 @@ function generateTtsFromNarration(string $narration, ?string $ttsVoice = null, ?
         if (($audioUrl === null || $audioUrl === '') && $lastError === '') {
             $lastError = $googleTts->getLastError();
         }
+        if ($audioUrl === null || $audioUrl === '') {
+            $lastError = $lastError ?: 'Google TTS 실패 (저장 경로 또는 API 확인)';
+        }
     }
     if ($audioUrl === null || $audioUrl === '') {
         try {
@@ -487,6 +496,24 @@ function generateTtsFromNarration(string $narration, ?string $ttsVoice = null, ?
             $audioUrl = $openai->textToSpeech($narration);
         } catch (\Throwable $e) {
             $lastError = $lastError ?: ('OpenAI TTS: ' . $e->getMessage());
+        }
+    }
+    if (($audioUrl === null || $audioUrl === '') && strlen($narration) > 4800) {
+        $shortNarration = mb_strcut($narration, 0, 4000, 'UTF-8');
+        if (!empty($googleTtsConfig) && is_string($googleTtsKey) && $googleTtsKey !== '') {
+            $googleTts = new GoogleTTSService(array_merge($googleTtsConfig, ['audio_storage_path' => $storageDir]));
+            $audioUrl = $googleTts->textToSpeech($shortNarration, ['voice' => $voice]);
+            if ($audioUrl === null && $lastError === '') {
+                $lastError = $googleTts->getLastError();
+            }
+        }
+        if (($audioUrl === null || $audioUrl === '') && $shortNarration !== '') {
+            try {
+                $openai = new OpenAIService([]);
+                $audioUrl = $openai->textToSpeech($shortNarration);
+            } catch (\Throwable $e) {
+                $lastError = $lastError ?: ('OpenAI TTS: ' . $e->getMessage());
+            }
         }
     }
 
