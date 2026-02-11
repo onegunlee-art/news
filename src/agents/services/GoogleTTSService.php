@@ -40,7 +40,7 @@ class GoogleTTSService
     /** API 호출 재시도 횟수 (429/503 등 일시적 오류 대응) */
     private const MAX_RETRIES = 4;
     /** 청크 간 호출 간격(초) - Rate limit 완화 */
-    private const CHUNK_DELAY_SEC = 1.0;
+    private const CHUNK_DELAY_SEC = 1.5;
 
     public function __construct(array $config = [])
     {
@@ -111,7 +111,7 @@ class GoogleTTSService
 
         try {
             $this->lastError = '';
-            set_time_limit(300);
+            set_time_limit(600);
             $voice = $options['voice'] ?? $this->defaultVoice;
             $pcmData = $this->synthesizeSsmlLinear16($ssml, $voice);
             $wavData = $this->createWavFile($pcmData);
@@ -176,7 +176,7 @@ class GoogleTTSService
      */
     private function generateAudioPcm(string $text, array $options): string
     {
-        set_time_limit(300);
+        set_time_limit(600);
         $voice = $options['voice'] ?? $this->defaultVoice;
         $chunks = $this->splitText($text);
         $pcmData = '';
@@ -222,7 +222,7 @@ class GoogleTTSService
         }
         try {
             $this->lastError = '';
-            set_time_limit(300);
+            set_time_limit(600);
             $pcm1 = $this->synthesizeSsmlLinear16($ssmlIntro, $voice);
             if ($narration !== '' && self::CHUNK_DELAY_SEC > 0) {
                 usleep((int) (self::CHUNK_DELAY_SEC * 1000000));
