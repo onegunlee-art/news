@@ -213,6 +213,33 @@ const AdminPage: React.FC = () => {
   const [settingsError, setSettingsError] = useState<string | null>(null);
   const [settingsSuccess, setSettingsSuccess] = useState<string | null>(null);
 
+  // 뉴스 관리 상태 (Feedback/useEffect에서 사용하므로 먼저 선언)
+  const [selectedCategory, setSelectedCategory] = useState<string>('diplomacy');
+  const [newsTitle, setNewsTitle] = useState('');
+  const [newsContent, setNewsContent] = useState('');
+  const [newsWhyImportant, setNewsWhyImportant] = useState('');
+  const [newsNarration, setNewsNarration] = useState('');
+  const [newsList, setNewsList] = useState<NewsArticle[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
+  const [editingNewsId, setEditingNewsId] = useState<number | null>(null);
+  const [isLoadingNews, setIsLoadingNews] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
+  const [articleUrl, setArticleUrl] = useState('');
+  const [articleSource, setArticleSource] = useState('');
+  const [articleAuthor, setArticleAuthor] = useState('');
+  const [articlePublishedAt, setArticlePublishedAt] = useState('');
+  const [articleImageUrl, setArticleImageUrl] = useState('');
+  const [articleSummary, setArticleSummary] = useState('');
+  const [showExtractedInfo, setShowExtractedInfo] = useState(false);
+  const [isRegeneratingThumbnail, setIsRegeneratingThumbnail] = useState(false);
+  const [isRegeneratingTts, setIsRegeneratingTts] = useState(false);
+  const [regeneratedTtsUrl, setRegeneratedTtsUrl] = useState<string | null>(null);
+  const refArticleSummary = useRef<HTMLTextAreaElement>(null);
+  const refNewsContent = useRef<HTMLTextAreaElement>(null);
+  const refNewsNarration = useRef<HTMLTextAreaElement>(null);
+  const refNewsWhyImportant = useRef<HTMLTextAreaElement>(null);
+
   // 설정 탭 활성 시 설정 로드
   useEffect(() => {
     if (activeTab !== 'settings') return;
@@ -540,35 +567,6 @@ const AdminPage: React.FC = () => {
     if ('speechSynthesis' in window) window.speechSynthesis.cancel();
     setIsSpeaking(false);
   };
-  
-  // 뉴스 관리 상태
-  const [selectedCategory, setSelectedCategory] = useState<string>('diplomacy');
-  const [newsTitle, setNewsTitle] = useState('');
-  const [newsContent, setNewsContent] = useState('');
-  const [newsWhyImportant, setNewsWhyImportant] = useState('');
-  const [newsNarration, setNewsNarration] = useState('');
-  const [newsList, setNewsList] = useState<NewsArticle[]>([]);
-  const [isSaving, setIsSaving] = useState(false);
-  const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
-  const [editingNewsId, setEditingNewsId] = useState<number | null>(null);
-  const [isLoadingNews, setIsLoadingNews] = useState(false);
-  const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
-  const [articleUrl, setArticleUrl] = useState('');
-  
-  // 추출된 기사 메타데이터 상태
-  const [articleSource, setArticleSource] = useState('');
-  const [articleAuthor, setArticleAuthor] = useState('');
-  const [articlePublishedAt, setArticlePublishedAt] = useState('');
-  const [articleImageUrl, setArticleImageUrl] = useState('');
-  const [articleSummary, setArticleSummary] = useState('');
-  const [showExtractedInfo, setShowExtractedInfo] = useState(false);
-  const [isRegeneratingThumbnail, setIsRegeneratingThumbnail] = useState(false);
-  const [isRegeneratingTts, setIsRegeneratingTts] = useState(false);
-  const [regeneratedTtsUrl, setRegeneratedTtsUrl] = useState<string | null>(null);
-  const refArticleSummary = useRef<HTMLTextAreaElement>(null);
-  const refNewsContent = useRef<HTMLTextAreaElement>(null);
-  const refNewsNarration = useRef<HTMLTextAreaElement>(null);
-  const refNewsWhyImportant = useRef<HTMLTextAreaElement>(null);
   
   const [stats, setStats] = useState<DashboardStats>({
     totalUsers: 0,
