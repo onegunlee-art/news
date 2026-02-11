@@ -145,6 +145,61 @@ function sendError($message, $status = 400, $extra = []) {
 }
 
 /**
+ * 504 게이트웨이 타임아웃 회피: 백그라운드 작업 + 폴링
+ * analyze 요청 시 즉시 job_id 반환 후, 파이프라인을 백그라운드에서 실행
+ */
+function getJobsDir(): string {
+    global $projectRoot;
+    $dir = rtrim($projectRoot, '/\\') . '/storage/jobs';
+    if (!is_dir($dir)) {
+        @mkdir($dir, 0755, true);
+    }
+    return $dir . '/';
+}
+
+function getJobFilePath(string $jobId): string {
+    $safe = preg_replace('/[^a-zA-Z0-9_-]/', '', $jobId);
+    if ($safe !== $jobId || strlen($jobId) > 64) {
+        throw new \InvalidArgumentException('Invalid job_id');
+    }
+    return getJobsDir() . $jobId . '.json';
+}
+
+function writeJobStatus(string $jobId, array $data): void {
+    $path = getJobFilePath($jobId);
+    file_put_contents($path, json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT), LOCK_EX);
+}
+
+function readJobStatus(string $jobId): ?array {
+    $path = getJobFilePath($jobId);
+    if (!is_file($path) || !is_readable($path)) {
+        return null;
+    }
+    $raw = file_get_contents($path);
+    $data = json_decode($raw, true);
+    return is_array($data) ? $data : null;
+}
+
+/**
+ * 즉시 응답 전송 후 스크립트 계속 실행 (504 타임아웃 회피)
+ */
+function sendResponseAndContinue(array $data, int $status = 200): void {
+    ob_clean();
+    http_response_code($status);
+    header('Content-Length: ' . strlen(json_encode($data, JSON_UNESCAPED_UNICODE)));
+    echo json_encode($data, JSON_UNESCAPED_UNICODE);
+    if (function_exists('fastcgi_finish_request')) {
+        fastcgi_finish_request();
+    } else {
+        if (ob_get_level()) {
+            ob_end_flush();
+        }
+        flush();
+    }
+    ignore_user_abort(true);
+}
+
+/**
  * TTS 미디어 캐시 키 (동일 입력이면 동일 해시 → 캐시 히트)
  */
 function buildTtsCacheKey(string $narration, ?string $ttsVoice, ?string $newsTitle, ?string $source, ?string $author): string {
@@ -530,6 +585,33 @@ $method = $_SERVER['REQUEST_METHOD'];
 try {
     switch ($method) {
         case 'GET':
+            // 폴링: job_status?job_id=xxx
+            $action = $_GET['action'] ?? '';
+            $jobId = $_GET['job_id'] ?? '';
+            if ($action === 'job_status' && $jobId !== '') {
+                try {
+                    $job = readJobStatus($jobId);
+                } catch (\Throwable $e) {
+                    sendResponse(['success' => false, 'status' => 'unknown', 'error' => 'Invalid job_id']);
+                }
+                if ($job === null) {
+                    sendResponse(['success' => false, 'status' => 'unknown', 'error' => 'Job not found']);
+                }
+                if (($job['status'] ?? '') === 'processing') {
+                    sendResponse([
+                        'success' => true,
+                        'status' => 'processing',
+                        'job_id' => $jobId,
+                        'message' => '분석 중... 잠시만 기다려주세요.',
+                    ]);
+                }
+                if (($job['status'] ?? '') === 'done' || ($job['status'] ?? '') === 'failed') {
+                    unset($job['status']);
+                    sendResponse($job);
+                }
+                sendResponse($job);
+            }
+            
             $pipeline = new AgentPipeline([]);
             $pipeline->setupDefaultPipeline();
             
@@ -574,9 +656,38 @@ try {
                         'enable_learning' => $input['enable_learning'] ?? true
                     ];
                     
-                    $result = analyzeUrl($url, $options);
-                    sendResponse($result);
-                    break;
+                    // 504 회피: job 생성 후 즉시 반환, 파이프라인은 백그라운드 실행
+                    $jobId = 'job_' . bin2hex(random_bytes(12));
+                    writeJobStatus($jobId, [
+                        'status' => 'processing',
+                        'url' => $url,
+                        'created_at' => date('c'),
+                    ]);
+                    
+                    sendResponseAndContinue([
+                        'success' => true,
+                        'job_id' => $jobId,
+                        'status' => 'processing',
+                        'message' => '분석을 시작했습니다. 잠시만 기다려주세요.',
+                        'analysis' => null,
+                    ]);
+                    
+                    // 백그라운드: 파이프라인 실행
+                    try {
+                        $result = analyzeUrl($url, $options);
+                        $result['job_id'] = $jobId;
+                        $result['status'] = $result['success'] ? 'done' : 'failed';
+                        writeJobStatus($jobId, $result);
+                    } catch (\Throwable $e) {
+                        writeJobStatus($jobId, [
+                            'status' => 'failed',
+                            'job_id' => $jobId,
+                            'success' => false,
+                            'error' => 'Pipeline 예외: ' . $e->getMessage(),
+                            'analysis' => null,
+                        ]);
+                    }
+                    exit;
 
                 case 'generate_tts':
                     $narration = $input['narration'] ?? '';
