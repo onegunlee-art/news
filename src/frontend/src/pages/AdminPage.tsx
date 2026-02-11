@@ -1018,7 +1018,16 @@ const AdminPage: React.FC = () => {
                       <input
                         type="url"
                         value={articleUrl}
-                        onChange={(e) => setArticleUrl(e.target.value)}
+                        onChange={(e) => {
+                          const url = e.target.value;
+                          setArticleUrl(url);
+                          const lower = url.toLowerCase();
+                          if (lower.includes('financial') || lower.includes('economy')) {
+                            setSelectedCategory('economy');
+                          } else if (lower.includes('foreign')) {
+                            setSelectedCategory('diplomacy');
+                          }
+                        }}
                         placeholder="https://example.com/article..."
                         className="flex-1 min-w-[200px] bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition"
                       />
