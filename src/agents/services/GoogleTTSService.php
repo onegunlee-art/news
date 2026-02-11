@@ -37,6 +37,9 @@ class GoogleTTSService
     /** 마지막 TTS 실패 시 원인 (API/저장 실패 시 메시지 저장) */
     private string $lastError = '';
 
+    /** API 호출 재시도 횟수 (429/503 등 일시적 오류 대응) */
+    private const MAX_RETRIES = 2;
+
     public function __construct(array $config = [])
     {
         $projectRoot = dirname(__DIR__, 3);
@@ -45,7 +48,7 @@ class GoogleTTSService
             : [];
         $merged = array_merge($baseConfig, $config);
 
-        $this->apiKey = $merged['api_key'] ?? '';
+        $this->apiKey = (string) ($merged['api_key'] ?? ($_ENV['GOOGLE_TTS_API_KEY'] ?? getenv('GOOGLE_TTS_API_KEY')) ?: '');
         $this->defaultVoice = $merged['default_voice'] ?? 'ko-KR-Standard-A';
         $this->languageCode = $merged['language_code'] ?? 'ko-KR';
         $this->timeout = (int) ($merged['timeout'] ?? 60);
@@ -135,24 +138,7 @@ class GoogleTTSService
             ],
         ];
 
-        $url = self::SYNTHESIZE_URL . '?key=' . urlencode($this->apiKey);
-        $ch = curl_init($url);
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => json_encode($payload),
-            CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
-            CURLOPT_TIMEOUT => $this->timeout,
-        ]);
-
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-
-        if ($httpCode !== 200) {
-            throw new \RuntimeException('Google TTS SSML API error: HTTP ' . $httpCode . ' ' . substr((string) $response, 0, 300));
-        }
-
+        $response = $this->callSynthesizeApi($payload);
         $data = json_decode($response, true);
         $audioContent = $data['audioContent'] ?? null;
         if ($audioContent === null) {
@@ -234,6 +220,57 @@ class GoogleTTSService
     }
 
     /**
+     * Google TTS synthesize API 호출 (429/503 재시도 포함)
+     */
+    private function callSynthesizeApi(array $payload): string
+    {
+        $url = self::SYNTHESIZE_URL . '?key=' . urlencode($this->apiKey);
+        $lastException = null;
+
+        for ($attempt = 1; $attempt <= self::MAX_RETRIES + 1; $attempt++) {
+            $ch = curl_init($url);
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_POST => true,
+                CURLOPT_POSTFIELDS => json_encode($payload),
+                CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+                CURLOPT_TIMEOUT => $this->timeout,
+                CURLOPT_CONNECTTIMEOUT => 15,
+            ]);
+
+            $response = curl_exec($ch);
+            $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlError = curl_error($ch);
+            curl_close($ch);
+
+            if ($httpCode === 200 && $response !== false) {
+                return (string) $response;
+            }
+
+            $msg = "Google TTS API: HTTP {$httpCode}";
+            if ($curlError) {
+                $msg .= " curl: {$curlError}";
+            }
+            if (is_string($response) && strlen($response) > 0) {
+                $errBody = json_decode($response, true);
+                $errMsg = $errBody['error']['message'] ?? $errBody['error']['status'] ?? substr($response, 0, 300);
+                $msg .= " | " . (is_string($errMsg) ? $errMsg : json_encode($errMsg));
+            }
+            $lastException = new \RuntimeException($msg);
+
+            if (in_array($httpCode, [429, 500, 502, 503], true) && $attempt <= self::MAX_RETRIES) {
+                $waitSec = $attempt * 2;
+                error_log("Google TTS HTTP {$httpCode}, retry {$attempt}/" . self::MAX_RETRIES . " in {$waitSec}s");
+                sleep($waitSec);
+            } else {
+                throw $lastException;
+            }
+        }
+
+        throw $lastException;
+    }
+
+    /**
      * 단일 청크를 LINEAR16(PCM)으로 합성하여 raw PCM 바이트 반환
      */
     private function synthesizeChunkLinear16(string $text, string $voiceName): string
@@ -250,32 +287,7 @@ class GoogleTTSService
             ],
         ];
 
-        $url = self::SYNTHESIZE_URL . '?key=' . urlencode($this->apiKey);
-        $ch = curl_init($url);
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => json_encode($payload),
-            CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
-            CURLOPT_TIMEOUT => $this->timeout,
-        ]);
-
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $curlError = curl_error($ch);
-        curl_close($ch);
-
-        if ($httpCode !== 200) {
-            $msg = "Google TTS API error: HTTP {$httpCode}";
-            if ($curlError) {
-                $msg .= " curl: {$curlError}";
-            }
-            if (is_string($response)) {
-                $msg .= " response: " . substr($response, 0, 500);
-            }
-            throw new \RuntimeException($msg);
-        }
-
+        $response = $this->callSynthesizeApi($payload);
         $data = json_decode($response, true);
         $audioContent = $data['audioContent'] ?? null;
         if ($audioContent === null) {
@@ -362,7 +374,7 @@ class GoogleTTSService
 
             // 문장 구분자 (한국어 마침표, 영어 마침표, 느낌표, 물음표, 줄바꿈)
             $bestCut = -1;
-            foreach (['. ', '? ', '! ', ".\n", "?\n", "!\n", "\n"] as $sep) {
+            foreach (['. ', '? ', '! ', '。 ', '。', ".\n", "?\n", "!\n", "。\n", "\n"] as $sep) {
                 $p = strrpos($window, $sep);
                 if ($p !== false && $p > $bestCut) {
                     $bestCut = $p + strlen($sep);
@@ -422,10 +434,17 @@ class GoogleTTSService
     {
         $filename = 'tts_' . uniqid() . '.' . $ext;
         if (!is_dir($this->audioStoragePath)) {
-            mkdir($this->audioStoragePath, 0755, true);
+            if (!@mkdir($this->audioStoragePath, 0755, true)) {
+                throw new \RuntimeException('Google TTS: storage directory creation failed: ' . $this->audioStoragePath);
+            }
+        }
+        if (!is_writable($this->audioStoragePath)) {
+            throw new \RuntimeException('Google TTS: storage directory not writable: ' . $this->audioStoragePath);
         }
         $filePath = $this->audioStoragePath . '/' . $filename;
-        file_put_contents($filePath, $data);
+        if (file_put_contents($filePath, $data) === false) {
+            throw new \RuntimeException('Google TTS: failed to write audio file: ' . $filePath);
+        }
 
         $sizeMB = round(strlen($data) / 1024 / 1024, 2);
         error_log("[GoogleTTS] Saved {$filename} ({$sizeMB} MB)");

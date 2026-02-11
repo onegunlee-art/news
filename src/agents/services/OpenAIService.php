@@ -519,6 +519,7 @@ class OpenAIService
             'response_format' => $options['format'] ?? $ttsConfig['response_format']
         ];
 
+        $timeout = (int) ($options['timeout'] ?? $this->config['timeout'] ?? 120);
         $ch = curl_init($this->config['endpoints']['tts']);
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
@@ -528,15 +529,26 @@ class OpenAIService
                 'Content-Type: application/json',
                 'Authorization: Bearer ' . $this->apiKey
             ],
-            CURLOPT_TIMEOUT => $this->config['timeout']
+            CURLOPT_TIMEOUT => $timeout,
+            CURLOPT_CONNECTTIMEOUT => 15,
         ]);
 
         $audioData = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlErr = curl_error($ch);
         curl_close($ch);
 
-        if ($httpCode !== 200) {
-            throw new \RuntimeException("OpenAI TTS API error: HTTP {$httpCode}");
+        if ($httpCode !== 200 || $audioData === false) {
+            $msg = "OpenAI TTS API error: HTTP {$httpCode}";
+            if ($curlErr !== '') {
+                $msg .= " curl: {$curlErr}";
+            }
+            if (is_string($audioData) && strlen($audioData) > 0) {
+                $decoded = json_decode($audioData, true);
+                $errDetail = $decoded['error']['message'] ?? substr($audioData, 0, 200);
+                $msg .= " | " . (is_string($errDetail) ? $errDetail : json_encode($errDetail));
+            }
+            throw new \RuntimeException($msg);
         }
 
         return $audioData;

@@ -47,26 +47,22 @@ final class TTSController
         // 1) DB에서 Admin이 설정한 voice 읽기
         $ttsVoice = $this->getSetting('tts_voice');
 
-        // 2) config 파일 로드
+        // 2) config 파일 로드 및 API 키 명시적 주입
         $config = file_exists($projectRoot . '/config/google_tts.php')
             ? require $projectRoot . '/config/google_tts.php'
             : [];
-
-        // 3) voice 결정: DB 설정 > config default > 하드코딩 default
-        $ttsVoice = $ttsVoice ?: ($config['default_voice'] ?? 'ko-KR-Standard-A');
-
-        // 디버그 로그
-        error_log("[TTS] voice from DB: " . ($this->getSetting('tts_voice') ?? 'null') . ", final voice: {$ttsVoice}");
-        error_log("[TTS] API key configured: " . ((!empty($config['api_key'])) ? 'yes' : 'no'));
+        $apiKey = $_ENV['GOOGLE_TTS_API_KEY'] ?? getenv('GOOGLE_TTS_API_KEY');
+        if (is_string($apiKey) && $apiKey !== '') {
+            $config['api_key'] = $apiKey;
+        }
+        $config['default_voice'] = $ttsVoice ?: ($config['default_voice'] ?? 'ko-KR-Standard-A');
+        $ttsVoice = $config['default_voice'];
 
         if (!file_exists($projectRoot . '/src/agents/services/GoogleTTSService.php')) {
             return Response::error('TTS 서비스 파일을 찾을 수 없습니다.', 503);
         }
 
         require_once $projectRoot . '/src/agents/services/GoogleTTSService.php';
-
-        // config에 voice도 넣어서 GoogleTTSService의 defaultVoice도 올바르게 설정
-        $config['default_voice'] = $ttsVoice;
         $service = new \Agents\Services\GoogleTTSService($config);
 
         if (!$service->isConfigured()) {
@@ -76,7 +72,9 @@ final class TTSController
         $url = $service->textToSpeech($text, ['voice' => $ttsVoice]);
 
         if ($url === null || $url === '') {
-            return Response::error('오디오 생성에 실패했습니다. 서버 로그를 확인해주세요.', 500);
+            $detail = $service->getLastError();
+            $msg = $detail !== '' ? ('오디오 생성 실패: ' . $detail) : '오디오 생성에 실패했습니다. 서버 로그를 확인해주세요.';
+            return Response::error($msg, 500);
         }
 
         return Response::success([

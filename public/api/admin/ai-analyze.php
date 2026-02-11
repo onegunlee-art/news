@@ -410,6 +410,8 @@ function analyzeUrl(string $url, array $options = []): array {
 function generateTtsFromNarration(string $narration, ?string $ttsVoice = null, ?string $newsTitle = null, ?string $source = null, ?string $author = null, ?string $publishedAt = null): array {
     global $projectRoot;
 
+    set_time_limit(300);
+
     $narration = trim($narration);
     if ($narration === '') {
         return ['success' => false, 'error' => 'narration is required'];
@@ -424,6 +426,10 @@ function generateTtsFromNarration(string $narration, ?string $ttsVoice = null, ?
     $googleTtsConfig = file_exists($projectRoot . 'config/google_tts.php')
         ? require $projectRoot . 'config/google_tts.php'
         : [];
+    $googleTtsKey = $_ENV['GOOGLE_TTS_API_KEY'] ?? getenv('GOOGLE_TTS_API_KEY');
+    if (is_string($googleTtsKey) && $googleTtsKey !== '') {
+        $googleTtsConfig['api_key'] = $googleTtsKey;
+    }
     $voice = $googleTtsConfig['default_voice'] ?? 'ko-KR-Standard-A';
     if ($ttsVoice !== null && $ttsVoice !== '') {
         $voice = $ttsVoice;
@@ -464,7 +470,6 @@ function generateTtsFromNarration(string $narration, ?string $ttsVoice = null, ?
 
     $audioUrl = null;
     $lastError = '';
-    $googleTtsKey = $_ENV['GOOGLE_TTS_API_KEY'] ?? getenv('GOOGLE_TTS_API_KEY');
     if (!empty($googleTtsConfig) && is_string($googleTtsKey) && $googleTtsKey !== '') {
         $googleTts = new GoogleTTSService($googleTtsConfig);
         $audioUrl = $googleTts->textToSpeechStructured($title, $meta, $narration, ['voice' => $voice]);
