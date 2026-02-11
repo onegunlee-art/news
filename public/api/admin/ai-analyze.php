@@ -202,13 +202,14 @@ function sendResponseAndContinue(array $data, int $status = 200): void {
 /**
  * TTS 미디어 캐시 키 (동일 입력이면 동일 해시 → 캐시 히트)
  */
-function buildTtsCacheKey(string $narration, ?string $ttsVoice, ?string $newsTitle, ?string $source, ?string $author): string {
+function buildTtsCacheKey(string $narration, ?string $ttsVoice, ?string $newsTitle, ?string $source, ?string $author, ?string $publishedAt = null): string {
     $payload = [
         trim($narration),
         $ttsVoice ?? '',
         $newsTitle ?? '',
         $source ?? '',
         $author ?? '',
+        $publishedAt ?? '',
     ];
     return hash('sha256', json_encode($payload, JSON_UNESCAPED_UNICODE));
 }
@@ -400,12 +401,12 @@ function analyzeUrl(string $url, array $options = []): array {
 
 /**
  * TTS 생성 (2단계: 분석 완료 후 호출)
- * 순서: 제목 → 0.5초 휴식 → 출처·작성자 → 0.5초 휴식 → 내레이션
- * 입력: narration (필수), tts_voice (선택), news_title, source, author (선택, 있으면 구조화 재생)
+ * 순서: 제목 → 1초 휴식 → 편집 문구(날짜·출처) → 1초 휴식 → 내레이션
+ * 입력: narration (필수), tts_voice (선택), news_title, source, published_at (선택, 있으면 구조화 재생)
  * 출력: { success, audio_url } 또는 { success: false, error }
  * 긴 기사(예: Foreign Affairs)는 내레이션이 매우 길어 TTS 시 메모리/타임아웃/API 제한에 걸릴 수 있으므로 바이트 상한 적용.
  */
-function generateTtsFromNarration(string $narration, ?string $ttsVoice = null, ?string $newsTitle = null, ?string $source = null, ?string $author = null): array {
+function generateTtsFromNarration(string $narration, ?string $ttsVoice = null, ?string $newsTitle = null, ?string $source = null, ?string $author = null, ?string $publishedAt = null): array {
     global $projectRoot;
 
     $narration = trim($narration);
@@ -441,17 +442,24 @@ function generateTtsFromNarration(string $narration, ?string $ttsVoice = null, ?
     }
 
     $title = $newsTitle !== null && trim($newsTitle) !== '' ? trim($newsTitle) : '제목 없음';
-    $metaParts = [];
-    if ($source !== null && trim($source) !== '') {
-        $metaParts[] = '출처 ' . trim($source);
+    $sourceName = ($source !== null && trim($source) !== '') ? trim($source) : 'The Gist';
+    // "Foreign Affairs Magazine" → "Foreign Affairs" (Magazine 제거)
+    if (preg_match('/^(.+?)\s+Magazine$/i', $sourceName, $m)) {
+        $sourceName = $m[1];
     }
-    if ($author !== null && trim($author) !== '') {
-        $metaParts[] = '작성자 ' . trim($author);
+    $dateStr = '';
+    if ($publishedAt !== null && trim($publishedAt) !== '') {
+        try {
+            $dt = new \DateTime(trim($publishedAt));
+            $dateStr = $dt->format('Y년 n월 j일');
+        } catch (\Throwable $e) {
+            $dateStr = '';
+        }
     }
-    $meta = implode('. ', $metaParts);
-    if ($meta === '') {
-        $meta = '출처 없음';
+    if ($dateStr === '') {
+        $dateStr = (new \DateTime())->format('Y년 n월 j일');
     }
+    $meta = $dateStr . '자 ' . $sourceName . ' 저널의 "' . $title . '"을 AI 번역, 요약하고 The Gist에서 일부 편집한 글입니다.';
 
     $audioUrl = null;
     $lastError = '';
@@ -695,9 +703,10 @@ try {
                     $newsTitle = isset($input['news_title']) && is_string($input['news_title']) ? $input['news_title'] : null;
                     $source = isset($input['source']) && is_string($input['source']) ? $input['source'] : null;
                     $author = isset($input['author']) && is_string($input['author']) ? $input['author'] : null;
+                    $publishedAt = isset($input['published_at']) && is_string($input['published_at']) ? $input['published_at'] : null;
                     $newsIdForCache = isset($input['news_id']) && (is_int($input['news_id']) || ctype_digit((string) $input['news_id'])) ? (int) $input['news_id'] : null;
 
-                    $ttsCacheKey = buildTtsCacheKey($narration, $ttsVoice, $newsTitle, $source, $author);
+                    $ttsCacheKey = buildTtsCacheKey($narration, $ttsVoice, $newsTitle, $source, $author, $publishedAt);
 
                     // 미디어 캐시: 동일 파라미터면 재생성 없이 기존 URL 반환 (API 비용 절감)
                     $supabaseForMedia = new SupabaseService([]);
@@ -709,7 +718,7 @@ try {
                         }
                     }
 
-                    $result = generateTtsFromNarration($narration, $ttsVoice, $newsTitle, $source, $author);
+                    $result = generateTtsFromNarration($narration, $ttsVoice, $newsTitle, $source, $author, $publishedAt);
 
                     // 성공 시 캐시에 저장
                     if ($result['success'] && !empty($result['audio_url']) && $supabaseForMedia->isConfigured()) {

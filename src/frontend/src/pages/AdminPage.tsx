@@ -859,7 +859,8 @@ const AdminPage: React.FC = () => {
                                 narration: narrationForTts,
                                 news_title: (a.news_title as string) || (article?.title as string) || '',
                                 source: article?.source || '',
-                                author: article?.author || ''
+                                author: article?.author || '',
+                                published_at: article?.published_at || null
                               }),
                             });
                             const ttsData = ttsRes.ok ? await ttsRes.json().catch(() => ({})) : {};
@@ -1138,13 +1139,14 @@ const AdminPage: React.FC = () => {
                               const res = await fetch('/api/admin/ai-analyze.php', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                  action: 'generate_tts',
-                                  narration: newsNarration.trim(),
-                                  news_title: newsTitle || '제목 없음',
-                                  source: articleSource || '',
-                                  author: articleAuthor || '',
-                                }),
+body: JSON.stringify({
+                                action: 'generate_tts',
+                                narration: newsNarration.trim(),
+                                news_title: newsTitle || '제목 없음',
+                                source: articleSource || '',
+                                author: articleAuthor || '',
+                                published_at: articlePublishedAt || null
+                              }),
                               });
                               const data = await res.json();
                               if (data.success && data.audio_url) {
@@ -1555,7 +1557,8 @@ const AdminPage: React.FC = () => {
                                 narration: narrationForTts,
                                 news_title: data.analysis?.news_title || data.article?.title || '',
                                 source: data.article?.source || '',
-                                author: data.article?.author || ''
+                                author: data.article?.author || '',
+                                published_at: data.article?.published_at || null
                               })
                             });
                             const ttsData = ttsRes.ok ? await ttsRes.json().catch(() => ({})) : {};

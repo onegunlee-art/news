@@ -199,7 +199,7 @@ class GoogleTTSService
     }
 
     /**
-     * 제목 → 0.5초 휴식 → 출처·작성자 → 0.5초 휴식 → 내레이션 순으로 한 WAV 생성 (SSML pause 사용)
+     * 제목 → 1초 휴식 → 편집 문구(날짜·출처) → 1초 휴식 → 내레이션 순으로 한 WAV 생성 (SSML pause 사용)
      */
     public function textToSpeechStructured(string $title, string $meta, string $narration, array $options = []): ?string
     {
@@ -215,7 +215,7 @@ class GoogleTTSService
         $meta = $escape($meta);
         $narration = trim($narration);
 
-        $ssmlIntro = '<speak>' . $title . '<break time="0.5s"/>' . $meta . '<break time="0.5s"/></speak>';
+        $ssmlIntro = '<speak>' . $title . '<break time="1s"/>' . $meta . '<break time="1s"/></speak>';
         try {
             $this->lastError = '';
             set_time_limit(300);

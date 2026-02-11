@@ -51,10 +51,20 @@ export default function NewsDetailPage() {
   const [error, setError] = useState<string | null>(null)
   const [showGptSummary, setShowGptSummary] = useState(false)
 
-  // 전역 팝업 플레이어에서 재생 (내레이션 + The Gist's Critique까지만)
+  // 전역 팝업 플레이어에서 재생 (제목 → 편집 문구 → 내레이션 → The Gist's Critique)
   const playArticle = () => {
     if (!news) return
-    const parts: string[] = [news.title]
+    const dateStr = news.published_at
+      ? `${new Date(news.published_at).getFullYear()}년 ${new Date(news.published_at).getMonth() + 1}월 ${new Date(news.published_at).getDate()}일`
+      : (news.updated_at || news.created_at)
+        ? `${new Date(news.updated_at || news.created_at!).getFullYear()}년 ${new Date(news.updated_at || news.created_at!).getMonth() + 1}월 ${new Date(news.updated_at || news.created_at!).getDate()}일`
+        : ''
+    const rawSource = (news.original_source && news.original_source.trim()) || (news.source === 'Admin' ? 'The Gist' : news.source || 'The Gist')
+    const sourceDisplay = formatSourceDisplayName(rawSource) || 'The Gist'
+    const editorialLine = dateStr
+      ? `${dateStr}자 ${sourceDisplay} 저널의 "${news.title}"을 AI 번역, 요약하고 The Gist에서 일부 편집한 글입니다.`
+      : `${sourceDisplay} 저널의 "${news.title}"을 AI 번역, 요약하고 The Gist에서 일부 편집한 글입니다.`
+    const parts: string[] = [news.title, editorialLine]
     const mainContent = news.narration || news.content || news.description || ''
     if (mainContent) parts.push(mainContent)
     if (news.why_important) parts.push("The Gist's Critique.", news.why_important)
