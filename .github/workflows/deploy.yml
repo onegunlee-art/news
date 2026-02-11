@@ -75,11 +75,6 @@ jobs:
         working-directory: src/frontend
         run: npm ci
 
-      - name: Type check
-        working-directory: src/frontend
-        run: npm run build
-        continue-on-error: true
-
       - name: Build for production
         working-directory: src/frontend
         run: npm run build
