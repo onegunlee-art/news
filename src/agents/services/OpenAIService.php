@@ -21,6 +21,9 @@ class OpenAIService
     private array $config;
     private bool $mockMode;
 
+    /** 마지막 API 에러 메시지 (디버깅용) */
+    private ?string $lastError = null;
+
     public function __construct(array $config = [])
     {
         $defaultConfig = require dirname(__DIR__, 3) . '/config/openai.php';
@@ -47,6 +50,14 @@ class OpenAIService
     public function isMockMode(): bool
     {
         return $this->mockMode;
+    }
+
+    /**
+     * 마지막 API 에러 메시지 (디버깅용)
+     */
+    public function getLastError(): ?string
+    {
+        return $this->lastError;
     }
 
     /**
@@ -641,6 +652,33 @@ class OpenAIService
     }
 
     /**
+     * URL에서 이미지 다운로드 (cURL 우선 - allow_url_fopen 미필요)
+     */
+    private function downloadImageUrl(string $url): ?string
+    {
+        if (function_exists('curl_init')) {
+            $ch = curl_init($url);
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_TIMEOUT => 30,
+                CURLOPT_SSL_VERIFYPEER => true,
+            ]);
+            $data = curl_exec($ch);
+            $err = curl_error($ch);
+            curl_close($ch);
+            if ($err === '' && $data !== false) {
+                return $data;
+            }
+        }
+        if (ini_get('allow_url_fopen')) {
+            $data = @file_get_contents($url);
+            return $data !== false ? $data : null;
+        }
+        return null;
+    }
+
+    /**
      * DALL·E 3로 썸네일 이미지 생성. 생성된 이미지는 저장 후 URL 반환.
      * API URL은 만료되므로 다운로드해 storage에 저장한다.
      *
@@ -683,30 +721,40 @@ class OpenAIService
         curl_close($ch);
 
         if ($httpCode !== 200) {
-            error_log('OpenAI Images API error: HTTP ' . $httpCode . ' ' . substr($response, 0, 500));
+            $errData = json_decode($response, true);
+            $errMsg = $errData['error']['message'] ?? $errData['error']['code'] ?? substr((string)$response, 0, 500);
+            $this->lastError = 'HTTP ' . $httpCode . ': ' . $errMsg;
+            error_log('OpenAI Images API error: ' . $this->lastError);
             return null;
         }
 
+        $this->lastError = null;
         $data = json_decode($response, true);
         $imageUrl = $data['data'][0]['url'] ?? null;
         if ($imageUrl === null) {
+            $this->lastError = 'Invalid response: no image URL in response';
             return null;
         }
 
-        // 만료되는 URL에서 다운로드 후 저장
+        // 만료되는 URL에서 다운로드 후 저장 (cURL 사용 - allow_url_fopen 미필요)
         $storagePath = $imgConfig['storage_path'] ?? dirname(__DIR__, 3) . '/storage/thumbnails';
         if (!is_dir($storagePath)) {
-            mkdir($storagePath, 0755, true);
+            @mkdir($storagePath, 0755, true);
         }
         $filename = 'dalle_' . uniqid() . '.png';
         $filePath = $storagePath . '/' . $filename;
 
-        $imgData = @file_get_contents($imageUrl);
-        if ($imgData === false || strlen($imgData) === 0) {
-            error_log('OpenAI Images: failed to download generated image from URL');
+        $imgData = $this->downloadImageUrl($imageUrl);
+        if ($imgData === null || strlen($imgData) === 0) {
+            $this->lastError = 'Failed to download generated image (curl or allow_url_fopen may be blocked)';
+            error_log('OpenAI Images: ' . $this->lastError);
             return null;
         }
-        file_put_contents($filePath, $imgData);
+        if (@file_put_contents($filePath, $imgData) === false) {
+            $this->lastError = 'Failed to write to storage (check storage/thumbnails permissions)';
+            error_log('OpenAI Images: ' . $this->lastError . ' - ' . $filePath);
+            return null;
+        }
 
         return '/storage/thumbnails/' . $filename;
     }

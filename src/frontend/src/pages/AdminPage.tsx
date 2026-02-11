@@ -2598,6 +2598,30 @@ body: JSON.stringify({
                   >
                     GPT API 호출 테스트
                   </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setSaveMessage({ type: 'info', text: 'DALL-E 3 썸네일 연동 테스트 중... (약 30초 소요)' });
+                      try {
+                        const r = await fetch('/api/admin/ai-analyze.php', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ action: 'test_dalle' })
+                        });
+                        const d = await r.json();
+                        if (d.success) {
+                          setSaveMessage({ type: 'success', text: `DALL-E 3 연동 성공 (${d.debug?.duration_ms ?? 0}ms) - 생성된 이미지: ${d.image_url ?? ''}` });
+                        } else {
+                          setSaveMessage({ type: 'error', text: `${d.message ?? d.error ?? '실패'}${d.debug?.mock_mode ? ' (Mock 모드)' : ''}` });
+                        }
+                      } catch (e) {
+                        setSaveMessage({ type: 'error', text: 'DALL-E 테스트 요청 실패: ' + (e as Error).message });
+                      }
+                    }}
+                    className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-lg text-sm transition"
+                  >
+                    DALL-E 3 테스트
+                  </button>
                 </div>
               </div>
 

@@ -543,6 +543,54 @@ function getStatus(): array {
 }
 
 /**
+ * DALL-E 3 연동 테스트 (썸네일 생성용)
+ * POST action=test_dalle → 단순 프롬프트로 이미지 생성 시도
+ */
+function testDalleCall(): array {
+    global $envLoaded, $envTried;
+    $openai = new OpenAIService([]);
+    $root = findProjectRoot();
+    $cfgFile = $root . 'config/openai.php';
+    $cfg = is_file($cfgFile) ? (require $cfgFile) : [];
+    $cfg = is_array($cfg) ? $cfg : [];
+    $debug = [
+        'env_loaded' => $envLoaded ?? false,
+        'openai_configured' => $openai->isConfigured(),
+        'mock_mode' => $openai->isMockMode(),
+        'images_endpoint' => $cfg['endpoints']['images'] ?? 'https://api.openai.com/v1/images/generations',
+    ];
+    if ($openai->isMockMode()) {
+        return [
+            'success' => false,
+            'message' => 'Mock 모드. OPENAI_API_KEY가 설정되지 않았습니다.',
+            'debug' => $debug,
+            'error' => 'OPENAI_API_KEY not set',
+        ];
+    }
+    $start = microtime(true);
+    try {
+        $url = $openai->createImage('A simple blue circle on white background, minimal editorial style.', ['timeout' => 60]);
+        $ms = round((microtime(true) - $start) * 1000, 2);
+        $lastErr = $openai->getLastError();
+        return [
+            'success' => $url !== null,
+            'message' => $url ? 'DALL-E 3 연동 성공' : ($lastErr ?? 'DALL-E 3 이미지 생성 실패'),
+            'debug' => array_merge($debug, ['duration_ms' => $ms]),
+            'image_url' => $url,
+            'error' => $url ? null : ($lastErr ?? 'createImage returned null'),
+        ];
+    } catch (\Throwable $e) {
+        $ms = round((microtime(true) - $start) * 1000, 2);
+        return [
+            'success' => false,
+            'message' => 'DALL-E 3 호출 실패: ' . $e->getMessage(),
+            'debug' => array_merge($debug, ['duration_ms' => $ms]),
+            'error' => $e->getMessage(),
+        ];
+    }
+}
+
+/**
  * GPT API 호출 단독 테스트 (스크래핑/파이프라인 없이 OpenAI만 호출)
  * POST action=test_openai → 실제 API 호출 후 성공/실패 반환
  */
@@ -762,6 +810,11 @@ try {
 
                 case 'test_openai':
                     $result = testOpenAICall();
+                    sendResponse($result);
+                    break;
+
+                case 'test_dalle':
+                    $result = testDalleCall();
                     sendResponse($result);
                     break;
 
