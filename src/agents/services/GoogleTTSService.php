@@ -34,6 +34,8 @@ class GoogleTTSService
     private string $languageCode;
     private int $timeout;
     private string $audioStoragePath;
+    /** 마지막 TTS 실패 시 원인 (API/저장 실패 시 메시지 저장) */
+    private string $lastError = '';
 
     public function __construct(array $config = [])
     {
@@ -55,6 +57,12 @@ class GoogleTTSService
         return $this->apiKey !== '';
     }
 
+    /** 마지막 실패 원인 (디버깅/API 응답용) */
+    public function getLastError(): string
+    {
+        return $this->lastError;
+    }
+
     /**
      * TTS 생성: 텍스트 → WAV 오디오 파일 URL
      */
@@ -66,13 +74,16 @@ class GoogleTTSService
         }
 
         if (!$this->isConfigured()) {
+            $this->lastError = 'GOOGLE_TTS_API_KEY not set';
             error_log('Google TTS: API key not configured. getenv(GOOGLE_TTS_API_KEY)=' . (getenv('GOOGLE_TTS_API_KEY') ?: '(empty)'));
             return null;
         }
 
         try {
+            $this->lastError = '';
             return $this->generateAudio($text, $options);
         } catch (\Throwable $e) {
+            $this->lastError = $e->getMessage();
             error_log('Google TTS error: ' . $e->getMessage());
             return null;
         }
@@ -94,12 +105,14 @@ class GoogleTTSService
         }
 
         try {
+            $this->lastError = '';
             set_time_limit(300);
             $voice = $options['voice'] ?? $this->defaultVoice;
             $pcmData = $this->synthesizeSsmlLinear16($ssml, $voice);
             $wavData = $this->createWavFile($pcmData);
             return $this->saveFile($wavData, 'wav');
         } catch (\Throwable $e) {
+            $this->lastError = $e->getMessage();
             error_log('Google TTS SSML error: ' . $e->getMessage());
             return null;
         }
@@ -191,6 +204,7 @@ class GoogleTTSService
     public function textToSpeechStructured(string $title, string $meta, string $narration, array $options = []): ?string
     {
         if (!$this->isConfigured()) {
+            $this->lastError = 'GOOGLE_TTS_API_KEY not set';
             return null;
         }
         $voice = $options['voice'] ?? $this->defaultVoice;
@@ -203,6 +217,7 @@ class GoogleTTSService
 
         $ssmlIntro = '<speak>' . $title . '<break time="0.5s"/>' . $meta . '<break time="0.5s"/></speak>';
         try {
+            $this->lastError = '';
             set_time_limit(300);
             $pcm1 = $this->synthesizeSsmlLinear16($ssmlIntro, $voice);
             $pcm2 = $narration !== '' ? $this->generateAudioPcm($narration, ['voice' => $voice]) : '';
@@ -212,6 +227,7 @@ class GoogleTTSService
             }
             return $this->saveFile($this->createWavFile($pcm), 'wav');
         } catch (\Throwable $e) {
+            $this->lastError = $e->getMessage();
             error_log('Google TTS structured error: ' . $e->getMessage());
             return null;
         }

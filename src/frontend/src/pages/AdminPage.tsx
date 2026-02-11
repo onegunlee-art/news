@@ -831,11 +831,12 @@ const AdminPage: React.FC = () => {
                                 const duration = data.duration_ms ? ` (분석 ${(data.duration_ms / 1000).toFixed(1)}초 + TTS)` : '';
                                 setSaveMessage({ type: 'success', text: `GPT 분석·TTS 완료!${duration}` });
                               } else {
-                                setSaveMessage({ type: 'error', text: 'TTS 생성만 실패. 내레이션은 사용 가능합니다.' });
+                                const ttsErrMsg = ttsData?.error ? `TTS 실패: ${ttsData.error}` : 'TTS 생성만 실패. 내레이션은 사용 가능합니다.';
+                                setSaveMessage({ type: 'error', text: ttsErrMsg });
                               }
                             } catch (ttsErr) {
                               setAiResult(data.analysis);
-                              setSaveMessage({ type: 'error', text: 'TTS 생성만 실패. 내레이션은 사용 가능합니다.' });
+                              setSaveMessage({ type: 'error', text: 'TTS 요청 실패 (네트워크/타임아웃). 내레이션은 사용 가능합니다.' });
                             }
                           } catch (error: unknown) {
                             if (timeout1) clearTimeout(timeout1);
@@ -1451,6 +1452,9 @@ const AdminPage: React.FC = () => {
                             const ttsData = ttsRes.ok ? await ttsRes.json().catch(() => ({})) : {};
                             const audioUrl = ttsData.success && ttsData.audio_url ? ttsData.audio_url : null;
                             setAiResult({ ...data.analysis, audio_url: audioUrl ?? undefined });
+                            if (!audioUrl && ttsData?.error) {
+                              setSaveMessage({ type: 'error', text: `TTS 실패: ${ttsData.error}` });
+                            }
                           } catch {
                             setAiResult(data.analysis);
                           }

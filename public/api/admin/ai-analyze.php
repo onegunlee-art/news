@@ -352,23 +352,33 @@ function generateTtsFromNarration(string $narration, ?string $ttsVoice = null, ?
     }
 
     $audioUrl = null;
+    $lastError = '';
     $googleTtsKey = $_ENV['GOOGLE_TTS_API_KEY'] ?? getenv('GOOGLE_TTS_API_KEY');
     if (!empty($googleTtsConfig) && is_string($googleTtsKey) && $googleTtsKey !== '') {
         $googleTts = new GoogleTTSService($googleTtsConfig);
         $audioUrl = $googleTts->textToSpeechStructured($title, $meta, $narration, ['voice' => $voice]);
         if ($audioUrl === null || $audioUrl === '') {
+            $lastError = $googleTts->getLastError();
             $audioUrl = $googleTts->textToSpeech($narration, ['voice' => $voice]);
+        }
+        if (($audioUrl === null || $audioUrl === '') && $lastError === '') {
+            $lastError = $googleTts->getLastError();
         }
     }
     if ($audioUrl === null || $audioUrl === '') {
-        $openai = new OpenAIService([]);
-        $audioUrl = $openai->textToSpeech($narration);
+        try {
+            $openai = new OpenAIService([]);
+            $audioUrl = $openai->textToSpeech($narration);
+        } catch (\Throwable $e) {
+            $lastError = $lastError ?: ('OpenAI TTS: ' . $e->getMessage());
+        }
     }
 
     if ($audioUrl !== null && $audioUrl !== '') {
         return ['success' => true, 'audio_url' => $audioUrl];
     }
-    return ['success' => false, 'error' => 'TTS 생성 실패. Google TTS 또는 OpenAI TTS 설정을 확인하세요.'];
+    $errMsg = $lastError !== '' ? ('TTS 생성 실패: ' . $lastError) : 'TTS 생성 실패. Google TTS 또는 OpenAI TTS 설정을 확인하세요.';
+    return ['success' => false, 'error' => $errMsg];
 }
 
 // 스타일 학습
