@@ -242,7 +242,7 @@ abstract class BaseAgent implements AgentInterface
     /**
      * 재시도 로직 래퍼
      */
-    protected function withRetry(callable $operation, int $maxRetries = null): mixed
+    protected function withRetry(callable $operation, ?int $maxRetries = null): mixed
     {
         $maxRetries = $maxRetries ?? $this->config['max_retries'];
         $lastException = null;

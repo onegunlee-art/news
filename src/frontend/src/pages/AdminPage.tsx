@@ -172,8 +172,10 @@ const AdminPage: React.FC = () => {
   const { } = useAuthStore(); // 권한 체크용 (추후 활성화)
   const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'news' | 'ai' | 'workspace' | 'knowledge' | 'settings'>('dashboard');
   
-  // AI 분석 상태
+  // AI 분석 상태 (feedback useEffect에서 사용하므로 먼저 선언)
   const [aiUrl, setAiUrl] = useState('');
+  const [articleUrl, setArticleUrl] = useState('');
+  const [editingNewsId, setEditingNewsId] = useState<number | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [aiResult, setAiResult] = useState<AIAnalysisResult | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
@@ -213,7 +215,7 @@ const AdminPage: React.FC = () => {
   const [settingsError, setSettingsError] = useState<string | null>(null);
   const [settingsSuccess, setSettingsSuccess] = useState<string | null>(null);
 
-  // 뉴스 관리 상태 (Feedback/useEffect에서 사용하므로 먼저 선언)
+  // 뉴스 관리 상태
   const [selectedCategory, setSelectedCategory] = useState<string>('diplomacy');
   const [newsTitle, setNewsTitle] = useState('');
   const [newsContent, setNewsContent] = useState('');
@@ -222,10 +224,8 @@ const AdminPage: React.FC = () => {
   const [newsList, setNewsList] = useState<NewsArticle[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
-  const [editingNewsId, setEditingNewsId] = useState<number | null>(null);
   const [isLoadingNews, setIsLoadingNews] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
-  const [articleUrl, setArticleUrl] = useState('');
   const [articleSource, setArticleSource] = useState('');
   const [articleAuthor, setArticleAuthor] = useState('');
   const [articlePublishedAt, setArticlePublishedAt] = useState('');
