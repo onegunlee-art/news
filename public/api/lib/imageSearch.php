@@ -135,29 +135,69 @@ function buildSearchQueryForIllustration(string $title, string $description = ''
 }
 
 /**
+ * 카테고리/키워드 기반 동적 플레이스홀더 URL 생성
+ * 단순 "News" 대신 의미 있는 텍스트와 카테고리별 색상 사용
+ */
+function buildDynamicPlaceholder(string $title, string $category = ''): string {
+    // 카테고리별 색상 테마 (bg/fg)
+    $themes = [
+        'diplomacy' => ['0f172a', '38bdf8', 'Diplomacy'],
+        'economy'   => ['0f172a', '34d399', 'Economy'],
+        'entertainment' => ['0f172a', 'fb923c', 'Entertainment'],
+        'technology' => ['0f172a', 'a78bfa', 'Tech'],
+        'security'  => ['0f172a', 'f87171', 'Security'],
+        'politics'  => ['0f172a', '60a5fa', 'Politics'],
+    ];
+
+    // 키워드 → 라벨 매핑 (제목에서 키워드 감지)
+    $keywordLabels = [
+        'trump' => 'US+Politics', 'biden' => 'US+Politics', 'election' => 'Election',
+        '트럼프' => 'US+Politics', '바이든' => 'US+Politics', '선거' => 'Election',
+        'china' => 'China', '중국' => 'China', 'russia' => 'Russia', '러시아' => 'Russia',
+        'ukraine' => 'Ukraine', '우크라이나' => 'Ukraine',
+        'trade' => 'Trade', '무역' => 'Trade', 'tariff' => 'Tariff', '관세' => 'Tariff',
+        'economy' => 'Economy', '경제' => 'Economy', 'finance' => 'Finance',
+        'war' => 'Conflict', '전쟁' => 'Conflict', 'military' => 'Military', '군사' => 'Military',
+        'climate' => 'Climate', '기후' => 'Climate', 'energy' => 'Energy', '에너지' => 'Energy',
+        'summit' => 'Summit', '정상회담' => 'Summit',
+        'nuclear' => 'Nuclear', '핵' => 'Nuclear',
+        'nato' => 'NATO', 'eu' => 'EU',
+        'iran' => 'Iran', 'israel' => 'Israel', 'gaza' => 'Gaza',
+        'oil' => 'Oil', '석유' => 'Oil',
+        'semiconductor' => 'Tech', '반도체' => 'Tech', 'ai' => 'AI', '인공지능' => 'AI',
+    ];
+
+    $titleLower = mb_strtolower($title);
+    $label = null;
+
+    // 키워드 매칭
+    foreach ($keywordLabels as $kw => $lbl) {
+        if (mb_strpos($titleLower, $kw) !== false) {
+            $label = $lbl;
+            break;
+        }
+    }
+
+    // 카테고리 테마 선택
+    $cat = strtolower($category ?: '');
+    $theme = $themes[$cat] ?? ['1e293b', '94a3b8', 'The+Gist'];
+    $bg = $theme[0];
+    $fg = $theme[1];
+
+    if ($label === null) {
+        $label = $theme[2]; // 카테고리 이름 사용
+    }
+
+    return "https://placehold.co/800x500/{$bg}/{$fg}?text=" . urlencode($label);
+}
+
+/**
  * 저작권 회피용: 일러스트/캐리커처 스타일 썸네일 URL 반환.
  * (og:image 대신 사용하여 원본 기사 이미지 저작권 이슈 회피)
  */
 function getIllustrationImageUrl(string $title, string $description = '', string $category = '', ?PDO $pdo = null): string {
-    global $illustrationDefaults;
-    if (!isset($illustrationDefaults) || !is_array($illustrationDefaults) || empty($illustrationDefaults)) {
-        $illustrationDefaults = [
-            'https://placehold.co/800x500/1e293b/94a3b8?text=The+Gist',
-            'https://placehold.co/800x500/334155/64748b?text=News',
-        ];
-    }
-
-    $usedUrls = [];
-    if ($pdo) {
-        try {
-            $usedUrls = $pdo->query("SELECT DISTINCT image_url FROM news WHERE image_url IS NOT NULL AND image_url != ''")->fetchAll(PDO::FETCH_COLUMN);
-        } catch (Exception $e) {
-            $usedUrls = [];
-        }
-    }
-
-    $pick = pickUnused($illustrationDefaults, $usedUrls, $title);
-    return ($pick !== null && $pick !== '') ? $pick : $illustrationDefaults[0];
+    // 동적 플레이스홀더 생성 (키워드/카테고리 기반)
+    return buildDynamicPlaceholder($title, $category);
 }
 
 /**
@@ -208,29 +248,39 @@ function smartImageUrl(string $title, string $category, ?PDO $pdo = null): strin
         }
     }
 
-    // 2. 국가/분쟁 키워드 매칭
+    // 2. 국가/분쟁 키워드 매칭 (placehold.co가 아닌 실제 URL만 사용)
     foreach ($countryImages as $keyword => $urls) {
         if (mb_strpos($titleLower, mb_strtolower($keyword)) !== false) {
-            $pick = pickUnused($urls, $usedUrls, $title);
-            if ($pick) return $pick;
+            // placehold.co 플레이스홀더 필터링
+            $realUrls = array_filter($urls, fn($u) => !str_contains($u, 'placehold.co'));
+            if (!empty($realUrls)) {
+                $pick = pickUnused(array_values($realUrls), $usedUrls, $title);
+                if ($pick) return $pick;
+            }
         }
     }
 
-    // 3. 주제 키워드 매칭
+    // 3. 주제 키워드 매칭 (placehold.co가 아닌 실제 URL만 사용)
     foreach ($topicImages as $keyword => $urls) {
         if (mb_strpos($titleLower, mb_strtolower($keyword)) !== false) {
-            $pick = pickUnused($urls, $usedUrls, $title);
+            $realUrls = array_filter($urls, fn($u) => !str_contains($u, 'placehold.co'));
+            if (!empty($realUrls)) {
+                $pick = pickUnused(array_values($realUrls), $usedUrls, $title);
+                if ($pick) return $pick;
+            }
+        }
+    }
+
+    // 4. 카테고리 기본 이미지 (placehold.co가 아닌 실제 URL만)
+    $cat = strtolower($category ?: '');
+    if (isset($categoryDefaults[$cat])) {
+        $realUrls = array_filter($categoryDefaults[$cat], fn($u) => !str_contains($u, 'placehold.co'));
+        if (!empty($realUrls)) {
+            $pick = pickUnused(array_values($realUrls), $usedUrls, $title);
             if ($pick) return $pick;
         }
     }
 
-    // 4. 카테고리 기본 이미지
-    $cat = strtolower($category ?: '');
-    if (isset($categoryDefaults[$cat])) {
-        $pick = pickUnused($categoryDefaults[$cat], $usedUrls, $title);
-        if ($pick) return $pick;
-    }
-
-    // 5. 범용 기본 이미지
-    return pickUnused($defaultImages, $usedUrls, $title) ?: $defaultImages[0];
+    // 5. 동적 플레이스홀더 (키워드/카테고리 기반 의미 있는 텍스트 + 색상)
+    return buildDynamicPlaceholder($title, $category);
 }
