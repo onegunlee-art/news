@@ -129,6 +129,8 @@ use Agents\Pipeline\AgentPipeline;
 use Agents\Agents\LearningAgent;
 use Agents\Services\OpenAIService;
 use Agents\Services\GoogleTTSService;
+use Agents\Services\SupabaseService;
+use Agents\Services\RAGService;
 
 // 응답 헬퍼
 function sendResponse($data, $status = 200) {
@@ -140,6 +142,20 @@ function sendResponse($data, $status = 200) {
 
 function sendError($message, $status = 400, $extra = []) {
     sendResponse(array_merge(['success' => false, 'error' => $message, 'analysis' => null], $extra), $status);
+}
+
+/**
+ * TTS 미디어 캐시 키 (동일 입력이면 동일 해시 → 캐시 히트)
+ */
+function buildTtsCacheKey(string $narration, ?string $ttsVoice, ?string $newsTitle, ?string $source, ?string $author): string {
+    $payload = [
+        trim($narration),
+        $ttsVoice ?? '',
+        $newsTitle ?? '',
+        $source ?? '',
+        $author ?? '',
+    ];
+    return hash('sha256', json_encode($payload, JSON_UNESCAPED_UNICODE));
 }
 
 // URL 분석 실행
@@ -182,12 +198,19 @@ function analyzeUrl(string $url, array $options = []): array {
         }
     }
 
+    $ragService = null;
+    $supabase = new SupabaseService([]);
+    if ($supabase->isConfigured()) {
+        $ragService = new RAGService(new OpenAIService([]), $supabase);
+    }
+
     $pipelineConfig = [
         'project_root' => rtrim($projectRoot, '/\\'),
         'openai' => [],
         'enable_interpret' => $options['enable_interpret'] ?? true,
         'enable_learning' => $options['enable_learning'] ?? true,
         'google_tts' => $googleTtsConfig,
+        'rag_service' => $ragService,
         'analysis' => [
             'enable_tts' => $options['enable_tts'] ?? false,
             'summary_length' => 3,
@@ -239,6 +262,23 @@ function analyzeUrl(string $url, array $options = []): array {
         $narration = $finalAnalysis['narration'] ?? null;
         if (empty($narration) && !empty($finalAnalysis['key_points'])) {
             $narration = implode(' ', $finalAnalysis['key_points']);
+        }
+
+        // RAG: 분석 결과 임베딩 저장 (AI 학습용)
+        if ($ragService !== null && $ragService->isConfigured()) {
+            $toStore = ($finalAnalysis['content_summary'] ?? '') . "\n\n" . ($narration ?? '');
+            if (!empty($finalAnalysis['key_points'])) {
+                $toStore .= "\n\n" . implode("\n", $finalAnalysis['key_points']);
+            }
+            if (trim($toStore) !== '') {
+                $ragService->storeAnalysisEmbedding(
+                    null,
+                    $url,
+                    $toStore,
+                    'analysis',
+                    ['news_title' => $finalAnalysis['news_title'] ?? '']
+                );
+            }
         }
 
         return [
@@ -544,7 +584,37 @@ try {
                     $newsTitle = isset($input['news_title']) && is_string($input['news_title']) ? $input['news_title'] : null;
                     $source = isset($input['source']) && is_string($input['source']) ? $input['source'] : null;
                     $author = isset($input['author']) && is_string($input['author']) ? $input['author'] : null;
+                    $newsIdForCache = isset($input['news_id']) && (is_int($input['news_id']) || ctype_digit((string) $input['news_id'])) ? (int) $input['news_id'] : null;
+
+                    $ttsCacheKey = buildTtsCacheKey($narration, $ttsVoice, $newsTitle, $source, $author);
+
+                    // 미디어 캐시: 동일 파라미터면 재생성 없이 기존 URL 반환 (API 비용 절감)
+                    $supabaseForMedia = new SupabaseService([]);
+                    if ($supabaseForMedia->isConfigured() && trim($narration) !== '') {
+                        $cacheQuery = 'media_type=eq.tts&generation_params->>hash=eq.' . rawurlencode($ttsCacheKey);
+                        $cached = $supabaseForMedia->select('media_cache', $cacheQuery, 1);
+                        if (!empty($cached) && is_array($cached) && !empty($cached[0]['file_url'])) {
+                            sendResponse(['success' => true, 'audio_url' => $cached[0]['file_url'], 'from_cache' => true]);
+                        }
+                    }
+
                     $result = generateTtsFromNarration($narration, $ttsVoice, $newsTitle, $source, $author);
+
+                    // 성공 시 캐시에 저장
+                    if ($result['success'] && !empty($result['audio_url']) && $supabaseForMedia->isConfigured()) {
+                        $voiceForParams = $ttsVoice ?: (require $projectRoot . 'config/google_tts.php')['default_voice'] ?? 'ko-KR-Standard-A';
+                        $supabaseForMedia->insert('media_cache', [
+                            'news_id' => $newsIdForCache,
+                            'media_type' => 'tts',
+                            'file_url' => $result['audio_url'],
+                            'generation_params' => [
+                                'hash' => $ttsCacheKey,
+                                'voice' => $voiceForParams,
+                                'title_preview' => $newsTitle ? mb_substr($newsTitle, 0, 100) : '',
+                            ],
+                        ]);
+                    }
+
                     sendResponse($result);
                     break;
 

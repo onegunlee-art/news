@@ -171,7 +171,7 @@ abstract class BaseAgent implements AgentInterface
     {
         $this->ensureInitialized();
 
-        $systemPrompt = $this->prompts['system'] ?? '';
+        $systemPrompt = $options['system_prompt'] ?? $this->prompts['system'] ?? '';
         
         return $this->openai->chat(
             systemPrompt: $systemPrompt,

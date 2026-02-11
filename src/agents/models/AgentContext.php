@@ -97,6 +97,14 @@ final class AgentContext
     }
 
     /**
+     * 메타데이터 값 반환
+     */
+    public function getMetadataValue(string $key): mixed
+    {
+        return $this->metadata[$key] ?? null;
+    }
+
+    /**
      * 메타데이터 추가
      */
     public function withMetadata(string $key, mixed $value): self

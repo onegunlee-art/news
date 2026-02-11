@@ -25,19 +25,22 @@ use Agents\Models\ArticleData;
 use Agents\Models\AnalysisResult;
 use Agents\Services\OpenAIService;
 use Agents\Services\GoogleTTSService;
+use Agents\Services\RAGService;
 
 class AnalysisAgent extends BaseAgent
 {
     private int $keyPointsCount = 4;
     private bool $enableTTS = true;
     private ?GoogleTTSService $googleTts = null;
+    private ?RAGService $ragService = null;
 
-    public function __construct(OpenAIService $openai, array $config = [], ?GoogleTTSService $googleTts = null)
+    public function __construct(OpenAIService $openai, array $config = [], ?GoogleTTSService $googleTts = null, ?RAGService $ragService = null)
     {
         parent::__construct($openai, $config);
         $this->keyPointsCount = max(4, (int) ($config['key_points_count'] ?? 4));
         $this->enableTTS = $config['enable_tts'] ?? true;
         $this->googleTts = $googleTts;
+        $this->ragService = $ragService ?? $config['rag_service'] ?? null;
     }
 
     public function getName(): string
@@ -141,8 +144,15 @@ class AnalysisAgent extends BaseAgent
     {
         $prompt = $this->buildFullAnalysisPrompt($article);
 
-        // GPT-5.2 모델 명시 호출
-        $response = $this->callGPT($prompt, ['model' => 'gpt-5.2']);
+        $options = ['model' => 'gpt-5.2'];
+        if ($this->ragService && $this->ragService->isConfigured()) {
+            $query = $article->getTitle() . ' ' . mb_substr($article->getContent(), 0, 500);
+            $ragContext = $this->ragService->retrieveRelevantContext($query, 3);
+            $basePrompt = $this->prompts['system'] ?? '당신은 "The Gist"의 수석 에디터입니다.';
+            $options['system_prompt'] = $this->ragService->buildSystemPromptWithRAG($basePrompt, $ragContext);
+        }
+
+        $response = $this->callGPT($prompt, $options);
         
         $data = $this->parseJsonResponse($response);
 

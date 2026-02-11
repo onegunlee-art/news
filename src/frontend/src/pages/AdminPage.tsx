@@ -21,6 +21,10 @@ import {
   AcademicCapIcon,
 } from '@heroicons/react/24/outline';
 import RichTextToolbar from '../components/Common/RichTextToolbar';
+import AIWorkspace from '../components/AIWorkspace/AIWorkspace';
+import type { ArticleContext } from '../components/AIWorkspace/AIWorkspace';
+import CritiqueEditor from '../components/CritiqueEditor/CritiqueEditor';
+import RAGTester from '../components/RAGTester/RAGTester';
 import { adminSettingsApi, ttsApi } from '../services/api';
 
 /** Google TTS 한국어 보이스 목록 (Admin에서 선택용) */
@@ -124,7 +128,7 @@ const sanitizeText = (text: string): string => {
 const AdminPage: React.FC = () => {
   const navigate = useNavigate();
   const { } = useAuthStore(); // 권한 체크용 (추후 활성화)
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'news' | 'ai' | 'settings'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'news' | 'ai' | 'workspace' | 'settings'>('dashboard');
   
   // AI 분석 상태
   const [aiUrl, setAiUrl] = useState('');
@@ -276,6 +280,9 @@ const AdminPage: React.FC = () => {
   const [articleImageUrl, setArticleImageUrl] = useState('');
   const [articleSummary, setArticleSummary] = useState('');
   const [showExtractedInfo, setShowExtractedInfo] = useState(false);
+  const [isRegeneratingThumbnail, setIsRegeneratingThumbnail] = useState(false);
+  const [isRegeneratingTts, setIsRegeneratingTts] = useState(false);
+  const [regeneratedTtsUrl, setRegeneratedTtsUrl] = useState<string | null>(null);
   const refArticleSummary = useRef<HTMLTextAreaElement>(null);
   const refNewsContent = useRef<HTMLTextAreaElement>(null);
   const refNewsNarration = useRef<HTMLTextAreaElement>(null);
@@ -356,6 +363,7 @@ const AdminPage: React.FC = () => {
     setNewsWhyImportant('');
     setNewsNarration('');
     setArticleUrl('');
+    setRegeneratedTtsUrl(null);
     // 메타데이터 필드 초기화
     setArticleSource('');
     setArticleAuthor('');
@@ -462,11 +470,25 @@ const AdminPage: React.FC = () => {
     </div>
   );
 
+  // Build article context for AI Workspace from current editing state
+  const workspaceArticleContext: ArticleContext | null = (articleUrl || newsTitle) ? {
+    title: newsTitle || undefined,
+    url: articleUrl || undefined,
+    summary: articleSummary || undefined,
+    narration: newsNarration || undefined,
+    analysis: aiResult ? JSON.stringify({
+      news_title: aiResult.news_title,
+      key_points: aiResult.key_points,
+      content_summary: aiResult.content_summary,
+    }) : undefined,
+  } : null;
+
   const tabs = [
     { id: 'dashboard', name: '대시보드', icon: ChartBarIcon },
     { id: 'users', name: '사용자 관리', icon: UsersIcon },
     { id: 'news', name: '뉴스 관리', icon: NewspaperIcon },
     { id: 'ai', name: 'AI 분석', icon: SparklesIcon },
+    { id: 'workspace', name: 'AI Workspace', icon: AcademicCapIcon },
     { id: 'settings', name: '설정', icon: CogIcon },
   ] as const;
 
@@ -962,6 +984,33 @@ const AdminPage: React.FC = () => {
                             >
                               자동 생성
                             </button>
+                            {editingNewsId && (
+                              <button
+                                type="button"
+                                disabled={isRegeneratingThumbnail}
+                                onClick={async () => {
+                                  setIsRegeneratingThumbnail(true);
+                                  setSaveMessage(null);
+                                  try {
+                                    const res = await fetch(`/api/admin/update-images.php?action=update_one&id=${editingNewsId}`);
+                                    const data = await res.json();
+                                    if (data.success && data.new_image) {
+                                      setArticleImageUrl(data.new_image);
+                                      setSaveMessage({ type: 'success', text: '썸네일이 재생성되었습니다.' });
+                                    } else {
+                                      setSaveMessage({ type: 'error', text: data.error || '썸네일 재생성 실패' });
+                                    }
+                                  } catch (e) {
+                                    setSaveMessage({ type: 'error', text: '썸네일 재생성 요청 실패' });
+                                  } finally {
+                                    setIsRegeneratingThumbnail(false);
+                                  }
+                                }}
+                                className="px-3 py-2 bg-cyan-700/70 hover:bg-cyan-600 text-white text-xs rounded-lg transition-colors whitespace-nowrap disabled:opacity-50"
+                              >
+                                {isRegeneratingThumbnail ? '재생성 중...' : '썸네일 재생성'}
+                              </button>
+                            )}
                           </div>
                           <p className="text-slate-500 text-xs mt-1">비워두면 제목 키워드 기반으로 썸네일이 자동 생성됩니다</p>
                         </div>
@@ -1064,7 +1113,53 @@ const AdminPage: React.FC = () => {
                       className="w-full bg-slate-900/50 border border-emerald-700/50 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition resize-none"
                     />
                     <p className="text-slate-500 text-sm mt-1">{newsNarration.length} / 10,000자</p>
-                  </div>
+                    {newsNarration.trim() && (
+                      <div className="mt-2 flex items-center gap-2">
+                        <button
+                          type="button"
+                          disabled={isRegeneratingTts}
+                          onClick={async () => {
+                            setIsRegeneratingTts(true);
+                            setRegeneratedTtsUrl(null);
+                            setSaveMessage(null);
+                            try {
+                              const res = await fetch('/api/admin/ai-analyze.php', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  action: 'generate_tts',
+                                  narration: newsNarration.trim(),
+                                  news_title: newsTitle || '제목 없음',
+                                  source: articleSource || '',
+                                  author: articleAuthor || '',
+                                }),
+                              });
+                              const data = await res.json();
+                              if (data.success && data.audio_url) {
+                                setRegeneratedTtsUrl(data.audio_url);
+                                setSaveMessage({ type: 'success', text: 'TTS가 재생성되었습니다.' });
+                              } else {
+                                setSaveMessage({ type: 'error', text: data.error || 'TTS 재생성 실패' });
+                              }
+                            } catch (e) {
+                              setSaveMessage({ type: 'error', text: 'TTS 재생성 요청 실패' });
+                            } finally {
+                              setIsRegeneratingTts(false);
+                            }
+                          }}
+                          className="px-4 py-2 bg-emerald-700/70 hover:bg-emerald-600 text-white text-sm rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
+                        >
+                          <SpeakerWaveIcon className="w-4 h-4" />
+                          {isRegeneratingTts ? 'TTS 생성 중...' : 'TTS 재생성'}
+                        </button>
+                      </div>
+                    )}
+                    {regeneratedTtsUrl && (
+                      <div className="mt-2 p-3 bg-slate-800/50 rounded-lg">
+                        <p className="text-slate-400 text-sm mb-2">생성된 TTS</p>
+                        <audio controls src={regeneratedTtsUrl} className="w-full max-w-md" />
+                      </div>
+                    )}
 
                   {/* The Gist's Critique 입력 */}
                   <div>
@@ -1162,6 +1257,7 @@ const AdminPage: React.FC = () => {
                             setNewsNarration('');
                             setArticleUrl('');
                             setEditingNewsId(null);
+                            setRegeneratedTtsUrl(null);
                             // 추출 정보 초기화
                             setArticleSource('');
                             setArticleAuthor('');
@@ -1755,6 +1851,30 @@ const AdminPage: React.FC = () => {
                     </div>
                   )}
                 </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'workspace' && (
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-2xl font-bold text-white mb-2">AI Workspace</h2>
+                <p className="text-slate-400">GPT 5.2 + RAG 기반 외교/정책 전문가 AI와 실시간 대화. 기사를 분석·개선하고, 크리틱을 학습시킵니다.</p>
+              </div>
+              <AIWorkspace articleContext={workspaceArticleContext} />
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-3">Critique Training</h3>
+                <p className="text-slate-400 text-sm mb-4">편집자 피드백을 구조화하여 저장하면 RAG에 자동 반영됩니다.</p>
+                <CritiqueEditor
+                  newsId={editingNewsId ?? undefined}
+                  articleUrl={articleUrl || undefined}
+                  articleTitle={newsTitle || undefined}
+                />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-3">RAG 검색 테스트</h3>
+                <p className="text-slate-400 text-sm mb-4">쿼리로 관련 크리틱/분석을 검색하고, 시스템 프롬프트 주입 결과를 확인합니다.</p>
+                <RAGTester />
               </div>
             </div>
           )}

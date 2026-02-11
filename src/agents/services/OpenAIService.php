@@ -70,12 +70,107 @@ class OpenAIService
     }
 
     /**
-     * 실제 API 호출 (에러 상세 로깅, 타임아웃 확장)
+     * Streaming Chat – Responses API (stream: true).
+     * $onToken(string $text) is called for every text delta.
+     * $onDone(string $fullText) is called when the stream ends.
+     */
+    public function chatStream(string $systemPrompt, string $userPrompt, callable $onToken, ?callable $onDone = null, array $options = []): void
+    {
+        if ($this->mockMode) {
+            $mock = $this->mockChatResponse($systemPrompt, $userPrompt);
+            // Simulate streaming by splitting into words
+            $words = explode(' ', $mock);
+            $full = '';
+            foreach ($words as $i => $word) {
+                $chunk = ($i > 0 ? ' ' : '') . $word;
+                $full .= $chunk;
+                $onToken($chunk);
+            }
+            if ($onDone) {
+                $onDone($full);
+            }
+            return;
+        }
+
+        $model = $options['model'] ?? $this->model;
+        $payload = [
+            'model' => $model,
+            'instructions' => $systemPrompt,
+            'input' => $userPrompt,
+            'temperature' => $options['temperature'] ?? $this->config['temperature'],
+            'max_output_tokens' => $options['max_tokens'] ?? $this->config['max_tokens'],
+            'stream' => true,
+        ];
+
+        $timeout = (int) ($options['timeout'] ?? $this->config['timeout'] ?? 120);
+        $endpoint = $this->config['endpoints']['chat'] ?? 'https://api.openai.com/v1/responses';
+
+        $fullText = '';
+
+        $ch = curl_init($endpoint);
+        curl_setopt_array($ch, [
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => json_encode($payload),
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/json',
+                'Authorization: Bearer ' . $this->apiKey,
+                'Accept: text/event-stream',
+            ],
+            CURLOPT_TIMEOUT => $timeout,
+            CURLOPT_CONNECTTIMEOUT => 15,
+            CURLOPT_RETURNTRANSFER => false,
+            // Process SSE chunks as they arrive
+            CURLOPT_WRITEFUNCTION => function ($ch, string $data) use ($onToken, &$fullText): int {
+                $lines = explode("\n", $data);
+                foreach ($lines as $line) {
+                    $line = trim($line);
+                    if ($line === '' || $line === 'data: [DONE]') {
+                        continue;
+                    }
+                    if (strpos($line, 'data: ') === 0) {
+                        $json = substr($line, 6);
+                        $parsed = json_decode($json, true);
+                        if ($parsed === null) {
+                            continue;
+                        }
+                        // Responses API streaming: type=response.output_text.delta → delta field
+                        $type = $parsed['type'] ?? '';
+                        if ($type === 'response.output_text.delta') {
+                            $delta = $parsed['delta'] ?? '';
+                            if ($delta !== '') {
+                                $fullText .= $delta;
+                                $onToken($delta);
+                            }
+                        }
+                    }
+                }
+                return strlen($data);
+            },
+        ]);
+
+        curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch);
+        curl_close($ch);
+
+        if ($curlError !== '') {
+            error_log("OpenAI Stream curl error: {$curlError}");
+        }
+        if ($httpCode !== 200 && $httpCode !== 0) {
+            error_log("OpenAI Stream HTTP error: {$httpCode}");
+        }
+
+        if ($onDone) {
+            $onDone($fullText);
+        }
+    }
+
+    /**
+     * 실제 API 호출 (에러 상세 로깅, 타임아웃 확장, 429 재시도)
      */
     private function callChatAPI(string $systemPrompt, string $userPrompt, array $options = []): string
     {
         $model = $options['model'] ?? $this->model;
-        // Responses API: instructions = system, input = user (string or array)
         $payload = [
             'model' => $model,
             'instructions' => $systemPrompt,
@@ -84,64 +179,105 @@ class OpenAIService
             'max_output_tokens' => $options['max_tokens'] ?? $this->config['max_tokens']
         ];
 
-        // options에 timeout이 있으면 사용, 없으면 config (긴 분석은 120초 권장)
         $timeout = (int)($options['timeout'] ?? $this->config['timeout'] ?? 60);
-
         $endpoint = $this->config['endpoints']['chat'] ?? 'https://api.openai.com/v1/responses';
-        $ch = curl_init($endpoint);
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => json_encode($payload),
-            CURLOPT_HTTPHEADER => [
-                'Content-Type: application/json',
-                'Authorization: Bearer ' . $this->apiKey
-            ],
-            CURLOPT_TIMEOUT => $timeout,
-            CURLOPT_CONNECTTIMEOUT => 15,
-        ]);
+        $maxRetries = (int)($options['max_retries'] ?? 3);
+        $attempt = 0;
 
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $curlError = curl_error($ch);
-        $curlErrno = curl_errno($ch);
-        curl_close($ch);
+        while (true) {
+            $attempt++;
+            $ch = curl_init($endpoint);
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_POST => true,
+                CURLOPT_POSTFIELDS => json_encode($payload),
+                CURLOPT_HTTPHEADER => [
+                    'Content-Type: application/json',
+                    'Authorization: Bearer ' . $this->apiKey
+                ],
+                CURLOPT_TIMEOUT => $timeout,
+                CURLOPT_CONNECTTIMEOUT => 15,
+            ]);
 
-        // curl 자체 에러 (타임아웃, 연결 실패 등)
-        if ($curlErrno !== 0) {
-            $errMsg = "OpenAI API curl error (errno={$curlErrno}): {$curlError}";
-            if ($curlErrno === CURLE_OPERATION_TIMEDOUT) {
-                $errMsg = "OpenAI API 요청 시간 초과 ({$timeout}초). 기사가 너무 길거나 서버가 느립니다.";
-            }
-            error_log($errMsg);
-            throw new \RuntimeException($errMsg);
-        }
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlError = curl_error($ch);
+            $curlErrno = curl_errno($ch);
+            curl_close($ch);
 
-        // HTTP 에러 - 응답 본문에서 상세 원인 추출
-        if ($httpCode !== 200) {
-            $errorDetail = '';
-            if ($response) {
-                $errData = json_decode($response, true);
-                if (isset($errData['error']['message'])) {
-                    $errorDetail = $errData['error']['message'];
-                } else {
-                    $errorDetail = mb_substr($response, 0, 500);
+            // curl 자체 에러
+            if ($curlErrno !== 0) {
+                $errMsg = "OpenAI API curl error (errno={$curlErrno}): {$curlError}";
+                if ($curlErrno === CURLE_OPERATION_TIMEDOUT) {
+                    $errMsg = "OpenAI API 요청 시간 초과 ({$timeout}초). 기사가 너무 길거나 서버가 느립니다.";
                 }
+                error_log($errMsg);
+                throw new \RuntimeException($errMsg);
             }
-            $errMsg = "OpenAI API error (HTTP {$httpCode}, model={$model}): {$errorDetail}";
-            error_log($errMsg);
-            throw new \RuntimeException($errMsg);
+
+            // 429 Rate Limit → 재시도
+            if ($httpCode === 429 && $attempt <= $maxRetries) {
+                $retryAfter = $this->parseRetryAfter($response);
+                $waitSec = $retryAfter > 0 ? min($retryAfter, 60) : min(pow(2, $attempt), 30);
+                error_log("OpenAI 429 rate limit hit (attempt {$attempt}/{$maxRetries}). Waiting {$waitSec}s...");
+                sleep((int)$waitSec);
+                continue;
+            }
+
+            // 5xx 서버 에러 → 재시도
+            if ($httpCode >= 500 && $httpCode < 600 && $attempt <= $maxRetries) {
+                $waitSec = min(pow(2, $attempt), 30);
+                error_log("OpenAI {$httpCode} server error (attempt {$attempt}/{$maxRetries}). Retrying in {$waitSec}s...");
+                sleep((int)$waitSec);
+                continue;
+            }
+
+            // HTTP 에러 (재시도 소진 후 또는 다른 에러)
+            if ($httpCode !== 200) {
+                $errorDetail = '';
+                if ($response) {
+                    $errData = json_decode($response, true);
+                    if (isset($errData['error']['message'])) {
+                        $errorDetail = $errData['error']['message'];
+                    } else {
+                        $errorDetail = mb_substr((string)$response, 0, 500);
+                    }
+                }
+                $errMsg = "OpenAI API error (HTTP {$httpCode}, model={$model}): {$errorDetail}";
+                error_log($errMsg);
+                throw new \RuntimeException($errMsg);
+            }
+
+            // 성공
+            break;
         }
 
         $data = json_decode($response, true);
-        // Responses API: output[] → message → content[] → output_text.text
         $text = $this->extractTextFromResponsesOutput($data);
         if ($text === null) {
-            error_log("OpenAI API: unexpected response structure: " . mb_substr($response, 0, 500));
+            error_log("OpenAI API: unexpected response structure: " . mb_substr((string)$response, 0, 500));
             throw new \RuntimeException("OpenAI API: 응답에 content가 없습니다.");
         }
 
         return $text;
+    }
+
+    /**
+     * Retry-After 헤더 또는 에러 body에서 대기 시간 추출
+     */
+    private function parseRetryAfter($response): float
+    {
+        if (!is_string($response) || $response === '') return 0;
+        $data = @json_decode($response, true);
+        // OpenAI 에러 응답에서 retry-after 힌트 파싱
+        $msg = $data['error']['message'] ?? '';
+        if (preg_match('/try again in ([\d.]+)s/i', $msg, $m)) {
+            return (float)$m[1];
+        }
+        if (preg_match('/retry.after[:\s]+([\d.]+)/i', $msg, $m)) {
+            return (float)$m[1];
+        }
+        return 0;
     }
 
     /**
@@ -449,24 +585,43 @@ class OpenAIService
             'input' => $text
         ];
 
-        $ch = curl_init($this->config['endpoints']['embeddings']);
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => json_encode($payload),
-            CURLOPT_HTTPHEADER => [
-                'Content-Type: application/json',
-                'Authorization: Bearer ' . $this->apiKey
-            ],
-            CURLOPT_TIMEOUT => $this->config['timeout']
-        ]);
+        $endpoint = $this->config['endpoints']['embeddings'] ?? 'https://api.openai.com/v1/embeddings';
+        $maxRetries = 3;
+        $attempt = 0;
 
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
+        while (true) {
+            $attempt++;
+            $ch = curl_init($endpoint);
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_POST => true,
+                CURLOPT_POSTFIELDS => json_encode($payload),
+                CURLOPT_HTTPHEADER => [
+                    'Content-Type: application/json',
+                    'Authorization: Bearer ' . $this->apiKey
+                ],
+                CURLOPT_TIMEOUT => $this->config['timeout']
+            ]);
 
-        if ($httpCode !== 200) {
-            throw new \RuntimeException("OpenAI Embeddings API error: HTTP {$httpCode}");
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            // 429/5xx → 재시도
+            if (($httpCode === 429 || $httpCode >= 500) && $attempt <= $maxRetries) {
+                $waitSec = ($httpCode === 429)
+                    ? max($this->parseRetryAfter($response), min(pow(2, $attempt), 30))
+                    : min(pow(2, $attempt), 30);
+                error_log("OpenAI Embeddings {$httpCode} (attempt {$attempt}/{$maxRetries}). Waiting {$waitSec}s...");
+                sleep((int)$waitSec);
+                continue;
+            }
+
+            if ($httpCode !== 200) {
+                throw new \RuntimeException("OpenAI Embeddings API error: HTTP {$httpCode}");
+            }
+
+            break;
         }
 
         $data = json_decode($response, true);
