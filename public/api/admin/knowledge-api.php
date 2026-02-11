@@ -92,10 +92,22 @@ function sendError(string $msg, int $status = 400): void {
 
 // ── Init services ───────────────────────────────────────
 $supabase = new SupabaseService([]);
-if (!$supabase->isConfigured()) {
-    sendError('Supabase not configured', 500);
-}
+$supabaseOk = $supabase->isConfigured();
 $openai = new OpenAIService([]);
+
+// Supabase 미설정 시: list는 빈 배열, add/delete는 친절한 에러
+function requireSupabaseKn(): void {
+    global $supabaseOk;
+    if (!$supabaseOk) {
+        ob_clean();
+        http_response_code(200);
+        echo json_encode([
+            'success' => false,
+            'error' => 'Supabase가 설정되지 않았습니다. 이론 라이브러리를 사용하려면 SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY를 env에 추가하세요.',
+        ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        exit;
+    }
+}
 
 // ── Route ───────────────────────────────────────────────
 $method = $_SERVER['REQUEST_METHOD'];
@@ -105,6 +117,9 @@ if ($method === 'GET') {
     $action = $_GET['action'] ?? '';
 
     if ($action === 'list') {
+        if (!$supabaseOk) {
+            sendResponse(['success' => true, 'items' => []]);
+        }
         $category = $_GET['category'] ?? null;
 
         $query = 'order=created_at.desc';
@@ -132,6 +147,7 @@ if ($method === 'POST') {
 
     // ── add_framework ───────────────────────────────────
     if ($action === 'add_framework') {
+        requireSupabaseKn();
         $category      = trim($input['category'] ?? '');
         $frameworkName  = trim($input['framework_name'] ?? '');
         $title         = trim($input['title'] ?? '');
@@ -194,6 +210,7 @@ if ($method === 'POST') {
 
     // ── delete ──────────────────────────────────────────
     if ($action === 'delete') {
+        requireSupabaseKn();
         $id = $input['id'] ?? '';
         if ($id === '') sendError('id required');
 

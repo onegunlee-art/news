@@ -96,20 +96,41 @@ function sendError(string $msg, int $status = 400): void {
 
 // ── Init services ───────────────────────────────────────
 $supabase = new SupabaseService([]);
-if (!$supabase->isConfigured()) {
-    sendError('Supabase not configured', 500);
-}
+$supabaseOk = $supabase->isConfigured();
 $openai = new OpenAIService([]);
 $rag    = new RAGService($openai, $supabase);
 
+// Supabase 미설정 시: get_history는 빈 배열 반환, POST는 친절한 에러 (배포 시 env에 SUPABASE_* 없을 수 있음)
+function requireSupabase(): void {
+    global $supabaseOk;
+    if (!$supabaseOk) {
+        ob_clean();
+        http_response_code(200);
+        echo json_encode([
+            'success' => false,
+            'error' => 'Supabase가 설정되지 않았습니다. 피드백/재분석 기능을 사용하려면 SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY를 env에 추가하세요.',
+        ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        exit;
+    }
+}
+
 // ── Route ───────────────────────────────────────────────
 $method = $_SERVER['REQUEST_METHOD'];
+$action = $method === 'GET' ? ($_GET['action'] ?? '') : '';
+if ($method === 'POST') {
+    $rawInput = file_get_contents('php://input');
+    $input = json_decode($rawInput, true);
+    if (!$input) sendError('Invalid JSON');
+    $action = $input['action'] ?? '';
+}
 
 // ── GET: get_history ────────────────────────────────────
 if ($method === 'GET') {
-    $action = $_GET['action'] ?? '';
 
     if ($action === 'get_history') {
+        if (!$supabaseOk) {
+            sendResponse(['success' => true, 'history' => []]);
+        }
         $articleId = $_GET['article_id'] ?? null;
         $articleUrl = $_GET['article_url'] ?? null;
 
@@ -133,14 +154,10 @@ if ($method === 'GET') {
 
 // ── POST actions ────────────────────────────────────────
 if ($method === 'POST') {
-    $rawInput = file_get_contents('php://input');
-    $input = json_decode($rawInput, true);
-    if (!$input) sendError('Invalid JSON');
-
-    $action = $input['action'] ?? '';
 
     // ── save_feedback ───────────────────────────────────
     if ($action === 'save_feedback') {
+        requireSupabase();
         $articleId  = $input['article_id'] ?? null;
         $articleUrl = $input['article_url'] ?? null;
         $adminComment = trim($input['admin_comment'] ?? '');
@@ -191,6 +208,7 @@ if ($method === 'POST') {
 
     // ── request_revision ────────────────────────────────
     if ($action === 'request_revision') {
+        requireSupabase();
         $feedbackId   = $input['feedback_id'] ?? '';
         $articleId    = $input['article_id'] ?? null;
         $articleUrl   = $input['article_url'] ?? null;
@@ -269,6 +287,7 @@ if ($method === 'POST') {
 
     // ── approve ─────────────────────────────────────────
     if ($action === 'approve') {
+        requireSupabase();
         $feedbackId   = $input['feedback_id'] ?? '';
         $articleId    = $input['article_id'] ?? null;
         $articleUrl   = $input['article_url'] ?? null;

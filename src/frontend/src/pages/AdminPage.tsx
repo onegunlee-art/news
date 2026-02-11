@@ -171,11 +171,13 @@ const AdminPage: React.FC = () => {
   const navigate = useNavigate();
   const { } = useAuthStore(); // 권한 체크용 (추후 활성화)
   const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'news' | 'ai' | 'workspace' | 'knowledge' | 'settings'>('dashboard');
-  
-  // AI 분석 상태 (feedback useEffect에서 사용하므로 먼저 선언)
-  const [aiUrl, setAiUrl] = useState('');
+
+  // feedback useEffect deps에서 참조되므로 컴포넌트 최상단에 선언
   const [articleUrl, setArticleUrl] = useState('');
   const [editingNewsId, setEditingNewsId] = useState<number | null>(null);
+
+  // AI 분석 상태
+  const [aiUrl, setAiUrl] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [aiResult, setAiResult] = useState<AIAnalysisResult | null>(null);
   const [aiError, setAiError] = useState<string | null>(null);
