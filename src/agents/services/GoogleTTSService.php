@@ -79,26 +79,142 @@ class GoogleTTSService
     }
 
     /**
+     * SSML로 TTS 생성 (pause 등 제어 가능). 단일 요청으로 합성.
+     * Google 제한 5000바이트 초과 시 null 반환.
+     */
+    public function textToSpeechWithSsml(string $ssml, array $options = []): ?string
+    {
+        $ssml = trim($ssml);
+        if ($ssml === '' || strlen($ssml) > self::MAX_INPUT_BYTES) {
+            return null;
+        }
+
+        if (!$this->isConfigured()) {
+            return null;
+        }
+
+        try {
+            set_time_limit(300);
+            $voice = $options['voice'] ?? $this->defaultVoice;
+            $pcmData = $this->synthesizeSsmlLinear16($ssml, $voice);
+            $wavData = $this->createWavFile($pcmData);
+            return $this->saveFile($wavData, 'wav');
+        } catch (\Throwable $e) {
+            error_log('Google TTS SSML error: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * SSML 한 번에 LINEAR16(PCM)으로 합성
+     */
+    private function synthesizeSsmlLinear16(string $ssml, string $voiceName): string
+    {
+        $payload = [
+            'input' => ['ssml' => $ssml],
+            'voice' => [
+                'languageCode' => $this->languageCode,
+                'name' => $voiceName,
+            ],
+            'audioConfig' => [
+                'audioEncoding' => 'LINEAR16',
+                'sampleRateHertz' => self::SAMPLE_RATE,
+            ],
+        ];
+
+        $url = self::SYNTHESIZE_URL . '?key=' . urlencode($this->apiKey);
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => json_encode($payload),
+            CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+            CURLOPT_TIMEOUT => $this->timeout,
+        ]);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($httpCode !== 200) {
+            throw new \RuntimeException('Google TTS SSML API error: HTTP ' . $httpCode . ' ' . substr((string) $response, 0, 300));
+        }
+
+        $data = json_decode($response, true);
+        $audioContent = $data['audioContent'] ?? null;
+        if ($audioContent === null) {
+            throw new \RuntimeException('Google TTS: missing audioContent');
+        }
+
+        $decoded = base64_decode($audioContent, true);
+        if ($decoded === false) {
+            throw new \RuntimeException('Google TTS: invalid base64');
+        }
+
+        if (strlen($decoded) > 44 && substr($decoded, 0, 4) === 'RIFF') {
+            $dataPos = strpos($decoded, 'data');
+            if ($dataPos !== false) {
+                $decoded = substr($decoded, $dataPos + 8);
+            }
+        }
+
+        return $decoded;
+    }
+
+    /**
      * 텍스트를 청크로 분할 → 각 청크를 LINEAR16(PCM)으로 합성 → 연결 → WAV 파일 저장
      */
     private function generateAudio(string $text, array $options): string
     {
+        $pcmData = $this->generateAudioPcm($text, $options);
+        return $this->saveFile($this->createWavFile($pcmData), 'wav');
+    }
+
+    /**
+     * 텍스트 → PCM raw bytes (청크 합성 후 연결). 구조화 TTS에서 내레이션 부분 합치기용.
+     */
+    private function generateAudioPcm(string $text, array $options): string
+    {
         set_time_limit(300);
         $voice = $options['voice'] ?? $this->defaultVoice;
         $chunks = $this->splitText($text);
-
-        error_log("[GoogleTTS] voice={$voice}, chunks=" . count($chunks) . ", totalBytes=" . strlen($text));
-
         $pcmData = '';
         foreach ($chunks as $i => $chunk) {
-            error_log("[GoogleTTS] Synthesizing chunk " . ($i + 1) . "/" . count($chunks) . " (" . strlen($chunk) . " bytes)");
             $pcmData .= $this->synthesizeChunkLinear16($chunk, $voice);
         }
+        return $pcmData;
+    }
 
-        // PCM 데이터에 WAV 헤더를 붙여서 완전한 WAV 파일 생성
-        $wavData = $this->createWavFile($pcmData);
+    /**
+     * 제목 → 0.5초 휴식 → 출처·작성자 → 0.5초 휴식 → 내레이션 순으로 한 WAV 생성 (SSML pause 사용)
+     */
+    public function textToSpeechStructured(string $title, string $meta, string $narration, array $options = []): ?string
+    {
+        if (!$this->isConfigured()) {
+            return null;
+        }
+        $voice = $options['voice'] ?? $this->defaultVoice;
+        $escape = function (string $s): string {
+            return htmlspecialchars(trim($s), ENT_XML1 | ENT_QUOTES, 'UTF-8');
+        };
+        $title = $escape($title);
+        $meta = $escape($meta);
+        $narration = trim($narration);
 
-        return $this->saveFile($wavData, 'wav');
+        $ssmlIntro = '<speak>' . $title . '<break time="0.5s"/>' . $meta . '<break time="0.5s"/></speak>';
+        try {
+            set_time_limit(300);
+            $pcm1 = $this->synthesizeSsmlLinear16($ssmlIntro, $voice);
+            $pcm2 = $narration !== '' ? $this->generateAudioPcm($narration, ['voice' => $voice]) : '';
+            $pcm = $pcm1 . $pcm2;
+            if ($pcm === '') {
+                return null;
+            }
+            return $this->saveFile($this->createWavFile($pcm), 'wav');
+        } catch (\Throwable $e) {
+            error_log('Google TTS structured error: ' . $e->getMessage());
+            return null;
+        }
     }
 
     /**

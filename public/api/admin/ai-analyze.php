@@ -304,11 +304,12 @@ function analyzeUrl(string $url, array $options = []): array {
 }
 
 /**
- * narration 텍스트만으로 TTS 생성 (2단계: 분석 완료 후 호출)
- * 입력: narration (필수), tts_voice (선택)
+ * TTS 생성 (2단계: 분석 완료 후 호출)
+ * 순서: 제목 → 0.5초 휴식 → 출처·작성자 → 0.5초 휴식 → 내레이션
+ * 입력: narration (필수), tts_voice (선택), news_title, source, author (선택, 있으면 구조화 재생)
  * 출력: { success, audio_url } 또는 { success: false, error }
  */
-function generateTtsFromNarration(string $narration, ?string $ttsVoice = null): array {
+function generateTtsFromNarration(string $narration, ?string $ttsVoice = null, ?string $newsTitle = null, ?string $source = null, ?string $author = null): array {
     global $projectRoot;
 
     $narration = trim($narration);
@@ -337,11 +338,27 @@ function generateTtsFromNarration(string $narration, ?string $ttsVoice = null): 
         }
     }
 
+    $title = $newsTitle !== null && trim($newsTitle) !== '' ? trim($newsTitle) : '제목 없음';
+    $metaParts = [];
+    if ($source !== null && trim($source) !== '') {
+        $metaParts[] = '출처 ' . trim($source);
+    }
+    if ($author !== null && trim($author) !== '') {
+        $metaParts[] = '작성자 ' . trim($author);
+    }
+    $meta = implode('. ', $metaParts);
+    if ($meta === '') {
+        $meta = '출처 없음';
+    }
+
     $audioUrl = null;
     $googleTtsKey = $_ENV['GOOGLE_TTS_API_KEY'] ?? getenv('GOOGLE_TTS_API_KEY');
     if (!empty($googleTtsConfig) && is_string($googleTtsKey) && $googleTtsKey !== '') {
         $googleTts = new GoogleTTSService($googleTtsConfig);
-        $audioUrl = $googleTts->textToSpeech($narration, ['voice' => $voice]);
+        $audioUrl = $googleTts->textToSpeechStructured($title, $meta, $narration, ['voice' => $voice]);
+        if ($audioUrl === null || $audioUrl === '') {
+            $audioUrl = $googleTts->textToSpeech($narration, ['voice' => $voice]);
+        }
     }
     if ($audioUrl === null || $audioUrl === '') {
         $openai = new OpenAIService([]);
@@ -507,7 +524,10 @@ try {
                 case 'generate_tts':
                     $narration = $input['narration'] ?? '';
                     $ttsVoice = isset($input['tts_voice']) && is_string($input['tts_voice']) ? $input['tts_voice'] : null;
-                    $result = generateTtsFromNarration($narration, $ttsVoice);
+                    $newsTitle = isset($input['news_title']) && is_string($input['news_title']) ? $input['news_title'] : null;
+                    $source = isset($input['source']) && is_string($input['source']) ? $input['source'] : null;
+                    $author = isset($input['author']) && is_string($input['author']) ? $input['author'] : null;
+                    $result = generateTtsFromNarration($narration, $ttsVoice, $newsTitle, $source, $author);
                     sendResponse($result);
                     break;
 

@@ -728,11 +728,17 @@ const AdminPage: React.FC = () => {
                           const controller1 = new AbortController();
                           let timeout1: ReturnType<typeof setTimeout> | null = setTimeout(() => controller1.abort(), 120000);
                           try {
-                            // 1단계: 분석만 (TTS 없음)
+                            // 1단계: 분석만 (TTS 없음). Interpret/Learning 끄고 Validation+Thumbnail+Analysis만 실행해 실패·명확화 방지
                             const response = await fetch('/api/admin/ai-analyze.php', {
                               method: 'POST',
                               headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ action: 'analyze', url: articleUrl.trim(), enable_tts: false }),
+                              body: JSON.stringify({
+                                action: 'analyze',
+                                url: articleUrl.trim(),
+                                enable_tts: false,
+                                enable_interpret: false,
+                                enable_learning: false
+                              }),
                               signal: controller1.signal
                             });
                             if (timeout1) clearTimeout(timeout1);
@@ -760,9 +766,13 @@ const AdminPage: React.FC = () => {
                             }
 
                             if (!data.success || !data.analysis) {
-                              const errDetail = data.error || 'GPT 분석 실패';
-                              const phaseStep = data.failed_step ? ` | 실패 단계: ${data.failed_step}` : '';
-                              setSaveMessage({ type: 'error', text: errDetail + phaseStep });
+                              let errDetail = data.error || 'GPT 분석 실패';
+                              if (data.needs_clarification && data.clarification_data?.clarification_question) {
+                                errDetail = '분석 방향 명확화 필요: ' + (data.clarification_data.clarification_question as string);
+                              } else if (data.failed_step) {
+                                errDetail = (data.error || errDetail) + ` (실패 단계: ${data.failed_step})`;
+                              }
+                              setSaveMessage({ type: 'error', text: errDetail });
                               setIsAnalyzing(false);
                               return;
                             }
@@ -804,7 +814,13 @@ const AdminPage: React.FC = () => {
                               const ttsRes = await fetch('/api/admin/ai-analyze.php', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ action: 'generate_tts', narration: narrationForTts }),
+                                body: JSON.stringify({
+                                  action: 'generate_tts',
+                                  narration: narrationForTts,
+                                  news_title: a.news_title || data.article?.title || '',
+                                  source: data.article?.source || '',
+                                  author: data.article?.author || ''
+                                }),
                                 signal: controller2.signal
                               });
                               clearTimeout(timeout2);
@@ -1389,11 +1405,20 @@ const AdminPage: React.FC = () => {
                           const response = await fetch('/api/admin/ai-analyze.php', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ action: 'analyze', url: aiUrl.trim(), enable_tts: false })
+                            body: JSON.stringify({
+                              action: 'analyze',
+                              url: aiUrl.trim(),
+                              enable_tts: false,
+                              enable_interpret: false,
+                              enable_learning: false
+                            })
                           });
                           const data = await response.json();
                           if (!data.success || !data.analysis) {
-                            setAiError(data.error || '분석 실패');
+                            const err = data.needs_clarification && data.clarification_data?.clarification_question
+                              ? '명확화 필요: ' + (data.clarification_data.clarification_question as string)
+                              : (data.error || '분석 실패') + (data.failed_step ? ` (${data.failed_step})` : '');
+                            setAiError(err);
                             setIsAnalyzing(false);
                             return;
                           }
@@ -1415,7 +1440,13 @@ const AdminPage: React.FC = () => {
                             const ttsRes = await fetch('/api/admin/ai-analyze.php', {
                               method: 'POST',
                               headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ action: 'generate_tts', narration: narrationForTts })
+                              body: JSON.stringify({
+                                action: 'generate_tts',
+                                narration: narrationForTts,
+                                news_title: data.analysis?.news_title || data.article?.title || '',
+                                source: data.article?.source || '',
+                                author: data.article?.author || ''
+                              })
                             });
                             const ttsData = ttsRes.ok ? await ttsRes.json().catch(() => ({})) : {};
                             const audioUrl = ttsData.success && ttsData.audio_url ? ttsData.audio_url : null;
