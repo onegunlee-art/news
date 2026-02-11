@@ -38,7 +38,9 @@ class GoogleTTSService
     private string $lastError = '';
 
     /** API 호출 재시도 횟수 (429/503 등 일시적 오류 대응) */
-    private const MAX_RETRIES = 2;
+    private const MAX_RETRIES = 3;
+    /** 청크 간 호출 간격(초) - Rate limit 완화 */
+    private const CHUNK_DELAY_SEC = 0.5;
 
     public function __construct(array $config = [])
     {
@@ -179,6 +181,9 @@ class GoogleTTSService
         $chunks = $this->splitText($text);
         $pcmData = '';
         foreach ($chunks as $i => $chunk) {
+            if ($i > 0 && self::CHUNK_DELAY_SEC > 0) {
+                usleep((int) (self::CHUNK_DELAY_SEC * 1000000));
+            }
             $pcmData .= $this->synthesizeChunkLinear16($chunk, $voice);
         }
         return $pcmData;
@@ -186,6 +191,7 @@ class GoogleTTSService
 
     /**
      * 제목 → 2초 휴식 → 편집 문구(날짜·출처) → 2초 휴식 → 내레이션(발췌) 순으로 한 WAV 생성 (SSML pause 사용)
+     * Google TTS SSML 제한 5000바이트→4800바이트 이하로 클램프. 초과 시 meta 축약.
      */
     public function textToSpeechStructured(string $title, string $meta, string $narration, array $options = []): ?string
     {
@@ -202,10 +208,25 @@ class GoogleTTSService
         $narration = trim($narration);
 
         $ssmlIntro = '<speak>' . $title . '<break time="2s"/>' . $meta . '<break time="2s"/></speak>';
+        if (strlen($ssmlIntro) > self::MAX_INPUT_BYTES) {
+            $fixedLen = strlen('<speak>') + strlen('</speak>') + strlen('<break time="2s"/>') * 2 + strlen($title);
+            $maxMetaBytes = self::MAX_INPUT_BYTES - $fixedLen - 24;
+            if ($maxMetaBytes > 20) {
+                $metaCut = mb_strcut($meta, 0, $maxMetaBytes - 3, 'UTF-8');
+                $meta = (strlen($metaCut) < strlen($meta)) ? $metaCut . '…' : $metaCut;
+                $ssmlIntro = '<speak>' . $title . '<break time="2s"/>' . $meta . '<break time="2s"/></speak>';
+            }
+            if (strlen($ssmlIntro) > self::MAX_INPUT_BYTES) {
+                $ssmlIntro = '<speak>' . $title . '<break time="2s"/></speak>';
+            }
+        }
         try {
             $this->lastError = '';
             set_time_limit(300);
             $pcm1 = $this->synthesizeSsmlLinear16($ssmlIntro, $voice);
+            if ($narration !== '' && self::CHUNK_DELAY_SEC > 0) {
+                usleep((int) (self::CHUNK_DELAY_SEC * 1000000));
+            }
             $pcm2 = $narration !== '' ? $this->generateAudioPcm($narration, ['voice' => $voice]) : '';
             $pcm = $pcm1 . $pcm2;
             if ($pcm === '') {
@@ -259,8 +280,8 @@ class GoogleTTSService
             $lastException = new \RuntimeException($msg);
 
             if (in_array($httpCode, [429, 500, 502, 503], true) && $attempt <= self::MAX_RETRIES) {
-                $waitSec = $attempt * 2;
-                error_log("Google TTS HTTP {$httpCode}, retry {$attempt}/" . self::MAX_RETRIES . " in {$waitSec}s");
+                $waitSec = $attempt * 3;
+                error_log("Google TTS HTTP {$httpCode}, retry {$attempt}/" . self::MAX_RETRIES . " in {$waitSec}s: " . ($lastException->getMessage()));
                 sleep($waitSec);
             } else {
                 throw $lastException;
