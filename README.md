@@ -6,7 +6,7 @@ Gisters, Becoming Leaders - 키워드 추출, 감정 분석, 맥락 요약
 
 ## 🚀 주요 기능
 
-- **뉴스 검색**: 네이버 뉴스 API 연동
+- **뉴스 검색**: NYT 뉴스 API 연동
 - **키워드 추출**: 형태소 분석 기반 핵심 키워드 추출
 - **감정 분석**: 긍정/부정/중립 감정 분류
 - **맥락 요약**: AI 기반 텍스트 요약
@@ -98,11 +98,6 @@ mysql -u ailand -p ailand < database/schema.sql
 2. 애플리케이션 생성
 3. REST API 키 발급
 4. Redirect URI 등록: `http://your-domain.com/api/auth/kakao/callback`
-
-### 네이버 뉴스 API
-1. [Naver Developers](https://developers.naver.com) 접속
-2. 애플리케이션 등록 (검색 API 선택)
-3. Client ID/Secret 발급
 
 ## 📡 API 엔드포인트
 

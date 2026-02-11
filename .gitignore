@@ -14,7 +14,6 @@ build/
 # Config files (실제 값 포함)
 config/database.php
 config/kakao.php
-config/naver.php
 # 예제 파일은 커밋됨: config/*.example.php
 
 # IDE

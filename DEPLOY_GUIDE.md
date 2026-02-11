@@ -43,7 +43,6 @@
 │   ├── app.php
 │   ├── database.php
 │   ├── kakao.php
-│   ├── naver.php
 │   └── routes.php
 └── storage/
     ├── cache/
@@ -130,12 +129,6 @@ GitHub에서 **main 브랜치에 push**하면 자동으로 빌드 후 FTP로 배
 ```php
 'client_id' => 'YOUR_KAKAO_REST_API_KEY',
 'client_secret' => 'YOUR_KAKAO_CLIENT_SECRET',
-```
-
-**네이버 API** (`config/naver.php`):
-```php
-'client_id' => 'YOUR_NAVER_CLIENT_ID',
-'client_secret' => 'YOUR_NAVER_CLIENT_SECRET',
 ```
 
 ---

@@ -1160,6 +1160,7 @@ const AdminPage: React.FC = () => {
                         <audio controls src={regeneratedTtsUrl} className="w-full max-w-md" />
                       </div>
                     )}
+                  </div>
 
                   {/* The Gist's Critique 입력 */}
                   <div>

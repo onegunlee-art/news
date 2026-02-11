@@ -81,7 +81,7 @@ Set-Location $ProjectRoot
 Write-Host ""
 Write-Host "[TEST] 설정 파일 확인..." -ForegroundColor Yellow
 
-$configFiles = @("config\app.php", "config\database.php", "config\kakao.php", "config\naver.php", "config\routes.php")
+$configFiles = @("config\app.php", "config\database.php", "config\kakao.php", "config\routes.php")
 $missingConfig = 0
 
 foreach ($file in $configFiles) {

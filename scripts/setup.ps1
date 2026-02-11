@@ -105,14 +105,6 @@ if (-not (Test-Path "config\kakao.php")) {
     Write-Host "  - config/kakao.php exists" -ForegroundColor Gray
 }
 
-# naver.php
-if (-not (Test-Path "config\naver.php")) {
-    Copy-Item "config\naver.example.php" "config\naver.php"
-    Write-Host "  OK config/naver.php created" -ForegroundColor Green
-} else {
-    Write-Host "  - config/naver.php exists" -ForegroundColor Gray
-}
-
 # Create storage directories
 if (-not (Test-Path "storage\cache")) {
     New-Item -ItemType Directory -Path "storage\cache" -Force | Out-Null
