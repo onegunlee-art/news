@@ -308,6 +308,7 @@ function analyzeUrl(string $url, array $options = []): array {
  * 순서: 제목 → 0.5초 휴식 → 출처·작성자 → 0.5초 휴식 → 내레이션
  * 입력: narration (필수), tts_voice (선택), news_title, source, author (선택, 있으면 구조화 재생)
  * 출력: { success, audio_url } 또는 { success: false, error }
+ * 긴 기사(예: Foreign Affairs)는 내레이션이 매우 길어 TTS 시 메모리/타임아웃/API 제한에 걸릴 수 있으므로 바이트 상한 적용.
  */
 function generateTtsFromNarration(string $narration, ?string $ttsVoice = null, ?string $newsTitle = null, ?string $source = null, ?string $author = null): array {
     global $projectRoot;
@@ -315,6 +316,12 @@ function generateTtsFromNarration(string $narration, ?string $ttsVoice = null, ?
     $narration = trim($narration);
     if ($narration === '') {
         return ['success' => false, 'error' => 'narration is required'];
+    }
+
+    // 긴 내레이션 시 메모리·타임아웃·Google 청크 수 제한 회피 (UTF-8 경계로 자르기)
+    $maxNarrationBytes = 24000; // 약 5청크(4800바이트) 분량 → 대략 2~3분 분량
+    if (strlen($narration) > $maxNarrationBytes) {
+        $narration = mb_strcut($narration, 0, $maxNarrationBytes, 'UTF-8');
     }
 
     $googleTtsConfig = file_exists($projectRoot . 'config/google_tts.php')
