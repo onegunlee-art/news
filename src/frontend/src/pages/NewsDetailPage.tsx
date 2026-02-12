@@ -97,6 +97,16 @@ export default function NewsDetailPage() {
     }
   }, [id])
 
+  // 기사 상세 진입 시 항상 맨 위로 스크롤 (진입 직후 + 로딩 완료 후)
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [id])
+  useEffect(() => {
+    if (!isLoading) {
+      window.scrollTo(0, 0)
+    }
+  }, [isLoading])
+
   const fetchNewsDetail = async (newsId: number) => {
     setIsLoading(true)
     setError(null)
