@@ -32,6 +32,33 @@ import CritiqueEditor from '../components/CritiqueEditor/CritiqueEditor';
 import RAGTester from '../components/RAGTester/RAGTester';
 import { adminSettingsApi, adminTtsApi, ttsApi } from '../services/api';
 
+/** Listen과 동일한 구조로 TTS params 구성 (캐시 공유) */
+function buildTtsParamsForListen(params: {
+  title: string
+  narration: string
+  whyImportant?: string
+  publishedAt?: string | null
+  updatedAt?: string | null
+  createdAt?: string | null
+  source?: string | null
+  originalSource?: string | null
+}): { title: string; meta: string; narration: string; critique_part: string } {
+  const title = (params.title || '제목 없음').trim()
+  const dateStr = params.publishedAt
+    ? `${new Date(params.publishedAt).getFullYear()}년 ${new Date(params.publishedAt).getMonth() + 1}월 ${new Date(params.publishedAt).getDate()}일`
+    : (params.updatedAt || params.createdAt)
+      ? `${new Date(params.updatedAt || params.createdAt!).getFullYear()}년 ${new Date(params.updatedAt || params.createdAt!).getMonth() + 1}월 ${new Date(params.updatedAt || params.createdAt!).getDate()}일`
+      : ''
+  const rawSource = (params.originalSource && String(params.originalSource).trim()) || (params.source === 'Admin' ? 'The Gist' : params.source || 'The Gist')
+  const sourceDisplay = formatSourceDisplayName(rawSource) || 'The Gist'
+  const meta = dateStr
+    ? `${dateStr}자 ${sourceDisplay} 저널의 "${title}"을 AI 번역, 요약하고 The Gist에서 일부 편집한 글입니다.`
+    : `${sourceDisplay} 저널의 "${title}"을 AI 번역, 요약하고 The Gist에서 일부 편집한 글입니다.`
+  const narration = (params.narration || '').trim()
+  const critiquePart = params.whyImportant ? `The Gist's Critique. ${params.whyImportant.trim()}` : ''
+  return { title, meta, narration, critique_part: critiquePart }
+}
+
 /** Google TTS 한국어 보이스 목록 (Admin에서 선택용) */
 const GOOGLE_TTS_VOICES = [
   { value: 'ko-KR-Standard-A', label: 'Standard A (여성)' },
@@ -1155,19 +1182,20 @@ const AdminPage: React.FC = () => {
                               return;
                             }
 
-                            // 2단계: TTS 생성
+                            // 2단계: TTS 생성 (Listen 캐시와 동일 구조 → 첫 Listen 시 즉시 재생)
                             setSaveMessage({ type: 'info', text: '분석 완료. TTS 생성 중...' });
+                            const ttsParams = buildTtsParamsForListen({
+                              title: (a.news_title as string) || (article?.title as string) || '',
+                              narration: narrationForTts,
+                              whyImportant: (a as { critical_analysis?: { why_important?: string }; why_important?: string })?.critical_analysis?.why_important ?? (a as { why_important?: string })?.why_important ?? '',
+                              publishedAt: article?.published_at,
+                              source: article?.source,
+                              originalSource: (article as { original_source?: string })?.original_source,
+                            })
                             const ttsRes = await fetch('/api/admin/ai-analyze.php', {
                               method: 'POST',
                               headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({
-                                action: 'generate_tts',
-                                narration: narrationForTts,
-                                news_title: (a.news_title as string) || (article?.title as string) || '',
-                                source: article?.source || '',
-                                author: article?.author || '',
-                                published_at: article?.published_at || null
-                              }),
+                              body: JSON.stringify({ action: 'generate_tts', ...ttsParams }),
                             });
                             const ttsData = ttsRes.ok ? await ttsRes.json().catch(() => ({})) : {};
                             const audioUrl = ttsData.success && ttsData.audio_url ? ttsData.audio_url : null;
@@ -1489,17 +1517,18 @@ const AdminPage: React.FC = () => {
                             setRegeneratedTtsUrl(null);
                             setSaveMessage(null);
                             try {
+                              const ttsParams = buildTtsParamsForListen({
+                                title: newsTitle || '제목 없음',
+                                narration: newsNarration.trim(),
+                                whyImportant: newsWhyImportant,
+                                publishedAt: articlePublishedAt,
+                                source: articleSource || 'Admin',
+                                originalSource: (articleSource !== 'Admin' ? articleSource : null) || undefined,
+                              })
                               const res = await fetch('/api/admin/ai-analyze.php', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
-body: JSON.stringify({
-                                action: 'generate_tts',
-                                narration: newsNarration.trim(),
-                                news_title: newsTitle || '제목 없음',
-                                source: articleSource || '',
-                                author: articleAuthor || '',
-                                published_at: articlePublishedAt || null
-                              }),
+                                body: JSON.stringify({ action: 'generate_tts', ...ttsParams }),
                               });
                               const data = await res.json();
                               if (data.success && data.audio_url) {
@@ -1612,10 +1641,27 @@ body: JSON.stringify({
                           }
                           
                           if (data.success) {
+                            const savedId = data.data?.id ?? data.new_id ?? data.id ?? editingNewsId
                             setSaveMessage({ 
                               type: 'success', 
                               text: isEditing ? '뉴스가 수정되었습니다!' : '뉴스가 저장되었습니다!' 
                             });
+                            // Listen 캐시 선반입 (저장 직후 TTS 생성 → 첫 Listen 시 즉시 재생)
+                            const ttsParams = buildTtsParamsForListen({
+                              title: newsTitle,
+                              narration: newsNarration.trim(),
+                              whyImportant: newsWhyImportant.trim() || undefined,
+                              publishedAt: articlePublishedAt.trim() || undefined,
+                              source: articleSource.trim() || 'Admin',
+                              originalSource: articleSource !== 'Admin' ? articleSource : undefined,
+                            })
+                            if (ttsParams.narration || ttsParams.critique_part) {
+                              fetch('/api/admin/ai-analyze.php', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ action: 'generate_tts', ...ttsParams, news_id: savedId ?? undefined }),
+                              }).catch(() => { /* ignore */ })
+                            }
                             // 목록 새로고침
                             await loadNewsList();
                             // 폼 초기화
@@ -1902,17 +1948,18 @@ body: JSON.stringify({
                             return;
                           }
                           try {
+                            const ttsParams = buildTtsParamsForListen({
+                              title: data.analysis?.news_title || data.article?.title || '',
+                              narration: narrationForTts,
+                              whyImportant: (data.analysis as { critical_analysis?: { why_important?: string }; why_important?: string })?.critical_analysis?.why_important ?? (data.analysis as { why_important?: string })?.why_important ?? '',
+                              publishedAt: data.article?.published_at,
+                              source: data.article?.source,
+                              originalSource: (data.article as { original_source?: string })?.original_source,
+                            })
                             const ttsRes = await fetch('/api/admin/ai-analyze.php', {
                               method: 'POST',
                               headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({
-                                action: 'generate_tts',
-                                narration: narrationForTts,
-                                news_title: data.analysis?.news_title || data.article?.title || '',
-                                source: data.article?.source || '',
-                                author: data.article?.author || '',
-                                published_at: data.article?.published_at || null
-                              })
+                              body: JSON.stringify({ action: 'generate_tts', ...ttsParams }),
                             });
                             const ttsData = ttsRes.ok ? await ttsRes.json().catch(() => ({})) : {};
                             const audioUrl = ttsData.success && ttsData.audio_url ? ttsData.audio_url : null;
