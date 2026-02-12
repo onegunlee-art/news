@@ -190,7 +190,7 @@ class GoogleTTSService
     }
 
     /**
-     * 제목 → 2초 휴식 → 편집 문구(날짜·출처) → 2초 휴식 → 내레이션(발췌) 순으로 한 WAV 생성 (SSML pause 사용)
+     * 제목 → 1초 휴식 → 편집 문구(날짜·출처) → 1초 휴식 → 내레이션(발췌) 순으로 한 WAV 생성 (SSML break + order)
      * Google TTS SSML 제한 5000바이트→4800바이트 이하로 클램프. 초과 시 meta 축약.
      */
     public function textToSpeechStructured(string $title, string $meta, string $narration, array $options = []): ?string
@@ -207,17 +207,17 @@ class GoogleTTSService
         $meta = $escape($meta);
         $narration = trim($narration);
 
-        $ssmlIntro = '<speak>' . $title . '<break time="2s"/>' . $meta . '<break time="2s"/></speak>';
+        $ssmlIntro = '<speak><p>' . $title . '</p><break time="1s"/><p>' . $meta . '</p><break time="1s"/></speak>';
         if (strlen($ssmlIntro) > self::MAX_INPUT_BYTES) {
-            $fixedLen = strlen('<speak>') + strlen('</speak>') + strlen('<break time="2s"/>') * 2 + strlen($title);
+            $fixedLen = strlen('<speak><p></p><break time="1s"/><p></p><break time="1s"/></speak>') + strlen($title);
             $maxMetaBytes = self::MAX_INPUT_BYTES - $fixedLen - 24;
             if ($maxMetaBytes > 20) {
                 $metaCut = mb_strcut($meta, 0, $maxMetaBytes - 3, 'UTF-8');
                 $meta = (strlen($metaCut) < strlen($meta)) ? $metaCut . '…' : $metaCut;
-                $ssmlIntro = '<speak>' . $title . '<break time="2s"/>' . $meta . '<break time="2s"/></speak>';
+                $ssmlIntro = '<speak><p>' . $title . '</p><break time="1s"/><p>' . $meta . '</p><break time="1s"/></speak>';
             }
             if (strlen($ssmlIntro) > self::MAX_INPUT_BYTES) {
-                $ssmlIntro = '<speak>' . $title . '<break time="2s"/></speak>';
+                $ssmlIntro = '<speak><p>' . $title . '</p><break time="1s"/></speak>';
             }
         }
         try {

@@ -402,7 +402,7 @@ function analyzeUrl(string $url, array $options = []): array {
 
 /**
  * TTS 생성 (2단계: 분석 완료 후 호출)
- * 순서: 제목 → 2초 휴식 → 편집 문구(날짜·출처) → 2초 휴식 → 내레이션(발췌)
+ * 순서: 제목 → 1초 휴식 → 편집 문구(날짜·출처) → 1초 휴식 → 내레이션(발췌)
  * 입력: narration (필수), tts_voice (선택), news_title, source, published_at (선택, 있으면 구조화 재생)
  * 출력: { success, audio_url } 또는 { success: false, error }
  * 긴 기사(예: Foreign Affairs)는 내레이션이 매우 길어 TTS 시 메모리/타임아웃/API 제한에 걸릴 수 있으므로 바이트 상한 적용.
