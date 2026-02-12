@@ -84,7 +84,7 @@ export default function NewsDetailPage() {
       800,
       400
     )
-    openAndPlay(news.title, text, 1.0, imageUrl)
+    openAndPlay(news.title, text, 1.0, imageUrl, news.id)
   }
 
   useEffect(() => {

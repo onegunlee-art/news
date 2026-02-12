@@ -153,14 +153,14 @@ function SearchArticleCard({ article }: { article: NewsItem }) {
         if (detail.why_important) parts.push("The Gist's Critique.", detail.why_important)
         const fullText = parts.join(' ').trim()
         const img = detail.image_url || article.image_url || ''
-        openAndPlay(article.title, fullText, 1.0, img)
+        openAndPlay(article.title, fullText, 1.0, img, Number(newsId))
         return
       }
     } catch { /* fallback */ }
 
     // fallback: 상세 못 가져오면 기존 방식
     const text = `${article.title}. ${article.description || ''}`.trim()
-    if (text) openAndPlay(article.title, text, 1.0)
+    if (text) openAndPlay(article.title, text, 1.0, undefined, Number(newsId))
   }
 
   const shareWebUrl = `${window.location.origin}/news/${article.id}`

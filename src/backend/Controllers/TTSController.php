@@ -3,9 +3,10 @@
  * TTS (Text-to-Speech) API 컨트롤러
  *
  * 홈/기사 Listen 재생용 Google TTS 생성. Admin 설정 보이스 사용.
+ * Supabase media_cache 있으면 캐시된 URL 반환 (Listen 시 매번 TTS 과금 방지).
  *
  * @author News Context Analysis Team
- * @version 1.1.0
+ * @version 1.2.0
  */
 
 declare(strict_types=1);
@@ -23,8 +24,8 @@ final class TTSController
 
     /**
      * POST /api/tts/generate
-     * Body: { "text": "..." }
-     * Returns: { "success": true, "data": { "url": "/storage/audio/xxx.mp3", "voice": "ko-KR-Standard-B" } }
+     * Body: { "text": "...", "news_id"?: number }
+     * Returns: { "success": true, "data": { "url": "/storage/audio/xxx.wav", "voice": "ko-KR-Standard-B" } }
      */
     public function generate(Request $request): Response
     {
@@ -42,6 +43,10 @@ final class TTSController
             return Response::error('텍스트가 너무 깁니다. ' . self::MAX_TEXT_LENGTH . '자 이하로 보내주세요.', 400);
         }
 
+        $newsId = isset($body['news_id']) && (is_int($body['news_id']) || ctype_digit((string) $body['news_id']))
+            ? (int) $body['news_id']
+            : null;
+
         $projectRoot = dirname(__DIR__, 3);
 
         // 1) DB에서 Admin이 설정한 voice 읽기
@@ -57,6 +62,21 @@ final class TTSController
         }
         $config['default_voice'] = $ttsVoice ?: ($config['default_voice'] ?? 'ko-KR-Standard-A');
         $ttsVoice = $config['default_voice'];
+
+        // 3) 캐시 키: hash(text, voice) → 동일 입력이면 캐시 사용 (Listen 시 로딩·과금 없음)
+        $cacheHash = hash('sha256', $text . '|' . $ttsVoice);
+
+        $supabase = $this->getSupabaseService($projectRoot);
+        if ($supabase !== null && $supabase->isConfigured()) {
+            $cacheQuery = 'media_type=eq.tts&generation_params->>hash=eq.' . rawurlencode($cacheHash);
+            $cached = $supabase->select('media_cache', $cacheQuery, 1);
+            if (!empty($cached) && is_array($cached) && !empty($cached[0]['file_url'])) {
+                return Response::success([
+                    'url' => $cached[0]['file_url'],
+                    'voice' => $ttsVoice,
+                ], '캐시된 오디오입니다.');
+            }
+        }
 
         if (!file_exists($projectRoot . '/src/agents/services/GoogleTTSService.php')) {
             return Response::error('TTS 서비스 파일을 찾을 수 없습니다.', 503);
@@ -77,10 +97,36 @@ final class TTSController
             return Response::error($msg, 500);
         }
 
+        // Supabase 있으면 media_cache에 저장 (다음 Listen 시 캐시 사용)
+        if ($supabase !== null && $supabase->isConfigured()) {
+            $supabase->insert('media_cache', [
+                'news_id' => $newsId,
+                'media_type' => 'tts',
+                'file_url' => $url,
+                'generation_params' => [
+                    'hash' => $cacheHash,
+                    'voice' => $ttsVoice,
+                ],
+            ]);
+        }
+
         return Response::success([
             'url' => $url,
             'voice' => $ttsVoice,
         ], '오디오가 생성되었습니다.');
+    }
+
+    private function getSupabaseService(string $projectRoot): ?\Agents\Services\SupabaseService
+    {
+        $path = $projectRoot . '/src/agents/services/SupabaseService.php';
+        if (!file_exists($path)) {
+            return null;
+        }
+        require_once $path;
+        $supabaseConfig = file_exists($projectRoot . '/config/supabase.php')
+            ? require $projectRoot . '/config/supabase.php'
+            : [];
+        return new \Agents\Services\SupabaseService($supabaseConfig);
     }
 
     /**

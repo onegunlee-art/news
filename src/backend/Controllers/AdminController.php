@@ -485,6 +485,152 @@ final class AdminController
     }
 
     /**
+     * TTS 일괄 재생성 (보이스 변경 시 전체 기사 Listen용 TTS를 새 보이스로 재생성)
+     * POST /api/admin/tts/regenerate-all
+     * Returns: { generated, skipped, total, message }
+     */
+    public function regenerateAllTts(Request $request): Response
+    {
+        set_time_limit(600); // 최대 10분
+
+        $projectRoot = dirname(__DIR__, 3);
+        $ttsVoice = $this->getSetting('tts_voice');
+        $config = file_exists($projectRoot . '/config/google_tts.php')
+            ? require $projectRoot . '/config/google_tts.php'
+            : [];
+        $apiKey = $_ENV['GOOGLE_TTS_API_KEY'] ?? getenv('GOOGLE_TTS_API_KEY');
+        if (is_string($apiKey) && $apiKey !== '') {
+            $config['api_key'] = $apiKey;
+        }
+        $config['default_voice'] = $ttsVoice ?: ($config['default_voice'] ?? 'ko-KR-Standard-A');
+        $ttsVoice = $config['default_voice'];
+
+        if (!file_exists($projectRoot . '/src/agents/services/GoogleTTSService.php')) {
+            return Response::error('TTS 서비스 파일을 찾을 수 없습니다.', 503);
+        }
+        require_once $projectRoot . '/src/agents/services/GoogleTTSService.php';
+        $service = new \Agents\Services\GoogleTTSService($config);
+        if (!$service->isConfigured()) {
+            return Response::error('Google TTS API 키가 설정되지 않았습니다.', 503);
+        }
+
+        $supabase = $this->getSupabaseService($projectRoot);
+
+        $columns = 'id, title, content, description, source';
+        $optCols = ['why_important', 'narration', 'published_at', 'updated_at', 'created_at', 'original_source'];
+        foreach ($optCols as $col) {
+            try {
+                $chk = $this->db->query("SHOW COLUMNS FROM news LIKE '{$col}'");
+                if ($chk && $chk->rowCount() > 0) {
+                    $columns .= ', ' . $col;
+                }
+            } catch (\Throwable $e) {
+                // 컬럼 없음
+            }
+        }
+
+        $stmt = $this->db->query("SELECT {$columns} FROM news ORDER BY id ASC");
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $generated = 0;
+        $skipped = 0;
+
+        foreach ($rows as $row) {
+            $fullText = $this->buildListenFullText($row);
+            if ($fullText === '') {
+                $skipped++;
+                continue;
+            }
+
+            $cacheHash = hash('sha256', $fullText . '|' . $ttsVoice);
+
+            if ($supabase !== null && $supabase->isConfigured()) {
+                $cacheQuery = 'media_type=eq.tts&generation_params->>hash=eq.' . rawurlencode($cacheHash);
+                $cached = $supabase->select('media_cache', $cacheQuery, 1);
+                if (!empty($cached) && is_array($cached) && !empty($cached[0]['file_url'])) {
+                    $skipped++;
+                    continue;
+                }
+            }
+
+            $url = $service->textToSpeech($fullText, ['voice' => $ttsVoice]);
+            if ($url === null || $url === '') {
+                $skipped++;
+                continue;
+            }
+
+            if ($supabase !== null && $supabase->isConfigured()) {
+                $supabase->insert('media_cache', [
+                    'news_id' => (int) $row['id'],
+                    'media_type' => 'tts',
+                    'file_url' => $url,
+                    'generation_params' => ['hash' => $cacheHash, 'voice' => $ttsVoice],
+                ]);
+            }
+            $generated++;
+        }
+
+        return Response::success([
+            'generated' => $generated,
+            'skipped' => $skipped,
+            'total' => count($rows),
+        ], "TTS 일괄 재생성 완료: {$generated}건 생성, {$skipped}건 스킵.");
+    }
+
+    private function getSetting(string $key): ?string
+    {
+        try {
+            $stmt = $this->db->prepare("SELECT `value` FROM settings WHERE `key` = ?");
+            $stmt->execute([$key]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $row ? (string) $row['value'] : null;
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    private function getSupabaseService(string $projectRoot): ?\Agents\Services\SupabaseService
+    {
+        $path = $projectRoot . '/src/agents/services/SupabaseService.php';
+        if (!file_exists($path)) {
+            return null;
+        }
+        require_once $path;
+        $cfg = file_exists($projectRoot . '/config/supabase.php') ? require $projectRoot . '/config/supabase.php' : [];
+        return new \Agents\Services\SupabaseService($cfg);
+    }
+
+    /** playArticle과 동일한 fullText 구성 (Listen 호환) */
+    private function buildListenFullText(array $row): string
+    {
+        $title = trim($row['title'] ?? '');
+        $dateStr = '';
+        $ref = $row['published_at'] ?? $row['updated_at'] ?? $row['created_at'] ?? null;
+        if ($ref) {
+            $t = strtotime($ref);
+            if ($t) {
+                $dateStr = date('Y', $t) . '년 ' . (int) date('n', $t) . '월 ' . (int) date('j', $t) . '일';
+            }
+        }
+        $rawSource = trim($row['original_source'] ?? '') ?: ($row['source'] === 'Admin' ? 'The Gist' : ($row['source'] ?? 'The Gist'));
+        $sourceDisplay = $rawSource ?: 'The Gist';
+        $editorialLine = $dateStr
+            ? "{$dateStr}자 {$sourceDisplay} 저널의 \"{$title}\"을 AI 번역, 요약하고 The Gist에서 일부 편집한 글입니다."
+            : "{$sourceDisplay} 저널의 \"{$title}\"을 AI 번역, 요약하고 The Gist에서 일부 편집한 글입니다.";
+        $parts = [$title, $editorialLine];
+        $mainContent = trim($row['narration'] ?? '') ?: trim($row['content'] ?? '') ?: trim($row['description'] ?? '');
+        if ($mainContent !== '') {
+            $parts[] = $mainContent;
+        }
+        $whyImportant = trim($row['why_important'] ?? '');
+        if ($whyImportant !== '') {
+            $parts[] = "The Gist's Critique.";
+            $parts[] = $whyImportant;
+        }
+        return implode(' ', $parts);
+    }
+
+    /**
      * NYT API 상태 확인
      */
     private function checkNytApi(): bool

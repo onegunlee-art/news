@@ -30,7 +30,7 @@ import AIWorkspace from '../components/AIWorkspace/AIWorkspace';
 import type { ArticleContext } from '../components/AIWorkspace/AIWorkspace';
 import CritiqueEditor from '../components/CritiqueEditor/CritiqueEditor';
 import RAGTester from '../components/RAGTester/RAGTester';
-import { adminSettingsApi, ttsApi } from '../services/api';
+import { adminSettingsApi, adminTtsApi, ttsApi } from '../services/api';
 
 /** Google TTS 한국어 보이스 목록 (Admin에서 선택용) */
 const GOOGLE_TTS_VOICES = [
@@ -269,8 +269,20 @@ const AdminPage: React.FC = () => {
       .updateSettings({ tts_voice: ttsVoice })
       .then(() => {
         setSettingsError(null);
-        setSettingsSuccess('보이스 설정이 저장되었습니다. 다음 AI 분석부터 적용됩니다.');
-        setTimeout(() => setSettingsSuccess(null), 4000);
+        setSettingsSuccess('보이스 저장됨. 기존 TTS 일괄 재생성 중…');
+        return adminTtsApi.regenerateAll()
+          .then((r) => {
+            const d = r.data?.data;
+            const msg = d
+              ? `보이스 저장 완료. TTS ${d.generated}건 재생성, ${d.skipped}건 스킵 (총 ${d.total}건)`
+              : '보이스 저장 완료. 기존 Listen TTS가 새 보이스로 일괄 재생성되었습니다.';
+            setSettingsSuccess(msg);
+            setTimeout(() => setSettingsSuccess(null), 6000);
+          })
+          .catch(() => {
+            setSettingsSuccess('보이스는 저장되었습니다. TTS 일괄 재생성에 실패했습니다. (Supabase/Google TTS 확인)');
+            setTimeout(() => setSettingsSuccess(null), 6000);
+          });
       })
       .catch((err) => setSettingsError(err.response?.data?.message || '저장에 실패했습니다.'))
       .finally(() => setSettingsSaving(false));

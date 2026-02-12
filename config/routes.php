@@ -188,6 +188,9 @@ $router->group(['prefix' => '/admin'], function (Router $router) {
     
     // 캐시 초기화
     $router->post('/cache/clear', [AdminController::class, 'clearCache']);
+
+    // TTS 보이스 변경 시 전체 기사 TTS 일괄 재생성 (Supabase media_cache 갱신)
+    $router->post('/tts/regenerate-all', [AdminController::class, 'regenerateAllTts']);
 });
 
 // ==================== 404 처리 ====================

@@ -117,10 +117,10 @@ export const analysisApi = {
     api.get('/analysis/user/history', { params: { page, per_page: perPage } }),
 }
 
-/** TTS 생성 (Google 보이스 - Admin 설정 적용) */
+/** TTS 생성 (Google 보이스 - Admin 설정 적용). newsId 있으면 캐시 시 news_id로 저장 */
 export const ttsApi = {
-  generate: (text: string) =>
-    api.post<{ success: boolean; data: { url: string } }>('/tts/generate', { text }),
+  generate: (text: string, newsId?: number) =>
+    api.post<{ success: boolean; data: { url: string } }>('/tts/generate', { text, ...(newsId != null && { news_id: newsId }) }),
 }
 
 /** Admin 설정 (Router: GET/PUT /api/admin/settings) */
@@ -128,6 +128,12 @@ export const adminSettingsApi = {
   getSettings: () => api.get<{ success: boolean; data: Record<string, string> }>('/admin/settings'),
   updateSettings: (settings: Record<string, string>) =>
     api.put('/admin/settings', settings),
+}
+
+/** Admin TTS 일괄 재생성 (보이스 변경 시 전체 기사 Listen용 캐시 갱신) */
+export const adminTtsApi = {
+  regenerateAll: () =>
+    api.post<{ success: boolean; data: { generated: number; skipped: number; total: number } }>('/admin/tts/regenerate-all'),
 }
 
 export const authApi = {

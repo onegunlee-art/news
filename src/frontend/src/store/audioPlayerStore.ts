@@ -16,7 +16,7 @@ interface AudioPlayerState {
 }
 
 interface AudioPlayerActions {
-  openAndPlay: (title: string, text: string, rate?: number, imageUrl?: string) => void
+  openAndPlay: (title: string, text: string, rate?: number, imageUrl?: string, newsId?: number) => void
   togglePlay: () => void
   pause: () => void
   seek: (progress: number) => void
@@ -42,7 +42,7 @@ export const useAudioPlayerStore = create<AudioPlayerState & AudioPlayerActions>
 
   setProgress: (progress) => set({ progress }),
 
-  openAndPlay: (title, text, rate = 1.0, imageUrl = '') => {
+  openAndPlay: (title, text, rate = 1.0, imageUrl = '', newsId?: number) => {
     const fullText = (text || '').trim()
     if (!fullText) return
     // 브라우저 TTS 완전 정지
@@ -58,9 +58,9 @@ export const useAudioPlayerStore = create<AudioPlayerState & AudioPlayerActions>
       audioUrl: null,
       isTtsLoading: true,
     })
-    // 서버 Google TTS만 사용 (브라우저 TTS 폴백 없음)
+    // 서버 Google TTS만 사용 (캐시 있으면 즉시 반환, 로딩·과금 없음)
     ttsApi
-      .generate(fullText)
+      .generate(fullText, newsId)
       .then((res) => {
         const url = res.data?.data?.url
         if (url) {
