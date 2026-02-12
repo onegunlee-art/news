@@ -25,6 +25,7 @@ import {
   ArrowPathIcon,
   HandThumbUpIcon,
   StarIcon,
+  CurrencyDollarIcon,
 } from '@heroicons/react/24/outline';
 import RichTextToolbar from '../components/Common/RichTextToolbar';
 import AIWorkspace from '../components/AIWorkspace/AIWorkspace';
@@ -204,7 +205,7 @@ const sanitizeText = (text: string): string => {
 const AdminPage: React.FC = () => {
   const navigate = useNavigate();
   const { } = useAuthStore(); // 권한 체크용 (추후 활성화)
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'news' | 'ai' | 'workspace' | 'knowledge' | 'settings'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'news' | 'ai' | 'workspace' | 'knowledge' | 'usage' | 'settings'>('dashboard');
 
   // feedback useEffect deps에서 참조되므로 컴포넌트 최상단에 선언
   const [articleUrl, setArticleUrl] = useState('');
@@ -244,6 +245,13 @@ const AdminPage: React.FC = () => {
   const [isAddingKnowledge, setIsAddingKnowledge] = useState(false);
   const [knowledgeMessage, setKnowledgeMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
+  // API 과금 대시보드
+  const [usageData, setUsageData] = useState<{
+    providers?: Record<string, { configured: boolean; dashboard_url?: string; usage?: unknown; usage_error?: string }>;
+    self_tracked?: { has_table: boolean; today: Array<Record<string, unknown>>; month: Array<Record<string, unknown>>; by_provider: Record<string, Record<string, unknown>> };
+  } | null>(null);
+  const [usageLoading, setUsageLoading] = useState(false);
+
   // Admin 설정 (TTS Voice)
   const [ttsVoice, setTtsVoice] = useState<string>('ko-KR-Standard-A');
   const [settingsLoading, setSettingsLoading] = useState(false);
@@ -278,6 +286,19 @@ const AdminPage: React.FC = () => {
   const refNewsContent = useRef<HTMLTextAreaElement>(null);
   const refNewsNarration = useRef<HTMLTextAreaElement>(null);
   const refNewsWhyImportant = useRef<HTMLTextAreaElement>(null);
+
+  // API 과금 탭 활성 시 데이터 로드
+  useEffect(() => {
+    if (activeTab !== 'usage') return;
+    setUsageLoading(true);
+    fetch('/api/admin/usage-dashboard.php')
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success) setUsageData(d);
+      })
+      .catch(() => setUsageData(null))
+      .finally(() => setUsageLoading(false));
+  }, [activeTab]);
 
   // 설정 탭 활성 시 설정 로드
   useEffect(() => {
@@ -823,6 +844,7 @@ const AdminPage: React.FC = () => {
     { id: 'ai', name: 'AI 분석', icon: SparklesIcon },
     { id: 'workspace', name: 'AI Workspace', icon: AcademicCapIcon },
     { id: 'knowledge', name: '이론 라이브러리', icon: BookOpenIcon },
+    { id: 'usage', name: 'API 과금', icon: CurrencyDollarIcon },
     { id: 'settings', name: '설정', icon: CogIcon },
   ] as const;
 
@@ -2641,6 +2663,153 @@ const AdminPage: React.FC = () => {
                   </div>
                 )}
               </div>
+            </div>
+          )}
+
+          {activeTab === 'usage' && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-white">API 과금 대시보드</h2>
+                  <p className="text-slate-400 text-sm mt-1">OpenAI, Google TTS, Kakao 등 API 사용량·과금 실시간 확인</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUsageLoading(true);
+                    fetch('/api/admin/usage-dashboard.php')
+                      .then((r) => r.json())
+                      .then((d) => {
+                        if (d.success) setUsageData(d);
+                      })
+                      .finally(() => setUsageLoading(false));
+                  }}
+                  disabled={usageLoading}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-sm transition disabled:opacity-50"
+                >
+                  <ArrowPathIcon className={`w-4 h-4 ${usageLoading ? 'animate-spin' : ''}`} />
+                  새로고침
+                </button>
+              </div>
+
+              {usageLoading ? (
+                <div className="flex justify-center py-12">
+                  <div className="animate-spin rounded-full h-10 w-10 border-2 border-cyan-500 border-t-transparent" />
+                </div>
+              ) : usageData ? (
+                <div className="space-y-6">
+                  {/* API 연동 상태 */}
+                  <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                    {[
+                      { key: 'openai', name: 'OpenAI', label: 'GPT / DALL-E / Embeddings' },
+                      { key: 'google_tts', name: 'Google TTS', label: '음성 합성' },
+                      { key: 'kakao', name: 'Kakao', label: '로그인 / 카카오톡' },
+                      { key: 'supabase', name: 'Supabase', label: 'DB / RAG / Auth' },
+                      { key: 'nyt', name: 'NYT', label: '뉴스 API' },
+                    ].map(({ key, name, label }) => {
+                      const p = usageData.providers?.[key];
+                      const configured = p?.configured ?? false;
+                      return (
+                        <div
+                          key={key}
+                          className={`rounded-xl p-4 border ${configured ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-slate-800/50 border-slate-700/50'}`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-semibold text-white">{name}</span>
+                            {configured ? (
+                              <CheckCircleIcon className="w-5 h-5 text-emerald-400" />
+                            ) : (
+                              <ExclamationTriangleIcon className="w-5 h-5 text-amber-400" />
+                            )}
+                          </div>
+                          <p className="text-slate-400 text-xs mt-1">{label}</p>
+                          {p?.dashboard_url && (
+                            <a
+                              href={p.dashboard_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block mt-2 text-cyan-400 text-xs hover:underline"
+                            >
+                              대시보드 열기 →
+                            </a>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* 자체 사용량 로그 (실시간) */}
+                  {usageData.self_tracked?.has_table && (
+                    <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50">
+                      <h3 className="text-lg font-semibold text-slate-200 mb-4">실시간 사용량 (자체 로그)</h3>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="text-left text-slate-400 border-b border-slate-700">
+                              <th className="pb-3 pr-4">Provider</th>
+                              <th className="pb-3 pr-4">Endpoint</th>
+                              <th className="pb-3 pr-4">Input (tokens)</th>
+                              <th className="pb-3 pr-4">Output (tokens)</th>
+                              <th className="pb-3 pr-4">Images</th>
+                              <th className="pb-3 pr-4">Characters</th>
+                              <th className="pb-3 pr-4">이번 달</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {Object.entries(usageData.self_tracked.by_provider || {}).map(([provider, row]) => {
+                              const r = row as { input_tokens?: number; output_tokens?: number; images?: number; characters?: number; cost_usd?: number };
+                              return (
+                                <tr key={provider} className="border-b border-slate-700/50">
+                                  <td className="py-3 pr-4"><span className="capitalize">{provider.replace('_', ' ')}</span></td>
+                                  <td className="py-3 pr-4">-</td>
+                                  <td className="py-3 pr-4">{r.input_tokens?.toLocaleString() ?? '-'}</td>
+                                  <td className="py-3 pr-4">{r.output_tokens?.toLocaleString() ?? '-'}</td>
+                                  <td className="py-3 pr-4">{r.images?.toLocaleString() ?? '-'}</td>
+                                  <td className="py-3 pr-4">{r.characters?.toLocaleString() ?? '-'}</td>
+                                  <td className="py-3 pr-4">{r.cost_usd != null ? `$${Number(r.cost_usd).toFixed(4)}` : '-'}</td>
+                                </tr>
+                              );
+                            })}
+                            {Object.keys(usageData.self_tracked.by_provider || {}).length === 0 && (
+                              <tr>
+                                <td colSpan={7} className="py-6 text-center text-slate-500">
+                                  아직 사용량 로그가 없습니다. API 호출 후 여기에 표시됩니다.
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                      <p className="text-slate-500 text-xs mt-4">
+                        GPT 분석, 채팅, 썸네일 생성, TTS 등 모든 API 호출 시 자동으로 기록됩니다.
+                      </p>
+                    </div>
+                  )}
+
+                  {!usageData.self_tracked?.has_table && (
+                    <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4">
+                      <p className="text-amber-200 text-sm">
+                        api_usage_logs 테이블이 없습니다. database/migrations/add_api_usage_logs.sql 마이그레이션을 실행해주세요.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* OpenAI Usage API 오류 */}
+                  {usageData.providers?.openai?.usage_error && (
+                    <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+                      <p className="text-amber-400 text-sm">{usageData.providers.openai.usage_error}</p>
+                      <p className="text-slate-500 text-xs mt-2">
+                        <a href="https://platform.openai.com/settings/organization/api-keys" target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:underline">
+                          OpenAI Organization Admin API 키
+                        </a>
+                        를 설정하면 Usage API에서 직접 사용량을 가져올 수 있습니다.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <p className="text-slate-500">데이터를 불러오지 못했습니다.</p>
+              )}
             </div>
           )}
 

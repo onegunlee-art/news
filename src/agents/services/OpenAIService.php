@@ -270,6 +270,22 @@ class OpenAIService
             throw new \RuntimeException("OpenAI API: 응답에 content가 없습니다.");
         }
 
+        // API 사용량 로깅 (대시보드용)
+        $usage = $data['usage'] ?? null;
+        $inTok = $usage['input_tokens'] ?? (int) ceil((mb_strlen($systemPrompt) + mb_strlen($userPrompt)) / 4);
+        $outTok = $usage['output_tokens'] ?? (int) ceil(mb_strlen($text) / 4);
+        $logPath = dirname(__DIR__, 3) . '/public/api/lib/usage_log.php';
+        if (file_exists($logPath)) {
+            require_once $logPath;
+            log_api_usage([
+                'provider' => 'openai',
+                'endpoint' => 'chat',
+                'model' => $model,
+                'input_tokens' => $inTok,
+                'output_tokens' => $outTok,
+            ]);
+        }
+
         return $text;
     }
 
@@ -563,6 +579,19 @@ class OpenAIService
             throw new \RuntimeException($msg);
         }
 
+        // API 사용량 로깅 (OpenAI TTS - 문자 수)
+        $chars = mb_strlen($text);
+        $logPath = dirname(__DIR__, 3) . '/public/api/lib/usage_log.php';
+        if (file_exists($logPath)) {
+            require_once $logPath;
+            log_api_usage([
+                'provider' => 'openai',
+                'endpoint' => 'tts',
+                'model' => $payload['model'] ?? 'tts-1-hd',
+                'characters' => $chars,
+            ]);
+        }
+
         return $audioData;
     }
 
@@ -649,7 +678,24 @@ class OpenAIService
         }
 
         $data = json_decode($response, true);
-        return $data['data'][0]['embedding'] ?? [];
+        $embedding = $data['data'][0]['embedding'] ?? [];
+
+        // API 사용량 로깅
+        $usage = $data['usage'] ?? null;
+        $inTok = $usage['prompt_tokens'] ?? $usage['input_tokens'] ?? (int) ceil(mb_strlen($text) / 4);
+        $logPath = dirname(__DIR__, 3) . '/public/api/lib/usage_log.php';
+        if (file_exists($logPath)) {
+            require_once $logPath;
+            log_api_usage([
+                'provider' => 'openai',
+                'endpoint' => 'embeddings',
+                'model' => 'text-embedding-3-small',
+                'input_tokens' => $inTok,
+                'output_tokens' => 0,
+            ]);
+        }
+
+        return $embedding;
     }
 
     /**
@@ -755,6 +801,18 @@ class OpenAIService
             $this->lastError = 'Failed to write to storage (check storage/thumbnails permissions)';
             error_log('OpenAI Images: ' . $this->lastError . ' - ' . $filePath);
             return null;
+        }
+
+        // API 사용량 로깅 (DALL-E)
+        $logPath = dirname(__DIR__, 3) . '/public/api/lib/usage_log.php';
+        if (file_exists($logPath)) {
+            require_once $logPath;
+            log_api_usage([
+                'provider' => 'openai',
+                'endpoint' => 'images',
+                'model' => $payload['model'] ?? 'dall-e-3',
+                'images' => 1,
+            ]);
         }
 
         return '/storage/thumbnails/' . $filename;

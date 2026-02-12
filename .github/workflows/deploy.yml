@@ -145,9 +145,11 @@ jobs:
           mkdir -p deploy/storage/audio
           mkdir -p deploy/storage/thumbnails
           
-          # Database 스키마
+          # Database 스키마 및 마이그레이션
           mkdir -p deploy/database
           cp database/schema.sql deploy/database/
+          mkdir -p deploy/database/migrations
+          cp database/migrations/*.sql deploy/database/migrations/ 2>/dev/null || true
           
           # 불필요한 파일 제거
           find deploy -name "*.md" -delete 2>/dev/null || true

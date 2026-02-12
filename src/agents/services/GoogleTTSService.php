@@ -275,6 +275,20 @@ class GoogleTTSService
             curl_close($ch);
 
             if ($httpCode === 200 && $response !== false) {
+                // API 사용량 로깅 (Google TTS - 문자 수)
+                $input = $payload['input'] ?? [];
+                $chars = isset($input['text']) ? mb_strlen($input['text']) : (isset($input['ssml']) ? mb_strlen(preg_replace('/<[^>]+>/', '', $input['ssml'])) : 0);
+                if ($chars > 0) {
+                    $logPath = dirname(__DIR__, 3) . '/public/api/lib/usage_log.php';
+                    if (file_exists($logPath)) {
+                        require_once $logPath;
+                        log_api_usage([
+                            'provider' => 'google_tts',
+                            'endpoint' => 'tts',
+                            'characters' => $chars,
+                        ]);
+                    }
+                }
                 return (string) $response;
             }
 
