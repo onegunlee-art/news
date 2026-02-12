@@ -49,7 +49,8 @@ function buildTtsParamsForListen(params: {
   const dateStr = ref
     ? `${new Date(ref).getFullYear()}년 ${new Date(ref).getMonth() + 1}월 ${new Date(ref).getDate()}일`
     : ''
-  const rawSource = (params.originalSource && String(params.originalSource).trim()) || (params.source === 'Admin' ? 'The Gist' : (params.source ? String(params.source) : 'The Gist'))
+  const rawSourceVal = (params.originalSource != null ? String(params.originalSource).trim() : '') || (params.source === 'Admin' ? 'The Gist' : (params.source != null ? String(params.source) : 'The Gist'))
+  const rawSource: string = typeof rawSourceVal === 'string' ? rawSourceVal : 'The Gist'
   const sourceDisplay = formatSourceDisplayName(rawSource) || 'The Gist'
   const meta = dateStr
     ? `${dateStr}자 ${sourceDisplay} 저널의 "${title}"을 AI 번역, 요약하고 The Gist에서 일부 편집한 글입니다.`
