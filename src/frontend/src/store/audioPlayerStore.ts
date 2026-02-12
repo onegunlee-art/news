@@ -16,7 +16,8 @@ interface AudioPlayerState {
 }
 
 interface AudioPlayerActions {
-  openAndPlay: (title: string, text: string, rate?: number, imageUrl?: string, newsId?: number) => void
+  /** title, meta(매체설명), narration(본문), critiquePart(The Gist's Critique...) - 구조화 TTS (pause 적용) */
+  openAndPlay: (title: string, meta: string, narration: string, critiquePart: string, rate?: number, imageUrl?: string, newsId?: number) => void
   togglePlay: () => void
   pause: () => void
   seek: (progress: number) => void
@@ -42,15 +43,19 @@ export const useAudioPlayerStore = create<AudioPlayerState & AudioPlayerActions>
 
   setProgress: (progress) => set({ progress }),
 
-  openAndPlay: (title, text, rate = 1.0, imageUrl = '', newsId?: number) => {
-    const fullText = (text || '').trim()
+  openAndPlay: (title, meta, narration, critiquePart, rate = 1.0, imageUrl = '', newsId?: number) => {
+    const t = (title || '').trim()
+    const m = (meta || '').trim()
+    const n = (narration || '').trim()
+    const c = (critiquePart || '').trim()
+    const fullText = [t, m, n, c].filter(Boolean).join(' ')
     if (!fullText) return
     // 브라우저 TTS 완전 정지
     if ('speechSynthesis' in window) window.speechSynthesis.cancel()
     set({
       isOpen: true,
       isPlaying: false,
-      title,
+      title: t || 'Listen',
       fullText,
       rate,
       imageUrl,
@@ -58,9 +63,9 @@ export const useAudioPlayerStore = create<AudioPlayerState & AudioPlayerActions>
       audioUrl: null,
       isTtsLoading: true,
     })
-    // 서버 Google TTS만 사용 (캐시 있으면 즉시 반환, 로딩·과금 없음)
+    // 서버 Google TTS (구조화: 제목 pause 매체설명 pause 내레이션 pause Critique. 캐시 있으면 즉시 반환)
     ttsApi
-      .generate(fullText, newsId)
+      .generateStructured(t, m, n, c, newsId)
       .then((res) => {
         const url = res.data?.data?.url
         if (url) {

@@ -535,14 +535,24 @@ final class AdminController
         $generated = 0;
         $skipped = 0;
 
+        $storageDir = $projectRoot . '/storage/audio';
+
         foreach ($rows as $row) {
-            $fullText = $this->buildListenFullText($row);
-            if ($fullText === '') {
+            $parts = $this->buildListenStructured($row);
+            if ($parts === null) {
                 $skipped++;
                 continue;
             }
+            [$title, $meta, $narration, $critiquePart] = $parts;
+            $fullPayload = $title . '|' . $meta . '|' . $narration . '|' . $critiquePart . '|' . $ttsVoice;
+            $cacheHash = hash('sha256', $fullPayload);
 
-            $cacheHash = hash('sha256', $fullText . '|' . $ttsVoice);
+            // 파일 캐시
+            $safeHash = preg_replace('/[^a-f0-9]/', '', $cacheHash);
+            if (is_file($storageDir . '/tts_' . $safeHash . '.wav')) {
+                $skipped++;
+                continue;
+            }
 
             if ($supabase !== null && $supabase->isConfigured()) {
                 $cacheQuery = 'media_type=eq.tts&generation_params->>hash=eq.' . rawurlencode($cacheHash);
@@ -553,7 +563,13 @@ final class AdminController
                 }
             }
 
-            $url = $service->textToSpeech($fullText, ['voice' => $ttsVoice]);
+            $url = $service->textToSpeechStructured(
+                $title ?: '제목 없음',
+                $meta ?: ' ',
+                $narration,
+                ['voice' => $ttsVoice, 'cache_hash' => $cacheHash],
+                $critiquePart
+            );
             if ($url === null || $url === '') {
                 $skipped++;
                 continue;
@@ -600,8 +616,8 @@ final class AdminController
         return new \Agents\Services\SupabaseService($cfg);
     }
 
-    /** playArticle과 동일한 fullText 구성 (Listen 호환) */
-    private function buildListenFullText(array $row): string
+    /** playArticle과 동일한 구조 (title, meta, narration, critiquePart) - Listen 호환 */
+    private function buildListenStructured(array $row): ?array
     {
         $title = trim($row['title'] ?? '');
         $dateStr = '';
@@ -614,20 +630,17 @@ final class AdminController
         }
         $rawSource = trim($row['original_source'] ?? '') ?: ($row['source'] === 'Admin' ? 'The Gist' : ($row['source'] ?? 'The Gist'));
         $sourceDisplay = $rawSource ?: 'The Gist';
-        $editorialLine = $dateStr
+        $meta = $dateStr
             ? "{$dateStr}자 {$sourceDisplay} 저널의 \"{$title}\"을 AI 번역, 요약하고 The Gist에서 일부 편집한 글입니다."
             : "{$sourceDisplay} 저널의 \"{$title}\"을 AI 번역, 요약하고 The Gist에서 일부 편집한 글입니다.";
-        $parts = [$title, $editorialLine];
-        $mainContent = trim($row['narration'] ?? '') ?: trim($row['content'] ?? '') ?: trim($row['description'] ?? '');
-        if ($mainContent !== '') {
-            $parts[] = $mainContent;
-        }
+        $narration = trim($row['narration'] ?? '') ?: trim($row['content'] ?? '') ?: trim($row['description'] ?? '');
         $whyImportant = trim($row['why_important'] ?? '');
-        if ($whyImportant !== '') {
-            $parts[] = "The Gist's Critique.";
-            $parts[] = $whyImportant;
+        $critiquePart = $whyImportant !== '' ? "The Gist's Critique. " . $whyImportant : '';
+
+        if ($narration === '' && $critiquePart === '') {
+            return null;
         }
-        return implode(' ', $parts);
+        return [$title, $meta, $narration, $critiquePart];
     }
 
     /**

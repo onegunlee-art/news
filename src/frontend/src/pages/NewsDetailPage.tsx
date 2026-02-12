@@ -64,12 +64,9 @@ export default function NewsDetailPage() {
     const editorialLine = dateStr
       ? `${dateStr}자 ${sourceDisplay} 저널의 "${news.title}"을 AI 번역, 요약하고 The Gist에서 일부 편집한 글입니다.`
       : `${sourceDisplay} 저널의 "${news.title}"을 AI 번역, 요약하고 The Gist에서 일부 편집한 글입니다.`
-    const parts: string[] = [news.title, editorialLine]
     const mainContent = news.narration || news.content || news.description || ''
-    if (mainContent) parts.push(mainContent)
-    if (news.why_important) parts.push("The Gist's Critique.", news.why_important)
-    const text = parts.join(' ').trim()
-    if (!text) {
+    const critiquePart = news.why_important ? `The Gist's Critique. ${news.why_important}` : ''
+    if (!mainContent && !critiquePart) {
       alert('재생할 본문 내용이 없습니다.')
       return
     }
@@ -84,7 +81,7 @@ export default function NewsDetailPage() {
       800,
       400
     )
-    openAndPlay(news.title, text, 1.0, imageUrl, news.id)
+    openAndPlay(news.title, editorialLine, mainContent, critiquePart, 1.0, imageUrl, news.id)
   }
 
   useEffect(() => {

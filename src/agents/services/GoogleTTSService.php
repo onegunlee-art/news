@@ -168,7 +168,8 @@ class GoogleTTSService
     private function generateAudio(string $text, array $options): string
     {
         $pcmData = $this->generateAudioPcm($text, $options);
-        return $this->saveFile($this->createWavFile($pcmData), 'wav');
+        $cacheHash = $options['cache_hash'] ?? null;
+        return $this->saveFile($this->createWavFile($pcmData), 'wav', $cacheHash);
     }
 
     /**
@@ -190,10 +191,10 @@ class GoogleTTSService
     }
 
     /**
-     * 제목 → 1초 휴식 → 편집 문구(날짜·출처) → 1초 휴식 → 내레이션(발췌) 순으로 한 WAV 생성 (SSML break + order)
-     * Google TTS SSML 제한 5000바이트→4800바이트 이하로 클램프. 초과 시 meta 축약.
+     * 제목 → 1초 휴식 → 편집 문구(매체설명) → 1초 휴식 → 내레이션 → 1초 휴식 → The Gist's Critique 순으로 WAV 생성
+     * @param string $critiquePart "The Gist's Critique. ..." (선택)
      */
-    public function textToSpeechStructured(string $title, string $meta, string $narration, array $options = []): ?string
+    public function textToSpeechStructured(string $title, string $meta, string $narration, array $options = [], string $critiquePart = ''): ?string
     {
         if (!$this->isConfigured()) {
             $this->lastError = 'GOOGLE_TTS_API_KEY not set';
@@ -206,6 +207,7 @@ class GoogleTTSService
         $title = $escape($title);
         $meta = $escape($meta);
         $narration = trim($narration);
+        $critiquePart = trim($critiquePart);
 
         $ssmlIntro = '<speak><p>' . $title . '</p><break time="1s"/><p>' . $meta . '</p><break time="1s"/></speak>';
         if (strlen($ssmlIntro) > self::MAX_INPUT_BYTES) {
@@ -229,10 +231,18 @@ class GoogleTTSService
             }
             $pcm2 = $narration !== '' ? $this->generateAudioPcm($narration, ['voice' => $voice]) : '';
             $pcm = $pcm1 . $pcm2;
+            if ($critiquePart !== '') {
+                if (self::CHUNK_DELAY_SEC > 0) {
+                    usleep((int) (self::CHUNK_DELAY_SEC * 1000000));
+                }
+                $pcm3 = $this->generateAudioPcm($critiquePart, ['voice' => $voice]);
+                $pcm .= $pcm3;
+            }
             if ($pcm === '') {
                 return null;
             }
-            return $this->saveFile($this->createWavFile($pcm), 'wav');
+            $cacheHash = $options['cache_hash'] ?? null;
+            return $this->saveFile($this->createWavFile($pcm), 'wav', $cacheHash);
         } catch (\Throwable $e) {
             $this->lastError = $e->getMessage();
             error_log('Google TTS structured error: ' . $e->getMessage());
@@ -450,10 +460,13 @@ class GoogleTTSService
 
     /**
      * 오디오 파일 저장 후 URL 반환
+     * @param string|null $cacheHash 캐시용 해시 (있으면 tts_{hash}.wav 로 저장)
      */
-    private function saveFile(string $data, string $ext): string
+    private function saveFile(string $data, string $ext, ?string $cacheHash = null): string
     {
-        $filename = 'tts_' . uniqid() . '.' . $ext;
+        $filename = $cacheHash !== null && $cacheHash !== ''
+            ? 'tts_' . preg_replace('/[^a-f0-9]/', '', $cacheHash) . '.' . $ext
+            : 'tts_' . uniqid() . '.' . $ext;
         if (!is_dir($this->audioStoragePath)) {
             if (!@mkdir($this->audioStoragePath, 0755, true)) {
                 throw new \RuntimeException('Google TTS: storage directory creation failed: ' . $this->audioStoragePath);

@@ -168,20 +168,28 @@ function ArticleCard({ article }: { article: NewsItem }) {
       const res = await newsApi.getDetail(Number(newsId))
       const detail = res.data?.data
       if (detail) {
-        const parts: string[] = [detail.title || article.title]
+        const title = detail.title || article.title
+        const dateStr = detail.published_at
+          ? `${new Date(detail.published_at).getFullYear()}년 ${new Date(detail.published_at).getMonth() + 1}월 ${new Date(detail.published_at).getDate()}일`
+          : (detail.updated_at || detail.created_at)
+            ? `${new Date(detail.updated_at || detail.created_at).getFullYear()}년 ${new Date(detail.updated_at || detail.created_at).getMonth() + 1}월 ${new Date(detail.updated_at || detail.created_at).getDate()}일`
+            : ''
+        const rawSource = (detail.original_source && String(detail.original_source).trim()) || (detail.source === 'Admin' ? 'The Gist' : detail.source || 'The Gist')
+        const sourceDisplay = formatSourceDisplayName(rawSource) || 'The Gist'
+        const editorialLine = dateStr
+          ? `${dateStr}자 ${sourceDisplay} 저널의 "${title}"을 AI 번역, 요약하고 The Gist에서 일부 편집한 글입니다.`
+          : `${sourceDisplay} 저널의 "${title}"을 AI 번역, 요약하고 The Gist에서 일부 편집한 글입니다.`
         const mainContent = detail.narration || detail.content || detail.description || article.description || ''
-        if (mainContent) parts.push(mainContent)
-        if (detail.why_important) parts.push("The Gist's Critique.", detail.why_important)
-        const fullText = parts.join(' ').trim()
+        const critiquePart = detail.why_important ? `The Gist's Critique. ${detail.why_important}` : ''
         const img = detail.image_url || article.image_url || ''
-        openAndPlay(article.title, fullText, 1.0, img, Number(newsId))
+        openAndPlay(title, editorialLine, mainContent, critiquePart, 1.0, img, Number(newsId))
         return
       }
     } catch { /* fallback */ }
 
-    // fallback: 상세 못 가져오면 기존 방식
+    // fallback: 상세 못 가져오면 기존 방식 (매체 설명 없음)
     const text = `${article.title}. ${article.description || ''}`.trim()
-    if (text) openAndPlay(article.title, text, 1.0, undefined, Number(newsId))
+    if (text) openAndPlay(article.title, '', text, '', 1.0, undefined, Number(newsId))
   }
 
   const shareWebUrl = `${window.location.origin}/news/${article.id ?? (article as any).news_id}`
