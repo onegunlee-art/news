@@ -51,7 +51,7 @@ class AnalysisAgent extends BaseAgent
     protected function getDefaultPrompts(): array
     {
         return [
-            'system' => '당신은 "The Gist"의 수석 에디터입니다. 해외 뉴스 기사를 한국 독자를 위해 분석합니다. 반드시 요청된 JSON 형식으로만 응답하세요.',
+            'system' => '당신은 "The Gist"의 수석 에디터입니다. 모든 기사는 지스터(The Gist 독자)를 위한 콘텐츠입니다. 지스터는 해외 뉴스를 한국어로 이해하고 싶어하는 독자층이며, The Gist의 핵심 독자입니다. 반드시 지스터 독자 관점에서 작성하고, 요청된 JSON 형식으로만 응답하세요.',
             'tasks' => [
                 'full_analysis' => [
                     'prompt' => '기사를 종합 분석하세요.'
@@ -192,7 +192,7 @@ class AnalysisAgent extends BaseAgent
 위 기사를 분석하여 아래 JSON 형식으로만 응답하세요. JSON 외에 다른 텍스트는 절대 포함하지 마세요.
 
 {
-  "news_title": "한국 독자가 클릭하고 싶은 한국어 뉴스 제목. 15~30자. 핵심을 담되 임팩트 있게.",
+  "news_title": "지스터가 클릭하고 싶은 한국어 뉴스 제목. 15~30자. 핵심을 담되 임팩트 있게. (지스터 = The Gist 독자)",
   "original_title": "원문의 영어 제목 그대로. 예: The Limits of Russian Power. 기사 본문이나 제목에서 확인한 정확한 영문 제목을 반드시 포함.",
   "content_summary": "원문의 AI 요약 및 구조 분석. 도입·전개·결론 구조를 유지하며, 핵심 논지·사실·수치를 포함한 상세 요약. 최소 600자 이상, 가능하면 900자 이상 작성. 마크다운 제목(##)과 불렛(-) 사용 가능.",
   "key_points": [
@@ -201,7 +201,7 @@ class AnalysisAgent extends BaseAgent
     "세 번째 핵심 포인트",
     "네 번째 핵심 포인트"
   ],
-  "narration": "이 기사를 뉴스 앵커가 전달하듯 작성한 내레이션 스크립트. 반드시 '지스터 여러분'으로 시작하세요. 도입(무슨 일이 있었는지) → 주요 내용(핵심 사실들)을 자연스럽게 이어서 말하듯 작성. 청취자가 귀로만 들어도 기사 전체를 이해할 수 있도록 충분히 상세하게 작성. 최소 900자 이상."
+  "narration": "지스터(The Gist 독자)를 위한 내레이션. 반드시 '지스터 여러분'으로 시작하세요. 도입(무슨 일이 있었는지) → 주요 내용(핵심 사실들)을 자연스럽게 이어서 말하듯 작성. 지스터가 귀로만 들어도 기사 전체를 이해할 수 있도록 충분히 상세하게. 최소 900자 이상."
 }
 PROMPT;
 
@@ -260,7 +260,9 @@ PROMPT;
             return $narration;
         }
         $out = str_replace('시청자 여러분', '지스터 여러분', $narration);
-        $out = preg_replace('/^시청자\s+여러분/', '지스터 여러분', $out); // 공백 변형
+        $out = preg_replace('/^시청자\s+여러분/', '지스터 여러분', $out);
+        $out = str_replace('청취자가', '지스터가', $out);
+        $out = str_replace('청취자에게', '지스터에게', $out);
         return $out !== $narration ? $out : $narration;
     }
 
@@ -356,7 +358,7 @@ PROMPT;
 JSON 외에 다른 텍스트는 절대 포함하지 마세요.
 
 {
-  "news_title": "개선된 한국어 뉴스 제목. 15~30자.",
+  "news_title": "지스터를 위한 개선된 한국어 뉴스 제목. 15~30자.",
   "original_title": "원문의 영어 제목 그대로. 이전 분석에서 가져오거나 기사에서 확인.",
   "content_summary": "개선된 AI 요약 및 구조 분석. 최소 600자 이상, 가능하면 900자 이상.",
   "key_points": [
@@ -365,7 +367,7 @@ JSON 외에 다른 텍스트는 절대 포함하지 마세요.
     "개선된 핵심 포인트 3",
     "개선된 핵심 포인트 4"
   ],
-  "narration": "개선된 뉴스 앵커 내레이션 스크립트. 반드시 '지스터 여러분'으로 시작. 최소 900자 이상."
+  "narration": "지스터를 위한 개선된 내레이션. 반드시 '지스터 여러분'으로 시작. 최소 900자 이상."
 }
 PROMPT;
 

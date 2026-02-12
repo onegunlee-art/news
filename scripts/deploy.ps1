@@ -47,7 +47,7 @@ Write-Host ""
 # 3. 커밋 & 푸시
 Write-Host "[3/3] Commit and push to main..." -ForegroundColor Yellow
 git add -A
-git commit -m "Deploy: 기사 상세 카테고리 라벨 + 다음 기사 보기 버튼"
+git commit -m "Deploy: 지스터 독자 통일 (GPT 프롬프트 + 내레이션 정규화)"
 git push origin main
 
 if ($LASTEXITCODE -ne 0) {
