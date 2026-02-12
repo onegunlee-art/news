@@ -2857,9 +2857,37 @@ const AdminPage: React.FC = () => {
 
                   {!usageData.self_tracked?.has_table && (
                     <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4">
-                      <p className="text-amber-200 text-sm">
-                        api_usage_logs 테이블이 없습니다. database/migrations/add_api_usage_logs.sql 마이그레이션을 실행해주세요.
+                      <p className="text-amber-200 text-sm mb-4">
+                        api_usage_logs 테이블이 없습니다. 아래 버튼을 눌러 마이그레이션을 실행해주세요.
                       </p>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          setSaveMessage({ type: 'info', text: '마이그레이션 실행 중...' });
+                          try {
+                            const r = await fetch('/api/admin/run-usage-migration.php');
+                            const d = await r.json();
+                            if (d.success) {
+                              setSaveMessage({ type: 'success', text: d.message });
+                              setUsageLoading(true);
+                              fetch('/api/admin/usage-dashboard.php')
+                                .then((res) => res.json())
+                                .then((data) => {
+                                  if (data.success) setUsageData(data);
+                                })
+                                .finally(() => setUsageLoading(false));
+                            } else {
+                              setSaveMessage({ type: 'error', text: d.message || '마이그레이션 실패' });
+                            }
+                          } catch (e) {
+                            setSaveMessage({ type: 'error', text: '마이그레이션 요청 실패: ' + (e as Error).message });
+                          }
+                          setTimeout(() => setSaveMessage(null), 5000);
+                        }}
+                        className="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium transition"
+                      >
+                        api_usage_logs 테이블 생성
+                      </button>
                     </div>
                   )}
 
