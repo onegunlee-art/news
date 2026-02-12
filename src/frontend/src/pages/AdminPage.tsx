@@ -26,6 +26,7 @@ import {
   HandThumbUpIcon,
   StarIcon,
   CurrencyDollarIcon,
+  ClipboardDocumentIcon,
 } from '@heroicons/react/24/outline';
 import RichTextToolbar from '../components/Common/RichTextToolbar';
 import AIWorkspace from '../components/AIWorkspace/AIWorkspace';
@@ -1521,10 +1522,28 @@ const AdminPage: React.FC = () => {
 
                   {/* 내레이션 톤 입력 */}
                   <div>
-                    <label className="block text-slate-300 mb-2 text-sm font-medium">
-                      <span className="text-emerald-400">내레이션 톤</span>
-                      <span className="ml-2 text-xs text-emerald-400/70">(붙여넣기 시 자동 정제)</span>
-                    </label>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-slate-300 text-sm font-medium">
+                        <span className="text-emerald-400">내레이션 톤</span>
+                        <span className="ml-2 text-xs text-emerald-400/70">(붙여넣기 시 자동 정제)</span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (newsNarration.trim()) {
+                            navigator.clipboard.writeText(newsNarration.trim());
+                            setSaveMessage({ type: 'success', text: '내레이션을 클립보드에 복사했습니다.' });
+                            setTimeout(() => setSaveMessage(null), 2000);
+                          }
+                        }}
+                        disabled={!newsNarration.trim()}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs transition disabled:opacity-40 disabled:cursor-not-allowed"
+                        title="전체 복사"
+                      >
+                        <ClipboardDocumentIcon className="w-4 h-4" />
+                        전체 복사
+                      </button>
+                    </div>
                     <RichTextToolbar textareaRef={refNewsNarration} value={newsNarration} onChange={setNewsNarration} />
                     <textarea
                       ref={refNewsNarration}
@@ -1596,10 +1615,28 @@ const AdminPage: React.FC = () => {
 
                   {/* The Gist's Critique 입력 */}
                   <div>
-                    <label className="block text-slate-300 mb-2 text-sm font-medium">
-                      <span className="text-amber-400">The Gist's Critique</span>
-                      <span className="ml-2 text-xs text-amber-400/70">(붙여넣기 시 자동 정제)</span>
-                    </label>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-slate-300 text-sm font-medium">
+                        <span className="text-amber-400">The Gist's Critique</span>
+                        <span className="ml-2 text-xs text-amber-400/70">(붙여넣기 시 자동 정제)</span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (newsWhyImportant.trim()) {
+                            navigator.clipboard.writeText(newsWhyImportant.trim());
+                            setSaveMessage({ type: 'success', text: 'The Gist\'s Critique를 클립보드에 복사했습니다.' });
+                            setTimeout(() => setSaveMessage(null), 2000);
+                          }
+                        }}
+                        disabled={!newsWhyImportant.trim()}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs transition disabled:opacity-40 disabled:cursor-not-allowed"
+                        title="전체 복사"
+                      >
+                        <ClipboardDocumentIcon className="w-4 h-4" />
+                        전체 복사
+                      </button>
+                    </div>
                     <RichTextToolbar textareaRef={refNewsWhyImportant} value={newsWhyImportant} onChange={setNewsWhyImportant} />
                     <textarea
                       ref={refNewsWhyImportant}
@@ -2064,10 +2101,26 @@ const AdminPage: React.FC = () => {
                       {/* 내레이션 */}
                       {(aiResult.narration || aiResult.translation_summary) && (
                         <div className="p-4 bg-slate-900/50 rounded-xl">
-                          <h4 className="text-cyan-400 font-medium mb-2 flex items-center gap-2">
-                            <DocumentTextIcon className="w-4 h-4" />
-                            내레이션
-                          </h4>
+                          <div className="flex items-center justify-between mb-2">
+                            <h4 className="text-cyan-400 font-medium flex items-center gap-2">
+                              <DocumentTextIcon className="w-4 h-4" />
+                              내레이션
+                            </h4>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const text = aiResult.narration || aiResult.translation_summary || '';
+                                navigator.clipboard.writeText(text);
+                                setSaveMessage({ type: 'success', text: '내레이션을 클립보드에 복사했습니다.' });
+                                setTimeout(() => setSaveMessage(null), 2000);
+                              }}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs transition"
+                              title="전체 복사"
+                            >
+                              <ClipboardDocumentIcon className="w-4 h-4" />
+                              전체 복사
+                            </button>
+                          </div>
                           <p className="text-slate-300 leading-relaxed whitespace-pre-line">{aiResult.narration || aiResult.translation_summary}</p>
                         </div>
                       )}
@@ -2090,7 +2143,23 @@ const AdminPage: React.FC = () => {
                       {/* 크리티컬 분석 */}
                       {aiResult.critical_analysis && aiResult.critical_analysis.why_important && (
                         <div className="p-4 bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-xl border border-purple-500/20">
-                          <h4 className="text-purple-400 font-medium mb-3">The Gist's Critique</h4>
+                          <div className="flex items-center justify-between mb-3">
+                            <h4 className="text-purple-400 font-medium">The Gist's Critique</h4>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const text = aiResult.critical_analysis?.why_important || '';
+                                navigator.clipboard.writeText(text);
+                                setSaveMessage({ type: 'success', text: 'The Gist\'s Critique를 클립보드에 복사했습니다.' });
+                                setTimeout(() => setSaveMessage(null), 2000);
+                              }}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs transition"
+                              title="전체 복사"
+                            >
+                              <ClipboardDocumentIcon className="w-4 h-4" />
+                              전체 복사
+                            </button>
+                          </div>
                           <p className="text-slate-200">{aiResult.critical_analysis.why_important}</p>
                         </div>
                       )}

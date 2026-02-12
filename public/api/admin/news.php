@@ -426,7 +426,7 @@ if ($method === 'GET') {
             SELECT $selectColumns
             FROM news 
             $where
-            ORDER BY created_at DESC 
+            ORDER BY COALESCE(published_at, created_at) DESC 
             LIMIT $perPage OFFSET $offset
         ");
         $stmt->execute($params);
