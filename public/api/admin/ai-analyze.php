@@ -600,15 +600,21 @@ function getStatus(): array {
  */
 function regenerateThumbnailDalle(array $input): array {
     $prompt = isset($input['prompt']) && is_string($input['prompt']) ? trim($input['prompt']) : '';
-    if ($prompt === '') {
-        return ['success' => false, 'error' => 'prompt is required', 'image_url' => null];
+    $newsTitle = isset($input['news_title']) && is_string($input['news_title']) ? trim($input['news_title']) : '';
+    $title = $prompt !== '' ? $prompt : $newsTitle;
+    if ($title === '') {
+        return ['success' => false, 'error' => 'prompt 또는 news_title이 필요합니다.', 'image_url' => null];
     }
     $openai = new OpenAIService([]);
     if ($openai->isMockMode()) {
         return ['success' => false, 'error' => 'OPENAI_API_KEY not set. DALL-E를 사용할 수 없습니다.', 'image_url' => null];
     }
-    $styleSuffix = '. Style: like a movie or novel cover, bright and vibrant tone, prominently featuring characters or people. Cartoon-like aesthetic. Must include national flags of relevant countries.';
-    $effectivePrompt = $prompt . $styleSuffix;
+    $effectivePrompt = "Based on the article title (without extracting or quoting the full text), create a custom thumbnail concept art in a witty metaphorical cartoon style that visually represents the key idea implied by the title: \"" . mb_substr($title, 0, 200) . "\". "
+        . "Style: Playful metaphor cartoon (no literal portraits). "
+        . "No text in the image. "
+        . "Imagery should convey the concept of the article title without any text. "
+        . "Clever symbolic elements and humor are encouraged. "
+        . "Do NOT include any written titles or captions in the thumbnail itself.";
     try {
         $url = $openai->createImage($effectivePrompt, ['timeout' => 90]);
         $lastErr = $openai->getLastError();

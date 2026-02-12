@@ -47,7 +47,7 @@ Write-Host ""
 # 3. 커밋 & 푸시
 Write-Host "[3/3] Commit and push to main..." -ForegroundColor Yellow
 git add -A
-git commit -m "Deploy: TTS 캐시 및 일괄 재생성 적용"
+git commit -m "Deploy: 썸네일 DALL-E 프롬프트 수정 (메타포 카툰 스타일)"
 git push origin main
 
 if ($LASTEXITCODE -ne 0) {

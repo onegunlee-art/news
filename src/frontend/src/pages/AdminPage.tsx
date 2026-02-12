@@ -1381,18 +1381,18 @@ const AdminPage: React.FC = () => {
                           {/* DALL-E로 썸네일 수정 */}
                           <div className="pt-2 border-t border-slate-700/50">
                             <label className="block text-slate-400 text-sm mb-1">DALL-E로 썸네일 수정</label>
-                            <p className="text-slate-500 text-xs mb-2">프롬프트를 입력하면 DALL-E로 새 썸네일을 생성합니다 (영문 권장)</p>
+                            <p className="text-slate-500 text-xs mb-2">기사 제목을 넣으면 메타포 카툰 스타일로 썸네일을 생성합니다 (비워두면 뉴스 제목 사용)</p>
                             <div className="flex gap-2">
                               <input
                                 type="text"
                                 value={dallePrompt}
                                 onChange={(e) => setDallePrompt(e.target.value)}
-                                placeholder="예: A blue ocean with sailing ships, editorial style"
+                                placeholder="기사 제목 또는 시각화할 개념 (비워두면 뉴스 제목 사용)"
                                 className="flex-1 bg-slate-800/50 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-500 focus:border-purple-500 focus:ring-1 focus:ring-purple-500 outline-none transition"
                               />
                               <button
                                 type="button"
-                                disabled={isRegeneratingDalle || !dallePrompt.trim()}
+                                disabled={isRegeneratingDalle || (!dallePrompt.trim() && !(newsTitle || '').trim())}
                                 onClick={async () => {
                                   setIsRegeneratingDalle(true);
                                   setSaveMessage(null);
