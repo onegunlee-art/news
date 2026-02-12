@@ -223,9 +223,26 @@ try {
         }
     } catch (Exception $e) { /* bookmarks 테이블 없을 수 있음 */ }
 
+    // 다음 기사 (같은 카테고리, id < 현재, 최신순 1건)
+    $nextArticle = null;
+    $category = $news['category'] ?? null;
+    try {
+        $nextSql = $category
+            ? "SELECT id, title FROM news WHERE category = ? AND id < ? ORDER BY id DESC LIMIT 1"
+            : "SELECT id, title FROM news WHERE id < ? ORDER BY id DESC LIMIT 1";
+        $nextStmt = $db->prepare($nextSql);
+        if ($category) {
+            $nextStmt->execute([$category, $news['id']]);
+        } else {
+            $nextStmt->execute([$news['id']]);
+        }
+        $nextArticle = $nextStmt->fetch(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {}
+
     // 응답 데이터 구성 (published_at = 포스팅 날짜로 표시)
     $responseData = [
         'id' => (int)$news['id'],
+        'category' => $news['category'] ?? null,
         'title' => $news['title'],
         'description' => $news['description'],
         'content' => $news['content'],
@@ -242,6 +259,7 @@ try {
         'updated_at' => $news['updated_at'] ?? null,
         'time_ago' => $timeAgo,
         'is_bookmarked' => $isBookmarked,
+        'next_article' => $nextArticle ? ['id' => (int)$nextArticle['id'], 'title' => $nextArticle['title']] : null,
     ];
     api_log('news/detail', 'GET', 200);
     echo json_encode([

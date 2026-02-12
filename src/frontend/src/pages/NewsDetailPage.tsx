@@ -32,6 +32,7 @@ interface NewsDetail {
   image_url?: string | null
   author?: string | null
   category?: string | null
+  next_article?: { id: number; title: string } | null
 }
 
 /** API category 값 → 목록 라벨 (외교, 금융 등) */
@@ -39,6 +40,9 @@ const categoryToLabel: Record<string, string> = {
   diplomacy: '외교',
   economy: '금융',
   entertainment: '엔터테인먼트',
+  technology: '기술',
+  tech: '기술',
+  security: '안보/군사',
 }
 
 export default function NewsDetailPage() {
@@ -271,10 +275,11 @@ export default function NewsDetailPage() {
         </div>
       </div>
 
+      <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto flex flex-col lg:flex-row lg:gap-8">
       <motion.article
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto"
+        className="flex-1 min-w-0"
       >
         {/* 대표 이미지 */}
         <div className="aspect-video bg-gray-100 overflow-hidden">
@@ -412,6 +417,30 @@ export default function NewsDetailPage() {
           )}
         </div>
       </motion.article>
+
+      {/* 다음 기사 보기 - 우측 사이드바 (데스크톱) / 본문 하단 (모바일) */}
+      {news.next_article && (
+        <aside className="lg:w-64 flex-shrink-0 order-last lg:order-none">
+          <div className="lg:sticky lg:top-20 pt-6 lg:pt-8 border-t lg:border-t-0 lg:border-l border-gray-100 lg:pl-6 mt-6 lg:mt-0">
+            <Link
+              to={`/news/${news.next_article.id}`}
+              className="block p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors group"
+            >
+              <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">다음 기사</span>
+              <p className="mt-1 text-sm font-medium text-gray-900 line-clamp-2 group-hover:text-primary-600 transition-colors">
+                {news.next_article.title}
+              </p>
+              <span className="inline-flex items-center gap-1 mt-2 text-sm text-primary-500 font-medium">
+                보기
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </span>
+            </Link>
+          </div>
+        </aside>
+      )}
+      </div>
 
       {/* 하단 네비게이션 - 모바일만, PC는 헤더에 링크 */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-40">
