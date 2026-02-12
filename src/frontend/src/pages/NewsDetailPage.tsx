@@ -9,6 +9,7 @@ import { useAudioPlayerStore } from '../store/audioPlayerStore'
 import LoadingSpinner from '../components/Common/LoadingSpinner'
 import { getPlaceholderImageUrl } from '../utils/imagePolicy'
 import { formatSourceDisplayName } from '../utils/formatSource'
+import { extractTitleFromUrl } from '../utils/extractTitleFromUrl'
 import { formatContentHtml } from '../utils/sanitizeHtml'
 
 interface NewsDetail {
@@ -20,7 +21,8 @@ interface NewsDetail {
   narration: string | null
   future_prediction?: string | null
   source: string | null
-  original_source?: string | null  // 추출된 원본 출처 (예: Financial Times)
+  original_source?: string | null  // 추출된 원본 출처 (예: Foreign Affairs)
+  original_title?: string | null   // 원문 영어 제목 (매체글 TTS용)
   url: string
   published_at: string | null
   created_at?: string | null
@@ -61,9 +63,10 @@ export default function NewsDetailPage() {
         : ''
     const rawSource = (news.original_source && news.original_source.trim()) || (news.source === 'Admin' ? 'The Gist' : news.source || 'The Gist')
     const sourceDisplay = formatSourceDisplayName(rawSource) || 'The Gist'
+    const titleForMeta = (news.original_title && String(news.original_title).trim()) || extractTitleFromUrl(news.url) || news.title
     const editorialLine = dateStr
-      ? `${dateStr}자 ${sourceDisplay} 저널의 "${news.title}"을 AI 번역, 요약하고 The Gist에서 일부 편집한 글입니다.`
-      : `${sourceDisplay} 저널의 "${news.title}"을 AI 번역, 요약하고 The Gist에서 일부 편집한 글입니다.`
+      ? `${dateStr}자 ${sourceDisplay} 저널의 "${titleForMeta}"을 AI 번역, 요약하고 The Gist에서 일부 편집한 글입니다.`
+      : `${sourceDisplay} 저널의 "${titleForMeta}"을 AI 번역, 요약하고 The Gist에서 일부 편집한 글입니다.`
     const mainContent = news.narration || news.content || news.description || ''
     const critiquePart = news.why_important ? `The Gist's Critique. ${news.why_important}` : ''
     if (!mainContent && !critiquePart) {
@@ -81,7 +84,7 @@ export default function NewsDetailPage() {
       800,
       400
     )
-    openAndPlay(news.title, editorialLine, mainContent, critiquePart, 1.0, imageUrl, news.id)
+    openAndPlay(titleForMeta, editorialLine, mainContent, critiquePart, 1.0, imageUrl, news.id)
   }
 
   useEffect(() => {

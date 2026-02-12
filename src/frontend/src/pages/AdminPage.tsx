@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { formatSourceDisplayName } from '../utils/formatSource';
+import { formatSourceDisplayName } from '../utils/formatSource'
+import { extractTitleFromUrl } from '../utils/extractTitleFromUrl';
 import {
   ChartBarIcon,
   UsersIcon,
@@ -42,8 +43,12 @@ function buildTtsParamsForListen(params: {
   createdAt?: string | null | undefined | unknown
   source?: string | null | undefined | unknown
   originalSource?: string | null | undefined | unknown
+  sourceUrl?: string | null | undefined
+  originalTitle?: string | null | undefined
 }): { title: string; meta: string; narration: string; critique_part: string } {
-  const title = (params.title || '제목 없음').trim()
+  const titleRaw = (params.title || '제목 없음').trim()
+  // 매체글 제목: GPT original_title(원문 영어) 우선 → URL 슬러그 → 한국어 제목
+  const title = (params.originalTitle && String(params.originalTitle).trim()) || (params.sourceUrl && extractTitleFromUrl(params.sourceUrl)) || titleRaw
   const toDateStr = (v: unknown) => (typeof v === 'string' ? v : null)
   const ref = toDateStr(params.publishedAt) || toDateStr(params.updatedAt) || toDateStr(params.createdAt)
   const dateStr = ref
@@ -160,6 +165,7 @@ const KNOWLEDGE_CATEGORIES = [
 // AI 분석 결과 인터페이스
 interface AIAnalysisResult {
   news_title?: string;
+  original_title?: string;
   translation_summary?: string;
   key_points?: string[];
   content_summary?: string;
@@ -261,6 +267,7 @@ const AdminPage: React.FC = () => {
   const [articlePublishedAt, setArticlePublishedAt] = useState('');
   const [articleImageUrl, setArticleImageUrl] = useState('');
   const [articleSummary, setArticleSummary] = useState('');
+  const [articleOriginalTitle, setArticleOriginalTitle] = useState('');
   const [showExtractedInfo, setShowExtractedInfo] = useState(false);
   const [isRegeneratingThumbnail, setIsRegeneratingThumbnail] = useState(false);
   const [isRegeneratingDalle, setIsRegeneratingDalle] = useState(false);
@@ -670,6 +677,7 @@ const AdminPage: React.FC = () => {
     // 추가 메타데이터 (출처, 작성자, 작성일, 사진)
     setArticleUrl(news.source_url || '');
     setArticleSource(news.original_source || news.source || '');
+    setArticleOriginalTitle((news as { original_title?: string }).original_title || '');
     setArticleAuthor(news.author || '');
     setArticlePublishedAt(news.published_at || '');
     setArticleImageUrl(news.image_url || '');
@@ -694,6 +702,7 @@ const AdminPage: React.FC = () => {
     setArticlePublishedAt('');
     setArticleImageUrl('');
     setArticleSummary('');
+    setArticleOriginalTitle('');
     setShowExtractedInfo(false);
     setSaveMessage(null);
   };
@@ -1192,6 +1201,8 @@ const AdminPage: React.FC = () => {
                               publishedAt: article?.published_at,
                               source: article?.source,
                               originalSource: (article as { original_source?: string })?.original_source,
+                              sourceUrl: (article as { source_url?: string; url?: string })?.source_url ?? (article as { url?: string })?.url,
+                              originalTitle: (a.original_title as string) || undefined,
                             })
                             const ttsRes = await fetch('/api/admin/ai-analyze.php', {
                               method: 'POST',
@@ -1525,6 +1536,8 @@ const AdminPage: React.FC = () => {
                                 publishedAt: articlePublishedAt,
                                 source: articleSource || 'Admin',
                                 originalSource: (articleSource !== 'Admin' ? articleSource : null) || undefined,
+                                sourceUrl: articleUrl || undefined,
+                                originalTitle: articleOriginalTitle || undefined,
                               })
                               const res = await fetch('/api/admin/ai-analyze.php', {
                                 method: 'POST',
@@ -1606,6 +1619,7 @@ const AdminPage: React.FC = () => {
                             narration: newsNarration.trim() || null,
                             source_url: articleUrl.trim() || null,
                             source: articleSource.trim() || null,
+                            original_title: articleOriginalTitle.trim() || null,
                             author: articleAuthor.trim() || null,
                             published_at: articlePublishedAt.trim() || null,
                             image_url: articleImageUrl.trim() || null,
@@ -1655,6 +1669,8 @@ const AdminPage: React.FC = () => {
                               publishedAt: articlePublishedAt.trim() || undefined,
                               source: articleSource.trim() || 'Admin',
                               originalSource: articleSource !== 'Admin' ? articleSource : undefined,
+                              sourceUrl: articleUrl.trim() || undefined,
+                              originalTitle: articleOriginalTitle.trim() || undefined,
                             })
                             if (ttsParams.narration || ttsParams.critique_part) {
                               fetch('/api/admin/ai-analyze.php', {
@@ -1671,6 +1687,7 @@ const AdminPage: React.FC = () => {
                             setNewsWhyImportant('');
                             setNewsNarration('');
                             setArticleUrl('');
+                            setArticleOriginalTitle('');
                             setEditingNewsId(null);
                             setRegeneratedTtsUrl(null);
                             // 추출 정보 초기화
@@ -1956,6 +1973,8 @@ const AdminPage: React.FC = () => {
                               publishedAt: data.article?.published_at,
                               source: data.article?.source,
                               originalSource: (data.article as { original_source?: string })?.original_source,
+                              sourceUrl: (data.article as { source_url?: string; url?: string })?.source_url ?? (data.article as { url?: string })?.url,
+                              originalTitle: (data.analysis as { original_title?: string })?.original_title,
                             })
                             const ttsRes = await fetch('/api/admin/ai-analyze.php', {
                               method: 'POST',
@@ -2303,6 +2322,7 @@ const AdminPage: React.FC = () => {
                           );
                           setNewsWhyImportant('');
                           setArticleUrl(aiUrl);
+                          setArticleOriginalTitle((aiResult.original_title as string) || '');
                         }}
                         className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-medium hover:opacity-90 transition flex items-center justify-center gap-2"
                       >

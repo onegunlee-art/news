@@ -517,7 +517,7 @@ final class AdminController
         $supabase = $this->getSupabaseService($projectRoot);
 
         $columns = 'id, title, content, description, source';
-        $optCols = ['why_important', 'narration', 'published_at', 'updated_at', 'created_at', 'original_source'];
+        $optCols = ['why_important', 'narration', 'published_at', 'updated_at', 'created_at', 'original_source', 'original_title', 'source_url'];
         foreach ($optCols as $col) {
             try {
                 $chk = $this->db->query("SHOW COLUMNS FROM news LIKE '{$col}'");
@@ -616,10 +616,52 @@ final class AdminController
         return new \Agents\Services\SupabaseService($cfg);
     }
 
+    /** URL 슬러그에서 영어 제목 추출 */
+    private function extractTitleFromUrl(string $url): ?string
+    {
+        $trimmed = trim($url);
+        if ($trimmed === '') {
+            return null;
+        }
+        if (!preg_match('#^https?://#i', $trimmed)) {
+            $trimmed = 'https://' . $trimmed;
+        }
+        $parsed = parse_url($trimmed);
+        if ($parsed === false || !isset($parsed['path'])) {
+            return null;
+        }
+        $segments = array_filter(explode('/', trim($parsed['path'], '/')));
+        if (empty($segments)) {
+            return null;
+        }
+        $slug = preg_replace('/\.(html?|php|aspx?)$/i', '', end($segments));
+        if ($slug === '') {
+            return null;
+        }
+        $words = array_filter(explode('-', $slug));
+        if (empty($words)) {
+            return null;
+        }
+        $result = [];
+        foreach ($words as $w) {
+            $result[] = ucfirst(strtolower($w));
+        }
+        return implode(' ', $result) ?: null;
+    }
+
     /** playArticle과 동일한 구조 (title, meta, narration, critiquePart) - Listen 호환 */
     private function buildListenStructured(array $row): ?array
     {
-        $title = trim($row['title'] ?? '');
+        $titleRaw = trim($row['title'] ?? '');
+        $originalTitle = trim($row['original_title'] ?? '');
+        $sourceUrl = trim($row['source_url'] ?? '');
+        // 매체글 제목: GPT original_title(원문 영어) 우선 → URL 슬러그 → 한국어 제목
+        $title = ($originalTitle !== '')
+            ? $originalTitle
+            : (($sourceUrl !== '' && ($extracted = $this->extractTitleFromUrl($sourceUrl))) ? $extracted : $titleRaw);
+        if ($title === '') {
+            $title = $titleRaw ?: '제목 없음';
+        }
         $dateStr = '';
         $ref = $row['published_at'] ?? $row['updated_at'] ?? $row['created_at'] ?? null;
         if ($ref) {

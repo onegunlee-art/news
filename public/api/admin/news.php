@@ -115,6 +115,7 @@ $hasWhyImportant   = isset($newsColumns['why_important']);
 $hasNarration      = isset($newsColumns['narration']);
 $hasFuturePrediction = isset($newsColumns['future_prediction']);
 $hasOriginalSource = isset($newsColumns['original_source']);
+$hasOriginalTitle  = isset($newsColumns['original_title']);
 $hasAuthor         = isset($newsColumns['author']);
 $hasPublishedAt    = isset($newsColumns['published_at']);
 
@@ -150,8 +151,12 @@ if ($method === 'POST') {
     $content = $input['content'] ?? '';
     $whyImportant = $input['why_important'] ?? null;
     $narration = $input['narration'] ?? null;
+    if ($narration !== null && is_string($narration)) {
+        $narration = str_replace('시청자 여러분', '지스터 여러분', $narration);
+    }
     $futurePrediction = $input['future_prediction'] ?? null;
     $sourceUrl = $input['source_url'] ?? null;
+    $originalTitle = $input['original_title'] ?? null;
     
     // 추가 메타데이터 필드
     $originalSource = $input['source'] ?? null;  // 원본 출처 (예: Financial Times)
@@ -256,6 +261,12 @@ if ($method === 'POST') {
         if ($hasOriginalSource) {
             $columns[] = 'original_source';
             $values[] = $originalSource;
+            $placeholders[] = '?';
+        }
+        
+        if ($hasOriginalTitle) {
+            $columns[] = 'original_title';
+            $values[] = $originalTitle;
             $placeholders[] = '?';
         }
         
@@ -396,6 +407,9 @@ if ($method === 'GET') {
         if ($hasOriginalSource) {
             $selectColumns = str_replace('source,', 'source, original_source,', $selectColumns);
         }
+        if ($hasOriginalTitle) {
+            $selectColumns = str_replace('title,', 'title, original_title,', $selectColumns);
+        }
         if ($hasAuthor) {
             $selectColumns = str_replace('original_source,', 'original_source, author,', $selectColumns);
             if (!$hasOriginalSource) {
@@ -458,6 +472,9 @@ if ($method === 'PUT') {
     $content = $input['content'] ?? '';
     $whyImportant = $input['why_important'] ?? null;
     $narration = $input['narration'] ?? null;
+    if ($narration !== null && is_string($narration)) {
+        $narration = str_replace('시청자 여러분', '지스터 여러분', $narration);
+    }
     $futurePrediction = $input['future_prediction'] ?? null;
     $sourceUrl = $input['source_url'] ?? null;
     
@@ -584,6 +601,11 @@ if ($method === 'PUT') {
         if ($hasOriginalSource) {
             $setClauses[] = 'original_source = ?';
             $values[] = $originalSource;
+        }
+        
+        if ($hasOriginalTitle) {
+            $setClauses[] = 'original_title = ?';
+            $values[] = $originalTitle;
         }
         
         if ($hasAuthor) {

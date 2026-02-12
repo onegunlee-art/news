@@ -23,7 +23,8 @@ final class AnalysisResult
         private readonly array $metadata = [],
         private readonly ?string $newsTitle = null,
         private readonly ?string $narration = null,
-        private readonly ?string $contentSummary = null
+        private readonly ?string $contentSummary = null,
+        private readonly ?string $originalTitle = null
     ) {}
 
     public function getTranslationSummary(): string
@@ -76,6 +77,11 @@ final class AnalysisResult
         return $this->contentSummary;
     }
 
+    public function getOriginalTitle(): ?string
+    {
+        return $this->originalTitle;
+    }
+
     /**
      * 오디오 URL 추가된 새 인스턴스 반환
      */
@@ -89,7 +95,8 @@ final class AnalysisResult
             metadata: $this->metadata,
             newsTitle: $this->newsTitle,
             narration: $this->narration,
-            contentSummary: $this->contentSummary
+            contentSummary: $this->contentSummary,
+            originalTitle: $this->originalTitle
         );
     }
 
@@ -106,7 +113,8 @@ final class AnalysisResult
             metadata: array_merge($this->metadata, $metadata),
             newsTitle: $this->newsTitle,
             narration: $this->narration,
-            contentSummary: $this->contentSummary
+            contentSummary: $this->contentSummary,
+            originalTitle: $this->originalTitle
         );
     }
 
@@ -117,6 +125,7 @@ final class AnalysisResult
     {
         return [
             'news_title' => $this->newsTitle,
+            'original_title' => $this->originalTitle,
             'translation_summary' => $this->translationSummary,
             'key_points' => $this->keyPoints,
             'narration' => $this->narration,
@@ -148,7 +157,8 @@ final class AnalysisResult
             metadata: $data['metadata'] ?? [],
             newsTitle: $data['news_title'] ?? null,
             narration: $data['narration'] ?? null,
-            contentSummary: $data['content_summary'] ?? null
+            contentSummary: $data['content_summary'] ?? null,
+            originalTitle: $data['original_title'] ?? null
         );
     }
 

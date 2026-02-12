@@ -110,6 +110,13 @@ try {
         $hasOriginalSource = $checkCol->rowCount() > 0;
     } catch (Exception $e) {}
     
+    // original_title 컬럼 존재 여부 확인 (원문 영어 제목, 매체글 TTS용)
+    $hasOriginalTitle = false;
+    try {
+        $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'original_title'");
+        $hasOriginalTitle = $checkCol->rowCount() > 0;
+    } catch (Exception $e) {}
+    
     // updated_at 컬럼 존재 여부 확인 (admin에서 업데이트한 날짜; 없을 수 있음)
     $hasUpdatedAt = false;
     try {
@@ -159,9 +166,12 @@ try {
     if ($hasOriginalSource) {
         $columns .= ', original_source';
     }
+    if ($hasOriginalTitle) {
+        $columns .= ', original_title';
+    }
     
     // #region agent log
-    $debugPayload('detail.php:columns', 'optional columns built', ['hasWhyImportant' => $hasWhyImportant, 'hasNarration' => $hasNarration, 'hasSourceUrl' => $hasSourceUrl, 'hasPublishedAt' => $hasPublishedAt, 'hasOriginalSource' => $hasOriginalSource, 'hasUpdatedAt' => $hasUpdatedAt, 'columns' => $columns], 'H1');
+    $debugPayload('detail.php:columns', 'optional columns built', ['hasWhyImportant' => $hasWhyImportant, 'hasNarration' => $hasNarration, 'hasSourceUrl' => $hasSourceUrl, 'hasPublishedAt' => $hasPublishedAt, 'hasOriginalSource' => $hasOriginalSource, 'hasOriginalTitle' => $hasOriginalTitle, 'hasUpdatedAt' => $hasUpdatedAt, 'columns' => $columns], 'H1');
     // #endregion
     
     // 뉴스 조회
@@ -224,6 +234,7 @@ try {
         'future_prediction' => $hasFuturePrediction ? ($news['future_prediction'] ?? null) : null,
         'source' => $news['source'],
         'original_source' => $hasOriginalSource ? ($news['original_source'] ?? null) : null,
+        'original_title' => $hasOriginalTitle ? ($news['original_title'] ?? null) : null,
         'url' => $hasSourceUrl ? ($news['source_url'] ?? '') : '',
         'image_url' => $news['image_url'],
         'published_at' => $dateForDisplay,

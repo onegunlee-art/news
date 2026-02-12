@@ -156,8 +156,10 @@ class AnalysisAgent extends BaseAgent
         
         $data = $this->parseJsonResponse($response);
 
+        // narration 정규화: 시청자 여러분 → 지스터 여러분
+        $narration = $this->normalizeNarration($data['narration'] ?? null);
+
         // narration이 있으면 translation_summary로도 사용 (하위 호환)
-        $narration = $data['narration'] ?? null;
         $translationSummary = $data['translation_summary'] ?? '';
         if (empty($translationSummary) && !empty($narration)) {
             $translationSummary = mb_substr($narration, 0, 200);
@@ -169,7 +171,8 @@ class AnalysisAgent extends BaseAgent
             criticalAnalysis: $data['critical_analysis'] ?? [],
             newsTitle: $data['news_title'] ?? null,
             narration: $narration,
-            contentSummary: $data['content_summary'] ?? null
+            contentSummary: $data['content_summary'] ?? null,
+            originalTitle: $data['original_title'] ?? null
         );
     }
 
@@ -190,6 +193,7 @@ class AnalysisAgent extends BaseAgent
 
 {
   "news_title": "한국 독자가 클릭하고 싶은 한국어 뉴스 제목. 15~30자. 핵심을 담되 임팩트 있게.",
+  "original_title": "원문의 영어 제목 그대로. 예: The Limits of Russian Power. 기사 본문이나 제목에서 확인한 정확한 영문 제목을 반드시 포함.",
   "content_summary": "원문의 AI 요약 및 구조 분석. 도입·전개·결론 구조를 유지하며, 핵심 논지·사실·수치를 포함한 상세 요약. 최소 600자 이상, 가능하면 900자 이상 작성. 마크다운 제목(##)과 불렛(-) 사용 가능.",
   "key_points": [
     "기사 본문의 핵심 내용을 최소 4개 이상의 불렛 포인트로 요약. 각 항목은 1~2문장, 구체적 사실과 수치를 포함.",
@@ -197,7 +201,7 @@ class AnalysisAgent extends BaseAgent
     "세 번째 핵심 포인트",
     "네 번째 핵심 포인트"
   ],
-  "narration": "이 기사를 뉴스 앵커가 전달하듯 작성한 내레이션 스크립트. 도입(무슨 일이 있었는지) → 주요 내용(핵심 사실들)을 자연스럽게 이어서 말하듯 작성. 청취자가 귀로만 들어도 기사 전체를 이해할 수 있도록 충분히 상세하게 작성. 최소 900자 이상."
+  "narration": "이 기사를 뉴스 앵커가 전달하듯 작성한 내레이션 스크립트. 반드시 '지스터 여러분'으로 시작하세요. 도입(무슨 일이 있었는지) → 주요 내용(핵심 사실들)을 자연스럽게 이어서 말하듯 작성. 청취자가 귀로만 들어도 기사 전체를 이해할 수 있도록 충분히 상세하게 작성. 최소 900자 이상."
 }
 PROMPT;
 
@@ -241,11 +245,23 @@ PROMPT;
         
         return [
             'news_title' => null,
-            'narration' => trim($response),
+            'original_title' => null,
+            'narration' => $this->normalizeNarration(trim($response)),
             'key_points' => ['분석 결과를 확인하세요.'],
             'content_summary' => null,
             'critical_analysis' => []
         ];
+    }
+
+    /** 시청자 여러분 → 지스터 여러분 정규화 */
+    private function normalizeNarration(?string $narration): ?string
+    {
+        if ($narration === null || trim($narration) === '') {
+            return $narration;
+        }
+        $out = str_replace('시청자 여러분', '지스터 여러분', $narration);
+        $out = preg_replace('/^시청자\s+여러분/', '지스터 여러분', $out); // 공백 변형
+        return $out !== $narration ? $out : $narration;
     }
 
     /**
@@ -341,6 +357,7 @@ JSON 외에 다른 텍스트는 절대 포함하지 마세요.
 
 {
   "news_title": "개선된 한국어 뉴스 제목. 15~30자.",
+  "original_title": "원문의 영어 제목 그대로. 이전 분석에서 가져오거나 기사에서 확인.",
   "content_summary": "개선된 AI 요약 및 구조 분석. 최소 600자 이상, 가능하면 900자 이상.",
   "key_points": [
     "개선된 핵심 포인트 1",
@@ -348,7 +365,7 @@ JSON 외에 다른 텍스트는 절대 포함하지 마세요.
     "개선된 핵심 포인트 3",
     "개선된 핵심 포인트 4"
   ],
-  "narration": "개선된 뉴스 앵커 내레이션 스크립트. 최소 900자 이상."
+  "narration": "개선된 뉴스 앵커 내레이션 스크립트. 반드시 '지스터 여러분'으로 시작. 최소 900자 이상."
 }
 PROMPT;
 
@@ -364,7 +381,9 @@ PROMPT;
 
         $response = $this->callGPT($prompt, $options);
         $data = $this->parseJsonResponse($response);
-
+        if (isset($data['narration']) && $data['narration'] !== null) {
+            $data['narration'] = $this->normalizeNarration($data['narration']);
+        }
         return $data;
     }
 
