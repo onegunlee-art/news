@@ -37,19 +37,19 @@ function buildTtsParamsForListen(params: {
   title: string
   narration: string
   whyImportant?: string
-  publishedAt?: string | null
-  updatedAt?: string | null
-  createdAt?: string | null
-  source?: string | null
-  originalSource?: string | null
+  publishedAt?: string | null | undefined | unknown
+  updatedAt?: string | null | undefined | unknown
+  createdAt?: string | null | undefined | unknown
+  source?: string | null | undefined | unknown
+  originalSource?: string | null | undefined | unknown
 }): { title: string; meta: string; narration: string; critique_part: string } {
   const title = (params.title || '제목 없음').trim()
-  const dateStr = params.publishedAt
-    ? `${new Date(params.publishedAt).getFullYear()}년 ${new Date(params.publishedAt).getMonth() + 1}월 ${new Date(params.publishedAt).getDate()}일`
-    : (params.updatedAt || params.createdAt)
-      ? `${new Date(params.updatedAt || params.createdAt!).getFullYear()}년 ${new Date(params.updatedAt || params.createdAt!).getMonth() + 1}월 ${new Date(params.updatedAt || params.createdAt!).getDate()}일`
-      : ''
-  const rawSource = (params.originalSource && String(params.originalSource).trim()) || (params.source === 'Admin' ? 'The Gist' : params.source || 'The Gist')
+  const toDateStr = (v: unknown) => (typeof v === 'string' ? v : null)
+  const ref = toDateStr(params.publishedAt) || toDateStr(params.updatedAt) || toDateStr(params.createdAt)
+  const dateStr = ref
+    ? `${new Date(ref).getFullYear()}년 ${new Date(ref).getMonth() + 1}월 ${new Date(ref).getDate()}일`
+    : ''
+  const rawSource = (params.originalSource && String(params.originalSource).trim()) || (params.source === 'Admin' ? 'The Gist' : (params.source ? String(params.source) : 'The Gist'))
   const sourceDisplay = formatSourceDisplayName(rawSource) || 'The Gist'
   const meta = dateStr
     ? `${dateStr}자 ${sourceDisplay} 저널의 "${title}"을 AI 번역, 요약하고 The Gist에서 일부 편집한 글입니다.`
