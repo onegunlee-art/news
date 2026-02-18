@@ -335,12 +335,12 @@ export default function NewsDetailPage() {
           {/* 오디오 재생 버튼 - 제목 아래 배치 */}
           <button
             onClick={playArticle}
-            className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition-colors mb-6 pb-6 border-b border-gray-100 w-full"
+            className="inline-flex items-center gap-2 text-base text-primary-500 hover:text-primary-600 transition-colors mb-6 pb-6 border-b border-gray-100 w-full"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 18v-6a9 9 0 0118 0v6M3 18h2a2 2 0 002-2v-4a2 2 0 00-2-2H3v8zm14 0h2a2 2 0 002-2v-4a2 2 0 00-2-2h-2v8z" />
             </svg>
-            <span className="font-medium">Listen to audio</span>
+            <span className="font-medium">AI 보이스로 듣기</span>
           </button>
 
           {/* 내레이션 (The Gist's Take) - 메인 콘텐츠 */}
