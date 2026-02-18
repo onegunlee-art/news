@@ -35,6 +35,7 @@ use Agents\Services\GoogleTTSService;
 use Agents\Services\WebScraperService;
 use Agents\Services\RAGService;
 use Agents\Services\SupabaseService;
+use Agents\Services\PersonaService;
 
 class AgentPipeline
 {
@@ -66,12 +67,16 @@ class AgentPipeline
         // 2. Thumbnail Agent (저작권 회피: og:image → 일러스트 스타일)
         $this->addAgent(new ThumbnailAgent($this->openai, $this->config));
 
-        // 3. Analysis Agent (Google TTS, RAG 사용 시 주입)
+        // 3. Analysis Agent (Google TTS, RAG, Persona 사용 시 주입)
         $googleTts = isset($this->config['google_tts']) && is_array($this->config['google_tts'])
             ? new GoogleTTSService($this->config['google_tts'])
             : null;
         $ragService = $this->config['rag_service'] ?? null;
-        $this->addAgent(new AnalysisAgent($this->openai, $this->config['analysis'] ?? [], $googleTts, $ragService));
+        $personaService = $this->config['persona_service'] ?? null;
+        if ($personaService === null && ($this->config['analysis']['persona_service'] ?? null) instanceof PersonaService) {
+            $personaService = $this->config['analysis']['persona_service'];
+        }
+        $this->addAgent(new AnalysisAgent($this->openai, $this->config['analysis'] ?? [], $googleTts, $ragService, $personaService));
 
         // 4. Interpret Agent (옵션)
         if ($this->config['enable_interpret'] ?? true) {

@@ -26,6 +26,7 @@ use Agents\Models\AnalysisResult;
 use Agents\Services\OpenAIService;
 use Agents\Services\GoogleTTSService;
 use Agents\Services\RAGService;
+use Agents\Services\PersonaService;
 
 class AnalysisAgent extends BaseAgent
 {
@@ -33,14 +34,16 @@ class AnalysisAgent extends BaseAgent
     private bool $enableTTS = true;
     private ?GoogleTTSService $googleTts = null;
     private ?RAGService $ragService = null;
+    private ?PersonaService $personaService = null;
 
-    public function __construct(OpenAIService $openai, array $config = [], ?GoogleTTSService $googleTts = null, ?RAGService $ragService = null)
+    public function __construct(OpenAIService $openai, array $config = [], ?GoogleTTSService $googleTts = null, ?RAGService $ragService = null, ?PersonaService $personaService = null)
     {
         parent::__construct($openai, $config);
         $this->keyPointsCount = max(4, (int) ($config['key_points_count'] ?? 4));
         $this->enableTTS = $config['enable_tts'] ?? true;
         $this->googleTts = $googleTts;
         $this->ragService = $ragService ?? $config['rag_service'] ?? null;
+        $this->personaService = $personaService ?? $config['persona_service'] ?? null;
     }
 
     public function getName(): string
@@ -145,11 +148,13 @@ class AnalysisAgent extends BaseAgent
         $prompt = $this->buildFullAnalysisPrompt($article);
 
         $options = ['model' => 'gpt-5.2', 'timeout' => 180, 'max_tokens' => 8000];
+        $basePrompt = $this->personaService ? $this->personaService->getSystemPrompt() : ($this->prompts['system'] ?? '당신은 "The Gist"의 수석 에디터입니다.');
         if ($this->ragService && $this->ragService->isConfigured()) {
             $query = $article->getTitle() . ' ' . mb_substr($article->getContent(), 0, 500);
             $ragContext = $this->ragService->retrieveRelevantContext($query, 3);
-            $basePrompt = $this->prompts['system'] ?? '당신은 "The Gist"의 수석 에디터입니다.';
             $options['system_prompt'] = $this->ragService->buildSystemPromptWithRAG($basePrompt, $ragContext);
+        } else {
+            $options['system_prompt'] = $basePrompt;
         }
 
         $response = $this->callGPT($prompt, $options);
@@ -384,12 +389,13 @@ PROMPT;
 
         $options = ['model' => 'gpt-5.2', 'timeout' => 180, 'max_tokens' => 8000];
 
-        // RAG 컨텍스트 주입 (knowledge_library 포함)
+        $basePrompt = $this->personaService ? $this->personaService->getSystemPrompt() : ($this->prompts['system'] ?? '당신은 "The Gist"의 수석 에디터입니다.');
         if ($this->ragService && $this->ragService->isConfigured()) {
             $query = ($originalAnalysis['news_title'] ?? '') . ' ' . mb_substr($adminFeedback, 0, 300);
             $ragContext = $this->ragService->retrieveRelevantContext($query, 3);
-            $basePrompt = $this->prompts['system'] ?? '당신은 "The Gist"의 수석 에디터입니다.';
             $options['system_prompt'] = $this->ragService->buildSystemPromptWithRAG($basePrompt, $ragContext);
+        } else {
+            $options['system_prompt'] = $basePrompt;
         }
 
         $response = $this->callGPT($prompt, $options);

@@ -255,9 +255,11 @@ function analyzeUrl(string $url, array $options = []): array {
     }
 
     $ragService = null;
+    $personaService = null;
     $supabase = new SupabaseService([]);
     if ($supabase->isConfigured()) {
         $ragService = new RAGService(new OpenAIService([]), $supabase);
+        $personaService = new \Agents\Services\PersonaService($supabase);
     }
 
     $pipelineConfig = [
@@ -268,6 +270,7 @@ function analyzeUrl(string $url, array $options = []): array {
         'enable_learning' => $options['enable_learning'] ?? true,
         'google_tts' => $googleTtsConfig,
         'rag_service' => $ragService,
+        'persona_service' => $personaService,
         'analysis' => [
             'enable_tts' => $options['enable_tts'] ?? false,
             'summary_length' => 3,

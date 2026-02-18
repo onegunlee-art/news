@@ -67,6 +67,7 @@ $coreFiles = [
     __DIR__ . '/services/WebScraperService.php',
     __DIR__ . '/services/SupabaseService.php',
     __DIR__ . '/services/RAGService.php',
+    __DIR__ . '/services/PersonaService.php',
     __DIR__ . '/agents/ValidationAgent.php',
     __DIR__ . '/agents/AnalysisAgent.php',
     __DIR__ . '/agents/InterpretAgent.php',

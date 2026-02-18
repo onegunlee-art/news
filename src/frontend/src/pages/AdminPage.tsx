@@ -27,6 +27,7 @@ import {
   StarIcon,
   CurrencyDollarIcon,
   ClipboardDocumentIcon,
+  UserCircleIcon,
 } from '@heroicons/react/24/outline';
 import RichTextToolbar from '../components/Common/RichTextToolbar';
 import AIWorkspace from '../components/AIWorkspace/AIWorkspace';
@@ -206,7 +207,7 @@ const sanitizeText = (text: string): string => {
 const AdminPage: React.FC = () => {
   const navigate = useNavigate();
   const { } = useAuthStore(); // 권한 체크용 (추후 활성화)
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'news' | 'ai' | 'workspace' | 'knowledge' | 'usage' | 'settings'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'news' | 'ai' | 'workspace' | 'persona' | 'knowledge' | 'usage' | 'settings'>('dashboard');
 
   // feedback useEffect deps에서 참조되므로 컴포넌트 최상단에 선언
   const [articleUrl, setArticleUrl] = useState('');
@@ -245,6 +246,21 @@ const AdminPage: React.FC = () => {
   const [knFormSource, setKnFormSource] = useState('');
   const [isAddingKnowledge, setIsAddingKnowledge] = useState(false);
   const [knowledgeMessage, setKnowledgeMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // API 과금 대시보드
+  // Persona Playground & Tester
+  const [personaMessages, setPersonaMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([]);
+  const [personaInput, setPersonaInput] = useState('');
+  const [personaLoading, setPersonaLoading] = useState(false);
+  const [personaExtracting, setPersonaExtracting] = useState(false);
+  const [personaName, setPersonaName] = useState('The Gist 수석 에디터 v1');
+  const [personaList, setPersonaList] = useState<{ id: string; name: string; system_prompt: string; is_active: boolean }[]>([]);
+  const [activePersona, setActivePersona] = useState<{ id: string; name: string; system_prompt: string } | null>(null);
+  const [personaTestUrl, setPersonaTestUrl] = useState('');
+  const [personaTestArticleId, setPersonaTestArticleId] = useState('');
+  const [personaTestLoading, setPersonaTestLoading] = useState(false);
+  const [personaTestResult, setPersonaTestResult] = useState<{ analysis_result?: Record<string, unknown>; checklist?: Record<string, unknown> } | null>(null);
+  const personaChatEndRef = useRef<HTMLDivElement>(null);
 
   // API 과금 대시보드
   const [usageData, setUsageData] = useState<{
@@ -317,6 +333,28 @@ const AdminPage: React.FC = () => {
       .catch((err) => setSettingsError(err.response?.data?.message || '설정을 불러올 수 없습니다.'))
       .finally(() => setSettingsLoading(false));
   }, [activeTab]);
+
+  // Persona 탭 활성 시 목록 로드
+  useEffect(() => {
+    if (activeTab !== 'persona') return;
+    fetch('/api/admin/persona-api.php?action=list')
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success && Array.isArray(d.personas)) setPersonaList(d.personas);
+      })
+      .catch(() => setPersonaList([]));
+    fetch('/api/admin/persona-api.php?action=active')
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success && d.persona) setActivePersona(d.persona);
+        else setActivePersona(null);
+      })
+      .catch(() => setActivePersona(null));
+  }, [activeTab]);
+
+  useEffect(() => {
+    personaChatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [personaMessages]);
 
   const saveTtsVoice = () => {
     setSettingsSaving(true);
@@ -844,6 +882,7 @@ const AdminPage: React.FC = () => {
     { id: 'news', name: '뉴스 관리', icon: NewspaperIcon },
     { id: 'ai', name: 'AI 분석', icon: SparklesIcon },
     { id: 'workspace', name: 'AI Workspace', icon: AcademicCapIcon },
+    { id: 'persona', name: '페르소나', icon: UserCircleIcon },
     { id: 'knowledge', name: '이론 라이브러리', icon: BookOpenIcon },
     { id: 'usage', name: 'API 과금', icon: CurrencyDollarIcon },
     { id: 'settings', name: '설정', icon: CogIcon },
@@ -2592,6 +2631,295 @@ const AdminPage: React.FC = () => {
                 <h3 className="text-lg font-semibold text-white mb-3">RAG 검색 테스트</h3>
                 <p className="text-slate-400 text-sm mb-4">쿼리로 관련 크리틱/분석을 검색하고, 시스템 프롬프트 주입 결과를 확인합니다.</p>
                 <RAGTester />
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'persona' && (
+            <div className="space-y-8">
+              <div>
+                <h2 className="text-2xl font-bold text-white mb-2">GPT 페르소나</h2>
+                <p className="text-slate-400">대화로 페르소나를 정의하고 DB에 저장. 실제 서비스에서 사용되는 system prompt를 관리합니다.</p>
+              </div>
+
+              {/* 1. Persona Playground */}
+              <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50">
+                <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                  <ChatBubbleLeftRightIcon className="w-5 h-5 text-cyan-400" />
+                  Persona Playground
+                </h3>
+                <p className="text-slate-400 text-sm mb-4">GPT와 대화하며 The Gist 에디터 페르소나(톤·스타일·원칙)를 정의하세요. 완료 후 &quot;페르소나 추출 &amp; 저장&quot;을 누르면 system prompt로 DB에 저장됩니다.</p>
+
+                <div className="space-y-4">
+                  <div className="bg-slate-900/70 rounded-xl border border-slate-700/50 max-h-80 overflow-y-auto p-4 space-y-3">
+                    {personaMessages.length === 0 && (
+                      <p className="text-slate-500 text-sm">대화를 시작하세요. 예: &quot;당신은 The Gist의 수석 에디터입니다. 톤은 친근하면서도 전문적이어야 합니다.&quot;</p>
+                    )}
+                    {personaMessages.map((m, i) => (
+                      <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                        <div className={`max-w-[85%] rounded-lg px-4 py-2 text-sm ${m.role === 'user' ? 'bg-cyan-500/20 text-cyan-100' : 'bg-slate-700/50 text-slate-200'}`}>
+                          {m.content}
+                        </div>
+                      </div>
+                    ))}
+                    {personaLoading && (
+                      <div className="flex justify-start">
+                        <div className="bg-slate-700/50 rounded-lg px-4 py-2 text-sm text-slate-400 animate-pulse">생성 중...</div>
+                      </div>
+                    )}
+                    <div ref={personaChatEndRef} />
+                  </div>
+
+                  <div className="flex gap-2 flex-wrap">
+                    <input
+                      type="text"
+                      value={personaInput}
+                      onChange={(e) => setPersonaInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          if (personaInput.trim() && !personaLoading) {
+                            const msg = personaInput.trim();
+                            setPersonaMessages((prev) => [...prev, { role: 'user', content: msg }]);
+                            setPersonaInput('');
+                            setPersonaLoading(true);
+                            fetch('/api/admin/persona-api.php', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                action: 'chat',
+                                message: msg,
+                                history: personaMessages,
+                              }),
+                            })
+                              .then((res) => res.ok ? res : Promise.reject(new Error('SSE failed')))
+                              .then(async (res) => {
+                                const reader = res.body?.getReader();
+                                if (!reader) return;
+                                const decoder = new TextDecoder();
+                                let buf = '';
+                                let fullText = '';
+                                while (true) {
+                                  const { done, value } = await reader.read();
+                                  if (done) break;
+                                  buf += decoder.decode(value, { stream: true });
+                                  const lines = buf.split('\n');
+                                  buf = lines.pop() || '';
+                                  for (const line of lines) {
+                                    if (line.startsWith('data: ')) {
+                                      try {
+                                        const raw = line.slice(6).trim();
+                                        if (raw === '[DONE]' || raw === '') continue;
+                                        const data = JSON.parse(raw);
+                                        if (data.full_text) fullText = data.full_text;
+                                        else if (data.text) fullText += data.text;
+                                      } catch {}
+                                    }
+                                  }
+                                }
+                                if (fullText) {
+                                  setPersonaMessages((prev) => [...prev, { role: 'assistant', content: fullText }]);
+                                }
+                              })
+                              .catch(() => setPersonaMessages((prev) => [...prev, { role: 'assistant', content: '오류가 발생했습니다. API 키와 네트워크를 확인하세요.' }]))
+                              .finally(() => setPersonaLoading(false));
+                          }
+                        }
+                      }}
+                      placeholder="메시지 입력 후 Enter..."
+                      className="flex-1 min-w-[200px] bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-500 focus:ring-1 focus:ring-cyan-500 outline-none"
+                    />
+                    <input
+                      type="text"
+                      value={personaName}
+                      onChange={(e) => setPersonaName(e.target.value)}
+                      placeholder="페르소나 이름"
+                      className="w-48 bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-500 focus:ring-1 focus:ring-cyan-500 outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (personaMessages.length === 0) {
+                          setSaveMessage({ type: 'error', text: '대화 내용이 없습니다.' });
+                          return;
+                        }
+                        setPersonaExtracting(true);
+                        setSaveMessage(null);
+                        try {
+                          const res = await fetch('/api/admin/persona-api.php', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              action: 'extract_and_save',
+                              history: personaMessages,
+                              name: personaName.trim() || 'The Gist 수석 에디터 v1',
+                            }),
+                          });
+                          const d = await res.json();
+                          if (d.success) {
+                            setSaveMessage({ type: 'success', text: '페르소나가 저장되었습니다.' });
+                            setActivePersona(d.persona);
+                            fetch('/api/admin/persona-api.php?action=list')
+                              .then((r) => r.json())
+                              .then((x) => x.success && Array.isArray(x.personas) && setPersonaList(x.personas));
+                          } else {
+                            setSaveMessage({ type: 'error', text: d.error || '저장 실패' });
+                          }
+                        } catch (e) {
+                          setSaveMessage({ type: 'error', text: '요청 실패: ' + (e as Error).message });
+                        } finally {
+                          setPersonaExtracting(false);
+                        }
+                      }}
+                      disabled={personaExtracting || personaMessages.length === 0}
+                      className="px-4 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {personaExtracting ? '추출 중...' : '페르소나 추출 & 저장'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* 2. 활성 페르소나 & 목록 */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50">
+                  <h3 className="text-lg font-semibold text-white mb-3">활성 페르소나</h3>
+                  {activePersona ? (
+                    <div className="space-y-2">
+                      <p className="text-cyan-400 font-medium">{activePersona.name}</p>
+                      <pre className="text-slate-300 text-xs whitespace-pre-wrap break-words max-h-40 overflow-y-auto bg-slate-900/50 rounded p-3">
+                        {activePersona.system_prompt}
+                      </pre>
+                    </div>
+                  ) : (
+                    <p className="text-slate-500 text-sm">활성 페르소나가 없습니다. Playground에서 정의 후 저장하세요.</p>
+                  )}
+                </div>
+                <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50">
+                  <h3 className="text-lg font-semibold text-white mb-3">저장된 페르소나 목록</h3>
+                  {personaList.length === 0 ? (
+                    <p className="text-slate-500 text-sm">저장된 페르소나가 없습니다.</p>
+                  ) : (
+                    <ul className="space-y-2">
+                      {personaList.map((p) => (
+                        <li key={p.id} className="flex items-center justify-between py-2 border-b border-slate-700/50 last:border-0">
+                          <span className="text-slate-300 text-sm">{p.name} {p.is_active && <span className="text-cyan-400 text-xs">(활성)</span>}</span>
+                          {!p.is_active && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                fetch('/api/admin/persona-api.php', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ action: 'set_active', persona_id: p.id }),
+                                })
+                                  .then((r) => r.json())
+                                  .then((d) => {
+                                    if (d.success) {
+                                      setSaveMessage({ type: 'success', text: '활성 페르소나가 변경되었습니다.' });
+                                      setActivePersona(p);
+                                      fetch('/api/admin/persona-api.php?action=active').then((x) => x.json()).then((x) => x.success && x.persona && setActivePersona(x.persona));
+                                      fetch('/api/admin/persona-api.php?action=list').then((x) => x.json()).then((x) => x.success && Array.isArray(x.personas) && setPersonaList(x.personas));
+                                    }
+                                  });
+                              }}
+                              className="text-cyan-400 hover:text-cyan-300 text-xs"
+                            >
+                              활성화
+                            </button>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+
+              {/* 3. Persona Tester - 일관성 점검 */}
+              <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50">
+                <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                  <CheckCircleIcon className="w-5 h-5 text-emerald-400" />
+                  일관성 점검 (Persona Tester)
+                </h3>
+                <p className="text-slate-400 text-sm mb-4">실제 파이프라인으로 기사를 분석하고, 페르소나 일관성(지스터 언급, 글자 수 등)을 점검합니다.</p>
+                <div className="flex gap-2 flex-wrap mb-4">
+                  <input
+                    type="text"
+                    value={personaTestUrl}
+                    onChange={(e) => setPersonaTestUrl(e.target.value)}
+                    placeholder="기사 URL"
+                    className="flex-1 min-w-[200px] bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-500 focus:ring-1 focus:ring-cyan-500 outline-none"
+                  />
+                  <input
+                    type="text"
+                    value={personaTestArticleId}
+                    onChange={(e) => setPersonaTestArticleId(e.target.value)}
+                    placeholder="또는 기사 ID"
+                    className="w-28 bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-500 focus:ring-1 focus:ring-cyan-500 outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!personaTestUrl.trim() && !personaTestArticleId.trim()) {
+                        setSaveMessage({ type: 'error', text: 'URL 또는 기사 ID를 입력하세요.' });
+                        return;
+                      }
+                      setPersonaTestLoading(true);
+                      setPersonaTestResult(null);
+                      setSaveMessage(null);
+                      try {
+                        const res = await fetch('/api/admin/persona-api.php', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            action: 'test_consistency',
+                            url: personaTestUrl.trim() || undefined,
+                            article_id: personaTestArticleId.trim() ? parseInt(personaTestArticleId, 10) : undefined,
+                          }),
+                        });
+                        const d = await res.json();
+                        if (d.success) {
+                          setPersonaTestResult({ analysis_result: d.analysis_result, checklist: d.checklist });
+                          setSaveMessage({ type: 'success', text: `점검 완료. 점수: ${d.checklist?.score ?? '-'}` });
+                        } else {
+                          setSaveMessage({ type: 'error', text: d.error || '테스트 실패' });
+                        }
+                      } catch (e) {
+                        setSaveMessage({ type: 'error', text: '요청 실패: ' + (e as Error).message });
+                      } finally {
+                        setPersonaTestLoading(false);
+                      }
+                    }}
+                    disabled={personaTestLoading}
+                    className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {personaTestLoading ? '분석 중...' : '테스트 실행'}
+                  </button>
+                </div>
+                {personaTestResult && (
+                  <div className="space-y-4 mt-4 pt-4 border-t border-slate-700/50">
+                    <div>
+                      <h4 className="text-slate-300 font-medium mb-2">분석 결과</h4>
+                      <pre className="text-slate-400 text-xs whitespace-pre-wrap bg-slate-900/50 rounded p-3 max-h-48 overflow-y-auto">
+                        {JSON.stringify(personaTestResult.analysis_result, null, 2)}
+                      </pre>
+                    </div>
+                    <div>
+                      <h4 className="text-slate-300 font-medium mb-2">체크리스트</h4>
+                      <ul className="text-sm space-y-1">
+                        {personaTestResult.checklist && Object.entries(personaTestResult.checklist).map(([k, v]) => (
+                          <li key={k} className="flex items-center gap-2">
+                            {typeof v === 'boolean' ? (
+                              v ? <CheckCircleIcon className="w-4 h-4 text-emerald-400" /> : <ExclamationTriangleIcon className="w-4 h-4 text-amber-400" />
+                            ) : null}
+                            <span className="text-slate-400">{k}:</span>
+                            <span className="text-slate-200">{String(v)}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
