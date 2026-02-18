@@ -31,39 +31,62 @@ const tabToCategory: Record<TabType, string | null> = {
   '인기': null,
 }
 
+const PER_PAGE = 20
+
+function filterPlaceholder(items: NewsItem[]): NewsItem[] {
+  const placeholderPhrases = ['무엇이 처음부터 왔었']
+  return items.filter(
+    (item: NewsItem) =>
+      !placeholderPhrases.some(
+        (phrase) =>
+          (item.title && item.title.includes(phrase)) ||
+          (item.description && item.description.includes(phrase))
+      )
+  )
+}
+
 export default function HomePage() {
   const [news, setNews] = useState<NewsItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
   const [activeTab, setActiveTab] = useState<TabType>('최신')
 
   useEffect(() => {
-    fetchNews()
+    setPage(1)
+    fetchNews(1, false)
   }, [activeTab])
 
-  const fetchNews = async () => {
-    setIsLoading(true)
+  const fetchNews = async (pageNum: number, append: boolean) => {
+    if (append) {
+      setIsLoadingMore(true)
+    } else {
+      setIsLoading(true)
+    }
     try {
       const category = tabToCategory[activeTab]
-      const response = await newsApi.getList(1, 20, category || undefined)
+      const response = await newsApi.getList(pageNum, PER_PAGE, category || undefined)
       if (response.data.success) {
         const items = response.data.data.items || []
-        // placeholder/잘못된 기사 제거 (예: "무엇이 처음부터 왔었" 등)
-        const placeholderPhrases = ['무엇이 처음부터 왔었']
-        const filtered = items.filter(
-          (item: NewsItem) =>
-            !placeholderPhrases.some(
-              (phrase) =>
-                (item.title && item.title.includes(phrase)) ||
-                (item.description && item.description.includes(phrase))
-            )
-        )
-        setNews(filtered)
+        const filtered = filterPlaceholder(items)
+        const pagination = response.data.data.pagination || {}
+        const total = pagination.total_pages ?? 1
+        setTotalPages(total)
+        setNews((prev) => (append ? [...prev, ...filtered] : filtered))
       }
     } catch (error) {
       console.error('Failed to fetch news:', error)
     } finally {
       setIsLoading(false)
+      setIsLoadingMore(false)
     }
+  }
+
+  const loadMore = () => {
+    const nextPage = page + 1
+    setPage(nextPage)
+    fetchNews(nextPage, true)
   }
 
   const tabs: TabType[] = ['최신', '외교', '금융', '인기']
@@ -105,11 +128,25 @@ export default function HomePage() {
             기사가 없습니다.
           </div>
         ) : (
-          <div className="space-y-0 lg:grid lg:grid-cols-2 lg:gap-x-12 lg:gap-y-0 lg:border-t lg:border-gray-100">
-            {news.map((item, index) => (
-              <ArticleCard key={item.id || index} article={item} />
-            ))}
-          </div>
+          <>
+            <div className="space-y-0 lg:grid lg:grid-cols-2 lg:gap-x-12 lg:gap-y-0 lg:border-t lg:border-gray-100">
+              {news.map((item, index) => (
+                <ArticleCard key={item.id || index} article={item} />
+              ))}
+            </div>
+            {page < totalPages && (
+              <div className="flex justify-center pt-8 pb-4">
+                <button
+                  type="button"
+                  onClick={loadMore}
+                  disabled={isLoadingMore}
+                  className="px-8 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isLoadingMore ? '불러오는 중...' : '더 보기'}
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
 
