@@ -202,7 +202,7 @@ $router->group(['prefix' => '/admin'], function (Router $router) {
         if (!is_file($scriptPath)) {
             return Response::error('백필 스크립트를 찾을 수 없습니다.', 404);
         }
-        $_GET = array_merge($_GET, $request->getQueryParams());
+        $_GET = array_merge($_GET, $request->query() ?? []);
         ob_start();
         include $scriptPath;
         $output = ob_get_clean();
