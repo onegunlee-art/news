@@ -320,9 +320,9 @@ export default function NewsDetailPage() {
             {news.title}
           </h1>
 
-          {/* 디폴트 출처 문구: original_title(영어) 우선 → URL에서 영어 제목 추출. 한국어 title 폴백 금지 */}
+          {/* 디폴트 출처 문구: original_title 우선 → URL 슬러그 추출 → 실제 기사 제목(최종 폴백) */}
           <p className="text-sm text-gray-500 mb-6">
-            이 글은 {formatDate() ? `${formatDate()}자, ` : ''}{((news.original_source && news.original_source.trim()) || news.source || 'The Gist')}에 게재된 &quot;{(news.original_title && news.original_title.trim()) || extractTitleFromUrl(news.url) || '[Admin에서 Original Title(영어) 입력]'}&quot; 기사를 The Gist가 AI를 통해 분석/정리한 것 입니다.
+            이 글은 {formatDate() ? `${formatDate()}자, ` : ''}{((news.original_source && news.original_source.trim()) || news.source || 'The Gist')}에 게재된 &quot;{(news.original_title && news.original_title.trim()) || extractTitleFromUrl(news.url) || news.title}&quot; 기사를 The Gist가 AI를 통해 분석/정리한 것 입니다.
           </p>
 
           {/* 저자 정보 (있을 경우) */}

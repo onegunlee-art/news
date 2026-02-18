@@ -124,8 +124,8 @@ try {
         $hasUpdatedAt = $checkCol->rowCount() > 0;
     } catch (Exception $e) {}
     
-    // 기본 컬럼 (updated_at은 있을 때만 포함)
-    $columns = 'id, category, title, description, content, source, image_url, created_at';
+    // 기본 컬럼 (url: extractTitleFromUrl용, source_url 없을 때 fallback)
+    $columns = 'id, category, title, description, content, source, url, image_url, created_at';
     if ($hasUpdatedAt) {
         $columns .= ', updated_at';
     }
@@ -252,7 +252,7 @@ try {
         'source' => $news['source'],
         'original_source' => $hasOriginalSource ? ($news['original_source'] ?? null) : null,
         'original_title' => $hasOriginalTitle ? ($news['original_title'] ?? null) : null,
-        'url' => $hasSourceUrl ? ($news['source_url'] ?? '') : '',
+        'url' => (!empty($news['source_url'] ?? '')) ? ($news['source_url'] ?? '') : ($news['url'] ?? ''),
         'image_url' => $news['image_url'],
         'published_at' => $dateForDisplay,
         'created_at' => $news['created_at'],
