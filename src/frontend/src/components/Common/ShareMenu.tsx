@@ -61,14 +61,14 @@ export default function ShareMenu({ title, description = '', webUrl, className =
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className={`p-1 transition-colors text-gray-400 hover:text-gray-600 ${className}`}
+        className={`p-1 transition-colors ${className || 'text-gray-400 hover:text-gray-600'}`}
         title={titleAttr}
         aria-label={titleAttr}
         aria-expanded={open}
         aria-haspopup="true"
       >
         {/* 공유 아이콘 (상자 + 위로 화살표) - 다른 아이콘과 밀도 통일 */}
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} aria-hidden="true">
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5} aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
         </svg>
       </button>

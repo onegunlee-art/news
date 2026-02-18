@@ -324,11 +324,11 @@ function ArticleCard({ article }: { article: NewsItem }) {
           <button
             type="button"
             onClick={handlePlayAudio}
-            className="p-1 transition-colors text-gray-300 hover:text-gray-500"
+            className="p-1 transition-colors text-gray-400 hover:text-gray-600"
             title="음성으로 듣기"
             aria-label="재생"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 18v-6a9 9 0 0118 0v6M3 18h2a2 2 0 002-2v-4a2 2 0 00-2-2H3v8zm14 0h2a2 2 0 002-2v-4a2 2 0 00-2-2h-2v8z" />
             </svg>
           </button>
@@ -339,7 +339,7 @@ function ArticleCard({ article }: { article: NewsItem }) {
             description={article.description || ''}
             imageUrl={imageUrl}
             webUrl={shareWebUrl}
-            className="text-gray-300 hover:text-gray-500"
+            className="text-gray-400 hover:text-gray-600"
             titleAttr="공유하기"
           />
           
@@ -348,14 +348,14 @@ function ArticleCard({ article }: { article: NewsItem }) {
             type="button"
             onClick={handleBookmark}
             disabled={isBookmarking}
-            className={`p-1 transition-colors ${isBookmarked ? 'text-primary-500' : 'text-gray-300 hover:text-gray-500'} ${isBookmarking ? 'opacity-60 cursor-wait' : ''}`}
+            className={`p-1 transition-colors ${isBookmarked ? 'text-primary-500' : 'text-gray-400 hover:text-gray-600'} ${isBookmarking ? 'opacity-60 cursor-wait' : ''}`}
             title="즐겨찾기"
             aria-label={isBookmarked ? '즐겨찾기 해제' : '즐겨찾기 추가'}
           >
             {isBookmarking ? (
               <span className="inline-block w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
             ) : (
-              <svg className="w-5 h-5" fill={isBookmarked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+              <svg className="w-5 h-5" fill={isBookmarked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
               </svg>
             )}
