@@ -67,7 +67,7 @@ export default function NewsDetailPage() {
         : ''
     const rawSource = (news.original_source && news.original_source.trim()) || (news.source === 'Admin' ? 'The Gist' : news.source || 'The Gist')
     const sourceDisplay = formatSourceDisplayName(rawSource) || 'The Gist'
-    const titleForMeta = (news.original_title && String(news.original_title).trim()) || extractTitleFromUrl(news.url) || 'Article'
+    const titleForMeta = (news.original_title && String(news.original_title).trim()) || extractTitleFromUrl(news.url) || news.title
     const editorialLine = dateStr
       ? `${dateStr}자 ${sourceDisplay} 저널의 "${titleForMeta}"을 AI 번역, 요약하고 The Gist에서 일부 편집한 글입니다.`
       : `${sourceDisplay} 저널의 "${titleForMeta}"을 AI 번역, 요약하고 The Gist에서 일부 편집한 글입니다.`
@@ -320,9 +320,9 @@ export default function NewsDetailPage() {
             {news.title}
           </h1>
 
-          {/* 디폴트 출처 문구: 기사 제목은 모조건 영어(original_title 우선, URL슬러그 추출). 한국어 title 폴백 금지 */}
+          {/* 디폴트 출처 문구: original_title(영어) 우선 → URL슬러그 → 실제 기사 제목 */}
           <p className="text-sm text-gray-500 mb-6">
-            이 글은 {formatDate() ? `${formatDate()}자, ` : ''}{((news.original_source && news.original_source.trim()) || news.source || 'The Gist')}에 게재된 &quot;{(news.original_title && news.original_title.trim()) || extractTitleFromUrl(news.url) || '[영문 원제목을 Admin에서 입력해주세요]'}&quot; 기사를 The Gist가 AI를 통해 분석/정리한 것 입니다.
+            이 글은 {formatDate() ? `${formatDate()}자, ` : ''}{((news.original_source && news.original_source.trim()) || news.source || 'The Gist')}에 게재된 &quot;{(news.original_title && news.original_title.trim()) || extractTitleFromUrl(news.url) || news.title}&quot; 기사를 The Gist가 AI를 통해 분석/정리한 것 입니다.
           </p>
 
           {/* 저자 정보 (있을 경우) */}

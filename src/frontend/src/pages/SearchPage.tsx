@@ -148,7 +148,7 @@ function SearchArticleCard({ article }: { article: NewsItem }) {
       const res = await newsApi.getDetail(Number(newsId))
       const detail = res.data?.data
       if (detail) {
-        const titleForMeta = (detail.original_title && String(detail.original_title).trim()) || extractTitleFromUrl(detail.url) || 'Article'
+        const titleForMeta = (detail.original_title && String(detail.original_title).trim()) || extractTitleFromUrl(detail.url) || (detail.title || article.title)
         const dateStr = detail.published_at
           ? `${new Date(detail.published_at).getFullYear()}년 ${new Date(detail.published_at).getMonth() + 1}월 ${new Date(detail.published_at).getDate()}일`
           : (detail.updated_at || detail.created_at)
