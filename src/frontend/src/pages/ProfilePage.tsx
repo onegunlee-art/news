@@ -230,7 +230,7 @@ function AudioList({ items }: { items: AudioListItem[] }) {
             )}
             <div className="flex items-center gap-2 text-xs">
               <span className="text-primary-500 font-medium">{formatSourceDisplayName(item.source) || 'The Gist'}</span>
-              <span className="text-gray-300">/</span>
+              <span className="text-gray-300"> | </span>
               <span className="text-gray-400">들은 날짜: {new Date(item.listenedAt).toLocaleDateString('ko-KR')}</span>
             </div>
           </Link>
@@ -280,7 +280,7 @@ function BookmarkList({ bookmarks }: { bookmarks: any[] }) {
             )}
             <div className="flex items-center gap-2 text-xs">
               <span className="text-primary-500 font-medium">{formatSourceDisplayName(item.source) || 'The Gist'}</span>
-              <span className="text-gray-300">/</span>
+              <span className="text-gray-300"> | </span>
               {item.bookmarked_at && (
                 <span className="text-gray-400">저장일: {new Date(item.bookmarked_at).toLocaleDateString('ko-KR')}</span>
               )}

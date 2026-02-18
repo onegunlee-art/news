@@ -311,7 +311,7 @@ export default function NewsDetailPage() {
           {/* 소스 및 날짜 (매체 옆 = admin에서 업데이트한 날짜) */}
           <div className="flex items-center gap-2 text-sm mb-4">
             <span className="text-primary-500 font-medium">{getSourceName()}</span>
-            <span className="text-gray-300">/</span>
+            <span className="text-gray-300"> | </span>
             <span className="text-gray-400">{formatHeaderDate()}</span>
           </div>
 
