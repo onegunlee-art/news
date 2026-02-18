@@ -1196,6 +1196,7 @@ const AdminPage: React.FC = () => {
                               if (article.published_at) setArticlePublishedAt(article.published_at as string);
                               if (article.author) setArticleAuthor((article.author as string) || '');
                             }
+                            setArticleOriginalTitle((a.original_title as string) || (article?.title as string) || '');
                             setNewsContent(
                               (a.content_summary as string) ||
                               ('## 주요 포인트\n' + ((a.key_points as string[])?.map((p: string) => `- ${p}`).join('\n') || ''))
@@ -2058,6 +2059,9 @@ const AdminPage: React.FC = () => {
                             if (data.article.published_at) setArticlePublishedAt(data.article.published_at);
                             if (data.article.author) setArticleAuthor(data.article.author);
                           }
+                          setArticleOriginalTitle(
+                            ((data.analysis as { original_title?: string })?.original_title || (data.article as { title?: string })?.title || '').trim()
+                          );
                           const a = data.analysis;
                           const narrationForTts = a.narration || (a.key_points || []).join(' ');
                           if (!narrationForTts.trim()) {
