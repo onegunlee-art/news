@@ -484,6 +484,7 @@ if ($method === 'PUT') {
     
     // 추가 메타데이터 필드
     $originalSource = $input['source'] ?? null;
+    $originalTitle = $input['original_title'] ?? null;
     $author = $input['author'] ?? null;
     $customImageUrl = $input['image_url'] ?? null;
     

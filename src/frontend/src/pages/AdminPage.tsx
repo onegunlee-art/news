@@ -1311,16 +1311,57 @@ const AdminPage: React.FC = () => {
                       </div>
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {/* 출처 */}
+                        {/* Original Source (매체, 영어) */}
                         <div>
-                          <label className="block text-slate-400 text-sm mb-1">출처 (Source)</label>
+                          <label className="block text-slate-400 text-sm mb-1">Original Source 매체 (영어 필수)</label>
                           <input
                             type="text"
                             value={articleSource}
                             onChange={(e) => setArticleSource(e.target.value)}
-                            placeholder="예: Financial Times, Reuters..."
+                            placeholder="예: Foreign Affairs, Financial Times, Reuters"
                             className="w-full bg-slate-800/50 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-500 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition"
                           />
+                          <p className="text-slate-500 text-xs mt-0.5">기사 페이지 출처 문구에 표시됩니다</p>
+                        </div>
+                        
+                        {/* Original Title (원문 영어 제목) */}
+                        <div>
+                          <label className="block text-slate-400 text-sm mb-1">Original Title 원문 제목 (영어 필수)</label>
+                          <input
+                            type="text"
+                            value={articleOriginalTitle}
+                            onChange={(e) => setArticleOriginalTitle(e.target.value)}
+                            placeholder="예: The Limits of Russian Power"
+                            className="w-full bg-slate-800/50 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-500 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition"
+                          />
+                          <p className="text-slate-500 text-xs mt-0.5">매체에 게재된 영어 원제목</p>
+                        </div>
+                        
+                        {/* 기존 기사 백필 버튼 */}
+                        <div className="md:col-span-2 flex items-center gap-3 pt-2">
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              if (!confirm('기존 모든 기사의 Original Source/Title을 source, title 값으로 채웁니다. 실행할까요?')) return;
+                              setSaveMessage({ type: 'info', text: '백필 실행 중...' });
+                              try {
+                                const r = await fetch('/api/admin/run-backfill-original.php');
+                                const d = await r.json();
+                                if (d.success) {
+                                  setSaveMessage({ type: 'success', text: d.message || '백필 완료' });
+                                  await loadNewsList();
+                                } else {
+                                  setSaveMessage({ type: 'error', text: d.message || '백필 실패' });
+                                }
+                              } catch (e) {
+                                setSaveMessage({ type: 'error', text: '백필 요청 실패: ' + (e as Error).message });
+                              }
+                            }}
+                            className="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs rounded-lg transition-colors"
+                          >
+                            기존 기사 Original Source/Title 채우기
+                          </button>
+                          <span className="text-slate-500 text-xs">빈 값인 기사에 source, title을 복사해 넣습니다</span>
                         </div>
                         
                         {/* 작성자 */}
