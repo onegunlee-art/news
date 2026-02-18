@@ -191,6 +191,29 @@ $router->group(['prefix' => '/admin'], function (Router $router) {
 
     // TTS 보이스 변경 시 전체 기사 TTS 일괄 재생성 (Supabase media_cache 갱신)
     $router->post('/tts/regenerate-all', [AdminController::class, 'regenerateAllTts']);
+
+    // original_title 백필 (원문 HTML에서 <title> 추출)
+    $router->get('/backfill-original-title', function (Request $request): Response {
+        $projectRoot = dirname(__DIR__);
+        $scriptPath = $projectRoot . '/api/admin/backfill-original-title-from-html.php';
+        if (!is_file($scriptPath)) {
+            $scriptPath = $projectRoot . '/public/api/admin/backfill-original-title-from-html.php';
+        }
+        if (!is_file($scriptPath)) {
+            return Response::error('백필 스크립트를 찾을 수 없습니다.', 404);
+        }
+        $_GET = array_merge($_GET, $request->getQueryParams());
+        ob_start();
+        include $scriptPath;
+        $output = ob_get_clean();
+        $data = json_decode($output, true);
+        if ($data && isset($data['success'])) {
+            return $data['success']
+                ? Response::success($data, $data['message'] ?? '완료')
+                : Response::error($data['message'] ?? '실패', 500);
+        }
+        return Response::error('백필 실행 중 오류가 발생했습니다.', 500);
+    });
 });
 
 // ==================== 404 처리 ====================
