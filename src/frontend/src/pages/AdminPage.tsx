@@ -2057,7 +2057,8 @@ const AdminPage: React.FC = () => {
                             setNewsTitle(data.article.title || '');
                             setArticleSummary(data.article.description || '');
                             if (data.article.published_at) setArticlePublishedAt(data.article.published_at);
-                            if (data.article.author) setArticleAuthor(data.article.author);
+                            const author = (data.analysis as { author?: string })?.author || data.article.author;
+                            if (author) setArticleAuthor(author);
                           }
                           setArticleOriginalTitle(
                             ((data.analysis as { original_title?: string })?.original_title || (data.article as { title?: string })?.title || '').trim()

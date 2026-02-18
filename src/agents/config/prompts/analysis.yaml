@@ -71,7 +71,8 @@ tasks:
       
       {
         "news_title": "지스터가 클릭하고 싶은 한국어 뉴스 제목. 15~30자. 핵심을 담되 임팩트 있게. (지스터 = The Gist 독자)",
-        "original_title": "원문의 영어 제목 그대로. 예: The Limits of Russian Power. 기사 본문이나 제목에서 확인한 정확한 영문 제목을 반드시 포함.",
+        "author": "URL 슬러그(맨 뒤 / 다음)에서 추출한 저자. 저자 먼저 추출 후 나머지가 제목.",
+        "original_title": "URL 슬러그에서 저자 제외한 나머지를 제목 형식으로. 예: The Limits of Russian Power.",
         "key_points": [
           "기사 본문의 핵심 내용을 최소 4개 이상의 불렛 포인트로 요약. 각 항목은 1~2문장, 구체적 사실과 수치를 포함.",
           "두 번째 핵심 포인트",

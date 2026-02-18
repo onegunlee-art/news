@@ -24,7 +24,8 @@ final class AnalysisResult
         private readonly ?string $newsTitle = null,
         private readonly ?string $narration = null,
         private readonly ?string $contentSummary = null,
-        private readonly ?string $originalTitle = null
+        private readonly ?string $originalTitle = null,
+        private readonly ?string $author = null
     ) {}
 
     public function getTranslationSummary(): string
@@ -82,6 +83,11 @@ final class AnalysisResult
         return $this->originalTitle;
     }
 
+    public function getAuthor(): ?string
+    {
+        return $this->author;
+    }
+
     /**
      * 오디오 URL 추가된 새 인스턴스 반환
      */
@@ -96,7 +102,8 @@ final class AnalysisResult
             newsTitle: $this->newsTitle,
             narration: $this->narration,
             contentSummary: $this->contentSummary,
-            originalTitle: $this->originalTitle
+            originalTitle: $this->originalTitle,
+            author: $this->author
         );
     }
 
@@ -114,7 +121,8 @@ final class AnalysisResult
             newsTitle: $this->newsTitle,
             narration: $this->narration,
             contentSummary: $this->contentSummary,
-            originalTitle: $this->originalTitle
+            originalTitle: $this->originalTitle,
+            author: $this->author
         );
     }
 
@@ -126,6 +134,7 @@ final class AnalysisResult
         return [
             'news_title' => $this->newsTitle,
             'original_title' => $this->originalTitle,
+            'author' => $this->author,
             'translation_summary' => $this->translationSummary,
             'key_points' => $this->keyPoints,
             'narration' => $this->narration,
@@ -158,7 +167,8 @@ final class AnalysisResult
             newsTitle: $data['news_title'] ?? null,
             narration: $data['narration'] ?? null,
             contentSummary: $data['content_summary'] ?? null,
-            originalTitle: $data['original_title'] ?? null
+            originalTitle: $data['original_title'] ?? null,
+            author: $data['author'] ?? null
         );
     }
 

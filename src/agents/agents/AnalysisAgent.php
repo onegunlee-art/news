@@ -172,7 +172,8 @@ class AnalysisAgent extends BaseAgent
             newsTitle: $data['news_title'] ?? null,
             narration: $narration,
             contentSummary: $data['content_summary'] ?? null,
-            originalTitle: $data['original_title'] ?? null
+            originalTitle: $data['original_title'] ?? null,
+            author: $data['author'] ?? null
         );
     }
 
@@ -183,17 +184,25 @@ class AnalysisAgent extends BaseAgent
     {
         $title = $article->getTitle();
         $content = $this->truncateContent($article->getContent(), 40000);
+        $url = $article->getUrl();
 
         $template = <<<PROMPT
+기사 URL: {$url}
 기사 제목: {$title}
 기사 본문:
 {$content}
+
+[제목과 저자 구분 방법]
+URL의 맨 뒤 / 다음 부분(슬러그)에 제목과 저자가 함께 포함되어 있습니다.
+1) 저자를 먼저 추출하세요. (보통 슬러그 끝부분이 저자 이름)
+2) 저자를 제외한 나머지가 원문 제목(original_title)입니다. 하이픈을 공백으로, 각 단어 첫 글자 대문자로 변환 (예: the-limits-of-russian-power → The Limits of Russian Power)
 
 위 기사를 분석하여 아래 JSON 형식으로만 응답하세요. JSON 외에 다른 텍스트는 절대 포함하지 마세요.
 
 {
   "news_title": "지스터가 클릭하고 싶은 한국어 뉴스 제목. 15~30자. 핵심을 담되 임팩트 있게. (지스터 = The Gist 독자)",
-  "original_title": "원문의 영어 제목 그대로. 예: The Limits of Russian Power. 기사 본문이나 제목에서 확인한 정확한 영문 제목을 반드시 포함.",
+  "author": "URL 슬러그에서 추출한 저자 이름. 예: Stephen Kotkin",
+  "original_title": "URL 슬러그에서 저자를 제외한 나머지를 제목 형식으로 변환. 예: The Limits of Russian Power. (저자 제외, 본문에서 확인한 정확한 영문 제목과 일치하면 그대로 사용)",
   "content_summary": "원문의 AI 요약 및 구조 분석. 도입·전개·결론 구조를 유지하며, 핵심 논지·사실·수치를 포함한 상세 요약. 최소 600자 이상, 가능하면 900자 이상 작성. 마크다운 제목(##)과 불렛(-) 사용 가능.",
   "key_points": [
     "기사 본문의 핵심 내용을 최소 4개 이상의 불렛 포인트로 요약. 각 항목은 1~2문장, 구체적 사실과 수치를 포함.",
@@ -246,6 +255,7 @@ PROMPT;
         return [
             'news_title' => null,
             'original_title' => null,
+            'author' => null,
             'narration' => $this->normalizeNarration(trim($response)),
             'key_points' => ['분석 결과를 확인하세요.'],
             'content_summary' => null,
@@ -359,6 +369,7 @@ JSON 외에 다른 텍스트는 절대 포함하지 마세요.
 
 {
   "news_title": "지스터를 위한 개선된 한국어 뉴스 제목. 15~30자.",
+  "author": "URL 슬러그에서 추출한 저자 이름. 이전 분석에서 가져오거나 유지.",
   "original_title": "원문의 영어 제목 그대로. 이전 분석에서 가져오거나 기사에서 확인.",
   "content_summary": "개선된 AI 요약 및 구조 분석. 최소 600자 이상, 가능하면 900자 이상.",
   "key_points": [

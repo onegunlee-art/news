@@ -348,6 +348,7 @@ function analyzeUrl(string $url, array $options = []): array {
             'analysis' => [
                 'news_title' => $finalAnalysis['news_title'] ?? null,
                 'original_title' => $finalAnalysis['original_title'] ?? null,
+                'author' => $finalAnalysis['author'] ?? null,
                 'translation_summary' => $finalAnalysis['translation_summary'] ?? ($narration ? mb_substr($narration, 0, 200) : ''),
                 'key_points' => $finalAnalysis['key_points'] ?? [],
                 'content_summary' => $finalAnalysis['content_summary'] ?? null,
