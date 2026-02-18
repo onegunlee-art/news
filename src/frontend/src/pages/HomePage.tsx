@@ -14,6 +14,7 @@ interface NewsItem {
   id?: number
   title: string
   description: string
+  narration?: string | null
   url: string
   source: string | null
   published_at: string | null
@@ -40,7 +41,8 @@ function filterPlaceholder(items: NewsItem[]): NewsItem[] {
       !placeholderPhrases.some(
         (phrase) =>
           (item.title && item.title.includes(phrase)) ||
-          (item.description && item.description.includes(phrase))
+          (item.description && item.description.includes(phrase)) ||
+          (item.narration && item.narration.includes(phrase))
       )
   )
 }
@@ -282,10 +284,10 @@ function ArticleCard({ article }: { article: NewsItem }) {
             {article.title}
           </h2>
           
-          {/* 설명 - 서브헤드라인 */}
-          {article.description && (
-            <p className="text-sm text-gray-600 leading-relaxed mb-2 line-clamp-2">
-              {article.description}
+          {/* 기사 내용 - 내레이션 우선, 없으면 요약 */}
+          {(article.narration || article.description) && (
+            <p className="text-xs text-gray-600 leading-relaxed mb-2 line-clamp-3">
+              {article.narration?.trim() || article.description}
             </p>
           )}
           
