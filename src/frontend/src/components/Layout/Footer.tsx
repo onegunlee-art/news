@@ -22,28 +22,6 @@ export default function Footer() {
               Gisters, Becoming Leaders
             </p>
           </div>
-
-          {/* 링크들 */}
-          <div className="flex items-center gap-8">
-            <Link 
-              to="/diplomacy" 
-              className="text-sm text-gray-500 hover:text-gray-900 transition-colors"
-            >
-              Foreign Affairs
-            </Link>
-            <Link 
-              to="/economy" 
-              className="text-sm text-gray-500 hover:text-gray-900 transition-colors"
-            >
-              Economy
-            </Link>
-            <Link 
-              to="/entertainment" 
-              className="text-sm text-gray-500 hover:text-gray-900 transition-colors"
-            >
-              Entertainment
-            </Link>
-          </div>
         </div>
       </div>
 
