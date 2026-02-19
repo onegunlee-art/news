@@ -497,7 +497,7 @@ final class AdminController
         $body = $request->json() ?? [];
         $force = isset($body['force']) && $body['force'] === true;
         $offset = isset($body['offset']) && is_numeric($body['offset']) ? max(0, (int) $body['offset']) : 0;
-        $limit = isset($body['limit']) && is_numeric($body['limit']) ? min(100, max(5, (int) $body['limit'])) : 15;
+        $limit = isset($body['limit']) && is_numeric($body['limit']) ? min(50, max(1, (int) $body['limit'])) : 1;
 
         $projectRoot = dirname(__DIR__, 3);
         $ttsVoice = $this->getSetting('tts_voice');

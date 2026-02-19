@@ -366,7 +366,7 @@ const AdminPage: React.FC = () => {
       setSettingsError(null);
       setSettingsSuccess('보이스 저장됨. TTS 배치 재생성 중…');
       let offset = 0;
-      const limit = 15;
+      const limit = 1;
       let totalSkip = 0;
       let total = 0;
       let hasMore = true;
@@ -1075,7 +1075,7 @@ const AdminPage: React.FC = () => {
                     onClick={async () => {
                       if (!confirm('기존 캐시를 무시하고 모든 기사 TTS를 강제 재생성합니다. (배치 처리로 504 방지) 계속할까요?')) return;
                       let offset = 0;
-                      const limit = 15;
+                      const limit = 1;
                       let totalGen = 0;
                       let totalSkip = 0;
                       let total = 0;
