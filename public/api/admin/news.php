@@ -628,6 +628,10 @@ if ($method === 'PUT') {
         
         $stmt = $db->prepare("UPDATE news SET $setStr WHERE id = ?");
         $stmt->execute($values);
+
+        // TTS 캐시 무효화 (기사 수정 시 Supabase media_cache 삭제)
+        require_once __DIR__ . '/../lib/invalidateTtsCache.php';
+        invalidateTtsCacheForNews((int) $id);
         
         echo json_encode([
             'success' => true,
@@ -671,6 +675,10 @@ if ($method === 'DELETE') {
         
         $stmt = $db->prepare("DELETE FROM news WHERE id = ?");
         $stmt->execute([$id]);
+
+        // TTS 캐시 무효화 (기사 삭제 시)
+        require_once __DIR__ . '/../lib/invalidateTtsCache.php';
+        invalidateTtsCacheForNews((int) $id);
         
         echo json_encode([
             'success' => true,

@@ -1433,8 +1433,33 @@ const AdminPage: React.FC = () => {
                           <p className="text-slate-500 text-xs mt-0.5">매체에 게재된 영어 원제목</p>
                         </div>
                         
-                        {/* 기존 기사 백필 / original_title 점검 */}
-                        <div className="md:col-span-2 flex items-center gap-3 pt-2">
+                        {/* 기존 기사 백필 / original_title 점검 / 원칙 점검 */}
+                        <div className="md:col-span-2 flex flex-wrap items-center gap-3 pt-2">
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              try {
+                                const r = await fetch('/api/admin/check-article-principles.php');
+                                const d = await r.json();
+                                if (d.success && d.data) {
+                                  const { total, title_not_korean, original_title_has_korean, original_title_missing, message } = d.data;
+                                  const parts: string[] = [];
+                                  if ((title_not_korean as number) > 0) parts.push(`title 한글 아님 ${title_not_korean}건`);
+                                  if ((original_title_has_korean as number) > 0) parts.push(`original_title 한글 포함 ${original_title_has_korean}건`);
+                                  if ((original_title_missing as number) > 0) parts.push(`original_title 누락 ${original_title_missing}건`);
+                                  const summary = parts.length > 0 ? parts.join(', ') : message;
+                                  setSaveMessage({ type: parts.length > 0 ? 'error' : 'info', text: `${summary} (총 ${total}건)` });
+                                } else {
+                                  setSaveMessage({ type: 'error', text: d.message || '원칙 점검 실패' });
+                                }
+                              } catch {
+                                setSaveMessage({ type: 'error', text: '원칙 점검 실패' });
+                              }
+                            }}
+                            className="px-3 py-1.5 text-sm bg-cyan-700/50 text-cyan-200 rounded-lg hover:bg-cyan-600/50 transition"
+                          >
+                            원칙 점검
+                          </button>
                           <button
                             type="button"
                             onClick={async () => {
@@ -1481,6 +1506,30 @@ const AdminPage: React.FC = () => {
                           <button
                             type="button"
                             onClick={async () => {
+                              if (!confirm('URL 슬러그에서 original_title을 추출해 백필합니다. 즉시 처리됩니다. 실행할까요?')) return;
+                              setSaveMessage({ type: 'info', text: 'original_title URL 백필 중...' });
+                              try {
+                                const r = await fetch('/api/admin/backfill-original-title-url');
+                                const d = r.ok ? await r.json() : null;
+                                const data = d?.data ?? d;
+                                if (d?.success ?? r.ok) {
+                                  const msg = data?.message ?? d?.message ?? '백필 완료';
+                                  setSaveMessage({ type: 'success', text: msg });
+                                  await loadNewsList();
+                                } else {
+                                  setSaveMessage({ type: 'error', text: d?.message ?? '백필 실패' });
+                                }
+                              } catch (e) {
+                                setSaveMessage({ type: 'error', text: '백필 요청 실패: ' + (e as Error).message });
+                              }
+                            }}
+                            className="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs rounded-lg transition-colors"
+                          >
+                            original_title URL 백필
+                          </button>
+                          <button
+                            type="button"
+                            onClick={async () => {
                               if (!confirm('원문 URL HTML에서 <title>을 추출해 original_title을 백필합니다. 수 분 소요. 실행할까요?')) return;
                               setSaveMessage({ type: 'info', text: 'original_title HTML 백필 중...' });
                               try {
@@ -1502,7 +1551,7 @@ const AdminPage: React.FC = () => {
                           >
                             original_title HTML 백필
                           </button>
-                          <span className="text-slate-500 text-xs">빈 값인 기사에 source, title을 복사해 넣습니다. HTML 백필은 URL에서 &lt;title&gt; 추출</span>
+                          <span className="text-slate-500 text-xs">Source/title 채우기: source만. URL 백필: 슬러그 추출. HTML 백필: &lt;title&gt; 추출</span>
                         </div>
                         
                         {/* 작성자 */}

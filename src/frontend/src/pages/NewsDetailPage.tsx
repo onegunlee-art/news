@@ -58,38 +58,48 @@ export default function NewsDetailPage() {
   const [showGptSummary, setShowGptSummary] = useState(false)
 
   // 전역 팝업 플레이어에서 재생 (제목 → 편집 문구 → 내레이션 → The Gist's Critique)
-  const playArticle = () => {
+  // Listen 클릭 시 최신 기사 데이터를 강제 조회하여 stale state로 인한 이전 보이스 재생 방지
+  const playArticle = async () => {
     if (!news) return
-    const dateStr = news.published_at
-      ? `${new Date(news.published_at).getFullYear()}년 ${new Date(news.published_at).getMonth() + 1}월 ${new Date(news.published_at).getDate()}일`
-      : (news.updated_at || news.created_at)
-        ? `${new Date(news.updated_at || news.created_at!).getFullYear()}년 ${new Date(news.updated_at || news.created_at!).getMonth() + 1}월 ${new Date(news.updated_at || news.created_at!).getDate()}일`
+    let data = news
+    try {
+      const res = await newsApi.getDetail(news.id)
+      if (res.data?.success && res.data?.data) {
+        data = res.data.data as NewsDetail
+        setNews(data)
+      }
+    } catch {
+      // 조회 실패 시 기존 news 사용
+    }
+    const dateStr = data.published_at
+      ? `${new Date(data.published_at).getFullYear()}년 ${new Date(data.published_at).getMonth() + 1}월 ${new Date(data.published_at).getDate()}일`
+      : (data.updated_at || data.created_at)
+        ? `${new Date(data.updated_at || data.created_at!).getFullYear()}년 ${new Date(data.updated_at || data.created_at!).getMonth() + 1}월 ${new Date(data.updated_at || data.created_at!).getDate()}일`
         : ''
-    const rawSource = (news.original_source && news.original_source.trim()) || (news.source === 'Admin' ? 'The Gist' : news.source || 'The Gist')
+    const rawSource = (data.original_source && data.original_source.trim()) || (data.source === 'Admin' ? 'The Gist' : data.source || 'The Gist')
     const sourceDisplay = formatSourceDisplayName(rawSource) || 'The Gist'
-    // 매체 설명: 원문 제목(영어)만 사용. news.title(한글 번역)은 사용하지 않음
-    const titleForMeta = (news.original_title && String(news.original_title).trim()) || extractTitleFromUrl(news.url) || 'Article'
+    const titleForMeta = (data.original_title && String(data.original_title).trim()) || extractTitleFromUrl(data.url) || 'Article'
     const editorialLine = dateStr
       ? `${dateStr}자 ${sourceDisplay} 저널의 "${titleForMeta}"을 AI 번역, 요약하고 The Gist에서 일부 편집한 글입니다.`
       : `${sourceDisplay} 저널의 "${titleForMeta}"을 AI 번역, 요약하고 The Gist에서 일부 편집한 글입니다.`
-    const mainContent = news.narration || news.content || news.description || ''
-    const critiquePart = news.why_important ? `The Gist's Critique. ${news.why_important}` : ''
+    const mainContent = data.narration || data.content || data.description || ''
+    const critiquePart = data.why_important ? `The Gist's Critique. ${data.why_important}` : ''
     if (!mainContent && !critiquePart) {
       alert('재생할 본문 내용이 없습니다.')
       return
     }
     addAudioItem({
-      id: news.id,
-      title: news.title,
-      description: news.description ?? news.content ?? null,
-      source: news.source ?? null,
+      id: data.id,
+      title: data.title,
+      description: data.description ?? data.content ?? null,
+      source: data.source ?? null,
     })
-    const imageUrl = news.image_url || getPlaceholderImageUrl(
-      { id: news.id, title: news.title, description: news.description, published_at: news.published_at, url: news.url, source: news.source },
+    const imageUrl = data.image_url || getPlaceholderImageUrl(
+      { id: data.id, title: data.title, description: data.description, published_at: data.published_at, url: data.url, source: data.source },
       800,
       400
     )
-    openAndPlay(titleForMeta, editorialLine, mainContent, critiquePart, 1.0, imageUrl, news.id)
+    openAndPlay(titleForMeta, editorialLine, mainContent, critiquePart, 1.0, imageUrl, data.id)
   }
 
   useEffect(() => {
