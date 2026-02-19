@@ -25,8 +25,20 @@ function log_api_usage(array $data): void
 
     try {
         if ($pdo === null) {
-            $projectRoot = dirname(__DIR__, 3) . '/';
-            if (file_exists($projectRoot . 'config/database.php')) {
+            // 경로 탐색: 로컬(public/api/lib), 배포(api/lib) 모두 지원
+            $candidates = [
+                dirname(__DIR__, 3) . '/',  // project/public/api/lib → project/
+                dirname(__DIR__, 2) . '/',  // deploy/api/lib → deploy/
+            ];
+            $projectRoot = null;
+            foreach ($candidates as $root) {
+                $configPath = $root . 'config/database.php';
+                if (file_exists($configPath)) {
+                    $projectRoot = $root;
+                    break;
+                }
+            }
+            if ($projectRoot !== null) {
                 $cfg = require $projectRoot . 'config/database.php';
                 $dsn = "mysql:host=" . ($cfg['host'] ?? 'localhost') . ";dbname=" . ($cfg['database'] ?? $cfg['dbname'] ?? 'ailand') . ";charset=" . ($cfg['charset'] ?? 'utf8mb4');
                 $pdo = new PDO($dsn, $cfg['username'] ?? 'ailand', $cfg['password'] ?? '', [

@@ -227,9 +227,20 @@ function ArticleCard({ article }: { article: NewsItem }) {
       }
     } catch { /* fallback */ }
 
-    // fallback: 상세 못 가져오면 기존 방식 (매체 설명 없음)
+    // fallback: 상세 못 가져오면 URL 기반으로 매체 설명 구성 (원칙 준수)
     const text = `${article.title}. ${article.description || ''}`.trim()
-    if (text) openAndPlay(article.title, '', text, '', 1.0, undefined, Number(newsId))
+    if (text) {
+      const url = (article as { url?: string; source_url?: string }).url || (article as { source_url?: string }).source_url
+      const titleForMeta = extractTitleFromUrl(url) || 'Article'
+      const sourceDisplay = formatSourceDisplayName(article.source) || 'The Gist'
+      const dateStr = article.published_at
+        ? `${new Date(article.published_at).getFullYear()}년 ${new Date(article.published_at).getMonth() + 1}월 ${new Date(article.published_at).getDate()}일`
+        : ''
+      const editorialLine = dateStr
+        ? `${dateStr}자 ${sourceDisplay} 저널의 "${titleForMeta}"을 AI 번역, 요약하고 The Gist에서 일부 편집한 글입니다.`
+        : `${sourceDisplay} 저널의 "${titleForMeta}"을 AI 번역, 요약하고 The Gist에서 일부 편집한 글입니다.`
+      openAndPlay(titleForMeta, editorialLine, text, '', 1.0, undefined, Number(newsId))
+    }
   }
 
   const shareWebUrl = `${window.location.origin}/news/${article.id ?? (article as any).news_id}`

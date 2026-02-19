@@ -274,7 +274,10 @@ class OpenAIService
         $usage = $data['usage'] ?? null;
         $inTok = $usage['input_tokens'] ?? (int) ceil((mb_strlen($systemPrompt) + mb_strlen($userPrompt)) / 4);
         $outTok = $usage['output_tokens'] ?? (int) ceil(mb_strlen($text) / 4);
-        $logPath = dirname(__DIR__, 3) . '/public/api/lib/usage_log.php';
+        $root = dirname(__DIR__, 3);
+        $logPath = file_exists($root . '/public/api/lib/usage_log.php')
+            ? $root . '/public/api/lib/usage_log.php'
+            : $root . '/api/lib/usage_log.php';
         if (file_exists($logPath)) {
             require_once $logPath;
             log_api_usage([
@@ -581,7 +584,10 @@ class OpenAIService
 
         // API 사용량 로깅 (OpenAI TTS - 문자 수)
         $chars = mb_strlen($text);
-        $logPath = dirname(__DIR__, 3) . '/public/api/lib/usage_log.php';
+        $root = dirname(__DIR__, 3);
+        $logPath = file_exists($root . '/public/api/lib/usage_log.php')
+            ? $root . '/public/api/lib/usage_log.php'
+            : $root . '/api/lib/usage_log.php';
         if (file_exists($logPath)) {
             require_once $logPath;
             log_api_usage([
@@ -683,7 +689,10 @@ class OpenAIService
         // API 사용량 로깅
         $usage = $data['usage'] ?? null;
         $inTok = $usage['prompt_tokens'] ?? $usage['input_tokens'] ?? (int) ceil(mb_strlen($text) / 4);
-        $logPath = dirname(__DIR__, 3) . '/public/api/lib/usage_log.php';
+        $root = dirname(__DIR__, 3);
+        $logPath = file_exists($root . '/public/api/lib/usage_log.php')
+            ? $root . '/public/api/lib/usage_log.php'
+            : $root . '/api/lib/usage_log.php';
         if (file_exists($logPath)) {
             require_once $logPath;
             log_api_usage([
@@ -804,7 +813,10 @@ class OpenAIService
         }
 
         // API 사용량 로깅 (DALL-E)
-        $logPath = dirname(__DIR__, 3) . '/public/api/lib/usage_log.php';
+        $root = dirname(__DIR__, 3);
+        $logPath = file_exists($root . '/public/api/lib/usage_log.php')
+            ? $root . '/public/api/lib/usage_log.php'
+            : $root . '/api/lib/usage_log.php';
         if (file_exists($logPath)) {
             require_once $logPath;
             log_api_usage([

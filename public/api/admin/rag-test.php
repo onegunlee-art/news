@@ -116,9 +116,10 @@ if (!$rag->isConfigured()) {
     http_response_code(503);
     echo json_encode([
         'success' => false,
-        'error' => 'RAG not configured (OpenAI + Supabase required)',
+        'error' => 'RAG not configured (OpenAI + Supabase required). Supabase에 match_critique_embeddings, match_analysis_embeddings, match_knowledge_library RPC가 정의되어 있는지 확인하세요.',
         'critiques' => [],
         'analyses' => [],
+        'knowledge' => [],
         'system_prompt_preview' => null,
     ]);
     exit;
@@ -135,5 +136,6 @@ echo json_encode([
     'top_k' => $topK,
     'critiques' => $context['critiques'] ?? [],
     'analyses' => $context['analyses'] ?? [],
+    'knowledge' => $context['knowledge'] ?? [],
     'system_prompt_preview' => $systemPromptPreview,
 ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);

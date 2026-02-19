@@ -279,7 +279,10 @@ class GoogleTTSService
                 $input = $payload['input'] ?? [];
                 $chars = isset($input['text']) ? mb_strlen($input['text']) : (isset($input['ssml']) ? mb_strlen(preg_replace('/<[^>]+>/', '', $input['ssml'])) : 0);
                 if ($chars > 0) {
-                    $logPath = dirname(__DIR__, 3) . '/public/api/lib/usage_log.php';
+                    $root = dirname(__DIR__, 3);
+                    $logPath = file_exists($root . '/public/api/lib/usage_log.php')
+                        ? $root . '/public/api/lib/usage_log.php'
+                        : $root . '/api/lib/usage_log.php';
                     if (file_exists($logPath)) {
                         require_once $logPath;
                         log_api_usage([

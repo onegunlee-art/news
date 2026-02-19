@@ -384,9 +384,9 @@ if ($method === 'GET') {
         $total = (int) $stmt->fetchColumn();
         
         // ★ 컬럼 존재 여부는 상단 DESCRIBE에서 이미 조회됨 (SHOW COLUMNS 제거)
-        $selectColumns = 'id, category, title, description, content, source, image_url, created_at';
+        $selectColumns = 'id, category, title, description, content, source, url, image_url, created_at';
         if ($hasSourceUrl) {
-            $selectColumns = 'id, category, title, description, content, source, source_url, image_url, created_at';
+            $selectColumns = 'id, category, title, description, content, source, url, source_url, image_url, created_at';
         }
         if ($hasWhyImportant) {
             $selectColumns = str_replace('content,', 'content, why_important,', $selectColumns);

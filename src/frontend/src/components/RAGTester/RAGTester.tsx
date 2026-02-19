@@ -18,6 +18,7 @@ const RAGTester: React.FC = () => {
   const [result, setResult] = useState<{
     critiques: RAGResult[];
     analyses: RAGResult[];
+    knowledge?: RAGResult[];
     system_prompt_preview?: string;
   } | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -47,10 +48,11 @@ const RAGTester: React.FC = () => {
         setResult({
           critiques: data.critiques || [],
           analyses: data.analyses || [],
+          knowledge: data.knowledge || [],
           system_prompt_preview: data.system_prompt_preview,
         });
       } else {
-        setError(data.error || 'RAG 검색 실패');
+        setError(data.error || 'RAG 검색 실패. Supabase RPC(match_critique_embeddings 등) 및 테이블 점검 필요.');
       }
     } catch (e) {
       setError('서버 오류: ' + (e as Error).message);
@@ -116,7 +118,7 @@ const RAGTester: React.FC = () => {
 
       {result && (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 space-y-4">
               <h4 className="font-semibold text-cyan-300">크리틱 결과 ({result.critiques.length})</h4>
               {result.critiques.length === 0 ? (
@@ -154,6 +156,25 @@ const RAGTester: React.FC = () => {
                         )}
                       </div>
                       <p className="text-sm text-slate-300 whitespace-pre-wrap line-clamp-4">{a.chunk_text || ''}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 space-y-4">
+              <h4 className="font-semibold text-amber-300">지식 라이브러리 ({(result.knowledge || []).length})</h4>
+              {(result.knowledge || []).length === 0 ? (
+                <p className="text-slate-500 text-sm">검색된 지식 없음</p>
+              ) : (
+                <div className="space-y-3 max-h-64 overflow-y-auto">
+                  {(result.knowledge || []).map((k, i) => (
+                    <div key={i} className="p-3 rounded-lg bg-slate-900/50 border border-slate-700/50">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-xs text-amber-400">
+                          유사도: {typeof k.similarity === 'number' ? (k.similarity * 100).toFixed(1) : '?'}%
+                        </span>
+                      </div>
+                      <p className="text-sm text-slate-300 whitespace-pre-wrap line-clamp-4">{(k as { title?: string; content?: string }).title || (k as { chunk_text?: string }).chunk_text || ''}</p>
                     </div>
                   ))}
                 </div>
