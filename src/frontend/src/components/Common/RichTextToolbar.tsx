@@ -7,7 +7,10 @@ const HIGHLIGHT_COLORS = [
 ] as const
 
 interface RichTextToolbarProps {
-  textareaRef: RefObject<HTMLTextAreaElement | null>
+  /** textarea 또는 contenteditable div ref */
+  editableRef?: RefObject<HTMLTextAreaElement | HTMLDivElement | null>
+  /** @deprecated use editableRef */
+  textareaRef?: RefObject<HTMLTextAreaElement | null>
   value: string
   onChange: (value: string) => void
   disabled?: boolean
@@ -27,18 +30,48 @@ function wrapSelection(
   return { newValue, newCursorStart, newCursorEnd }
 }
 
-export default function RichTextToolbar({ textareaRef, value, onChange, disabled }: RichTextToolbarProps) {
+export default function RichTextToolbar({
+  editableRef,
+  textareaRef,
+  value,
+  onChange,
+  disabled,
+}: RichTextToolbarProps) {
+  const ref = editableRef ?? textareaRef
+
   const applyWrap = (before: string, after: string) => {
-    const ta = textareaRef.current
-    if (!ta || disabled) return
-    const start = ta.selectionStart
-    const end = ta.selectionEnd
-    const { newValue, newCursorStart, newCursorEnd } = wrapSelection(value, start, end, before, after)
-    onChange(newValue)
-    ta.focus()
-    requestAnimationFrame(() => {
-      ta.setSelectionRange(newCursorStart, newCursorEnd)
-    })
+    const el = ref?.current
+    if (!el || disabled) return
+
+    if (el instanceof HTMLTextAreaElement) {
+      const start = el.selectionStart
+      const end = el.selectionEnd
+      const { newValue, newCursorStart, newCursorEnd } = wrapSelection(value, start, end, before, after)
+      onChange(newValue)
+      el.focus()
+      requestAnimationFrame(() => {
+        el.setSelectionRange(newCursorStart, newCursorEnd)
+      })
+      return
+    }
+
+    // contenteditable div
+    const sel = window.getSelection()
+    const range = sel?.rangeCount ? sel.getRangeAt(0) : null
+    if (!range || !el.contains(range.commonAncestorContainer)) {
+      el.focus()
+      return
+    }
+    if (range.collapsed) return
+
+    const fragment = range.extractContents()
+    const div = document.createElement('div')
+    div.appendChild(fragment)
+    const selectedHtml = div.innerHTML
+    const wrappedHtml = before + selectedHtml + after
+    document.execCommand('insertHTML', false, wrappedHtml)
+    el.focus()
+    onChange(el.innerHTML)
   }
 
   return (

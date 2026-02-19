@@ -29,7 +29,7 @@ import {
   ClipboardDocumentIcon,
   UserCircleIcon,
 } from '@heroicons/react/24/outline';
-import RichTextToolbar from '../components/Common/RichTextToolbar';
+import RichTextEditor from '../components/Common/RichTextEditor';
 import AIWorkspace from '../components/AIWorkspace/AIWorkspace';
 import type { ArticleContext } from '../components/AIWorkspace/AIWorkspace';
 import CritiqueEditor from '../components/CritiqueEditor/CritiqueEditor';
@@ -113,6 +113,7 @@ interface NewsArticle {
   future_prediction?: string;
   source?: string;
   source_url?: string;
+  url?: string;
   original_source?: string;
   author?: string;
   published_at?: string;
@@ -297,10 +298,6 @@ const AdminPage: React.FC = () => {
   const [dallePrompt, setDallePrompt] = useState('');
   const [isRegeneratingTts, setIsRegeneratingTts] = useState(false);
   const [regeneratedTtsUrl, setRegeneratedTtsUrl] = useState<string | null>(null);
-  const refArticleSummary = useRef<HTMLTextAreaElement>(null);
-  const refNewsContent = useRef<HTMLTextAreaElement>(null);
-  const refNewsNarration = useRef<HTMLTextAreaElement>(null);
-  const refNewsWhyImportant = useRef<HTMLTextAreaElement>(null);
 
   // API 과금 탭 활성 시 데이터 로드
   useEffect(() => {
@@ -744,8 +741,9 @@ const AdminPage: React.FC = () => {
     setNewsContent(news.content);
     setNewsWhyImportant(news.why_important || '');
     setNewsNarration(news.narration || '');
-    // 추가 메타데이터 (출처, 작성자, 작성일, 사진)
-    setArticleUrl(news.source_url || '');
+    // 추가 메타데이터 (출처, 작성자, 작성일, 사진) - source_url 우선, 없으면 url (API가 url 반환)
+    const urlToShow = (news.source_url && news.source_url.trim()) || (news.url && news.url.trim()) || '';
+    setArticleUrl(urlToShow);
     setArticleSource(news.original_source || news.source || '');
     setArticleOriginalTitle((news as { original_title?: string }).original_title || '');
     setArticleAuthor(news.author || '');
@@ -1694,14 +1692,13 @@ const AdminPage: React.FC = () => {
                       {/* 요약 */}
                       <div>
                         <label className="block text-slate-400 text-sm mb-1">요약 (Summary)</label>
-                        <RichTextToolbar textareaRef={refArticleSummary} value={articleSummary} onChange={setArticleSummary} />
-                        <textarea
-                          ref={refArticleSummary}
+                        <RichTextEditor
                           value={articleSummary}
-                          onChange={(e) => setArticleSummary(e.target.value)}
+                          onChange={setArticleSummary}
+                          sanitizePaste={(t) => sanitizeText(t).replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}
                           placeholder="기사 요약 내용..."
                           rows={3}
-                          className="w-full bg-slate-800/50 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-500 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition resize-none"
+                          className="w-full bg-slate-800/50 border border-slate-600 rounded-lg text-sm"
                         />
                       </div>
                     </div>
@@ -1731,20 +1728,13 @@ const AdminPage: React.FC = () => {
                       gpt 요약
                       <span className="ml-2 text-xs text-cyan-400">(붙여넣기 시 자동 정제)</span>
                     </label>
-                    <RichTextToolbar textareaRef={refNewsContent} value={newsContent} onChange={setNewsContent} />
-                    <textarea
-                      ref={refNewsContent}
+                    <RichTextEditor
                       value={newsContent}
-                      onChange={(e) => setNewsContent(e.target.value)}
-                      onPaste={(e) => {
-                        e.preventDefault();
-                        const pastedText = e.clipboardData.getData('text');
-                        const sanitized = sanitizeText(pastedText);
-                        setNewsContent(sanitized);
-                      }}
+                      onChange={setNewsContent}
+                      sanitizePaste={(t) => sanitizeText(t).replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}
                       placeholder="뉴스 본문을 작성하세요..."
                       rows={8}
-                      className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition resize-none"
+                      className="w-full bg-slate-900/50 border border-slate-700 rounded-xl"
                     />
                     <p className="text-slate-500 text-sm mt-1">{newsContent.length} / 10,000자</p>
                   </div>
@@ -1773,20 +1763,13 @@ const AdminPage: React.FC = () => {
                         전체 복사
                       </button>
                     </div>
-                    <RichTextToolbar textareaRef={refNewsNarration} value={newsNarration} onChange={setNewsNarration} />
-                    <textarea
-                      ref={refNewsNarration}
+                    <RichTextEditor
                       value={newsNarration}
-                      onChange={(e) => setNewsNarration(e.target.value)}
-                      onPaste={(e) => {
-                        e.preventDefault();
-                        const pastedText = e.clipboardData.getData('text');
-                        const sanitized = sanitizeText(pastedText);
-                        setNewsNarration(sanitized);
-                      }}
+                      onChange={setNewsNarration}
+                      sanitizePaste={(t) => sanitizeText(t).replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}
                       placeholder="내레이션 스타일로 작성하세요..."
                       rows={6}
-                      className="w-full bg-slate-900/50 border border-emerald-700/50 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none transition resize-none"
+                      className="w-full bg-slate-900/50 border border-emerald-700/50 rounded-xl focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
                     />
                     <p className="text-slate-500 text-sm mt-1">{newsNarration.length} / 10,000자</p>
                     {newsNarration.trim() && (
@@ -1866,20 +1849,13 @@ const AdminPage: React.FC = () => {
                         전체 복사
                       </button>
                     </div>
-                    <RichTextToolbar textareaRef={refNewsWhyImportant} value={newsWhyImportant} onChange={setNewsWhyImportant} />
-                    <textarea
-                      ref={refNewsWhyImportant}
+                    <RichTextEditor
                       value={newsWhyImportant}
-                      onChange={(e) => setNewsWhyImportant(e.target.value)}
-                      onPaste={(e) => {
-                        e.preventDefault();
-                        const pastedText = e.clipboardData.getData('text');
-                        const sanitized = sanitizeText(pastedText);
-                        setNewsWhyImportant(sanitized);
-                      }}
+                      onChange={setNewsWhyImportant}
+                      sanitizePaste={(t) => sanitizeText(t).replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}
                       placeholder="The Gist's Critique를 작성해주세요..."
                       rows={5}
-                      className="w-full bg-slate-900/50 border border-amber-700/50 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none transition resize-none"
+                      className="w-full bg-slate-900/50 border border-amber-700/50 rounded-xl focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
                     />
                     <p className="text-slate-500 text-sm mt-1">{newsWhyImportant.length} / 5,000자</p>
                   </div>
