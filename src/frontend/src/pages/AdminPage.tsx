@@ -1071,8 +1071,10 @@ const AdminPage: React.FC = () => {
                         } else {
                           setSaveMessage({ type: 'error', text: (res.data as { message?: string })?.message || 'TTS 갱신 실패' });
                         }
-                      } catch (e) {
-                        setSaveMessage({ type: 'error', text: 'TTS 갱신 요청 실패' });
+                      } catch (e: unknown) {
+                        const err = e as { response?: { data?: { message?: string } }; message?: string };
+                        const msg = err.response?.data?.message || err.message || 'TTS 갱신 요청 실패';
+                        setSaveMessage({ type: 'error', text: msg });
                       }
                     }}
                     className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-500 to-teal-500 text-white rounded-xl hover:opacity-90 transition text-sm"
