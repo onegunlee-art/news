@@ -225,6 +225,17 @@ begin
 end;
 $$;
 
+-- TTS media_cache 조회 (hash 기반, PostgREST JSONB 필터 대체)
+create or replace function get_tts_cache_by_hash(p_hash text)
+returns table (file_url text, generation_params jsonb)
+language sql stable
+as $$
+  select mc.file_url, mc.generation_params
+  from media_cache mc
+  where mc.media_type = 'tts' and (mc.generation_params->>'hash') = p_hash
+  limit 1;
+$$;
+
 -- Match knowledge library by cosine similarity
 create or replace function match_knowledge_library(
   query_embedding vector(1536),

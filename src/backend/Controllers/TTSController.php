@@ -79,10 +79,9 @@ final class TTSController
 
         $supabase = $this->getSupabaseService($projectRoot);
         if ($supabase !== null && $supabase->isConfigured()) {
-            $cacheQuery = 'media_type=eq.tts&generation_params->>hash=eq.' . rawurlencode($cacheHash);
-            $cached = $supabase->select('media_cache', $cacheQuery, 1);
-            if (!empty($cached) && is_array($cached) && !empty($cached[0]['file_url'])) {
-                return Response::success(['url' => $cached[0]['file_url'], 'voice' => $ttsVoice], '캐시된 오디오입니다.');
+            $cached = $this->getTtsCacheFromSupabase($supabase, $cacheHash, $projectRoot);
+            if ($cached !== null) {
+                return Response::success(['url' => $cached['file_url'], 'voice' => $ttsVoice], '캐시된 오디오입니다.');
             }
         }
 
@@ -116,21 +115,30 @@ final class TTSController
         $fullPayload = $title . '|' . $meta . '|' . $narration . '|' . $critiquePart . '|' . $ttsVoice;
         $cacheHash = hash('sha256', $fullPayload);
 
+        $this->logTtsDebug('structured_request', [
+            'news_id' => $newsId,
+            'title_preview' => mb_substr($title, 0, 60),
+            'meta_preview' => mb_substr($meta, 0, 80),
+            'cache_hash' => $cacheHash,
+        ], $projectRoot);
+
         // 파일 캐시
         $cachedUrl = $this->getCachedFileUrl($storageDir, $cacheHash);
         if ($cachedUrl !== null) {
+            $this->logTtsDebug('cache_hit', ['source' => 'file', 'hash' => $cacheHash], $projectRoot);
             return Response::success(['url' => $cachedUrl, 'voice' => $ttsVoice], '캐시된 오디오입니다.');
         }
 
         $supabase = $this->getSupabaseService($projectRoot);
         if ($supabase !== null && $supabase->isConfigured()) {
-            $cacheQuery = 'media_type=eq.tts&generation_params->>hash=eq.' . rawurlencode($cacheHash);
-            $cached = $supabase->select('media_cache', $cacheQuery, 1);
-            if (!empty($cached) && is_array($cached) && !empty($cached[0]['file_url'])) {
-                return Response::success(['url' => $cached[0]['file_url'], 'voice' => $ttsVoice], '캐시된 오디오입니다.');
+            $cached = $this->getTtsCacheFromSupabase($supabase, $cacheHash, $projectRoot);
+            if ($cached !== null) {
+                $this->logTtsDebug('cache_hit', ['source' => 'supabase', 'hash' => $cacheHash], $projectRoot);
+                return Response::success(['url' => $cached['file_url'], 'voice' => $ttsVoice], '캐시된 오디오입니다.');
             }
         }
 
+        $this->logTtsDebug('generating', ['hash' => $cacheHash], $projectRoot);
         require_once $projectRoot . '/src/agents/services/GoogleTTSService.php';
         $service = new \Agents\Services\GoogleTTSService($config);
         if (!$service->isConfigured()) {
@@ -151,6 +159,37 @@ final class TTSController
 
         $this->saveToSupabase($supabase, $newsId, $url, $cacheHash, $ttsVoice);
         return Response::success(['url' => $url, 'voice' => $ttsVoice], '오디오가 생성되었습니다.');
+    }
+
+    /**
+     * Supabase에서 TTS 캐시 조회. RPC 우선, 실패 시 REST 필터 사용 + 해시 검증.
+     * @return array{file_url: string}|null
+     */
+    private function getTtsCacheFromSupabase(\Agents\Services\SupabaseService $supabase, string $cacheHash, string $projectRoot): ?array
+    {
+        // 1) RPC 함수 사용 (JSONB 필터보다 안정적)
+        $rpcResult = $supabase->rpc('get_tts_cache_by_hash', ['p_hash' => $cacheHash]);
+        if (is_array($rpcResult) && !empty($rpcResult[0]['file_url'])) {
+            return $rpcResult[0];
+        }
+
+        // 2) REST 필터 폴백 (PostgREST JSONB)
+        $cacheQuery = 'media_type=eq.tts&generation_params->>hash=eq.' . rawurlencode($cacheHash);
+        $cached = $supabase->select('media_cache', $cacheQuery, 1);
+        if (!empty($cached) && is_array($cached) && !empty($cached[0]['file_url'])) {
+            $rowHash = $cached[0]['generation_params']['hash'] ?? null;
+            if ($rowHash === $cacheHash) {
+                return $cached[0];
+            }
+            $this->logTtsDebug('cache_mismatch', [
+                'expected_hash' => $cacheHash,
+                'row_hash' => $rowHash,
+                'query' => $cacheQuery,
+            ], $projectRoot);
+        } else {
+            $this->logTtsDebug('supabase_miss', ['hash' => $cacheHash, 'query' => $cacheQuery], $projectRoot);
+        }
+        return null;
     }
 
     private function getCachedFileUrl(string $storageDir, string $hash): ?string
@@ -196,5 +235,21 @@ final class TTSController
             error_log("[TTS] getSetting error: " . $e->getMessage());
             return null;
         }
+    }
+
+    /** TTS 디버깅 로그 (storage/logs/tts_debug.log) */
+    private function logTtsDebug(string $event, array $data, string $projectRoot): void
+    {
+        $logDir = $projectRoot . '/storage/logs';
+        if (!is_dir($logDir)) {
+            @mkdir($logDir, 0755, true);
+        }
+        $logPath = $logDir . '/tts_debug.log';
+        $line = json_encode([
+            'ts' => date('Y-m-d H:i:s'),
+            'event' => $event,
+            'data' => $data,
+        ], JSON_UNESCAPED_UNICODE) . "\n";
+        @file_put_contents($logPath, $line, FILE_APPEND | LOCK_EX);
     }
 }

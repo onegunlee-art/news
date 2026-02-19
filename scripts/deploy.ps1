@@ -47,7 +47,7 @@ Write-Host ""
 # 3. 커밋 & 푸시
 Write-Host "[3/3] Commit and push to main..." -ForegroundColor Yellow
 git add -A
-git commit -m "Deploy: 지스터 독자 통일 (GPT 프롬프트 + 내레이션 정규화)"
+git commit -m "Deploy: TTS 매체설명 불일치 수정 (디버깅 로그 + Supabase RPC)"
 git push origin main
 
 if ($LASTEXITCODE -ne 0) {
