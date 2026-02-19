@@ -1061,10 +1061,10 @@ const AdminPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={async () => {
-                      if (!confirm('전체 기사의 Listen 오디오를 현재 DB(매체 설명/원문 제목) 기준으로 재생성합니다. original_title 백필 후 매체 설명·보이스 불일치 시 사용하세요. 계속할까요?')) return;
+                      if (!confirm('기존 캐시를 무시하고 모든 기사 TTS를 강제 재생성합니다. (매체설명·보이스 불일치 시 사용) 수 분 소요. 계속할까요?')) return;
                       try {
-                        setSaveMessage({ type: 'success', text: 'TTS 갱신 중... (수 분 소요)' });
-                        const res = await adminTtsApi.regenerateAll();
+                        setSaveMessage({ type: 'success', text: 'TTS 강제 재생성 중... (수 분 소요)' });
+                        const res = await adminTtsApi.regenerateAll({ force: true });
                         const data = res.data?.data;
                         if (res.data?.success && data) {
                           setSaveMessage({ type: 'success', text: `TTS ${data.generated}건 재생성, ${data.skipped}건 스킵 (총 ${data.total}건)` });
