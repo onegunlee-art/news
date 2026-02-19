@@ -64,6 +64,23 @@ export default function RichTextToolbar({
     }
     if (range.collapsed) return
 
+    // 볼드/하이라이트 중첩 보존: 선택 영역이 포맷 요소(b, strong, mark, span) 내부에 있으면
+    // 해당 요소 전체를 포함하도록 range 확장 (extractContents 시 포맷 손실 방지)
+    const FORMATTING_TAGS = ['B', 'STRONG', 'MARK', 'SPAN']
+    let node: Node | null = range.commonAncestorContainer
+    if (node.nodeType === Node.TEXT_NODE) node = node.parentElement
+    if (node?.nodeType === Node.ELEMENT_NODE) {
+      let elem: HTMLElement | null = node as HTMLElement
+      while (elem && elem !== el) {
+        if (FORMATTING_TAGS.includes(elem.tagName) && el.contains(elem)) {
+          range.setStartBefore(elem)
+          range.setEndAfter(elem)
+          break
+        }
+        elem = elem.parentElement
+      }
+    }
+
     const fragment = range.extractContents()
     const div = document.createElement('div')
     div.appendChild(fragment)

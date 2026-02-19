@@ -47,7 +47,7 @@ Write-Host ""
 # 3. 커밋 & 푸시
 Write-Host "[3/3] Commit and push to main..." -ForegroundColor Yellow
 git add -A
-git commit -m "Deploy: Admin 수정 URL 표시, RichTextEditor WYSIWYG 적용"
+git commit -m "Deploy: 볼드/하이라이트 유저페이지 표시 수정, 중첩 포맷 보존"
 git push origin main
 
 if ($LASTEXITCODE -ne 0) {
