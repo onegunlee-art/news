@@ -140,10 +140,14 @@ export const adminSettingsApi = {
     api.put('/admin/settings', settings),
 }
 
-/** Admin TTS 일괄 재생성 (보이스/매체설명 변경 시 전체 기사 Listen용 캐시 갱신) - 수 분 소요 */
+/** Admin TTS 일괄 재생성 (배치 처리로 504 방지) */
 export const adminTtsApi = {
-  regenerateAll: (params?: { force?: boolean }) =>
-    api.post<{ success: boolean; data: { generated: number; skipped: number; total: number } }>('/admin/tts/regenerate-all', params ?? {}, { timeout: 600000 }),
+  regenerateAll: (params?: { force?: boolean; offset?: number; limit?: number }) =>
+    api.post<{ success: boolean; data: { generated: number; skipped: number; total: number; offset: number; has_more: boolean } }>(
+      '/admin/tts/regenerate-all',
+      params ?? {},
+      { timeout: 120000 }
+    ),
 }
 
 export const authApi = {

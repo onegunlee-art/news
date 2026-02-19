@@ -487,14 +487,17 @@ final class AdminController
     /**
      * TTS 일괄 재생성 (보이스/매체설명 변경 시 전체 기사 Listen용 TTS 재생성)
      * POST /api/admin/tts/regenerate-all
-     * Body: { "force"?: bool } - true이면 기존 캐시 무시하고 강제 재생성
-     * Returns: { generated, skipped, total, message }
+     * Body: { "force"?: bool, "offset"?: int, "limit"?: int }
+     *   force: 기존 캐시 무시, offset/limit: 배치 처리 (504 타임아웃 방지)
+     * Returns: { generated, skipped, total, offset, has_more, message }
      */
     public function regenerateAllTts(Request $request): Response
     {
-        set_time_limit(600); // 최대 10분
+        set_time_limit(120); // 배치당 최대 2분 (504 방지)
         $body = $request->json() ?? [];
         $force = isset($body['force']) && $body['force'] === true;
+        $offset = isset($body['offset']) && is_numeric($body['offset']) ? max(0, (int) $body['offset']) : 0;
+        $limit = isset($body['limit']) && is_numeric($body['limit']) ? min(100, max(5, (int) $body['limit'])) : 15;
 
         $projectRoot = dirname(__DIR__, 3);
         $ttsVoice = $this->getSetting('tts_voice');
@@ -533,7 +536,10 @@ final class AdminController
         }
 
         $stmt = $this->db->query("SELECT {$columns} FROM news ORDER BY id ASC");
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $allRows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = array_slice($allRows, $offset, $limit);
+        $total = count($allRows);
+        $hasMore = ($offset + count($rows)) < $total;
 
         $generated = 0;
         $skipped = 0;
@@ -594,8 +600,12 @@ final class AdminController
         return Response::success([
             'generated' => $generated,
             'skipped' => $skipped,
-            'total' => count($rows),
-        ], "TTS 일괄 재생성 완료: {$generated}건 생성, {$skipped}건 스킵.");
+            'total' => $total,
+            'offset' => $offset,
+            'has_more' => $hasMore,
+        ], $hasMore
+            ? "배치 완료: {$generated}건 생성, {$skipped}건 스킵 (다음 배치 진행 중)"
+            : "TTS 일괄 재생성 완료: 총 {$generated}건 생성, {$skipped}건 스킵.");
     }
 
     private function getSetting(string $key): ?string

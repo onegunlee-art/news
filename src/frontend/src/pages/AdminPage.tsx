@@ -356,31 +356,43 @@ const AdminPage: React.FC = () => {
     personaChatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [personaMessages]);
 
-  const saveTtsVoice = () => {
+  const saveTtsVoice = async () => {
     setSettingsSaving(true);
     setSettingsError(null);
     setSettingsSuccess(null);
-    adminSettingsApi
-      .updateSettings({ tts_voice: ttsVoice })
-      .then(() => {
-        setSettingsError(null);
-        setSettingsSuccess('보이스 저장됨. 기존 TTS 일괄 재생성 중…');
-        return adminTtsApi.regenerateAll()
-          .then((r) => {
-            const d = r.data?.data;
-            const msg = d
-              ? `보이스 저장 완료. TTS ${d.generated}건 재생성, ${d.skipped}건 스킵 (총 ${d.total}건)`
-              : '보이스 저장 완료. 기존 Listen TTS가 새 보이스로 일괄 재생성되었습니다.';
-            setSettingsSuccess(msg);
-            setTimeout(() => setSettingsSuccess(null), 6000);
-          })
-          .catch(() => {
-            setSettingsSuccess('보이스는 저장되었습니다. TTS 일괄 재생성에 실패했습니다. (Supabase/Google TTS 확인)');
-            setTimeout(() => setSettingsSuccess(null), 6000);
-          });
-      })
-      .catch((err) => setSettingsError(err.response?.data?.message || '저장에 실패했습니다.'))
-      .finally(() => setSettingsSaving(false));
+    let totalGen = 0;
+    try {
+      await adminSettingsApi.updateSettings({ tts_voice: ttsVoice });
+      setSettingsError(null);
+      setSettingsSuccess('보이스 저장됨. TTS 배치 재생성 중…');
+      let offset = 0;
+      const limit = 15;
+      let totalSkip = 0;
+      let total = 0;
+      let hasMore = true;
+      while (hasMore) {
+        const r = await adminTtsApi.regenerateAll({ offset, limit });
+        const d = r.data?.data;
+        if (!r.data?.success || !d) break;
+        totalGen += d.generated;
+        totalSkip += d.skipped;
+        total = d.total;
+        hasMore = d.has_more ?? false;
+        offset += limit;
+        if (hasMore) setSettingsSuccess(`TTS 재생성 중... ${Math.min(offset, total)}/${total}`);
+      }
+      setSettingsSuccess(`보이스 저장 완료. TTS ${totalGen}건 재생성, ${totalSkip}건 스킵 (총 ${total}건)`);
+      setTimeout(() => setSettingsSuccess(null), 6000);
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { message?: string } } };
+      if (totalGen > 0) {
+        setSettingsSuccess(`보이스 저장됨. TTS 일부 재생성됨 (${totalGen}건). 나머지는 TTS 전체 갱신 버튼으로 실행하세요.`);
+      } else {
+        setSettingsError(e.response?.data?.message || '저장에 실패했습니다.');
+      }
+    } finally {
+      setSettingsSaving(false);
+    }
   };
 
   // ── Feedback API helpers ────────────────────────────
@@ -1061,20 +1073,36 @@ const AdminPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={async () => {
-                      if (!confirm('기존 캐시를 무시하고 모든 기사 TTS를 강제 재생성합니다. (매체설명·보이스 불일치 시 사용) 수 분 소요. 계속할까요?')) return;
+                      if (!confirm('기존 캐시를 무시하고 모든 기사 TTS를 강제 재생성합니다. (배치 처리로 504 방지) 계속할까요?')) return;
+                      let offset = 0;
+                      const limit = 15;
+                      let totalGen = 0;
+                      let totalSkip = 0;
+                      let total = 0;
+                      let hasMore = true;
                       try {
-                        setSaveMessage({ type: 'success', text: 'TTS 강제 재생성 중... (수 분 소요)' });
-                        const res = await adminTtsApi.regenerateAll({ force: true });
-                        const data = res.data?.data;
-                        if (res.data?.success && data) {
-                          setSaveMessage({ type: 'success', text: `TTS ${data.generated}건 재생성, ${data.skipped}건 스킵 (총 ${data.total}건)` });
-                        } else {
-                          setSaveMessage({ type: 'error', text: (res.data as { message?: string })?.message || 'TTS 갱신 실패' });
+                        setSaveMessage({ type: 'success', text: 'TTS 강제 재생성 중...' });
+                        while (hasMore) {
+                          const res = await adminTtsApi.regenerateAll({ force: true, offset, limit });
+                          const data = res.data?.data;
+                          if (!res.data?.success || !data) {
+                            setSaveMessage({ type: 'error', text: (res.data as { message?: string })?.message || 'TTS 갱신 실패' });
+                            return;
+                          }
+                          totalGen += data.generated;
+                          totalSkip += data.skipped;
+                          total = data.total;
+                          hasMore = data.has_more ?? false;
+                          offset += limit;
+                          if (hasMore) {
+                            setSaveMessage({ type: 'success', text: `TTS 재생성 중... ${Math.min(offset, total)}/${total} (${totalGen}건 생성)` });
+                          }
                         }
+                        setSaveMessage({ type: 'success', text: `TTS 완료: ${totalGen}건 생성, ${totalSkip}건 스킵 (총 ${total}건)` });
                       } catch (e: unknown) {
                         const err = e as { response?: { data?: { message?: string } }; message?: string };
                         const msg = err.response?.data?.message || err.message || 'TTS 갱신 요청 실패';
-                        setSaveMessage({ type: 'error', text: msg });
+                        setSaveMessage({ type: 'error', text: totalGen > 0 ? `${msg} (진행: ${totalGen}건 생성됨)` : msg });
                       }
                     }}
                     className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-500 to-teal-500 text-white rounded-xl hover:opacity-90 transition text-sm"
