@@ -485,13 +485,16 @@ final class AdminController
     }
 
     /**
-     * TTS 일괄 재생성 (보이스 변경 시 전체 기사 Listen용 TTS를 새 보이스로 재생성)
+     * TTS 일괄 재생성 (보이스/매체설명 변경 시 전체 기사 Listen용 TTS 재생성)
      * POST /api/admin/tts/regenerate-all
+     * Body: { "force"?: bool } - true이면 기존 캐시 무시하고 강제 재생성
      * Returns: { generated, skipped, total, message }
      */
     public function regenerateAllTts(Request $request): Response
     {
         set_time_limit(600); // 최대 10분
+        $body = $request->json() ?? [];
+        $force = isset($body['force']) && $body['force'] === true;
 
         $projectRoot = dirname(__DIR__, 3);
         $ttsVoice = $this->getSetting('tts_voice');
@@ -547,19 +550,21 @@ final class AdminController
             $fullPayload = $title . '|' . $meta . '|' . $narration . '|' . $critiquePart . '|' . $ttsVoice;
             $cacheHash = hash('sha256', $fullPayload);
 
-            // 파일 캐시
-            $safeHash = preg_replace('/[^a-f0-9]/', '', $cacheHash);
-            if (is_file($storageDir . '/tts_' . $safeHash . '.wav')) {
-                $skipped++;
-                continue;
-            }
-
-            if ($supabase !== null && $supabase->isConfigured()) {
-                $cacheQuery = 'media_type=eq.tts&generation_params->>hash=eq.' . rawurlencode($cacheHash);
-                $cached = $supabase->select('media_cache', $cacheQuery, 1);
-                if (!empty($cached) && is_array($cached) && !empty($cached[0]['file_url'])) {
+            if (!$force) {
+                // 파일 캐시
+                $safeHash = preg_replace('/[^a-f0-9]/', '', $cacheHash);
+                if (is_file($storageDir . '/tts_' . $safeHash . '.wav')) {
                     $skipped++;
                     continue;
+                }
+
+                if ($supabase !== null && $supabase->isConfigured()) {
+                    $cacheQuery = 'media_type=eq.tts&generation_params->>hash=eq.' . rawurlencode($cacheHash);
+                    $cached = $supabase->select('media_cache', $cacheQuery, 1);
+                    if (!empty($cached) && is_array($cached) && !empty($cached[0]['file_url'])) {
+                        $skipped++;
+                        continue;
+                    }
                 }
             }
 

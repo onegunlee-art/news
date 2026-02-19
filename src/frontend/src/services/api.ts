@@ -140,10 +140,10 @@ export const adminSettingsApi = {
     api.put('/admin/settings', settings),
 }
 
-/** Admin TTS 일괄 재생성 (보이스 변경 시 전체 기사 Listen용 캐시 갱신) */
+/** Admin TTS 일괄 재생성 (보이스/매체설명 변경 시 전체 기사 Listen용 캐시 갱신) */
 export const adminTtsApi = {
-  regenerateAll: () =>
-    api.post<{ success: boolean; data: { generated: number; skipped: number; total: number } }>('/admin/tts/regenerate-all'),
+  regenerateAll: (params?: { force?: boolean }) =>
+    api.post<{ success: boolean; data: { generated: number; skipped: number; total: number } }>('/admin/tts/regenerate-all', params ?? {}),
 }
 
 export const authApi = {
