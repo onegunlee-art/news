@@ -17,6 +17,7 @@ if (file_exists(__DIR__ . '/../../config/database.php')) {
 
 require __DIR__ . '/../lib/extractTitleFromHtml.php';
 require __DIR__ . '/../lib/extractTitleFromUrl.php';
+require __DIR__ . '/../lib/invalidateTtsCache.php';
 
 $cfg = ['host' => 'localhost', 'database' => 'ailand', 'username' => 'ailand', 'password' => '', 'charset' => 'utf8mb4'];
 
@@ -115,6 +116,7 @@ try {
             $upd->execute([$finalTitle, $row['id']]);
             if ($upd->rowCount() > 0) {
                 $updated++;
+                invalidateTtsCacheForNews((int) $row['id']);
             }
         } else {
             $updated++;

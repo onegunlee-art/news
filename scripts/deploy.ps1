@@ -47,7 +47,7 @@ Write-Host ""
 # 3. 커밋 & 푸시
 Write-Host "[3/3] Commit and push to main..." -ForegroundColor Yellow
 git add -A
-git commit -m "Deploy: TTS 캐시 무효화 (기사 수정/삭제 시) + Listen 전 최신 데이터 조회"
+git commit -m "Deploy: TTS cache-busting, detail no-cache, backfill invalidation"
 git push origin main
 
 if ($LASTEXITCODE -ne 0) {

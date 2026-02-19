@@ -63,7 +63,7 @@ export default function NewsDetailPage() {
     if (!news) return
     let data = news
     try {
-      const res = await newsApi.getDetail(news.id)
+      const res = await newsApi.getDetail(news.id, { _t: Date.now() })
       if (res.data?.success && res.data?.data) {
         data = res.data.data as NewsDetail
         setNews(data)

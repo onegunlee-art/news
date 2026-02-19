@@ -77,8 +77,8 @@ export const newsApi = {
   search: (query: string, page = 1, perPage = 20) =>
     api.get('/admin/news.php', { params: { query, page, per_page: perPage } }),
   
-  getDetail: (id: number) =>
-    api.get('/news/detail.php', { params: { id } }),
+  getDetail: (id: number, params?: Record<string, unknown>) =>
+    api.get('/news/detail.php', { params: { id, ...params } }),
   
   bookmark: (id: number, memo?: string) =>
     api.post('/news/bookmark', { id, memo }),

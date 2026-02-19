@@ -13,6 +13,7 @@ if (file_exists(__DIR__ . '/../../config/database.php')) {
 }
 
 require __DIR__ . '/../lib/extractTitleFromUrl.php';
+require __DIR__ . '/../lib/invalidateTtsCache.php';
 
 $cfg = ['host' => 'localhost', 'database' => 'ailand', 'username' => 'ailand', 'password' => '', 'charset' => 'utf8mb4'];
 
@@ -81,7 +82,10 @@ try {
         if (!$dryRun) {
             $upd = $pdo->prepare('UPDATE news SET original_title = ? WHERE id = ?');
             $upd->execute([trim($titleFromUrl), $row['id']]);
-            if ($upd->rowCount() > 0) $updated++;
+            if ($upd->rowCount() > 0) {
+                $updated++;
+                invalidateTtsCacheForNews((int) $row['id']);
+            }
         } else {
             $updated++;
         }
