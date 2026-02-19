@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { formatSourceDisplayName } from '../utils/formatSource'
+import { formatSourceDisplayName, buildEditorialLine } from '../utils/formatSource'
 import { extractTitleFromUrl } from '../utils/extractTitleFromUrl';
 import {
   ChartBarIcon,
@@ -50,8 +50,8 @@ function buildTtsParamsForListen(params: {
   originalTitle?: string | null | undefined
 }): { title: string; meta: string; narration: string; critique_part: string } {
   const titleRaw = (params.title || '제목 없음').trim()
-  // 매체글 제목: GPT original_title(원문 영어) 우선 → URL 슬러그 → 한국어 제목
-  const title = (params.originalTitle && String(params.originalTitle).trim()) || (params.sourceUrl && extractTitleFromUrl(params.sourceUrl)) || titleRaw
+  const title = titleRaw
+  const originalTitle = (params.originalTitle && String(params.originalTitle).trim()) || (params.sourceUrl && extractTitleFromUrl(params.sourceUrl)) || '원문'
   const toDateStr = (v: unknown) => (typeof v === 'string' ? v : null)
   const ref = toDateStr(params.publishedAt) || toDateStr(params.updatedAt) || toDateStr(params.createdAt)
   const dateStr = ref
@@ -60,9 +60,7 @@ function buildTtsParamsForListen(params: {
   const rawSourceVal = (params.originalSource != null ? String(params.originalSource).trim() : '') || (params.source === 'Admin' ? 'The Gist' : (params.source != null ? String(params.source) : 'The Gist'))
   const rawSource: string = typeof rawSourceVal === 'string' ? rawSourceVal : 'The Gist'
   const sourceDisplay = formatSourceDisplayName(rawSource) || 'The Gist'
-  const meta = dateStr
-    ? `${dateStr}자 ${sourceDisplay} 저널의 "${title}"을 AI 번역, 요약하고 The Gist에서 일부 편집한 글입니다.`
-    : `${sourceDisplay} 저널의 "${title}"을 AI 번역, 요약하고 The Gist에서 일부 편집한 글입니다.`
+  const meta = buildEditorialLine({ dateStr, sourceDisplay, originalTitle })
   const narration = (params.narration || '').trim()
   const critiquePart = params.whyImportant ? `The Gist's Critique. ${params.whyImportant.trim()}` : ''
   return { title, meta, narration, critique_part: critiquePart }

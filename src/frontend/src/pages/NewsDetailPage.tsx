@@ -8,7 +8,7 @@ import { useAudioListStore } from '../store/audioListStore'
 import { useAudioPlayerStore } from '../store/audioPlayerStore'
 import LoadingSpinner from '../components/Common/LoadingSpinner'
 import { getPlaceholderImageUrl } from '../utils/imagePolicy'
-import { formatSourceDisplayName } from '../utils/formatSource'
+import { formatSourceDisplayName, buildEditorialLine } from '../utils/formatSource'
 import { extractTitleFromUrl } from '../utils/extractTitleFromUrl'
 import { formatContentHtml } from '../utils/sanitizeHtml'
 
@@ -78,10 +78,8 @@ export default function NewsDetailPage() {
         : ''
     const rawSource = (data.original_source && data.original_source.trim()) || (data.source === 'Admin' ? 'The Gist' : data.source || 'The Gist')
     const sourceDisplay = formatSourceDisplayName(rawSource) || 'The Gist'
-    const titleForMeta = (data.original_title && String(data.original_title).trim()) || extractTitleFromUrl(data.url) || 'Article'
-    const editorialLine = dateStr
-      ? `${dateStr}자 ${sourceDisplay} 저널의 "${titleForMeta}"을 AI 번역, 요약하고 The Gist에서 일부 편집한 글입니다.`
-      : `${sourceDisplay} 저널의 "${titleForMeta}"을 AI 번역, 요약하고 The Gist에서 일부 편집한 글입니다.`
+    const originalTitle = (data.original_title && String(data.original_title).trim()) || extractTitleFromUrl(data.url) || '원문'
+    const editorialLine = buildEditorialLine({ dateStr, sourceDisplay, originalTitle })
     const mainContent = data.narration || data.content || data.description || ''
     const critiquePart = data.why_important ? `The Gist's Critique. ${data.why_important}` : ''
     if (!mainContent && !critiquePart) {
@@ -99,7 +97,7 @@ export default function NewsDetailPage() {
       800,
       400
     )
-    openAndPlay(titleForMeta, editorialLine, mainContent, critiquePart, 1.0, imageUrl, data.id)
+    openAndPlay(data.title, editorialLine, mainContent, critiquePart, 1.0, imageUrl, data.id)
   }
 
   useEffect(() => {

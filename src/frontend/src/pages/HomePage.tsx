@@ -7,7 +7,7 @@ import { useAudioListStore } from '../store/audioListStore'
 import { useAudioPlayerStore } from '../store/audioPlayerStore'
 import LoadingSpinner from '../components/Common/LoadingSpinner'
 import { getPlaceholderImageUrl } from '../utils/imagePolicy'
-import { formatSourceDisplayName } from '../utils/formatSource'
+import { formatSourceDisplayName, buildEditorialLine } from '../utils/formatSource'
 import { extractTitleFromUrl } from '../utils/extractTitleFromUrl'
 
 interface NewsItem {
@@ -208,7 +208,7 @@ function ArticleCard({ article }: { article: NewsItem }) {
       const res = await newsApi.getDetail(Number(newsId))
       const detail = res.data?.data
       if (detail) {
-        const titleForMeta = (detail.original_title && String(detail.original_title).trim()) || extractTitleFromUrl(detail.url) || 'Article'
+        const originalTitle = (detail.original_title && String(detail.original_title).trim()) || extractTitleFromUrl(detail.url) || '원문'
         const dateStr = detail.published_at
           ? `${new Date(detail.published_at).getFullYear()}년 ${new Date(detail.published_at).getMonth() + 1}월 ${new Date(detail.published_at).getDate()}일`
           : (detail.updated_at || detail.created_at)
@@ -216,13 +216,11 @@ function ArticleCard({ article }: { article: NewsItem }) {
             : ''
         const rawSource = (detail.original_source && String(detail.original_source).trim()) || (detail.source === 'Admin' ? 'The Gist' : detail.source || 'The Gist')
         const sourceDisplay = formatSourceDisplayName(rawSource) || 'The Gist'
-        const editorialLine = dateStr
-          ? `${dateStr}자 ${sourceDisplay} 저널의 "${titleForMeta}"을 AI 번역, 요약하고 The Gist에서 일부 편집한 글입니다.`
-          : `${sourceDisplay} 저널의 "${titleForMeta}"을 AI 번역, 요약하고 The Gist에서 일부 편집한 글입니다.`
+        const editorialLine = buildEditorialLine({ dateStr, sourceDisplay, originalTitle })
         const mainContent = detail.narration || detail.content || detail.description || article.description || ''
         const critiquePart = detail.why_important ? `The Gist's Critique. ${detail.why_important}` : ''
         const img = detail.image_url || article.image_url || ''
-        openAndPlay(titleForMeta, editorialLine, mainContent, critiquePart, 1.0, img, Number(newsId))
+        openAndPlay(detail.title, editorialLine, mainContent, critiquePart, 1.0, img, Number(newsId))
         return
       }
     } catch { /* fallback */ }
@@ -231,15 +229,13 @@ function ArticleCard({ article }: { article: NewsItem }) {
     const text = `${article.title}. ${article.description || ''}`.trim()
     if (text) {
       const url = (article as { url?: string; source_url?: string }).url || (article as { source_url?: string }).source_url
-      const titleForMeta = extractTitleFromUrl(url) || 'Article'
+      const originalTitle = extractTitleFromUrl(url) || '원문'
       const sourceDisplay = formatSourceDisplayName(article.source) || 'The Gist'
       const dateStr = article.published_at
         ? `${new Date(article.published_at).getFullYear()}년 ${new Date(article.published_at).getMonth() + 1}월 ${new Date(article.published_at).getDate()}일`
         : ''
-      const editorialLine = dateStr
-        ? `${dateStr}자 ${sourceDisplay} 저널의 "${titleForMeta}"을 AI 번역, 요약하고 The Gist에서 일부 편집한 글입니다.`
-        : `${sourceDisplay} 저널의 "${titleForMeta}"을 AI 번역, 요약하고 The Gist에서 일부 편집한 글입니다.`
-      openAndPlay(titleForMeta, editorialLine, text, '', 1.0, undefined, Number(newsId))
+      const editorialLine = buildEditorialLine({ dateStr, sourceDisplay, originalTitle })
+      openAndPlay(article.title, editorialLine, text, '', 1.0, undefined, Number(newsId))
     }
   }
 
