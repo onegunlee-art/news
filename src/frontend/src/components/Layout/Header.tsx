@@ -3,9 +3,6 @@ import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuthStore } from '../../store/authStore'
 
-/** 스크롤 시 헤더 배경이 왼쪽→오른쪽으로 채워지는 거리(px) */
-const SCROLL_FILL_THRESHOLD = 120
-
 export default function Header() {
   const { isAuthenticated, login, logout } = useAuthStore()
   const [isLoginOpen, setIsLoginOpen] = useState(false)
@@ -16,12 +13,17 @@ export default function Header() {
 
   useEffect(() => {
     const onScroll = () => {
-      const ratio = Math.min(window.scrollY / SCROLL_FILL_THRESHOLD, 1)
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight
+      const ratio = maxScroll <= 0 ? 0 : Math.min(window.scrollY / maxScroll, 1)
       setScrollFill(ratio)
     }
     onScroll()
     window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
+    window.addEventListener('resize', onScroll)
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+    }
   }, [])
 
   const handleLogout = async () => {
