@@ -228,8 +228,8 @@ export default function NewsDetailPage() {
 
   return (
     <div className="min-h-screen bg-white pb-20 md:pb-8">
-      {/* 상단 헤더 */}
-      <div className="sticky top-0 bg-white z-40 border-b border-gray-100">
+      {/* 상단 헤더 - Layout Header(h-14) 바로 아래에 붙도록 top-14 */}
+      <div className="sticky top-14 z-30 bg-white border-b border-gray-100">
         <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between h-12">
             {/* 뒤로가기 */}
