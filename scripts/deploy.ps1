@@ -47,7 +47,7 @@ Write-Host ""
 # 3. 커밋 & 푸시
 Write-Host "[3/3] Commit and push to main..." -ForegroundColor Yellow
 git add -A
-git commit -m "Deploy: 볼드/하이라이트 유저페이지 표시 수정, 중첩 포맷 보존"
+git commit -m "Deploy: 볼드/하이라이트 코드형태 표시 수정 (엔티티 복원, 패턴 확장)"
 git push origin main
 
 if ($LASTEXITCODE -ne 0) {
