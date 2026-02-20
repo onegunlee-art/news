@@ -354,12 +354,9 @@ export default function NewsDetailPage() {
 
           {/* 내레이션 (The Gist's Take) - 메인 콘텐츠 */}
           {news.narration && (
-            <div className="prose prose-lg max-w-none mb-8">
-              <p
-                className="text-gray-700 leading-relaxed whitespace-pre-wrap [&_mark]:rounded-sm [&_mark]:px-0.5"
-                dangerouslySetInnerHTML={{ __html: formatContentHtml(news.narration) }}
-              />
-            </div>
+            <div className="prose prose-lg max-w-none mb-8 text-gray-700 leading-relaxed whitespace-pre-wrap [&_mark]:rounded-sm [&_mark]:px-0.5 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-0.5 [&_div]:my-1"
+              dangerouslySetInnerHTML={{ __html: formatContentHtml(news.narration) }}
+            />
           )}
 
           {/* GPT 요약 (접이식) */}
@@ -382,24 +379,18 @@ export default function NewsDetailPage() {
                 원문 AI 요약/구조 분석 보기
               </button>
               {showGptSummary && (
-                <div className="mt-3 p-4 bg-gray-50 rounded-lg border border-gray-100">
-                  <p
-                    className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap [&_mark]:rounded-sm [&_mark]:px-0.5"
-                    dangerouslySetInnerHTML={{ __html: formatContentHtml(news.content) }}
-                  />
-                </div>
+                <div className="mt-3 p-4 bg-gray-50 rounded-lg border border-gray-100 text-sm text-gray-600 leading-relaxed whitespace-pre-wrap [&_mark]:rounded-sm [&_mark]:px-0.5 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-0.5 [&_div]:my-1"
+                  dangerouslySetInnerHTML={{ __html: formatContentHtml(news.content) }}
+                />
               )}
             </div>
           )}
 
           {/* 내레이션이 없고 GPT 요약도 없는 경우: description 표시 */}
           {!news.narration && !news.content && news.description && (
-            <div className="prose prose-lg max-w-none mb-8">
-              <p
-                className="text-gray-700 leading-relaxed [&_mark]:rounded-sm [&_mark]:px-0.5"
-                dangerouslySetInnerHTML={{ __html: formatContentHtml(news.description) }}
-              />
-            </div>
+            <div className="prose prose-lg max-w-none mb-8 text-gray-700 leading-relaxed [&_mark]:rounded-sm [&_mark]:px-0.5 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-0.5 [&_div]:my-1"
+              dangerouslySetInnerHTML={{ __html: formatContentHtml(news.description) }}
+            />
           )}
 
           {/* The Gist's Critique 섹션 */}
@@ -412,7 +403,7 @@ export default function NewsDetailPage() {
                 The Gist's Critique
               </h2>
               <div
-                className="text-gray-700 leading-relaxed whitespace-pre-wrap [&_mark]:rounded-sm [&_mark]:px-0.5"
+                className="text-gray-700 leading-relaxed whitespace-pre-wrap [&_mark]:rounded-sm [&_mark]:px-0.5 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-0.5 [&_div]:my-1"
                 dangerouslySetInnerHTML={{ __html: formatContentHtml(news.why_important) }}
               />
             </div>

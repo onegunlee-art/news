@@ -1,7 +1,6 @@
 /**
- * 편집 툴에서 사용하는 태그만 허용 (볼드, 하이라이트)
- * 허용: <b>, <strong>, <mark>, <span style="background|font-weight">, <br />
- * contenteditable / 브라우저 / DB 다양한 형식 지원
+ * 편집 툴에서 사용하는 태그만 허용
+ * 볼드, 하이라이트, 리스트, 정렬, 글자크기
  */
 const ALLOWED_PATTERNS = [
   /<b(\s[^>]*)?\/?>/gi,
@@ -14,8 +13,19 @@ const ALLOWED_PATTERNS = [
   /<span\s+style='[^']*background[^']*'[^>]*\/?>/gi,
   /<span\s+style="[^"]*font-weight[^"]*"[^>]*\/?>/gi,
   /<span\s+style='[^']*font-weight[^']*'[^>]*\/?>/gi,
+  /<span\s+style="[^"]*font-size[^"]*"[^>]*\/?>/gi,
+  /<span\s+style='[^']*font-size[^']*'[^>]*\/?>/gi,
   /<\/span>/gi,
   /<br\s*\/?>/gi,
+  /<ul(\s[^>]*)?\/?>/gi,
+  /<\/ul>/gi,
+  /<ol(\s[^>]*)?\/?>/gi,
+  /<\/ol>/gi,
+  /<li(\s[^>]*)?\/?>/gi,
+  /<\/li>/gi,
+  /<div\s+style="[^"]*text-align:\s*(?:left|center|right|justify)[^"]*"[^>]*\/?>/gi,
+  /<font\s+size="[^"]*"[^>]*\/?>/gi,
+  /<\/font>/gi,
 ]
 
 export function sanitizeHtml(html: string): string {
@@ -34,7 +44,7 @@ export function sanitizeHtml(html: string): string {
 }
 
 /**
- * HTML 엔티티 복원 (DB에 이스케이프 저장된 볼드/하이라이트 태그 정상화)
+ * HTML 엔티티 복원 (DB에 이스케이프 저장된 태그 정상화)
  */
 function unescapeHtmlEntities(s: string): string {
   return s
@@ -47,19 +57,29 @@ function unescapeHtmlEntities(s: string): string {
 
 /**
  * contenteditable이 생성한 블록 태그(div, p)를 br로 정규화
+ * text-align div, ul/ol/li는 보존
  */
 function normalizeBlockTags(s: string): string {
+  const alignBlocks: string[] = []
+  s = s.replace(
+    /<div\s+style="[^"]*text-align:\s*(left|center|right|justify)[^"]*"[^>]*>((?:(?!<div|<\/div).)*)<\/div>/gi,
+    (_, align, body) => {
+      const idx = alignBlocks.length
+      alignBlocks.push(`<div style="text-align:${align}">${body}</div>`)
+      return `\x01A${idx}\x01`
+    }
+  )
   s = s.replace(/<\/div>/gi, '<br/>')
   s = s.replace(/<div[^>]*>/gi, '')
   s = s.replace(/<\/p>/gi, '<br/>')
   s = s.replace(/<p[^>]*>/gi, '')
   s = s.replace(/(<br\s*\/?>){3,}/gi, '<br/><br/>')
+  s = s.replace(/\x01A(\d+)\x01/g, (_, i) => alignBlocks[Number(i)] ?? '')
   return s
 }
 
 /**
  * 텍스트를 HTML로 렌더링할 때 사용
- * 순서: 줄바꿈→br, 엔티티 복원, 블록태그 정규화, sanitize
  */
 export function formatContentHtml(text: string | null | undefined): string {
   if (text == null || text === '') return ''
@@ -71,7 +91,6 @@ export function formatContentHtml(text: string | null | undefined): string {
 
 /**
  * RichTextEditor HTML → DB 저장 전 정규화
- * div/p → br, 연속 br 정리, 앞뒤 br 제거
  */
 export function normalizeEditorHtml(html: string): string {
   if (!html || typeof html !== 'string') return ''
