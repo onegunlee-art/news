@@ -708,19 +708,11 @@ const AdminPage: React.FC = () => {
     //   navigate('/');
     //   return;
     // }
-
     loadDashboardData();
   }, []);
 
-  // 뉴스 탭이 활성화되거나 카테고리가 변경될 때 뉴스 목록 로드
-  useEffect(() => {
-    if (activeTab === 'news') {
-      loadNewsList();
-    }
-  }, [activeTab, selectedCategory]);
-
   // 기존 뉴스 목록 로드
-  const loadNewsList = async () => {
+  const loadNewsList = useCallback(async () => {
     setIsLoadingNews(true);
     try {
       const response = await fetch(`/api/admin/news.php?category=${selectedCategory}`);
@@ -733,7 +725,14 @@ const AdminPage: React.FC = () => {
     } finally {
       setIsLoadingNews(false);
     }
-  };
+  }, [selectedCategory]);
+
+  // 뉴스 탭이 활성화되거나 카테고리가 변경될 때 뉴스 목록 로드
+  useEffect(() => {
+    if (activeTab === 'news') {
+      loadNewsList();
+    }
+  }, [activeTab, loadNewsList]);
 
   // 뉴스 수정 시작
   const handleEditNews = (news: NewsArticle) => {
