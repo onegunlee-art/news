@@ -47,7 +47,7 @@ Write-Host ""
 # 3. 커밋 & 푸시
 Write-Host "[3/3] Commit and push to main..." -ForegroundColor Yellow
 git add -A
-git commit -m "Deploy: 기사 상세 상단바 Layout Header 아래 붙이기 (top-14)"
+git commit -m "Deploy: 헤더 스크롤 시 왼쪽→오른쪽 배경 채우기"
 git push origin main
 
 if ($LASTEXITCODE -ne 0) {

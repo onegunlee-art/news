@@ -1,14 +1,28 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuthStore } from '../../store/authStore'
+
+/** 스크롤 시 헤더 배경이 왼쪽→오른쪽으로 채워지는 거리(px) */
+const SCROLL_FILL_THRESHOLD = 120
 
 export default function Header() {
   const { isAuthenticated, login, logout } = useAuthStore()
   const [isLoginOpen, setIsLoginOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [scrollFill, setScrollFill] = useState(0)
   const navigate = useNavigate()
+
+  useEffect(() => {
+    const onScroll = () => {
+      const ratio = Math.min(window.scrollY / SCROLL_FILL_THRESHOLD, 1)
+      setScrollFill(ratio)
+    }
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
   const handleLogout = async () => {
     await logout()
@@ -25,9 +39,15 @@ export default function Header() {
   }
 
   return (
-    <header className="bg-white sticky top-0 z-40 border-b border-gray-100">
+    <header className="relative sticky top-0 z-40 border-b border-gray-100 overflow-hidden bg-white/5">
+      {/* 스크롤 비율에 따라 왼쪽→오른쪽으로 채워지는 배경 */}
+      <div
+        className="absolute inset-0 bg-white transition-[width] duration-150 ease-out"
+        style={{ width: `${scrollFill * 100}%` }}
+        aria-hidden
+      />
       {/* 메인 헤더 - PC에서 넓은 max-width */}
-      <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 md:px-6">
+      <div className="relative z-10 max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 md:px-6">
         <div className="flex items-center justify-between h-14">
           {/* 왼쪽 - 로그인/로그아웃 */}
           <div className="w-16 md:w-auto">
