@@ -39,10 +39,10 @@ export default function Header() {
   }
 
   return (
-    <header className="relative sticky top-0 z-40 border-b border-gray-100 overflow-hidden bg-white/5">
-      {/* 스크롤 비율에 따라 왼쪽→오른쪽으로 채워지는 배경 */}
+    <header className="relative sticky top-0 z-40 border-b border-gray-100 overflow-hidden bg-white">
+      {/* 스크롤 비율에 따라 왼쪽→오른쪽으로 연한 회색이 진행 */}
       <div
-        className="absolute inset-0 bg-white transition-[width] duration-150 ease-out"
+        className="absolute inset-y-0 left-0 bg-gray-50 transition-[width] duration-200 ease-out"
         style={{ width: `${scrollFill * 100}%` }}
         aria-hidden
       />
