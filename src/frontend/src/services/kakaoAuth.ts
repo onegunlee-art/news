@@ -243,7 +243,7 @@ export const getAuthErrorFromUrl = (): { error: string; description: string } | 
   if (error) {
     return {
       error,
-      description: params.get('error_description') || 'Unknown error',
+      description: params.get('error_description') || decodeURIComponent(error),
     };
   }
   

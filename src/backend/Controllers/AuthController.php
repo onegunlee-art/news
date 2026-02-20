@@ -231,7 +231,7 @@ final class AuthController
         $config = require dirname(__DIR__, 3) . '/config/app.php';
         $frontendUrl = $config['url'] ?? 'https://www.thegist.co.kr';
         
-        $redirectUrl = $frontendUrl . '/auth/callback?error=' . urlencode($error);
+        $redirectUrl = $frontendUrl . '/auth/callback?error=login_failed&error_description=' . urlencode($error);
         
         return Response::redirect($redirectUrl);
     }
