@@ -40,9 +40,8 @@ foreach ($tryPaths as $p) {
 }
 
 if (!$configPath) {
-    header('Content-Type: application/json; charset=utf-8');
-    http_response_code(500);
-    echo json_encode(['success' => false, 'message' => '설정 파일을 찾을 수 없습니다.', 'tried' => $tryPaths], JSON_UNESCAPED_UNICODE);
+    $frontendUrl = $frontendBase . '/auth/callback?error=config_not_found&error_description=' . urlencode('카카오 설정 파일을 찾을 수 없습니다.');
+    header('Location: ' . $frontendUrl);
     exit;
 }
 
@@ -81,7 +80,7 @@ $tokenData = json_decode($tokenResponse, true);
 $accessToken = $tokenData['access_token'] ?? null;
 
 if (empty($accessToken)) {
-    $frontendUrl = $frontendBase . '/auth/callback?error=' . urlencode('no_token');
+    $frontendUrl = $frontendBase . '/auth/callback?error=no_token&error_description=' . urlencode('카카오 액세스 토큰을 받지 못했습니다.');
     header('Location: ' . $frontendUrl);
     exit;
 }
@@ -102,7 +101,7 @@ $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 curl_close($ch);
 
 if ($httpCode !== 200) {
-    $frontendUrl = $frontendBase . '/auth/callback?error=' . urlencode('user_info_failed');
+    $frontendUrl = $frontendBase . '/auth/callback?error=user_info_failed&error_description=' . urlencode('카카오 사용자 정보 조회 실패 (HTTP ' . $httpCode . ')');
     header('Location: ' . $frontendUrl);
     exit;
 }
@@ -111,7 +110,7 @@ $userData = json_decode($userResponse, true);
 $kakaoId = $userData['id'] ?? null;
 
 if (empty($kakaoId)) {
-    $frontendUrl = $frontendBase . '/auth/callback?error=' . urlencode('no_kakao_id');
+    $frontendUrl = $frontendBase . '/auth/callback?error=no_kakao_id&error_description=' . urlencode('카카오 ID를 받지 못했습니다.');
     header('Location: ' . $frontendUrl);
     exit;
 }
