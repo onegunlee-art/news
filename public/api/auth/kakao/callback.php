@@ -30,11 +30,46 @@ function kakaoLog(string $step, $data = null): void {
 function kakaoRedirectError(string $code, string $desc): void {
     global $frontendBase;
     kakaoLog('ERROR', ['code' => $code, 'desc' => $desc]);
-    header('Location: ' . $frontendBase . '/auth/callback?error=' . urlencode($code) . '&error_description=' . urlencode($desc));
+    header('Content-Type: text/html; charset=utf-8');
+    echo '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>로그인 오류</title>
+<style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;margin:0;background:#1a1a2e;color:#fff}.box{text-align:center;max-width:400px;padding:2rem}.icon{font-size:48px;margin-bottom:16px}p{color:#aaa;margin-top:12px;font-size:14px}</style></head>
+<body><div class="box"><div class="icon">⚠️</div><h2>로그인 실패</h2><p>' . htmlspecialchars($desc, ENT_QUOTES, 'UTF-8') . '</p><p>잠시 후 홈으로 이동합니다...</p></div>
+<script>
+console.error("Kakao login error:", ' . json_encode(['code' => $code, 'desc' => $desc]) . ');
+setTimeout(function(){ window.location.href = ' . json_encode($frontendBase) . '; }, 3000);
+</script></body></html>';
     exit;
 }
 
 kakaoLog('start', ['method' => $_SERVER['REQUEST_METHOD'], 'has_code' => isset($_GET['code']), 'docroot' => $_SERVER['DOCUMENT_ROOT']]);
+
+// 버전 확인용
+if (isset($_GET['_version'])) {
+    header('Content-Type: application/json');
+    echo json_encode(['version' => '2026-02-20-v3', 'php' => PHP_VERSION, 'docroot' => $_SERVER['DOCUMENT_ROOT']]);
+    exit;
+}
+
+// 최근 로그 확인용
+if (isset($_GET['_logs'])) {
+    header('Content-Type: text/plain; charset=utf-8');
+    $logDirs = [
+        $_SERVER['DOCUMENT_ROOT'] . '/../storage/logs',
+        $_SERVER['DOCUMENT_ROOT'] . '/storage/logs',
+        __DIR__ . '/../../../../storage/logs',
+    ];
+    foreach ($logDirs as $d) {
+        $f = $d . '/kakao_callback.log';
+        if (file_exists($f)) {
+            $lines = file($f);
+            echo "=== Log: $f ===\n";
+            echo implode('', array_slice($lines, -30));
+            exit;
+        }
+    }
+    echo 'No log file found. Tried: ' . implode(', ', $logDirs);
+    exit;
+}
 
 // 카카오에서 에러 반환
 if (isset($_GET['error'])) {
@@ -70,19 +105,24 @@ $config = require $configPath;
 kakaoLog('token_exchange', ['redirect_uri' => $config['oauth']['redirect_uri'], 'has_key' => !empty($config['rest_api_key'])]);
 
 // 카카오 토큰 교환
+$tokenPostData = [
+    'grant_type' => 'authorization_code',
+    'client_id' => $config['rest_api_key'],
+    'redirect_uri' => $config['oauth']['redirect_uri'],
+    'code' => $code,
+];
+kakaoLog('token_request_data', ['redirect_uri' => $config['oauth']['redirect_uri'], 'client_id_prefix' => substr($config['rest_api_key'], 0, 8)]);
+
 $ch = curl_init();
 curl_setopt_array($ch, [
     CURLOPT_URL => $config['oauth']['token_url'],
     CURLOPT_POST => true,
-    CURLOPT_POSTFIELDS => http_build_query([
-        'grant_type' => 'authorization_code',
-        'client_id' => $config['rest_api_key'],
-        'redirect_uri' => $config['oauth']['redirect_uri'],
-        'code' => $code,
-    ]),
+    CURLOPT_POSTFIELDS => http_build_query($tokenPostData),
     CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_TIMEOUT => 10,
+    CURLOPT_TIMEOUT => 15,
     CURLOPT_HTTPHEADER => ['Content-Type: application/x-www-form-urlencoded;charset=utf-8'],
+    CURLOPT_SSL_VERIFYPEER => true,
+    CURLOPT_FOLLOWLOCATION => true,
 ]);
 $tokenResponse = curl_exec($ch);
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -92,13 +132,34 @@ curl_close($ch);
 kakaoLog('token_response', ['http' => $httpCode, 'curl_err' => $curlErr, 'body_preview' => mb_substr($tokenResponse ?: '', 0, 200)]);
 
 if ($curlErr) {
-    kakaoRedirectError('curl_error', 'curl 오류: ' . $curlErr);
+    if (strpos($curlErr, 'SSL') !== false || strpos($curlErr, 'certificate') !== false) {
+        kakaoLog('ssl_retry', 'Retrying without SSL verification');
+        $ch = curl_init();
+        curl_setopt_array($ch, [
+            CURLOPT_URL => $config['oauth']['token_url'],
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => http_build_query($tokenPostData),
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 15,
+            CURLOPT_HTTPHEADER => ['Content-Type: application/x-www-form-urlencoded;charset=utf-8'],
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_FOLLOWLOCATION => true,
+        ]);
+        $tokenResponse = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlErr = curl_error($ch);
+        curl_close($ch);
+        kakaoLog('ssl_retry_result', ['http' => $httpCode, 'curl_err' => $curlErr]);
+    }
+    if ($curlErr) {
+        kakaoRedirectError('curl_error', 'curl 오류: ' . $curlErr);
+    }
 }
 
 if ($httpCode !== 200) {
     $err = json_decode($tokenResponse, true);
-    $msg = $err['error_description'] ?? ($err['error'] ?? '토큰 발급 실패 (HTTP ' . $httpCode . ')');
-    kakaoRedirectError('token_error', $msg);
+    $msg = $err['error_description'] ?? ($err['error'] ?? '토큰 발급 실패');
+    kakaoRedirectError('token_error', '카카오 토큰 교환 실패 (HTTP ' . $httpCode . '): ' . $msg);
 }
 
 $tokenData = json_decode($tokenResponse, true);
@@ -113,11 +174,13 @@ $ch = curl_init();
 curl_setopt_array($ch, [
     CURLOPT_URL => $config['api']['base_url'] . $config['api']['user_info'],
     CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_TIMEOUT => 10,
+    CURLOPT_TIMEOUT => 15,
     CURLOPT_HTTPHEADER => [
         'Authorization: Bearer ' . $accessToken,
         'Content-Type: application/x-www-form-urlencoded;charset=utf-8',
     ],
+    CURLOPT_SSL_VERIFYPEER => true,
+    CURLOPT_FOLLOWLOCATION => true,
 ]);
 $userResponse = curl_exec($ch);
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
