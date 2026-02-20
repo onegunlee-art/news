@@ -111,6 +111,9 @@ $tokenPostData = [
     'redirect_uri' => $config['oauth']['redirect_uri'],
     'code' => $code,
 ];
+if (!empty($config['client_secret'])) {
+    $tokenPostData['client_secret'] = $config['client_secret'];
+}
 kakaoLog('token_request_data', ['redirect_uri' => $config['oauth']['redirect_uri'], 'client_id_prefix' => substr($config['rest_api_key'], 0, 8)]);
 
 $ch = curl_init();

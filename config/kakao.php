@@ -37,6 +37,7 @@ return [
     */
     
     'rest_api_key' => $KAKAO_REST_API_KEY,
+    'client_secret' => getenv('KAKAO_CLIENT_SECRET') ?: '6hhWqWruISV00PbbvTrjHnqMY00aMOGs',
     'javascript_key' => getenv('KAKAO_JAVASCRIPT_KEY') ?: '',
     'admin_key' => getenv('KAKAO_ADMIN_KEY') ?: '',
     

@@ -75,12 +75,18 @@ final class KakaoAuthService implements AuthServiceInterface
      */
     public function getAccessToken(string $code): array
     {
-        $response = $this->httpClient->postForm($this->config['oauth']['token_url'], [
+        $params = [
             'grant_type' => 'authorization_code',
             'client_id' => $this->config['rest_api_key'],
             'redirect_uri' => $this->config['oauth']['redirect_uri'],
             'code' => $code,
-        ]);
+        ];
+
+        if (!empty($this->config['client_secret'])) {
+            $params['client_secret'] = $this->config['client_secret'];
+        }
+
+        $response = $this->httpClient->postForm($this->config['oauth']['token_url'], $params);
         
         if (!$response->isSuccess()) {
             $error = $response->json();
