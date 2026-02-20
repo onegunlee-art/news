@@ -55,9 +55,8 @@ export default function NewsDetailPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isBookmarked, setIsBookmarked] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [showGptSummary, setShowGptSummary] = useState(false)
 
-  // 전역 팝업 플레이어에서 재생 (제목 → 편집 문구 → 내레이션 → The Gist's Critique)
+  // 전역 팝업 플레이어에서 재생 (제목 → 편집 문구 → The Gist → 내레이션)
   // Listen 클릭 시 최신 기사 데이터를 강제 조회하여 stale state로 인한 이전 보이스 재생 방지
   const playArticle = async () => {
     if (!news) return
@@ -80,9 +79,9 @@ export default function NewsDetailPage() {
     const sourceDisplay = formatSourceDisplayName(rawSource) || 'The Gist'
     const originalTitle = (data.original_title && String(data.original_title).trim()) || extractTitleFromUrl(data.url) || '원문'
     const editorialLine = buildEditorialLine({ dateStr, sourceDisplay, originalTitle })
-    const mainContent = data.narration || data.content || data.description || ''
-    const critiquePart = data.why_important ? `The Gist's Critique. ${data.why_important}` : ''
-    if (!mainContent && !critiquePart) {
+    const critiqueText = data.why_important ? `The Gist. ${data.why_important}` : ''
+    const narrationText = data.narration || data.content || data.description || ''
+    if (!narrationText && !critiqueText) {
       alert('재생할 본문 내용이 없습니다.')
       return
     }
@@ -97,7 +96,7 @@ export default function NewsDetailPage() {
       800,
       400
     )
-    openAndPlay(data.title, editorialLine, mainContent, critiquePart, 1.0, imageUrl, data.id)
+    openAndPlay(data.title, editorialLine, critiqueText, narrationText, 1.0, imageUrl, data.id)
   }
 
   useEffect(() => {
@@ -352,59 +351,49 @@ export default function NewsDetailPage() {
             <span className="font-medium">AI 보이스로 듣기</span>
           </button>
 
-          {/* 내레이션 (The Gist's Take) - 메인 콘텐츠 */}
+          {/* The Gist — 주황색 프리미엄 박스 */}
+          {news.why_important && (
+            <div className="mb-8 border-l-4 border-orange-500 bg-gradient-to-r from-orange-50 via-amber-50 to-white rounded-r-xl shadow-sm overflow-hidden">
+              <div className="px-5 py-5 sm:px-6 sm:py-6">
+                <h2
+                  className="text-xl font-semibold mb-3 tracking-wide"
+                  style={{ fontFamily: "'Lobster', cursive", color: '#FF6F00' }}
+                >
+                  The Gist
+                </h2>
+                <div
+                  className="text-gray-800 leading-relaxed whitespace-pre-wrap [&_mark]:rounded-sm [&_mark]:px-0.5 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-0.5"
+                  dangerouslySetInnerHTML={{ __html: formatContentHtml(news.why_important) }}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* 내레이션 — 메인 콘텐츠 */}
           {news.narration && (
-            <div className="prose prose-lg max-w-none mb-8 text-gray-700 leading-relaxed whitespace-pre-wrap [&_mark]:rounded-sm [&_mark]:px-0.5 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-0.5 [&_div]:my-1"
+            <div className="prose prose-lg max-w-none mb-8 text-gray-700 leading-relaxed whitespace-pre-wrap [&_mark]:rounded-sm [&_mark]:px-0.5 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-0.5"
               dangerouslySetInnerHTML={{ __html: formatContentHtml(news.narration) }}
             />
           )}
 
-          {/* GPT 요약 (접이식) */}
-          {news.content && (
-            <div className="mb-8">
-              <button
-                type="button"
-                onClick={() => setShowGptSummary(!showGptSummary)}
-                className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
-              >
-                <svg 
-                  className={`w-4 h-4 transition-transform ${showGptSummary ? 'rotate-90' : ''}`} 
-                  fill="none" 
-                  stroke="currentColor" 
-                  viewBox="0 0 24 24"
-                  strokeWidth={2}
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
-                원문 AI 요약/구조 분석 보기
-              </button>
-              {showGptSummary && (
-                <div className="mt-3 p-4 bg-gray-50 rounded-lg border border-gray-100 text-sm text-gray-600 leading-relaxed whitespace-pre-wrap [&_mark]:rounded-sm [&_mark]:px-0.5 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-0.5 [&_div]:my-1"
-                  dangerouslySetInnerHTML={{ __html: formatContentHtml(news.content) }}
-                />
-              )}
-            </div>
-          )}
-
-          {/* 내레이션이 없고 GPT 요약도 없는 경우: description 표시 */}
-          {!news.narration && !news.content && news.description && (
-            <div className="prose prose-lg max-w-none mb-8 text-gray-700 leading-relaxed [&_mark]:rounded-sm [&_mark]:px-0.5 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-0.5 [&_div]:my-1"
+          {/* 내레이션이 없는 경우: description 표시 */}
+          {!news.narration && news.description && (
+            <div className="prose prose-lg max-w-none mb-8 text-gray-700 leading-relaxed [&_mark]:rounded-sm [&_mark]:px-0.5 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-0.5"
               dangerouslySetInnerHTML={{ __html: formatContentHtml(news.description) }}
             />
           )}
 
-          {/* The Gist's Critique 섹션 */}
-          {news.why_important && (
-            <div className="border-t border-gray-100 pt-6 mt-6">
-              <h2 
-                className="text-xl font-medium mb-4"
-                style={{ fontFamily: "'Lobster', cursive", color: '#FF6F00' }}
-              >
-                The Gist's Critique
-              </h2>
-              <div
-                className="text-gray-700 leading-relaxed whitespace-pre-wrap [&_mark]:rounded-sm [&_mark]:px-0.5 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-0.5 [&_div]:my-1"
-                dangerouslySetInnerHTML={{ __html: formatContentHtml(news.why_important) }}
+          {/* 원문 AI 요약/구조 분석 — 항상 오픈 */}
+          {news.content && (
+            <div className="mb-8 border-t border-gray-100 pt-6 mt-2">
+              <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
+                </svg>
+                원문 AI 요약/구조 분석
+              </h3>
+              <div className="p-4 bg-gray-50 rounded-lg border border-gray-100 text-sm text-gray-600 leading-relaxed whitespace-pre-wrap [&_mark]:rounded-sm [&_mark]:px-0.5 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-0.5"
+                dangerouslySetInnerHTML={{ __html: formatContentHtml(news.content) }}
               />
             </div>
           )}
