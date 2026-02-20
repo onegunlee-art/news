@@ -178,7 +178,8 @@ class AnalysisAgent extends BaseAgent
             narration: $narration,
             contentSummary: $data['content_summary'] ?? null,
             originalTitle: $data['original_title'] ?? null,
-            author: $data['author'] ?? null
+            author: $data['author'] ?? null,
+            subtitle: $data['subtitle'] ?? null
         );
     }
 
@@ -202,13 +203,21 @@ URL의 맨 뒤 / 다음 부분(슬러그)에 제목과 저자가 함께 포함�
 1) 저자를 먼저 추출하세요. (보통 슬러그 끝부분이 저자 이름)
 2) 저자를 제외한 나머지가 원문 제목(original_title)입니다. 하이픈을 공백으로, 각 단어 첫 글자 대문자로 변환 (예: the-limits-of-russian-power → The Limits of Russian Power)
 
+[부제목(Subtitle) 추출 방법]
+Foreign Affairs 등 주요 매체 기사에는 메인 제목 바로 아래에 부제목(subtitle)이 존재합니다.
+- 부제목은 메인 제목보다 짧고, 질문형이거나 보충 설명 형태입니다.
+- 예: 제목 "What America Must Learn From Ukraine" → 부제목 "Will Washington Repeat Moscow's Mistakes?"
+- 본문 시작 전, 제목과 저자 사이에 위치한 짧은 이탤릭체 문장이 부제목입니다.
+- 부제목이 명확하지 않으면 빈 문자열("")로 반환하세요.
+
 위 기사를 분석하여 아래 JSON 형식으로만 응답하세요. JSON 외에 다른 텍스트는 절대 포함하지 마세요.
 
 {
   "news_title": "지스터가 클릭하고 싶은 한국어 뉴스 제목. 15~30자. 핵심을 담되 임팩트 있게. (지스터 = The Gist 독자)",
+  "subtitle": "기사의 부제목(영문 원문 그대로). 메인 제목 아래에 위치한 서브타이틀. 없으면 빈 문자열.",
   "author": "URL 슬러그에서 추출한 저자 이름. 예: Stephen Kotkin",
   "original_title": "URL 슬러그에서 저자를 제외한 나머지를 제목 형식으로 변환. 예: The Limits of Russian Power. (저자 제외, 본문에서 확인한 정확한 영문 제목과 일치하면 그대로 사용)",
-  "content_summary": "원문을 한국어로 번역한 내용으로 작성. 중요 단어·전문 용어는 괄호 안에 영어 원문을 병기 (예: ai 삼중딜레마 (ai trilemma)). 도입·전개·결론 구조 유지, 핵심 논지·사실·수치 포함. 최소 600자 이상, 가능하면 900자 이상. 마크다운 제목(##)과 불렛(-) 사용 가능.",
+  "content_summary": "영어 한 줄 → 한국어 한 줄 교차 형식으로 작성. 각 문단의 핵심을 영어 원문 1줄, 바로 다음 줄에 한국어 번역 1줄로 구성. 예:\nThe article argues that Washington must study Ukraine's battlefield innovations.\n이 기사는 워싱턴이 우크라이나의 전장 혁신을 연구해야 한다고 주장한다.\n\nRussia's initial advantages were eroded by adaptive Ukrainian tactics.\n러시아의 초기 우위는 적응력 있는 우크라이나 전술에 의해 잠식되었다.\n\n이 형식을 유지하되, 최소 600자 이상. 중요 용어는 영어 원문을 괄호 병기.",
   "key_points": [
     "기사 본문의 핵심 내용을 최소 4개 이상의 불렛 포인트로 요약. 각 항목은 1~2문장, 구체적 사실과 수치를 포함.",
     "두 번째 핵심 포인트",

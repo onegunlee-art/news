@@ -118,6 +118,7 @@ $hasOriginalSource = isset($newsColumns['original_source']);
 $hasOriginalTitle  = isset($newsColumns['original_title']);
 $hasAuthor         = isset($newsColumns['author']);
 $hasPublishedAt    = isset($newsColumns['published_at']);
+$hasSubtitle       = isset($newsColumns['subtitle']);
 
 $method = $_SERVER['REQUEST_METHOD'];
 
@@ -148,6 +149,7 @@ if ($method === 'POST') {
     
     $category = $input['category'] ?? '';
     $title = $input['title'] ?? '';
+    $subtitle = $input['subtitle'] ?? null;
     $content = $input['content'] ?? '';
     $whyImportant = $input['why_important'] ?? null;
     $narration = $input['narration'] ?? null;
@@ -236,6 +238,12 @@ if ($method === 'POST') {
         $values = [$category, $title, $description, $content, $sourceValue, $url, $imageUrl];
         $placeholders = ['?', '?', '?', '?', '?', '?', '?', 'NOW()'];
         
+        if ($hasSubtitle) {
+            $columns[] = 'subtitle';
+            $values[] = $subtitle;
+            $placeholders[] = '?';
+        }
+
         if ($hasWhyImportant) {
             $columns[] = 'why_important';
             $values[] = $whyImportant;
@@ -421,6 +429,9 @@ if ($method === 'GET') {
         if ($hasPublishedAt) {
             $selectColumns .= ', published_at';
         }
+        if ($hasSubtitle) {
+            $selectColumns = str_replace('title,', 'title, subtitle,', $selectColumns);
+        }
         
         $stmt = $db->prepare("
             SELECT $selectColumns
@@ -471,6 +482,7 @@ if ($method === 'PUT') {
     $id = $input['id'] ?? 0;
     $category = $input['category'] ?? '';
     $title = $input['title'] ?? '';
+    $subtitle = $input['subtitle'] ?? null;
     $content = $input['content'] ?? '';
     $whyImportant = $input['why_important'] ?? null;
     $narration = $input['narration'] ?? null;
@@ -621,6 +633,11 @@ if ($method === 'PUT') {
         if ($hasPublishedAt) {
             $setClauses[] = 'published_at = ?';
             $values[] = $publishedAt;
+        }
+        
+        if ($hasSubtitle) {
+            $setClauses[] = 'subtitle = ?';
+            $values[] = $subtitle;
         }
         
         $values[] = $id;  // WHERE 절용

@@ -28,6 +28,7 @@ import {
   CurrencyDollarIcon,
   ClipboardDocumentIcon,
   UserCircleIcon,
+  ArrowsPointingOutIcon,
 } from '@heroicons/react/24/outline';
 import RichTextEditor from '../components/Common/RichTextEditor';
 import { normalizeEditorHtml } from '../utils/sanitizeHtml';
@@ -107,6 +108,7 @@ interface NewsArticle {
   id?: number;
   category: string;
   title: string;
+  subtitle?: string;
   description?: string;
   content: string;
   why_important?: string;
@@ -279,9 +281,11 @@ const AdminPage: React.FC = () => {
   // 뉴스 관리 상태
   const [selectedCategory, setSelectedCategory] = useState<string>('diplomacy');
   const [newsTitle, setNewsTitle] = useState('');
+  const [newsSubtitle, setNewsSubtitle] = useState('');
   const [newsContent, setNewsContent] = useState('');
   const [newsWhyImportant, setNewsWhyImportant] = useState('');
   const [newsNarration, setNewsNarration] = useState('');
+  const [isContentFullscreen, setIsContentFullscreen] = useState(false);
   const [newsList, setNewsList] = useState<NewsArticle[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
@@ -738,6 +742,7 @@ const AdminPage: React.FC = () => {
   const handleEditNews = (news: NewsArticle) => {
     setEditingNewsId(news.id || null);
     setNewsTitle(news.title);
+    setNewsSubtitle(news.subtitle || '');
     setNewsContent(news.content);
     setNewsWhyImportant(news.why_important || '');
     setNewsNarration(news.narration || '');
@@ -759,6 +764,7 @@ const AdminPage: React.FC = () => {
   const handleCancelEdit = () => {
     setEditingNewsId(null);
     setNewsTitle('');
+    setNewsSubtitle('');
     setNewsContent('');
     setNewsWhyImportant('');
     setNewsNarration('');
@@ -897,6 +903,7 @@ const AdminPage: React.FC = () => {
   ] as const;
 
   return (
+    <>
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       <div className="flex">
         {/* Sidebar */}
@@ -1280,6 +1287,7 @@ const AdminPage: React.FC = () => {
                             const article = data.article as Record<string, unknown> | undefined;
                             setAiUrl(articleUrl.trim());
                             setNewsTitle((a.news_title as string) || (article?.title as string) || '');
+                            setNewsSubtitle((a.subtitle as string) || '');
                             if (article) {
                               setArticleImageUrl((article.image_url as string) || '');
                               setArticleSummary((article.description as string) || '');
@@ -1722,12 +1730,43 @@ const AdminPage: React.FC = () => {
                     />
                   </div>
 
-                  {/* gpt 요약 입력 */}
+                  {/* 부제목 입력 */}
                   <div>
                     <label className="block text-slate-300 mb-2 text-sm font-medium">
-                      gpt 요약
-                      <span className="ml-2 text-xs text-cyan-400">(붙여넣기 시 자동 정제)</span>
+                      부제목 <span className="text-slate-500 text-xs">(Subtitle)</span>
                     </label>
+                    <input
+                      type="text"
+                      value={newsSubtitle}
+                      onChange={(e) => setNewsSubtitle(e.target.value)}
+                      onPaste={(e) => {
+                        e.preventDefault();
+                        const pastedText = e.clipboardData.getData('text');
+                        const sanitized = sanitizeText(pastedText).replace(/\n/g, ' ');
+                        setNewsSubtitle(sanitized);
+                      }}
+                      placeholder="부제목 (Foreign Affairs 등 매체의 서브타이틀)"
+                      className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition text-sm"
+                    />
+                  </div>
+
+                  {/* gpt 요약 입력 */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-slate-300 text-sm font-medium">
+                        gpt 요약
+                        <span className="ml-2 text-xs text-cyan-400">(붙여넣기 시 자동 정제)</span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setIsContentFullscreen(true)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs transition"
+                        title="전체 화면 편집"
+                      >
+                        <ArrowsPointingOutIcon className="w-4 h-4" />
+                        확대
+                      </button>
+                    </div>
                     <RichTextEditor
                       value={newsContent}
                       onChange={setNewsContent}
@@ -1881,6 +1920,7 @@ const AdminPage: React.FC = () => {
                             ...(isEditing && { id: editingNewsId }),
                             category: selectedCategory,
                             title: newsTitle,
+                            subtitle: newsSubtitle.trim() || null,
                             content: cleanContent,
                             why_important: cleanWhyImportant || null,
                             narration: cleanNarration || null,
@@ -1950,6 +1990,7 @@ const AdminPage: React.FC = () => {
                             await loadNewsList();
                             // 폼 초기화
                             setNewsTitle('');
+                            setNewsSubtitle('');
                             setNewsContent('');
                             setNewsWhyImportant('');
                             setNewsNarration('');
@@ -2307,6 +2348,9 @@ const AdminPage: React.FC = () => {
                             GPT 생성 제목
                           </h4>
                           <p className="text-white text-lg font-semibold">{aiResult.news_title}</p>
+                          {!!(aiResult as Record<string, unknown>).subtitle && (
+                            <p className="text-slate-400 text-sm italic mt-1">{String((aiResult as Record<string, unknown>).subtitle)}</p>
+                          )}
                         </div>
                       )}
 
@@ -2624,6 +2668,7 @@ const AdminPage: React.FC = () => {
                             (aiResult.key_points?.map((p, i) => `${i + 1}번. ${p}`).join(' ') || ''))
                           );
                           setNewsWhyImportant('');
+                          setNewsSubtitle(((aiResult as Record<string, unknown>).subtitle as string) || '');
                           setArticleUrl(aiUrl);
                           setArticleOriginalTitle((aiResult.original_title as string) || '');
                         }}
@@ -3556,6 +3601,43 @@ const AdminPage: React.FC = () => {
         </div>
       </div>
     </div>
+
+    {/* GPT 요약 전체 화면 편집 모달 */}
+    {isContentFullscreen && (
+      <div className="fixed inset-0 z-50 bg-slate-900 flex flex-col">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700 bg-slate-800">
+          <h2 className="text-white text-lg font-semibold">gpt 요약 편집</h2>
+          <button
+            type="button"
+            onClick={() => setIsContentFullscreen(false)}
+            className="p-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 transition"
+          >
+            <XMarkIcon className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="flex-1 overflow-auto p-6">
+          <RichTextEditor
+            value={newsContent}
+            onChange={setNewsContent}
+            sanitizePaste={(t) => sanitizeText(t).replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}
+            placeholder="뉴스 본문을 작성하세요..."
+            rows={30}
+            className="w-full bg-slate-900/50 border border-slate-700 rounded-xl min-h-[70vh]"
+          />
+        </div>
+        <div className="px-6 py-3 border-t border-slate-700 bg-slate-800 flex items-center justify-between">
+          <p className="text-slate-400 text-sm">{newsContent.length} / 10,000자</p>
+          <button
+            type="button"
+            onClick={() => setIsContentFullscreen(false)}
+            className="px-6 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-emerald-500 text-white font-medium hover:opacity-90 transition"
+          >
+            편집 완료
+          </button>
+        </div>
+      </div>
+    )}
+  </>
   );
 };
 

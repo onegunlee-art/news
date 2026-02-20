@@ -15,6 +15,7 @@ import { formatContentHtml } from '../utils/sanitizeHtml'
 interface NewsDetail {
   id: number
   title: string
+  subtitle?: string | null
   description: string | null
   content: string | null
   why_important: string | null
@@ -327,6 +328,13 @@ export default function NewsDetailPage() {
           <h1 className="text-2xl font-bold text-gray-900 leading-snug mb-2">
             {news.title}
           </h1>
+
+          {/* 부제목 (Foreign Affairs 등 매체의 서브타이틀) */}
+          {news.subtitle && (
+            <p className="text-lg text-gray-500 italic mb-3 leading-relaxed">
+              {news.subtitle}
+            </p>
+          )}
 
           {/* 매체 설명: 원문 제목(영어)만 표시. 기사 제목(news.title)은 한글 번역이므로 사용하지 않음 */}
           <p className="text-sm text-gray-500 mb-6">

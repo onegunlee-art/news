@@ -63,6 +63,7 @@ CREATE TABLE IF NOT EXISTS `news` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '뉴스 고유 ID',
     `external_id` VARCHAR(100) NULL COMMENT '외부 API 뉴스 ID',
     `title` VARCHAR(500) NOT NULL COMMENT '뉴스 제목',
+    `subtitle` VARCHAR(500) NULL COMMENT '부제목 (Foreign Affairs 등 매체의 서브타이틀)',
     `description` TEXT NULL COMMENT '뉴스 설명/요약',
     `content` LONGTEXT NULL COMMENT '뉴스 본문',
     `source` VARCHAR(200) NULL COMMENT '뉴스 출처 (언론사)',
