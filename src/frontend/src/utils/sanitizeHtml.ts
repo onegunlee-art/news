@@ -38,7 +38,7 @@ export function sanitizeHtml(html: string): string {
       return `\x00${stored.length - 1}\x00`
     })
   }
-  s = s.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  s = s.replace(/<[^>]*>/g, '')
   s = s.replace(/\x00(\d+)\x00/g, (_, i) => stored[Number(i)] ?? '')
   return s
 }
@@ -69,10 +69,8 @@ function normalizeBlockTags(s: string): string {
       return `\x01A${idx}\x01`
     }
   )
-  s = s.replace(/<\/div>/gi, '<br/>')
-  s = s.replace(/<div[^>]*>/gi, '')
-  s = s.replace(/<\/p>/gi, '<br/>')
-  s = s.replace(/<p[^>]*>/gi, '')
+  s = s.replace(/<\/(?:div|p|section|article|header|footer|aside|main|nav|figure|figcaption|blockquote|h[1-6])>/gi, '<br/>')
+  s = s.replace(/<(?:div|p|section|article|header|footer|aside|main|nav|figure|figcaption|blockquote|h[1-6])(?:\s[^>]*)?>/gi, '')
   s = s.replace(/(<br\s*\/?>){3,}/gi, '<br/><br/>')
   s = s.replace(/\x01A(\d+)\x01/g, (_, i) => alignBlocks[Number(i)] ?? '')
   return s
@@ -87,6 +85,21 @@ export function formatContentHtml(text: string | null | undefined): string {
   s = unescapeHtmlEntities(s)
   s = normalizeBlockTags(s)
   return sanitizeHtml(s)
+}
+
+/**
+ * HTML 태그를 모두 제거하고 순수 텍스트만 반환 (목록 페이지 미리보기용)
+ */
+export function stripHtml(text: string | null | undefined): string {
+  if (text == null || text === '') return ''
+  let s = String(text)
+  s = unescapeHtmlEntities(s)
+  s = s.replace(/<br\s*\/?>/gi, ' ')
+  s = s.replace(/<\/(?:p|div|li|h[1-6])>/gi, ' ')
+  s = s.replace(/<[^>]*>/g, '')
+  s = s.replace(/&nbsp;/gi, ' ')
+  s = s.replace(/\s{2,}/g, ' ')
+  return s.trim()
 }
 
 /**

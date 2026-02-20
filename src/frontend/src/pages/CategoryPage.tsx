@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { newsApi } from '../services/api';
 import { getPlaceholderImageUrl } from '../utils/imagePolicy';
 import { formatSourceDisplayName } from '../utils/formatSource';
+import { stripHtml } from '../utils/sanitizeHtml';
 
 interface NewsItem {
   id: string;
@@ -178,7 +179,7 @@ function ArticleCard({ article, index }: { article: NewsItem; index: number }) {
           </h2>
           {article.description && (
             <p className="text-gray-600 text-sm leading-relaxed line-clamp-2 mb-3">
-              {article.description}
+              {stripHtml(article.description)}
             </p>
           )}
           <p className="text-xs text-gray-400">

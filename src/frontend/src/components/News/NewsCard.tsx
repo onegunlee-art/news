@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { useMemo } from 'react'
 import { getPlaceholderImageUrl } from '../../utils/imagePolicy'
 import { formatSourceDisplayName } from '../../utils/formatSource'
+import { stripHtml } from '../../utils/sanitizeHtml'
 
 interface NewsItem {
   id?: number
@@ -77,7 +78,7 @@ export default function NewsCard({ news, index = 0 }: NewsCardProps) {
         {/* 설명 */}
         {news.description && (
           <p className="text-gray-600 text-sm line-clamp-2 mb-4 flex-1">
-            {news.description}
+            {stripHtml(news.description)}
           </p>
         )}
 

@@ -9,6 +9,7 @@ import LoadingSpinner from '../components/Common/LoadingSpinner'
 import { getPlaceholderImageUrl } from '../utils/imagePolicy'
 import { formatSourceDisplayName, buildEditorialLine } from '../utils/formatSource'
 import { extractTitleFromUrl } from '../utils/extractTitleFromUrl'
+import { stripHtml } from '../utils/sanitizeHtml'
 
 interface NewsItem {
   id?: number
@@ -217,7 +218,7 @@ function SearchArticleCard({ article }: { article: NewsItem }) {
         <div className="flex-1 min-w-0">
           <h2 className="text-lg font-bold text-gray-900 leading-snug mb-1.5 line-clamp-2">{article.title}</h2>
           {article.description && (
-            <p className="text-sm text-gray-600 leading-relaxed mb-2 line-clamp-2">{article.description}</p>
+            <p className="text-sm text-gray-600 leading-relaxed mb-2 line-clamp-2">{stripHtml(article.description)}</p>
           )}
           <div className="flex items-center gap-2 text-xs text-gray-500">
             <span className="font-medium text-primary-500">{getSourceName()}</span>

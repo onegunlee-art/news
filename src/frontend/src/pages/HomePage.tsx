@@ -9,6 +9,7 @@ import LoadingSpinner from '../components/Common/LoadingSpinner'
 import { getPlaceholderImageUrl } from '../utils/imagePolicy'
 import { formatSourceDisplayName, buildEditorialLine } from '../utils/formatSource'
 import { extractTitleFromUrl } from '../utils/extractTitleFromUrl'
+import { stripHtml } from '../utils/sanitizeHtml'
 
 interface NewsItem {
   id?: number
@@ -293,7 +294,7 @@ function ArticleCard({ article }: { article: NewsItem }) {
           {/* 기사 내용 - 내레이션 우선, 없으면 요약 */}
           {(article.narration || article.description) && (
             <p className="text-xs text-gray-600 leading-relaxed mb-2 line-clamp-3">
-              {article.narration?.trim() || article.description}
+              {stripHtml(article.narration?.trim() || article.description)}
             </p>
           )}
           
