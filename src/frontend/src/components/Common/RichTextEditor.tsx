@@ -41,15 +41,32 @@ export default function RichTextEditor({
     onChange(el.innerHTML)
   }, [onChange])
 
+  /** 리스트(ul/ol) 내부인지 확인 - Enter 시 기본 동작(새 li 생성) 허용 */
+  const isInsideList = useCallback((): boolean => {
+    const el = divRef.current
+    const sel = window.getSelection()
+    const range = sel?.rangeCount ? sel.getRangeAt(0) : null
+    if (!el || !range || !el.contains(range.commonAncestorContainer)) return false
+    let node: Node | null = range.commonAncestorContainer
+    if (node.nodeType === Node.TEXT_NODE) node = node.parentElement
+    while (node && node !== el) {
+      if (node.nodeName === 'LI') return true
+      node = node.parentElement
+    }
+    return false
+  }, [])
+
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (e.key !== 'Enter') return
+      // Word처럼: 리스트 안에 있으면 Enter 시 새 항목 자동 생성 (브라우저 기본 동작 사용)
+      if (isInsideList()) return
       e.preventDefault()
       document.execCommand('insertLineBreak')
       const el = divRef.current
       if (el) onChange(el.innerHTML)
     },
-    [onChange]
+    [onChange, isInsideList]
   )
 
   const handlePaste = useCallback(
