@@ -30,6 +30,7 @@ import {
   UserCircleIcon,
 } from '@heroicons/react/24/outline';
 import RichTextEditor from '../components/Common/RichTextEditor';
+import { normalizeEditorHtml } from '../utils/sanitizeHtml';
 import AIWorkspace from '../components/AIWorkspace/AIWorkspace';
 import type { ArticleContext } from '../components/AIWorkspace/AIWorkspace';
 import CritiqueEditor from '../components/CritiqueEditor/CritiqueEditor';
@@ -1874,13 +1875,16 @@ const AdminPage: React.FC = () => {
                         
                         try {
                           const isEditing = editingNewsId !== null;
+                          const cleanContent = normalizeEditorHtml(newsContent)
+                          const cleanNarration = normalizeEditorHtml(newsNarration)
+                          const cleanWhyImportant = normalizeEditorHtml(newsWhyImportant)
                           const requestBody = {
                             ...(isEditing && { id: editingNewsId }),
                             category: selectedCategory,
                             title: newsTitle,
-                            content: newsContent,
-                            why_important: newsWhyImportant.trim() || null,
-                            narration: newsNarration.trim() || null,
+                            content: cleanContent,
+                            why_important: cleanWhyImportant || null,
+                            narration: cleanNarration || null,
                             source_url: articleUrl.trim() || null,
                             source: articleSource.trim() || null,
                             original_title: articleOriginalTitle.trim() || null,

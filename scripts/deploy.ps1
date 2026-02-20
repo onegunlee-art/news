@@ -47,7 +47,7 @@ Write-Host ""
 # 3. 커밋 & 푸시
 Write-Host "[3/3] Commit and push to main..." -ForegroundColor Yellow
 git add -A
-git commit -m "Deploy: 볼드/하이라이트 코드형태 표시 수정 (엔티티 복원, 패턴 확장)"
+git commit -m "Deploy: div태그 정규화, Enter시 br 삽입, 저장전 HTML 정리"
 git push origin main
 
 if ($LASTEXITCODE -ne 0) {

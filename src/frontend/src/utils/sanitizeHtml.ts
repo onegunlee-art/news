@@ -1,7 +1,7 @@
 /**
  * 편집 툴에서 사용하는 태그만 허용 (볼드, 하이라이트)
  * 허용: <b>, <strong>, <mark>, <span style="background|font-weight">, <br />
- * 브라우저/DB 다양한 형식 지원 (style 속성, 따옴표 종류 등)
+ * contenteditable / 브라우저 / DB 다양한 형식 지원
  */
 const ALLOWED_PATTERNS = [
   /<b(\s[^>]*)?\/?>/gi,
@@ -34,7 +34,7 @@ export function sanitizeHtml(html: string): string {
 }
 
 /**
- * HTML 엔티티 복원 (이스케이프된 볼드/하이라이트 태그 정상 표시)
+ * HTML 엔티티 복원 (DB에 이스케이프 저장된 볼드/하이라이트 태그 정상화)
  */
 function unescapeHtmlEntities(s: string): string {
   return s
@@ -46,12 +46,38 @@ function unescapeHtmlEntities(s: string): string {
 }
 
 /**
- * 텍스트를 HTML로 렌더링할 때 줄바꿈을 <br />로 변환한 뒤 sanitize
- * DB에 이스케이프된 HTML(&lt;b&gt; 등)으로 저장된 경우 복원하여 정상 표시
+ * contenteditable이 생성한 블록 태그(div, p)를 br로 정규화
+ */
+function normalizeBlockTags(s: string): string {
+  s = s.replace(/<\/div>/gi, '<br/>')
+  s = s.replace(/<div[^>]*>/gi, '')
+  s = s.replace(/<\/p>/gi, '<br/>')
+  s = s.replace(/<p[^>]*>/gi, '')
+  s = s.replace(/(<br\s*\/?>){3,}/gi, '<br/><br/>')
+  return s
+}
+
+/**
+ * 텍스트를 HTML로 렌더링할 때 사용
+ * 순서: 줄바꿈→br, 엔티티 복원, 블록태그 정규화, sanitize
  */
 export function formatContentHtml(text: string | null | undefined): string {
   if (text == null || text === '') return ''
   let s = String(text).replace(/\n/g, '<br/>')
   s = unescapeHtmlEntities(s)
+  s = normalizeBlockTags(s)
   return sanitizeHtml(s)
+}
+
+/**
+ * RichTextEditor HTML → DB 저장 전 정규화
+ * div/p → br, 연속 br 정리, 앞뒤 br 제거
+ */
+export function normalizeEditorHtml(html: string): string {
+  if (!html || typeof html !== 'string') return ''
+  let s = html
+  s = normalizeBlockTags(s)
+  s = s.replace(/^(<br\s*\/?>)+/gi, '')
+  s = s.replace(/(<br\s*\/?>)+$/gi, '')
+  return s.trim()
 }

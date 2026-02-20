@@ -4,7 +4,6 @@ import RichTextToolbar from './RichTextToolbar'
 interface RichTextEditorProps {
   value: string
   onChange: (value: string) => void
-  /** 붙여넣기 시 정제. (plainText) => html 반환. 미제공 시 insertText 사용 */
   sanitizePaste?: (plainText: string) => string
   placeholder?: string
   rows?: number
@@ -14,7 +13,7 @@ interface RichTextEditorProps {
 
 /**
  * WYSIWYG 리치 텍스트 에디터 (볼드, 하이라이트가 실제 스타일로 표시됨)
- * contenteditable div 사용 - textarea 대신 HTML 렌더링
+ * contenteditable div 사용 - Enter 시 <br> 삽입 (div 생성 방지)
  */
 export default function RichTextEditor({
   value,
@@ -27,7 +26,6 @@ export default function RichTextEditor({
 }: RichTextEditorProps) {
   const divRef = useRef<HTMLDivElement>(null)
 
-  // 외부 value 변경 시 innerHTML 동기화 (편집 시작 등). 포커스 중에는 덮어쓰지 않음
   useEffect(() => {
     const el = divRef.current
     if (!el || document.activeElement === el) return
@@ -40,9 +38,19 @@ export default function RichTextEditor({
   const handleInput = useCallback(() => {
     const el = divRef.current
     if (!el) return
-    const html = el.innerHTML
-    onChange(html)
+    onChange(el.innerHTML)
   }, [onChange])
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key !== 'Enter') return
+      e.preventDefault()
+      document.execCommand('insertLineBreak')
+      const el = divRef.current
+      if (el) onChange(el.innerHTML)
+    },
+    [onChange]
+  )
 
   const handlePaste = useCallback(
     (e: React.ClipboardEvent) => {
@@ -75,6 +83,7 @@ export default function RichTextEditor({
         contentEditable={!disabled}
         suppressContentEditableWarning
         onInput={handleInput}
+        onKeyDown={handleKeyDown}
         onPaste={handlePaste}
         data-placeholder={placeholder}
         className={`w-full rounded-xl px-4 py-3 text-white placeholder-slate-500 outline-none transition resize-none overflow-auto [&:empty::before]:content-[attr(data-placeholder)] [&:empty::before]:text-slate-500 [&_mark]:rounded-sm [&_mark]:px-0.5 [&_b]:font-bold [&_strong]:font-bold ${className}`}
