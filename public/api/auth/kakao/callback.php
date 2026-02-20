@@ -1,96 +1,119 @@
 <?php
 /**
  * 카카오 콜백 - 직접 처리
- * 
- * 카카오 인증 후 콜백을 처리합니다.
  * 경로: /api/auth/kakao/callback
  */
 
+error_reporting(0);
+ini_set('display_errors', '0');
+
 $frontendBase = 'https://www.thegist.co.kr';
 
-// 에러 처리
-if (isset($_GET['error'])) {
-    $errorCode = $_GET['error'] ?? 'unknown';
-    $errorDescription = $_GET['error_description'] ?? '알 수 없는 오류';
-    $frontendUrl = $frontendBase . '/auth/callback?error=' . urlencode($errorCode) . '&error_description=' . urlencode($errorDescription);
-    header('Location: ' . $frontendUrl);
+function kakaoLog(string $step, $data = null): void {
+    $dirs = [
+        $_SERVER['DOCUMENT_ROOT'] . '/../storage/logs',
+        $_SERVER['DOCUMENT_ROOT'] . '/storage/logs',
+        __DIR__ . '/../../../../storage/logs',
+    ];
+    foreach ($dirs as $d) {
+        if (is_dir($d) || @mkdir($d, 0755, true)) {
+            @file_put_contents($d . '/kakao_callback.log', json_encode([
+                'ts' => date('Y-m-d H:i:s'),
+                'step' => $step,
+                'data' => $data,
+            ], JSON_UNESCAPED_UNICODE) . "\n", FILE_APPEND | LOCK_EX);
+            return;
+        }
+    }
+}
+
+function kakaoRedirectError(string $code, string $desc): void {
+    global $frontendBase;
+    kakaoLog('ERROR', ['code' => $code, 'desc' => $desc]);
+    header('Location: ' . $frontendBase . '/auth/callback?error=' . urlencode($code) . '&error_description=' . urlencode($desc));
     exit;
+}
+
+kakaoLog('start', ['method' => $_SERVER['REQUEST_METHOD'], 'has_code' => isset($_GET['code']), 'docroot' => $_SERVER['DOCUMENT_ROOT']]);
+
+// 카카오에서 에러 반환
+if (isset($_GET['error'])) {
+    kakaoRedirectError($_GET['error'] ?? 'unknown', $_GET['error_description'] ?? '카카오 인증 중 에러가 발생했습니다.');
 }
 
 // 인가 코드 확인
 $code = $_GET['code'] ?? null;
-
 if (empty($code)) {
-    header('Content-Type: application/json; charset=utf-8');
-    http_response_code(400);
-    echo json_encode(['success' => false, 'message' => '인가 코드가 없습니다.'], JSON_UNESCAPED_UNICODE);
-    exit;
+    kakaoRedirectError('no_code', '인가 코드가 없습니다. 카카오 로그인을 다시 시도해주세요.');
 }
 
-// 설정 파일 로드 (배포 환경 대응: 여러 경로 시도)
+// 설정 파일 로드 (배포 환경별 여러 경로 시도)
 $configPath = null;
 $tryPaths = [
-    dirname(__DIR__, 4) . '/config/kakao.php',
-    dirname(__DIR__, 3) . '/config/kakao.php',
-    __DIR__ . '/../../../../config/kakao.php',
+    $_SERVER['DOCUMENT_ROOT'] . '/config/kakao.php',
     $_SERVER['DOCUMENT_ROOT'] . '/../config/kakao.php',
+    dirname(__DIR__, 3) . '/config/kakao.php',
+    dirname(__DIR__, 4) . '/config/kakao.php',
 ];
 foreach ($tryPaths as $p) {
     if (file_exists($p)) { $configPath = $p; break; }
 }
 
+kakaoLog('config', ['found' => $configPath, 'tried' => $tryPaths]);
+
 if (!$configPath) {
-    $frontendUrl = $frontendBase . '/auth/callback?error=config_not_found&error_description=' . urlencode('카카오 설정 파일을 찾을 수 없습니다.');
-    header('Location: ' . $frontendUrl);
-    exit;
+    kakaoRedirectError('config_not_found', '서버 설정 파일을 찾을 수 없습니다 (config/kakao.php). 관리자에게 문의하세요.');
 }
 
 $config = require $configPath;
 
-// 액세스 토큰 요청
-$tokenUrl = $config['oauth']['token_url'];
-$tokenParams = [
-    'grant_type' => 'authorization_code',
-    'client_id' => $config['rest_api_key'],
-    'redirect_uri' => $config['oauth']['redirect_uri'],
-    'code' => $code,
-];
+kakaoLog('token_exchange', ['redirect_uri' => $config['oauth']['redirect_uri'], 'has_key' => !empty($config['rest_api_key'])]);
 
+// 카카오 토큰 교환
 $ch = curl_init();
 curl_setopt_array($ch, [
-    CURLOPT_URL => $tokenUrl,
+    CURLOPT_URL => $config['oauth']['token_url'],
     CURLOPT_POST => true,
-    CURLOPT_POSTFIELDS => http_build_query($tokenParams),
+    CURLOPT_POSTFIELDS => http_build_query([
+        'grant_type' => 'authorization_code',
+        'client_id' => $config['rest_api_key'],
+        'redirect_uri' => $config['oauth']['redirect_uri'],
+        'code' => $code,
+    ]),
     CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_TIMEOUT => 10,
     CURLOPT_HTTPHEADER => ['Content-Type: application/x-www-form-urlencoded;charset=utf-8'],
 ]);
 $tokenResponse = curl_exec($ch);
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+$curlErr = curl_error($ch);
 curl_close($ch);
 
+kakaoLog('token_response', ['http' => $httpCode, 'curl_err' => $curlErr, 'body_preview' => mb_substr($tokenResponse ?: '', 0, 200)]);
+
+if ($curlErr) {
+    kakaoRedirectError('curl_error', 'curl 오류: ' . $curlErr);
+}
+
 if ($httpCode !== 200) {
-    $error = json_decode($tokenResponse, true);
-    $msg = $error['error_description'] ?? ($error['error'] ?? '토큰 발급 실패');
-    $frontendUrl = $frontendBase . '/auth/callback?error=' . urlencode('token_error') . '&error_description=' . urlencode($msg);
-    header('Location: ' . $frontendUrl);
-    exit;
+    $err = json_decode($tokenResponse, true);
+    $msg = $err['error_description'] ?? ($err['error'] ?? '토큰 발급 실패 (HTTP ' . $httpCode . ')');
+    kakaoRedirectError('token_error', $msg);
 }
 
 $tokenData = json_decode($tokenResponse, true);
 $accessToken = $tokenData['access_token'] ?? null;
 
 if (empty($accessToken)) {
-    $frontendUrl = $frontendBase . '/auth/callback?error=no_token&error_description=' . urlencode('카카오 액세스 토큰을 받지 못했습니다.');
-    header('Location: ' . $frontendUrl);
-    exit;
+    kakaoRedirectError('no_access_token', '카카오 액세스 토큰을 받지 못했습니다.');
 }
 
 // 사용자 정보 요청
-$userInfoUrl = $config['api']['base_url'] . $config['api']['user_info'];
 $ch = curl_init();
 curl_setopt_array($ch, [
-    CURLOPT_URL => $userInfoUrl,
+    CURLOPT_URL => $config['api']['base_url'] . $config['api']['user_info'],
     CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_TIMEOUT => 10,
     CURLOPT_HTTPHEADER => [
         'Authorization: Bearer ' . $accessToken,
         'Content-Type: application/x-www-form-urlencoded;charset=utf-8',
@@ -98,21 +121,20 @@ curl_setopt_array($ch, [
 ]);
 $userResponse = curl_exec($ch);
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+$curlErr = curl_error($ch);
 curl_close($ch);
 
+kakaoLog('userinfo_response', ['http' => $httpCode, 'curl_err' => $curlErr]);
+
 if ($httpCode !== 200) {
-    $frontendUrl = $frontendBase . '/auth/callback?error=user_info_failed&error_description=' . urlencode('카카오 사용자 정보 조회 실패 (HTTP ' . $httpCode . ')');
-    header('Location: ' . $frontendUrl);
-    exit;
+    kakaoRedirectError('user_info_failed', '카카오 사용자 정보 조회 실패 (HTTP ' . $httpCode . ')');
 }
 
 $userData = json_decode($userResponse, true);
 $kakaoId = $userData['id'] ?? null;
 
 if (empty($kakaoId)) {
-    $frontendUrl = $frontendBase . '/auth/callback?error=no_kakao_id&error_description=' . urlencode('카카오 ID를 받지 못했습니다.');
-    header('Location: ' . $frontendUrl);
-    exit;
+    kakaoRedirectError('no_kakao_id', '카카오 ID를 받지 못했습니다.');
 }
 
 $kakaoAccount = $userData['kakao_account'] ?? [];
@@ -124,13 +146,7 @@ $email = $kakaoAccount['email'] ?? null;
 // DB에 사용자 저장/업데이트
 $dbUserId = null;
 try {
-    $dbCfg = [
-        'host' => 'localhost',
-        'dbname' => 'ailand',
-        'username' => 'ailand',
-        'password' => 'romi4120!',
-        'charset' => 'utf8mb4',
-    ];
+    $dbCfg = ['host' => 'localhost', 'dbname' => 'ailand', 'username' => 'ailand', 'password' => 'romi4120!', 'charset' => 'utf8mb4'];
     $pdo = new PDO(
         "mysql:host={$dbCfg['host']};dbname={$dbCfg['dbname']};charset={$dbCfg['charset']}",
         $dbCfg['username'], $dbCfg['password'],
@@ -150,8 +166,9 @@ try {
             ->execute([(string)$kakaoId, $nickname, $profileImage, $email]);
         $dbUserId = (int)$pdo->lastInsertId();
     }
+    kakaoLog('db_ok', ['dbUserId' => $dbUserId, 'isNew' => !$row]);
 } catch (Throwable $e) {
-    error_log('[kakao-callback] DB error: ' . $e->getMessage());
+    kakaoLog('db_error', ['msg' => $e->getMessage()]);
     $dbUserId = $kakaoId;
 }
 
@@ -174,18 +191,12 @@ $jwtPayloadEncoded = rtrim(strtr(base64_encode(json_encode($jwtPayload)), '+/', 
 $jwtSignature = rtrim(strtr(base64_encode(hash_hmac('sha256', "$jwtHeader.$jwtPayloadEncoded", $jwtSecret, true)), '+/', '-_'), '=');
 $accessTokenJwt = "$jwtHeader.$jwtPayloadEncoded.$jwtSignature";
 
-$refreshPayload = [
-    'user_id' => $dbUserId,
-    'type' => 'refresh',
-    'iat' => time(),
-    'exp' => time() + 86400 * 30,
-];
+$refreshPayload = ['user_id' => $dbUserId, 'type' => 'refresh', 'iat' => time(), 'exp' => time() + 86400 * 30];
 $refreshPayloadEncoded = rtrim(strtr(base64_encode(json_encode($refreshPayload)), '+/', '-_'), '=');
 $refreshSignature = rtrim(strtr(base64_encode(hash_hmac('sha256', "$jwtHeader.$refreshPayloadEncoded", $jwtSecret, true)), '+/', '-_'), '=');
 $refreshTokenJwt = "$jwtHeader.$refreshPayloadEncoded.$refreshSignature";
 
-// user 객체 (프론트엔드용)
-$userJson = json_encode([
+$userObj = [
     'id' => $dbUserId,
     'nickname' => $nickname,
     'email' => $email,
@@ -193,34 +204,26 @@ $userJson = json_encode([
     'role' => 'user',
     'created_at' => date('c'),
     'is_subscribed' => false,
-], JSON_UNESCAPED_UNICODE);
+];
 
-// HTML 리다이렉트 (localStorage에 저장 후 이동)
+kakaoLog('success', ['dbUserId' => $dbUserId, 'nickname' => $nickname]);
+
+// HTML → localStorage 저장 후 프론트엔드로 이동
 header('Content-Type: text/html; charset=utf-8');
 echo '<!DOCTYPE html>
 <html>
-<head>
-    <meta charset="UTF-8">
-    <title>로그인 처리 중...</title>
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f5f5f5; }
-        .loading { text-align: center; }
-        .spinner { width: 40px; height: 40px; border: 4px solid #e0e0e0; border-top-color: #FEE500; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-    </style>
+<head><meta charset="UTF-8"><title>로그인 처리 중...</title>
+<style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;display:flex;justify-content:center;align-items:center;height:100vh;margin:0;background:#f5f5f5}.loading{text-align:center}.spinner{width:40px;height:40px;border:4px solid #e0e0e0;border-top-color:#FEE500;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px}@keyframes spin{to{transform:rotate(360deg)}}</style>
 </head>
 <body>
-    <div class="loading">
-        <div class="spinner"></div>
-        <p>카카오 로그인 처리 중...</p>
-    </div>
-    <script>
-        try {
-            localStorage.setItem("access_token", ' . json_encode($accessTokenJwt) . ');
-            localStorage.setItem("refresh_token", ' . json_encode($refreshTokenJwt) . ');
-            localStorage.setItem("user", ' . json_encode($userJson) . ');
-        } catch(e) {}
-        window.location.href = "' . $frontendBase . '/auth/callback#access_token=' . urlencode($accessTokenJwt) . '&refresh_token=' . urlencode($refreshTokenJwt) . '";
-    </script>
+<div class="loading"><div class="spinner"></div><p>카카오 로그인 처리 중...</p></div>
+<script>
+try {
+    localStorage.setItem("access_token", ' . json_encode($accessTokenJwt) . ');
+    localStorage.setItem("refresh_token", ' . json_encode($refreshTokenJwt) . ');
+    localStorage.setItem("user", JSON.stringify(' . json_encode($userObj) . '));
+} catch(e) { console.error("localStorage error:", e); }
+window.location.href = ' . json_encode($frontendBase . '/auth/callback#access_token=' . urlencode($accessTokenJwt) . '&refresh_token=' . urlencode($refreshTokenJwt)) . ';
+</script>
 </body>
 </html>';
