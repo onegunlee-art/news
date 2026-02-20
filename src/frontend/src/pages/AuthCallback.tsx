@@ -25,7 +25,8 @@ export default function AuthCallback() {
       return
     }
 
-    // URL fragment에서 토큰 확인 (백엔드에서 리다이렉트한 경우)
+    // URL fragment에서 토큰 확인 (callback.php에서 리다이렉트한 경우)
+    // callback.php가 localStorage에 access_token, refresh_token, user를 미리 저장함
     const hash = window.location.hash.substring(1)
     if (hash) {
       const params = new URLSearchParams(hash)
@@ -35,7 +36,17 @@ export default function AuthCallback() {
       if (token && refreshToken) {
         localStorage.setItem('access_token', token)
         localStorage.setItem('refresh_token', refreshToken)
-        initializeAuth()
+
+        // callback.php가 저장한 user 정보 복원
+        const userStr = localStorage.getItem('user')
+        if (userStr) {
+          try {
+            const user = JSON.parse(userStr)
+            setUser(user)
+          } catch { /* ignore parse error */ }
+        }
+
+        setTokens(token, refreshToken)
         navigate('/')
         return
       }

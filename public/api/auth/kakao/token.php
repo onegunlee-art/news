@@ -2,8 +2,10 @@
 /**
  * 카카오 인가 코드로 토큰 교환 API
  * 
- * POST /api/auth/kakao/token.php
+ * POST /api/auth/kakao/token
  * Body: { "code": "인가코드" }
+ * 
+ * AuthCallback.tsx에서 code로 직접 토큰 교환할 때 사용 (fallback)
  */
 
 header('Content-Type: application/json; charset=utf-8');
@@ -11,68 +13,47 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 
-// OPTIONS 요청 처리 (CORS preflight)
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
 
-// POST 요청만 허용
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Method not allowed',
-    ], JSON_UNESCAPED_UNICODE);
+    echo json_encode(['success' => false, 'message' => 'Method not allowed'], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
-// 요청 본문 파싱
 $input = json_decode(file_get_contents('php://input'), true);
 $code = $input['code'] ?? null;
 
 if (empty($code)) {
     http_response_code(400);
-    echo json_encode([
-        'success' => false,
-        'message' => '인가 코드가 필요합니다.',
-    ], JSON_UNESCAPED_UNICODE);
+    echo json_encode(['success' => false, 'message' => '인가 코드가 필요합니다.'], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
-// 설정 파일 로드
-// 배포 환경에 맞게 경로 조정
-$configPath = dirname(__DIR__, 4) . '/config/kakao.php';
-
-// 배포 환경에서 경로가 다를 수 있으므로 여러 경로 시도
-if (!file_exists($configPath)) {
-    // 대체 경로 시도
-    $configPath = dirname(__DIR__, 3) . '/config/kakao.php';
+// 설정 파일 로드 (배포 환경 대응: 여러 경로 시도)
+$configPath = null;
+$tryPaths = [
+    dirname(__DIR__, 4) . '/config/kakao.php',
+    dirname(__DIR__, 3) . '/config/kakao.php',
+    __DIR__ . '/../../../../config/kakao.php',
+    $_SERVER['DOCUMENT_ROOT'] . '/../config/kakao.php',
+];
+foreach ($tryPaths as $p) {
+    if (file_exists($p)) { $configPath = $p; break; }
 }
 
-if (!file_exists($configPath)) {
-    // 또 다른 대체 경로 시도
-    $configPath = __DIR__ . '/../../../../config/kakao.php';
-}
-
-if (!file_exists($configPath)) {
+if (!$configPath) {
     http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'message' => '설정 파일을 찾을 수 없습니다.',
-        'tried_paths' => [
-            dirname(__DIR__, 4) . '/config/kakao.php',
-            dirname(__DIR__, 3) . '/config/kakao.php',
-            __DIR__ . '/../../../../config/kakao.php',
-        ],
-    ], JSON_UNESCAPED_UNICODE);
+    echo json_encode(['success' => false, 'message' => '설정 파일을 찾을 수 없습니다.'], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
 $config = require $configPath;
 
-// Redirect URI 설정 (프론트엔드 콜백 URL)
-$redirectUri = 'https://www.thegist.co.kr/api/auth/kakao/callback';
+$redirectUri = $config['oauth']['redirect_uri'];
 
 // 액세스 토큰 요청
 $tokenUrl = $config['oauth']['token_url'];
@@ -89,11 +70,8 @@ curl_setopt_array($ch, [
     CURLOPT_POST => true,
     CURLOPT_POSTFIELDS => http_build_query($tokenParams),
     CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_HTTPHEADER => [
-        'Content-Type: application/x-www-form-urlencoded;charset=utf-8',
-    ],
+    CURLOPT_HTTPHEADER => ['Content-Type: application/x-www-form-urlencoded;charset=utf-8'],
 ]);
-
 $tokenResponse = curl_exec($ch);
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 curl_close($ch);
@@ -105,10 +83,6 @@ if ($httpCode !== 200) {
         'success' => false,
         'message' => '토큰 발급 실패',
         'error' => $error,
-        'http_code' => $httpCode,
-        'response' => $tokenResponse,
-        'redirect_uri' => $redirectUri,
-        'code' => substr($code, 0, 20) . '...', // 코드 일부만 로깅
     ], JSON_UNESCAPED_UNICODE);
     exit;
 }
@@ -118,87 +92,90 @@ $kakaoAccessToken = $tokenData['access_token'] ?? null;
 
 if (empty($kakaoAccessToken)) {
     http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'message' => '액세스 토큰이 없습니다.',
-    ], JSON_UNESCAPED_UNICODE);
+    echo json_encode(['success' => false, 'message' => '액세스 토큰이 없습니다.'], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
 // 사용자 정보 요청
 $userInfoUrl = $config['api']['base_url'] . $config['api']['user_info'];
-$propertyKeys = implode(',', $config['property_keys'] ?? ['kakao_account.profile']);
-
 $ch = curl_init();
 curl_setopt_array($ch, [
-    CURLOPT_URL => $userInfoUrl . '?property_keys=[' . $propertyKeys . ']',
+    CURLOPT_URL => $userInfoUrl,
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_HTTPHEADER => [
         'Authorization: Bearer ' . $kakaoAccessToken,
         'Content-Type: application/x-www-form-urlencoded;charset=utf-8',
     ],
 ]);
-
 $userResponse = curl_exec($ch);
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-$curlError = curl_error($ch);
 curl_close($ch);
 
 if ($httpCode !== 200) {
     http_response_code(500);
-    $errorData = json_decode($userResponse, true);
-    echo json_encode([
-        'success' => false,
-        'message' => '사용자 정보 조회 실패',
-        'error' => $errorData,
-        'http_code' => $httpCode,
-        'curl_error' => $curlError,
-        'response' => $userResponse,
-    ], JSON_UNESCAPED_UNICODE);
+    echo json_encode(['success' => false, 'message' => '사용자 정보 조회 실패'], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
 $userData = json_decode($userResponse, true);
-
-if (json_last_error() !== JSON_ERROR_NONE) {
-    http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'message' => '사용자 정보 파싱 실패',
-        'json_error' => json_last_error_msg(),
-        'response' => $userResponse,
-    ], JSON_UNESCAPED_UNICODE);
-    exit;
-}
-
-// 사용자 정보 추출
 $kakaoId = $userData['id'] ?? null;
 
 if (empty($kakaoId)) {
     http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'message' => '카카오 ID를 찾을 수 없습니다.',
-        'user_data' => $userData,
-    ], JSON_UNESCAPED_UNICODE);
+    echo json_encode(['success' => false, 'message' => '카카오 ID를 찾을 수 없습니다.'], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
 $kakaoAccount = $userData['kakao_account'] ?? [];
 $profile = $kakaoAccount['profile'] ?? [];
-
 $nickname = $profile['nickname'] ?? '사용자';
 $profileImage = $profile['profile_image_url'] ?? null;
+$email = $kakaoAccount['email'] ?? null;
+
+// DB에 사용자 저장/업데이트
+$dbUserId = null;
+try {
+    $dbCfg = [
+        'host' => 'localhost',
+        'dbname' => 'ailand',
+        'username' => 'ailand',
+        'password' => 'romi4120!',
+        'charset' => 'utf8mb4',
+    ];
+    $pdo = new PDO(
+        "mysql:host={$dbCfg['host']};dbname={$dbCfg['dbname']};charset={$dbCfg['charset']}",
+        $dbCfg['username'], $dbCfg['password'],
+        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]
+    );
+
+    $stmt = $pdo->prepare("SELECT id FROM users WHERE kakao_id = ? LIMIT 1");
+    $stmt->execute([(string)$kakaoId]);
+    $row = $stmt->fetch();
+
+    if ($row) {
+        $dbUserId = (int)$row['id'];
+        $pdo->prepare("UPDATE users SET nickname = ?, profile_image = ?, last_login_at = NOW() WHERE id = ?")
+            ->execute([$nickname, $profileImage, $dbUserId]);
+    } else {
+        $pdo->prepare("INSERT INTO users (kakao_id, nickname, profile_image, email, role, status, created_at, last_login_at) VALUES (?, ?, ?, ?, 'user', 'active', NOW(), NOW())")
+            ->execute([(string)$kakaoId, $nickname, $profileImage, $email]);
+        $dbUserId = (int)$pdo->lastInsertId();
+    }
+} catch (Throwable $e) {
+    error_log('[kakao-token] DB error: ' . $e->getMessage());
+    $dbUserId = $kakaoId;
+}
 
 // JWT 토큰 생성
 $jwtSecret = 'news-context-jwt-secret-key-2026';
+
 $jwtPayload = [
-    'user_id' => $kakaoId,
+    'user_id' => $dbUserId,
+    'kakao_id' => (string)$kakaoId,
     'nickname' => $nickname,
-    'profile_image' => $profileImage,
     'provider' => 'kakao',
     'iat' => time(),
-    'exp' => time() + 3600 * 24, // 24시간 후 만료
+    'exp' => time() + 3600 * 24,
 ];
 
 $jwtHeader = rtrim(strtr(base64_encode(json_encode(['typ' => 'JWT', 'alg' => 'HS256'])), '+/', '-_'), '=');
@@ -206,26 +183,25 @@ $jwtPayloadEncoded = rtrim(strtr(base64_encode(json_encode($jwtPayload)), '+/', 
 $jwtSignature = rtrim(strtr(base64_encode(hash_hmac('sha256', "$jwtHeader.$jwtPayloadEncoded", $jwtSecret, true)), '+/', '-_'), '=');
 $accessTokenJwt = "$jwtHeader.$jwtPayloadEncoded.$jwtSignature";
 
-// 리프레시 토큰
 $refreshPayload = [
-    'user_id' => $kakaoId,
+    'user_id' => $dbUserId,
     'type' => 'refresh',
     'iat' => time(),
-    'exp' => time() + 86400 * 30, // 30일 후 만료
+    'exp' => time() + 86400 * 30,
 ];
 $refreshPayloadEncoded = rtrim(strtr(base64_encode(json_encode($refreshPayload)), '+/', '-_'), '=');
 $refreshSignature = rtrim(strtr(base64_encode(hash_hmac('sha256', "$jwtHeader.$refreshPayloadEncoded", $jwtSecret, true)), '+/', '-_'), '=');
 $refreshTokenJwt = "$jwtHeader.$refreshPayloadEncoded.$refreshSignature";
 
-// 성공 응답
 echo json_encode([
     'success' => true,
     'message' => '로그인 성공',
     'access_token' => $accessTokenJwt,
     'refresh_token' => $refreshTokenJwt,
     'user' => [
-        'id' => $kakaoId,
+        'id' => $dbUserId,
         'nickname' => $nickname,
+        'email' => $email,
         'profile_image' => $profileImage,
         'role' => 'user',
         'created_at' => date('c'),

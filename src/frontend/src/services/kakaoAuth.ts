@@ -144,24 +144,19 @@ export const initKakao = async (): Promise<boolean> => {
  * 카카오 로그인 (REST API 방식 - JavaScript 키 불필요)
  */
 export const kakaoLogin = async (): Promise<void> => {
-  // Redirect URI 확인 (디버깅)
-  console.log('Kakao Login - Redirect URI:', REDIRECT_URI);
-  console.log('Kakao Login - REST API Key:', KAKAO_REST_API_KEY ? 'Set' : 'Not Set');
-  
-  // JavaScript SDK 초기화 시도
-  const sdkInitialized = await initKakao();
-  
-  if (sdkInitialized) {
-    console.log('Using Kakao SDK');
-    window.Kakao.Auth.authorize({
-      redirectUri: REDIRECT_URI,
-      scope: 'profile_nickname,profile_image',
-    });
-    return;
+  // JS Key가 있을 때만 SDK 시도, 없으면 바로 REST API 방식
+  if (KAKAO_JAVASCRIPT_KEY) {
+    const sdkInitialized = await initKakao();
+    if (sdkInitialized) {
+      window.Kakao.Auth.authorize({
+        redirectUri: REDIRECT_URI,
+        scope: 'profile_nickname,profile_image',
+      });
+      return;
+    }
   }
 
-  // REST API 방식으로 직접 리다이렉트
-  console.log('Using REST API method');
+  // REST API 방식으로 직접 리다이렉트 (SDK 불필요)
   const params = new URLSearchParams({
     client_id: KAKAO_REST_API_KEY,
     redirect_uri: REDIRECT_URI,
@@ -169,9 +164,7 @@ export const kakaoLogin = async (): Promise<void> => {
     scope: 'profile_nickname,profile_image',
   });
 
-  const authUrl = `https://kauth.kakao.com/oauth/authorize?${params.toString()}`;
-  console.log('Kakao Auth URL:', authUrl);
-  window.location.href = authUrl;
+  window.location.href = `https://kauth.kakao.com/oauth/authorize?${params.toString()}`;
 };
 
 /**
