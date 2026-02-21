@@ -110,8 +110,9 @@ class WebScraperService
 
         $xpath = new \DOMXPath($doc);
 
-        // 메타데이터 추출
+        // 메타데이터 추출 (부제목은 header 제거 전에 추출)
         $title = $this->extractTitle($xpath);
+        $subtitle = $this->extractSubtitle($xpath);
         $description = $this->extractMetaContent($xpath, 'description');
         $author = $this->extractAuthor($xpath);
         $publishedAt = $this->extractPublishedDate($xpath, $html);
@@ -135,7 +136,8 @@ class WebScraperService
             metadata: [
                 'scraped_at' => date('c'),
                 'content_length' => strlen($content)
-            ]
+            ],
+            subtitle: $subtitle
         );
     }
 
@@ -169,6 +171,43 @@ class WebScraperService
         }
 
         return '';
+    }
+
+    /**
+     * 부제목 추출 (Foreign Affairs: h2/em/p, 기타: subtitle/dek/alternativeHeadline)
+     */
+    private function extractSubtitle(\DOMXPath $xpath): ?string
+    {
+        $selectors = [
+            '//h1/following-sibling::h2[1]',           // Foreign Affairs: h2 직후
+            '//h1/following-sibling::em[1]',           // Foreign Affairs: 이탤릭 부제목
+            '//h1/following-sibling::p[1]',            // h1 다음 첫 p
+            '//h1/following-sibling::*[1][self::p or self::em or self::span or self::div]',
+            '//article//h2[1]',                         // article 내 첫 h2
+            '//article//em[1]',                         // article 내 첫 em (이탤릭 부제목)
+            '//*[@itemprop="alternativeHeadline"]',     // schema.org
+            '//*[contains(@class, "subtitle")]',
+            '//*[contains(@class, "subhead")]',
+            '//*[contains(@class, "dek")]',
+            '//*[contains(@class, "article-subtitle")]',
+            '//*[contains(@class, "headline-sub")]',
+            '//*[contains(@class, "standfirst")]',
+            '//*[contains(@class, "lede")]',
+        ];
+        foreach ($selectors as $selector) {
+            try {
+                $nodes = $xpath->query($selector);
+                if ($nodes !== false && $nodes->length > 0) {
+                    $text = trim($nodes->item(0)->textContent ?? '');
+                    if ($text !== '' && mb_strlen($text) < 300 && mb_strlen($text) > 5) {
+                        return $text;
+                    }
+                }
+            } catch (\Throwable $e) {
+                continue;
+            }
+        }
+        return null;
     }
 
     /**
