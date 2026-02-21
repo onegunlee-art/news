@@ -815,6 +815,11 @@ const AdminPage: React.FC = () => {
   const [, setTermsContent] = useState('');
   const [privacySaving, setPrivacySaving] = useState(false);
   const [privacyMessage, setPrivacyMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [welcomeMessage, setWelcomeMessage] = useState('');
+  const [welcomeTitleTemplate, setWelcomeTitleTemplate] = useState('{name}님');
+  const [promoCodePrefix, setPromoCodePrefix] = useState('WELCOME');
+  const [welcomeSaving, setWelcomeSaving] = useState(false);
+  const [welcomeSaveMsg, setWelcomeSaveMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
     // 권한 체크 (실제 환경에서는 API 호출)
@@ -935,6 +940,9 @@ const AdminPage: React.FC = () => {
       if (s) {
         setPrivacyContent(s.privacy_policy ?? '');
         setTermsContent(s.terms_of_service ?? '');
+        setWelcomeMessage(s.welcome_popup_message ?? 'The Gist 가입을 감사드립니다.');
+        setWelcomeTitleTemplate(s.welcome_popup_title ?? '{name}님');
+        setPromoCodePrefix(s.promo_code_prefix ?? 'WELCOME');
       }
     } catch (e) {
       console.error('대시보드 로드 실패:', e);
@@ -1209,6 +1217,73 @@ const AdminPage: React.FC = () => {
                       </button>
                       {privacyMessage && (
                         <span className={privacyMessage.type === 'success' ? 'text-emerald-400' : 'text-red-400'}>{privacyMessage.text}</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 가입 환영 팝업 설정 */}
+                  <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50">
+                    <h3 className="text-lg font-semibold text-white mb-4">가입 환영 팝업 설정</h3>
+                    <p className="text-slate-400 text-sm mb-4">가입 완료 시 표시되는 팝업 메시지와 프로모션 코드 접두사를 설정합니다.</p>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-slate-400 text-sm mb-1">환영 메시지</label>
+                        <input
+                          type="text"
+                          value={welcomeMessage}
+                          onChange={(e) => setWelcomeMessage(e.target.value)}
+                          placeholder="The Gist 가입을 감사드립니다."
+                          className="w-full px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-slate-200"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-slate-400 text-sm mb-1">이름 표시 형식 (&#123;name&#125; = 닉네임)</label>
+                        <input
+                          type="text"
+                          value={welcomeTitleTemplate}
+                          onChange={(e) => setWelcomeTitleTemplate(e.target.value)}
+                          placeholder="{name}님"
+                          className="w-full px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-slate-200"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-slate-400 text-sm mb-1">프로모션 코드 접두사</label>
+                        <input
+                          type="text"
+                          value={promoCodePrefix}
+                          onChange={(e) => setPromoCodePrefix(e.target.value)}
+                          placeholder="WELCOME"
+                          className="w-full px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-slate-200"
+                        />
+                        <p className="text-slate-500 text-xs mt-1">예: WELCOME → WELCOME-A1B2C3D4 형식으로 발급</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 mt-4">
+                      <button
+                        type="button"
+                        disabled={welcomeSaving}
+                        onClick={async () => {
+                          setWelcomeSaving(true);
+                          setWelcomeSaveMsg(null);
+                          try {
+                            await adminSettingsApi.updateSettings({
+                              welcome_popup_message: welcomeMessage,
+                              welcome_popup_title: welcomeTitleTemplate,
+                              promo_code_prefix: promoCodePrefix.trim() || 'WELCOME',
+                            });
+                            setWelcomeSaveMsg({ type: 'success', text: '저장되었습니다.' });
+                          } catch (e) {
+                            setWelcomeSaveMsg({ type: 'error', text: '저장에 실패했습니다.' });
+                          } finally {
+                            setWelcomeSaving(false);
+                          }
+                        }}
+                        className="px-4 py-2 bg-orange-600 hover:bg-orange-500 disabled:opacity-50 text-white rounded-lg text-sm"
+                      >
+                        {welcomeSaving ? '저장 중...' : '저장'}
+                      </button>
+                      {welcomeSaveMsg && (
+                        <span className={welcomeSaveMsg.type === 'success' ? 'text-emerald-400' : 'text-red-400'}>{welcomeSaveMsg.text}</span>
                       )}
                     </div>
                   </div>

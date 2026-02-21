@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Core\Database;
 use App\Models\User;
 use App\Repositories\UserRepository;
 use App\Utils\JWT;
@@ -81,7 +82,7 @@ final class AuthService
         $kakaoUser = $this->kakaoAuth->getUserInfo($tokenData['access_token']);
         
         // 3. 사용자 생성 또는 업데이트
-        $userId = $this->userRepository->createOrUpdateFromKakao($kakaoUser);
+        [$userId, $isNewUser] = $this->userRepository->createOrUpdateFromKakao($kakaoUser);
         
         // 4. 사용자 정보 조회
         $userData = $this->userRepository->findById($userId);
@@ -102,12 +103,16 @@ final class AuthService
         $refreshExpiry = new \DateTimeImmutable('+7 days');
         $this->userRepository->saveRefreshToken($userId, $refreshToken, $refreshExpiry);
         
+        $promoCode = $isNewUser ? $this->generateAndSavePromoCode($userId) : null;
+        
         return [
             'user' => User::fromArray($userData)->toJson(),
             'access_token' => $accessToken,
             'refresh_token' => $refreshToken,
             'token_type' => 'Bearer',
-            'expires_in' => 86400, // 24시간
+            'expires_in' => 86400,
+            'is_new_user' => $isNewUser,
+            'promo_code' => $promoCode,
         ];
     }
 
@@ -326,12 +331,38 @@ final class AuthService
         
         $user = User::fromArray($userData)->toJson();
         
+        $promoCode = $this->generateAndSavePromoCode($userId);
+        
         return [
             'user' => $user,
             'access_token' => $accessToken,
             'refresh_token' => $refreshToken,
             'token_type' => 'Bearer',
             'expires_in' => 86400,
+            'promo_code' => $promoCode,
         ];
+    }
+
+    /**
+     * 프로모션 코드 생성 및 저장
+     */
+    private function generateAndSavePromoCode(int $userId): ?string
+    {
+        try {
+            $db = Database::getInstance()->getConnection();
+            $prefix = 'WELCOME';
+            $stmt = $db->query("SELECT `value` FROM settings WHERE `key` = 'promo_code_prefix' LIMIT 1");
+            $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+            if ($row && !empty(trim($row['value'] ?? ''))) {
+                $prefix = trim($row['value']);
+            }
+            $code = $prefix . '-' . strtoupper(bin2hex(random_bytes(4)));
+            $stmt = $db->prepare("INSERT INTO promo_codes (user_id, code) VALUES (?, ?)");
+            $stmt->execute([$userId, $code]);
+            return $code;
+        } catch (\Throwable $e) {
+            error_log('Promo code generation failed: ' . $e->getMessage());
+            return null;
+        }
     }
 }

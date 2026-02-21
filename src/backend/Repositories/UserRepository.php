@@ -54,29 +54,27 @@ final class UserRepository extends BaseRepository
 
     /**
      * 카카오 로그인으로 사용자 생성 또는 업데이트
+     * @return array{0: int, 1: bool} [userId, isNewUser]
      */
-    public function createOrUpdateFromKakao(array $kakaoData): int
+    public function createOrUpdateFromKakao(array $kakaoData): array
     {
         $user = User::fromKakaoData($kakaoData);
         $existingUser = $this->findByKakaoId($user->getKakaoId());
         
         if ($existingUser) {
-            // 기존 사용자 업데이트
             $this->update($existingUser['id'], [
                 'nickname' => $user->getNickname(),
                 'profile_image' => $user->getProfileImage(),
                 'email' => $user->getEmail(),
                 'last_login_at' => date('Y-m-d H:i:s'),
             ]);
-            
-            return (int) $existingUser['id'];
+            return [(int) $existingUser['id'], false];
         }
         
-        // 새 사용자 생성
         $userData = $user->toArray();
         $userData['last_login_at'] = date('Y-m-d H:i:s');
-        
-        return $this->create($userData);
+        $userId = $this->create($userData);
+        return [$userId, true];
     }
 
     /**

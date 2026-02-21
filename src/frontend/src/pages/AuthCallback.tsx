@@ -109,6 +109,15 @@ export default function AuthCallback() {
             setUser(data.user)
           }
           
+          if (data.is_new_user && data.promo_code) {
+            const userName = data.user?.nickname || data.user?.email?.split('@')[0] || '회원'
+            localStorage.setItem('welcome_popup', JSON.stringify({
+              userName,
+              promoCode: data.promo_code,
+              ts: Date.now(),
+            }))
+          }
+          
           setTokens(data.access_token, data.refresh_token || '')
           navigate('/')
           return

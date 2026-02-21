@@ -134,6 +134,8 @@ $email = $kakaoAccount['email'] ?? null;
 
 // DB에 사용자 저장/업데이트
 $dbUserId = null;
+$isNewUser = false;
+$promoCode = null;
 try {
     $dbCfg = [
         'host' => 'localhost',
@@ -152,6 +154,8 @@ try {
     $stmt->execute([(string)$kakaoId]);
     $row = $stmt->fetch();
 
+    $isNewUser = false;
+    $promoCode = null;
     if ($row) {
         $dbUserId = (int)$row['id'];
         $pdo->prepare("UPDATE users SET nickname = ?, profile_image = ?, last_login_at = NOW() WHERE id = ?")
@@ -160,10 +164,30 @@ try {
         $pdo->prepare("INSERT INTO users (kakao_id, nickname, profile_image, email, role, status, created_at, last_login_at) VALUES (?, ?, ?, ?, 'user', 'active', NOW(), NOW())")
             ->execute([(string)$kakaoId, $nickname, $profileImage, $email]);
         $dbUserId = (int)$pdo->lastInsertId();
+        $isNewUser = true;
+        try {
+            $prefix = 'WELCOME';
+            $pr = $pdo->query("SELECT `value` FROM settings WHERE `key` = 'promo_code_prefix' LIMIT 1");
+            if ($pr && ($prRow = $pr->fetch(PDO::FETCH_ASSOC)) && !empty(trim($prRow['value'] ?? ''))) {
+                $prefix = trim($prRow['value']);
+            }
+            $promoCode = $prefix . '-' . strtoupper(bin2hex(random_bytes(4)));
+            $pdo->prepare("INSERT INTO promo_codes (user_id, code) VALUES (?, ?)")->execute([$dbUserId, $promoCode]);
+        } catch (Throwable $ex) {
+            error_log('[kakao-token] Promo code: ' . $ex->getMessage());
+        }
     }
 } catch (Throwable $e) {
     error_log('[kakao-token] DB error: ' . $e->getMessage());
-    $dbUserId = $kakaoId;
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => '로그인 처리 중 오류가 발생했습니다.'], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+if (!$dbUserId) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => '사용자 정보를 가져올 수 없습니다.'], JSON_UNESCAPED_UNICODE);
+    exit;
 }
 
 // JWT 토큰 생성
@@ -193,7 +217,7 @@ $refreshPayloadEncoded = rtrim(strtr(base64_encode(json_encode($refreshPayload))
 $refreshSignature = rtrim(strtr(base64_encode(hash_hmac('sha256', "$jwtHeader.$refreshPayloadEncoded", $jwtSecret, true)), '+/', '-_'), '=');
 $refreshTokenJwt = "$jwtHeader.$refreshPayloadEncoded.$refreshSignature";
 
-echo json_encode([
+$response = [
     'success' => true,
     'message' => '로그인 성공',
     'access_token' => $accessTokenJwt,
@@ -207,4 +231,9 @@ echo json_encode([
         'created_at' => date('c'),
         'is_subscribed' => false,
     ],
-], JSON_UNESCAPED_UNICODE);
+];
+if ($isNewUser ?? false) {
+    $response['is_new_user'] = true;
+    $response['promo_code'] = $promoCode ?? null;
+}
+echo json_encode($response, JSON_UNESCAPED_UNICODE);

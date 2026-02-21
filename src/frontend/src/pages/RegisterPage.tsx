@@ -1,9 +1,10 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuthStore } from '../store/authStore'
-import { authApi } from '../services/api'
+import { authApi, welcomeSettingsApi } from '../services/api'
 import PrivacyPolicyModal from '../components/Common/PrivacyPolicyModal'
+import WelcomePopup from '../components/Common/WelcomePopup'
 
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate()
@@ -21,6 +22,8 @@ const RegisterPage: React.FC = () => {
   const [showPrivacyModal, setShowPrivacyModal] = useState(false)
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('monthly')
   const [showSuccess, setShowSuccess] = useState(false)
+  const [welcomeMessage, setWelcomeMessage] = useState('The Gist 가입을 감사드립니다.')
+  const [welcomePopupData, setWelcomePopupData] = useState<{ userName: string; promoCode?: string } | null>(null)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -61,14 +64,15 @@ const RegisterPage: React.FC = () => {
       )
 
       if (res.data?.success && res.data?.data) {
-        const { user, access_token, refresh_token } = res.data.data
+        const { user, access_token, refresh_token, promo_code } = res.data.data
         setTokens(access_token, refresh_token)
         setUser(user)
         localStorage.setItem('user', JSON.stringify(user))
+        setWelcomePopupData({
+          userName: user?.nickname || user?.email?.split('@')[0] || '회원',
+          promoCode: promo_code,
+        })
         setShowSuccess(true)
-        setTimeout(() => {
-          navigate('/', { replace: true })
-        }, 2000)
       } else {
         throw new Error(res.data?.message || '회원가입에 실패했습니다.')
       }
@@ -87,25 +91,28 @@ const RegisterPage: React.FC = () => {
     login()
   }
 
-  if (showSuccess) {
+  useEffect(() => {
+    welcomeSettingsApi.getWelcome().then((r) => {
+      if (r.data?.success && r.data?.data?.message) setWelcomeMessage(r.data.data.message)
+    }).catch(() => {})
+  }, [])
+
+  const handleCloseWelcome = () => {
+    setShowSuccess(false)
+    setWelcomePopupData(null)
+    navigate('/', { replace: true })
+  }
+
+  if (showSuccess && welcomePopupData) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="w-full max-w-md text-center"
-        >
-          <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-8">
-            <div className="w-20 h-20 mx-auto mb-6 bg-green-500 rounded-full flex items-center justify-center">
-              <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <h2 className="text-2xl font-semibold text-gray-900 mb-3">회원가입이 완료되었습니다!</h2>
-            <p className="text-gray-600 mb-6">잠시 후 메인 페이지로 이동합니다.</p>
-            <div className="animate-pulse text-primary-500">이동 중...</div>
-          </div>
-        </motion.div>
+        <WelcomePopup
+          isOpen={true}
+          onClose={handleCloseWelcome}
+          userName={welcomePopupData.userName}
+          welcomeMessage={welcomeMessage}
+          promoCode={welcomePopupData.promoCode}
+        />
       </div>
     )
   }

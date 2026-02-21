@@ -1,8 +1,10 @@
 import { Routes, Route } from 'react-router-dom'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuthStore } from './store/authStore'
 import Layout from './components/Layout/Layout'
 import AudioPlayerPopup from './components/AudioPlayer/AudioPlayerPopup'
+import WelcomePopup from './components/Common/WelcomePopup'
+import { welcomeSettingsApi } from './services/api'
 import HomePage from './pages/HomePage'
 import AllNewsPage from './pages/AllNewsPage'
 import NewsDetailPage from './pages/NewsDetailPage'
@@ -20,14 +22,49 @@ import SearchPage from './pages/SearchPage'
 
 function App() {
   const { initializeAuth } = useAuthStore()
+  const [welcomeData, setWelcomeData] = useState<{ userName: string; welcomeMessage: string; promoCode?: string } | null>(null)
 
   useEffect(() => {
     initializeAuth()
   }, [initializeAuth])
 
+  useEffect(() => {
+    const raw = localStorage.getItem('welcome_popup')
+    if (!raw) return
+    try {
+      const data = JSON.parse(raw)
+      if (data.userName && data.ts && Date.now() - data.ts < 60000) {
+        welcomeSettingsApi.getWelcome().then((r) => {
+          const msg = r.data?.success && r.data?.data?.message ? r.data.data.message : 'The Gist 가입을 감사드립니다.'
+          setWelcomeData({
+            userName: data.userName,
+            welcomeMessage: msg,
+            promoCode: data.promoCode,
+          })
+        }).catch(() => {
+          setWelcomeData({
+            userName: data.userName,
+            welcomeMessage: 'The Gist 가입을 감사드립니다.',
+            promoCode: data.promoCode,
+          })
+        })
+      }
+      localStorage.removeItem('welcome_popup')
+    } catch { localStorage.removeItem('welcome_popup') }
+  }, [])
+
   return (
     <div className="min-h-screen bg-dark-500 bg-gradient-main">
       <AudioPlayerPopup />
+      {welcomeData && (
+        <WelcomePopup
+          isOpen={!!welcomeData}
+          onClose={() => setWelcomeData(null)}
+          userName={welcomeData.userName}
+          welcomeMessage={welcomeData.welcomeMessage}
+          promoCode={welcomeData.promoCode}
+        />
+      )}
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<HomePage />} />

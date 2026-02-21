@@ -133,6 +133,11 @@ export const ttsApi = {
     api.post<{ success: boolean; data: { url: string } }>('/tts/generate', { text }),
 }
 
+/** 가입 환영 설정 (공개) */
+export const welcomeSettingsApi = {
+  getWelcome: () => api.get<{ success: boolean; data: { message: string; title_template: string } }>('/settings/welcome'),
+}
+
 /** Admin 설정 (Router: GET/PUT /api/admin/settings) */
 export const adminSettingsApi = {
   getSettings: () => api.get<{ success: boolean; data: Record<string, string> }>('/admin/settings'),
