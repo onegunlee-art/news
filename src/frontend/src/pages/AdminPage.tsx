@@ -35,6 +35,8 @@ import type { ArticleContext } from '../components/AIWorkspace/AIWorkspace';
 import CritiqueEditor from '../components/CritiqueEditor/CritiqueEditor';
 import RAGTester from '../components/RAGTester/RAGTester';
 import { api, adminSettingsApi, adminTtsApi, ttsApi } from '../services/api';
+import { PRIVACY_POLICY_CONTENT } from '../components/Common/PrivacyPolicyContent';
+import WelcomePopup from '../components/Common/WelcomePopup';
 
 /** Listen과 동일한 구조로 TTS params 구성 (캐시 공유) */
 function buildTtsParamsForListen(params: {
@@ -784,6 +786,7 @@ const AdminPage: React.FC = () => {
   const [welcomeTitleTemplate, setWelcomeTitleTemplate] = useState('{name}님');
   const [welcomeSaving, setWelcomeSaving] = useState(false);
   const [welcomeSaveMsg, setWelcomeSaveMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [showWelcomePreview, setShowWelcomePreview] = useState(false);
 
   useEffect(() => {
     // 권한 체크 (실제 환경에서는 API 호출)
@@ -892,7 +895,7 @@ const AdminPage: React.FC = () => {
         setDashboardUsers(usersRes.data.data.items);
       const s = settingsRes.data?.data;
       if (s) {
-        setPrivacyContent(s.privacy_policy ?? '');
+        setPrivacyContent((s.privacy_policy && s.privacy_policy.trim()) ? s.privacy_policy : PRIVACY_POLICY_CONTENT);
         setTermsContent(s.terms_of_service ?? '');
         setWelcomeMessage(s.welcome_popup_message ?? 'The Gist 가입을 감사드립니다.');
         setWelcomeTitleTemplate(s.welcome_popup_title ?? '{name}님');
@@ -1093,6 +1096,13 @@ const AdminPage: React.FC = () => {
                     <div className="flex items-center gap-3 mt-4">
                       <button
                         type="button"
+                        onClick={() => setShowWelcomePreview(true)}
+                        className="px-4 py-2 bg-slate-600 hover:bg-slate-500 text-white rounded-lg text-sm"
+                      >
+                        미리보기
+                      </button>
+                      <button
+                        type="button"
                         disabled={welcomeSaving}
                         onClick={async () => {
                           setWelcomeSaving(true);
@@ -1118,6 +1128,16 @@ const AdminPage: React.FC = () => {
                       )}
                     </div>
                   </div>
+
+                  {/* 환영 팝업 미리보기 */}
+                  {showWelcomePreview && (
+                    <WelcomePopup
+                      isOpen={true}
+                      onClose={() => setShowWelcomePreview(false)}
+                      userName="홍길동"
+                      welcomeMessage={welcomeMessage || 'The Gist 가입을 감사드립니다.'}
+                    />
+                  )}
                 </>
               )}
             </div>
