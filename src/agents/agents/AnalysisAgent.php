@@ -157,6 +157,12 @@ class AnalysisAgent extends BaseAgent
             $options['system_prompt'] = $basePrompt;
         }
 
+        $imageUrl = $this->loadSubtitleReferenceImage();
+        if ($imageUrl !== null) {
+            $options['image_url'] = $imageUrl;
+            $prompt = "[참조 이미지 - 반드시 확인] 첨부된 Foreign Affairs 기사 스크린샷을 보세요. 이미지에서 빨간 원/밑줄로 표시된 부분을 확인하세요.\n\n- '제목'(제목): 가장 큰 볼드체 (예: What America Must Learn From Ukraine)\n- '부제목'(부제목): 제목 바로 아래, 이탤릭체로 된 짧은 문장 (예: Will Washington Repeat Moscow's Mistakes?)\n\n기사 본문에서 이 패턴과 동일한 위치·형식의 텍스트를 subtitle 필드에 반드시 추출하세요. 부제목이 있으면 절대 빈 문자열로 두지 마세요.\n\n" . $prompt;
+        }
+
         $response = $this->callGPT($prompt, $options);
         
         $data = $this->parseJsonResponse($response);
@@ -191,10 +197,15 @@ class AnalysisAgent extends BaseAgent
         $title = $article->getTitle();
         $content = $this->truncateContent($article->getContent(), 40000);
         $url = $article->getUrl();
+        $scrapedSubtitle = $article->getSubtitle();
+        $subtitleBlock = ($scrapedSubtitle !== null && $scrapedSubtitle !== '')
+            ? "\n기사 부제목(HTML에서 추출됨 - 이 값을 subtitle 필드에 그대로 사용): " . $scrapedSubtitle
+            : '';
 
         $template = <<<PROMPT
 기사 URL: {$url}
-기사 제목: {$title}
+기사 제목: {$title}{$subtitleBlock}
+
 기사 본문:
 {$content}
 
@@ -204,7 +215,8 @@ URL의 맨 뒤 / 다음 부분(슬러그)에 제목과 저자가 함께 포함�
 2) 저자를 제외한 나머지가 원문 제목(original_title)입니다. 하이픈을 공백으로, 각 단어 첫 글자 대문자로 변환 (예: the-limits-of-russian-power → The Limits of Russian Power)
 
 [부제목(Subtitle) 추출 방법]
-Foreign Affairs 등 주요 매체 기사에는 메인 제목 바로 아래에 부제목(subtitle)이 존재합니다.
+- 위에 "기사 부제목(HTML에서 추출됨)"이 있으면 그 값을 subtitle 필드에 그대로 사용하세요.
+- 없으면: Foreign Affairs 등 주요 매체 기사에는 메인 제목 바로 아래에 부제목(subtitle)이 존재합니다.
 - 부제목은 메인 제목보다 짧고, 질문형이거나 보충 설명 형태입니다.
 - 예: 제목 "What America Must Learn From Ukraine" → 부제목 "Will Washington Repeat Moscow's Mistakes?"
 - 본문 시작 전, 제목과 저자 사이에 위치한 짧은 이탤릭체 문장이 부제목입니다.
@@ -239,6 +251,24 @@ Foreign Affairs 등 주요 매체 기사에는 메인 제목 바로 아래에 �
 PROMPT;
 
         return $template;
+    }
+
+    /**
+     * 부제목 추출 참조 이미지 로드 (base64 data URL)
+     * src/agents/assets/reference/subtitle_foreign_affairs.png 존재 시 반환 (배포에 포함됨)
+     */
+    private function loadSubtitleReferenceImage(): ?string
+    {
+        $path = dirname(__DIR__) . '/assets/reference/subtitle_foreign_affairs.png';
+        if (!is_file($path) || !is_readable($path)) {
+            return null;
+        }
+        $data = file_get_contents($path);
+        if ($data === false || strlen($data) < 100) {
+            return null;
+        }
+        $b64 = base64_encode($data);
+        return 'data:image/png;base64,' . $b64;
     }
 
     /**
