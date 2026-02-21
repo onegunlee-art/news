@@ -70,6 +70,7 @@ class OpenAIService
 
     /**
      * Chat Completion API 호출
+     * @param array $options ['image_url' => 'data:image/png;base64,...' | 'https://...'] 이미지 전달 시 멀티모달
      */
     public function chat(string $systemPrompt, string $userPrompt, array $options = []): string
     {
@@ -182,10 +183,23 @@ class OpenAIService
     private function callChatAPI(string $systemPrompt, string $userPrompt, array $options = []): string
     {
         $model = $options['model'] ?? $this->model;
+        $imageUrl = $options['image_url'] ?? null;
+        $imageUrls = $options['image_urls'] ?? [];
+
+        $input = $userPrompt;
+        $images = array_filter(array_merge($imageUrl ? [$imageUrl] : [], $imageUrls));
+        if (!empty($images)) {
+            $content = [['type' => 'input_text', 'text' => $userPrompt]];
+            foreach ($images as $img) {
+                $content[] = ['type' => 'input_image', 'image_url' => $img, 'detail' => 'low'];
+            }
+            $input = [['role' => 'user', 'content' => $content]];
+        }
+
         $payload = [
             'model' => $model,
             'instructions' => $systemPrompt,
-            'input' => $userPrompt,
+            'input' => $input,
             'temperature' => $options['temperature'] ?? $this->config['temperature'],
             'max_output_tokens' => $options['max_tokens'] ?? $this->config['max_tokens']
         ];

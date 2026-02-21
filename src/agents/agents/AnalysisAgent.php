@@ -157,10 +157,15 @@ class AnalysisAgent extends BaseAgent
             $options['system_prompt'] = $basePrompt;
         }
 
-        $imageUrl = $this->loadSubtitleReferenceImage();
-        if ($imageUrl !== null) {
-            $options['image_url'] = $imageUrl;
-            $prompt = "[참조 이미지 - 반드시 확인] 첨부된 Foreign Affairs 기사 스크린샷을 보세요. 이미지에서 빨간 원/밑줄로 표시된 부분을 확인하세요.\n\n- '제목'(제목): 가장 큰 볼드체 (예: What America Must Learn From Ukraine)\n- '부제목'(부제목): 제목 바로 아래, 이탤릭체로 된 짧은 문장 (예: Will Washington Repeat Moscow's Mistakes?)\n\n기사 본문에서 이 패턴과 동일한 위치·형식의 텍스트를 subtitle 필드에 반드시 추출하세요. 부제목이 있으면 절대 빈 문자열로 두지 마세요.\n\n" . $prompt;
+        $imageUrls = $this->loadAllReferenceImages();
+        if (!empty($imageUrls)) {
+            $options['image_urls'] = $imageUrls;
+            $prompt = "[참조 이미지 - 반드시 확인] 첨부된 4개의 참조 이미지를 순서대로 확인하세요.\n\n"
+                . "1) 제목·부제목: Foreign Affairs 기사 상단 스크린샷. 제목(가장 큰 볼드체)과 부제목(이탤릭체) 위치를 확인하고, subtitle 필드에 부제목을 반드시 추출하세요.\n"
+                . "2) 소제목: 본문 중간의 섹션 헤딩(큰 글씨/대문자) 예시. content_summary에서 소제목 한글(영문) 형식으로 나열하세요.\n"
+                . "3) 무시할 부분: pull quote 스타일의 큰 볼드 텍스트. content_summary, key_points, narration에 포함하지 마세요.\n"
+                . "4) 요약 룰: content_summary 작성 형식(영한 교차 등) 참고.\n\n"
+                . "기사 본문에서 위 패턴에 맞게 분석하세요.\n\n" . $prompt;
         }
 
         $response = $this->callGPT($prompt, $options);
@@ -254,21 +259,37 @@ PROMPT;
     }
 
     /**
-     * 부제목 추출 참조 이미지 로드 (base64 data URL)
-     * src/agents/assets/reference/subtitle_foreign_affairs.png 존재 시 반환 (배포에 포함됨)
+     * GPT 분석용 참조 이미지 전체 로드 (base64 data URL 배열)
+     * src/agents/assets/reference/ 내 이미지들 (배포에 포함됨)
+     * - title_subtitle.jpg: 제목·부제목 추출
+     * - subheading_reference.jpg: 소제목 식별
+     * - pull_quote_ignore.jpg: 무시할 pull quote
+     * - summary_rules.jpg: 요약 룰
      */
-    private function loadSubtitleReferenceImage(): ?string
+    private function loadAllReferenceImages(): array
     {
-        $path = dirname(__DIR__) . '/assets/reference/subtitle_foreign_affairs.png';
-        if (!is_file($path) || !is_readable($path)) {
-            return null;
+        $base = dirname(__DIR__) . '/assets/reference/';
+        $first = is_file($base . 'subtitle_foreign_affairs.png') ? 'subtitle_foreign_affairs.png' : 'title_subtitle.jpg';
+        $files = [
+            $first,
+            'subheading_reference.jpg',
+            'pull_quote_ignore.jpg',
+            'summary_rules.jpg',
+        ];
+        $result = [];
+        foreach ($files as $f) {
+            $path = $base . $f;
+            if (!is_file($path) || !is_readable($path)) {
+                continue;
+            }
+            $data = file_get_contents($path);
+            if ($data === false || strlen($data) < 100) {
+                continue;
+            }
+            $mime = str_ends_with($f, '.png') ? 'image/png' : 'image/jpeg';
+            $result[] = 'data:' . $mime . ';base64,' . base64_encode($data);
         }
-        $data = file_get_contents($path);
-        if ($data === false || strlen($data) < 100) {
-            return null;
-        }
-        $b64 = base64_encode($data);
-        return 'data:image/png;base64,' . $b64;
+        return $result;
     }
 
     /**
