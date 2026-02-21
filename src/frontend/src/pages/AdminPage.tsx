@@ -1067,7 +1067,7 @@ const AdminPage: React.FC = () => {
                   {/* 가입 환영 팝업 설정 */}
                   <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50">
                     <h3 className="text-lg font-semibold text-white mb-4">가입 환영 팝업 설정</h3>
-                    <p className="text-slate-400 text-sm mb-4">가입 완료 시 표시되는 팝업 메시지와 프로모션 코드 접두사를 설정합니다.</p>
+                    <p className="text-slate-400 text-sm mb-4">가입 완료 시 표시되는 환영 팝업 메시지를 설정합니다.</p>
                     <div className="space-y-4">
                       <div>
                         <label className="block text-slate-400 text-sm mb-1">환영 메시지</label>
