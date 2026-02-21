@@ -36,7 +36,7 @@ import AIWorkspace from '../components/AIWorkspace/AIWorkspace';
 import type { ArticleContext } from '../components/AIWorkspace/AIWorkspace';
 import CritiqueEditor from '../components/CritiqueEditor/CritiqueEditor';
 import RAGTester from '../components/RAGTester/RAGTester';
-import { adminSettingsApi, adminTtsApi, ttsApi } from '../services/api';
+import { api, adminSettingsApi, adminTtsApi, ttsApi } from '../services/api';
 
 /** Listen과 동일한 구조로 TTS params 구성 (캐시 공유) */
 function buildTtsParamsForListen(params: {
@@ -204,6 +204,108 @@ const sanitizeText = (text: string): string => {
     .join('\n')
     // 연속된 빈 줄 → 하나로
     .replace(/\n{3,}/g, '\n\n');
+};
+
+type UserRow = { id: number; nickname: string; email: string | null; status: string; last_login_at: string | null; created_at: string };
+type UserDetail = UserRow & { usage?: { analyses_count: number; bookmarks_count: number; search_count: number } };
+
+const UsersManagementSection: React.FC<{
+  onUserDetail: (u: UserDetail | null) => void;
+}> = ({ onUserDetail }) => {
+  const [users, setUsers] = useState<UserRow[]>([]);
+  const [pagination, setPagination] = useState({ page: 1, per_page: 20, total: 0, total_pages: 0 });
+  const [loading, setLoading] = useState(true);
+  const loadUsers = useCallback(async (page = 1) => {
+    setLoading(true);
+    try {
+      const res = await api.get<{ success: boolean; data: { items: UserRow[]; pagination: typeof pagination } }>(`/admin/users?page=${page}&per_page=20`);
+      if (res.data.success && res.data.data) {
+        setUsers(res.data.data.items);
+        setPagination(res.data.data.pagination);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+  useEffect(() => {
+    loadUsers(1);
+  }, [loadUsers]);
+  return (
+    <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50">
+      {loading ? (
+        <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-10 w-10 border-2 border-cyan-500 border-t-transparent" /></div>
+      ) : (
+        <>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-slate-600">
+                  <th className="py-3 px-4 text-slate-400 font-medium">ID</th>
+                  <th className="py-3 px-4 text-slate-400 font-medium">닉네임</th>
+                  <th className="py-3 px-4 text-slate-400 font-medium">이메일</th>
+                  <th className="py-3 px-4 text-slate-400 font-medium">상태</th>
+                  <th className="py-3 px-4 text-slate-400 font-medium">최근 로그인</th>
+                  <th className="py-3 px-4 text-slate-400 font-medium">가입일</th>
+                  <th className="py-3 px-4 text-slate-400 font-medium"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map((u) => (
+                  <tr key={u.id} className="border-b border-slate-700/50">
+                    <td className="py-3 px-4 text-white">{u.id}</td>
+                    <td className="py-3 px-4 text-white">{u.nickname}</td>
+                    <td className="py-3 px-4 text-slate-300">{u.email || '-'}</td>
+                    <td className="py-3 px-4"><span className={`px-2 py-1 rounded text-xs ${u.status === 'active' ? 'bg-emerald-500/20 text-emerald-400' : u.status === 'banned' ? 'bg-red-500/20 text-red-400' : 'bg-slate-500/20 text-slate-400'}`}>{u.status}</span></td>
+                    <td className="py-3 px-4 text-slate-400 text-sm">{u.last_login_at ? new Date(u.last_login_at).toLocaleString('ko-KR') : '-'}</td>
+                    <td className="py-3 px-4 text-slate-400 text-sm">{u.created_at ? new Date(u.created_at).toLocaleString('ko-KR') : '-'}</td>
+                    <td className="py-3 px-4">
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            const res = await api.get<{ success: boolean; data: UserDetail }>(`/admin/users/${u.id}`);
+                            if (res.data.success && res.data.data) onUserDetail(res.data.data);
+                          } catch (e) {
+                            console.error(e);
+                          }
+                        }}
+                        className="text-cyan-400 hover:text-cyan-300 text-sm"
+                      >
+                        상세
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {pagination.total_pages > 1 && (
+            <div className="flex justify-center gap-2 mt-4">
+              <button
+                type="button"
+                disabled={pagination.page <= 1}
+                onClick={() => loadUsers(pagination.page - 1)}
+                className="px-3 py-1 rounded bg-slate-700 disabled:opacity-50 text-slate-300"
+              >
+                이전
+              </button>
+              <span className="py-1 text-slate-400">{pagination.page} / {pagination.total_pages}</span>
+              <button
+                type="button"
+                disabled={pagination.page >= pagination.total_pages}
+                onClick={() => loadUsers(pagination.page + 1)}
+                className="px-3 py-1 rounded bg-slate-700 disabled:opacity-50 text-slate-300"
+              >
+                다음
+              </button>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
 };
 
 const AdminPage: React.FC = () => {
@@ -706,6 +808,14 @@ const AdminPage: React.FC = () => {
   const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // 대시보드: 회원 목록, 개인정보처리방침
+  const [dashboardUsers, setDashboardUsers] = useState<{ id: number; nickname: string; email: string | null; status: string; last_login_at: string | null; created_at: string }[]>([]);
+  const [selectedUserDetail, setSelectedUserDetail] = useState<{ id: number; nickname: string; email: string | null; status: string; last_login_at: string | null; created_at: string; usage?: { analyses_count: number; bookmarks_count: number; search_count: number } } | null>(null);
+  const [privacyContent, setPrivacyContent] = useState('');
+  const [termsContent, setTermsContent] = useState('');
+  const [privacySaving, setPrivacySaving] = useState(false);
+  const [privacyMessage, setPrivacyMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
   useEffect(() => {
     // 권한 체크 (실제 환경에서는 API 호출)
     // if (!isAuthenticated || user?.role !== 'admin') {
@@ -804,32 +914,28 @@ const AdminPage: React.FC = () => {
 
   const loadDashboardData = async () => {
     setLoading(true);
-    
-    // 실제 API 호출 대신 데모 데이터 사용
-    setTimeout(() => {
-      setStats({
-        totalUsers: 127,
-        totalNews: 1543,
-        totalAnalyses: 892,
-        todayUsers: 23,
-        todayAnalyses: 45,
-        apiStatus: {
-          nyt: true,
-          kakao: true,
-          database: true,
-        },
-      });
-
-      setRecentActivities([
-        { id: 1, type: 'user', message: '새 사용자가 가입했습니다', time: '5분 전' },
-        { id: 2, type: 'analysis', message: '뉴스 분석이 완료되었습니다', time: '12분 전' },
-        { id: 3, type: 'news', message: 'NYT에서 새 뉴스를 가져왔습니다', time: '1시간 전' },
-        { id: 4, type: 'user', message: '사용자가 로그인했습니다', time: '2시간 전' },
-        { id: 5, type: 'analysis', message: '키워드 분석이 실행되었습니다', time: '3시간 전' },
+    try {
+      const [statsRes, activitiesRes, usersRes, settingsRes] = await Promise.all([
+        api.get<{ success: boolean; data: DashboardStats }>('/admin/stats'),
+        api.get<{ success: boolean; data: { type: string; message: string; time: string }[] }>('/admin/activities?limit=10'),
+        api.get<{ success: boolean; data: { items: { id: number; nickname: string; email: string | null; status: string; last_login_at: string | null; created_at: string }[] } }>('/admin/users?per_page=5&page=1'),
+        adminSettingsApi.getSettings(),
       ]);
-
+      if (statsRes.data.success && statsRes.data.data) setStats(statsRes.data.data);
+      if (activitiesRes.data.success && Array.isArray(activitiesRes.data.data))
+        setRecentActivities(activitiesRes.data.data.map((a, i) => ({ id: i + 1, ...a })));
+      if (usersRes.data.success && usersRes.data.data?.items)
+        setDashboardUsers(usersRes.data.data.items);
+      const s = settingsRes.data?.data;
+      if (s) {
+        setPrivacyContent(s.privacy_policy ?? '');
+        setTermsContent(s.terms_of_service ?? '');
+      }
+    } catch (e) {
+      console.error('대시보드 로드 실패:', e);
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
 
   const StatCard: React.FC<{
@@ -963,21 +1069,18 @@ const AdminPage: React.FC = () => {
                       title="전체 사용자"
                       value={stats.totalUsers}
                       icon={<UsersIcon className="w-6 h-6 text-white" />}
-                      change="+12% 이번 주"
                       color="bg-gradient-to-br from-blue-500 to-blue-600"
                     />
                     <StatCard
                       title="저장된 뉴스"
                       value={stats.totalNews.toLocaleString()}
                       icon={<NewspaperIcon className="w-6 h-6 text-white" />}
-                      change="+8% 이번 주"
                       color="bg-gradient-to-br from-emerald-500 to-emerald-600"
                     />
                     <StatCard
                       title="분석 완료"
                       value={stats.totalAnalyses}
                       icon={<ChartBarIcon className="w-6 h-6 text-white" />}
-                      change="+23% 이번 주"
                       color="bg-gradient-to-br from-purple-500 to-purple-600"
                     />
                     <StatCard
@@ -1025,30 +1128,83 @@ const AdminPage: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Quick Actions */}
+                  {/* 회원 관리 (최근 5명) */}
                   <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50">
-                    <h3 className="text-lg font-semibold text-white mb-4">빠른 작업</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <button className="p-4 bg-slate-900/50 rounded-xl hover:bg-slate-700/50 transition-all text-left">
-                        <NewspaperIcon className="w-8 h-8 text-cyan-400 mb-2" />
-                        <p className="text-white font-medium">뉴스 새로고침</p>
-                        <p className="text-slate-500 text-sm">NYT API 호출</p>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-white">최근 가입 회원</h3>
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab('users')}
+                        className="text-cyan-400 hover:text-cyan-300 text-sm"
+                      >
+                        전체 보기 →
                       </button>
-                      <button className="p-4 bg-slate-900/50 rounded-xl hover:bg-slate-700/50 transition-all text-left">
-                        <ChartBarIcon className="w-8 h-8 text-purple-400 mb-2" />
-                        <p className="text-white font-medium">분석 리포트</p>
-                        <p className="text-slate-500 text-sm">통계 다운로드</p>
+                    </div>
+                    <div className="space-y-2">
+                      {dashboardUsers.length === 0 ? (
+                        <p className="text-slate-500 text-sm">등록된 회원이 없습니다.</p>
+                      ) : (
+                        dashboardUsers.map((u) => (
+                          <div
+                            key={u.id}
+                            className="flex items-center justify-between py-2 px-3 bg-slate-900/50 rounded-lg hover:bg-slate-700/30"
+                          >
+                            <div>
+                              <span className="text-white font-medium">{u.nickname}</span>
+                              {u.email && <span className="text-slate-500 text-sm ml-2">({u.email})</span>}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                try {
+                                  const res = await api.get<{ success: boolean; data: typeof selectedUserDetail }>(`/admin/users/${u.id}`);
+                                  if (res.data.success && res.data.data) setSelectedUserDetail(res.data.data);
+                                } catch (e) {
+                                  console.error(e);
+                                }
+                              }}
+                              className="text-cyan-400 hover:text-cyan-300 text-sm"
+                            >
+                              상세
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 개인정보처리방침 수정 */}
+                  <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50">
+                    <h3 className="text-lg font-semibold text-white mb-4">개인정보처리방침 수정</h3>
+                    <textarea
+                      value={privacyContent}
+                      onChange={(e) => setPrivacyContent(e.target.value)}
+                      placeholder="개인정보처리방침 내용을 입력하세요. 공개 페이지 /privacy 에 표시됩니다."
+                      className="w-full h-32 px-4 py-3 bg-slate-900/50 border border-slate-600 rounded-lg text-slate-200 placeholder-slate-500 focus:ring-2 focus:ring-cyan-500 focus:border-transparent resize-none"
+                    />
+                    <div className="flex items-center gap-3 mt-3">
+                      <button
+                        type="button"
+                        disabled={privacySaving}
+                        onClick={async () => {
+                          setPrivacySaving(true);
+                          setPrivacyMessage(null);
+                          try {
+                            await adminSettingsApi.updateSettings({ privacy_policy: privacyContent });
+                            setPrivacyMessage({ type: 'success', text: '저장되었습니다.' });
+                          } catch (e) {
+                            setPrivacyMessage({ type: 'error', text: '저장에 실패했습니다.' });
+                          } finally {
+                            setPrivacySaving(false);
+                          }
+                        }}
+                        className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white rounded-lg text-sm"
+                      >
+                        {privacySaving ? '저장 중...' : '저장'}
                       </button>
-                      <button className="p-4 bg-slate-900/50 rounded-xl hover:bg-slate-700/50 transition-all text-left">
-                        <UsersIcon className="w-8 h-8 text-blue-400 mb-2" />
-                        <p className="text-white font-medium">사용자 초대</p>
-                        <p className="text-slate-500 text-sm">이메일 발송</p>
-                      </button>
-                      <button className="p-4 bg-slate-900/50 rounded-xl hover:bg-slate-700/50 transition-all text-left">
-                        <CogIcon className="w-8 h-8 text-orange-400 mb-2" />
-                        <p className="text-white font-medium">캐시 초기화</p>
-                        <p className="text-slate-500 text-sm">시스템 정리</p>
-                      </button>
+                      {privacyMessage && (
+                        <span className={privacyMessage.type === 'success' ? 'text-emerald-400' : 'text-red-400'}>{privacyMessage.text}</span>
+                      )}
                     </div>
                   </div>
                 </>
@@ -1059,9 +1215,7 @@ const AdminPage: React.FC = () => {
           {activeTab === 'users' && (
             <div className="space-y-6">
               <h2 className="text-2xl font-bold text-white">사용자 관리</h2>
-              <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50">
-                <p className="text-slate-400">사용자 관리 기능이 곧 추가됩니다.</p>
-              </div>
+              <UsersManagementSection onUserDetail={setSelectedUserDetail} />
             </div>
           )}
 
@@ -3601,6 +3755,35 @@ const AdminPage: React.FC = () => {
         </div>
       </div>
     </div>
+
+    {/* 회원 상세 모달 */}
+    {selectedUserDetail && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setSelectedUserDetail(null)}>
+        <div className="bg-slate-800 rounded-2xl p-6 max-w-md w-full mx-4 border border-slate-600 shadow-xl" onClick={(e) => e.stopPropagation()}>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold text-white">회원 상세</h3>
+            <button type="button" onClick={() => setSelectedUserDetail(null)} className="p-1 rounded hover:bg-slate-700 text-slate-400">
+              <XMarkIcon className="w-5 h-5" />
+            </button>
+          </div>
+          <div className="space-y-3 text-sm">
+            <p><span className="text-slate-500">닉네임:</span> <span className="text-white">{selectedUserDetail.nickname}</span></p>
+            <p><span className="text-slate-500">이메일:</span> <span className="text-white">{selectedUserDetail.email || '-'}</span></p>
+            <p><span className="text-slate-500">상태:</span> <span className={`px-2 py-0.5 rounded text-xs ${selectedUserDetail.status === 'active' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-500/20 text-slate-400'}`}>{selectedUserDetail.status}</span></p>
+            <p><span className="text-slate-500">가입일:</span> <span className="text-slate-300">{selectedUserDetail.created_at ? new Date(selectedUserDetail.created_at).toLocaleString('ko-KR') : '-'}</span></p>
+            <p><span className="text-slate-500">최근 로그인:</span> <span className="text-slate-300">{selectedUserDetail.last_login_at ? new Date(selectedUserDetail.last_login_at).toLocaleString('ko-KR') : '-'}</span></p>
+            {selectedUserDetail.usage && (
+              <div className="pt-3 border-t border-slate-600">
+                <p className="text-slate-400 font-medium mb-2">사용 통계</p>
+                <p><span className="text-slate-500">분석 횟수:</span> <span className="text-white">{selectedUserDetail.usage.analyses_count}</span></p>
+                <p><span className="text-slate-500">북마크:</span> <span className="text-white">{selectedUserDetail.usage.bookmarks_count}</span></p>
+                <p><span className="text-slate-500">검색 횟수:</span> <span className="text-white">{selectedUserDetail.usage.search_count}</span></p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    )}
 
     {/* GPT 요약 전체 화면 편집 모달 */}
     {isContentFullscreen && (

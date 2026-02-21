@@ -160,6 +160,55 @@ final class AdminController
     }
 
     /**
+     * 사용자 상세 조회 (사용 통계 포함)
+     *
+     * GET /api/admin/users/{id}
+     */
+    public function userDetail(Request $request): Response
+    {
+        $userId = (int) $request->param('id');
+        if ($userId <= 0) {
+            return Response::error('유효하지 않은 사용자 ID입니다.', 400);
+        }
+
+        try {
+            $stmt = $this->db->prepare("
+                SELECT id, email, nickname, profile_image, role, status,
+                       last_login_at, created_at, updated_at
+                FROM users WHERE id = ?
+            ");
+            $stmt->execute([$userId]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$user) {
+                return Response::notFound('사용자를 찾을 수 없습니다.');
+            }
+
+            // 사용 통계
+            $stmt = $this->db->prepare("SELECT COUNT(*) FROM analyses WHERE user_id = ?");
+            $stmt->execute([$userId]);
+            $analysesCount = (int) $stmt->fetchColumn();
+
+            $stmt = $this->db->prepare("SELECT COUNT(*) FROM bookmarks WHERE user_id = ?");
+            $stmt->execute([$userId]);
+            $bookmarksCount = (int) $stmt->fetchColumn();
+
+            $stmt = $this->db->prepare("SELECT COUNT(*) FROM search_history WHERE user_id = ?");
+            $stmt->execute([$userId]);
+            $searchCount = (int) $stmt->fetchColumn();
+
+            $user['usage'] = [
+                'analyses_count' => $analysesCount,
+                'bookmarks_count' => $bookmarksCount,
+                'search_count' => $searchCount,
+            ];
+
+            return Response::success($user, '사용자 상세 조회 성공');
+        } catch (RuntimeException $e) {
+            return Response::error('사용자 조회 실패: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
      * 사용자 상태 변경
      * 
      * PUT /api/admin/users/{id}/status

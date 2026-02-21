@@ -21,6 +21,31 @@ use App\Controllers\TTSController;
 
 /** @var Router $router */
 
+// ==================== 공개 설정 (개인정보처리방침, 이용약관) ====================
+$router->get('/settings/privacy', function (Request $request): Response {
+    try {
+        $db = \App\Core\Database::getInstance()->getConnection();
+        $stmt = $db->query("SELECT `value` FROM settings WHERE `key` = 'privacy_policy' LIMIT 1");
+        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+        $content = $row['value'] ?? null;
+        return Response::success(['content' => $content], 'OK');
+    } catch (Throwable $e) {
+        return Response::success(['content' => null], 'OK');
+    }
+});
+
+$router->get('/settings/terms', function (Request $request): Response {
+    try {
+        $db = \App\Core\Database::getInstance()->getConnection();
+        $stmt = $db->query("SELECT `value` FROM settings WHERE `key` = 'terms_of_service' LIMIT 1");
+        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+        $content = $row['value'] ?? null;
+        return Response::success(['content' => $content], 'OK');
+    } catch (Throwable $e) {
+        return Response::success(['content' => null], 'OK');
+    }
+});
+
 // ==================== 헬스 체크 ====================
 $router->get('/health', function (Request $request): Response {
     return Response::success([
@@ -171,6 +196,7 @@ $router->group(['prefix' => '/admin'], function (Router $router) {
     
     // 사용자 관리
     $router->get('/users', [AdminController::class, 'users']);
+    $router->get('/users/{id}', [AdminController::class, 'userDetail']);
     $router->put('/users/{id}/status', [AdminController::class, 'updateUserStatus']);
     $router->put('/users/{id}/role', [AdminController::class, 'updateUserRole']);
     

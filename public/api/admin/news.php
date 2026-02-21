@@ -222,8 +222,11 @@ if ($method === 'POST') {
             }
         }
         
-        // UTF-8 안전한 description 생성 (300자)
-        $description = mb_substr(strip_tags($content), 0, 300, 'UTF-8');
+        // UTF-8 안전한 description: 사용자 지정 요약이 있으면 사용, 없으면 content에서 생성 (300자)
+        $customDescription = $input['description'] ?? null;
+        $description = !empty($customDescription)
+            ? mb_substr(strip_tags($customDescription), 0, 300, 'UTF-8')
+            : mb_substr(strip_tags($content), 0, 300, 'UTF-8');
         
         // 이미지 URL: 사용자 지정 URL이 있으면 그것을 사용, 없으면 자동 생성
         $imageUrl = !empty($customImageUrl) ? $customImageUrl : smartImageUrl($title, $category, $db);
@@ -552,29 +555,34 @@ if ($method === 'PUT') {
             exit;
         }
         
-        // UTF-8 안전한 description 생성 (300자 제한, 문자 기반)
-        $cleanContent = strip_tags($content);
-        $description = '';
-        $charCount = 0;
-        $len = strlen($cleanContent);
-        for ($i = 0; $i < $len && $charCount < 300; ) {
-            $byte = ord($cleanContent[$i]);
-            if ($byte < 128) {
-                $description .= $cleanContent[$i];
-                $i++;
-            } elseif (($byte & 0xE0) == 0xC0) {
-                $description .= substr($cleanContent, $i, 2);
-                $i += 2;
-            } elseif (($byte & 0xF0) == 0xE0) {
-                $description .= substr($cleanContent, $i, 3);
-                $i += 3;
-            } elseif (($byte & 0xF8) == 0xF0) {
-                $description .= substr($cleanContent, $i, 4);
-                $i += 4;
-            } else {
-                $i++;
+        // UTF-8 안전한 description: 사용자 지정 요약이 있으면 사용, 없으면 content에서 생성 (300자)
+        $customDescription = $input['description'] ?? null;
+        if (!empty($customDescription)) {
+            $description = mb_substr(strip_tags($customDescription), 0, 300, 'UTF-8');
+        } else {
+            $cleanContent = strip_tags($content);
+            $description = '';
+            $charCount = 0;
+            $len = strlen($cleanContent);
+            for ($i = 0; $i < $len && $charCount < 300; ) {
+                $byte = ord($cleanContent[$i]);
+                if ($byte < 128) {
+                    $description .= $cleanContent[$i];
+                    $i++;
+                } elseif (($byte & 0xE0) == 0xC0) {
+                    $description .= substr($cleanContent, $i, 2);
+                    $i += 2;
+                } elseif (($byte & 0xF0) == 0xE0) {
+                    $description .= substr($cleanContent, $i, 3);
+                    $i += 3;
+                } elseif (($byte & 0xF8) == 0xF0) {
+                    $description .= substr($cleanContent, $i, 4);
+                    $i += 4;
+                } else {
+                    $i++;
+                }
+                $charCount++;
             }
-            $charCount++;
         }
         
         // 이미지 URL: 사용자 지정 URL이 있으면 그것을 사용, 없으면 자동 생성
