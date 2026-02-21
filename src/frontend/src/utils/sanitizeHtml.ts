@@ -1,6 +1,6 @@
 /**
  * 편집 툴에서 사용하는 태그만 허용
- * 볼드, 하이라이트, 리스트, 정렬, 글자크기
+ * 볼드, 하이라이트, 리스트, 정렬, 글자크기, 표
  */
 const ALLOWED_PATTERNS = [
   /<b(\s[^>]*)?\/?>/gi,
@@ -26,7 +26,37 @@ const ALLOWED_PATTERNS = [
   /<div\s+style="[^"]*text-align:\s*(?:left|center|right|justify)[^"]*"[^>]*\/?>/gi,
   /<font\s+size="[^"]*"[^>]*\/?>/gi,
   /<\/font>/gi,
+  // 표(table) 태그
+  /<table(\s[^>]*)?>/gi,
+  /<\/table>/gi,
+  /<thead(\s[^>]*)?>/gi,
+  /<\/thead>/gi,
+  /<tbody(\s[^>]*)?>/gi,
+  /<\/tbody>/gi,
+  /<tr(\s[^>]*)?>/gi,
+  /<\/tr>/gi,
+  /<td(\s[^>]*)?>/gi,
+  /<\/td>/gi,
+  /<th(\s[^>]*)?>/gi,
+  /<\/th>/gi,
 ]
+
+/**
+ * 붙여넣기용 HTML 정제 (표 포함)
+ * - script, style, iframe 제거
+ * - 이벤트 핸들러 속성 제거
+ * - sanitizeHtml로 허용 태그만 유지
+ */
+export function sanitizePastedHtml(html: string): string {
+  if (!html || typeof html !== 'string') return ''
+  let s = html
+  s = s.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+  s = s.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+  s = s.replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
+  s = s.replace(/\s+on\w+\s*=\s*["'][^"']*["']/gi, '')
+  s = s.replace(/\s+on\w+\s*=\s*[^\s>]+/gi, '')
+  return sanitizeHtml(s)
+}
 
 export function sanitizeHtml(html: string): string {
   if (!html || typeof html !== 'string') return ''

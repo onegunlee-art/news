@@ -1,5 +1,6 @@
 import { useRef, useEffect, useCallback } from 'react'
 import RichTextToolbar from './RichTextToolbar'
+import { sanitizePastedHtml } from '../../utils/sanitizeHtml'
 
 interface RichTextEditorProps {
   value: string
@@ -72,6 +73,16 @@ export default function RichTextEditor({
   const handlePaste = useCallback(
     (e: React.ClipboardEvent) => {
       e.preventDefault()
+      const pastedHtml = e.clipboardData.getData('text/html')
+      if (pastedHtml && /<table[\s>]/i.test(pastedHtml)) {
+        const sanitized = sanitizePastedHtml(pastedHtml)
+        if (sanitized) {
+          document.execCommand('insertHTML', false, sanitized)
+          const el = divRef.current
+          if (el) onChange(el.innerHTML)
+          return
+        }
+      }
       const pastedText = e.clipboardData.getData('text/plain')
       if (sanitizePaste) {
         const html = sanitizePaste(pastedText)
@@ -103,7 +114,7 @@ export default function RichTextEditor({
         onKeyDown={handleKeyDown}
         onPaste={handlePaste}
         data-placeholder={placeholder}
-        className={`w-full rounded-xl px-4 py-3 text-white placeholder-slate-500 outline-none transition resize-none overflow-auto [&:empty::before]:content-[attr(data-placeholder)] [&:empty::before]:text-slate-500 [&_mark]:rounded-sm [&_mark]:px-0.5 [&_b]:font-bold [&_strong]:font-bold [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-0.5 ${className}`}
+        className={`w-full rounded-xl px-4 py-3 text-white placeholder-slate-500 outline-none transition resize-none overflow-auto [&:empty::before]:content-[attr(data-placeholder)] [&:empty::before]:text-slate-500 [&_mark]:rounded-sm [&_mark]:px-0.5 [&_b]:font-bold [&_strong]:font-bold [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-0.5 [&_table]:border-collapse [&_table]:w-full [&_table]:my-2 [&_td]:border [&_td]:border-slate-500 [&_td]:px-2 [&_td]:py-1.5 [&_th]:border [&_th]:border-slate-500 [&_th]:px-2 [&_th]:py-1.5 [&_th]:font-semibold [&_th]:bg-slate-700/50 ${className}`}
         style={{ minHeight }}
       />
     </div>

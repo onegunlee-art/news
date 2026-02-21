@@ -207,6 +207,26 @@ export default function RichTextToolbar({
         </svg>
       </button>
 
+      {/* 표 삽입 */}
+      <button
+        type="button"
+        onClick={() => {
+          const el = ref?.current
+          if (!el || disabled || el instanceof HTMLTextAreaElement) return
+          el.focus()
+          const tableHtml = '<table border="1" cellpadding="4" cellspacing="0" style="border-collapse:collapse;width:100%;"><tbody><tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr></tbody></table><br/>'
+          document.execCommand('insertHTML', false, tableHtml)
+          onChange(el.innerHTML)
+        }}
+        disabled={disabled}
+        className="p-1.5 rounded-md bg-slate-700 hover:bg-slate-600 text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition"
+        title="표 삽입 (3x3)"
+      >
+        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M3 3h14v14H3V3zm2 2v4h4V5H5zm6 0v4h4V5h-4zm-6 6v4h4v-4H5zm6 0v4h4v-4h-4z" />
+        </svg>
+      </button>
+
       <span className="w-px h-5 bg-slate-600 mx-0.5" aria-hidden />
 
       {/* 정렬: 왼쪽 | 가운데 | 오른쪽 | 양쪽 */}
