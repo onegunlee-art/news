@@ -300,14 +300,17 @@ class WebScraperService
      */
     private function extractContent(\DOMXPath $xpath, \DOMDocument $doc): string
     {
-        // 불필요한 요소 제거
+        // 불필요한 요소 제거 (구독/뉴스레터 블록 포함)
         $removeSelectors = [
             '//script', '//style', '//nav', '//header', '//footer',
             '//aside', '//form', '//iframe', '//noscript',
             '//*[contains(@class, "ad")]', '//*[contains(@class, "advertisement")]',
             '//*[contains(@class, "sidebar")]', '//*[contains(@class, "comment")]',
             '//*[contains(@class, "related")]', '//*[contains(@class, "share")]',
-            '//*[contains(@id, "ad")]', '//*[contains(@id, "comment")]'
+            '//*[contains(@id, "ad")]', '//*[contains(@id, "comment")]',
+            '//*[contains(@class, "newsletter")]', '//*[contains(@class, "subscribe")]',
+            '//*[contains(@class, "signup")]', '//*[contains(@class, "email-signup")]',
+            '//*[contains(@id, "newsletter")]', '//*[contains(@id, "subscribe")]',
         ];
 
         foreach ($removeSelectors as $selector) {
@@ -339,7 +342,7 @@ class WebScraperService
             if ($elements->length > 0) {
                 $content = $this->extractTextFromNode($elements->item(0));
                 if (strlen($content) > 200) { // 충분한 길이의 콘텐츠
-                    return $content;
+                    return $this->cleanNewsletterBlocks($content);
                 }
             }
         }
@@ -362,16 +365,40 @@ class WebScraperService
         }
 
         if ($bestParent) {
-            return $this->extractTextFromNode($bestParent);
+            return $this->cleanNewsletterBlocks($this->extractTextFromNode($bestParent));
         }
 
         // 최후의 수단: body 전체
         $body = $xpath->query('//body');
         if ($body->length > 0) {
-            return $this->extractTextFromNode($body->item(0));
+            return $this->cleanNewsletterBlocks($this->extractTextFromNode($body->item(0)));
         }
 
         return '';
+    }
+
+    /**
+     * 구독/뉴스레터 유도 블록 제거 (추출된 텍스트 후처리)
+     */
+    private function cleanNewsletterBlocks(string $text): string
+    {
+        $patterns = [
+            '/Subscribe to\s+[^\n]{0,200}/iu',
+            '/Sign Up\s*[→\->]?\s*/iu',
+            '/Enter your email[^.]{0,100}\.?/iu',
+            '/delivered to your inbox[^.]{0,100}\.?/iu',
+            '/delivered free to your inbox[^.]{0,100}\.?/iu',
+            '/Our editors\'?\s*top picks[^.]{0,150}\.?/iu',
+            '/Get the latest[^.]{0,150}\.?/iu',
+        ];
+
+        $result = $text;
+        foreach ($patterns as $pattern) {
+            $result = preg_replace($pattern, '', $result);
+        }
+        // 정리: 연속 빈 줄 3개 이상 → 2개로
+        $result = preg_replace('/\n\s*\n\s*\n+/', "\n\n", $result);
+        return trim($result);
     }
 
     /**

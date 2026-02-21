@@ -184,7 +184,7 @@ class AnalysisAgent extends BaseAgent
     }
 
     /**
-     * 종합 분석 프롬프트 생성 (v3: content_summary, 4+ key_points, narration 900자+, Critique 미요청)
+     * 종합 분석 프롬프트 생성 (v4: news_title 직역, 소제목 기반 content_summary, pull-quote 무시)
      */
     private function buildFullAnalysisPrompt(ArticleData $article): string
     {
@@ -210,21 +210,31 @@ Foreign Affairs 등 주요 매체 기사에는 메인 제목 바로 아래에 �
 - 본문 시작 전, 제목과 저자 사이에 위치한 짧은 이탤릭체 문장이 부제목입니다.
 - 부제목이 명확하지 않으면 빈 문자열("")로 반환하세요.
 
+[소제목(Subheading) 식별 방법]
+- 본문 중간에 등장하는, 주변보다 큰 글씨 또는 전부 대문자로 된 짧은 문구
+- 예: "ANTICIPATION AND ADAPTATION" (섹션 구분용 헤딩)
+- content_summary에서 각 소제목을 한글(영문) 형식으로 나열하고, 그 아래 해당 섹션 요약을 작성
+
+[해석 시 무시할 부분]
+본문 중간에 등장하는 "pull quote" 스타일의 큰 볼드 텍스트는 요약/분석에서 완전히 무시하세요.
+- 예: 본문과 별도로 강조된 한 문장 ("The American military has largely had the same programs and training for the last 30 years.")
+- 이런 인용형 볼드는 기사 핵심이 아니므로 content_summary, key_points, narration에 포함하지 마세요.
+
 위 기사를 분석하여 아래 JSON 형식으로만 응답하세요. JSON 외에 다른 텍스트는 절대 포함하지 마세요.
 
 {
-  "news_title": "지스터가 클릭하고 싶은 한국어 뉴스 제목. 15~30자. 핵심을 담되 임팩트 있게. (지스터 = The Gist 독자)",
+  "news_title": "기사 영문 제목(original_title)을 단어 그대로 직역한 한국어. 예: What America Must Learn From Ukraine → 미국이 우크라이나에서 배워야 할 것. 임팩트 문구가 아닌 직역만.",
   "subtitle": "기사의 부제목(영문 원문 그대로). 메인 제목 아래에 위치한 서브타이틀. 없으면 빈 문자열.",
   "author": "URL 슬러그에서 추출한 저자 이름. 예: Stephen Kotkin",
   "original_title": "URL 슬러그에서 저자를 제외한 나머지를 제목 형식으로 변환. 예: The Limits of Russian Power. (저자 제외, 본문에서 확인한 정확한 영문 제목과 일치하면 그대로 사용)",
-  "content_summary": "영어 한 줄 → 한국어 한 줄 교차 형식으로 작성. 각 문단의 핵심을 영어 원문 1줄, 바로 다음 줄에 한국어 번역 1줄로 구성. 예:\nThe article argues that Washington must study Ukraine's battlefield innovations.\n이 기사는 워싱턴이 우크라이나의 전장 혁신을 연구해야 한다고 주장한다.\n\nRussia's initial advantages were eroded by adaptive Ukrainian tactics.\n러시아의 초기 우위는 적응력 있는 우크라이나 전술에 의해 잠식되었다.\n\n이 형식을 유지하되, 최소 600자 이상. 중요 용어는 영어 원문을 괄호 병기.",
+  "content_summary": "아래 구조를 정확히 따르세요.\n\n한글 제목 (영문 제목)\n한글 부제 (영문 부제)\n\n[첫 번째 소제목 나오기 전까지의 전체 요약 - 반드시 영문 한 줄 → 한글 한 줄 교차 형식]\n예:\nThe article argues that Washington must study Ukraine's innovations.\n이 기사는 워싱턴이 우크라이나의 혁신을 연구해야 한다고 주장한다.\n\n소제목1 한글 (영문 소제목)\n[해당 섹션 내용 - 영문 한 줄 → 한글 한 줄 교차]\n\n소제목2 한글 (영문 소제목)\n[해당 섹션 내용 - 영문 한 줄 → 한글 한 줄 교차]\n\n... (소제목이 더 있으면 반복)\n\n- 본문 요약·섹션 내용은 모두 '영어 1줄 → 한국어 1줄' 교차 형식으로 작성 (글 다듬기 편하게)\n- 소제목: 기사 본문 중간에 큰 글씨/대문자로 된 섹션 헤딩 (예: ANTICIPATION AND ADAPTATION)\n- 소제목이 없으면 '한글 제목/부제/전체 요약(영한 교차)'만 작성\n- 최소 600자 이상",
   "key_points": [
-    "기사 본문의 핵심 내용을 최소 4개 이상의 불렛 포인트로 요약. 각 항목은 1~2문장, 구체적 사실과 수치를 포함.",
+    "기사 본문의 핵심 내용을 최소 4개 이상의 불렛 포인트로 요약. 각 항목은 1~2문장, 구체적 사실과 수치를 포함. (pull-quote 볼드는 제외)",
     "두 번째 핵심 포인트",
     "세 번째 핵심 포인트",
     "네 번째 핵심 포인트"
   ],
-  "narration": "지스터(The Gist 독자)를 위한 내레이션. 반드시 '지스터 여러분'으로 시작하세요. 도입(무슨 일이 있었는지) → 주요 내용(핵심 사실들)을 자연스럽게 이어서 말하듯 작성. 지스터가 귀로만 들어도 기사 전체를 이해할 수 있도록 충분히 상세하게. 최소 900자 이상."
+  "narration": "지스터(The Gist 독자)를 위한 내레이션. 반드시 '지스터 여러분'으로 시작하세요. 도입(무슨 일이 있었는지) → 주요 내용(핵심 사실들)을 자연스럽게 이어서 말하듯 작성. pull-quote 볼드 텍스트는 포함하지 마세요. 지스터가 귀로만 들어도 기사 전체를 이해할 수 있도록 충분히 상세하게. 최소 900자 이상."
 }
 PROMPT;
 
