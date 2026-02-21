@@ -8,8 +8,6 @@ import {
   UsersIcon,
   NewspaperIcon,
   CogIcon,
-  ArrowTrendingUpIcon,
-  ClockIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon,
   PencilSquareIcon,
@@ -83,26 +81,6 @@ const GOOGLE_TTS_VOICES = [
   { value: 'ko-KR-Neural2-C', label: 'Neural2 C (여성)' },
   { value: 'ko-KR-Neural2-D', label: 'Neural2 D (남성)' },
 ];
-
-interface DashboardStats {
-  totalUsers: number;
-  totalNews: number;
-  totalAnalyses: number;
-  todayUsers: number;
-  todayAnalyses: number;
-  apiStatus: {
-    nyt: boolean;
-    kakao: boolean;
-    database: boolean;
-  };
-}
-
-interface RecentActivity {
-  id: number;
-  type: 'user' | 'analysis' | 'news';
-  message: string;
-  time: string;
-}
 
 interface NewsArticle {
   id?: number;
@@ -793,19 +771,6 @@ const AdminPage: React.FC = () => {
     setIsSpeaking(false);
   };
   
-  const [stats, setStats] = useState<DashboardStats>({
-    totalUsers: 0,
-    totalNews: 0,
-    totalAnalyses: 0,
-    todayUsers: 0,
-    todayAnalyses: 0,
-    apiStatus: {
-      nyt: false,
-      kakao: false,
-      database: false,
-    },
-  });
-  const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
   const [loading, setLoading] = useState(true);
 
   // 대시보드: 회원 목록, 개인정보처리방침
@@ -919,20 +884,10 @@ const AdminPage: React.FC = () => {
   const loadDashboardData = async () => {
     setLoading(true);
     try {
-      const [statsRes, activitiesRes, usersRes, settingsRes] = await Promise.all([
-        api.get<{ success: boolean; data: DashboardStats }>('/admin/stats'),
-        api.get<{ success: boolean; data: { type: string; message: string; time: string }[] }>('/admin/activities?limit=10'),
+      const [usersRes, settingsRes] = await Promise.all([
         api.get<{ success: boolean; data: { items: { id: number; nickname: string; email: string | null; status: string; last_login_at: string | null; created_at: string }[] } }>('/admin/users?per_page=5&page=1'),
         adminSettingsApi.getSettings(),
       ]);
-      if (statsRes.data.success && statsRes.data.data) setStats(statsRes.data.data);
-      if (activitiesRes.data.success && Array.isArray(activitiesRes.data.data))
-        setRecentActivities(activitiesRes.data.data.map((a, i) => ({
-          id: i + 1,
-          type: (a.type === 'user' || a.type === 'analysis' || a.type === 'news' ? a.type : 'user') as RecentActivity['type'],
-          message: a.message,
-          time: a.time,
-        })));
       if (usersRes.data.success && usersRes.data.data?.items)
         setDashboardUsers(usersRes.data.data.items);
       const s = settingsRes.data?.data;
@@ -948,51 +903,6 @@ const AdminPage: React.FC = () => {
       setLoading(false);
     }
   };
-
-  const StatCard: React.FC<{
-    title: string;
-    value: number | string;
-    icon: React.ReactNode;
-    change?: string;
-    color: string;
-  }> = ({ title, value, icon, change, color }) => (
-    <div className={`bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50`}>
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-slate-400 text-sm">{title}</p>
-          <p className="text-3xl font-bold text-white mt-2">{value}</p>
-          {change && (
-            <p className="text-emerald-400 text-sm mt-1 flex items-center gap-1">
-              <ArrowTrendingUpIcon className="w-4 h-4" />
-              {change}
-            </p>
-          )}
-        </div>
-        <div className={`p-4 rounded-xl ${color}`}>
-          {icon}
-        </div>
-      </div>
-    </div>
-  );
-
-  const ApiStatusBadge: React.FC<{ name: string; status: boolean }> = ({ name, status }) => (
-    <div className="flex items-center justify-between py-3 px-4 bg-slate-900/50 rounded-lg">
-      <span className="text-slate-300">{name}</span>
-      <div className={`flex items-center gap-2 ${status ? 'text-emerald-400' : 'text-red-400'}`}>
-        {status ? (
-          <>
-            <CheckCircleIcon className="w-5 h-5" />
-            <span className="text-sm">정상</span>
-          </>
-        ) : (
-          <>
-            <ExclamationTriangleIcon className="w-5 h-5" />
-            <span className="text-sm">오류</span>
-          </>
-        )}
-      </div>
-    </div>
-  );
 
   // Build article context for AI Workspace from current editing state
   const workspaceArticleContext: ArticleContext | null = (articleUrl || newsTitle) ? {
