@@ -812,7 +812,7 @@ const AdminPage: React.FC = () => {
   const [dashboardUsers, setDashboardUsers] = useState<{ id: number; nickname: string; email: string | null; status: string; last_login_at: string | null; created_at: string }[]>([]);
   const [selectedUserDetail, setSelectedUserDetail] = useState<{ id: number; nickname: string; email: string | null; status: string; last_login_at: string | null; created_at: string; usage?: { analyses_count: number; bookmarks_count: number; search_count: number } } | null>(null);
   const [privacyContent, setPrivacyContent] = useState('');
-  const [termsContent, setTermsContent] = useState('');
+  const [, setTermsContent] = useState('');
   const [privacySaving, setPrivacySaving] = useState(false);
   const [privacyMessage, setPrivacyMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -923,7 +923,12 @@ const AdminPage: React.FC = () => {
       ]);
       if (statsRes.data.success && statsRes.data.data) setStats(statsRes.data.data);
       if (activitiesRes.data.success && Array.isArray(activitiesRes.data.data))
-        setRecentActivities(activitiesRes.data.data.map((a, i) => ({ id: i + 1, ...a })));
+        setRecentActivities(activitiesRes.data.data.map((a, i) => ({
+          id: i + 1,
+          type: (a.type === 'user' || a.type === 'analysis' || a.type === 'news' ? a.type : 'user') as RecentActivity['type'],
+          message: a.message,
+          time: a.time,
+        })));
       if (usersRes.data.success && usersRes.data.data?.items)
         setDashboardUsers(usersRes.data.data.items);
       const s = settingsRes.data?.data;
