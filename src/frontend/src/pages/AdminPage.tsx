@@ -817,7 +817,6 @@ const AdminPage: React.FC = () => {
   const [privacyMessage, setPrivacyMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [welcomeMessage, setWelcomeMessage] = useState('');
   const [welcomeTitleTemplate, setWelcomeTitleTemplate] = useState('{name}님');
-  const [promoCodePrefix, setPromoCodePrefix] = useState('WELCOME');
   const [welcomeSaving, setWelcomeSaving] = useState(false);
   const [welcomeSaveMsg, setWelcomeSaveMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -942,7 +941,6 @@ const AdminPage: React.FC = () => {
         setTermsContent(s.terms_of_service ?? '');
         setWelcomeMessage(s.welcome_popup_message ?? 'The Gist 가입을 감사드립니다.');
         setWelcomeTitleTemplate(s.welcome_popup_title ?? '{name}님');
-        setPromoCodePrefix(s.promo_code_prefix ?? 'WELCOME');
       }
     } catch (e) {
       console.error('대시보드 로드 실패:', e);
@@ -1246,17 +1244,6 @@ const AdminPage: React.FC = () => {
                           className="w-full px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-slate-200"
                         />
                       </div>
-                      <div>
-                        <label className="block text-slate-400 text-sm mb-1">프로모션 코드 접두사</label>
-                        <input
-                          type="text"
-                          value={promoCodePrefix}
-                          onChange={(e) => setPromoCodePrefix(e.target.value)}
-                          placeholder="WELCOME"
-                          className="w-full px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-slate-200"
-                        />
-                        <p className="text-slate-500 text-xs mt-1">예: WELCOME → WELCOME-A1B2C3D4 형식으로 발급</p>
-                      </div>
                     </div>
                     <div className="flex items-center gap-3 mt-4">
                       <button
@@ -1269,7 +1256,6 @@ const AdminPage: React.FC = () => {
                             await adminSettingsApi.updateSettings({
                               welcome_popup_message: welcomeMessage,
                               welcome_popup_title: welcomeTitleTemplate,
-                              promo_code_prefix: promoCodePrefix.trim() || 'WELCOME',
                             });
                             setWelcomeSaveMsg({ type: 'success', text: '저장되었습니다.' });
                           } catch (e) {

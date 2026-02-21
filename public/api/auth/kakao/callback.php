@@ -211,6 +211,7 @@ $email = $kakaoAccount['email'] ?? null;
 
 // DB에 사용자 저장/업데이트
 $dbUserId = null;
+$isNewUser = false;
 try {
     $dbCfg = ['host' => 'localhost', 'dbname' => 'ailand', 'username' => 'ailand', 'password' => 'romi4120!', 'charset' => 'utf8mb4'];
     $pdo = new PDO(
@@ -228,11 +229,12 @@ try {
         $pdo->prepare("UPDATE users SET nickname = ?, profile_image = ?, last_login_at = NOW() WHERE id = ?")
             ->execute([$nickname, $profileImage, $dbUserId]);
     } else {
+        $isNewUser = true;
         $pdo->prepare("INSERT INTO users (kakao_id, nickname, profile_image, email, role, status, created_at, last_login_at) VALUES (?, ?, ?, ?, 'user', 'active', NOW(), NOW())")
             ->execute([(string)$kakaoId, $nickname, $profileImage, $email]);
         $dbUserId = (int)$pdo->lastInsertId();
     }
-    kakaoLog('db_ok', ['dbUserId' => $dbUserId, 'isNew' => !$row]);
+    kakaoLog('db_ok', ['dbUserId' => $dbUserId, 'isNew' => $isNewUser]);
 } catch (Throwable $e) {
     kakaoLog('db_error', ['msg' => $e->getMessage()]);
     $dbUserId = $kakaoId;
@@ -274,6 +276,12 @@ $userObj = [
 
 kakaoLog('success', ['dbUserId' => $dbUserId, 'nickname' => $nickname]);
 
+// 신규 가입 시 환영 팝업용 데이터 (프로모션 코드 없음)
+$welcomePopupJs = '';
+if ($isNewUser) {
+    $welcomePopupJs = 'localStorage.setItem("welcome_popup", JSON.stringify({userName:' . json_encode($nickname) . ',ts:Date.now()}));';
+}
+
 // HTML → localStorage 저장 후 프론트엔드로 이동
 header('Content-Type: text/html; charset=utf-8');
 echo '<!DOCTYPE html>
@@ -288,6 +296,7 @@ try {
     localStorage.setItem("access_token", ' . json_encode($accessTokenJwt) . ');
     localStorage.setItem("refresh_token", ' . json_encode($refreshTokenJwt) . ');
     localStorage.setItem("user", JSON.stringify(' . json_encode($userObj) . '));
+    ' . $welcomePopupJs . '
 } catch(e) { console.error("localStorage error:", e); }
 window.location.href = ' . json_encode($frontendBase . '/auth/callback#access_token=' . urlencode($accessTokenJwt) . '&refresh_token=' . urlencode($refreshTokenJwt)) . ';
 </script>

@@ -135,7 +135,6 @@ $email = $kakaoAccount['email'] ?? null;
 // DB에 사용자 저장/업데이트
 $dbUserId = null;
 $isNewUser = false;
-$promoCode = null;
 try {
     $dbCfg = [
         'host' => 'localhost',
@@ -154,8 +153,6 @@ try {
     $stmt->execute([(string)$kakaoId]);
     $row = $stmt->fetch();
 
-    $isNewUser = false;
-    $promoCode = null;
     if ($row) {
         $dbUserId = (int)$row['id'];
         $pdo->prepare("UPDATE users SET nickname = ?, profile_image = ?, last_login_at = NOW() WHERE id = ?")
@@ -165,17 +162,6 @@ try {
             ->execute([(string)$kakaoId, $nickname, $profileImage, $email]);
         $dbUserId = (int)$pdo->lastInsertId();
         $isNewUser = true;
-        try {
-            $prefix = 'WELCOME';
-            $pr = $pdo->query("SELECT `value` FROM settings WHERE `key` = 'promo_code_prefix' LIMIT 1");
-            if ($pr && ($prRow = $pr->fetch(PDO::FETCH_ASSOC)) && !empty(trim($prRow['value'] ?? ''))) {
-                $prefix = trim($prRow['value']);
-            }
-            $promoCode = $prefix . '-' . strtoupper(bin2hex(random_bytes(4)));
-            $pdo->prepare("INSERT INTO promo_codes (user_id, code) VALUES (?, ?)")->execute([$dbUserId, $promoCode]);
-        } catch (Throwable $ex) {
-            error_log('[kakao-token] Promo code: ' . $ex->getMessage());
-        }
     }
 } catch (Throwable $e) {
     error_log('[kakao-token] DB error: ' . $e->getMessage());
@@ -232,8 +218,7 @@ $response = [
         'is_subscribed' => false,
     ],
 ];
-if ($isNewUser ?? false) {
+if ($isNewUser) {
     $response['is_new_user'] = true;
-    $response['promo_code'] = $promoCode ?? null;
 }
 echo json_encode($response, JSON_UNESCAPED_UNICODE);

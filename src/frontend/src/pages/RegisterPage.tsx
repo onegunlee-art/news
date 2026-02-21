@@ -23,7 +23,7 @@ const RegisterPage: React.FC = () => {
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('monthly')
   const [showSuccess, setShowSuccess] = useState(false)
   const [welcomeMessage, setWelcomeMessage] = useState('The Gist 가입을 감사드립니다.')
-  const [welcomePopupData, setWelcomePopupData] = useState<{ userName: string; promoCode?: string } | null>(null)
+  const [welcomePopupData, setWelcomePopupData] = useState<{ userName: string } | null>(null)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -64,13 +64,12 @@ const RegisterPage: React.FC = () => {
       )
 
       if (res.data?.success && res.data?.data) {
-        const { user, access_token, refresh_token, promo_code } = res.data.data
+        const { user, access_token, refresh_token } = res.data.data
         setTokens(access_token, refresh_token)
         setUser(user)
         localStorage.setItem('user', JSON.stringify(user))
         setWelcomePopupData({
           userName: user?.nickname || user?.email?.split('@')[0] || '회원',
-          promoCode: promo_code,
         })
         setShowSuccess(true)
       } else {
@@ -111,7 +110,6 @@ const RegisterPage: React.FC = () => {
           onClose={handleCloseWelcome}
           userName={welcomePopupData.userName}
           welcomeMessage={welcomeMessage}
-          promoCode={welcomePopupData.promoCode}
         />
       </div>
     )

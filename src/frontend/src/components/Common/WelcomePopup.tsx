@@ -6,7 +6,6 @@ export interface WelcomePopupProps {
   onClose: () => void
   userName: string
   welcomeMessage?: string
-  promoCode?: string
 }
 
 /** 가입 완료 환영 팝업 - 오렌지 브랜드 컬러, 트렌디한 디자인 */
@@ -15,7 +14,6 @@ const WelcomePopup: React.FC<WelcomePopupProps> = ({
   onClose,
   userName,
   welcomeMessage = 'The Gist 가입을 감사드립니다.',
-  promoCode,
 }) => {
   useEffect(() => {
     if (isOpen) {
@@ -25,12 +23,6 @@ const WelcomePopup: React.FC<WelcomePopupProps> = ({
       document.body.style.overflow = ''
     }
   }, [isOpen])
-
-  const handleCopyCode = () => {
-    if (promoCode && navigator.clipboard) {
-      navigator.clipboard.writeText(promoCode)
-    }
-  }
 
   return (
     <AnimatePresence>
@@ -79,25 +71,6 @@ const WelcomePopup: React.FC<WelcomePopupProps> = ({
 
                 {/* 환영 메시지 */}
                 <p className="mt-3 text-center text-slate-600 leading-relaxed">{welcomeMessage}</p>
-
-                {/* 프로모션 코드 */}
-                {promoCode && (
-                  <div className="mt-6 rounded-xl bg-slate-50 p-4 border border-slate-100">
-                    <p className="mb-2 text-center text-sm font-medium text-slate-500">프로모션 코드</p>
-                    <div className="flex items-center justify-center gap-2">
-                      <code className="rounded-lg bg-white px-4 py-2 font-mono text-lg font-bold text-orange-600 tracking-wider shadow-inner border border-orange-100">
-                        {promoCode}
-                      </code>
-                      <button
-                        type="button"
-                        onClick={handleCopyCode}
-                        className="rounded-lg bg-orange-500 px-3 py-2 text-sm font-medium text-white transition hover:bg-orange-600"
-                      >
-                        복사
-                      </button>
-                    </div>
-                  </div>
-                )}
 
                 {/* 확인 버튼 */}
                 <button

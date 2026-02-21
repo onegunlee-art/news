@@ -22,7 +22,7 @@ import SearchPage from './pages/SearchPage'
 
 function App() {
   const { initializeAuth } = useAuthStore()
-  const [welcomeData, setWelcomeData] = useState<{ userName: string; welcomeMessage: string; promoCode?: string } | null>(null)
+  const [welcomeData, setWelcomeData] = useState<{ userName: string; welcomeMessage: string } | null>(null)
 
   useEffect(() => {
     initializeAuth()
@@ -39,13 +39,11 @@ function App() {
           setWelcomeData({
             userName: data.userName,
             welcomeMessage: msg,
-            promoCode: data.promoCode,
           })
         }).catch(() => {
           setWelcomeData({
             userName: data.userName,
             welcomeMessage: 'The Gist 가입을 감사드립니다.',
-            promoCode: data.promoCode,
           })
         })
       }
@@ -62,7 +60,6 @@ function App() {
           onClose={() => setWelcomeData(null)}
           userName={welcomeData.userName}
           welcomeMessage={welcomeData.welcomeMessage}
-          promoCode={welcomeData.promoCode}
         />
       )}
       <Routes>

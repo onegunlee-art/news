@@ -295,12 +295,11 @@ final class AuthController
                 }
             }
             
-            // 신규 가입 시 환영 팝업용 데이터 저장
-            if (tokenData.is_new_user && tokenData.promo_code) {
+            // 신규 가입 시 환영 팝업용 데이터 저장 (프로모션 코드 없음)
+            if (tokenData.is_new_user) {
                 const userName = tokenData.user?.nickname || tokenData.user?.email?.split('@')[0] || '회원';
                 localStorage.setItem('welcome_popup', JSON.stringify({
                     userName,
-                    promoCode: tokenData.promo_code,
                     ts: Date.now()
                 }));
             }
