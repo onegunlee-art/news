@@ -16,6 +16,7 @@ import {
   SparklesIcon,
   PlayIcon,
   DocumentTextIcon,
+  DocumentDuplicateIcon,
   SpeakerWaveIcon,
   AcademicCapIcon,
   BookOpenIcon,
@@ -37,6 +38,7 @@ import RAGTester from '../components/RAGTester/RAGTester';
 import { api, adminFetch, adminSettingsApi, adminTtsApi, ttsApi } from '../services/api';
 import { PRIVACY_POLICY_CONTENT } from '../components/Common/PrivacyPolicyContent';
 import WelcomePopup from '../components/Common/WelcomePopup';
+import AdminDraftPreviewEdit, { type DraftArticle } from '../components/Admin/AdminDraftPreviewEdit';
 
 /** Listen과 동일한 구조로 TTS params 구성 (캐시 공유) */
 function buildTtsParamsForListen(params: {
@@ -103,6 +105,8 @@ interface NewsArticle {
   published_at?: string;
   image_url?: string;
   created_at?: string;
+  updated_at?: string;
+  original_title?: string;
 }
 
 const categories = [
@@ -303,7 +307,7 @@ const AdminPage: React.FC = () => {
       navigate('/', { replace: true });
     }
   }, [user, isAuthenticated, isLoading, isInitialized, navigate]);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'news' | 'ai' | 'workspace' | 'persona' | 'knowledge' | 'usage' | 'settings'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'news' | 'drafts' | 'ai' | 'workspace' | 'persona' | 'knowledge' | 'usage' | 'settings'>('dashboard');
 
   // feedback useEffect deps에서 참조되므로 컴포넌트 최상단에 선언
   const [articleUrl, setArticleUrl] = useState('');
@@ -397,6 +401,13 @@ const AdminPage: React.FC = () => {
   const [dallePrompt, setDallePrompt] = useState('');
   const [isRegeneratingTts, setIsRegeneratingTts] = useState(false);
   const [regeneratedTtsUrl, setRegeneratedTtsUrl] = useState<string | null>(null);
+
+  // 임시저장 탭 상태
+  const [draftList, setDraftList] = useState<NewsArticle[]>([]);
+  const [editingDraftId, setEditingDraftId] = useState<number | null>(null);
+  const [draftDetail, setDraftDetail] = useState<DraftArticle | null>(null);
+  const [isLoadingDrafts, setIsLoadingDrafts] = useState(false);
+  const [deleteDraftConfirmId, setDeleteDraftConfirmId] = useState<number | null>(null);
 
   // API 과금 탭 활성 시 데이터 로드
   useEffect(() => {
@@ -825,12 +836,75 @@ const AdminPage: React.FC = () => {
     }
   }, [selectedCategory]);
 
+  // 임시저장 목록 로드 (뉴스 목록과 동일한 API 패턴)
+  const loadDraftsList = useCallback(async () => {
+    setIsLoadingDrafts(true);
+    try {
+      const response = await adminFetch('/api/admin/news.php?status_filter=draft');
+      const text = await response.text();
+      if (!text || text.trim().startsWith('<')) {
+        console.error('Drafts API returned HTML instead of JSON');
+        setDraftList([]);
+        return;
+      }
+      const data = JSON.parse(text);
+      if (data.success && data.data?.items) {
+        setDraftList(data.data.items);
+      } else {
+        setDraftList([]);
+      }
+    } catch (error) {
+      console.error('Failed to load drafts:', error);
+      setDraftList([]);
+    } finally {
+      setIsLoadingDrafts(false);
+    }
+  }, []);
+
   // 뉴스 탭이 활성화되거나 카테고리가 변경될 때 뉴스 목록 로드
   useEffect(() => {
     if (activeTab === 'news') {
       loadNewsList();
     }
   }, [activeTab, loadNewsList]);
+
+  // 임시저장 탭 활성 시 목록 로드, 비활성 시 편집 상태 초기화
+  useEffect(() => {
+    if (activeTab === 'drafts') {
+      loadDraftsList();
+    } else {
+      setEditingDraftId(null);
+      setDraftDetail(null);
+    }
+  }, [activeTab, loadDraftsList]);
+
+  // 임시저장 편집 시작 (뉴스와 동일: 목록 데이터 직접 사용, API 단건 조회 없음)
+  const handleEditDraft = (draft: NewsArticle) => {
+    const urlVal = (draft.source_url && draft.source_url.trim()) || (draft.url && draft.url.trim()) || '#';
+    setEditingDraftId(draft.id ?? null);
+    setDraftDetail({
+      id: draft.id!,
+      title: draft.title,
+      subtitle: draft.subtitle ?? null,
+      description: draft.description ?? null,
+      content: draft.content ?? '',
+      why_important: draft.why_important ?? null,
+      narration: draft.narration ?? null,
+      future_prediction: draft.future_prediction ?? null,
+      source: draft.source ?? null,
+      source_url: draft.source_url ?? draft.url ?? null,
+      original_source: draft.original_source ?? null,
+      original_title: draft.original_title ?? null,
+      url: urlVal,
+      published_at: draft.published_at ?? null,
+      created_at: draft.created_at ?? null,
+      updated_at: draft.updated_at ?? null,
+      image_url: draft.image_url ?? null,
+      author: draft.author ?? null,
+      category: draft.category ?? null,
+      status: draft.status ?? 'draft',
+    });
+  };
 
   // 뉴스 수정 시작
   const handleEditNews = (news: NewsArticle) => {
@@ -896,6 +970,30 @@ const AdminPage: React.FC = () => {
     }
   };
 
+  // 임시저장 삭제
+  const handleDeleteDraft = async (id: number) => {
+    try {
+      const response = await adminFetch(`/api/admin/news.php?id=${id}`, {
+        method: 'DELETE',
+      });
+      const data = await response.json();
+      if (data.success) {
+        setDraftList((prev) => prev.filter((n) => n.id !== id));
+        if (editingDraftId === id) {
+          setEditingDraftId(null);
+          setDraftDetail(null);
+        }
+      } else {
+        throw new Error(data.message);
+      }
+    } catch (error) {
+      setSaveMessage({ type: 'error', text: '삭제 실패: ' + (error as Error).message });
+      setTimeout(() => setSaveMessage(null), 3000);
+    } finally {
+      setDeleteDraftConfirmId(null);
+    }
+  };
+
   const loadDashboardData = async () => {
     setLoading(true);
     try {
@@ -936,6 +1034,7 @@ const AdminPage: React.FC = () => {
     { id: 'dashboard', name: '대시보드', icon: ChartBarIcon },
     { id: 'users', name: '사용자 관리', icon: UsersIcon },
     { id: 'news', name: '뉴스 관리', icon: NewspaperIcon },
+    { id: 'drafts', name: '임시저장', icon: DocumentDuplicateIcon },
     { id: 'ai', name: 'AI 분석', icon: SparklesIcon },
     { id: 'workspace', name: 'AI Workspace', icon: AcademicCapIcon },
     { id: 'persona', name: '페르소나', icon: UserCircleIcon },
@@ -2054,6 +2153,73 @@ const AdminPage: React.FC = () => {
                           setSaveMessage({ type: 'error', text: '제목과 내용을 모두 입력해주세요.' });
                           return;
                         }
+                        setIsSaving(true);
+                        setSaveMessage(null);
+                        try {
+                          const cleanContent = normalizeEditorHtml(newsContent);
+                          const cleanNarration = normalizeEditorHtml(newsNarration);
+                          const cleanWhyImportant = normalizeEditorHtml(newsWhyImportant);
+                          const requestBody = {
+                            ...(editingNewsId && { id: editingNewsId }),
+                            category: selectedCategory,
+                            title: newsTitle,
+                            subtitle: newsSubtitle.trim() || null,
+                            content: cleanContent,
+                            why_important: cleanWhyImportant || null,
+                            narration: cleanNarration || null,
+                            source_url: articleUrl.trim() || null,
+                            source: articleSource.trim() || null,
+                            original_title: articleOriginalTitle.trim() || null,
+                            author: articleAuthor.trim() || null,
+                            published_at: articlePublishedAt.trim() || null,
+                            image_url: articleImageUrl.trim() || null,
+                            status: 'draft' as const,
+                          };
+                          const response = await adminFetch('/api/admin/news.php', {
+                            method: editingNewsId ? 'PUT' : 'POST',
+                            headers: { 'Content-Type': 'application/json; charset=utf-8' },
+                            body: JSON.stringify(requestBody),
+                          });
+                          const responseText = await response.text();
+                          if (!responseText) {
+                            throw new Error('서버에서 빈 응답을 반환했습니다.');
+                          }
+                          let data: { success?: boolean; message?: string };
+                          try {
+                            data = JSON.parse(responseText);
+                          } catch {
+                            throw new Error('서버가 JSON 대신 HTML을 반환했습니다. API 경로를 확인하세요.');
+                          }
+                          if (data.success) {
+                            setSaveMessage({ type: 'success', text: '임시 저장되었습니다.' });
+                            loadDraftsList();
+                            // 폼 유지 (계속 편집 가능)
+                          } else {
+                            throw new Error(data.message || '임시 저장 실패');
+                          }
+                        } catch (error) {
+                          setSaveMessage({ type: 'error', text: '임시 저장 실패: ' + (error as Error).message });
+                        } finally {
+                          setIsSaving(false);
+                          setTimeout(() => setSaveMessage(null), 5000);
+                        }
+                      }}
+                      disabled={isSaving || !newsTitle.trim() || !newsContent.trim()}
+                      className={`px-6 py-3 rounded-xl font-medium transition-all flex items-center gap-2 ${
+                        isSaving || !newsTitle.trim() || !newsContent.trim()
+                          ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
+                          : 'bg-slate-600 hover:bg-slate-500 text-slate-200'
+                      }`}
+                    >
+                      <DocumentDuplicateIcon className="w-5 h-5" />
+                      임시 저장
+                    </button>
+                    <button
+                      onClick={async () => {
+                        if (!newsTitle.trim() || !newsContent.trim()) {
+                          setSaveMessage({ type: 'error', text: '제목과 내용을 모두 입력해주세요.' });
+                          return;
+                        }
                         
                         setIsSaving(true);
                         setSaveMessage(null);
@@ -2333,6 +2499,179 @@ const AdminPage: React.FC = () => {
                       </button>
                       <button
                         onClick={() => handleDeleteNews(deleteConfirmId)}
+                        className="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition"
+                      >
+                        삭제
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'drafts' && (
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-2xl font-bold text-white mb-2">임시저장</h2>
+                <p className="text-slate-400">저장된 임시저장 글을 편집하거나 삭제할 수 있습니다</p>
+              </div>
+
+              {editingDraftId && draftDetail ? (
+                <AdminDraftPreviewEdit
+                  news={draftDetail}
+                  onUpdate={async (updates) => {
+                    const response = await adminFetch('/api/admin/news.php', {
+                      method: 'PUT',
+                      headers: { 'Content-Type': 'application/json; charset=utf-8' },
+                      body: JSON.stringify({
+                        id: draftDetail.id,
+                        category: draftDetail.category || 'diplomacy',
+                        title: draftDetail.title,
+                        subtitle: draftDetail.subtitle ?? null,
+                        content: draftDetail.content ?? '',
+                        why_important: updates.why_important ?? draftDetail.why_important ?? null,
+                        narration: updates.narration ?? draftDetail.narration ?? null,
+                        future_prediction: draftDetail.future_prediction ?? null,
+                        source_url: draftDetail.source_url ?? null,
+                        source: draftDetail.source ?? null,
+                        original_title: draftDetail.original_title ?? null,
+                        author: draftDetail.author ?? null,
+                        published_at: draftDetail.published_at ?? null,
+                        image_url: draftDetail.image_url ?? null,
+                        status: 'draft',
+                      }),
+                    });
+                    const data = await response.json();
+                    if (!data.success) throw new Error(data.message || '저장 실패');
+                    setDraftDetail((prev) => (prev ? { ...prev, ...updates } : null));
+                  }}
+                  onPublish={async () => {
+                    const response = await adminFetch('/api/admin/news.php', {
+                      method: 'PUT',
+                      headers: { 'Content-Type': 'application/json; charset=utf-8' },
+                      body: JSON.stringify({
+                        id: draftDetail.id,
+                        category: draftDetail.category || 'diplomacy',
+                        title: draftDetail.title,
+                        subtitle: draftDetail.subtitle ?? null,
+                        content: draftDetail.content ?? '',
+                        why_important: draftDetail.why_important ?? null,
+                        narration: draftDetail.narration ?? null,
+                        future_prediction: draftDetail.future_prediction ?? null,
+                        source_url: draftDetail.source_url ?? null,
+                        source: draftDetail.source ?? null,
+                        original_title: draftDetail.original_title ?? null,
+                        author: draftDetail.author ?? null,
+                        published_at: draftDetail.published_at ?? null,
+                        image_url: draftDetail.image_url ?? null,
+                        status: 'published',
+                      }),
+                    });
+                    const data = await response.json();
+                    if (!data.success) throw new Error(data.message || '게시 실패');
+                    setEditingDraftId(null);
+                    setDraftDetail(null);
+                    await loadDraftsList();
+                  }}
+                  onBack={() => {
+                    setEditingDraftId(null);
+                    setDraftDetail(null);
+                    loadDraftsList();
+                  }}
+                />
+              ) : (
+                <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-white">임시저장 목록</h3>
+                    <span className="text-slate-400 text-sm">총 {draftList.length}개</span>
+                  </div>
+                  {isLoadingDrafts ? (
+                    <div className="flex items-center justify-center py-12">
+                      <div className="animate-spin rounded-full h-8 w-8 border-4 border-cyan-500 border-t-transparent"></div>
+                    </div>
+                  ) : draftList.length === 0 ? (
+                    <p className="text-slate-500 text-center py-8">임시저장된 글이 없습니다.</p>
+                  ) : (
+                    <div className="space-y-3 max-h-[500px] overflow-y-auto">
+                      {draftList.map((draft) => (
+                        <div
+                          key={draft.id}
+                          className="p-4 bg-slate-900/50 rounded-xl border border-slate-700/30 hover:border-slate-600/50 transition-all"
+                        >
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-xs px-2 py-0.5 bg-slate-700 text-slate-300 rounded">
+                                  ID: {draft.id}
+                                </span>
+                                {draft.category && (
+                                  <span className="text-xs px-2 py-0.5 bg-amber-500/20 text-amber-400 rounded">
+                                    {draft.category}
+                                  </span>
+                                )}
+                              </div>
+                              <h4 className="text-white font-medium truncate">{draft.title}</h4>
+                              <p className="text-slate-400 text-sm mt-1 line-clamp-2">
+                                {draft.description || draft.content}
+                              </p>
+                              <p className="text-slate-500 text-xs mt-2">
+                                {draft.updated_at
+                                  ? new Date(draft.updated_at).toLocaleString('ko-KR')
+                                  : draft.created_at
+                                    ? new Date(draft.created_at).toLocaleString('ko-KR')
+                                    : ''}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <button
+                                onClick={() => handleEditDraft(draft)}
+                                className="p-2 rounded-lg text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10 transition"
+                                title="편집"
+                              >
+                                <PencilSquareIcon className="w-5 h-5" />
+                              </button>
+                              <button
+                                onClick={() => setDeleteDraftConfirmId(draft.id ?? null)}
+                                className="p-2 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition"
+                                title="삭제"
+                              >
+                                <TrashIcon className="w-5 h-5" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* 임시저장 삭제 확인 다이얼로그 */}
+              {deleteDraftConfirmId && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+                  <div className="bg-slate-800 rounded-2xl p-6 border border-slate-700 max-w-md w-full mx-4 shadow-2xl">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="p-3 bg-red-500/20 rounded-full">
+                        <TrashIcon className="w-6 h-6 text-red-400" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-white">임시저장 삭제</h3>
+                        <p className="text-slate-400 text-sm">이 작업은 되돌릴 수 없습니다.</p>
+                      </div>
+                    </div>
+                    <p className="text-slate-300 mb-6">
+                      ID {deleteDraftConfirmId} 임시저장 글을 정말 삭제하시겠습니까?
+                    </p>
+                    <div className="flex gap-3 justify-end">
+                      <button
+                        onClick={() => setDeleteDraftConfirmId(null)}
+                        className="px-4 py-2 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 transition"
+                      >
+                        취소
+                      </button>
+                      <button
+                        onClick={() => deleteDraftConfirmId && handleDeleteDraft(deleteDraftConfirmId)}
                         className="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition"
                       >
                         삭제
