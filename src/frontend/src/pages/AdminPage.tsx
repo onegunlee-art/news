@@ -844,8 +844,8 @@ const AdminPage: React.FC = () => {
       const response = await adminFetch('/api/admin/news.php?status_filter=draft&per_page=50');
       const ct = response.headers.get('content-type') || '';
       if (!ct.includes('application/json')) {
-        const text = await response.text();
-        throw new Error(`서버가 JSON 대신 HTML을 반환했습니다 (${response.status}). API 경로를 확인하세요.`);
+        const body = await response.text();
+        throw new Error(`서버가 JSON 대신 HTML을 반환했습니다 (${response.status}). ${body.slice(0, 150)}...`);
       }
       const data = await response.json();
       if (data.success && data.data?.items) {
