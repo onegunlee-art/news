@@ -47,7 +47,8 @@ export default function AuthCallback() {
         }
 
         setTokens(token, refreshToken)
-        navigate('/')
+        const user = (() => { try { const u = localStorage.getItem('user'); return u ? JSON.parse(u) : null; } catch { return null; } })()
+        navigate(user?.role === 'admin' ? '/admin' : '/')
         return
       }
     }
@@ -118,7 +119,7 @@ export default function AuthCallback() {
           }
           
           setTokens(data.access_token, data.refresh_token || '')
-          navigate('/')
+          navigate(data.user?.role === 'admin' ? '/admin' : '/')
           return
         } else {
           console.error('Token exchange failed:', data)

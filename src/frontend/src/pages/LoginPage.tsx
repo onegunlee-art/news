@@ -27,7 +27,7 @@ const LoginPage: React.FC = () => {
         setTokens(access_token, refresh_token);
         setUser(user);
         localStorage.setItem('user', JSON.stringify(user));
-        navigate('/', { replace: true });
+        navigate((user as { role?: string })?.role === 'admin' ? '/admin' : '/', { replace: true });
       } else {
         throw new Error(res.data.message || '로그인에 실패했습니다.');
       }
