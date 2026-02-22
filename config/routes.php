@@ -116,6 +116,47 @@ $router->group(['prefix' => '/auth'], function (Router $router) {
         ], '테스트 계정 준비 완료');
     });
 
+    // 관리자 계정 생성/업그레이드 (1회 실행용, 완료 후 라우트 제거 권장)
+    // ?email=xxx 로 특정 이메일을 admin으로 업그레이드 가능 (없으면 test@test.com)
+    $router->get('/seed-admin-user', function (Request $request): Response {
+        try {
+            $db = \App\Core\Database::getInstance();
+        } catch (Throwable $e) {
+            return Response::error('DB 연결 실패: ' . $e->getMessage(), 500);
+        }
+        $email = trim((string) ($request->query('email') ?? 'test@test.com'));
+        if ($email === '') {
+            return Response::error('email 파라미터가 필요합니다. 예: /api/auth/seed-admin-user?email=your@email.com', 400);
+        }
+        $password = 'Test1234!';
+        $existing = $db->fetchOne("SELECT id, role FROM users WHERE email = :email", ['email' => $email]);
+        if ($existing) {
+            $db->executeQuery("UPDATE users SET role = 'admin' WHERE id = :id", ['id' => $existing['id']]);
+            return Response::success([
+                'message' => 'test@test.com 계정이 관리자로 업그레이드되었습니다.',
+                'email' => $email,
+                'password' => $password,
+                'admin_url' => '/admin',
+                'login_url' => '/login',
+            ], '관리자 설정 완료');
+        }
+        $hash = password_hash($password, PASSWORD_DEFAULT);
+        $db->insert('users', [
+            'email' => $email,
+            'password_hash' => $hash,
+            'nickname' => '관리자',
+            'role' => 'admin',
+            'status' => 'active',
+        ]);
+        return Response::success([
+            'message' => '관리자 계정이 생성되었습니다.',
+            'email' => $email,
+            'password' => $password,
+            'admin_url' => '/admin',
+            'login_url' => '/login',
+        ], '관리자 설정 완료');
+    });
+
     // 이메일/비밀번호 로그인
     $router->post('/login', [AuthController::class, 'login']);
     

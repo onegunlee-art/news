@@ -291,9 +291,10 @@ const UsersManagementSection: React.FC<{
 
 const AdminPage: React.FC = () => {
   const navigate = useNavigate();
-  const { user, isAuthenticated, isLoading } = useAuthStore();
+  const { user, isAuthenticated, isLoading, isInitialized } = useAuthStore();
   useEffect(() => {
-    if (isLoading) return;
+    // 인증 초기화가 끝나기 전에는 리다이렉트하지 않음 (새로고침 시 어드민 유지)
+    if (!isInitialized || isLoading) return;
     if (!isAuthenticated || !user) {
       navigate('/', { replace: true });
       return;
@@ -301,7 +302,7 @@ const AdminPage: React.FC = () => {
     if ((user as { role?: string }).role !== 'admin') {
       navigate('/', { replace: true });
     }
-  }, [user, isAuthenticated, isLoading, navigate]);
+  }, [user, isAuthenticated, isLoading, isInitialized, navigate]);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'news' | 'ai' | 'workspace' | 'persona' | 'knowledge' | 'usage' | 'settings'>('dashboard');
 
   // feedback useEffect deps에서 참조되므로 컴포넌트 최상단에 선언
@@ -942,6 +943,16 @@ const AdminPage: React.FC = () => {
     { id: 'usage', name: 'API 과금', icon: CurrencyDollarIcon },
     { id: 'settings', name: '설정', icon: CogIcon },
   ] as const;
+
+  // 인증 초기화/검증 중 또는 권한 없음(리다이렉트 예정)에는 로딩 표시 (새로고침 시 어드민 유지)
+  const isAdmin = user && (user as { role?: string }).role === 'admin';
+  if (!isInitialized || isLoading || !isAuthenticated || !user || !isAdmin) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-cyan-500 border-t-transparent"></div>
+      </div>
+    );
+  }
 
   return (
     <>

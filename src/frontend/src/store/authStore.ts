@@ -21,6 +21,7 @@ interface AuthState {
   isAuthenticated: boolean
   isSubscribed: boolean
   isLoading: boolean
+  isInitialized: boolean
   error: string | null
   
   // Actions
@@ -44,6 +45,7 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       isSubscribed: false,
       isLoading: false,
+      isInitialized: false,
       error: null,
 
       setUser: (user) => {
@@ -83,6 +85,7 @@ export const useAuthStore = create<AuthState>()(
             refreshToken: null,
             isAuthenticated: false,
             isSubscribed: false,
+            isInitialized: true,
             error: null,
           })
           localStorage.removeItem('access_token')
@@ -134,10 +137,13 @@ export const useAuthStore = create<AuthState>()(
             refreshToken,
             isAuthenticated: true,
             user: userStr ? JSON.parse(userStr) : null,
+            isInitialized: true,
           })
           
           // 사용자 정보 갱신
           get().fetchUser()
+        } else {
+          set({ isInitialized: true })
         }
       },
 
