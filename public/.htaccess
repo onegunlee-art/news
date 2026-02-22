@@ -103,13 +103,11 @@ Options -Indexes
     php_value max_execution_time 1200
 </IfModule>
 
-# 민감한 파일 접근 차단
+# 민감한 파일 접근 차단 (Apache 2.4: Require all denied)
 <FilesMatch "\.(env|sql|md|json|lock|yml|yaml)$">
-    Order allow,deny
-    Deny from all
+    Require all denied
 </FilesMatch>
 
 <FilesMatch "^\.">
-    Order allow,deny
-    Deny from all
+    Require all denied
 </FilesMatch>
