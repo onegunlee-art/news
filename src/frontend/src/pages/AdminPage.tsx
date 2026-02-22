@@ -27,11 +27,9 @@ import {
   ClipboardDocumentIcon,
   UserCircleIcon,
   ArrowsPointingOutIcon,
-  DocumentDuplicateIcon,
 } from '@heroicons/react/24/outline';
 import RichTextEditor from '../components/Common/RichTextEditor';
 import { normalizeEditorHtml } from '../utils/sanitizeHtml';
-import AdminDraftPreviewEdit, { type DraftArticle } from '../components/Admin/AdminDraftPreviewEdit';
 import AIWorkspace from '../components/AIWorkspace/AIWorkspace';
 import type { ArticleContext } from '../components/AIWorkspace/AIWorkspace';
 import CritiqueEditor from '../components/CritiqueEditor/CritiqueEditor';
@@ -304,7 +302,7 @@ const AdminPage: React.FC = () => {
       navigate('/', { replace: true });
     }
   }, [user, isAuthenticated, isLoading, navigate]);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'news' | 'drafts' | 'ai' | 'workspace' | 'persona' | 'knowledge' | 'usage' | 'settings'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'news' | 'ai' | 'workspace' | 'persona' | 'knowledge' | 'usage' | 'settings'>('dashboard');
 
   // feedback useEffect deps에서 참조되므로 컴포넌트 최상단에 선언
   const [articleUrl, setArticleUrl] = useState('');
@@ -398,10 +396,6 @@ const AdminPage: React.FC = () => {
   const [dallePrompt, setDallePrompt] = useState('');
   const [isRegeneratingTts, setIsRegeneratingTts] = useState(false);
   const [regeneratedTtsUrl, setRegeneratedTtsUrl] = useState<string | null>(null);
-  const [draftPreviewId, setDraftPreviewId] = useState<number | null>(null);
-  const [draftArticle, setDraftArticle] = useState<DraftArticle | null>(null);
-  const [draftList, setDraftList] = useState<NewsArticle[]>([]);
-  const [isLoadingDraft, setIsLoadingDraft] = useState(false);
 
   // API 과금 탭 활성 시 데이터 로드
   useEffect(() => {
@@ -837,59 +831,6 @@ const AdminPage: React.FC = () => {
     }
   }, [activeTab, loadNewsList]);
 
-  // 임시 저장 목록 로드
-  const loadDraftList = useCallback(async () => {
-    setIsLoadingDraft(true);
-    try {
-      const response = await adminFetch('/api/admin/news.php?status_filter=draft&per_page=50');
-      const ct = response.headers.get('content-type') || '';
-      if (!ct.includes('application/json')) {
-        const body = await response.text();
-        throw new Error(`서버가 JSON 대신 HTML을 반환했습니다 (${response.status}). ${body.slice(0, 150)}...`);
-      }
-      const data = await response.json();
-      if (data.success && data.data?.items) {
-        setDraftList(data.data.items);
-      } else {
-        setDraftList([]);
-      }
-    } catch (e) {
-      setDraftList([]);
-      setSaveMessage({ type: 'error', text: (e as Error).message });
-    } finally {
-      setIsLoadingDraft(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (activeTab === 'drafts') {
-      loadDraftList();
-    }
-  }, [activeTab, loadDraftList]);
-
-  // draft 단건 조회 (미리보기/편집용)
-  const fetchDraftArticle = useCallback(async (id: number) => {
-    setIsLoadingDraft(true);
-    try {
-      const response = await adminFetch(`/api/admin/news.php?id=${id}`);
-      const ct = response.headers.get('content-type') || '';
-      if (!ct.includes('application/json')) {
-        throw new Error('서버가 JSON 대신 HTML을 반환했습니다. API 경로를 확인하세요.');
-      }
-      const data = await response.json();
-      if (data.success && data.data?.article) {
-        setDraftArticle(data.data.article as DraftArticle);
-        setDraftPreviewId(id);
-      } else {
-        setSaveMessage({ type: 'error', text: '기사를 불러올 수 없습니다.' });
-      }
-    } catch (e) {
-      setSaveMessage({ type: 'error', text: '기사 조회 실패: ' + (e as Error).message });
-    } finally {
-      setIsLoadingDraft(false);
-    }
-  }, []);
-
   // 뉴스 수정 시작
   const handleEditNews = (news: NewsArticle) => {
     setEditingNewsId(news.id || null);
@@ -994,7 +935,6 @@ const AdminPage: React.FC = () => {
     { id: 'dashboard', name: '대시보드', icon: ChartBarIcon },
     { id: 'users', name: '사용자 관리', icon: UsersIcon },
     { id: 'news', name: '뉴스 관리', icon: NewspaperIcon },
-    { id: 'drafts', name: '임시 저장', icon: DocumentDuplicateIcon },
     { id: 'ai', name: 'AI 분석', icon: SparklesIcon },
     { id: 'workspace', name: 'AI Workspace', icon: AcademicCapIcon },
     { id: 'persona', name: '페르소나', icon: UserCircleIcon },
@@ -1045,76 +985,7 @@ const AdminPage: React.FC = () => {
 
         {/* Main Content */}
         <div className="flex-1 p-8">
-          {/* 임시 저장 미리보기/편집 화면 */}
-          {draftPreviewId && draftArticle && (
-            <AdminDraftPreviewEdit
-              news={draftArticle}
-              onUpdate={async (updates) => {
-                const cleanContent = updates.content != null ? normalizeEditorHtml(updates.content) : (draftArticle.content ?? null);
-                const cleanNarration = updates.narration != null ? normalizeEditorHtml(updates.narration) : (draftArticle.narration ?? null);
-                const cleanWhyImportant = updates.why_important != null ? normalizeEditorHtml(updates.why_important) : (draftArticle.why_important ?? null);
-                const response = await adminFetch('/api/admin/news.php', {
-                  method: 'PUT',
-                  headers: { 'Content-Type': 'application/json; charset=utf-8' },
-                  body: JSON.stringify({
-                    id: draftPreviewId,
-                    category: draftArticle.category,
-                    title: draftArticle.title,
-                    subtitle: draftArticle.subtitle ?? null,
-                    content: cleanContent ?? draftArticle.content ?? '',
-                    why_important: cleanWhyImportant,
-                    narration: cleanNarration,
-                    source_url: draftArticle.source_url ?? draftArticle.url ?? null,
-                    source: draftArticle.original_source ?? draftArticle.source ?? null,
-                    original_title: draftArticle.original_title ?? null,
-                    author: draftArticle.author ?? null,
-                    published_at: draftArticle.published_at ?? null,
-                    image_url: draftArticle.image_url ?? null,
-                    status: 'draft',
-                  }),
-                });
-                const data = await response.json();
-                if (!data.success) throw new Error(data.message || '저장 실패');
-                setDraftArticle((prev) => prev ? { ...prev, ...updates } : null);
-              }}
-              onPublish={async () => {
-                const response = await adminFetch('/api/admin/news.php', {
-                  method: 'PUT',
-                  headers: { 'Content-Type': 'application/json; charset=utf-8' },
-                  body: JSON.stringify({
-                    id: draftPreviewId,
-                    category: draftArticle.category,
-                    title: draftArticle.title,
-                    subtitle: draftArticle.subtitle ?? null,
-                    content: draftArticle.content ?? '',
-                    why_important: draftArticle.why_important ?? null,
-                    narration: draftArticle.narration ?? null,
-                    source_url: draftArticle.source_url ?? draftArticle.url ?? null,
-                    source: draftArticle.original_source ?? draftArticle.source ?? null,
-                    original_title: draftArticle.original_title ?? null,
-                    author: draftArticle.author ?? null,
-                    published_at: draftArticle.published_at ?? null,
-                    image_url: draftArticle.image_url ?? null,
-                    status: 'published',
-                  }),
-                });
-                const data = await response.json();
-                if (!data.success) throw new Error(data.message || '게시 실패');
-                setDraftPreviewId(null);
-                setDraftArticle(null);
-                await loadNewsList();
-                await loadDraftList();
-                setSaveMessage({ type: 'success', text: '게시되었습니다!' });
-                setTimeout(() => setSaveMessage(null), 3000);
-              }}
-              onBack={() => {
-                setDraftPreviewId(null);
-                setDraftArticle(null);
-              }}
-            />
-          )}
-
-          {!draftPreviewId && activeTab === 'dashboard' && (
+          {activeTab === 'dashboard' && (
             <div className="space-y-8">
               <div>
                 <h2 className="text-2xl font-bold text-white mb-2">대시보드</h2>
@@ -1283,14 +1154,14 @@ const AdminPage: React.FC = () => {
             </div>
           )}
 
-          {!draftPreviewId && activeTab === 'users' && (
+          {activeTab === 'users' && (
             <div className="space-y-6">
               <h2 className="text-2xl font-bold text-white">사용자 관리</h2>
               <UsersManagementSection onUserDetail={setSelectedUserDetail} />
             </div>
           )}
 
-          {!draftPreviewId && activeTab === 'news' && (
+          {activeTab === 'news' && (
             <div className="space-y-6">
               <div className="flex items-center justify-between flex-wrap gap-3">
                 <div>
@@ -2308,63 +2179,6 @@ const AdminPage: React.FC = () => {
                       )}
                     </button>
 
-                    {!editingNewsId && (
-                      <button
-                        onClick={async () => {
-                          if (!newsTitle.trim() || !newsContent.trim()) {
-                            setSaveMessage({ type: 'error', text: '제목과 내용을 모두 입력해주세요.' });
-                            return;
-                          }
-                          setIsSaving(true);
-                          setSaveMessage(null);
-                          try {
-                            const cleanContent = normalizeEditorHtml(newsContent);
-                            const cleanNarration = normalizeEditorHtml(newsNarration);
-                            const cleanWhyImportant = normalizeEditorHtml(newsWhyImportant);
-                            const response = await adminFetch('/api/admin/news.php', {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json; charset=utf-8' },
-                              body: JSON.stringify({
-                                category: selectedCategory,
-                                title: newsTitle,
-                                subtitle: newsSubtitle.trim() || null,
-                                content: cleanContent,
-                                why_important: cleanWhyImportant || null,
-                                narration: cleanNarration || null,
-                                source_url: articleUrl.trim() || null,
-                                source: articleSource.trim() || null,
-                                original_title: articleOriginalTitle.trim() || null,
-                                author: articleAuthor.trim() || null,
-                                published_at: articlePublishedAt.trim() || null,
-                                image_url: articleImageUrl.trim() || null,
-                                status: 'draft',
-                              }),
-                            });
-                            const data = await response.json();
-                            if (data.success) {
-                              const savedId = data.data?.id ?? data.new_id ?? data.id;
-                              setSaveMessage({ type: 'success', text: '임시 저장되었습니다. 미리보기에서 확인하세요.' });
-                              if (savedId) {
-                                await fetchDraftArticle(savedId);
-                              }
-                            } else {
-                              throw new Error(data.message || '임시 저장 실패');
-                            }
-                          } catch (error) {
-                            setSaveMessage({ type: 'error', text: '임시 저장 실패: ' + (error as Error).message });
-                          } finally {
-                            setIsSaving(false);
-                            setTimeout(() => setSaveMessage(null), 5000);
-                          }
-                        }}
-                        disabled={isSaving || !newsTitle.trim() || !newsContent.trim()}
-                        className="px-6 py-3 rounded-xl font-medium bg-amber-600/80 hover:bg-amber-500 text-white transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                      >
-                        <DocumentDuplicateIcon className="w-5 h-5" />
-                        임시 저장
-                      </button>
-                    )}
-
                     <button
                       onClick={handleCancelEdit}
                       className="px-6 py-3 rounded-xl font-medium bg-slate-700/50 text-slate-300 hover:bg-slate-600/50 transition"
@@ -2519,47 +2333,7 @@ const AdminPage: React.FC = () => {
             </div>
           )}
 
-          {!draftPreviewId && activeTab === 'drafts' && (
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-2xl font-bold text-white mb-2">임시 저장</h2>
-                <p className="text-slate-400">배포 전 condition 체크 및 편집이 가능한 초안 목록</p>
-              </div>
-              {isLoadingDraft ? (
-                <div className="flex justify-center py-20">
-                  <div className="animate-spin rounded-full h-12 w-12 border-4 border-cyan-500 border-t-transparent" />
-                </div>
-              ) : draftList.length === 0 ? (
-                <div className="bg-slate-800/50 rounded-2xl p-12 text-center border border-slate-700/50">
-                  <DocumentDuplicateIcon className="w-16 h-16 mx-auto text-slate-500 mb-4" />
-                  <p className="text-slate-400">임시 저장된 글이 없습니다.</p>
-                  <p className="text-slate-500 text-sm mt-2">뉴스 관리에서 URL 추출 후 &quot;임시 저장&quot; 버튼을 누르세요.</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {draftList.map((item) => (
-                    <button
-                      key={item.id}
-                      onClick={() => item.id && fetchDraftArticle(item.id)}
-                      className="w-full text-left p-4 rounded-xl bg-slate-800/50 hover:bg-slate-700/50 border border-slate-700/50 transition"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="min-w-0 flex-1">
-                          <p className="font-medium text-white truncate">{item.title}</p>
-                          <p className="text-slate-500 text-sm mt-1">
-                            {item.category} · {(item as { updated_at?: string }).updated_at || (item as { created_at?: string }).created_at || '-'}
-                          </p>
-                        </div>
-                        <span className="text-amber-400/80 text-xs ml-2">편집</span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {!draftPreviewId && activeTab === 'ai' && (
+          {activeTab === 'ai' && (
             <div className="space-y-6">
               <div>
                 <h2 className="text-2xl font-bold text-white mb-2">AI 뉴스 분석</h2>
@@ -3145,7 +2919,7 @@ const AdminPage: React.FC = () => {
             </div>
           )}
 
-          {!draftPreviewId && activeTab === 'workspace' && (
+          {activeTab === 'workspace' && (
             <div className="space-y-6">
               <div>
                 <h2 className="text-2xl font-bold text-white mb-2">AI Workspace</h2>
@@ -3169,7 +2943,7 @@ const AdminPage: React.FC = () => {
             </div>
           )}
 
-          {!draftPreviewId && activeTab === 'persona' && (
+          {activeTab === 'persona' && (
             <div className="space-y-8">
               <div>
                 <h2 className="text-2xl font-bold text-white mb-2">GPT 페르소나</h2>
@@ -3458,7 +3232,7 @@ const AdminPage: React.FC = () => {
             </div>
           )}
 
-          {!draftPreviewId && activeTab === 'knowledge' && (
+          {activeTab === 'knowledge' && (
             <div className="space-y-6">
               <div>
                 <h2 className="text-2xl font-bold text-white mb-2">이론 라이브러리</h2>
@@ -3643,7 +3417,7 @@ const AdminPage: React.FC = () => {
             </div>
           )}
 
-          {!draftPreviewId && activeTab === 'usage' && (
+          {activeTab === 'usage' && (
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -3818,7 +3592,7 @@ const AdminPage: React.FC = () => {
             </div>
           )}
 
-          {!draftPreviewId && activeTab === 'settings' && (
+          {activeTab === 'settings' && (
             <div className="space-y-6">
               <h2 className="text-2xl font-bold text-white">설정</h2>
 
