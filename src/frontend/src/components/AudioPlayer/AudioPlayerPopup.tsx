@@ -37,6 +37,7 @@ export default function AudioPlayerPopup() {
   const progress = useAudioPlayerStore((s) => s.progress)
   const audioUrl = useAudioPlayerStore((s) => s.audioUrl)
   const isTtsLoading = useAudioPlayerStore((s) => s.isTtsLoading)
+  const ttsError = useAudioPlayerStore((s) => s.ttsError)
   const close = useAudioPlayerStore((s) => s.close)
   const setProgress = useAudioPlayerStore((s) => s.setProgress)
 
@@ -323,9 +324,9 @@ export default function AudioPlayerPopup() {
           </div>
         )}
 
-        {/* TTS 실패 시 안내 */}
+        {/* TTS 실패 시 안내 (구체적 에러 메시지 표시) */}
         {!isTtsLoading && !audioUrl && (
-          <p className="text-sm text-red-500 mb-2">오디오 생성에 실패했습니다. 잠시 후 다시 시도해주세요.</p>
+          <p className="text-sm text-red-500 mb-2">{ttsError || '오디오 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.'}</p>
         )}
 
         {/* 재생 시간 + 진행 바 */}

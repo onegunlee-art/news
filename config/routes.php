@@ -237,6 +237,14 @@ $router->group(['prefix' => '/admin'], function (Router $router) {
 
     // original_title 백필 (URL 슬러그에서 추출, 즉시 처리)
     $router->get('/backfill-original-title-url', function (Request $request): Response {
+        $authService = new \App\Services\AuthService();
+        $adminId = $authService->getAuthenticatedUserId($request->bearerToken() ?? '');
+        if (!$adminId) return Response::unauthorized('관리자 권한이 필요합니다.');
+        $db = \App\Core\Database::getInstance()->getConnection();
+        $stmt = $db->prepare("SELECT role FROM users WHERE id = ?");
+        $stmt->execute([$adminId]);
+        $u = $stmt->fetch(\PDO::FETCH_ASSOC);
+        if (!$u || ($u['role'] ?? '') !== 'admin') return Response::unauthorized('관리자 권한이 필요합니다.');
         $projectRoot = dirname(__DIR__);
         $scriptPath = $projectRoot . '/api/admin/backfill-original-title-from-url.php';
         if (!is_file($scriptPath)) {
@@ -258,8 +266,52 @@ $router->group(['prefix' => '/admin'], function (Router $router) {
         return Response::error('백필 실행 중 오류가 발생했습니다.', 500);
     });
 
+    // Admin PHP 스크립트 프록시 (api/admin/*.php → Router 경유, 인증 적용)
+    $router->any('/{script}.php', function (Request $request): Response {
+        $script = $request->param('script') . '.php';
+        $projectRoot = dirname(__DIR__);
+        $scriptPath = $projectRoot . '/public/api/admin/' . $script;
+        if (!is_file($scriptPath)) {
+            $scriptPath = $projectRoot . '/api/admin/' . $script;
+        }
+        if (!is_file($scriptPath) || !preg_match('/^[a-z0-9_-]+\.php$/i', $script)) {
+            return Response::notFound('Admin script not found');
+        }
+        // news.php: published_only=1인 GET은 공개 목록이므로 인증 생략
+        $isPublicNewsList = ($script === 'news.php' && $request->isMethod('GET')
+            && ($request->query('published_only') === '1' || $request->query('published_only') === 'true'));
+        if (!$isPublicNewsList) {
+            $token = $request->bearerToken();
+            if (!$token) {
+                return Response::unauthorized('관리자 권한이 필요합니다.');
+            }
+            $authService = new \App\Services\AuthService();
+            $adminId = $authService->getAuthenticatedUserId($token);
+            if (!$adminId) {
+                return Response::unauthorized('관리자 권한이 필요합니다.');
+            }
+            $db = \App\Core\Database::getInstance()->getConnection();
+            $stmt = $db->prepare("SELECT role FROM users WHERE id = ?");
+            $stmt->execute([$adminId]);
+            $user = $stmt->fetch(\PDO::FETCH_ASSOC);
+            if (!$user || ($user['role'] ?? '') !== 'admin') {
+                return Response::unauthorized('관리자 권한이 필요합니다.');
+            }
+        }
+        include $scriptPath;
+        exit;
+    });
+
     // original_title 백필 (원문 HTML에서 <title> 추출)
     $router->get('/backfill-original-title', function (Request $request): Response {
+        $authService = new \App\Services\AuthService();
+        $adminId = $authService->getAuthenticatedUserId($request->bearerToken() ?? '');
+        if (!$adminId) return Response::unauthorized('관리자 권한이 필요합니다.');
+        $db = \App\Core\Database::getInstance()->getConnection();
+        $stmt = $db->prepare("SELECT role FROM users WHERE id = ?");
+        $stmt->execute([$adminId]);
+        $u = $stmt->fetch(\PDO::FETCH_ASSOC);
+        if (!$u || ($u['role'] ?? '') !== 'admin') return Response::unauthorized('관리자 권한이 필요합니다.');
         $projectRoot = dirname(__DIR__);
         $scriptPath = $projectRoot . '/api/admin/backfill-original-title-from-html.php';
         if (!is_file($scriptPath)) {

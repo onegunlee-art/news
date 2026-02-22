@@ -2,6 +2,18 @@ import axios from 'axios'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api'
 
+/** Admin API용 fetch 래퍼 - Authorization 헤더 자동 첨부 (향후 인증 적용 시 대비) */
+export function adminFetch(url: string, init?: RequestInit): Promise<Response> {
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('access_token') : null
+  const headers = new Headers(init?.headers)
+  headers.set('Content-Type', 'application/json')
+  if (token) {
+    headers.set('Authorization', `Bearer ${token}`)
+    headers.set('X-Authorization', `Bearer ${token}`)
+  }
+  return fetch(url, { ...init, headers })
+}
+
 export const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 30000,
@@ -136,10 +148,10 @@ export const ttsApi = {
       narration,
       critique_part: critiquePart,
       ...(newsId != null && { news_id: newsId }),
-    }),
+    }, { timeout: 810000 }),
   /** 단순 텍스트 (Admin 미리듣기용) */
   generate: (text: string) =>
-    api.post<{ success: boolean; data: { url: string } }>('/tts/generate', { text }),
+    api.post<{ success: boolean; data: { url: string } }>('/tts/generate', { text }, { timeout: 810000 }),
 }
 
 /** 가입 환영 설정 (공개) */
@@ -160,7 +172,7 @@ export const adminTtsApi = {
     api.post<{ success: boolean; data: { generated: number; skipped: number; total: number; offset: number; has_more: boolean } }>(
       '/admin/tts/regenerate-all',
       params ?? {},
-      { timeout: 120000 }
+      { timeout: 1080000 }
     ),
 }
 

@@ -13,6 +13,8 @@ interface AudioPlayerState {
   audioUrl: string | null
   /** 서버 TTS 생성 중 */
   isTtsLoading: boolean
+  /** TTS 생성 실패 시 에러 메시지 (사용자 피드백) */
+  ttsError: string | null
 }
 
 interface AudioPlayerActions {
@@ -36,6 +38,7 @@ const initial: AudioPlayerState = {
   progress: 0,
   audioUrl: null,
   isTtsLoading: false,
+  ttsError: null,
 }
 
 export const useAudioPlayerStore = create<AudioPlayerState & AudioPlayerActions>((set, _get) => ({
@@ -62,6 +65,7 @@ export const useAudioPlayerStore = create<AudioPlayerState & AudioPlayerActions>
       progress: 0,
       audioUrl: null,
       isTtsLoading: true,
+      ttsError: null,
     })
     // 서버 Google TTS (구조화: 제목 pause 매체설명 pause 내레이션 pause Critique. 캐시 있으면 즉시 반환)
     ttsApi
@@ -69,13 +73,14 @@ export const useAudioPlayerStore = create<AudioPlayerState & AudioPlayerActions>
       .then((res) => {
         const url = res.data?.data?.url
         if (url) {
-          set({ audioUrl: url, isTtsLoading: false })
+          set({ audioUrl: url, isTtsLoading: false, ttsError: null })
         } else {
-          set({ isTtsLoading: false })
+          set({ isTtsLoading: false, ttsError: '오디오 URL을 받지 못했습니다. 다시 시도해 주세요.' })
         }
       })
-      .catch(() => {
-        set({ isTtsLoading: false })
+      .catch((err) => {
+        const msg = err.response?.data?.message ?? err.message ?? '오디오 생성에 실패했습니다. 서버 연결을 확인해 주세요.'
+        set({ isTtsLoading: false, ttsError: msg })
       })
   },
 

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { adminFetch } from '../../services/api';
 
 interface RAGResult {
   chunk_text?: string;
@@ -24,7 +25,7 @@ const RAGTester: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch('/api/admin/rag-test.php')
+    adminFetch('/api/admin/rag-test.php')
       .then((r) => r.json())
       .then((d) => {
         if (d.success) setStatus(d);
@@ -38,7 +39,7 @@ const RAGTester: React.FC = () => {
     setError(null);
     setResult(null);
     try {
-      const res = await fetch('/api/admin/rag-test.php', {
+      const res = await adminFetch('/api/admin/rag-test.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: query.trim(), top_k: topK }),

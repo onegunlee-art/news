@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { adminFetch } from '../../services/api';
 
 export interface ChatMessage {
   id: string;
@@ -59,7 +60,7 @@ const AIWorkspace: React.FC<AIWorkspaceProps> = ({ articleContext }) => {
   const loadConversations = useCallback(async () => {
     setConvListLoading(true);
     try {
-      const res = await fetch('/api/admin/chat-stream.php?action=list_conversations');
+      const res = await adminFetch('/api/admin/chat-stream.php?action=list_conversations');
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data)) {
@@ -80,7 +81,7 @@ const AIWorkspace: React.FC<AIWorkspaceProps> = ({ articleContext }) => {
     setMessages([]);
     setError(null);
     try {
-      const res = await fetch(`/api/admin/chat-stream.php?action=get_messages&conversation_id=${encodeURIComponent(convId)}`);
+      const res = await adminFetch(`/api/admin/chat-stream.php?action=get_messages&conversation_id=${encodeURIComponent(convId)}`);
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data)) {
@@ -166,7 +167,7 @@ const AIWorkspace: React.FC<AIWorkspaceProps> = ({ articleContext }) => {
 
     abortRef.current = new AbortController();
     try {
-      const res = await fetch('/api/admin/chat-stream.php', {
+      const res = await adminFetch('/api/admin/chat-stream.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

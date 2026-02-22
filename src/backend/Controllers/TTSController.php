@@ -28,7 +28,7 @@ final class TTSController
      */
     public function generate(Request $request): Response
     {
-        set_time_limit(300);
+        set_time_limit(2700);
 
         $body = $request->json();
         $projectRoot = dirname(__DIR__, 3);

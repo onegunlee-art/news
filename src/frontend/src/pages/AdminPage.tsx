@@ -36,7 +36,7 @@ import AIWorkspace from '../components/AIWorkspace/AIWorkspace';
 import type { ArticleContext } from '../components/AIWorkspace/AIWorkspace';
 import CritiqueEditor from '../components/CritiqueEditor/CritiqueEditor';
 import RAGTester from '../components/RAGTester/RAGTester';
-import { api, adminSettingsApi, adminTtsApi, ttsApi } from '../services/api';
+import { api, adminFetch, adminSettingsApi, adminTtsApi, ttsApi } from '../services/api';
 import { PRIVACY_POLICY_CONTENT } from '../components/Common/PrivacyPolicyContent';
 import WelcomePopup from '../components/Common/WelcomePopup';
 
@@ -293,7 +293,17 @@ const UsersManagementSection: React.FC<{
 
 const AdminPage: React.FC = () => {
   const navigate = useNavigate();
-  const { } = useAuthStore(); // 권한 체크용 (추후 활성화)
+  const { user, isAuthenticated, isLoading } = useAuthStore();
+  useEffect(() => {
+    if (isLoading) return;
+    if (!isAuthenticated || !user) {
+      navigate('/', { replace: true });
+      return;
+    }
+    if ((user as { role?: string }).role !== 'admin') {
+      navigate('/', { replace: true });
+    }
+  }, [user, isAuthenticated, isLoading, navigate]);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'news' | 'drafts' | 'ai' | 'workspace' | 'persona' | 'knowledge' | 'usage' | 'settings'>('dashboard');
 
   // feedback useEffect deps에서 참조되므로 컴포넌트 최상단에 선언
@@ -397,7 +407,7 @@ const AdminPage: React.FC = () => {
   useEffect(() => {
     if (activeTab !== 'usage') return;
     setUsageLoading(true);
-    fetch('/api/admin/usage-dashboard.php')
+    adminFetch('/api/admin/usage-dashboard.php')
       .then((r) => r.json())
       .then((d) => {
         if (d.success) setUsageData(d);
@@ -426,13 +436,13 @@ const AdminPage: React.FC = () => {
   // Persona 탭 활성 시 목록 로드
   useEffect(() => {
     if (activeTab !== 'persona') return;
-    fetch('/api/admin/persona-api.php?action=list')
+    adminFetch('/api/admin/persona-api.php?action=list')
       .then((r) => r.json())
       .then((d) => {
         if (d.success && Array.isArray(d.personas)) setPersonaList(d.personas);
       })
       .catch(() => setPersonaList([]));
-    fetch('/api/admin/persona-api.php?action=active')
+    adminFetch('/api/admin/persona-api.php?action=active')
       .then((r) => r.json())
       .then((d) => {
         if (d.success && d.persona) setActivePersona(d.persona);
@@ -489,7 +499,7 @@ const AdminPage: React.FC = () => {
     if (!articleUrl && !articleId) return;
     try {
       const params = articleId ? `article_id=${articleId}` : `article_url=${encodeURIComponent(articleUrl!)}`;
-      const res = await fetch(`/api/admin/feedback-api.php?action=get_history&${params}`);
+      const res = await adminFetch(`/api/admin/feedback-api.php?action=get_history&${params}`);
       const data = await res.json();
       if (data.success) {
         setFeedbackHistory(data.history ?? []);
@@ -507,7 +517,7 @@ const AdminPage: React.FC = () => {
     setIsSavingFeedback(true);
     setFeedbackMessage(null);
     try {
-      const res = await fetch('/api/admin/feedback-api.php', {
+      const res = await adminFetch('/api/admin/feedback-api.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -543,7 +553,7 @@ const AdminPage: React.FC = () => {
     setIsRequestingRevision(true);
     setFeedbackMessage(null);
     try {
-      const res = await fetch('/api/admin/feedback-api.php', {
+      const res = await adminFetch('/api/admin/feedback-api.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -582,7 +592,7 @@ const AdminPage: React.FC = () => {
     setIsApprovingAnalysis(true);
     setFeedbackMessage(null);
     try {
-      const res = await fetch('/api/admin/feedback-api.php', {
+      const res = await adminFetch('/api/admin/feedback-api.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -613,7 +623,7 @@ const AdminPage: React.FC = () => {
     setKnowledgeLoading(true);
     try {
       const catParam = category !== 'all' ? `&category=${encodeURIComponent(category)}` : '';
-      const res = await fetch(`/api/admin/knowledge-api.php?action=list${catParam}`);
+      const res = await adminFetch(`/api/admin/knowledge-api.php?action=list${catParam}`);
       const data = await res.json();
       if (data.success) {
         setKnowledgeItems(data.items ?? []);
@@ -634,7 +644,7 @@ const AdminPage: React.FC = () => {
     setKnowledgeMessage(null);
     try {
       const keywords = knFormKeywords.split(',').map(k => k.trim()).filter(Boolean);
-      const res = await fetch('/api/admin/knowledge-api.php', {
+      const res = await adminFetch('/api/admin/knowledge-api.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -670,7 +680,7 @@ const AdminPage: React.FC = () => {
   const deleteKnowledgeItem = async (id: string) => {
     if (!confirm('이 프레임워크를 삭제하시겠습니까?')) return;
     try {
-      const res = await fetch('/api/admin/knowledge-api.php', {
+      const res = await adminFetch('/api/admin/knowledge-api.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'delete', id }),
@@ -808,7 +818,7 @@ const AdminPage: React.FC = () => {
   const loadNewsList = useCallback(async () => {
     setIsLoadingNews(true);
     try {
-      const response = await fetch(`/api/admin/news.php?category=${selectedCategory}`);
+      const response = await adminFetch(`/api/admin/news.php?category=${selectedCategory}`);
       const data = await response.json();
       if (data.success && data.data?.items) {
         setNewsList(data.data.items);
@@ -831,7 +841,7 @@ const AdminPage: React.FC = () => {
   const loadDraftList = useCallback(async () => {
     setIsLoadingDraft(true);
     try {
-      const response = await fetch('/api/admin/news.php?status_filter=draft&per_page=50');
+      const response = await adminFetch('/api/admin/news.php?status_filter=draft&per_page=50');
       const data = await response.json();
       if (data.success && data.data?.items) {
         setDraftList(data.data.items);
@@ -855,7 +865,7 @@ const AdminPage: React.FC = () => {
   const fetchDraftArticle = useCallback(async (id: number) => {
     setIsLoadingDraft(true);
     try {
-      const response = await fetch(`/api/admin/news.php?id=${id}`);
+      const response = await adminFetch(`/api/admin/news.php?id=${id}`);
       const data = await response.json();
       if (data.success && data.data?.article) {
         setDraftArticle(data.data.article as DraftArticle);
@@ -916,7 +926,7 @@ const AdminPage: React.FC = () => {
   // 뉴스 삭제
   const handleDeleteNews = async (id: number) => {
     try {
-      const response = await fetch(`/api/admin/news.php?id=${id}`, {
+      const response = await adminFetch(`/api/admin/news.php?id=${id}`, {
         method: 'DELETE',
       });
       const data = await response.json();
@@ -1033,7 +1043,7 @@ const AdminPage: React.FC = () => {
                 const cleanContent = updates.content != null ? normalizeEditorHtml(updates.content) : (draftArticle.content ?? null);
                 const cleanNarration = updates.narration != null ? normalizeEditorHtml(updates.narration) : (draftArticle.narration ?? null);
                 const cleanWhyImportant = updates.why_important != null ? normalizeEditorHtml(updates.why_important) : (draftArticle.why_important ?? null);
-                const response = await fetch('/api/admin/news.php', {
+                const response = await adminFetch('/api/admin/news.php', {
                   method: 'PUT',
                   headers: { 'Content-Type': 'application/json; charset=utf-8' },
                   body: JSON.stringify({
@@ -1058,7 +1068,7 @@ const AdminPage: React.FC = () => {
                 setDraftArticle((prev) => prev ? { ...prev, ...updates } : null);
               }}
               onPublish={async () => {
-                const response = await fetch('/api/admin/news.php', {
+                const response = await adminFetch('/api/admin/news.php', {
                   method: 'PUT',
                   headers: { 'Content-Type': 'application/json; charset=utf-8' },
                   body: JSON.stringify({
@@ -1326,7 +1336,7 @@ const AdminPage: React.FC = () => {
                       if (!confirm('전체 기사의 썸네일을 새 규칙(인물/국가/API)으로 일괄 갱신합니다. 계속할까요?')) return;
                       try {
                         setSaveMessage({ type: 'success', text: '썸네일 갱신 중...' });
-                        const res = await fetch('/api/admin/update-images.php?action=update_all');
+                        const res = await adminFetch('/api/admin/update-images.php?action=update_all');
                         const data = await res.json();
                         if (data.success) {
                           setSaveMessage({ type: 'success', text: `${data.total}개 기사 썸네일이 갱신되었습니다.` });
@@ -1421,9 +1431,9 @@ const AdminPage: React.FC = () => {
                           try {
                             // 0단계: 사전 연결 확인 (Failed to fetch 원인 진단) - 가벼운 ping 사용
                             const preflightCtrl = new AbortController();
-                            const preflightTimer = setTimeout(() => preflightCtrl.abort(), 10000);
+                            const preflightTimer = setTimeout(() => preflightCtrl.abort(), 90000);
                             try {
-                              const preRes = await fetch(`${apiUrl}?action=ping`, { signal: preflightCtrl.signal });
+                              const preRes = await adminFetch(`${apiUrl}?action=ping`, { signal: preflightCtrl.signal });
                               clearTimeout(preflightTimer);
                               if (!preRes.ok) {
                                 setSaveMessage({ type: 'error', text: `API 연결됐으나 HTTP ${preRes.status}. 서버 오류일 수 있습니다.` });
@@ -1434,7 +1444,7 @@ const AdminPage: React.FC = () => {
                               clearTimeout(preflightTimer);
                               const pe = preErr as Error & { name?: string };
                               if (pe.name === 'AbortError') {
-                                setSaveMessage({ type: 'error', text: 'API 연결 시간 초과(10초). 서버·호스팅 타임아웃 또는 배포 경로를 확인해주세요.' });
+                                setSaveMessage({ type: 'error', text: 'API 연결 시간 초과(90초). 서버·호스팅 타임아웃 또는 배포 경로를 확인해주세요.' });
                               } else {
                                 const pingUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}${apiUrl}?action=ping`;
                               setSaveMessage({ type: 'error', text: `API 연결 실패: ${pe.message || String(preErr)}. 배포 경로(${apiUrl}), 서버, 네트워크를 확인하세요. 브라우저에서 ${pingUrl} 을 직접 열어 연결 여부를 확인해보세요.` });
@@ -1446,8 +1456,8 @@ const AdminPage: React.FC = () => {
                             setSaveMessage({ type: 'info', text: '분석을 시작했습니다. 잠시만 기다려주세요...' });
                             // 1단계: analyze 요청 → 서버가 즉시 job_id 반환 (504 회피)
                             const startCtrl = new AbortController();
-                            const startTimer = setTimeout(() => startCtrl.abort(), 90000);
-                            const startRes = await fetch(apiUrl, {
+                            const startTimer = setTimeout(() => startCtrl.abort(), 810000);
+                            const startRes = await adminFetch(apiUrl, {
                               method: 'POST',
                               signal: startCtrl.signal,
                               headers: { 'Content-Type': 'application/json' },
@@ -1483,7 +1493,7 @@ const AdminPage: React.FC = () => {
                                 if (i > 0) await new Promise((r) => setTimeout(r, pollInterval));
                                 if (pollAborted) break;
                                 setSaveMessage({ type: 'info', text: `분석 중... (${i + 1}회 확인)` });
-                                const pollRes = await fetch(`/api/admin/ai-analyze.php?action=job_status&job_id=${encodeURIComponent(jobId)}`);
+                                const pollRes = await adminFetch(`/api/admin/ai-analyze.php?action=job_status&job_id=${encodeURIComponent(jobId)}`);
                                 const pollJson = await pollRes.json().catch(() => ({}));
                                 if (pollJson.status === 'processing') continue;
                                 data = pollJson as Record<string, unknown>;
@@ -1562,7 +1572,7 @@ const AdminPage: React.FC = () => {
                               sourceUrl: (article as { source_url?: string; url?: string })?.source_url ?? (article as { url?: string })?.url,
                               originalTitle: (a.original_title as string) || undefined,
                             })
-                            const ttsRes = await fetch('/api/admin/ai-analyze.php', {
+                            const ttsRes = await adminFetch('/api/admin/ai-analyze.php', {
                               method: 'POST',
                               headers: { 'Content-Type': 'application/json' },
                               body: JSON.stringify({ action: 'generate_tts', ...ttsParams }),
@@ -1582,7 +1592,7 @@ const AdminPage: React.FC = () => {
                             const err = error as Error & { name?: string };
                             let msg: string;
                             if (err.name === 'AbortError') {
-                              msg = '요청 시간 초과(90초). 서버·호스팅 타임아웃이거나 URL 접근이 느립니다.';
+                              msg = '요청 시간 초과(13.5분). 서버·호스팅 타임아웃이거나 URL 접근이 느립니다.';
                             } else if ((err.message || '').includes('Failed to fetch')) {
                               const pingUrl = typeof window !== 'undefined' ? `${window.location.origin}/api/admin/ai-analyze.php?action=ping` : '/api/admin/ai-analyze.php?action=ping';
                               msg = `서버 연결 실패 (Failed to fetch). 배포 경로, 서버 상태, 네트워크를 확인하세요. 브라우저에서 ${pingUrl} 을 직접 열어 연결 여부를 확인해보세요.`;
@@ -1615,7 +1625,7 @@ const AdminPage: React.FC = () => {
                       type="button"
                       onClick={async () => {
                         try {
-                          const r = await fetch('/api/admin/ai-analyze.php');
+                          const r = await adminFetch('/api/admin/ai-analyze.php');
                           const d = await r.json();
                           const msg = d.success
                             ? `상태: ${d.status} | Mock: ${d.mock_mode ? '예' : '아니오'} | API키: ${d.openai_key_set ? '설정됨' : '없음'} | env: ${d.env_loaded ? '로드됨' : '없음'} | root: ${(d.project_root || '').slice(-30)}`
@@ -1688,7 +1698,7 @@ const AdminPage: React.FC = () => {
                             type="button"
                             onClick={async () => {
                               try {
-                                const r = await fetch('/api/admin/check-article-principles.php');
+                                const r = await adminFetch('/api/admin/check-article-principles.php');
                                 const d = await r.json();
                                 if (d.success && d.data) {
                                   const { total, title_not_korean, original_title_has_korean, original_title_missing, message } = d.data;
@@ -1713,7 +1723,7 @@ const AdminPage: React.FC = () => {
                             type="button"
                             onClick={async () => {
                               try {
-                                const r = await fetch('/api/admin/check-original-title.php');
+                                const r = await adminFetch('/api/admin/check-original-title.php');
                                 const d = await r.json();
                                 if (d.success && d.data) {
                                   const { total, with_original_title, missing, message } = d.data;
@@ -1736,7 +1746,7 @@ const AdminPage: React.FC = () => {
                               if (!confirm('기존 모든 기사의 Original Source/Title을 source, title 값으로 채웁니다. 실행할까요?')) return;
                               setSaveMessage({ type: 'info', text: '백필 실행 중...' });
                               try {
-                                const r = await fetch('/api/admin/run-backfill-original.php');
+                                const r = await adminFetch('/api/admin/run-backfill-original.php');
                                 const d = await r.json();
                                 if (d.success) {
                                   setSaveMessage({ type: 'success', text: d.message || '백필 완료' });
@@ -1758,7 +1768,7 @@ const AdminPage: React.FC = () => {
                               if (!confirm('URL 슬러그에서 original_title을 추출해 백필합니다. 즉시 처리됩니다. 실행할까요?')) return;
                               setSaveMessage({ type: 'info', text: 'original_title URL 백필 중...' });
                               try {
-                                const r = await fetch('/api/admin/backfill-original-title-url');
+                                const r = await adminFetch('/api/admin/backfill-original-title-url');
                                 const d = r.ok ? await r.json() : null;
                                 const data = d?.data ?? d;
                                 if (d?.success ?? r.ok) {
@@ -1782,7 +1792,7 @@ const AdminPage: React.FC = () => {
                               if (!confirm('원문 URL HTML에서 <title>을 추출해 original_title을 백필합니다. 수 분 소요. 실행할까요?')) return;
                               setSaveMessage({ type: 'info', text: 'original_title HTML 백필 중...' });
                               try {
-                                const r = await fetch('/api/admin/backfill-original-title');
+                                const r = await adminFetch('/api/admin/backfill-original-title');
                                 const d = r.ok ? await r.json() : null;
                                 const data = d?.data ?? d;
                                 if (d?.success ?? r.ok) {
@@ -1854,7 +1864,7 @@ const AdminPage: React.FC = () => {
                                   setIsRegeneratingThumbnail(true);
                                   setSaveMessage(null);
                                   try {
-                                    const res = await fetch(`/api/admin/update-images.php?action=update_one&id=${editingNewsId}`);
+                                    const res = await adminFetch(`/api/admin/update-images.php?action=update_one&id=${editingNewsId}`);
                                     const data = await res.json();
                                     if (data.success && data.new_image) {
                                       setArticleImageUrl(data.new_image);
@@ -1911,7 +1921,7 @@ const AdminPage: React.FC = () => {
                                   setIsRegeneratingDalle(true);
                                   setSaveMessage(null);
                                   try {
-                                    const res = await fetch('/api/admin/ai-analyze.php', {
+                                    const res = await adminFetch('/api/admin/ai-analyze.php', {
                                       method: 'POST',
                                       headers: { 'Content-Type': 'application/json' },
                                       body: JSON.stringify({
@@ -2076,7 +2086,7 @@ const AdminPage: React.FC = () => {
                                 sourceUrl: articleUrl || undefined,
                                 originalTitle: articleOriginalTitle || undefined,
                               })
-                              const res = await fetch('/api/admin/ai-analyze.php', {
+                              const res = await adminFetch('/api/admin/ai-analyze.php', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({ action: 'generate_tts', ...ttsParams }),
@@ -2183,7 +2193,7 @@ const AdminPage: React.FC = () => {
                             bodySize: JSON.stringify(requestBody).length 
                           });
                           
-                          const response = await fetch('/api/admin/news.php', {
+                          const response = await adminFetch('/api/admin/news.php', {
                             method: isEditing ? 'PUT' : 'POST',
                             headers: { 'Content-Type': 'application/json; charset=utf-8' },
                             body: JSON.stringify(requestBody),
@@ -2225,7 +2235,7 @@ const AdminPage: React.FC = () => {
                               originalTitle: articleOriginalTitle.trim() || undefined,
                             })
                             if (ttsParams.narration || ttsParams.critique_part) {
-                              fetch('/api/admin/ai-analyze.php', {
+                              adminFetch('/api/admin/ai-analyze.php', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({ action: 'generate_tts', ...ttsParams, news_id: savedId ?? undefined }),
@@ -2301,7 +2311,7 @@ const AdminPage: React.FC = () => {
                             const cleanContent = normalizeEditorHtml(newsContent);
                             const cleanNarration = normalizeEditorHtml(newsNarration);
                             const cleanWhyImportant = normalizeEditorHtml(newsWhyImportant);
-                            const response = await fetch('/api/admin/news.php', {
+                            const response = await adminFetch('/api/admin/news.php', {
                               method: 'POST',
                               headers: { 'Content-Type': 'application/json; charset=utf-8' },
                               body: JSON.stringify({
@@ -2581,7 +2591,7 @@ const AdminPage: React.FC = () => {
                         setAiError(null);
                         setAiResult(null);
                         try {
-                          const response = await fetch('/api/admin/ai-analyze.php', {
+                          const response = await adminFetch('/api/admin/ai-analyze.php', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
@@ -2630,7 +2640,7 @@ const AdminPage: React.FC = () => {
                               sourceUrl: (data.article as { source_url?: string; url?: string })?.source_url ?? (data.article as { url?: string })?.url,
                               originalTitle: (data.analysis as { original_title?: string })?.original_title,
                             })
-                            const ttsRes = await fetch('/api/admin/ai-analyze.php', {
+                            const ttsRes = await adminFetch('/api/admin/ai-analyze.php', {
                               method: 'POST',
                               headers: { 'Content-Type': 'application/json' },
                               body: JSON.stringify({ action: 'generate_tts', ...ttsParams }),
@@ -3051,7 +3061,7 @@ const AdminPage: React.FC = () => {
                         setIsLearning(true);
                         try {
                           const texts = learningTexts.split('---').map(t => t.trim()).filter(t => t);
-                          const response = await fetch('/api/admin/ai-analyze.php', {
+                          const response = await adminFetch('/api/admin/ai-analyze.php', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
@@ -3094,7 +3104,7 @@ const AdminPage: React.FC = () => {
                     <button
                       onClick={async () => {
                         try {
-                          const response = await fetch('/api/admin/ai-analyze.php', {
+                          const response = await adminFetch('/api/admin/ai-analyze.php', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ action: 'status' })
@@ -3197,7 +3207,7 @@ const AdminPage: React.FC = () => {
                             setPersonaMessages((prev) => [...prev, { role: 'user', content: msg }]);
                             setPersonaInput('');
                             setPersonaLoading(true);
-                            fetch('/api/admin/persona-api.php', {
+                            adminFetch('/api/admin/persona-api.php', {
                               method: 'POST',
                               headers: { 'Content-Type': 'application/json' },
                               body: JSON.stringify({
@@ -3260,7 +3270,7 @@ const AdminPage: React.FC = () => {
                         setPersonaExtracting(true);
                         setSaveMessage(null);
                         try {
-                          const res = await fetch('/api/admin/persona-api.php', {
+                          const res = await adminFetch('/api/admin/persona-api.php', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
@@ -3273,7 +3283,7 @@ const AdminPage: React.FC = () => {
                           if (d.success) {
                             setSaveMessage({ type: 'success', text: '페르소나가 저장되었습니다.' });
                             setActivePersona(d.persona);
-                            fetch('/api/admin/persona-api.php?action=list')
+                            adminFetch('/api/admin/persona-api.php?action=list')
                               .then((r) => r.json())
                               .then((x) => x.success && Array.isArray(x.personas) && setPersonaList(x.personas));
                           } else {
@@ -3322,7 +3332,7 @@ const AdminPage: React.FC = () => {
                             <button
                               type="button"
                               onClick={() => {
-                                fetch('/api/admin/persona-api.php', {
+                                adminFetch('/api/admin/persona-api.php', {
                                   method: 'POST',
                                   headers: { 'Content-Type': 'application/json' },
                                   body: JSON.stringify({ action: 'set_active', persona_id: p.id }),
@@ -3332,8 +3342,8 @@ const AdminPage: React.FC = () => {
                                     if (d.success) {
                                       setSaveMessage({ type: 'success', text: '활성 페르소나가 변경되었습니다.' });
                                       setActivePersona(p);
-                                      fetch('/api/admin/persona-api.php?action=active').then((x) => x.json()).then((x) => x.success && x.persona && setActivePersona(x.persona));
-                                      fetch('/api/admin/persona-api.php?action=list').then((x) => x.json()).then((x) => x.success && Array.isArray(x.personas) && setPersonaList(x.personas));
+                                      adminFetch('/api/admin/persona-api.php?action=active').then((x) => x.json()).then((x) => x.success && x.persona && setActivePersona(x.persona));
+                                      adminFetch('/api/admin/persona-api.php?action=list').then((x) => x.json()).then((x) => x.success && Array.isArray(x.personas) && setPersonaList(x.personas));
                                     }
                                   });
                               }}
@@ -3382,7 +3392,7 @@ const AdminPage: React.FC = () => {
                       setPersonaTestResult(null);
                       setSaveMessage(null);
                       try {
-                        const res = await fetch('/api/admin/persona-api.php', {
+                        const res = await adminFetch('/api/admin/persona-api.php', {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
                           body: JSON.stringify({
@@ -3634,7 +3644,7 @@ const AdminPage: React.FC = () => {
                   type="button"
                   onClick={() => {
                     setUsageLoading(true);
-                    fetch('/api/admin/usage-dashboard.php')
+                    adminFetch('/api/admin/usage-dashboard.php')
                       .then((r) => r.json())
                       .then((d) => {
                         if (d.success) setUsageData(d);
@@ -3753,12 +3763,12 @@ const AdminPage: React.FC = () => {
                         onClick={async () => {
                           setSaveMessage({ type: 'info', text: '마이그레이션 실행 중...' });
                           try {
-                            const r = await fetch('/api/admin/run-usage-migration.php');
+                            const r = await adminFetch('/api/admin/run-usage-migration.php');
                             const d = await r.json();
                             if (d.success) {
                               setSaveMessage({ type: 'success', text: d.message });
                               setUsageLoading(true);
-                              fetch('/api/admin/usage-dashboard.php')
+                              adminFetch('/api/admin/usage-dashboard.php')
                                 .then((res) => res.json())
                                 .then((data) => {
                                   if (data.success) setUsageData(data);
@@ -3851,7 +3861,7 @@ const AdminPage: React.FC = () => {
                     type="button"
                     onClick={async () => {
                       try {
-                        const r = await fetch('/api/admin/ai-analyze.php');
+                        const r = await adminFetch('/api/admin/ai-analyze.php');
                         const d = await r.json();
                         const msg = d.success
                           ? `상태: ${d.status} | Mock: ${d.mock_mode ? '예' : '아니오'} | API키: ${d.openai_key_set ? '설정됨' : '없음'} | env: ${d.env_loaded ? '로드됨' : '없음'} | root: ${(d.project_root || '').slice(-40)}`
@@ -3871,7 +3881,7 @@ const AdminPage: React.FC = () => {
                     onClick={async () => {
                       setSaveMessage({ type: 'info', text: 'GPT API 호출 테스트 중...' });
                       try {
-                        const r = await fetch('/api/admin/ai-analyze.php', {
+                        const r = await adminFetch('/api/admin/ai-analyze.php', {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
                           body: JSON.stringify({ action: 'test_openai' })
@@ -3895,7 +3905,7 @@ const AdminPage: React.FC = () => {
                     onClick={async () => {
                       setSaveMessage({ type: 'info', text: 'DALL-E 3 썸네일 연동 테스트 중... (약 30초 소요)' });
                       try {
-                        const r = await fetch('/api/admin/ai-analyze.php', {
+                        const r = await adminFetch('/api/admin/ai-analyze.php', {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
                           body: JSON.stringify({ action: 'test_dalle' })

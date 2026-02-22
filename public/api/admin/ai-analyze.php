@@ -48,8 +48,8 @@ register_shutdown_function(function() {
     }
 });
 
-// TTS 여러 청크 생성 시 60초 제한에 걸리지 않도록 실행 시간 연장
-set_time_limit(300);
+// TTS 여러 청크 생성 시 60초 제한에 걸리지 않도록 실행 시간 연장 (3배: 45분)
+set_time_limit(2700);
 
 // ── 프로젝트 루트 자동 탐지 ──
 function findProjectRoot(): string {
@@ -424,7 +424,7 @@ function analyzeUrl(string $url, array $options = []): array {
 function generateTtsFromNarration(string $narration, ?string $ttsVoice = null, ?string $newsTitle = null, ?string $source = null, ?string $author = null, ?string $publishedAt = null): array {
     global $projectRoot;
 
-    set_time_limit(1200); // TTS 40청크 + 재시도 고려 20분
+    set_time_limit(3600); // TTS 40청크 + 재시도 고려 (3배: 60분)
 
     $narration = trim($narration);
     if ($narration === '') {
@@ -914,7 +914,7 @@ try {
                         }
                     }
 
-                    set_time_limit(1200);
+                    set_time_limit(3600);
                     $result = generateTtsFromNarrationStructured($title ?: '제목 없음', $meta ?: ' ', $narration, $critiquePart, $voiceForParams, $ttsCacheKey, $projectRoot);
 
                     if ($result['success'] && !empty($result['audio_url']) && $supabaseForMedia->isConfigured()) {

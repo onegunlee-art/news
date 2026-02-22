@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { adminFetch } from '../../services/api';
 
 interface Critique {
   id: string;
@@ -52,7 +53,7 @@ const CritiqueEditor: React.FC<CritiqueEditorProps> = ({ newsId, articleUrl, art
     try {
       const params = newsId ? `news_id=${newsId}` : articleUrl ? `article_url=${encodeURIComponent(articleUrl)}` : '';
       if (!params) { setLoading(false); return; }
-      const res = await fetch(`/api/admin/critique-api.php?action=list_critiques&${params}`);
+      const res = await adminFetch(`/api/admin/critique-api.php?action=list_critiques&${params}`);
       const data = await res.json();
       if (data.success) setCritiques(data.critiques || []);
     } catch {
@@ -89,7 +90,7 @@ const CritiqueEditor: React.FC<CritiqueEditorProps> = ({ newsId, articleUrl, art
       };
       if (editingId) body.parent_id = editingId;
 
-      const res = await fetch('/api/admin/critique-api.php', {
+      const res = await adminFetch('/api/admin/critique-api.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -124,7 +125,7 @@ const CritiqueEditor: React.FC<CritiqueEditorProps> = ({ newsId, articleUrl, art
 
   const fetchVersions = async (critiqueId: string) => {
     try {
-      const res = await fetch(`/api/admin/critique-api.php?action=critique_versions&critique_id=${critiqueId}`);
+      const res = await adminFetch(`/api/admin/critique-api.php?action=critique_versions&critique_id=${critiqueId}`);
       const data = await res.json();
       if (data.success) setVersions(data.versions || []);
     } catch {

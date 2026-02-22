@@ -72,11 +72,10 @@ final class AdminController
      */
     public function stats(Request $request): Response
     {
-        // 관리자 권한 확인 (개발 중에는 생략 가능)
-        // $adminId = $this->checkAdminAuth($request);
-        // if (!$adminId) {
-        //     return Response::unauthorized('관리자 권한이 필요합니다.');
-        // }
+        $adminId = $this->checkAdminAuth($request);
+        if (!$adminId) {
+            return Response::unauthorized('관리자 권한이 필요합니다.');
+        }
         
         try {
             // 전체 사용자 수
@@ -124,6 +123,10 @@ final class AdminController
      */
     public function users(Request $request): Response
     {
+        $adminId = $this->checkAdminAuth($request);
+        if (!$adminId) {
+            return Response::unauthorized('관리자 권한이 필요합니다.');
+        }
         $page = max(1, (int) $request->query('page', 1));
         $perPage = min((int) $request->query('per_page', 20), 100);
         $offset = ($page - 1) * $perPage;
@@ -166,6 +169,10 @@ final class AdminController
      */
     public function userDetail(Request $request): Response
     {
+        $adminId = $this->checkAdminAuth($request);
+        if (!$adminId) {
+            return Response::unauthorized('관리자 권한이 필요합니다.');
+        }
         $userId = (int) $request->param('id');
         if ($userId <= 0) {
             return Response::error('유효하지 않은 사용자 ID입니다.', 400);
@@ -215,6 +222,10 @@ final class AdminController
      */
     public function updateUserStatus(Request $request): Response
     {
+        $adminId = $this->checkAdminAuth($request);
+        if (!$adminId) {
+            return Response::unauthorized('관리자 권한이 필요합니다.');
+        }
         $userId = (int) $request->param('id');
         $status = $request->json('status');
         
@@ -244,6 +255,10 @@ final class AdminController
      */
     public function updateUserRole(Request $request): Response
     {
+        $adminId = $this->checkAdminAuth($request);
+        if (!$adminId) {
+            return Response::unauthorized('관리자 권한이 필요합니다.');
+        }
         $userId = (int) $request->param('id');
         $role = $request->json('role');
         
@@ -273,6 +288,10 @@ final class AdminController
      */
     public function activities(Request $request): Response
     {
+        $adminId = $this->checkAdminAuth($request);
+        if (!$adminId) {
+            return Response::unauthorized('관리자 권한이 필요합니다.');
+        }
         $limit = min((int) $request->query('limit', 10), 50);
         
         try {
@@ -333,6 +352,10 @@ final class AdminController
      */
     public function getSettings(Request $request): Response
     {
+        $adminId = $this->checkAdminAuth($request);
+        if (!$adminId) {
+            return Response::unauthorized('관리자 권한이 필요합니다.');
+        }
         try {
             $stmt = $this->db->query("SELECT `key`, `value` FROM settings");
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -356,6 +379,10 @@ final class AdminController
      */
     public function updateSettings(Request $request): Response
     {
+        $adminId = $this->checkAdminAuth($request);
+        if (!$adminId) {
+            return Response::unauthorized('관리자 권한이 필요합니다.');
+        }
         $settings = $request->json();
         
         if (!is_array($settings)) {
@@ -387,6 +414,10 @@ final class AdminController
      */
     public function createNews(Request $request): Response
     {
+        $adminId = $this->checkAdminAuth($request);
+        if (!$adminId) {
+            return Response::unauthorized('관리자 권한이 필요합니다.');
+        }
         $category = $request->json('category');
         $title = $request->json('title');
         $content = $request->json('content');
@@ -432,6 +463,10 @@ final class AdminController
      */
     public function getNews(Request $request): Response
     {
+        $adminId = $this->checkAdminAuth($request);
+        if (!$adminId) {
+            return Response::unauthorized('관리자 권한이 필요합니다.');
+        }
         $category = $request->query('category');
         $page = max(1, (int) $request->query('page', 1));
         $perPage = min((int) $request->query('per_page', 20), 100);
@@ -486,6 +521,10 @@ final class AdminController
      */
     public function deleteNews(Request $request): Response
     {
+        $adminId = $this->checkAdminAuth($request);
+        if (!$adminId) {
+            return Response::unauthorized('관리자 권한이 필요합니다.');
+        }
         $newsId = (int) $request->param('id');
         
         if ($newsId <= 0) {
@@ -514,6 +553,10 @@ final class AdminController
      */
     public function clearCache(Request $request): Response
     {
+        $adminId = $this->checkAdminAuth($request);
+        if (!$adminId) {
+            return Response::unauthorized('관리자 권한이 필요합니다.');
+        }
         try {
             $cacheDir = __DIR__ . '/../../../storage/cache';
             
@@ -542,7 +585,11 @@ final class AdminController
      */
     public function regenerateAllTts(Request $request): Response
     {
-        set_time_limit(120); // 배치당 최대 2분 (504 방지)
+        $adminId = $this->checkAdminAuth($request);
+        if (!$adminId) {
+            return Response::unauthorized('관리자 권한이 필요합니다.');
+        }
+        set_time_limit(360); // 배치당 최대 6분 (3배 연장)
         $body = $request->json() ?? [];
         $force = isset($body['force']) && $body['force'] === true;
         $offset = isset($body['offset']) && is_numeric($body['offset']) ? max(0, (int) $body['offset']) : 0;
