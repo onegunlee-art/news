@@ -119,6 +119,7 @@ $hasOriginalTitle  = isset($newsColumns['original_title']);
 $hasAuthor         = isset($newsColumns['author']);
 $hasPublishedAt    = isset($newsColumns['published_at']);
 $hasSubtitle       = isset($newsColumns['subtitle']);
+$hasStatus         = isset($newsColumns['status']);
 
 $method = $_SERVER['REQUEST_METHOD'];
 
@@ -179,6 +180,12 @@ if ($method === 'POST') {
             $publishedAt = null;
             logError('Failed to parse published_at: ' . $publishedAtRaw);
         }
+    }
+    
+    // status: draft(임시저장) | published(공개). hasStatus 없으면 published로 저장
+    $status = $hasStatus ? ($input['status'] ?? 'published') : 'published';
+    if ($hasStatus && !in_array($status, ['draft', 'published'])) {
+        $status = 'published';
     }
     
     // 디버그 로깅
@@ -293,6 +300,11 @@ if ($method === 'POST') {
             $values[] = $publishedAt;
             $placeholders[] = '?';
         }
+        if ($hasStatus) {
+            $columns[] = 'status';
+            $values[] = $status;
+            $placeholders[] = '?';
+        }
         
         $columnStr = implode(', ', $columns);
         $placeholderStr = implode(', ', $placeholders);
@@ -359,10 +371,47 @@ if ($method === 'POST') {
     exit;
 }
 
-// GET: 뉴스 목록 조회 (검색 기능 포함)
+// GET: 뉴스 단건 조회 (id 있을 때) 또는 목록 조회
 if ($method === 'GET') {
+    $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+    
+    // 단건 조회: Admin용 (draft 포함, status 무관)
+    if ($id > 0) {
+        try {
+            $selCols = 'id, category, title, description, content, source, url, image_url, created_at, updated_at';
+            if ($hasSubtitle) $selCols .= ', subtitle';
+            if ($hasWhyImportant) $selCols .= ', why_important';
+            if ($hasNarration) $selCols .= ', narration';
+            if ($hasFuturePrediction) $selCols .= ', future_prediction';
+            if ($hasSourceUrl) $selCols .= ', source_url';
+            if ($hasOriginalSource) $selCols .= ', original_source';
+            if ($hasOriginalTitle) $selCols .= ', original_title';
+            if ($hasAuthor) $selCols .= ', author';
+            if ($hasPublishedAt) $selCols .= ', published_at';
+            if ($hasStatus) $selCols .= ', status';
+            $stmt = $db->prepare("SELECT $selCols FROM news WHERE id = ?");
+            $stmt->execute([$id]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$row) {
+                http_response_code(404);
+                echo json_encode(['success' => false, 'message' => '뉴스를 찾을 수 없습니다.']);
+                exit;
+            }
+            api_log('admin/news', 'GET', 200);
+            echo json_encode(['success' => true, 'data' => ['article' => $row]]);
+        } catch (PDOException $e) {
+            api_log('admin/news', 'GET', 500, $e->getMessage());
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => '뉴스 조회 실패: ' . $e->getMessage()]);
+        }
+        exit;
+    }
+    
+    // 목록 조회
     $category = $_GET['category'] ?? '';
     $query = $_GET['query'] ?? '';  // 검색어
+    $statusFilter = $_GET['status_filter'] ?? '';  // draft | published
+    $publishedOnly = isset($_GET['published_only']) && ($_GET['published_only'] === '1' || $_GET['published_only'] === 'true');
     $page = max(1, (int)($_GET['page'] ?? 1));
     $perPage = min((int)($_GET['per_page'] ?? 20), 100);
     $offset = ($page - 1) * $perPage;
@@ -384,6 +433,16 @@ if ($method === 'GET') {
             $params[] = $searchTerm;
             $params[] = $searchTerm;
             $params[] = $searchTerm;
+        }
+        
+        // status 필터: published_only(유저용) 또는 status_filter(Admin용)
+        if ($hasStatus) {
+            if ($publishedOnly) {
+                $conditions[] = "status = 'published'";
+            } elseif ($statusFilter === 'draft' || $statusFilter === 'published') {
+                $conditions[] = 'status = ?';
+                $params[] = $statusFilter;
+            }
         }
         
         $where = count($conditions) > 0 ? 'WHERE ' . implode(' AND ', $conditions) : '';
@@ -433,6 +492,9 @@ if ($method === 'GET') {
         }
         if ($hasSubtitle) {
             $selectColumns = str_replace('title,', 'title, subtitle,', $selectColumns);
+        }
+        if ($hasStatus) {
+            $selectColumns .= ', status';
         }
         
         $stmt = $db->prepare("
@@ -511,6 +573,12 @@ if ($method === 'PUT') {
         } catch (Exception $e) {
             $publishedAt = null;
         }
+    }
+    
+    // status: draft | published (게시하기 시 published로 변경)
+    $status = null;
+    if ($hasStatus && isset($input['status'])) {
+        $status = in_array($input['status'], ['draft', 'published']) ? $input['status'] : null;
     }
     
     // 디버그 로깅
@@ -644,6 +712,11 @@ if ($method === 'PUT') {
         if ($hasSubtitle) {
             $setClauses[] = 'subtitle = ?';
             $values[] = $subtitle;
+        }
+        
+        if ($hasStatus && $status !== null) {
+            $setClauses[] = 'status = ?';
+            $values[] = $status;
         }
         
         $values[] = $id;  // WHERE 절용

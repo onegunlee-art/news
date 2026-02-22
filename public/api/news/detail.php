@@ -132,6 +132,13 @@ try {
         $hasUpdatedAt = $checkCol->rowCount() > 0;
     } catch (Exception $e) {}
     
+    // status 컬럼 존재 여부 (draft는 유저에게 비노출)
+    $hasStatus = false;
+    try {
+        $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'status'");
+        $hasStatus = $checkCol->rowCount() > 0;
+    } catch (Exception $e) {}
+    
     // 기본 컬럼 (url: extractTitleFromUrl용, source_url 없을 때 fallback)
     $columns = 'id, category, title, description, content, source, url, image_url, created_at';
     if ($hasUpdatedAt) {
@@ -189,8 +196,13 @@ try {
     // #region agent log
     $debugPayload('detail.php:beforeExecute', 'SELECT about to run', ['id' => $id, 'columns' => $columns], 'H3');
     // #endregion
-    $stmt = $db->prepare("SELECT $columns FROM news WHERE id = ?");
-    $stmt->execute([$id]);
+    $whereClause = 'id = ?';
+    $whereParams = [$id];
+    if ($hasStatus) {
+        $whereClause .= " AND (status = 'published' OR status IS NULL)";
+    }
+    $stmt = $db->prepare("SELECT $columns FROM news WHERE $whereClause");
+    $stmt->execute($whereParams);
     $news = $stmt->fetch();
     // #region agent log
     $debugPayload('detail.php:afterFetch', 'SELECT result', ['hasRow' => (bool)$news, 'rowKeys' => $news ? array_keys($news) : null], 'H4');
