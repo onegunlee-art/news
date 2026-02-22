@@ -82,7 +82,13 @@ $config = file_exists($configPath) ? require $configPath : [];
 
 // 요청 URI 파싱
 $requestUri = $_SERVER['REQUEST_URI'] ?? '/';
-$requestUri = parse_url($requestUri, PHP_URL_PATH);
+// Rewrite로 index.php에 진입한 경우 원본 경로 복원 (api/admin 등 → HTML 대신 JSON 반환)
+$originalUri = $_SERVER['REDIRECT_ORIGINAL_URI'] ?? $_SERVER['REDIRECT_URL'] ?? null;
+if ($originalUri !== null && $originalUri !== '' && str_starts_with($originalUri, '/api/')) {
+    $requestUri = $originalUri;
+}
+$requestUri = parse_url($requestUri, PHP_URL_PATH) ?? '/';
+$requestUri = '/' . trim((string) $requestUri, '/') ?: '/';
 $requestMethod = $_SERVER['REQUEST_METHOD'];
 
 // API 요청인지 확인
