@@ -27,8 +27,8 @@ ErrorDocument 404 /index.php
     # 분석 API 직접 처리
     RewriteRule ^api/analysis/news/([0-9]+)$ api/analysis/news.php [QSA,L]
 
-    # Admin API: index.php로 라우팅 (원본 URI 전달로 JSON 응답 보장)
-    RewriteRule ^api/admin/ index.php [QSA,L,E=ORIGINAL_URI:%{REQUEST_URI}]
+    # Admin API: index.php로 라우팅 (쿼리로 경로 전달 - 호스팅 호환)
+    RewriteRule ^api/admin/(.+)$ index.php?__api_path=/api/admin/$1 [QSA,L]
 
     # 정적 파일은 직접 제공 (PHP 파일 포함)
     RewriteCond %{REQUEST_FILENAME} -f
