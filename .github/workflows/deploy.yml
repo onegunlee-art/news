@@ -118,6 +118,8 @@ jobs:
           echo "=== 배포 패키지에 포함될 항목 ==="
           ls -la public/
           test -f public/index.html && echo "OK: index.html 있음" || echo "WARN: index.html 없음"
+          test -f public/api.php && echo "OK: api.php 있음" || echo "WARN: api.php 없음"
+          test -f public/api/admin/news.php && echo "OK: api/admin/news.php 있음" || echo "WARN: api/admin/news.php 없음"
           ls public/assets/ 2>/dev/null | head -5 || true
 
       - name: Create deployment package

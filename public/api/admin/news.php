@@ -398,7 +398,13 @@ if ($method === 'GET') {
                 exit;
             }
             api_log('admin/news', 'GET', 200);
-            echo json_encode(['success' => true, 'data' => ['article' => $row]]);
+            $json = json_encode(['success' => true, 'data' => ['article' => $row]], JSON_UNESCAPED_UNICODE);
+            if ($json === false) {
+                http_response_code(500);
+                echo json_encode(['success' => false, 'message' => 'JSON 인코딩 실패: ' . json_last_error_msg()]);
+                exit;
+            }
+            echo $json;
         } catch (PDOException $e) {
             api_log('admin/news', 'GET', 500, $e->getMessage());
             http_response_code(500);
