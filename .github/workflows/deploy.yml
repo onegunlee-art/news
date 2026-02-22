@@ -120,6 +120,7 @@ jobs:
           test -f public/index.html && echo "OK: index.html 있음" || echo "WARN: index.html 없음"
           test -f public/api.php && echo "OK: api.php 있음" || echo "WARN: api.php 없음"
           test -f public/api/admin/news.php && echo "OK: api/admin/news.php 있음" || echo "WARN: api/admin/news.php 없음"
+          test -f public/.htaccess && echo "OK: .htaccess 있음" || echo "WARN: .htaccess 없음"
           ls public/assets/ 2>/dev/null | head -5 || true
 
       - name: Create deployment package
@@ -129,6 +130,8 @@ jobs:
           
           # Public 폴더 (프론트엔드 빌드 + PHP 진입점)
           cp -r public/* deploy/
+          # dotfile 복사 (*는 .htaccess 등 dotfile 미포함)
+          cp public/.htaccess deploy/ 2>/dev/null || true
           
           # Config 폴더
           mkdir -p deploy/config
