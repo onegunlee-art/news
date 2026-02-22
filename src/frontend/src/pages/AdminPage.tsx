@@ -1413,14 +1413,43 @@ const AdminPage: React.FC = () => {
                             return;
                           }
                           setIsAnalyzing(true);
-                          setSaveMessage({ type: 'info', text: '분석을 시작했습니다. 잠시만 기다려주세요...' });
+                          setSaveMessage({ type: 'info', text: 'API 연결 확인 중...' });
                           setAiError(null);
                           setAiResult(null);
                           let pollAborted = false;
+                          const apiUrl = '/api/admin/ai-analyze.php';
                           try {
+                            // 0단계: 사전 연결 확인 (Failed to fetch 원인 진단) - 가벼운 ping 사용
+                            const preflightCtrl = new AbortController();
+                            const preflightTimer = setTimeout(() => preflightCtrl.abort(), 10000);
+                            try {
+                              const preRes = await fetch(`${apiUrl}?action=ping`, { signal: preflightCtrl.signal });
+                              clearTimeout(preflightTimer);
+                              if (!preRes.ok) {
+                                setSaveMessage({ type: 'error', text: `API 연결됐으나 HTTP ${preRes.status}. 서버 오류일 수 있습니다.` });
+                                setIsAnalyzing(false);
+                                return;
+                              }
+                            } catch (preErr: unknown) {
+                              clearTimeout(preflightTimer);
+                              const pe = preErr as Error & { name?: string };
+                              if (pe.name === 'AbortError') {
+                                setSaveMessage({ type: 'error', text: 'API 연결 시간 초과(10초). 서버·호스팅 타임아웃 또는 배포 경로를 확인해주세요.' });
+                              } else {
+                                const pingUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}${apiUrl}?action=ping`;
+                              setSaveMessage({ type: 'error', text: `API 연결 실패: ${pe.message || String(preErr)}. 배포 경로(${apiUrl}), 서버, 네트워크를 확인하세요. 브라우저에서 ${pingUrl} 을 직접 열어 연결 여부를 확인해보세요.` });
+                              }
+                              setIsAnalyzing(false);
+                              return;
+                            }
+
+                            setSaveMessage({ type: 'info', text: '분석을 시작했습니다. 잠시만 기다려주세요...' });
                             // 1단계: analyze 요청 → 서버가 즉시 job_id 반환 (504 회피)
-                            const startRes = await fetch('/api/admin/ai-analyze.php', {
+                            const startCtrl = new AbortController();
+                            const startTimer = setTimeout(() => startCtrl.abort(), 90000);
+                            const startRes = await fetch(apiUrl, {
                               method: 'POST',
+                              signal: startCtrl.signal,
                               headers: { 'Content-Type': 'application/json' },
                               body: JSON.stringify({
                                 action: 'analyze',
@@ -1430,6 +1459,7 @@ const AdminPage: React.FC = () => {
                                 enable_learning: false
                               }),
                             });
+                            clearTimeout(startTimer);
 
                             const contentType = startRes.headers.get('content-type') || '';
                             if (!contentType.includes('application/json')) {
@@ -1550,9 +1580,15 @@ const AdminPage: React.FC = () => {
                           } catch (error: unknown) {
                             console.error('GPT 분석 에러:', error);
                             const err = error as Error & { name?: string };
-                            const msg = err.name === 'AbortError'
-                              ? '요청 시간 초과. 서버·프록시 타임아웃이거나 URL 접근이 느립니다.'
-                              : '서버 오류: ' + (err.message || String(error));
+                            let msg: string;
+                            if (err.name === 'AbortError') {
+                              msg = '요청 시간 초과(90초). 서버·호스팅 타임아웃이거나 URL 접근이 느립니다.';
+                            } else if ((err.message || '').includes('Failed to fetch')) {
+                              const pingUrl = typeof window !== 'undefined' ? `${window.location.origin}/api/admin/ai-analyze.php?action=ping` : '/api/admin/ai-analyze.php?action=ping';
+                              msg = `서버 연결 실패 (Failed to fetch). 배포 경로, 서버 상태, 네트워크를 확인하세요. 브라우저에서 ${pingUrl} 을 직접 열어 연결 여부를 확인해보세요.`;
+                            } else {
+                              msg = '서버 오류: ' + (err.message || String(error));
+                            }
                             setSaveMessage({ type: 'error', text: msg });
                           } finally {
                             pollAborted = true;
@@ -1587,7 +1623,11 @@ const AdminPage: React.FC = () => {
                           setSaveMessage({ type: d.openai_key_set ? 'success' : 'error', text: msg });
                           if (d.env_tried?.length) console.log('env_tried', d.env_tried);
                         } catch (e) {
-                          setSaveMessage({ type: 'error', text: '상태 확인 실패: ' + (e as Error).message });
+                          const em = (e as Error).message;
+                          const hint = em.includes('Failed to fetch')
+                            ? ' (API 연결 불가. 배포 경로·서버·네트워크 확인)'
+                            : '';
+                          setSaveMessage({ type: 'error', text: '상태 확인 실패: ' + em + hint });
                         }
                       }}
                       className="text-slate-500 hover:text-cyan-400 text-xs mt-1 underline"

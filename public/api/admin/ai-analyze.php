@@ -25,6 +25,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
+// 가벼운 ping (autoload 로드 전) - Failed to fetch 원인 진단용
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'GET' && ($_GET['action'] ?? '') === 'ping') {
+    ob_clean();
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode(['success' => true, 'action' => 'ping', 'message' => 'API 연결됨', 'ts' => time()], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
 // Fatal Error 핸들러 - 어떤 경우에도 JSON 응답 보장
 register_shutdown_function(function() {
     $error = error_get_last();
