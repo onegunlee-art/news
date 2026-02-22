@@ -21,6 +21,8 @@ ErrorDocument 404 /index.php
     RewriteRule ^api/auth/kakao$ api/auth/kakao.php [L]
     RewriteRule ^api/auth/kakao/callback$ api/auth/kakao/callback.php [QSA,L]
     RewriteRule ^api/auth/kakao/token$ api/auth/kakao/token.php [QSA,L]
+    # 관리자 계정 생성 (1회 실행용)
+    RewriteRule ^api/auth/seed-admin-user$ api/auth/seed-admin-user.php [QSA,L]
     
     # 분석 API 직접 처리
     RewriteRule ^api/analysis/news/([0-9]+)$ api/analysis/news.php [QSA,L]

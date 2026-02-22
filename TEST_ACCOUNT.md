@@ -45,6 +45,27 @@ PC에 PHP가 설치되어 있다면, 프로젝트 루트 폴더에서 아래처�
    - 로그인 페이지(`/login`)에서 **이메일**과 **비밀번호**를 입력한 뒤 로그인 버튼을 누릅니다.
    - 카카오 로그인 없이 위 계정으로 로그인할 수 있습니다.
 
+## 관리자(Admin) 접속 방법
+
+Admin 페이지(`/admin`)에 들어가려면 **로그인 + role=admin** 이 필요합니다.
+
+### 1단계: 관리자 계정 설정 (최초 1회)
+
+브라우저 주소창에 아래 URL을 입력해 접속합니다.
+
+- **배포 서버**: `https://www.thegist.co.kr/api/auth/seed-admin-user`
+- **또는 (직접 파일)**: `https://www.thegist.co.kr/api/auth/seed-admin-user.php`
+- **다른 이메일로 설정**: `https://www.thegist.co.kr/api/auth/seed-admin-user?email=your@email.com`
+
+한 번만 열면 `test@test.com`(또는 지정한 이메일) 계정이 관리자로 설정됩니다.
+
+### 2단계: 로그인 후 Admin 접속
+
+1. `/login`에서 이메일·비밀번호로 로그인
+2. `https://www.thegist.co.kr/admin` 접속
+
+---
+
 ## 주의사항
 
 - **운영 환경에서는 해당 계정을 삭제하거나 비밀번호를 변경**하는 것을 권장합니다.
