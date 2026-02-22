@@ -10,6 +10,7 @@ GPT가 Foreign Affairs 등 기사를 분석할 때 참조하는 이미지들입�
 | 소제목 항목.jpg | subheading_reference.jpg | 소제목(섹션 헤딩) 식별 |
 | 무시해야 하는 해석.jpg | pull_quote_ignore.jpg | pull quote 무시 (요약에서 제외) |
 | 요약 룰.jpg | summary_rules.jpg | content_summary 작성 형식 |
+| 가독성 형식.png | readability_format.png | content_summary 가독성 형식 (The Gist 스타일: 섹션별 제목, 영한 교차, 짧은 문단) |
 
 ## 대체 파일
 
