@@ -71,11 +71,23 @@ spl_autoload_register(function (string $class) use ($projectRoot): void {
     if (file_exists($file)) require $file;
 });
 
-// 요청 URI: __path 쿼리 파라미터로 전달 (항상 설정됨)
+// 요청 URI: __path 쿼리 파라미터로 전달 (리라이트 시 항상 설정됨)
 $requestUri = $_GET['__path'] ?? $_SERVER['REQUEST_URI'] ?? '/';
 $requestUri = parse_url($requestUri, PHP_URL_PATH) ?? '/';
 $requestUri = '/' . trim((string) $requestUri, '/') ?: '/';
 $requestMethod = $_SERVER['REQUEST_METHOD'];
+
+// __path 없이 직접 호출된 경우 (리라이트 실패)
+if (!isset($_GET['__path']) && !str_starts_with($requestUri, '/api/')) {
+    header('Content-Type: application/json; charset=UTF-8');
+    http_response_code(400);
+    echo json_encode([
+        'success' => false,
+        'error' => 'Bad Request',
+        'message' => 'API는 /api/* 경로로만 접근 가능합니다. __path가 필요합니다.',
+    ], JSON_UNESCAPED_UNICODE);
+    exit;
+}
 
 // API 전용: 항상 JSON 응답
 header('Content-Type: application/json; charset=UTF-8');
@@ -98,9 +110,19 @@ try {
     }
 } catch (Throwable $e) {
     http_response_code(500);
+    $msg = $e->getMessage();
+    $file = $e->getFile();
+    $line = $e->getLine();
+    // 로그 기록 (배포 서버 디버깅용)
+    $logDir = ($projectRoot ?? __DIR__) . '/storage/logs';
+    if (is_dir($logDir) || @mkdir($logDir, 0755, true)) {
+        @file_put_contents($logDir . '/api_error.log', date('Y-m-d H:i:s') . " $msg in $file:$line\n", FILE_APPEND | LOCK_EX);
+    }
     echo json_encode([
         'success' => false,
         'error' => 'Internal Server Error',
-        'message' => $e->getMessage(),
+        'message' => $msg,
+        'file' => basename($file),
+        'line' => $line,
     ], JSON_UNESCAPED_UNICODE);
 }
