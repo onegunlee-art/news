@@ -842,14 +842,20 @@ const AdminPage: React.FC = () => {
     setIsLoadingDraft(true);
     try {
       const response = await adminFetch('/api/admin/news.php?status_filter=draft&per_page=50');
+      const ct = response.headers.get('content-type') || '';
+      if (!ct.includes('application/json')) {
+        const text = await response.text();
+        throw new Error(`서버가 JSON 대신 HTML을 반환했습니다 (${response.status}). API 경로를 확인하세요.`);
+      }
       const data = await response.json();
       if (data.success && data.data?.items) {
         setDraftList(data.data.items);
       } else {
         setDraftList([]);
       }
-    } catch {
+    } catch (e) {
       setDraftList([]);
+      setSaveMessage({ type: 'error', text: (e as Error).message });
     } finally {
       setIsLoadingDraft(false);
     }
@@ -866,6 +872,10 @@ const AdminPage: React.FC = () => {
     setIsLoadingDraft(true);
     try {
       const response = await adminFetch(`/api/admin/news.php?id=${id}`);
+      const ct = response.headers.get('content-type') || '';
+      if (!ct.includes('application/json')) {
+        throw new Error('서버가 JSON 대신 HTML을 반환했습니다. API 경로를 확인하세요.');
+      }
       const data = await response.json();
       if (data.success && data.data?.article) {
         setDraftArticle(data.data.article as DraftArticle);
