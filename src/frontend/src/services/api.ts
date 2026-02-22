@@ -69,13 +69,22 @@ api.interceptors.response.use(
 
 // API 함수들
 export const newsApi = {
-  // 우리 DB에서 뉴스 목록 조회
-  getList: (page = 1, perPage = 20, category?: string) =>
-    api.get('/admin/news.php', { params: { page, per_page: perPage, category } }),
+  // 우리 DB에서 뉴스 목록 조회 (published_only: 유저용 목록에서 draft 제외)
+  getList: (page = 1, perPage = 20, category?: string, publishedOnly = true) =>
+    api.get('/admin/news.php', {
+      params: {
+        page,
+        per_page: perPage,
+        category,
+        ...(publishedOnly && { published_only: '1' }),
+      },
+    }),
   
-  // 우리 DB에서 키워드 검색
+  // 우리 DB에서 키워드 검색 (유저용, published만)
   search: (query: string, page = 1, perPage = 20) =>
-    api.get('/admin/news.php', { params: { query, page, per_page: perPage } }),
+    api.get('/admin/news.php', {
+      params: { query, page, per_page: perPage, published_only: '1' },
+    }),
   
   getDetail: (id: number, params?: Record<string, unknown>) =>
     api.get('/news/detail.php', { params: { id, ...params } }),
