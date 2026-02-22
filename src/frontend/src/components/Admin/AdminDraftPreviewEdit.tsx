@@ -132,8 +132,9 @@ export default function AdminDraftPreviewEdit({
     }
   }
 
+  // 유저 페이지(NewsDetailPage)와 동일한 스타일 - 문맥별로 나뉜 형태 유지
   const proseClasses =
-    'text-gray-700 leading-relaxed whitespace-pre-wrap [&_mark]:rounded-sm [&_mark]:px-0.5 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-0.5 [&_table]:border-collapse [&_table]:w-full [&_table]:my-2 [&_td]:border [&_td]:border-gray-300 [&_td]:px-2 [&_td]:py-1.5 [&_th]:border [&_th]:border-gray-300 [&_th]:px-2 [&_th]:py-1.5 [&_th]:font-semibold [&_th]:bg-gray-100'
+    'leading-relaxed whitespace-pre-wrap [&_mark]:rounded-sm [&_mark]:px-0.5 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-0.5 [&_table]:border-collapse [&_table]:w-full [&_table]:my-2 [&_td]:border [&_td]:border-gray-300 [&_td]:px-2 [&_td]:py-1.5 [&_th]:border [&_th]:border-gray-300 [&_th]:px-2 [&_th]:py-1.5 [&_th]:font-semibold [&_th]:bg-gray-100'
 
   return (
     <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 py-6">
@@ -222,7 +223,7 @@ export default function AdminDraftPreviewEdit({
             </div>
           )}
 
-          {/* The Gist 섹션 */}
+          {/* The Gist — 유저 페이지와 동일: 주황색 박스, 문맥별 구분 */}
           <div className="mb-8">
             <div className="flex items-center justify-between mb-2">
               <h2
@@ -254,16 +255,20 @@ export default function AdminDraftPreviewEdit({
                 />
               </div>
             ) : (
-              <div
-                className={`border-l-4 border-orange-500 bg-gradient-to-r from-orange-50 via-amber-50 to-white rounded-r-xl px-5 py-5 ${proseClasses}`}
-                dangerouslySetInnerHTML={{
-                  __html: formatContentHtml(news.why_important || ''),
-                }}
-              />
+              <div className="border-l-4 border-orange-500 bg-gradient-to-r from-orange-50 via-amber-50 to-white rounded-r-xl shadow-sm overflow-hidden">
+                <div className="px-5 py-5 sm:px-6 sm:py-6">
+                  <div
+                    className={`text-gray-800 ${proseClasses}`}
+                    dangerouslySetInnerHTML={{
+                      __html: formatContentHtml(news.why_important || ''),
+                    }}
+                  />
+                </div>
+              </div>
             )}
           </div>
 
-          {/* 내레이션 섹션 */}
+          {/* 내레이션 — 유저 페이지와 동일: prose, 문맥별 구분 */}
           <div className="mb-8">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-lg font-semibold text-gray-800">내레이션</h3>
@@ -291,7 +296,7 @@ export default function AdminDraftPreviewEdit({
               </div>
             ) : (
               <div
-                className={`prose prose-lg max-w-none ${proseClasses}`}
+                className={`prose prose-lg max-w-none text-gray-700 ${proseClasses}`}
                 dangerouslySetInnerHTML={{
                   __html: formatContentHtml(news.narration || news.description || ''),
                 }}
@@ -299,8 +304,8 @@ export default function AdminDraftPreviewEdit({
             )}
           </div>
 
-          {/* 원문 AI 요약/구조 분석 섹션 */}
-          <div className="mb-8 border-t border-gray-100 pt-6">
+          {/* 원문 AI 요약/구조 분석 — 유저 페이지와 동일: border-t 구분, 회색 박스 */}
+          <div className="mb-8 border-t border-gray-100 pt-6 mt-2">
             <div className="flex items-center justify-between mb-3">
               <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-500 uppercase tracking-wider">
                 <svg
@@ -350,9 +355,9 @@ export default function AdminDraftPreviewEdit({
             )}
           </div>
 
-          {/* 원문 링크 */}
+          {/* 원문 링크 — 유저 페이지와 동일 */}
           {news.url && news.url !== '#' && (
-            <div className="border-t border-gray-100 pt-6">
+            <div className="border-t border-gray-100 pt-6 mt-6">
               <a
                 href={news.url}
                 target="_blank"
