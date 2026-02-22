@@ -48,7 +48,7 @@ export default function RichTextToolbar({
     onChange(el.innerHTML)
   }
 
-  const applyWrap = (before: string, after: string) => {
+  const applyWrap = (before: string, after: string, expandToFormattingTags = true) => {
     const el = ref?.current
     if (!el || disabled) return
 
@@ -70,18 +70,21 @@ export default function RichTextToolbar({
     }
     if (range.collapsed) return
 
-    const FORMATTING_TAGS = ['B', 'STRONG', 'MARK', 'SPAN']
-    let node: Node | null = range.commonAncestorContainer
-    if (node.nodeType === Node.TEXT_NODE) node = node.parentElement
-    if (node?.nodeType === Node.ELEMENT_NODE) {
-      let elem: HTMLElement | null = node as HTMLElement
-      while (elem && elem !== el) {
-        if (FORMATTING_TAGS.includes(elem.tagName) && el.contains(elem)) {
-          range.setStartBefore(elem)
-          range.setEndAfter(elem)
-          break
+    // 볼드(B/STRONG)만 선택 영역을 부모 포맷 태그 전체로 확장. 하이라이트는 드래그한 영역만 적용
+    if (expandToFormattingTags) {
+      const FORMATTING_TAGS = ['B', 'STRONG']
+      let node: Node | null = range.commonAncestorContainer
+      if (node.nodeType === Node.TEXT_NODE) node = node.parentElement
+      if (node?.nodeType === Node.ELEMENT_NODE) {
+        let elem: HTMLElement | null = node as HTMLElement
+        while (elem && elem !== el) {
+          if (FORMATTING_TAGS.includes(elem.tagName) && el.contains(elem)) {
+            range.setStartBefore(elem)
+            range.setEndAfter(elem)
+            break
+          }
+          elem = elem.parentElement
         }
-        elem = elem.parentElement
       }
     }
 
@@ -164,7 +167,7 @@ export default function RichTextToolbar({
       removeHighlight()
       return
     }
-    applyWrap(`<mark style="background:${opt.bg}">`, '</mark>')
+    applyWrap(`<mark style="background:${opt.bg}">`, '</mark>', false)
   }
 
   return (
