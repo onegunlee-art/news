@@ -27,8 +27,6 @@ ErrorDocument 404 /index.php
     # 분석 API 직접 처리
     RewriteRule ^api/analysis/news/([0-9]+)$ api/analysis/news.php [QSA,L]
 
-    # Admin API: index.php 리라이트 제거 → api/admin/*.php 파일 직접 실행 (HTML 반환 이슈 회피)
-
     # 정적 파일은 직접 제공 (PHP 파일 포함)
     RewriteCond %{REQUEST_FILENAME} -f
     RewriteRule ^ - [L]
@@ -37,9 +35,9 @@ ErrorDocument 404 /index.php
     RewriteCond %{REQUEST_FILENAME} -d
     RewriteRule ^ - [L]
 
-    # API 요청 중 실제 파일이 없는 경우만 index.php로 라우팅
+    # API 요청: api.php로 라우팅 (HTML 대신 항상 JSON 반환)
     RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteRule ^api/(.*)$ index.php [QSA,L]
+    RewriteRule ^api/(.*)$ api.php?__path=/api/$1 [QSA,L]
 
     # React SPA 라우팅 지원
     RewriteCond %{REQUEST_FILENAME} !-f
