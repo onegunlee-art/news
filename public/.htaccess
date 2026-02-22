@@ -96,18 +96,14 @@ ErrorDocument 404 /index.php
 # 디렉토리 목록 비활성화
 Options -Indexes
 
-# PHP 설정 (dothome 호환, AI 분석 등 장시간 요청 허용)
-<IfModule mod_php.c>
-    php_value upload_max_filesize 10M
-    php_value post_max_size 10M
-    php_value max_execution_time 1200
+# php_value 제거: 닷홈(FastCGI/PHP-FPM)에서 500 유발. 필요시 php.ini 또는 호스팅 패널에서 설정
+
+# 민감한 파일 접근 차단 (닷홈 호환: 모듈 없으면 스킵)
+<IfModule mod_authz_core.c>
+    <FilesMatch "\.(env|sql|md|json|lock|yml|yaml)$">
+        Require all denied
+    </FilesMatch>
+    <FilesMatch "^\.">
+        Require all denied
+    </FilesMatch>
 </IfModule>
-
-# 민감한 파일 접근 차단 (Apache 2.4: Require all denied)
-<FilesMatch "\.(env|sql|md|json|lock|yml|yaml)$">
-    Require all denied
-</FilesMatch>
-
-<FilesMatch "^\.">
-    Require all denied
-</FilesMatch>
