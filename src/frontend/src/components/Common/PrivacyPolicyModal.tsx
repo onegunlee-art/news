@@ -1,5 +1,6 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { api } from '../../services/api'
 import { PRIVACY_POLICY_CONTENT } from './PrivacyPolicyContent'
 
 interface PrivacyPolicyModalProps {
@@ -8,6 +9,21 @@ interface PrivacyPolicyModalProps {
 }
 
 const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ isOpen, onClose }) => {
+  const [content, setContent] = useState<string>(PRIVACY_POLICY_CONTENT)
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (!isOpen) return
+    setLoading(true)
+    api.get<{ success: boolean; data: { content: string | null } }>('/settings/privacy')
+      .then((r) => {
+        const c = r.data?.data?.content
+        setContent((c && c.trim()) ? c : PRIVACY_POLICY_CONTENT)
+      })
+      .catch(() => setContent(PRIVACY_POLICY_CONTENT))
+      .finally(() => setLoading(false))
+  }, [isOpen])
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -43,7 +59,7 @@ const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ isOpen, onClose
                 </button>
               </div>
               <div className="flex-1 overflow-y-auto px-6 py-5 text-sm text-gray-700 leading-relaxed whitespace-pre-line">
-                {PRIVACY_POLICY_CONTENT}
+                {loading ? '로딩 중...' : content}
               </div>
               <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
                 <button

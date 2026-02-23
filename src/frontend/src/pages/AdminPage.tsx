@@ -802,9 +802,11 @@ const AdminPage: React.FC = () => {
   const [dashboardUsers, setDashboardUsers] = useState<{ id: number; nickname: string; email: string | null; status: string; last_login_at: string | null; created_at: string }[]>([]);
   const [selectedUserDetail, setSelectedUserDetail] = useState<{ id: number; nickname: string; email: string | null; status: string; last_login_at: string | null; created_at: string; usage?: { analyses_count: number; bookmarks_count: number; search_count: number } } | null>(null);
   const [privacyContent, setPrivacyContent] = useState('');
-  const [, setTermsContent] = useState('');
+  const [termsContent, setTermsContent] = useState('');
   const [privacySaving, setPrivacySaving] = useState(false);
   const [privacyMessage, setPrivacyMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [termsSaving, setTermsSaving] = useState(false);
+  const [termsMessage, setTermsMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [welcomeMessage, setWelcomeMessage] = useState('');
   const [welcomeTitleTemplate, setWelcomeTitleTemplate] = useState('{name}님');
   const [welcomeSaving, setWelcomeSaving] = useState(false);
@@ -1246,6 +1248,41 @@ const AdminPage: React.FC = () => {
                       </button>
                       {welcomeSaveMsg && (
                         <span className={welcomeSaveMsg.type === 'success' ? 'text-emerald-400' : 'text-red-400'}>{welcomeSaveMsg.text}</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 이용약관 수정 */}
+                  <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50">
+                    <h3 className="text-lg font-semibold text-white mb-4">이용약관 수정</h3>
+                    <textarea
+                      value={termsContent}
+                      onChange={(e) => setTermsContent(e.target.value)}
+                      placeholder="이용약관 내용을 입력하세요. 공개 페이지 /terms 및 푸터에 표시됩니다."
+                      className="w-full h-32 px-4 py-3 bg-slate-900/50 border border-slate-600 rounded-lg text-slate-200 placeholder-slate-500 focus:ring-2 focus:ring-cyan-500 focus:border-transparent resize-none"
+                    />
+                    <div className="flex items-center gap-3 mt-3">
+                      <button
+                        type="button"
+                        disabled={termsSaving}
+                        onClick={async () => {
+                          setTermsSaving(true);
+                          setTermsMessage(null);
+                          try {
+                            await adminSettingsApi.updateSettings({ terms_of_service: termsContent });
+                            setTermsMessage({ type: 'success', text: '저장되었습니다.' });
+                          } catch (e) {
+                            setTermsMessage({ type: 'error', text: '저장에 실패했습니다.' });
+                          } finally {
+                            setTermsSaving(false);
+                          }
+                        }}
+                        className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white rounded-lg text-sm"
+                      >
+                        {termsSaving ? '저장 중...' : '저장'}
+                      </button>
+                      {termsMessage && (
+                        <span className={termsMessage.type === 'success' ? 'text-emerald-400' : 'text-red-400'}>{termsMessage.text}</span>
                       )}
                     </div>
                   </div>
