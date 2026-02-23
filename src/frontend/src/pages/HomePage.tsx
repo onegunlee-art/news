@@ -24,13 +24,23 @@ interface NewsItem {
   image_url?: string | null
 }
 
-type TabType = '최신' | '외교' | '금융' | '인기'
+type TabType = '최신' | '외교' | '경제' | '특집' | '인기'
 
 const tabToCategory: Record<TabType, string | null> = {
   '최신': null,
   '외교': 'diplomacy',
-  '금융': 'economy',
+  '경제': 'economy',
+  '특집': 'entertainment',
   '인기': null,
+}
+
+const categoryToLabel: Record<string, string> = {
+  diplomacy: '외교',
+  economy: '경제',
+  entertainment: '특집',
+  technology: '기술',
+  tech: '기술',
+  security: '안보/군사',
 }
 
 const PER_PAGE = 20
@@ -92,7 +102,7 @@ export default function HomePage() {
     fetchNews(nextPage, true)
   }
 
-  const tabs: TabType[] = ['최신', '외교', '금융', '인기']
+  const tabs: TabType[] = ['최신', '외교', '경제', '특집', '인기']
 
   return (
     <div className="min-h-screen bg-white pb-20 md:pb-8">
@@ -185,8 +195,9 @@ function ArticleCard({ article }: { article: NewsItem }) {
     return ''
   }
 
-  // 소스 이름 매핑
-  const getSourceName = () => {
+  // 카테고리 라벨 (없으면 The Gist)
+  const getCategoryLabel = () => {
+    if (article.category) return categoryToLabel[article.category] ?? article.category
     if (article.source === 'Admin') return 'The Gist'
     return formatSourceDisplayName(article.source) || 'The Gist'
   }
@@ -281,34 +292,33 @@ function ArticleCard({ article }: { article: NewsItem }) {
   const detailUrl = `/news/${newsId || ''}`
 
   return (
-    <article className="flex gap-4 py-5 border-b border-gray-100 last:border-0 lg:border-b lg:border-gray-100">
-      {/* 클릭 시 상세로 이동하는 영역만 Link */}
-      <Link to={detailUrl} className="flex-1 min-w-0 flex gap-4">
+    <article className="flex flex-col gap-3 py-5 border-b border-gray-100 last:border-0 lg:border-b lg:border-gray-100">
+      {/* 클릭 시 상세로 이동하는 영역 */}
+      <Link to={detailUrl} className="flex gap-4 min-w-0">
         {/* 왼쪽 - 텍스트 콘텐츠 */}
         <div className="flex-1 min-w-0">
-          {/* 제목 - Foreign Affairs 스타일: 굵은 헤드라인 */}
+          {/* 제목 - 2줄 */}
           <h2 className="text-lg font-bold text-gray-900 leading-snug mb-1.5 line-clamp-2">
             {article.title}
           </h2>
           
-          {/* 기사 내용 - 내레이션 우선, 없으면 요약 */}
+          {/* 기사 내용 미리보기 - 3줄 */}
           {(article.narration || article.description) && (
             <p className="text-xs text-gray-600 leading-relaxed mb-2 line-clamp-3">
               {stripHtml(article.narration?.trim() || article.description)}
             </p>
           )}
           
-          {/* 소스 및 날짜 - Foreign Affairs 스타일: 저자/출처 라인 */}
+          {/* 카테고리 | 날짜 게시 */}
           <div className="flex items-center gap-2 text-xs">
-            <span className="font-medium text-primary-500">{getSourceName()}</span>
+            <span className="font-medium text-primary-500">{getCategoryLabel()}</span>
             <span className="text-gray-300"> | </span>
             <span className="text-gray-400">{formatDate()}</span>
           </div>
         </div>
 
-        {/* 오른쪽 - 이미지 */}
-        <div className="w-24 h-24 flex-shrink-0">
-          <div className="w-full h-full bg-gray-100 rounded-lg overflow-hidden">
+        {/* 오른쪽 - 큰 이미지 (16:9 비율) */}
+        <div className="w-32 sm:w-40 aspect-video flex-shrink-0 bg-gray-100 rounded-lg overflow-hidden">
             <img
               src={imageUrl}
               alt={article.title}
@@ -321,58 +331,52 @@ function ArticleCard({ article }: { article: NewsItem }) {
                 )
               }}
             />
-          </div>
         </div>
       </Link>
 
-      {/* 액션 버튼들 - Link 밖에 두어 클릭 시 상세 이동 안 함 */}
-      <div className="flex flex-col justify-between py-1" role="group" aria-label="기사 액션">
-          {/* 오디오 재생 버튼 */}
-          <button
-            type="button"
-            onClick={handlePlayAudio}
-            className="p-1 transition-colors text-gray-400 hover:text-gray-600"
-            title="음성으로 듣기"
-            aria-label="재생"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 18v-6a9 9 0 0118 0v6M3 18h2a2 2 0 002-2v-4a2 2 0 00-2-2H3v8zm14 0h2a2 2 0 002-2v-4a2 2 0 00-2-2h-2v8z" />
+      {/* 액션 아이콘 - 하단 우측 가로 배치 */}
+      <div className="flex justify-end gap-2" role="group" aria-label="기사 액션">
+        <button
+          type="button"
+          onClick={handlePlayAudio}
+          className="p-1 transition-colors text-gray-400 hover:text-gray-600"
+          title="음성으로 듣기"
+          aria-label="재생"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 18v-6a9 9 0 0118 0v6M3 18h2a2 2 0 002-2v-4a2 2 0 00-2-2H3v8zm14 0h2a2 2 0 002-2v-4a2 2 0 00-2-2h-2v8z" />
+          </svg>
+        </button>
+        <ShareMenu
+          title={article.title}
+          description={article.description || ''}
+          imageUrl={imageUrl}
+          webUrl={shareWebUrl}
+          className="text-gray-400 hover:text-gray-600"
+          titleAttr="공유하기"
+        />
+        <button
+          type="button"
+          onClick={handleBookmark}
+          disabled={isBookmarking}
+          className={`p-1 transition-colors ${isBookmarked ? 'text-primary-500' : 'text-gray-400 hover:text-gray-600'} ${isBookmarking ? 'opacity-60 cursor-wait' : ''}`}
+          title="즐겨찾기"
+          aria-label={isBookmarked ? '즐겨찾기 해제' : '즐겨찾기 추가'}
+        >
+          {isBookmarking ? (
+            <span className="inline-block w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <svg className="w-5 h-5" fill={isBookmarked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
             </svg>
-          </button>
-          
-          {/* 공유하기 메뉴 */}
-          <ShareMenu
-            title={article.title}
-            description={article.description || ''}
-            imageUrl={imageUrl}
-            webUrl={shareWebUrl}
-            className="text-gray-400 hover:text-gray-600"
-            titleAttr="공유하기"
-          />
-          
-          {/* 즐겨찾기 버튼 */}
-          <button
-            type="button"
-            onClick={handleBookmark}
-            disabled={isBookmarking}
-            className={`p-1 transition-colors ${isBookmarked ? 'text-primary-500' : 'text-gray-400 hover:text-gray-600'} ${isBookmarking ? 'opacity-60 cursor-wait' : ''}`}
-            title="즐겨찾기"
-            aria-label={isBookmarked ? '즐겨찾기 해제' : '즐겨찾기 추가'}
-          >
-            {isBookmarking ? (
-              <span className="inline-block w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <svg className="w-5 h-5" fill={isBookmarked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-              </svg>
-            )}
-          </button>
-        </div>
+          )}
+        </button>
+      </div>
     </article>
   )
 }
 
-// 하단 네비게이션 - 모바일만 표시, PC는 헤더에 최신/즐겨찾기/설정 링크
+// 하단 네비게이션 - 모바일만 표시 (최신, My Page, 설정)
 function BottomNav() {
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-40">

@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useAuthStore } from '../../store/authStore'
 
 export default function Header() {
-  const { isAuthenticated, login, logout } = useAuthStore()
+  const { isAuthenticated, login } = useAuthStore()
   const [isLoginOpen, setIsLoginOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -26,11 +26,6 @@ export default function Header() {
     }
   }, [])
 
-  const handleLogout = async () => {
-    await logout()
-    navigate('/')
-  }
-
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     if (searchQuery.trim()) {
@@ -51,22 +46,16 @@ export default function Header() {
       {/* 메인 헤더 - PC에서 넓은 max-width */}
       <div className="relative z-10 max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 md:px-6">
         <div className="flex items-center justify-between h-14">
-          {/* 왼쪽 - 로그인/로그아웃 */}
+          {/* 왼쪽 - 구독하기 (비로그인) / My Page (로그인) */}
           <div className="w-16 md:w-auto">
             {isAuthenticated ? (
-              <button 
-                onClick={handleLogout} 
-                className="text-xs text-gray-500 hover:text-gray-900 transition-colors"
-              >
-                로그아웃
-              </button>
+              <Link to="/profile" className="text-xs text-gray-500 hover:text-gray-900 transition-colors">
+                My Page
+              </Link>
             ) : (
-              <button 
-                onClick={() => setIsLoginOpen(true)} 
-                className="text-xs text-gray-500 hover:text-gray-900 transition-colors"
-              >
-                로그인
-              </button>
+              <Link to="/register" className="text-xs text-gray-500 hover:text-gray-900 transition-colors">
+                구독하기
+              </Link>
             )}
           </div>
 
@@ -77,19 +66,8 @@ export default function Header() {
             </h1>
           </Link>
 
-          {/* 오른쪽 - PC: 최신/즐겨찾기/설정 + 검색 */}
-          <div className="w-16 md:w-auto flex justify-end items-center gap-2 md:gap-6">
-            <nav className="hidden md:flex items-center gap-6">
-              <Link to="/" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-                최신
-              </Link>
-              <Link to="/profile" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-                My Page
-              </Link>
-              <Link to="/settings" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
-                설정
-              </Link>
-            </nav>
+          {/* 오른쪽 - 검색 아이콘만 */}
+          <div className="w-16 md:w-auto flex justify-end items-center">
             <button
               onClick={() => setIsSearchOpen(true)}
               className="p-2 text-gray-600 hover:text-gray-900 transition-colors"

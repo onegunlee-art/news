@@ -36,11 +36,11 @@ interface NewsDetail {
   next_article?: { id: number; title: string } | null
 }
 
-/** API category 값 → 목록 라벨 (외교, 금융 등) */
+/** API category 값 → 목록 라벨 (외교, 경제 등) */
 const categoryToLabel: Record<string, string> = {
   diplomacy: '외교',
-  economy: '금융',
-  entertainment: '엔터테인먼트',
+  economy: '경제',
+  entertainment: '특집',
   technology: '기술',
   tech: '기술',
   security: '안보/군사',
