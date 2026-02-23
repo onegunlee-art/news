@@ -292,11 +292,10 @@ function ArticleCard({ article }: { article: NewsItem }) {
   const detailUrl = `/news/${newsId || ''}`
 
   return (
-    <article className="flex flex-col gap-3 py-5 border-b border-gray-100 last:border-0 lg:border-b lg:border-gray-100">
-      {/* 클릭 시 상세로 이동하는 영역 */}
-      <Link to={detailUrl} className="flex gap-4 min-w-0">
-        {/* 왼쪽 - 텍스트 콘텐츠 */}
-        <div className="flex-1 min-w-0">
+    <article className="flex gap-4 py-5 border-b border-gray-100 last:border-0 lg:border-b lg:border-gray-100">
+      {/* 왼쪽 - 텍스트 콘텐츠 (flex-1로 공간 확보) */}
+      <div className="flex-1 min-w-0 flex flex-col">
+        <Link to={detailUrl} className="block">
           {/* 제목 - 2줄 */}
           <h2 className="text-lg font-bold text-gray-900 leading-snug mb-1.5 line-clamp-2">
             {article.title}
@@ -308,70 +307,70 @@ function ArticleCard({ article }: { article: NewsItem }) {
               {stripHtml(article.narration?.trim() || article.description)}
             </p>
           )}
-          
-          {/* 카테고리 | 날짜 게시 */}
-          <div className="flex items-center gap-2 text-xs">
+        </Link>
+        
+        {/* 카테고리 | 날짜 | 아이콘 3개 - 같은 행 */}
+        <div className="flex justify-between items-center gap-2 mt-auto">
+          <Link to={detailUrl} className="flex items-center gap-2 text-xs shrink-0">
             <span className="font-medium text-primary-500">{getCategoryLabel()}</span>
             <span className="text-gray-300"> | </span>
             <span className="text-gray-400">{formatDate()}</span>
+          </Link>
+          <div className="flex items-center gap-1 shrink-0" role="group" aria-label="기사 액션">
+            <button
+              type="button"
+              onClick={handlePlayAudio}
+              className="p-1 transition-colors text-gray-400 hover:text-gray-600"
+              title="음성으로 듣기"
+              aria-label="재생"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 18v-6a9 9 0 0118 0v6M3 18h2a2 2 0 002-2v-4a2 2 0 00-2-2H3v8zm14 0h2a2 2 0 002-2v-4a2 2 0 00-2-2h-2v8z" />
+              </svg>
+            </button>
+            <ShareMenu
+              title={article.title}
+              description={article.description || ''}
+              imageUrl={imageUrl}
+              webUrl={shareWebUrl}
+              className="text-gray-400 hover:text-gray-600"
+              titleAttr="공유하기"
+            />
+            <button
+              type="button"
+              onClick={handleBookmark}
+              disabled={isBookmarking}
+              className={`p-1 transition-colors ${isBookmarked ? 'text-primary-500' : 'text-gray-400 hover:text-gray-600'} ${isBookmarking ? 'opacity-60 cursor-wait' : ''}`}
+              title="즐겨찾기"
+              aria-label={isBookmarked ? '즐겨찾기 해제' : '즐겨찾기 추가'}
+            >
+              {isBookmarking ? (
+                <span className="inline-block w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <svg className="w-5 h-5" fill={isBookmarked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                </svg>
+              )}
+            </button>
           </div>
         </div>
-
-        {/* 오른쪽 - 큰 이미지 (16:9 비율) */}
-        <div className="w-32 sm:w-40 aspect-video flex-shrink-0 bg-gray-100 rounded-lg overflow-hidden">
-            <img
-              src={imageUrl}
-              alt={article.title}
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = getPlaceholderImageUrl(
-                  { id: article.id, title: article.title, description: article.description, published_at: article.published_at, category: article.category, url: article.url, source: article.source },
-                  200,
-                  200
-                )
-              }}
-            />
-        </div>
-      </Link>
-
-      {/* 액션 아이콘 - 하단 우측 가로 배치 */}
-      <div className="flex justify-end gap-2" role="group" aria-label="기사 액션">
-        <button
-          type="button"
-          onClick={handlePlayAudio}
-          className="p-1 transition-colors text-gray-400 hover:text-gray-600"
-          title="음성으로 듣기"
-          aria-label="재생"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3 18v-6a9 9 0 0118 0v6M3 18h2a2 2 0 002-2v-4a2 2 0 00-2-2H3v8zm14 0h2a2 2 0 002-2v-4a2 2 0 00-2-2h-2v8z" />
-          </svg>
-        </button>
-        <ShareMenu
-          title={article.title}
-          description={article.description || ''}
-          imageUrl={imageUrl}
-          webUrl={shareWebUrl}
-          className="text-gray-400 hover:text-gray-600"
-          titleAttr="공유하기"
-        />
-        <button
-          type="button"
-          onClick={handleBookmark}
-          disabled={isBookmarking}
-          className={`p-1 transition-colors ${isBookmarked ? 'text-primary-500' : 'text-gray-400 hover:text-gray-600'} ${isBookmarking ? 'opacity-60 cursor-wait' : ''}`}
-          title="즐겨찾기"
-          aria-label={isBookmarked ? '즐겨찾기 해제' : '즐겨찾기 추가'}
-        >
-          {isBookmarking ? (
-            <span className="inline-block w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
-          ) : (
-            <svg className="w-5 h-5" fill={isBookmarked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-            </svg>
-          )}
-        </button>
       </div>
+
+      {/* 오른쪽 - 썸네일 (사이즈 조절로 왼쪽 메타+아이콘과 같은 높이 맞춤) */}
+      <Link to={detailUrl} className="w-24 h-20 sm:w-28 sm:h-24 flex-shrink-0 bg-gray-100 rounded-lg overflow-hidden">
+        <img
+          src={imageUrl}
+          alt={article.title}
+          className="w-full h-full object-cover"
+          onError={(e) => {
+            (e.target as HTMLImageElement).src = getPlaceholderImageUrl(
+              { id: article.id, title: article.title, description: article.description, published_at: article.published_at, category: article.category, url: article.url, source: article.source },
+              200,
+              200
+            )
+          }}
+        />
+      </Link>
     </article>
   )
 }
