@@ -1056,9 +1056,9 @@ const AdminPage: React.FC = () => {
   return (
     <>
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      <div className="flex">
-        {/* Sidebar */}
-        <div className="w-64 min-h-screen bg-slate-900/80 backdrop-blur-xl border-r border-slate-700/50 p-6">
+      <div className="flex min-h-screen">
+        {/* Sidebar - sticky로 스크롤 시에도 항상 보이게 */}
+        <div className="w-64 shrink-0 sticky top-0 self-start max-h-screen overflow-y-auto bg-slate-900/80 backdrop-blur-xl border-r border-slate-700/50 p-6">
           <div className="mb-8">
             <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-emerald-400 bg-clip-text text-transparent">
               Admin Panel
@@ -1093,8 +1093,8 @@ const AdminPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Main Content */}
-        <div className="flex-1 p-8">
+        {/* Main Content - overflow-auto로 영역 내 스크롤 (min-h-0으로 flex shrink 허용) */}
+        <div className="flex-1 min-w-0 min-h-0 overflow-y-auto p-8">
           {activeTab === 'dashboard' && (
             <div className="space-y-8">
               <div>
