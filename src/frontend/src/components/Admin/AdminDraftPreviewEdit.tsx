@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import RichTextEditor from '../Common/RichTextEditor'
-import { formatContentHtml, normalizeEditorHtml } from '../../utils/sanitizeHtml'
+import { formatContentHtml, normalizeEditorHtml, ensureBrForEditor } from '../../utils/sanitizeHtml'
 import { getPlaceholderImageUrl } from '../../utils/imagePolicy'
 import { formatSourceDisplayName } from '../../utils/formatSource'
 import { extractTitleFromUrl } from '../../utils/extractTitleFromUrl'
@@ -44,7 +44,7 @@ const sanitizeText = (text: string): string =>
     .join('\n')
     .replace(/\n{3,}/g, '\n\n')
 
-type EditSection = 'why_important' | 'narration' | 'content' | null
+type EditSection = 'title' | 'subtitle' | 'why_important' | 'narration' | 'content' | null
 
 interface AdminDraftPreviewEditProps {
   news: DraftArticle
@@ -103,7 +103,7 @@ export default function AdminDraftPreviewEdit({
   }
 
   const handleSectionChange = useCallback(
-    (field: 'why_important' | 'narration' | 'content', value: string) => {
+    (field: 'title' | 'subtitle' | 'why_important' | 'narration' | 'content', value: string) => {
       setNews((prev) => ({ ...prev, [field]: value }))
     },
     []
@@ -113,6 +113,8 @@ export default function AdminDraftPreviewEdit({
     setIsSaving(true)
     try {
       await onUpdate({
+        title: news.title,
+        subtitle: news.subtitle ?? null,
         why_important: news.why_important ? normalizeEditorHtml(news.why_important) : null,
         narration: news.narration ? normalizeEditorHtml(news.narration) : null,
         content: news.content ? normalizeEditorHtml(news.content) : null,
@@ -206,13 +208,61 @@ export default function AdminDraftPreviewEdit({
             <span className="text-gray-400">{formatHeaderDate()}</span>
           </div>
 
-          {/* 제목 */}
-          <h1 className="text-2xl font-bold text-gray-900 leading-snug mb-2">{news.title}</h1>
+          {/* 제목 — 수정/미리보기 토글 */}
+          <div className="mb-3">
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <span className="text-xs text-gray-400">제목</span>
+              <button
+                onClick={() =>
+                  setEditingSection(editingSection === 'title' ? null : 'title')
+                }
+                className="text-xs px-2 py-1 rounded bg-slate-600 hover:bg-slate-500 text-slate-200"
+              >
+                {editingSection === 'title' ? '적용' : '수정'}
+              </button>
+            </div>
+            {editingSection === 'title' ? (
+              <input
+                type="text"
+                value={news.title}
+                onChange={(e) => handleSectionChange('title', e.target.value)}
+                className="w-full text-2xl font-bold text-gray-900 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2"
+                placeholder="제목"
+              />
+            ) : (
+              <h1 className="text-2xl font-bold text-gray-900 leading-snug">{news.title}</h1>
+            )}
+          </div>
 
-          {/* 부제목 */}
-          {news.subtitle && (
-            <p className="text-lg text-gray-500 italic mb-3 leading-relaxed">{news.subtitle}</p>
-          )}
+          {/* 부제목 — 수정/미리보기 토글 */}
+          <div className="mb-3">
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <span className="text-xs text-gray-400">부제목</span>
+              <button
+                onClick={() =>
+                  setEditingSection(editingSection === 'subtitle' ? null : 'subtitle')
+                }
+                className="text-xs px-2 py-1 rounded bg-slate-600 hover:bg-slate-500 text-slate-200"
+              >
+                {editingSection === 'subtitle' ? '적용' : '수정'}
+              </button>
+            </div>
+            {editingSection === 'subtitle' ? (
+              <textarea
+                value={news.subtitle ?? ''}
+                onChange={(e) => handleSectionChange('subtitle', e.target.value)}
+                rows={2}
+                className="w-full text-lg text-gray-500 italic bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 leading-relaxed"
+                placeholder="부제목 (선택)"
+              />
+            ) : (
+              (news.subtitle && (
+                <p className="text-lg text-gray-500 italic leading-relaxed whitespace-pre-wrap">
+                  {news.subtitle}
+                </p>
+              )) || null
+            )}
+          </div>
 
           {/* 매체 설명 */}
           <p className="text-sm text-gray-500 mb-6">
@@ -250,7 +300,7 @@ export default function AdminDraftPreviewEdit({
             {editingSection === 'why_important' ? (
               <div className="border-l-4 border-orange-500 bg-gradient-to-r from-orange-50/50 via-amber-50/50 to-white rounded-r-xl p-4">
                 <RichTextEditor
-                  value={news.why_important || ''}
+                  value={ensureBrForEditor(news.why_important)}
                   onChange={(v) => handleSectionChange('why_important', v)}
                   sanitizePaste={(t) =>
                     sanitizeText(t).replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')
@@ -290,7 +340,7 @@ export default function AdminDraftPreviewEdit({
             {editingSection === 'narration' ? (
               <div className="prose prose-lg max-w-none">
                 <RichTextEditor
-                  value={news.narration || ''}
+                  value={ensureBrForEditor(news.narration)}
                   onChange={(v) => handleSectionChange('narration', v)}
                   sanitizePaste={(t) =>
                     sanitizeText(t).replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')
@@ -341,7 +391,7 @@ export default function AdminDraftPreviewEdit({
             {editingSection === 'content' ? (
               <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
                 <RichTextEditor
-                  value={news.content || ''}
+                  value={ensureBrForEditor(news.content)}
                   onChange={(v) => handleSectionChange('content', v)}
                   sanitizePaste={(t) =>
                     sanitizeText(t).replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')

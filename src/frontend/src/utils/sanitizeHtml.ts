@@ -146,6 +146,14 @@ export function stripHtml(text: string | null | undefined): string {
 }
 
 /**
+ * 편집기에 표시할 때 \n을 <br/>로 변환 (줄바꿈이 원문과 동일하게 표시되도록)
+ */
+export function ensureBrForEditor(html: string | null | undefined): string {
+  if (html == null || html === '') return ''
+  return String(html).replace(/\n/g, '<br/>')
+}
+
+/**
  * RichTextEditor HTML → DB 저장 전 정규화
  */
 export function normalizeEditorHtml(html: string): string {
