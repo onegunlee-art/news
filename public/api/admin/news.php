@@ -7,7 +7,7 @@
  * DELETE: 뉴스 삭제
  */
 
-require __DIR__ . '/../lib/log.php';
+require_once __DIR__ . '/../lib/log.php';
 
 // 에러 리포팅 설정 - JSON 응답만 출력하도록
 error_reporting(E_ALL);
@@ -33,7 +33,7 @@ register_shutdown_function(function() {
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
+header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Authorization, X-Requested-With');
 
 // OPTIONS 요청 처리
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -41,7 +41,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-// 에러 로깅 함수
+// 에러 로깅 함수 (Router include 시 중복 정의 방지)
+if (!function_exists('logError')) {
 function logError($message, $data = null) {
     $logFile = __DIR__ . '/news_error.log';
     $timestamp = date('Y-m-d H:i:s');
@@ -52,8 +53,10 @@ function logError($message, $data = null) {
     $logMessage .= "\n";
     file_put_contents($logFile, $logMessage, FILE_APPEND | LOCK_EX);
 }
+}
 
-// JSON 입력 안전하게 읽기
+// JSON 입력 안전하게 읽기 (Router include 시 중복 정의 방지)
+if (!function_exists('getJsonInput')) {
 function getJsonInput() {
     $rawInput = file_get_contents('php://input');
     
@@ -72,6 +75,7 @@ function getJsonInput() {
     }
     
     return $input;
+}
 }
 
 // 데이터베이스 설정

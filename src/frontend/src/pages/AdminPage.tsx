@@ -2246,25 +2246,38 @@ const AdminPage: React.FC = () => {
                             headers: { 'Content-Type': 'application/json; charset=utf-8' },
                             body: JSON.stringify(requestBody),
                           });
+                          if (response.status === 401) {
+                            setSaveMessage({ type: 'error', text: '로그인이 필요합니다. 페이지를 새로고침 후 다시 로그인해주세요.' });
+                            return;
+                          }
                           const responseText = await response.text();
                           if (!responseText) {
-                            throw new Error('서버에서 빈 응답을 반환했습니다.');
+                            setSaveMessage({ type: 'error', text: '서버에서 빈 응답을 반환했습니다. 잠시 후 다시 시도해주세요.' });
+                            return;
                           }
                           let data: { success?: boolean; message?: string };
                           try {
                             data = JSON.parse(responseText);
                           } catch {
-                            throw new Error('서버가 JSON 대신 HTML을 반환했습니다. API 경로를 확인하세요.');
+                            setSaveMessage({
+                              type: 'error',
+                              text: `서버 응답 오류 (HTTP ${response.status}): HTML 또는 잘못된 형식입니다. 잠시 후 다시 시도해주세요.`,
+                            });
+                            return;
                           }
                           if (data.success) {
                             setSaveMessage({ type: 'success', text: '임시 저장되었습니다.' });
                             loadDraftsList();
-                            // 폼 유지 (계속 편집 가능)
                           } else {
-                            throw new Error(data.message || '임시 저장 실패');
+                            setSaveMessage({ type: 'error', text: data.message || '임시 저장 실패' });
                           }
                         } catch (error) {
-                          setSaveMessage({ type: 'error', text: '임시 저장 실패: ' + (error as Error).message });
+                          const err = error as Error;
+                          const isNetwork = err instanceof TypeError && (err.message.includes('fetch') || err.message.includes('network'));
+                          setSaveMessage({
+                            type: 'error',
+                            text: isNetwork ? '네트워크 연결을 확인해주세요.' : `임시 저장 실패: ${err.message}`,
+                          });
                         } finally {
                           setIsSaving(false);
                           setTimeout(() => setSaveMessage(null), 5000);
@@ -2324,25 +2337,25 @@ const AdminPage: React.FC = () => {
                             headers: { 'Content-Type': 'application/json; charset=utf-8' },
                             body: JSON.stringify(requestBody),
                           });
-                          
-                          // 응답 텍스트 먼저 가져오기
-                          const responseText = await response.text();
-                          console.log('Response status:', response.status, 'Response length:', responseText.length);
-                          
-                          // 응답이 비어있으면 에러
-                          if (!responseText) {
-                            throw new Error('서버에서 빈 응답을 반환했습니다. (status: ' + response.status + ')');
+                          if (response.status === 401) {
+                            setSaveMessage({ type: 'error', text: '로그인이 필요합니다. 페이지를 새로고침 후 다시 로그인해주세요.' });
+                            return;
                           }
-                          
-                          // JSON 파싱 시도
+                          const responseText = await response.text();
+                          if (!responseText) {
+                            setSaveMessage({ type: 'error', text: `서버에서 빈 응답을 반환했습니다 (HTTP ${response.status}). 잠시 후 다시 시도해주세요.` });
+                            return;
+                          }
                           let data;
                           try {
                             data = JSON.parse(responseText);
-                          } catch (parseError) {
-                            console.error('JSON parse error:', parseError, 'Response:', responseText.substring(0, 500));
-                            throw new Error('서버 응답 파싱 실패. 서버 오류 발생.');
+                          } catch {
+                            setSaveMessage({
+                              type: 'error',
+                              text: `서버 응답 오류 (HTTP ${response.status}): HTML 또는 잘못된 형식입니다. 잠시 후 다시 시도해주세요.`,
+                            });
+                            return;
                           }
-                          
                           if (data.success) {
                             const savedId = data.data?.id ?? data.new_id ?? data.id ?? editingNewsId
                             setSaveMessage({ 
@@ -2387,11 +2400,16 @@ const AdminPage: React.FC = () => {
                             setArticleSummary('');
                             setShowExtractedInfo(false);
                           } else {
-                            throw new Error(data.message || '저장 실패');
+                            setSaveMessage({ type: 'error', text: data.message || '저장 실패' });
+                            return;
                           }
                         } catch (error) {
-                          console.error('Save error:', error);
-                          setSaveMessage({ type: 'error', text: '저장 실패: ' + (error as Error).message });
+                          const err = error as Error;
+                          const isNetwork = err instanceof TypeError && (err.message.includes('fetch') || err.message.includes('network'));
+                          setSaveMessage({
+                            type: 'error',
+                            text: isNetwork ? '네트워크 연결을 확인해주세요.' : `저장 실패: ${err.message}`,
+                          });
                         } finally {
                           setIsSaving(false);
                           setTimeout(() => setSaveMessage(null), 5000);
@@ -2611,8 +2629,22 @@ const AdminPage: React.FC = () => {
                         status: 'draft',
                       }),
                     });
-                    const data = await response.json();
-                    if (!data.success) throw new Error(data.message || '저장 실패');
+                    if (response.status === 401) {
+                      setSaveMessage({ type: 'error', text: '로그인이 필요합니다. 페이지를 새로고침 후 다시 로그인해주세요.' });
+                      throw new Error('Unauthorized');
+                    }
+                    const text = await response.text();
+                    let data: { success?: boolean; message?: string };
+                    try {
+                      data = JSON.parse(text);
+                    } catch {
+                      setSaveMessage({ type: 'error', text: `서버 응답 오류 (HTTP ${response.status}). 잠시 후 다시 시도해주세요.` });
+                      throw new Error('Invalid JSON');
+                    }
+                    if (!data.success) {
+                      setSaveMessage({ type: 'error', text: data.message || '임시저장 업데이트 실패' });
+                      throw new Error(data.message || '저장 실패');
+                    }
                     setDraftDetail((prev) => (prev ? { ...prev, ...updates } : null));
                   }}
                   onPublish={async (currentState) => {
@@ -2638,8 +2670,22 @@ const AdminPage: React.FC = () => {
                         status: 'published',
                       }),
                     });
-                    const data = await response.json();
-                    if (!data.success) throw new Error(data.message || '게시 실패');
+                    if (response.status === 401) {
+                      setSaveMessage({ type: 'error', text: '로그인이 필요합니다. 페이지를 새로고침 후 다시 로그인해주세요.' });
+                      throw new Error('Unauthorized');
+                    }
+                    const text = await response.text();
+                    let data: { success?: boolean; message?: string };
+                    try {
+                      data = JSON.parse(text);
+                    } catch {
+                      setSaveMessage({ type: 'error', text: `서버 응답 오류 (HTTP ${response.status}). 잠시 후 다시 시도해주세요.` });
+                      throw new Error('Invalid JSON');
+                    }
+                    if (!data.success) {
+                      setSaveMessage({ type: 'error', text: data.message || '게시 실패' });
+                      throw new Error(data.message || '게시 실패');
+                    }
                     setSaveMessage({ type: 'success', text: '기사가 게시되었습니다.' });
                     setTimeout(() => setSaveMessage(null), 5000);
                     setEditingDraftId(null);
