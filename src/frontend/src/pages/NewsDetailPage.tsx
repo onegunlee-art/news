@@ -359,9 +359,9 @@ export default function NewsDetailPage() {
             <span className="font-medium">AI 보이스로 듣기</span>
           </button>
 
-          {/* The Gist — 주황색 프리미엄 박스 */}
+          {/* The Gist — 단일 배경 박스 */}
           {news.why_important && (
-            <div className="mb-8 border-l-4 border-orange-500 bg-gradient-to-r from-orange-50 via-amber-50 to-white rounded-r-xl shadow-sm overflow-hidden">
+            <div className="mb-8 bg-amber-50 rounded-xl shadow-sm overflow-hidden">
               <div className="px-5 py-5 sm:px-6 sm:py-6">
                 <h2
                   className="text-xl font-semibold mb-3 tracking-wide"
