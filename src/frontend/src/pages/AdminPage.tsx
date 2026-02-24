@@ -378,6 +378,7 @@ const AdminPage: React.FC = () => {
 
   // 뉴스 관리 상태
   const [selectedCategory, setSelectedCategory] = useState<string>('diplomacy');
+  const [newsSearchQuery, setNewsSearchQuery] = useState('');
   const [newsTitle, setNewsTitle] = useState('');
   const [newsSubtitle, setNewsSubtitle] = useState('');
   const [newsContent, setNewsContent] = useState('');
@@ -822,11 +823,15 @@ const AdminPage: React.FC = () => {
     loadDashboardData();
   }, []);
 
-  // 기존 뉴스 목록 로드
+  // 기존 뉴스 목록 로드 (전체/검색 지원)
   const loadNewsList = useCallback(async () => {
     setIsLoadingNews(true);
     try {
-      const response = await adminFetch(`/api/admin/news.php?category=${selectedCategory}`);
+      const params = new URLSearchParams();
+      if (selectedCategory !== 'all') params.set('category', selectedCategory);
+      if (newsSearchQuery.trim()) params.set('query', newsSearchQuery.trim());
+      if (selectedCategory === 'all' || newsSearchQuery.trim()) params.set('per_page', '50');
+      const response = await adminFetch(`/api/admin/news.php?${params.toString()}`);
       const data = await response.json();
       if (data.success && data.data?.items) {
         setNewsList(data.data.items);
@@ -836,7 +841,7 @@ const AdminPage: React.FC = () => {
     } finally {
       setIsLoadingNews(false);
     }
-  }, [selectedCategory]);
+  }, [selectedCategory, newsSearchQuery]);
 
   // 임시저장 목록 로드 (뉴스 목록과 동일한 API 패턴)
   const loadDraftsList = useCallback(async () => {
@@ -2607,9 +2612,12 @@ const AdminPage: React.FC = () => {
                     });
                     const data = await response.json();
                     if (!data.success) throw new Error(data.message || '게시 실패');
+                    setSaveMessage({ type: 'success', text: '기사가 게시되었습니다.' });
+                    setTimeout(() => setSaveMessage(null), 5000);
                     setEditingDraftId(null);
                     setDraftDetail(null);
                     await loadDraftsList();
+                    await loadNewsList();
                   }}
                   onBack={() => {
                     setEditingDraftId(null);
