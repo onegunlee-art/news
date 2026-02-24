@@ -2571,7 +2571,7 @@ const AdminPage: React.FC = () => {
                         category: draftDetail.category || 'diplomacy',
                         title: draftDetail.title,
                         subtitle: draftDetail.subtitle ?? null,
-                        content: draftDetail.content ?? '',
+                        content: updates.content ?? draftDetail.content ?? '',
                         why_important: updates.why_important ?? draftDetail.why_important ?? null,
                         narration: updates.narration ?? draftDetail.narration ?? null,
                         future_prediction: draftDetail.future_prediction ?? null,
@@ -2588,25 +2588,25 @@ const AdminPage: React.FC = () => {
                     if (!data.success) throw new Error(data.message || '저장 실패');
                     setDraftDetail((prev) => (prev ? { ...prev, ...updates } : null));
                   }}
-                  onPublish={async () => {
+                  onPublish={async (currentState) => {
                     const response = await adminFetch('/api/admin/news.php', {
                       method: 'PUT',
                       headers: { 'Content-Type': 'application/json; charset=utf-8' },
                       body: JSON.stringify({
-                        id: draftDetail.id,
-                        category: draftDetail.category || 'diplomacy',
-                        title: draftDetail.title,
-                        subtitle: draftDetail.subtitle ?? null,
-                        content: draftDetail.content ?? '',
-                        why_important: draftDetail.why_important ?? null,
-                        narration: draftDetail.narration ?? null,
-                        future_prediction: draftDetail.future_prediction ?? null,
-                        source_url: draftDetail.source_url ?? null,
-                        source: draftDetail.source ?? null,
-                        original_title: draftDetail.original_title ?? null,
-                        author: draftDetail.author ?? null,
-                        published_at: draftDetail.published_at ?? null,
-                        image_url: draftDetail.image_url ?? null,
+                        id: currentState.id,
+                        category: currentState.category || 'diplomacy',
+                        title: currentState.title,
+                        subtitle: currentState.subtitle ?? null,
+                        content: currentState.content ?? '',
+                        why_important: currentState.why_important ?? null,
+                        narration: currentState.narration ?? null,
+                        future_prediction: currentState.future_prediction ?? null,
+                        source_url: currentState.source_url ?? null,
+                        source: currentState.source ?? null,
+                        original_title: currentState.original_title ?? null,
+                        author: currentState.author ?? null,
+                        published_at: currentState.published_at ?? null,
+                        image_url: currentState.image_url ?? null,
                         status: 'published',
                       }),
                     });

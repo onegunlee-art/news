@@ -49,7 +49,7 @@ type EditSection = 'why_important' | 'narration' | 'content' | null
 interface AdminDraftPreviewEditProps {
   news: DraftArticle
   onUpdate: (updates: Partial<DraftArticle>) => Promise<void>
-  onPublish: () => Promise<void>
+  onPublish: (currentState: DraftArticle) => Promise<void>
   onBack: () => void
 }
 
@@ -126,7 +126,13 @@ export default function AdminDraftPreviewEdit({
   const handlePublish = async () => {
     setIsPublishing(true)
     try {
-      await onPublish()
+      const current: DraftArticle = {
+        ...news,
+        why_important: news.why_important ? normalizeEditorHtml(news.why_important) : null,
+        narration: news.narration ? normalizeEditorHtml(news.narration) : null,
+        content: news.content ? normalizeEditorHtml(news.content) : null,
+      }
+      await onPublish(current)
     } finally {
       setIsPublishing(false)
     }
