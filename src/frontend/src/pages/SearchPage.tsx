@@ -158,8 +158,8 @@ function SearchArticleCard({ article }: { article: NewsItem }) {
         const rawSource = (detail.original_source && String(detail.original_source).trim()) || (detail.source === 'Admin' ? 'The Gist' : detail.source || 'The Gist')
         const sourceDisplay = formatSourceDisplayName(rawSource) || 'The Gist'
         const editorialLine = buildEditorialLine({ dateStr, sourceDisplay, originalTitle })
-        const mainContent = detail.narration || detail.content || detail.description || article.description || ''
-        const critiquePart = detail.why_important ? `The Gist's Critique. ${detail.why_important}` : ''
+        const mainContent = stripHtml(detail.narration || detail.content || detail.description || article.description || '')
+        const critiquePart = detail.why_important ? `The Gist's Critique. ${stripHtml(detail.why_important)}` : ''
         const img = detail.image_url || article.image_url || ''
         openAndPlay(detail.title, editorialLine, mainContent, critiquePart, 1.0, img, Number(newsId))
         return

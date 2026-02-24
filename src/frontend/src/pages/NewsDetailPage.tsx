@@ -10,7 +10,7 @@ import LoadingSpinner from '../components/Common/LoadingSpinner'
 import { getPlaceholderImageUrl } from '../utils/imagePolicy'
 import { formatSourceDisplayName, buildEditorialLine } from '../utils/formatSource'
 import { extractTitleFromUrl } from '../utils/extractTitleFromUrl'
-import { formatContentHtml } from '../utils/sanitizeHtml'
+import { formatContentHtml, stripHtml } from '../utils/sanitizeHtml'
 
 interface NewsDetail {
   id: number
@@ -57,7 +57,7 @@ export default function NewsDetailPage() {
   const [isBookmarked, setIsBookmarked] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // 전역 팝업 플레이어에서 재생 (제목 → 편집 문구 → The Gist → 내레이션)
+  // 전역 팝업 플레이어에서 재생 (제목 → 매체설명 → 내레이션 → The Gist)
   // Listen 클릭 시 최신 기사 데이터를 강제 조회하여 stale state로 인한 이전 보이스 재생 방지
   const playArticle = async () => {
     if (!news) return
@@ -80,8 +80,8 @@ export default function NewsDetailPage() {
     const sourceDisplay = formatSourceDisplayName(rawSource) || 'The Gist'
     const originalTitle = (data.original_title && String(data.original_title).trim()) || extractTitleFromUrl(data.url) || '원문'
     const editorialLine = buildEditorialLine({ dateStr, sourceDisplay, originalTitle })
-    const critiqueText = data.why_important ? `The Gist. ${data.why_important}` : ''
-    const narrationText = data.narration || data.content || data.description || ''
+    const critiqueText = data.why_important ? `The Gist. ${stripHtml(data.why_important)}` : ''
+    const narrationText = stripHtml(data.narration || data.content || data.description || '')
     if (!narrationText && !critiqueText) {
       alert('재생할 본문 내용이 없습니다.')
       return
@@ -97,7 +97,7 @@ export default function NewsDetailPage() {
       800,
       400
     )
-    openAndPlay(data.title, editorialLine, critiqueText, narrationText, 1.0, imageUrl, data.id)
+    openAndPlay(data.title, editorialLine, narrationText, critiqueText, 1.0, imageUrl, data.id)
   }
 
   useEffect(() => {
