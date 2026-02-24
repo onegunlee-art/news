@@ -868,10 +868,26 @@ const AdminPage: React.FC = () => {
     }
   }, []);
 
-  // 뉴스 탭이 활성화되거나 카테고리가 변경될 때 뉴스 목록 로드
+  // 뉴스 탭이 활성화되거나 카테고리가 변경될 때 뉴스 목록 로드, 비활성 시 편집 상태 초기화
   useEffect(() => {
     if (activeTab === 'news') {
       loadNewsList();
+    } else {
+      setEditingNewsId(null);
+      setNewsTitle('');
+      setNewsSubtitle('');
+      setNewsContent('');
+      setNewsWhyImportant('');
+      setNewsNarration('');
+      setArticleUrl('');
+      setArticleSource('');
+      setArticleOriginalTitle('');
+      setArticleAuthor('');
+      setArticlePublishedAt('');
+      setArticleImageUrl('');
+      setArticleSummary('');
+      setShowExtractedInfo(false);
+      setRegeneratedTtsUrl(null);
     }
   }, [activeTab, loadNewsList]);
 
@@ -1077,7 +1093,14 @@ const AdminPage: React.FC = () => {
             {tabs.map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => {
+                  if (tab.id !== activeTab) {
+                    setEditingNewsId(null);
+                    setEditingDraftId(null);
+                    setDraftDetail(null);
+                  }
+                  setActiveTab(tab.id);
+                }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                   activeTab === tab.id
                     ? 'bg-gradient-to-r from-cyan-500/20 to-emerald-500/20 text-cyan-400 border border-cyan-500/30'
@@ -2206,6 +2229,7 @@ const AdminPage: React.FC = () => {
                             category: selectedCategory,
                             title: newsTitle,
                             subtitle: newsSubtitle.trim() || null,
+                            description: articleSummary.trim() || null,
                             content: cleanContent,
                             why_important: cleanWhyImportant || null,
                             narration: cleanNarration || null,
@@ -2276,6 +2300,7 @@ const AdminPage: React.FC = () => {
                             category: selectedCategory,
                             title: newsTitle,
                             subtitle: newsSubtitle.trim() || null,
+                            description: articleSummary.trim() || null,
                             content: cleanContent,
                             why_important: cleanWhyImportant || null,
                             narration: cleanNarration || null,
@@ -2285,6 +2310,7 @@ const AdminPage: React.FC = () => {
                             author: articleAuthor.trim() || null,
                             published_at: articlePublishedAt.trim() || null,
                             image_url: articleImageUrl.trim() || null,
+                            status: 'published' as const,
                           };
                           
                           console.log('Sending request:', { 
@@ -2568,19 +2594,20 @@ const AdminPage: React.FC = () => {
                       headers: { 'Content-Type': 'application/json; charset=utf-8' },
                       body: JSON.stringify({
                         id: draftDetail.id,
-                        category: draftDetail.category || 'diplomacy',
-                        title: draftDetail.title,
-                        subtitle: draftDetail.subtitle ?? null,
+                        category: updates.category ?? (draftDetail.category || 'diplomacy'),
+                        title: updates.title ?? draftDetail.title,
+                        subtitle: updates.subtitle ?? draftDetail.subtitle ?? null,
+                        description: updates.description ?? draftDetail.description ?? null,
                         content: updates.content ?? draftDetail.content ?? '',
                         why_important: updates.why_important ?? draftDetail.why_important ?? null,
                         narration: updates.narration ?? draftDetail.narration ?? null,
-                        future_prediction: draftDetail.future_prediction ?? null,
-                        source_url: draftDetail.source_url ?? null,
-                        source: draftDetail.source ?? null,
-                        original_title: draftDetail.original_title ?? null,
-                        author: draftDetail.author ?? null,
-                        published_at: draftDetail.published_at ?? null,
-                        image_url: draftDetail.image_url ?? null,
+                        future_prediction: updates.future_prediction ?? draftDetail.future_prediction ?? null,
+                        source_url: updates.source_url ?? draftDetail.source_url ?? null,
+                        source: updates.source ?? draftDetail.source ?? null,
+                        original_title: updates.original_title ?? draftDetail.original_title ?? null,
+                        author: updates.author ?? draftDetail.author ?? null,
+                        published_at: updates.published_at ?? draftDetail.published_at ?? null,
+                        image_url: updates.image_url ?? draftDetail.image_url ?? null,
                         status: 'draft',
                       }),
                     });
@@ -2597,6 +2624,7 @@ const AdminPage: React.FC = () => {
                         category: currentState.category || 'diplomacy',
                         title: currentState.title,
                         subtitle: currentState.subtitle ?? null,
+                        description: currentState.description ?? null,
                         content: currentState.content ?? '',
                         why_important: currentState.why_important ?? null,
                         narration: currentState.narration ?? null,

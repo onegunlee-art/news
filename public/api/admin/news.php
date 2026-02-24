@@ -666,7 +666,7 @@ if ($method === 'PUT') {
         // ★ 컬럼 존재 여부는 상단 DESCRIBE에서 이미 조회됨 (SHOW COLUMNS 제거)
         
         // 동적 UPDATE 쿼리 생성
-        $setClauses = ['category = ?', 'title = ?', 'description = ?', 'content = ?', 'image_url = ?'];
+        $setClauses = ['category = ?', 'title = ?', 'description = ?', 'content = ?', 'image_url = ?', 'updated_at = NOW()'];
         $values = [$category, $title, $description, $content, $imageUrl];
         
         // source 값 업데이트 (원본 출처가 있으면)
