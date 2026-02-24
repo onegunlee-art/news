@@ -124,6 +124,7 @@ $hasAuthor         = isset($newsColumns['author']);
 $hasPublishedAt    = isset($newsColumns['published_at']);
 $hasSubtitle       = isset($newsColumns['subtitle']);
 $hasStatus         = isset($newsColumns['status']);
+$hasUpdatedAt      = isset($newsColumns['updated_at']);
 
 $method = $_SERVER['REQUEST_METHOD'];
 
@@ -670,8 +671,11 @@ if ($method === 'PUT') {
         // ★ 컬럼 존재 여부는 상단 DESCRIBE에서 이미 조회됨 (SHOW COLUMNS 제거)
         
         // 동적 UPDATE 쿼리 생성
-        $setClauses = ['category = ?', 'title = ?', 'description = ?', 'content = ?', 'image_url = ?', 'updated_at = NOW()'];
+        $setClauses = ['category = ?', 'title = ?', 'description = ?', 'content = ?', 'image_url = ?'];
         $values = [$category, $title, $description, $content, $imageUrl];
+        if ($hasUpdatedAt) {
+            $setClauses[] = 'updated_at = NOW()';
+        }
         
         // source 값 업데이트 (원본 출처가 있으면)
         if ($sourceValue !== null) {
