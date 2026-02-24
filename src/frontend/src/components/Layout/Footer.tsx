@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import PrivacyPolicyModal from '../Common/PrivacyPolicyModal'
+import TermsModal from '../Common/TermsModal'
 
 export default function Footer() {
   const currentYear = new Date().getFullYear()
   const [showPrivacyModal, setShowPrivacyModal] = useState(false)
+  const [showTermsModal, setShowTermsModal] = useState(false)
 
   return (
     <footer className="bg-gray-50 border-t border-gray-100 pb-20 md:pb-0">
@@ -23,11 +25,15 @@ export default function Footer() {
           <p className="text-gray-500 text-sm mt-2">
             Gisters, Becoming Leaders
           </p>
-          {/* 이용 약관 | 개인정보처리방침 */}
+          {/* 이용 약관 | 개인정보처리방침 (둘 다 팝업) */}
           <div className="flex items-center gap-4 mt-6">
-            <Link to="/terms" className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
+            <button
+              type="button"
+              onClick={() => setShowTermsModal(true)}
+              className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+            >
               이용 약관
-            </Link>
+            </button>
             <button
               type="button"
               onClick={() => setShowPrivacyModal(true)}
@@ -48,6 +54,7 @@ export default function Footer() {
         </div>
       </div>
 
+      <TermsModal isOpen={showTermsModal} onClose={() => setShowTermsModal(false)} />
       <PrivacyPolicyModal isOpen={showPrivacyModal} onClose={() => setShowPrivacyModal(false)} />
     </footer>
   )

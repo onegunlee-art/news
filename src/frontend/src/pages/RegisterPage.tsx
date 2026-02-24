@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { useAuthStore } from '../store/authStore'
 import { authApi, welcomeSettingsApi } from '../services/api'
 import PrivacyPolicyModal from '../components/Common/PrivacyPolicyModal'
+import TermsModal from '../components/Common/TermsModal'
 import WelcomePopup from '../components/Common/WelcomePopup'
 
 const RegisterPage: React.FC = () => {
@@ -20,6 +21,7 @@ const RegisterPage: React.FC = () => {
   const [agreeTerms, setAgreeTerms] = useState(false)
   const [agreePrivacy, setAgreePrivacy] = useState(false)
   const [showPrivacyModal, setShowPrivacyModal] = useState(false)
+  const [showTermsModal, setShowTermsModal] = useState(false)
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('monthly')
   const [showSuccess, setShowSuccess] = useState(false)
   const [welcomeMessage, setWelcomeMessage] = useState('The Gist 가입을 감사드립니다.')
@@ -117,6 +119,7 @@ const RegisterPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4">
+      <TermsModal isOpen={showTermsModal} onClose={() => setShowTermsModal(false)} />
       <PrivacyPolicyModal isOpen={showPrivacyModal} onClose={() => setShowPrivacyModal(false)} />
 
       <motion.div
@@ -295,7 +298,14 @@ const RegisterPage: React.FC = () => {
                         className="mt-1 w-4 h-4 rounded border-gray-300 text-primary-500 focus:ring-primary-500"
                       />
                       <label htmlFor="agreeTerms" className="text-sm text-gray-600">
-                        이용약관에 동의합니다 <span className="text-red-500">(필수)</span>
+                        <button
+                          type="button"
+                          onClick={() => setShowTermsModal(true)}
+                          className="text-primary-500 hover:text-primary-600 hover:underline cursor-pointer"
+                        >
+                          이용약관
+                        </button>
+                        에 동의합니다 <span className="text-red-500">(필수)</span>
                       </label>
                     </div>
                     <div className="flex items-start gap-2">
