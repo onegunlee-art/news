@@ -378,7 +378,7 @@ const AdminPage: React.FC = () => {
 
   // 뉴스 관리 상태
   const [selectedCategory, setSelectedCategory] = useState<string>('diplomacy');
-  const [newsSearchQuery, setNewsSearchQuery] = useState('');
+  const [newsSearchQuery, _setNewsSearchQuery] = useState('');
   const [newsTitle, setNewsTitle] = useState('');
   const [newsSubtitle, setNewsSubtitle] = useState('');
   const [newsContent, setNewsContent] = useState('');
