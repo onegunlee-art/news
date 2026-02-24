@@ -114,7 +114,7 @@ export default function RichTextEditor({
         onKeyDown={handleKeyDown}
         onPaste={handlePaste}
         data-placeholder={placeholder}
-        className={`w-full rounded-xl px-4 py-3 text-white placeholder-slate-500 outline-none transition resize-none overflow-auto [&:empty::before]:content-[attr(data-placeholder)] [&:empty::before]:text-slate-500 [&_mark]:rounded-sm [&_mark]:px-0.5 [&_b]:font-bold [&_strong]:font-bold [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-0.5 [&_table]:border-collapse [&_table]:w-full [&_table]:my-2 [&_td]:border [&_td]:border-slate-500 [&_td]:px-2 [&_td]:py-1.5 [&_th]:border [&_th]:border-slate-500 [&_th]:px-2 [&_th]:py-1.5 [&_th]:font-semibold [&_th]:bg-slate-700/50 ${className}`}
+        className={`w-full rounded-xl px-4 py-3 text-white placeholder-slate-500 outline-none transition resize-none overflow-auto [&:empty::before]:content-[attr(data-placeholder)] [&:empty::before]:text-slate-500 [&_mark]:rounded-sm [&_mark]:px-0.5 [&_b]:font-bold [&_strong]:font-bold [&_i]:italic [&_em]:italic [&_u]:underline [&_s]:line-through [&_strike]:line-through [&_img]:max-w-full [&_img]:rounded [&_img]:my-2 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-0.5 [&_table]:border-collapse [&_table]:w-full [&_table]:my-2 [&_td]:border [&_td]:border-slate-500 [&_td]:px-2 [&_td]:py-1.5 [&_th]:border [&_th]:border-slate-500 [&_th]:px-2 [&_th]:py-1.5 [&_th]:font-semibold [&_th]:bg-slate-700/50 ${className}`}
         style={{ minHeight }}
       />
     </div>

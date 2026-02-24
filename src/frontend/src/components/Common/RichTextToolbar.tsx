@@ -170,65 +170,106 @@ export default function RichTextToolbar({
     applyWrap(`<mark style="background:${opt.bg}">`, '</mark>', false)
   }
 
+  const insertImage = () => {
+    const el = ref?.current
+    if (!el || disabled || el instanceof HTMLTextAreaElement) return
+    const url = window.prompt('이미지 URL을 입력하세요:', '')
+    if (!url || !url.trim()) return
+    const safeUrl = url.trim().replace(/[<>"']/g, '')
+    el.focus()
+    document.execCommand('insertHTML', false, `<img src="${safeUrl}" alt="" style="max-width:100%;height:auto;display:block;margin:0.5rem 0;border-radius:0.25rem;" /><br/>`)
+    onChange(el.innerHTML)
+  }
+
   return (
     <div className="flex items-center gap-1 flex-wrap mb-1">
-      {/* 볼드 */}
+      {/* B I U S - execCommand로 하이라이트와 충돌 없이 중첩 */}
       <button
         type="button"
-        onClick={() => applyWrap('<b>', '</b>')}
+        onClick={() => execCommandAndSync('bold')}
         disabled={disabled}
         className="px-2 py-1.5 rounded-md bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed transition"
         title="볼드"
       >
         B
       </button>
+      <button
+        type="button"
+        onClick={() => execCommandAndSync('italic')}
+        disabled={disabled}
+        className="px-2 py-1.5 rounded-md bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm italic disabled:opacity-50 disabled:cursor-not-allowed transition"
+        title="이탤릭"
+      >
+        I
+      </button>
+      <button
+        type="button"
+        onClick={() => execCommandAndSync('underline')}
+        disabled={disabled}
+        className="px-2 py-1.5 rounded-md bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm underline disabled:opacity-50 disabled:cursor-not-allowed transition"
+        title="밑줄"
+      >
+        U
+      </button>
+      <button
+        type="button"
+        onClick={() => execCommandAndSync('strikeThrough')}
+        disabled={disabled}
+        className="px-2 py-1.5 rounded-md bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm line-through disabled:opacity-50 disabled:cursor-not-allowed transition"
+        title="취소선"
+      >
+        S
+      </button>
 
       <span className="w-px h-5 bg-slate-600 mx-0.5" aria-hidden />
 
-      {/* 불릿 / 번호 */}
-      <button
-        type="button"
-        onClick={() => execCommandAndSync('insertUnorderedList')}
-        disabled={disabled}
-        className="p-1.5 rounded-md bg-slate-700 hover:bg-slate-600 text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition"
-        title="불릿 포인트"
-      >
-        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-          <path d="M4 6a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm0 5a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm0 5a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" />
-          <path d="M8 5h10v1.5H8V5zm0 5h10v1.5H8V10zm0 5h10v1.5H8V15z" fill="currentColor" />
-        </svg>
-      </button>
-      <button
-        type="button"
-        onClick={() => execCommandAndSync('insertOrderedList')}
-        disabled={disabled}
-        className="p-1.5 rounded-md bg-slate-700 hover:bg-slate-600 text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition"
-        title="번호 매기기"
-      >
-        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-          <path d="M2 3h2v1H2V3zm0 4h2v1H2V7zm0 4h2v1H2v-1zm2 4h12v1.5H4V15zm0-5h12v1.5H4V10zm0-5h12v1.5H4V5z" />
-        </svg>
-      </button>
+      {/* 하이라이트 */}
+      {HIGHLIGHT_OPTIONS.map((opt) =>
+        'isRemove' in opt && opt.isRemove ? (
+          <button
+            key="none"
+            type="button"
+            onClick={() => handleHighlight(opt)}
+            disabled={disabled}
+            className="flex items-center gap-1 px-2 py-1.5 rounded-md bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs disabled:opacity-50 disabled:cursor-not-allowed transition border border-slate-600"
+            title="하이라이트 제거"
+          >
+            <span className="w-3 h-3 rounded border border-slate-500 bg-transparent" />
+            원래색
+          </button>
+        ) : (
+          <button
+            key={opt.bg}
+            type="button"
+            onClick={() => handleHighlight(opt)}
+            disabled={disabled}
+            className="w-7 h-7 rounded border border-slate-600 hover:ring-2 hover:ring-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed transition"
+            style={{ backgroundColor: opt.bg }}
+            title={`하이라이트: ${opt.name}`}
+          />
+        )
+      )}
 
-      {/* 표 삽입 */}
-      <button
-        type="button"
-        onClick={() => {
-          const el = ref?.current
-          if (!el || disabled || el instanceof HTMLTextAreaElement) return
-          el.focus()
-          const tableHtml = '<table border="1" cellpadding="4" cellspacing="0" style="border-collapse:collapse;width:100%;"><tbody><tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr></tbody></table><br/>'
-          document.execCommand('insertHTML', false, tableHtml)
-          onChange(el.innerHTML)
+      <span className="w-px h-5 bg-slate-600 mx-0.5" aria-hidden />
+
+      {/* 글자 크기 */}
+      <select
+        onChange={(e) => {
+          const v = e.target.value
+          if (v) execCommandAndSync('fontSize', v)
+          e.target.value = ''
         }}
         disabled={disabled}
-        className="p-1.5 rounded-md bg-slate-700 hover:bg-slate-600 text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition"
-        title="표 삽입 (3x3)"
+        className="h-8 px-2 rounded-md bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs disabled:opacity-50 disabled:cursor-not-allowed transition border-0 cursor-pointer"
+        title="글자 크기"
       >
-        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-          <path d="M3 3h14v14H3V3zm2 2v4h4V5H5zm6 0v4h4V5h-4zm-6 6v4h4v-4H5zm6 0v4h4v-4h-4z" />
-        </svg>
-      </button>
+        <option value="">크기</option>
+        <option value="1">작게</option>
+        <option value="2">보통</option>
+        <option value="3">조금 크게</option>
+        <option value="4">크게</option>
+        <option value="5">더 크게</option>
+      </select>
 
       <span className="w-px h-5 bg-slate-600 mx-0.5" aria-hidden />
 
@@ -280,53 +321,62 @@ export default function RichTextToolbar({
 
       <span className="w-px h-5 bg-slate-600 mx-0.5" aria-hidden />
 
-      {/* 글자 크기 */}
-      <select
-        onChange={(e) => {
-          const v = e.target.value
-          if (v) execCommandAndSync('fontSize', v)
-          e.target.value = ''
+      {/* 불릿 / 번호 */}
+      <button
+        type="button"
+        onClick={() => execCommandAndSync('insertUnorderedList')}
+        disabled={disabled}
+        className="p-1.5 rounded-md bg-slate-700 hover:bg-slate-600 text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition"
+        title="불릿 포인트"
+      >
+        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M4 6a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm0 5a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm0 5a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" />
+          <path d="M8 5h10v1.5H8V5zm0 5h10v1.5H8V10zm0 5h10v1.5H8V15z" fill="currentColor" />
+        </svg>
+      </button>
+      <button
+        type="button"
+        onClick={() => execCommandAndSync('insertOrderedList')}
+        disabled={disabled}
+        className="p-1.5 rounded-md bg-slate-700 hover:bg-slate-600 text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition"
+        title="번호 매기기"
+      >
+        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M2 3h2v1H2V3zm0 4h2v1H2V7zm0 4h2v1H2v-1zm2 4h12v1.5H4V15zm0-5h12v1.5H4V10zm0-5h12v1.5H4V5z" />
+        </svg>
+      </button>
+
+      {/* 표 삽입 */}
+      <button
+        type="button"
+        onClick={() => {
+          const el = ref?.current
+          if (!el || disabled || el instanceof HTMLTextAreaElement) return
+          el.focus()
+          const tableHtml = '<table border="1" cellpadding="4" cellspacing="0" style="border-collapse:collapse;width:100%;"><tbody><tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr></tbody></table><br/>'
+          document.execCommand('insertHTML', false, tableHtml)
+          onChange(el.innerHTML)
         }}
         disabled={disabled}
-        className="h-8 px-2 rounded-md bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs disabled:opacity-50 disabled:cursor-not-allowed transition border-0 cursor-pointer"
-        title="글자 크기"
+        className="p-1.5 rounded-md bg-slate-700 hover:bg-slate-600 text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition"
+        title="표 삽입 (3x3)"
       >
-        <option value="">크기</option>
-        <option value="1">작게</option>
-        <option value="2">보통</option>
-        <option value="3">조금 크게</option>
-        <option value="4">크게</option>
-        <option value="5">더 크게</option>
-      </select>
-
-      <span className="w-px h-5 bg-slate-600 mx-0.5" aria-hidden />
-
-      {/* 하이라이트: 원래색 | 노랑 | 오렌지 | 퍼플 */}
-      {HIGHLIGHT_OPTIONS.map((opt) =>
-        'isRemove' in opt && opt.isRemove ? (
-          <button
-            key="none"
-            type="button"
-            onClick={() => handleHighlight(opt)}
-            disabled={disabled}
-            className="flex items-center gap-1 px-2 py-1.5 rounded-md bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs disabled:opacity-50 disabled:cursor-not-allowed transition border border-slate-600"
-            title="하이라이트 제거"
-          >
-            <span className="w-3 h-3 rounded border border-slate-500 bg-transparent" />
-            원래색
-          </button>
-        ) : (
-          <button
-            key={opt.bg}
-            type="button"
-            onClick={() => handleHighlight(opt)}
-            disabled={disabled}
-            className="w-7 h-7 rounded border border-slate-600 hover:ring-2 hover:ring-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed transition"
-            style={{ backgroundColor: opt.bg }}
-            title={`하이라이트: ${opt.name}`}
-          />
-        )
-      )}
+        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M3 3h14v14H3V3zm2 2v4h4V5H5zm6 0v4h4V5h-4zm-6 6v4h4v-4H5zm6 0v4h4v-4h-4z" />
+        </svg>
+      </button>
+      {/* 이미지 삽입 */}
+      <button
+        type="button"
+        onClick={insertImage}
+        disabled={disabled}
+        className="p-1.5 rounded-md bg-slate-700 hover:bg-slate-600 text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition"
+        title="이미지 삽입"
+      >
+        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+        </svg>
+      </button>
     </div>
   )
 }
