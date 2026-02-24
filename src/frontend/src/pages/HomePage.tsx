@@ -293,9 +293,9 @@ function ArticleCard({ article }: { article: NewsItem }) {
 
   return (
     <article className="flex flex-col gap-3 py-5 border-b border-gray-100 last:border-0 lg:border-b lg:border-gray-100">
-      {/* 1행: 왼쪽 글 + 오른쪽 썸네일 (위아래 위치 같게) */}
-      <div className="flex items-stretch gap-4">
-        <Link to={detailUrl} className="flex-1 min-w-0">
+      {/* 1행: 왼쪽 글 + 오른쪽 썸네일 (높이 동일, grid로 정렬) */}
+      <div className="grid grid-cols-[1fr_auto] items-stretch gap-4">
+        <Link to={detailUrl} className="min-w-0 flex flex-col">
           {/* 제목 - 2줄 */}
           <h2 className="text-lg font-bold text-gray-900 leading-snug mb-1.5 line-clamp-2">
             {article.title}
@@ -309,8 +309,8 @@ function ArticleCard({ article }: { article: NewsItem }) {
           )}
         </Link>
 
-        {/* 오른쪽 - 썸네일 (왼쪽 글과 같은 높이, items-stretch로 맞춤) */}
-        <Link to={detailUrl} className="w-24 sm:w-28 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 block h-full">
+        {/* 오른쪽 - 썸네일 (정사각형 고정, grid로 왼쪽과 같은 높이) */}
+        <Link to={detailUrl} className="w-28 h-28 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 block aspect-square">
           <img
             src={imageUrl}
             alt={article.title}
@@ -326,9 +326,9 @@ function ArticleCard({ article }: { article: NewsItem }) {
         </Link>
       </div>
 
-      {/* 2행: 카테고리 | 날짜 | 아이콘 3개 (그 밑에) */}
-      <div className="flex justify-between items-center gap-2">
-        <Link to={detailUrl} className="flex items-center gap-2 text-xs shrink-0">
+      {/* 2행: 카테고리 | 날짜 | 아이콘 3개 (빈 공간 없이 정렬) */}
+      <div className="flex items-center gap-3 flex-nowrap">
+        <Link to={detailUrl} className="flex items-center gap-1.5 text-xs shrink-0">
           <span className="font-medium text-primary-500">{getCategoryLabel()}</span>
           <span className="text-gray-300"> | </span>
           <span className="text-gray-400">{formatDate()}</span>
