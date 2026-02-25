@@ -813,6 +813,11 @@ const AdminPage: React.FC = () => {
   const [welcomeSaving, setWelcomeSaving] = useState(false);
   const [welcomeSaveMsg, setWelcomeSaveMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [showWelcomePreview, setShowWelcomePreview] = useState(false);
+  const [contactEmail, setContactEmail] = useState('onegunlee@gmail.com');
+  const [copyrightText, setCopyrightText] = useState('');
+  const [theGistVision, setTheGistVision] = useState('Gisters, Becoming Leaders');
+  const [siteSettingsSaving, setSiteSettingsSaving] = useState(false);
+  const [siteSettingsMsg, setSiteSettingsMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
     // 권한 체크 (실제 환경에서는 API 호출)
@@ -1032,6 +1037,9 @@ const AdminPage: React.FC = () => {
         setTermsContent(s.terms_of_service ?? '');
         setWelcomeMessage(s.welcome_popup_message ?? 'The Gist 가입을 감사드립니다.');
         setWelcomeTitleTemplate(s.welcome_popup_title ?? '{name}님');
+        setContactEmail(s.contact_email ?? 'onegunlee@gmail.com');
+        setCopyrightText(s.copyright_text ?? '');
+        setTheGistVision(s.the_gist_vision ?? 'Gisters, Becoming Leaders');
       }
     } catch (e) {
       console.error('대시보드 로드 실패:', e);
@@ -1311,6 +1319,72 @@ const AdminPage: React.FC = () => {
                       </button>
                       {termsMessage && (
                         <span className={termsMessage.type === 'success' ? 'text-emerald-400' : 'text-red-400'}>{termsMessage.text}</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 문의 수신 이메일 / The Gist 비전 / 저작권 (My Page·푸터 반영) */}
+                  <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 space-y-4">
+                    <h3 className="text-lg font-semibold text-white mb-4">사이트 설정 (문의·비전·저작권)</h3>
+                    <p className="text-slate-400 text-sm mb-4">문의하기 수신 이메일, The Gist 비전 문구, 저작권 문구. 저장 시 My Page·푸터에 즉시 반영됩니다.</p>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-slate-400 text-sm mb-1">문의 수신 이메일</label>
+                        <input
+                          type="email"
+                          value={contactEmail}
+                          onChange={(e) => setContactEmail(e.target.value)}
+                          placeholder="onegunlee@gmail.com"
+                          className="w-full px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-slate-200"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-slate-400 text-sm mb-1">The Gist 비전 문구</label>
+                        <textarea
+                          value={theGistVision}
+                          onChange={(e) => setTheGistVision(e.target.value)}
+                          placeholder="Gisters, Becoming Leaders"
+                          rows={2}
+                          className="w-full px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-slate-200 placeholder-slate-500 resize-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-slate-400 text-sm mb-1">저작권 문구</label>
+                        <input
+                          type="text"
+                          value={copyrightText}
+                          onChange={(e) => setCopyrightText(e.target.value)}
+                          placeholder="비어 있으면 © 2026 The Gist 사용"
+                          className="w-full px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-slate-200"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 mt-4">
+                      <button
+                        type="button"
+                        disabled={siteSettingsSaving}
+                        onClick={async () => {
+                          setSiteSettingsSaving(true);
+                          setSiteSettingsMsg(null);
+                          try {
+                            await adminSettingsApi.updateSettings({
+                              contact_email: contactEmail,
+                              the_gist_vision: theGistVision,
+                              copyright_text: copyrightText,
+                            });
+                            setSiteSettingsMsg({ type: 'success', text: '저장되었습니다.' });
+                          } catch (e) {
+                            setSiteSettingsMsg({ type: 'error', text: '저장에 실패했습니다.' });
+                          } finally {
+                            setSiteSettingsSaving(false);
+                          }
+                        }}
+                        className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white rounded-lg text-sm"
+                      >
+                        {siteSettingsSaving ? '저장 중...' : '사이트 설정 저장'}
+                      </button>
+                      {siteSettingsMsg && (
+                        <span className={siteSettingsMsg.type === 'success' ? 'text-emerald-400' : 'text-red-400'}>{siteSettingsMsg.text}</span>
                       )}
                     </div>
                   </div>
