@@ -58,6 +58,15 @@ function filterPlaceholder(items: NewsItem[]): NewsItem[] {
   )
 }
 
+/** 기사를 2개씩 묶어 행 단위로 (PC 2열 그리드용). 마지막 행은 1개일 수 있음. */
+function chunkBy2<T>(arr: T[]): T[][] {
+  const out: T[][] = []
+  for (let i = 0; i < arr.length; i += 2) {
+    out.push(arr.slice(i, i + 2))
+  }
+  return out
+}
+
 export default function HomePage() {
   const [news, setNews] = useState<NewsItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -130,8 +139,8 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* 기사 목록 - 기사 사이만 회색(배경 비침), 메뉴와 첫 기사 간격 축소 */}
-      <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 md:px-8 lg:px-12 xl:px-16 pt-4 md:pt-5">
+      {/* 기사 목록 - 메뉴~첫기사는 흰 배경, 기사와 기사 사이에만 회색 띠(이미지와 동일) */}
+      <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 md:px-8 lg:px-12 xl:px-16 pt-4 md:pt-5 bg-page">
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
             <LoadingSpinner size="large" />
@@ -142,10 +151,33 @@ export default function HomePage() {
           </div>
         ) : (
           <>
-            <div className="bg-page-secondary lg:grid lg:grid-cols-2 lg:gap-x-12 lg:gap-y-2 gap-y-2 py-2 lg:py-2">
-              {news.map((item, index) => (
-                <ArticleCard key={item.id ?? index} article={item} />
-              ))}
+            <div className="bg-page">
+              {/* 모바일: 기사 1개씩, 기사와 기사 사이에만 회색 */}
+              <div className="lg:hidden">
+                {news.map((item, i) => (
+                  <div key={item.id ?? i}>
+                    <ArticleCard article={item} />
+                    {i < news.length - 1 && (
+                      <div className="h-2 bg-page-secondary" aria-hidden />
+                    )}
+                  </div>
+                ))}
+              </div>
+              {/* PC(lg~): 기사 2개씩 한 행, 행과 행 사이에만 회색 */}
+              <div className="hidden lg:block">
+                {chunkBy2(news).map((row, rowIndex) => (
+                  <div key={rowIndex}>
+                    <div className="grid grid-cols-2 gap-x-12">
+                      {row.map((item, idx) => (
+                        <ArticleCard key={item.id ?? rowIndex * 2 + idx} article={item} />
+                      ))}
+                    </div>
+                    {rowIndex < chunkBy2(news).length - 1 && (
+                      <div className="h-2 bg-page-secondary" aria-hidden />
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
             {page < totalPages && (
               <div className="apply-grayscale flex justify-center pt-8 pb-4">
