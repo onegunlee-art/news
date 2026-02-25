@@ -108,7 +108,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-white pb-8">
       {/* 탭 네비게이션 - PC: Foreign Affairs 스타일 넓은 레이아웃 */}
       <div className="sticky top-14 bg-white z-30 border-b border-gray-200">
-        <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 md:px-6">
+        <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 md:px-8 lg:px-12 xl:px-16">
           <div className="flex">
             {tabs.map((tab) => (
               <button
@@ -131,7 +131,7 @@ export default function HomePage() {
       </div>
 
       {/* 기사 목록 - 모바일: 1열 / PC: Foreign Affairs 스타일 넓은 2열 */}
-      <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 md:px-6 pt-6 md:pt-8">
+      <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 md:px-8 lg:px-12 xl:px-16 pt-8 md:pt-10">
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
             <LoadingSpinner size="large" />
@@ -153,7 +153,7 @@ export default function HomePage() {
                   type="button"
                   onClick={loadMore}
                   disabled={isLoadingMore}
-                  className="px-8 py-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="text-gray-600 hover:text-gray-900 underline-offset-2 hover:underline font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoadingMore ? '불러오는 중...' : '더 보기'}
                 </button>
@@ -351,7 +351,7 @@ function ArticleCard({ article }: { article: NewsItem }) {
           </div>
         </div>
 
-        <Link to={detailUrl} className="w-28 h-full min-h-[7rem] flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 block self-stretch">
+        <Link to={detailUrl} className="w-28 h-full min-h-[7rem] flex-shrink-0 rounded-none overflow-hidden bg-gray-100 block self-stretch">
           <img
             src={imageUrl}
             alt={article.title}
