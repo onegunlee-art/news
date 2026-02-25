@@ -151,15 +151,6 @@ export default function NewsDetailPage() {
     }
   }
 
-  // 원문 게재일 (URL에서 추출) → 제목 밑 출처 문구용
-  const formatDate = () => {
-    if (news?.published_at) {
-      const date = new Date(news.published_at)
-      return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`
-    }
-    return news?.time_ago || ''
-  }
-
   // admin에서 업데이트한 날짜 → 사진 밑 매체 옆 표시용
   const formatHeaderDate = () => {
     const dateStr = news?.updated_at || news?.created_at
