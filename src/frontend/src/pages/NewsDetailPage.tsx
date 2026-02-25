@@ -336,9 +336,9 @@ export default function NewsDetailPage() {
             </p>
           )}
 
-          {/* 매체 설명: 원문 제목(영어)만 표시. 기사 제목(news.title)은 한글 번역이므로 사용하지 않음 */}
+          {/* 매체 설명 */}
           <p className="text-sm text-gray-500 mb-6">
-            이 글은 {formatDate() ? `${formatDate()}자, ` : ''}{((news.original_source && news.original_source.trim()) || news.source || 'The Gist')}에 게재된 &quot;{(news.original_title && news.original_title.trim()) || extractTitleFromUrl(news.url) || '원문'}&quot; 기사를 The Gist가 AI를 통해 분석/정리한 것 입니다.
+            이 글은 &quot;{((news.original_source && news.original_source.trim()) || news.source || 'The Gist')}&quot;에 게재된 &quot;{(news.original_title && news.original_title.trim()) || extractTitleFromUrl(news.url) || '원문'}&quot; 글의 시각을 참조하여 The Gist가 작성한 글 입니다.
           </p>
 
           {/* 저자 정보 (있을 경우) */}
@@ -391,35 +391,35 @@ export default function NewsDetailPage() {
             />
           )}
 
-          {/* 원문 AI 요약/구조 분석 — 항상 오픈 */}
-          {news.content && (
+          {/* 참고 글 AI 구조 분석 — 제목 오른쪽 끝에 참고 글 전체 원문 보기 링크 */}
+          {(news.content || (news.url && news.url !== '#')) && (
             <div className="mb-8 border-t border-gray-100 pt-6 mt-2">
-              <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
-                </svg>
-                원문 AI 요약/구조 분석
-              </h3>
-              <div className="p-4 bg-gray-50 rounded-lg border border-gray-100 text-sm text-gray-600 leading-relaxed whitespace-pre-wrap [&_mark]:rounded-sm [&_mark]:px-0.5 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-0.5 [&_table]:border-collapse [&_table]:w-full [&_table]:my-2 [&_td]:border [&_td]:border-gray-300 [&_td]:px-2 [&_td]:py-1.5 [&_th]:border [&_th]:border-gray-300 [&_th]:px-2 [&_th]:py-1.5 [&_th]:font-semibold [&_th]:bg-gray-100"
-                dangerouslySetInnerHTML={{ __html: formatContentHtml(news.content) }}
-              />
-            </div>
-          )}
-
-          {/* 원문 링크 */}
-          {news.url && news.url !== '#' && (
-            <div className="border-t border-gray-100 pt-6 mt-6">
-              <a
-                href={news.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 text-sm text-gray-500 hover:text-primary-500 transition-colors"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
-                원문 보기
-              </a>
+              <div className="flex justify-between items-center gap-4 mb-3">
+                <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-500 uppercase tracking-wider shrink-0">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
+                  </svg>
+                  참고 글 AI 구조 분석
+                </h3>
+                {news.url && news.url !== '#' && (
+                  <a
+                    href={news.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-primary-500 transition-colors shrink-0"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                    참고 글 전체 원문 보기
+                  </a>
+                )}
+              </div>
+              {news.content && (
+                <div className="p-4 bg-gray-50 rounded-lg border border-gray-100 text-sm text-gray-600 leading-relaxed whitespace-pre-wrap [&_mark]:rounded-sm [&_mark]:px-0.5 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-0.5 [&_table]:border-collapse [&_table]:w-full [&_table]:my-2 [&_td]:border [&_td]:border-gray-300 [&_td]:px-2 [&_td]:py-1.5 [&_th]:border [&_th]:border-gray-300 [&_th]:px-2 [&_th]:py-1.5 [&_th]:font-semibold [&_th]:bg-gray-100"
+                  dangerouslySetInnerHTML={{ __html: formatContentHtml(news.content) }}
+                />
+              )}
             </div>
           )}
         </div>
