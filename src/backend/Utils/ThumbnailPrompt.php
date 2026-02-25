@@ -55,33 +55,62 @@ final class ThumbnailPrompt
     }
 
     /**
-     * 기사 텍스트에서 GPT로 CONTENT 변수(Summary, Keywords) 추출.
+     * 콘텐츠 블록(5–8줄 시네마틱 씬 등)으로 최종 DALL-E 프롬프트 조립.
+     */
+    public static function buildFullPromptFromContentBlock(string $contentBlock): string
+    {
+        $contentBlock = trim($contentBlock) !== '' ? trim($contentBlock) : 'Global news.';
+        return $contentBlock . "\n\n" . self::getStyleLayer();
+    }
+
+    /**
+     * 기사 텍스트에서 GPT로 콘텐츠 레이어 추출 (에디토리얼 아트 디렉터 방식).
+     * 출력: 5–8줄 시네마틱 씬 설명 → content_block.
      * $openai는 chat(string $systemPrompt, string $userPrompt): string 메서드를 가진 객체.
      *
-     * @return array{summary: string, keywords: string}
+     * @param string $articleUrl 기사 URL (프롬프트 컨텍스트용, 선택)
+     * @return array{summary: string, keywords: string, content_block: string} summary/keywords는 하위 호환용, content_block이 메인.
      */
-    public static function extractContentLayerFromArticle(string $title, string $descriptionOrContent, object $openai): array
+    public static function extractContentLayerFromArticle(string $title, string $descriptionOrContent, object $openai, string $articleUrl = ''): array
     {
+        $fallbackBlock = mb_substr(trim($title), 0, 200) ?: 'Global news.';
         $default = [
-            'summary' => mb_substr(trim($title), 0, 200) ?: 'news',
+            'summary' => $fallbackBlock,
             'keywords' => '',
+            'content_block' => $fallbackBlock,
         ];
 
         if (!method_exists($openai, 'chat')) {
             return $default;
         }
 
-        $systemPrompt = 'You are an editor summarizing a news article for a thumbnail illustration brief. ' .
-            'Output exactly two lines in English, no other text. ' .
-            'Line 1: Summary: [one sentence summarizing the article]. ' .
-            'Line 2: Keywords: [comma-separated key terms: persons, institutions, concepts, themes].';
+        $systemPrompt = "You are an editorial art director for an international affairs magazine.\n\n" .
+            "Extract the core geopolitical argument from the article.\n" .
+            "Then translate the argument into visual narrative scenes for an editorial illustration.\n\n" .
+            "Rules:\n" .
+            "- Do NOT summarize the article\n" .
+            "- Convert abstract ideas into physical situations\n" .
+            "- Focus on diplomacy, power hierarchy, negotiation, alliance dynamics\n" .
+            "- Include people behavior, spatial relationships, symbolic objects\n" .
+            "- Avoid generic office scenes\n" .
+            "- Avoid decorative imagery\n\n" .
+            "Output:\n" .
+            "Short cinematic scene descriptions (5–8 lines).\n" .
+            "Each line must describe a visual situation that can be illustrated.\n\n" .
+            "Tone:\n" .
+            "Subtle geopolitical tension, institutional environments, strategic relationships, quiet symbolism.\n\n" .
+            "Output only the 5–8 lines, one scene per line, no labels or numbering.";
 
-        $userPrompt = "Article title: " . trim($title) . "\n\n";
-        if (trim($descriptionOrContent) !== '') {
-            $snippet = mb_substr(trim($descriptionOrContent), 0, 2000);
-            $userPrompt .= "Summary or excerpt: " . $snippet . "\n\n";
+        $userPrompt = '';
+        if ($articleUrl !== '') {
+            $userPrompt .= "Read the article from this URL:\n" . trim($articleUrl) . "\n\n";
         }
-        $userPrompt .= "Provide Summary (one sentence) and Keywords (comma-separated) for the thumbnail.";
+        $userPrompt .= "Article title: " . trim($title) . "\n\n";
+        if (trim($descriptionOrContent) !== '') {
+            $snippet = mb_substr(trim($descriptionOrContent), 0, 4000);
+            $userPrompt .= "Article content (excerpt):\n" . $snippet . "\n\n";
+        }
+        $userPrompt .= "Provide 5–8 lines of cinematic scene descriptions for the thumbnail illustration.";
 
         try {
             $response = $openai->chat($systemPrompt, $userPrompt);
@@ -89,26 +118,29 @@ final class ThumbnailPrompt
             return $default;
         }
 
-        $summary = '';
-        $keywords = '';
-
         $lines = preg_split('/\r\n|\r|\n/', $response);
+        $sceneLines = [];
         foreach ($lines as $line) {
             $line = trim($line);
-            if (stripos($line, 'Summary:') === 0) {
-                $summary = trim(preg_replace('/\s+/', ' ', (string) substr($line, 8)));
-            } elseif (stripos($line, 'Keywords:') === 0) {
-                $keywords = trim(preg_replace('/\s+/', ' ', (string) substr($line, 9)));
+            if ($line === '') {
+                continue;
+            }
+            $sceneLines[] = $line;
+            if (count($sceneLines) >= 8) {
+                break;
             }
         }
 
-        if ($summary === '' && $keywords === '') {
+        if (count($sceneLines) === 0) {
             return $default;
         }
 
+        $contentBlock = implode("\n", $sceneLines);
+
         return [
-            'summary' => $summary !== '' ? $summary : $default['summary'],
-            'keywords' => $keywords,
+            'summary' => $sceneLines[0] ?? $fallbackBlock,
+            'keywords' => '',
+            'content_block' => $contentBlock,
         ];
     }
 
@@ -118,6 +150,6 @@ final class ThumbnailPrompt
     public static function buildFallbackPromptFromTitle(string $titleSnippet): string
     {
         $t = mb_substr(trim($titleSnippet), 0, 200) ?: 'news';
-        return self::buildFullPrompt($t, '');
+        return self::buildFullPromptFromContentBlock($t);
     }
 }

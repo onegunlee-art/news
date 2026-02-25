@@ -147,13 +147,11 @@ class ThumbnailAgent extends BaseAgent
                 if (trim($contentInput) === '') {
                     $contentInput = (string) $article->getContent();
                 }
-                $contentInput = mb_substr(trim($contentInput), 0, 2000);
+                $contentInput = mb_substr(trim($contentInput), 0, 4000);
+                $articleUrl = $article->getUrl() ?? '';
 
-                $contentLayer = \App\Utils\ThumbnailPrompt::extractContentLayerFromArticle($title, $contentInput, $this->openai);
-                $prompt = \App\Utils\ThumbnailPrompt::buildFullPrompt(
-                    $contentLayer['summary'],
-                    $contentLayer['keywords']
-                );
+                $contentLayer = \App\Utils\ThumbnailPrompt::extractContentLayerFromArticle($title, $contentInput, $this->openai, $articleUrl);
+                $prompt = \App\Utils\ThumbnailPrompt::buildFullPromptFromContentBlock($contentLayer['content_block']);
                 $usedPrompt = $prompt;
                 $generated = $this->openai->createImage($prompt);
                 if ($generated !== null && $generated !== '') {

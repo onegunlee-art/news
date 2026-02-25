@@ -628,6 +628,7 @@ function regenerateThumbnailDalle(array $input): array {
 
     $title = '';
     $descriptionOrContent = '';
+    $articleUrl = '';
 
     $newsId = isset($input['news_id']) && (is_int($input['news_id']) || ctype_digit((string) $input['news_id'])) ? (int) $input['news_id'] : null;
     if ($newsId > 0 && file_exists($projectRoot . 'src/backend/Core/Database.php')) {
@@ -658,11 +659,8 @@ function regenerateThumbnailDalle(array $input): array {
         return ['success' => false, 'error' => 'prompt, news_title, 또는 news_id가 필요합니다.', 'image_url' => null];
     }
 
-    $contentLayer = \App\Utils\ThumbnailPrompt::extractContentLayerFromArticle($title, $descriptionOrContent, $openai);
-    $effectivePrompt = \App\Utils\ThumbnailPrompt::buildFullPrompt(
-        $contentLayer['summary'],
-        $contentLayer['keywords']
-    );
+    $contentLayer = \App\Utils\ThumbnailPrompt::extractContentLayerFromArticle($title, $descriptionOrContent, $openai, $articleUrl);
+    $effectivePrompt = \App\Utils\ThumbnailPrompt::buildFullPromptFromContentBlock($contentLayer['content_block']);
 
     try {
         $url = $openai->createImage($effectivePrompt, ['timeout' => 90]);
