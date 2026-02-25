@@ -9,7 +9,7 @@ export default function Footer() {
   const [showTermsModal, setShowTermsModal] = useState(false)
 
   return (
-    <footer className="bg-gray-50 border-t border-gray-100 pb-20 md:pb-0">
+    <footer className="bg-gray-50 border-t border-gray-100 pb-6 md:pb-0">
       {/* 메인 푸터 - 이미지 [하단] 구조 */}
       <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 py-12">
         <div className="flex flex-col items-center text-center">

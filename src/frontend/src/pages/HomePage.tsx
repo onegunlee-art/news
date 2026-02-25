@@ -105,7 +105,7 @@ export default function HomePage() {
   const tabs: TabType[] = ['최신', '외교', '경제', '특집', '인기']
 
   return (
-    <div className="min-h-screen bg-white pb-20 md:pb-8">
+    <div className="min-h-screen bg-white pb-8">
       {/* 탭 네비게이션 - PC: Foreign Affairs 스타일 넓은 레이아웃 */}
       <div className="sticky top-14 bg-white z-30 border-b border-gray-200">
         <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 md:px-6">
@@ -164,8 +164,6 @@ export default function HomePage() {
       </div>
 
 
-      {/* 하단 네비게이션 - 모바일만 표시, PC는 헤더에 링크 */}
-      <BottomNav />
     </div>
   )
 }
@@ -372,38 +370,3 @@ function ArticleCard({ article }: { article: NewsItem }) {
   )
 }
 
-// 하단 네비게이션 - 모바일만 표시 (최신, My Page, 설정)
-function BottomNav() {
-  return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-40">
-      <div className="max-w-lg mx-auto px-4">
-        <div className="flex items-center justify-around h-16">
-          {/* 최신 */}
-          <Link to="/" className="flex flex-col items-center gap-1 text-gray-900">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span className="text-xs font-medium">최신</span>
-          </Link>
-
-          {/* My Page */}
-          <Link to="/profile" className="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-900 transition-colors">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-            </svg>
-            <span className="text-xs">My Page</span>
-          </Link>
-
-          {/* 설정 */}
-          <Link to="/settings" className="flex flex-col items-center gap-1 text-gray-400 hover:text-gray-900 transition-colors">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            <span className="text-xs">설정</span>
-          </Link>
-        </div>
-      </div>
-    </nav>
-  )
-}

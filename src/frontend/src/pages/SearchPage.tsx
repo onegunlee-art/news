@@ -53,7 +53,7 @@ export default function SearchPage() {
   }, [q])
 
   return (
-    <div className="min-h-screen bg-white pb-20 md:pb-8">
+    <div className="min-h-screen bg-white pb-8">
       <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 md:px-6 pt-6 md:pt-8">
         {/* 검색 결과 헤더 */}
         <div className="mb-6">
