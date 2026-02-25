@@ -291,10 +291,10 @@ function ArticleCard({ article }: { article: NewsItem }) {
 
   return (
     <article className="py-5 border-b border-page last:border-0 lg:border-b lg:border-page">
-      {/* 글 + 메타 | 썸네일 (높이 동일, 메타는 글 바로 밑·아래는 썸네일과 맞춤) - 왼쪽만 흑백 적용 */}
+      {/* 상단: 글 블록과 썸네일 높이 동일하게 맞춤 */}
       <div className="grid grid-cols-[1fr_auto] items-stretch gap-4">
-        <div className="apply-grayscale min-w-0 flex flex-col min-h-[7rem]">
-          <Link to={detailUrl} className="flex flex-col">
+        <div className="apply-grayscale min-w-0 flex flex-col">
+          <Link to={detailUrl} className="flex flex-col min-h-[7rem] justify-center">
             <h2 className="text-lg font-bold text-page leading-snug mb-1.5 line-clamp-2">
               {article.title}
             </h2>
@@ -304,58 +304,12 @@ function ArticleCard({ article }: { article: NewsItem }) {
               </p>
             )}
           </Link>
-          {/* 글 바로 밑 메타 (카테고리 | 날짜 | 아이콘), mt-auto로 썸네일 아래와 맞춤 */}
-          <div className="flex items-center gap-3 flex-nowrap mt-auto pt-2">
-            <Link to={detailUrl} className="flex items-center gap-1.5 text-xs shrink-0">
-              <span className="font-medium text-primary-500">{getCategoryLabel()}</span>
-              <span className="text-page-muted"> | </span>
-              <span className="text-page-secondary">{formatDate()}</span>
-            </Link>
-            <div className="flex items-center gap-3 shrink-0" role="group" aria-label="기사 액션">
-              <button
-                type="button"
-                onClick={handlePlayAudio}
-                className="p-1 transition-colors text-page-secondary hover:text-page"
-                title="음성으로 듣기"
-                aria-label="재생"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 18v-6a9 9 0 0118 0v6M3 18h2a2 2 0 002-2v-4a2 2 0 00-2-2H3v8zm14 0h2a2 2 0 002-2v-4a2 2 0 00-2-2h-2v8z" />
-                </svg>
-              </button>
-              <ShareMenu
-                title={article.title}
-                description={article.description || ''}
-                imageUrl={imageUrl}
-                webUrl={shareWebUrl}
-                className="text-page-secondary hover:text-page"
-                titleAttr="공유하기"
-              />
-              <button
-                type="button"
-                onClick={handleBookmark}
-                disabled={isBookmarking}
-                className={`p-1 transition-colors ${isBookmarked ? 'text-primary-500' : 'text-page-secondary hover:text-page'} ${isBookmarking ? 'opacity-60 cursor-wait' : ''}`}
-                title="즐겨찾기"
-                aria-label={isBookmarked ? '즐겨찾기 해제' : '즐겨찾기 추가'}
-              >
-                {isBookmarking ? (
-                  <span className="inline-block w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <svg className="w-5 h-5" fill={isBookmarked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                  </svg>
-                )}
-              </button>
-            </div>
-          </div>
         </div>
-
-        <Link to={detailUrl} className="w-28 h-full min-h-[7rem] flex-shrink-0 rounded-none overflow-hidden bg-page-secondary block self-stretch">
+        <Link to={detailUrl} className="w-28 min-h-[7rem] flex-shrink-0 rounded-none overflow-hidden bg-page-secondary block self-stretch">
           <img
             src={imageUrl}
             alt={article.title}
-            className="w-full h-full object-cover"
+            className="w-full h-full min-h-[7rem] object-cover"
             onError={(e) => {
               (e.target as HTMLImageElement).src = getPlaceholderImageUrl(
                 { id: article.id, title: article.title, description: article.description, published_at: article.published_at, category: article.category, url: article.url, source: article.source },
@@ -365,6 +319,51 @@ function ArticleCard({ article }: { article: NewsItem }) {
             }}
           />
         </Link>
+      </div>
+      {/* 구분선 아래: 매체 | 날짜(왼쪽) / 아이콘 3개만(오른쪽, 아이콘 옆 구분자 없음) */}
+      <div className="apply-grayscale flex items-center justify-between pt-2 mt-2 border-t border-page">
+        <Link to={detailUrl} className="flex items-center gap-1.5 text-xs shrink-0">
+          <span className="font-medium text-primary-500">{getCategoryLabel()}</span>
+          <span className="text-page-muted">|</span>
+          <span className="text-page-secondary">{formatDate()}</span>
+        </Link>
+        <div className="flex items-center gap-2 shrink-0" role="group" aria-label="기사 액션">
+          <button
+            type="button"
+            onClick={handlePlayAudio}
+            className="p-1 transition-colors text-page-secondary hover:text-page"
+            title="음성으로 듣기"
+            aria-label="재생"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 18v-6a9 9 0 0118 0v6M3 18h2a2 2 0 002-2v-4a2 2 0 00-2-2H3v8zm14 0h2a2 2 0 002-2v-4a2 2 0 00-2-2h-2v8z" />
+            </svg>
+          </button>
+          <ShareMenu
+            title={article.title}
+            description={article.description || ''}
+            imageUrl={imageUrl}
+            webUrl={shareWebUrl}
+            className="text-page-secondary hover:text-page"
+            titleAttr="공유하기"
+          />
+          <button
+            type="button"
+            onClick={handleBookmark}
+            disabled={isBookmarking}
+            className={`p-1 transition-colors ${isBookmarked ? 'text-primary-500' : 'text-page-secondary hover:text-page'} ${isBookmarking ? 'opacity-60 cursor-wait' : ''}`}
+            title="즐겨찾기"
+            aria-label={isBookmarked ? '즐겨찾기 해제' : '즐겨찾기 추가'}
+          >
+            {isBookmarking ? (
+              <span className="inline-block w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <svg className="w-5 h-5" fill={isBookmarked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+              </svg>
+            )}
+          </button>
+        </div>
       </div>
     </article>
   )
