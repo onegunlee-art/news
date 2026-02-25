@@ -649,7 +649,8 @@ final class AdminController
                 continue;
             }
             [$title, $meta, $narration, $critiquePart] = $parts;
-            $fullPayload = $title . '|' . $meta . '|' . $narration . '|' . $critiquePart . '|' . $ttsVoice;
+            // Listen과 동일한 캐시 키 (재생 순서: The Gist → narration)
+            $fullPayload = $title . '|' . $meta . '|' . $critiquePart . '|' . $narration . '|' . $ttsVoice;
             $cacheHash = hash('sha256', $fullPayload);
 
             if (!$force) {
