@@ -151,9 +151,8 @@ class ThumbnailAgent extends BaseAgent
 
                 $contentLayer = \App\Utils\ThumbnailPrompt::extractContentLayerFromArticle($title, $contentInput, $this->openai);
                 $prompt = \App\Utils\ThumbnailPrompt::buildFullPrompt(
-                    $contentLayer['core_theme'],
-                    $contentLayer['key_elements'],
-                    $contentLayer['metaphor_idea']
+                    $contentLayer['summary'],
+                    $contentLayer['keywords']
                 );
                 $usedPrompt = $prompt;
                 $generated = $this->openai->createImage($prompt);

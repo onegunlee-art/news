@@ -2,7 +2,7 @@
 /**
  * DALL-E 썸네일 프롬프트 단일 정의
  *
- * [콘텐츠 레이어] + [스타일 레이어] 구조.
+ * [콘텐츠 레이어] + [고정 스타일 블록] 구조.
  * ThumbnailAgent(파이프라인)와 Admin(ai-analyze regenerate_thumbnail_dalle)에서 공유.
  *
  * @author The Gist AI System
@@ -15,60 +15,56 @@ namespace App\Utils;
 final class ThumbnailPrompt
 {
     /**
-     * [STYLE LAYER] 고정 문자열. 편집 일러스트 스타일.
+     * [고정 스타일 블록] 브랜드 스타일. 항상 동일.
      */
     public static function getStyleLayer(): string
     {
-        return "Flat editorial illustration\n" .
-            "Symmetrical composition\n" .
-            "Architectural city cross-section\n" .
-            "Multiple small narrative scenes happening simultaneously\n" .
-            "Clean line art, thin outlines\n" .
-            "Muted pastel palette with one accent color\n" .
-            "Vintage newspaper illustration mood\n" .
-            "Planimetric perspective, minimal shadows\n" .
-            "Stylized human figures with expressive poses\n" .
-            "Playful but intellectual visual metaphor\n" .
-            "Magazine cover composition\n" .
-            "No text";
+        return "Dense multi-scene editorial illustration across a layered city.\n" .
+            "Architectural cutaway buildings revealing interior rooms.\n" .
+            "Panel grid composition with parallel narrative scenes.\n\n" .
+            "Environment-first storytelling.\n" .
+            "No oversized metaphor.\n" .
+            "No infographic style.\n\n" .
+            "Highly symmetrical,\n" .
+            "miniature stylized figures,\n" .
+            "flat pastel palette,\n" .
+            "thin line art,\n" .
+            "vintage editorial print texture,\n" .
+            "planimetric perspective,\n" .
+            "magazine illustration quality,\n" .
+            "text-free.\n\n" .
+            "Complex cross-section city block,\n" .
+            "multiple rooms visible simultaneously,\n" .
+            "parallel narrative scenes unfolding at once.";
     }
 
     /**
      * 콘텐츠 변수로 최종 DALL-E 프롬프트 조립.
      *
-     * @param string $coreTheme   기사 핵심 주제
-     * @param string $keyElements 주요 인물/기관/개념
-     * @param string $metaphorIdea 상징적 상황
+     * @param string $summary  기사 요약 (한 문장)
+     * @param string $keywords 핵심 키워드 (쉼표 구분)
      */
-    public static function buildFullPrompt(string $coreTheme, string $keyElements, string $metaphorIdea): string
+    public static function buildFullPrompt(string $summary, string $keywords): string
     {
-        $coreTheme = trim($coreTheme) !== '' ? trim($coreTheme) : 'global news';
-        $keyElements = trim($keyElements);
-        $metaphorIdea = trim($metaphorIdea) !== '' ? trim($metaphorIdea) : $coreTheme;
+        $summary = trim($summary) !== '' ? trim($summary) : 'Global news.';
+        $keywords = trim($keywords);
 
-        return "Create an editorial illustration thumbnail for a news article.\n\n" .
-            "[CONTENT LAYER]\n" .
-            "Core theme: " . $coreTheme . "\n" .
-            "Key elements: " . $keyElements . "\n" .
-            "Metaphor idea: " . $metaphorIdea . "\n\n" .
-            "[STYLE LAYER]\n" .
-            self::getStyleLayer() . "\n\n" .
-            "High detail, balanced layout, professional global news thumbnail.\n\n" .
-            "Generate one strong visual metaphor that represents the article's core conflict or idea.";
+        return $summary . "\n" .
+            $keywords . "\n\n" .
+            self::getStyleLayer();
     }
 
     /**
-     * 기사 텍스트에서 GPT로 CONTENT 변수(Core theme, Key elements, Metaphor idea) 추출.
+     * 기사 텍스트에서 GPT로 CONTENT 변수(Summary, Keywords) 추출.
      * $openai는 chat(string $systemPrompt, string $userPrompt): string 메서드를 가진 객체.
      *
-     * @return array{core_theme: string, key_elements: string, metaphor_idea: string}
+     * @return array{summary: string, keywords: string}
      */
     public static function extractContentLayerFromArticle(string $title, string $descriptionOrContent, object $openai): array
     {
         $default = [
-            'core_theme' => mb_substr(trim($title), 0, 200) ?: 'news',
-            'key_elements' => '',
-            'metaphor_idea' => '',
+            'summary' => mb_substr(trim($title), 0, 200) ?: 'news',
+            'keywords' => '',
         ];
 
         if (!method_exists($openai, 'chat')) {
@@ -76,17 +72,16 @@ final class ThumbnailPrompt
         }
 
         $systemPrompt = 'You are an editor summarizing a news article for a thumbnail illustration brief. ' .
-            'Output exactly three lines in English, no other text. Format (one line each): ' .
-            'Core theme: [one short phrase] ' .
-            'Key elements: [persons, institutions, or concepts] ' .
-            'Metaphor idea: [one symbolic situation for visual metaphor]';
+            'Output exactly two lines in English, no other text. ' .
+            'Line 1: Summary: [one sentence summarizing the article]. ' .
+            'Line 2: Keywords: [comma-separated key terms: persons, institutions, concepts, themes].';
 
         $userPrompt = "Article title: " . trim($title) . "\n\n";
         if (trim($descriptionOrContent) !== '') {
             $snippet = mb_substr(trim($descriptionOrContent), 0, 2000);
             $userPrompt .= "Summary or excerpt: " . $snippet . "\n\n";
         }
-        $userPrompt .= "Provide Core theme, Key elements, and Metaphor idea for the thumbnail.";
+        $userPrompt .= "Provide Summary (one sentence) and Keywords (comma-separated) for the thumbnail.";
 
         try {
             $response = $openai->chat($systemPrompt, $userPrompt);
@@ -94,40 +89,35 @@ final class ThumbnailPrompt
             return $default;
         }
 
-        $coreTheme = '';
-        $keyElements = '';
-        $metaphorIdea = '';
+        $summary = '';
+        $keywords = '';
 
         $lines = preg_split('/\r\n|\r|\n/', $response);
         foreach ($lines as $line) {
             $line = trim($line);
-            if (stripos($line, 'Core theme:') === 0) {
-                $coreTheme = trim(preg_replace('/\s+/', ' ', (string) substr($line, 11)));
-            } elseif (stripos($line, 'Key elements:') === 0) {
-                $keyElements = trim(preg_replace('/\s+/', ' ', (string) substr($line, 13)));
-            } elseif (stripos($line, 'Metaphor idea:') === 0) {
-                $metaphorIdea = trim(preg_replace('/\s+/', ' ', (string) substr($line, 14)));
+            if (stripos($line, 'Summary:') === 0) {
+                $summary = trim(preg_replace('/\s+/', ' ', (string) substr($line, 8)));
+            } elseif (stripos($line, 'Keywords:') === 0) {
+                $keywords = trim(preg_replace('/\s+/', ' ', (string) substr($line, 9)));
             }
         }
 
-        if ($coreTheme === '' && $keyElements === '' && $metaphorIdea === '') {
+        if ($summary === '' && $keywords === '') {
             return $default;
         }
 
         return [
-            'core_theme' => $coreTheme !== '' ? $coreTheme : $default['core_theme'],
-            'key_elements' => $keyElements,
-            'metaphor_idea' => $metaphorIdea !== '' ? $metaphorIdea : $default['core_theme'],
+            'summary' => $summary !== '' ? $summary : $default['summary'],
+            'keywords' => $keywords,
         ];
     }
 
     /**
      * 제목만 있을 때(또는 GPT 실패 시) 최소 콘텐츠 레이어로 fallback.
-     * 하위 호환: 기존 buildDalleThumbnailPrompt 호출부가 없어지므로 이 메서드만 남김.
      */
     public static function buildFallbackPromptFromTitle(string $titleSnippet): string
     {
         $t = mb_substr(trim($titleSnippet), 0, 200) ?: 'news';
-        return self::buildFullPrompt($t, '', '');
+        return self::buildFullPrompt($t, '');
     }
 }

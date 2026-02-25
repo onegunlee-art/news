@@ -660,9 +660,8 @@ function regenerateThumbnailDalle(array $input): array {
 
     $contentLayer = \App\Utils\ThumbnailPrompt::extractContentLayerFromArticle($title, $descriptionOrContent, $openai);
     $effectivePrompt = \App\Utils\ThumbnailPrompt::buildFullPrompt(
-        $contentLayer['core_theme'],
-        $contentLayer['key_elements'],
-        $contentLayer['metaphor_idea']
+        $contentLayer['summary'],
+        $contentLayer['keywords']
     );
 
     try {
