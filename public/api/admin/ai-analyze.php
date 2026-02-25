@@ -609,32 +609,62 @@ function getStatus(): array {
 }
 
 /**
- * DALL-E로 썸네일 수정 (Admin에서 직접 프롬프트 입력)
- * POST action=regenerate_thumbnail_dalle → { prompt (필수), news_title (선택) }
+ * DALL-E로 썸네일 수정 (Admin) – 콘텐츠 레이어 + 스타일 레이어
+ * POST action=regenerate_thumbnail_dalle → { prompt (선택), news_title (선택), news_id (선택) }
+ * news_id 있으면 DB에서 기사 조회 후 GPT로 CONTENT 변수 추출; 없으면 prompt/news_title만으로 추출.
  */
 function regenerateThumbnailDalle(array $input): array {
-    $prompt = isset($input['prompt']) && is_string($input['prompt']) ? trim($input['prompt']) : '';
-    $newsTitle = isset($input['news_title']) && is_string($input['news_title']) ? trim($input['news_title']) : '';
-    $title = $prompt !== '' ? $prompt : $newsTitle;
-    if ($title === '') {
-        return ['success' => false, 'error' => 'prompt 또는 news_title이 필요합니다.', 'image_url' => null];
+    $projectRoot = findProjectRoot();
+    $path = $projectRoot . 'src/backend/Utils/ThumbnailPrompt.php';
+    if (!is_file($path)) {
+        return ['success' => false, 'error' => 'ThumbnailPrompt not found.', 'image_url' => null];
     }
+    require_once $path;
+
     $openai = new OpenAIService([]);
     if ($openai->isMockMode()) {
         return ['success' => false, 'error' => 'OPENAI_API_KEY not set. DALL-E를 사용할 수 없습니다.', 'image_url' => null];
     }
-    $titleSnippet = mb_substr($title, 0, 200);
-    $effectivePrompt = "Start by using the original headline of the article from the provided URL as the default basis for the thumbnail concept. "
-        . "Based on the article title (without extracting or quoting the full text), create a custom thumbnail concept art in a witty metaphorical cartoon style that visually represents the key idea implied by the title: \"" . $titleSnippet . "\". "
-        . "Style: Playful metaphor cartoon (no literal portraits), with a medium level of satire. "
-        . "Main characters: Include 1–2 protagonist characters representing the key country or countries, expressed through national characteristics or flags in a stylized, symbolic way. "
-        . "Composition: Vertical (portrait) orientation with a wide cinematic feel optimized for a tall thumbnail. "
-        . "Background: Keep the background clean and not overly complex so the main symbols and characters stand out clearly. "
-        . "Visual elements: The image must include symbolic objects, at least one clear national symbol, and visible flags integrated naturally into the scene. "
-        . "No text in the image. "
-        . "Imagery should convey the concept of the article title without any text. "
-        . "Clever symbolic elements and humor are encouraged. "
-        . "Do NOT include any written titles or captions in the thumbnail itself.";
+
+    $title = '';
+    $descriptionOrContent = '';
+
+    $newsId = isset($input['news_id']) && (is_int($input['news_id']) || ctype_digit((string) $input['news_id'])) ? (int) $input['news_id'] : null;
+    if ($newsId > 0 && file_exists($projectRoot . 'src/backend/Core/Database.php')) {
+        require_once $projectRoot . 'src/backend/Core/Database.php';
+        try {
+            $db = \App\Core\Database::getInstance()->getConnection();
+            $stmt = $db->prepare("SELECT title, description, content, narration FROM news WHERE id = ? LIMIT 1");
+            $stmt->execute([$newsId]);
+            $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+            if ($row) {
+                $title = (string) ($row['title'] ?? '');
+                $desc = (string) ($row['description'] ?? '');
+                $body = (string) ($row['content'] ?? '');
+                $narration = (string) ($row['narration'] ?? '');
+                $descriptionOrContent = $desc !== '' ? $desc : ($narration !== '' ? $narration : $body);
+            }
+        } catch (\Throwable $e) {
+            // fallback: leave title/descriptionOrContent empty, use prompt/news_title below
+        }
+    }
+
+    if (trim($title) === '') {
+        $prompt = isset($input['prompt']) && is_string($input['prompt']) ? trim($input['prompt']) : '';
+        $newsTitle = isset($input['news_title']) && is_string($input['news_title']) ? trim($input['news_title']) : '';
+        $title = $prompt !== '' ? $prompt : $newsTitle;
+    }
+    if (trim($title) === '') {
+        return ['success' => false, 'error' => 'prompt, news_title, 또는 news_id가 필요합니다.', 'image_url' => null];
+    }
+
+    $contentLayer = \App\Utils\ThumbnailPrompt::extractContentLayerFromArticle($title, $descriptionOrContent, $openai);
+    $effectivePrompt = \App\Utils\ThumbnailPrompt::buildFullPrompt(
+        $contentLayer['core_theme'],
+        $contentLayer['key_elements'],
+        $contentLayer['metaphor_idea']
+    );
+
     try {
         $url = $openai->createImage($effectivePrompt, ['timeout' => 90]);
         $lastErr = $openai->getLastError();

@@ -57,28 +57,16 @@ class ThumbnailAgent extends BaseAgent
     //  프롬프트 생성 (핵심)
     // ══════════════════════════════════════════════════════════
 
-    /**
-     * 기사 제목 기반 DALL-E 3 썸네일 프롬프트 생성.
-     * 메타포 중심의 재치 있는 카툰 스타일, 텍스트/인물 직접 표현 없음.
-     */
-    private function buildThumbnailPrompt(string $title): string
+    private function ensureThumbnailPromptLoaded(): void
     {
-        $titleSnippet = mb_substr(trim($title), 0, 200);
-        if ($titleSnippet === '') {
-            $titleSnippet = 'news';
+        static $loaded = false;
+        if (!$loaded) {
+            $path = __DIR__ . '/../../backend/Utils/ThumbnailPrompt.php';
+            if (is_file($path)) {
+                require_once $path;
+            }
+            $loaded = true;
         }
-
-        return "Start by using the original headline of the article from the provided URL as the default basis for the thumbnail concept. " .
-            "Based on the article title (without extracting or quoting the full text), create a custom thumbnail concept art in a witty metaphorical cartoon style that visually represents the key idea implied by the title: \"{$titleSnippet}\". " .
-            "Style: Playful metaphor cartoon (no literal portraits), with a medium level of satire. " .
-            "Main characters: Include 1–2 protagonist characters representing the key country or countries, expressed through national characteristics or flags in a stylized, symbolic way. " .
-            "Composition: Vertical (portrait) orientation with a wide cinematic feel optimized for a tall thumbnail. " .
-            "Background: Keep the background clean and not overly complex so the main symbols and characters stand out clearly. " .
-            "Visual elements: The image must include symbolic objects, at least one clear national symbol, and visible flags integrated naturally into the scene. " .
-            "No text in the image. " .
-            "Imagery should convey the concept of the article title without any text. " .
-            "Clever symbolic elements and humor are encouraged. " .
-            "Do NOT include any written titles or captions in the thumbnail itself.";
     }
 
     // ══════════════════════════════════════════════════════════
@@ -151,10 +139,22 @@ class ThumbnailAgent extends BaseAgent
         $thumbnailSource = 'none';
         $usedPrompt = '';
 
-        // ── 1) GPT → DALL·E 3 생성 (최우선) ──
+        // ── 1) GPT로 CONTENT 변수 추출 → buildFullPrompt → DALL·E 3 생성 (최우선) ──
         if ($this->openai->isConfigured()) {
             try {
-                $prompt = $this->buildThumbnailPrompt($title);
+                $this->ensureThumbnailPromptLoaded();
+                $contentInput = $description;
+                if (trim($contentInput) === '') {
+                    $contentInput = (string) $article->getContent();
+                }
+                $contentInput = mb_substr(trim($contentInput), 0, 2000);
+
+                $contentLayer = \App\Utils\ThumbnailPrompt::extractContentLayerFromArticle($title, $contentInput, $this->openai);
+                $prompt = \App\Utils\ThumbnailPrompt::buildFullPrompt(
+                    $contentLayer['core_theme'],
+                    $contentLayer['key_elements'],
+                    $contentLayer['metaphor_idea']
+                );
                 $usedPrompt = $prompt;
                 $generated = $this->openai->createImage($prompt);
                 if ($generated !== null && $generated !== '') {
@@ -164,6 +164,18 @@ class ThumbnailAgent extends BaseAgent
                 }
             } catch (\Throwable $e) {
                 $this->log('DALL·E 3 thumbnail generation failed: ' . $e->getMessage(), 'warning');
+                try {
+                    $prompt = \App\Utils\ThumbnailPrompt::buildFallbackPromptFromTitle($title);
+                    $usedPrompt = $prompt;
+                    $generated = $this->openai->createImage($prompt);
+                    if ($generated !== null && $generated !== '') {
+                        $newImageUrl = $generated;
+                        $thumbnailSource = 'dall-e-3';
+                        $this->log('Thumbnail fallback (title-only) DALL·E 3: ' . $newImageUrl, 'info');
+                    }
+                } catch (\Throwable $e2) {
+                    $this->log('Fallback DALL·E 3 also failed: ' . $e2->getMessage(), 'warning');
+                }
             }
         } else {
             $this->log('OpenAI not configured for DALL·E, trying fallbacks', 'info');
