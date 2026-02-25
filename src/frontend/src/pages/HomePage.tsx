@@ -106,8 +106,8 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-page pb-8">
-      {/* 탭 네비게이션 - PC: Foreign Affairs 스타일 넓은 레이아웃 */}
-      <div className="apply-grayscale sticky top-14 bg-page z-30 border-b border-page">
+      {/* 탭 네비게이션 - 이미지처럼 연한 배경으로 본문과 구분 */}
+      <div className="apply-grayscale sticky top-14 bg-page-secondary z-30 border-b border-page">
         <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 md:px-8 lg:px-12 xl:px-16">
           <div className="flex">
             {tabs.map((tab) => (
@@ -142,9 +142,9 @@ export default function HomePage() {
           </div>
         ) : (
           <>
-            <div className="space-y-0 lg:grid lg:grid-cols-2 lg:gap-x-12 lg:gap-y-0 lg:border-t lg:border-page">
+            <div className="space-y-0 lg:grid lg:grid-cols-2 lg:gap-x-12 lg:gap-y-0">
               {news.map((item, index) => (
-                <ArticleCard key={item.id || index} article={item} />
+                <ArticleCard key={item.id || index} article={item} index={index} />
               ))}
             </div>
             {page < totalPages && (
@@ -168,8 +168,8 @@ export default function HomePage() {
   )
 }
 
-// 기사 카드 - 왼쪽 텍스트 + 오른쪽 이미지 (기사별 고유 이미지, 중복 없음)
-function ArticleCard({ article }: { article: NewsItem }) {
+// 기사 카드 - 왼쪽 텍스트 + 오른쪽 이미지 (기사별 고유 이미지, 중복 없음). 기사 간 구분은 선이 아닌 배경색 교차로.
+function ArticleCard({ article, index = 0 }: { article: NewsItem; index?: number }) {
   const navigate = useNavigate()
   const { isAuthenticated } = useAuthStore()
   const addAudioItem = useAudioListStore((s) => s.addItem)
@@ -289,8 +289,9 @@ function ArticleCard({ article }: { article: NewsItem }) {
   const newsId = article.id ?? (article as any).news_id
   const detailUrl = `/news/${newsId || ''}`
 
+  const bgClass = index % 2 === 0 ? 'bg-page' : 'bg-page-secondary'
   return (
-    <article className="py-5 border-b border-page last:border-0 lg:border-b lg:border-page">
+    <article className={`py-5 ${bgClass}`}>
       {/* 상단: 글 블록과 썸네일 높이 동일하게 맞춤 */}
       <div className="grid grid-cols-[1fr_auto] items-stretch gap-4">
         <div className="apply-grayscale min-w-0 flex flex-col">
