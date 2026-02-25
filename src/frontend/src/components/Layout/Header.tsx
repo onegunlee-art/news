@@ -46,14 +46,26 @@ export default function Header() {
       {/* 메인 헤더 - PC에서 넓은 max-width */}
       <div className="relative z-10 max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 md:px-6">
         <div className="flex items-center justify-between h-14">
-          {/* 왼쪽 - 구독하기 (비로그인) / My Page (로그인) */}
-          <div className="w-16 md:w-auto">
+          {/* 왼쪽 - 모바일: 세로 3선(햄버거) → My Page/구독 이동, PC: 텍스트 링크 */}
+          <div className="w-16 md:w-auto flex items-center">
+            {/* 모바일: 햄버거 아이콘 */}
+            <button
+              type="button"
+              onClick={() => navigate(isAuthenticated ? '/profile' : '/register')}
+              className="md:hidden p-2 -ml-2 text-gray-600 hover:text-gray-900 transition-colors"
+              aria-label={isAuthenticated ? 'My Page' : '구독하기'}
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            {/* PC: 텍스트 링크 */}
             {isAuthenticated ? (
-              <Link to="/profile" className="text-xs text-gray-500 hover:text-gray-900 transition-colors">
+              <Link to="/profile" className="hidden md:inline text-xs text-gray-500 hover:text-gray-900 transition-colors">
                 My Page
               </Link>
             ) : (
-              <Link to="/register" className="text-xs text-gray-500 hover:text-gray-900 transition-colors">
+              <Link to="/register" className="hidden md:inline text-xs text-gray-500 hover:text-gray-900 transition-colors">
                 구독하기
               </Link>
             )}

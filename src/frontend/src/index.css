@@ -21,6 +21,32 @@
   --border-color: #eeeeee;
   --font-korean: 'Noto Sans KR', sans-serif;
   --font-english: 'Lobster', cursive;
+  /* 보기 설정: 글씨 크기 (작게 14px, 보통 16px, 크게 18px) */
+  --text-size: 16px;
+}
+
+/* 보기 설정 - 글씨 크기 (viewSettingsStore → html[data-font-size]) */
+html[data-font-size="small"] {
+  --text-size: 14px;
+}
+html[data-font-size="normal"] {
+  --text-size: 16px;
+}
+html[data-font-size="large"] {
+  --text-size: 18px;
+}
+/* 보기 설정 - 흑백 (viewSettingsStore → html[data-grayscale]) */
+html[data-grayscale="true"] {
+  filter: grayscale(1);
+}
+
+[data-theme="dark"] {
+  --bg-light: #171717;
+  --bg-gray: #262626;
+  --text-primary: #fafafa;
+  --text-secondary: #a3a3a3;
+  --text-muted: #737373;
+  --border-color: #404040;
 }
 
 * {
@@ -35,6 +61,7 @@ html {
 
 body {
   font-family: var(--font-korean);
+  font-size: var(--text-size);
   font-weight: 400;
   font-style: normal;
   background: var(--bg-light);

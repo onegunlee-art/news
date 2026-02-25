@@ -28,6 +28,16 @@ function App() {
     initializeAuth()
   }, [initializeAuth])
 
+  // 보기 설정 (글씨 크기, 테마) 복원
+  useEffect(() => {
+    const size = localStorage.getItem('view-text-size')
+    if (size === 'small') document.documentElement.style.setProperty('--text-size', '14px')
+    else if (size === 'large') document.documentElement.style.setProperty('--text-size', '18px')
+    else document.documentElement.style.setProperty('--text-size', '16px')
+    const theme = localStorage.getItem('view-theme')
+    document.documentElement.setAttribute('data-theme', theme === 'dark' ? 'dark' : 'light')
+  }, [])
+
   useEffect(() => {
     const raw = localStorage.getItem('welcome_popup')
     if (!raw) return

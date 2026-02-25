@@ -159,6 +159,20 @@ export const welcomeSettingsApi = {
   getWelcome: () => api.get<{ success: boolean; data: { message: string; title_template: string } }>('/settings/welcome'),
 }
 
+/** 사이트 공개 설정 (My Page/푸터: 문의 이메일, 저작권, The Gist 비전) */
+export const siteSettingsApi = {
+  getSite: () =>
+    api.get<{
+      success: boolean
+      data: { contact_email: string; copyright_text: string; the_gist_vision: string }
+    }>('/settings/site'),
+}
+
+/** 문의하기 (이메일 발송) */
+export const contactApi = {
+  send: (body: { subject?: string; message: string }) => api.post<{ success: boolean; message?: string }>('/contact', body),
+}
+
 /** Admin 설정 (Router: GET/PUT /api/admin/settings) */
 export const adminSettingsApi = {
   getSettings: () => api.get<{ success: boolean; data: Record<string, string> }>('/admin/settings'),

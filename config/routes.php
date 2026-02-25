@@ -63,6 +63,63 @@ $router->get('/settings/welcome', function (Request $request): Response {
     }
 });
 
+// 사이트 공개 설정 (My Page/푸터용: 문의 이메일, 저작권, The Gist 비전)
+$router->get('/settings/site', function (Request $request): Response {
+    try {
+        $db = \App\Core\Database::getInstance()->getConnection();
+        $stmt = $db->query("SELECT `key`, `value` FROM settings WHERE `key` IN ('contact_email', 'copyright_text', 'the_gist_vision')");
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $year = date('Y');
+        $data = [
+            'contact_email' => 'onegunlee@gmail.com',
+            'copyright_text' => "© {$year} The Gist",
+            'the_gist_vision' => 'Gisters, Becoming Leaders',
+        ];
+        foreach ($rows as $r) {
+            if (isset($data[$r['key']])) {
+                $data[$r['key']] = $r['value'] ?? $data[$r['key']];
+            }
+        }
+        return Response::success($data, 'OK');
+    } catch (Throwable $e) {
+        $year = date('Y');
+        return Response::success([
+            'contact_email' => 'onegunlee@gmail.com',
+            'copyright_text' => "© {$year} The Gist",
+            'the_gist_vision' => 'Gisters, Becoming Leaders',
+        ], 'OK');
+    }
+});
+
+// 문의하기 (이메일 발송) - 수신 주소는 settings.contact_email 사용
+$router->post('/contact', function (Request $request): Response {
+    $message = $request->json('message');
+    if (!is_string($message) || trim($message) === '') {
+        return Response::error('내용을 입력해주세요.', 400);
+    }
+    try {
+        $db = \App\Core\Database::getInstance()->getConnection();
+        $stmt = $db->query("SELECT `key`, `value` FROM settings WHERE `key` = 'contact_email' LIMIT 1");
+        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+        $to = isset($row['value']) && trim((string)$row['value']) !== '' ? trim($row['value']) : 'onegunlee@gmail.com';
+        $subjectRaw = $request->json('subject');
+        $subjectRaw = is_string($subjectRaw) && trim($subjectRaw) !== '' ? trim($subjectRaw) : '[The Gist] 문의하기';
+        $subjectEncoded = '=?UTF-8?B?' . base64_encode($subjectRaw) . '?=';
+        $headers = [
+            'MIME-Version: 1.0',
+            'Content-type: text/plain; charset=UTF-8',
+            'From: noreply@thegist.co.kr',
+        ];
+        $ok = @mail($to, $subjectEncoded, trim($message), implode("\r\n", $headers));
+        if (!$ok) {
+            return Response::error('이메일 발송에 실패했습니다. 서버 메일 설정을 확인해주세요.', 500);
+        }
+        return Response::success(null, '문의가 접수되었습니다.');
+    } catch (Throwable $e) {
+        return Response::error('문의 접수 중 오류가 발생했습니다.', 500);
+    }
+});
+
 // ==================== 헬스 체크 ====================
 $router->get('/health', function (Request $request): Response {
     return Response::success([
