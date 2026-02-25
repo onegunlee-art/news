@@ -246,13 +246,17 @@ try {
         }
     } catch (Exception $e) { /* bookmarks 테이블 없을 수 있음 */ }
 
-    // 다음 기사 (같은 카테고리, id < 현재, 최신순 1건)
+    // 다음 기사 (같은 카테고리, id < 현재, 최신순 1건, 공개된 기사만)
     $nextArticle = null;
     $category = $news['category'] ?? null;
     try {
-        $nextSql = $category
-            ? "SELECT id, title FROM news WHERE category = ? AND id < ? ORDER BY id DESC LIMIT 1"
-            : "SELECT id, title FROM news WHERE id < ? ORDER BY id DESC LIMIT 1";
+        $nextWhere = $category
+            ? "category = ? AND id < ?"
+            : "id < ?";
+        if ($hasStatus) {
+            $nextWhere .= " AND (status = 'published' OR status IS NULL)";
+        }
+        $nextSql = "SELECT id, title FROM news WHERE $nextWhere ORDER BY id DESC LIMIT 1";
         $nextStmt = $db->prepare($nextSql);
         if ($category) {
             $nextStmt->execute([$category, $news['id']]);
