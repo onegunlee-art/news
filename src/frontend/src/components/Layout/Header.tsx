@@ -36,10 +36,10 @@ export default function Header() {
   }
 
   return (
-    <header className="relative sticky top-0 z-40 border-b border-gray-100 overflow-hidden bg-white">
+    <header className="apply-grayscale relative sticky top-0 z-40 border-b border-page overflow-hidden bg-page">
       {/* 스크롤 비율에 따라 왼쪽→오른쪽으로 연한 회색이 진행 */}
       <div
-        className="absolute inset-y-0 left-0 bg-gray-50 transition-[width] duration-200 ease-out"
+        className="absolute inset-y-0 left-0 bg-page-secondary transition-[width] duration-200 ease-out"
         style={{ width: `${scrollFill * 100}%` }}
         aria-hidden
       />
@@ -52,7 +52,7 @@ export default function Header() {
             <button
               type="button"
               onClick={() => navigate(isAuthenticated ? '/profile' : '/register')}
-              className="md:hidden p-2 -ml-2 text-gray-600 hover:text-gray-900 transition-colors"
+              className="md:hidden p-2 -ml-2 text-page-secondary hover:text-page transition-colors"
               aria-label={isAuthenticated ? 'My Page' : '구독하기'}
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -61,11 +61,11 @@ export default function Header() {
             </button>
             {/* PC: 텍스트 링크 */}
             {isAuthenticated ? (
-              <Link to="/profile" className="hidden md:inline text-xs text-gray-500 hover:text-gray-900 transition-colors">
+              <Link to="/profile" className="hidden md:inline text-xs text-page-secondary hover:text-page transition-colors">
                 My Page
               </Link>
             ) : (
-              <Link to="/register" className="hidden md:inline text-xs text-gray-500 hover:text-gray-900 transition-colors">
+              <Link to="/register" className="hidden md:inline text-xs text-page-secondary hover:text-page transition-colors">
                 구독하기
               </Link>
             )}
@@ -82,7 +82,7 @@ export default function Header() {
           <div className="w-16 md:w-auto flex justify-end items-center">
             <button
               onClick={() => setIsSearchOpen(true)}
-              className="p-2 text-gray-600 hover:text-gray-900 transition-colors"
+              className="p-2 text-page-secondary hover:text-page transition-colors"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -99,13 +99,13 @@ export default function Header() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-white z-50"
+            className="apply-grayscale fixed inset-0 bg-page z-50"
           >
             <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 md:px-6 pt-4">
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => setIsSearchOpen(false)}
-                  className="p-2 text-gray-600"
+                  className="p-2 text-page-secondary"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -118,12 +118,12 @@ export default function Header() {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="키워드 검색 (제목·내용·요약)"
                     autoFocus
-                    className="flex-1 px-4 py-3 bg-gray-100 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="flex-1 px-4 py-3 bg-page-secondary rounded-lg text-page placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-primary-500"
                   />
                   <button
                     type="submit"
                     disabled={!searchQuery.trim()}
-                    className="px-4 py-3 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+                    className="px-4 py-3 rounded-lg bg-[var(--text-primary)] text-[var(--bg-light)] text-sm font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
                   >
                     검색하기
                   </button>

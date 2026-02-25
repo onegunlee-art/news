@@ -311,16 +311,16 @@ export default function AudioPlayerPopup() {
 
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 z-[100] bg-gray-100 border-t border-gray-200 shadow-[0_-4px_12px_rgba(0,0,0,0.08)]"
+      className="fixed bottom-0 left-0 right-0 z-[100] bg-page-secondary border-t border-page shadow-[0_-4px_12px_rgba(0,0,0,0.08)]"
       role="dialog"
       aria-label="오디오 재생"
     >
       <div className="max-w-7xl mx-auto px-4 py-3">
         {/* 로딩 상태 */}
         {isTtsLoading && (
-          <div className="flex items-center gap-2 mb-2">
+          <div className="apply-grayscale flex items-center gap-2 mb-2">
             <div className="w-4 h-4 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-gray-500">Google Voice로 오디오 생성 중...</p>
+            <p className="text-sm text-page-secondary">Google Voice로 오디오 생성 중...</p>
           </div>
         )}
 
@@ -329,9 +329,9 @@ export default function AudioPlayerPopup() {
           <p className="text-sm text-red-500 mb-2">{ttsError || '오디오 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.'}</p>
         )}
 
-        {/* 재생 시간 + 진행 바 */}
-        <div className="flex items-center gap-2 mb-2">
-          <span className="text-xs text-gray-500 tabular-nums w-10">{formatTime(currentSec)}</span>
+        {/* 재생 시간 + 진행 바 (흑백 적용) */}
+        <div className="apply-grayscale flex items-center gap-2 mb-2">
+          <span className="text-xs text-page-secondary tabular-nums w-10">{formatTime(currentSec)}</span>
           <input
             type="range"
             min={0}
@@ -344,14 +344,14 @@ export default function AudioPlayerPopup() {
             onMouseUp={handleSeekEnd}
             onTouchEnd={handleSeekEnd}
             disabled={!canControl}
-            className="flex-1 h-1.5 rounded-full appearance-none bg-gray-200 accent-primary-500 cursor-pointer disabled:opacity-50"
+            className="flex-1 h-1.5 rounded-full appearance-none bg-[var(--border-color)] accent-primary-500 cursor-pointer disabled:opacity-50"
             aria-label="재생 위치"
           />
-          <span className="text-xs text-gray-500 tabular-nums w-10 text-right">{formatTime(duration)}</span>
+          <span className="text-xs text-page-secondary tabular-nums w-10 text-right">{formatTime(duration)}</span>
         </div>
 
         <div className="flex items-center justify-between">
-          {/* 왼쪽: 썸네일 + 제목 */}
+          {/* 왼쪽: 썸네일(흑백 제외) + 제목(흑백 적용) */}
           <div className="flex items-center gap-3 flex-1 min-w-0">
             {imageUrl && (
               <img
@@ -363,8 +363,8 @@ export default function AudioPlayerPopup() {
                 }}
               />
             )}
-            <div className="min-w-0">
-              <h3 className="text-sm font-medium text-gray-900 truncate" title={title}>
+            <div className="apply-grayscale min-w-0">
+              <h3 className="text-sm font-medium text-page truncate" title={title}>
                 {title || '재생 중'}
               </h3>
               {audioUrl && (
@@ -373,14 +373,14 @@ export default function AudioPlayerPopup() {
             </div>
           </div>
 
-          {/* 오른쪽: 컨트롤 버튼들 */}
-          <div className="flex items-center gap-1 flex-shrink-0">
+          {/* 오른쪽: 컨트롤 버튼들 (흑백 적용) */}
+          <div className="apply-grayscale flex items-center gap-1 flex-shrink-0">
             {/* 15초 뒤로 */}
             <button
               type="button"
               onClick={() => handleSkipBack(15)}
               disabled={!canControl}
-              className="w-10 h-10 flex items-center justify-center text-gray-600 hover:text-gray-900 transition-colors disabled:opacity-40"
+              className="w-10 h-10 flex items-center justify-center text-page-secondary hover:text-page transition-colors disabled:opacity-40"
               aria-label="15초 뒤로"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -426,7 +426,7 @@ export default function AudioPlayerPopup() {
             <button
               type="button"
               onClick={handleClose}
-              className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors ml-1"
+              className="w-8 h-8 flex items-center justify-center text-page-muted hover:text-page-secondary transition-colors ml-1"
               aria-label="닫기"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>

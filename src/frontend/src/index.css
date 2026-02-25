@@ -35,8 +35,8 @@ html[data-font-size="normal"] {
 html[data-font-size="large"] {
   --text-size: 18px;
 }
-/* 보기 설정 - 흑백 (viewSettingsStore → html[data-grayscale]) */
-html[data-grayscale="true"] {
+/* 보기 설정 - 흑백: 썸네일 제외, .apply-grayscale 블록에만 적용 */
+html[data-grayscale="true"] .apply-grayscale {
   filter: grayscale(1);
 }
 
@@ -48,6 +48,14 @@ html[data-grayscale="true"] {
   --text-muted: #737373;
   --border-color: #404040;
 }
+
+/* 테마 반응 유틸 (배경/텍스트/보더) */
+.bg-page { background-color: var(--bg-light); }
+.bg-page-secondary { background-color: var(--bg-gray); }
+.text-page { color: var(--text-primary); }
+.text-page-secondary { color: var(--text-secondary); }
+.text-page-muted { color: var(--text-muted); }
+.border-page { border-color: var(--border-color); }
 
 * {
   margin: 0;
@@ -84,23 +92,23 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-english);
 }
 
-/* 스크롤바 스타일 */
+/* 스크롤바 스타일 (테마 반응) */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: var(--bg-gray);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #ccc;
+  background: var(--border-color);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #aaa;
+  background: var(--text-muted);
 }
 
 /* 선택 영역 스타일 */

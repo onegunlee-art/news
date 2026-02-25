@@ -80,9 +80,9 @@ const CategoryPage: React.FC = () => {
 
   if (!config) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-4xl font-semibold text-gray-900 mb-4">카테고리를 찾을 수 없습니다</h1>
+      <div className="min-h-screen bg-page flex items-center justify-center">
+        <div className="apply-grayscale text-center">
+          <h1 className="text-4xl font-semibold text-page mb-4">카테고리를 찾을 수 없습니다</h1>
           <Link to="/" className="text-primary-500 hover:underline">홈으로 돌아가기</Link>
         </div>
       </div>
@@ -90,19 +90,19 @@ const CategoryPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-page">
       {/* 카테고리 헤더 */}
-      <section className="border-b border-gray-200">
+      <section className="apply-grayscale border-b border-page">
         <div className="max-w-7xl mx-auto px-4 py-12">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="max-w-3xl"
           >
-            <h1 className="text-4xl md:text-5xl font-semibold text-gray-900 mb-4">
+            <h1 className="text-4xl md:text-5xl font-semibold text-page mb-4">
               {config.name}
             </h1>
-            <p className="text-xl text-gray-600 leading-relaxed">
+            <p className="text-xl text-page-secondary leading-relaxed">
               {config.description}
             </p>
           </motion.div>
@@ -121,8 +121,8 @@ const CategoryPage: React.FC = () => {
               <p className="text-red-500">{error}</p>
             </div>
           ) : news.length === 0 ? (
-            <div className="text-center py-20">
-              <p className="text-gray-500">기사가 없습니다.</p>
+            <div className="apply-grayscale text-center py-20">
+              <p className="text-page-secondary">기사가 없습니다.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -157,7 +157,7 @@ function ArticleCard({ article, index }: { article: NewsItem; index: number }) {
       className="group"
     >
       <a href={article.url} target="_blank" rel="noopener noreferrer" className="block">
-        {/* 이미지 (기사별 고유 시드, 중복 없음) */}
+        {/* 이미지 (흑백 제외) */}
         <div className="aspect-[16/10] overflow-hidden mb-4">
           <img
             src={imageUrl}
@@ -169,20 +169,20 @@ function ArticleCard({ article, index }: { article: NewsItem; index: number }) {
           />
         </div>
         
-        {/* 콘텐츠 */}
-        <div>
+        {/* 콘텐츠 (흑백 적용) */}
+        <div className="apply-grayscale">
           <span className="text-xs font-semibold text-primary-500 uppercase tracking-wider">
             {formatSourceDisplayName(article.source) || 'News'}
           </span>
-          <h2 className="text-xl font-medium text-gray-900 mt-2 mb-2 leading-snug group-hover:text-primary-500 transition-colors line-clamp-2">
+          <h2 className="text-xl font-medium text-page mt-2 mb-2 leading-snug group-hover:text-primary-500 transition-colors line-clamp-2">
             {article.title}
           </h2>
           {article.description && (
-            <p className="text-gray-600 text-sm leading-relaxed line-clamp-2 mb-3">
+            <p className="text-page-secondary text-sm leading-relaxed line-clamp-2 mb-3">
               {stripHtml(article.description)}
             </p>
           )}
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-page-muted">
             {formatDate(article.published_at)}
           </p>
         </div>

@@ -198,13 +198,13 @@ export default function NewsDetailPage() {
   if (error && !news) {
     return (
       <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 py-16 text-center">
-        <div className="text-gray-400 mb-4">
+        <div className="text-page-muted mb-4">
           <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
         </div>
-        <h2 className="text-xl font-bold text-gray-900 mb-2">오류 발생</h2>
-        <p className="text-gray-500 mb-6">{error}</p>
+        <h2 className="text-xl font-bold text-page mb-2">오류 발생</h2>
+        <p className="text-page-secondary mb-6">{error}</p>
         <Link
           to="/"
           className="inline-block px-6 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors"
@@ -218,15 +218,15 @@ export default function NewsDetailPage() {
   if (!news) return null
 
   return (
-    <div className="min-h-screen bg-white pb-8">
+    <div className="min-h-screen bg-page pb-8">
       {/* 상단 헤더 - Layout Header(h-14) 바로 아래에 붙도록 top-14 */}
-      <div className="sticky top-14 z-30 bg-white border-b border-gray-100">
+      <div className="apply-grayscale sticky top-14 z-30 bg-page border-b border-page">
         <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between h-12">
             {/* 뒤로가기 */}
             <button
               onClick={() => navigate(-1)}
-              className="flex items-center gap-1 text-gray-600 hover:text-gray-900 transition-colors"
+              className="flex items-center gap-1 text-page-secondary hover:text-page transition-colors"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -239,7 +239,7 @@ export default function NewsDetailPage() {
               {/* 오디오 재생 (팝업 플레이어) */}
               <button 
                 onClick={playArticle}
-                className="p-1 transition-colors text-gray-400 hover:text-gray-600"
+                className="p-1 transition-colors text-page-secondary hover:text-page"
                 title="음성으로 듣기"
                 aria-label="재생"
               >
@@ -254,7 +254,7 @@ export default function NewsDetailPage() {
                   description={news.description || ''}
                   imageUrl={getImageUrl()}
                   webUrl={window.location.href}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-page-secondary hover:text-page"
                   titleAttr="공유하기"
                 />
               )}
@@ -272,7 +272,7 @@ export default function NewsDetailPage() {
                   }
                   handleBookmark()
                 }}
-                className={`p-1 transition-colors ${isBookmarked ? 'text-primary-500' : 'text-gray-400 hover:text-gray-600'}`}
+                className={`p-1 transition-colors ${isBookmarked ? 'text-primary-500' : 'text-page-secondary hover:text-page'}`}
                 title="즐겨찾기"
                 aria-label={isBookmarked ? '즐겨찾기 해제' : '즐겨찾기 추가'}
               >
@@ -291,8 +291,8 @@ export default function NewsDetailPage() {
         animate={{ opacity: 1 }}
         className="flex-1 min-w-0"
       >
-        {/* 대표 이미지 */}
-        <div className="aspect-video bg-gray-100 overflow-hidden">
+        {/* 대표 이미지 (흑백 제외) */}
+        <div className="aspect-video bg-page-secondary overflow-hidden">
           <img
             src={getImageUrl()}
             alt={news.title}
@@ -307,42 +307,42 @@ export default function NewsDetailPage() {
           />
         </div>
 
-        <div className="px-4 pt-5 pb-8">
+        <div className="apply-grayscale px-4 pt-5 pb-8">
           {/* 소스 및 날짜 (매체 옆 = admin에서 업데이트한 날짜) */}
           <div className="flex items-center gap-2 text-sm mb-4">
             <span className="text-primary-500 font-medium">{getSourceName()}</span>
-            <span className="text-gray-300"> | </span>
-            <span className="text-gray-400">{formatHeaderDate()}</span>
+            <span className="text-page-muted"> | </span>
+            <span className="text-page-secondary">{formatHeaderDate()}</span>
           </div>
 
           {/* 제목 */}
-          <h1 className="text-2xl font-bold text-gray-900 leading-snug mb-2">
+          <h1 className="text-2xl font-bold text-page leading-snug mb-2">
             {news.title}
           </h1>
 
           {/* 부제목 (Foreign Affairs 등 매체의 서브타이틀) */}
           {news.subtitle && (
-            <p className="text-lg text-gray-500 italic mb-3 leading-relaxed">
+            <p className="text-lg text-page-secondary italic mb-3 leading-relaxed">
               {news.subtitle}
             </p>
           )}
 
           {/* 매체 설명 */}
-          <p className="text-sm text-gray-500 mb-6">
+          <p className="text-sm text-page-secondary mb-6">
             이 글은 &quot;{((news.original_source && news.original_source.trim()) || news.source || 'The Gist')}&quot;에 게재된 &quot;{(news.original_title && news.original_title.trim()) || extractTitleFromUrl(news.url) || '원문'}&quot; 글의 시각을 참조하여 The Gist가 작성한 글 입니다.
           </p>
 
           {/* 저자 정보 (있을 경우) */}
           {news.author && (
-            <div className="text-sm text-gray-500 mb-4">
-              <span className="font-medium text-gray-700">{news.author}</span> 씀
+            <div className="text-sm text-page-secondary mb-4">
+              <span className="font-medium text-page">{news.author}</span> 씀
             </div>
           )}
 
           {/* 오디오 재생 버튼 - 제목 아래 배치 */}
           <button
             onClick={playArticle}
-            className="inline-flex items-center gap-2 text-base text-primary-500 hover:text-primary-600 transition-colors mb-6 pb-6 border-b border-gray-100 w-full"
+            className="inline-flex items-center gap-2 text-base text-primary-500 hover:text-primary-600 transition-colors mb-6 pb-6 border-b border-page w-full"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 18v-6a9 9 0 0118 0v6M3 18h2a2 2 0 002-2v-4a2 2 0 00-2-2H3v8zm14 0h2a2 2 0 002-2v-4a2 2 0 00-2-2h-2v8z" />
@@ -361,7 +361,7 @@ export default function NewsDetailPage() {
                   The Gist
                 </h2>
                 <div
-                  className="text-gray-800 leading-relaxed whitespace-pre-wrap [&_mark]:rounded-sm [&_mark]:px-0.5 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-0.5 [&_table]:border-collapse [&_table]:w-full [&_table]:my-2 [&_td]:border [&_td]:border-gray-300 [&_td]:px-2 [&_td]:py-1.5 [&_th]:border [&_th]:border-gray-300 [&_th]:px-2 [&_th]:py-1.5 [&_th]:font-semibold [&_th]:bg-gray-100"
+                  className="text-page leading-relaxed whitespace-pre-wrap [&_mark]:rounded-sm [&_mark]:px-0.5 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-0.5 [&_table]:border-collapse [&_table]:w-full [&_table]:my-2 [&_td]:border [&_td]:border-gray-300 [&_td]:px-2 [&_td]:py-1.5 [&_th]:border [&_th]:border-gray-300 [&_th]:px-2 [&_th]:py-1.5 [&_th]:font-semibold [&_th]:bg-gray-100"
                   dangerouslySetInnerHTML={{ __html: formatContentHtml(news.why_important) }}
                 />
               </div>
@@ -370,23 +370,23 @@ export default function NewsDetailPage() {
 
           {/* 내레이션 — 메인 콘텐츠 */}
           {news.narration && (
-            <div className="prose prose-lg max-w-none mb-8 text-gray-700 leading-relaxed whitespace-pre-wrap [&_mark]:rounded-sm [&_mark]:px-0.5 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-0.5 [&_table]:border-collapse [&_table]:w-full [&_table]:my-2 [&_td]:border [&_td]:border-gray-300 [&_td]:px-2 [&_td]:py-1.5 [&_th]:border [&_th]:border-gray-300 [&_th]:px-2 [&_th]:py-1.5 [&_th]:font-semibold [&_th]:bg-gray-100"
+            <div className="prose prose-lg max-w-none mb-8 text-page-secondary leading-relaxed whitespace-pre-wrap [&_mark]:rounded-sm [&_mark]:px-0.5 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-0.5 [&_table]:border-collapse [&_table]:w-full [&_table]:my-2 [&_td]:border [&_td]:border-gray-300 [&_td]:px-2 [&_td]:py-1.5 [&_th]:border [&_th]:border-gray-300 [&_th]:px-2 [&_th]:py-1.5 [&_th]:font-semibold [&_th]:bg-gray-100"
               dangerouslySetInnerHTML={{ __html: formatContentHtml(news.narration) }}
             />
           )}
 
           {/* 내레이션이 없는 경우: description 표시 */}
           {!news.narration && news.description && (
-            <div className="prose prose-lg max-w-none mb-8 text-gray-700 leading-relaxed [&_mark]:rounded-sm [&_mark]:px-0.5 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-0.5 [&_table]:border-collapse [&_table]:w-full [&_table]:my-2 [&_td]:border [&_td]:border-gray-300 [&_td]:px-2 [&_td]:py-1.5 [&_th]:border [&_th]:border-gray-300 [&_th]:px-2 [&_th]:py-1.5 [&_th]:font-semibold [&_th]:bg-gray-100"
+            <div className="prose prose-lg max-w-none mb-8 text-page-secondary leading-relaxed [&_mark]:rounded-sm [&_mark]:px-0.5 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-0.5 [&_table]:border-collapse [&_table]:w-full [&_table]:my-2 [&_td]:border [&_td]:border-gray-300 [&_td]:px-2 [&_td]:py-1.5 [&_th]:border [&_th]:border-gray-300 [&_th]:px-2 [&_th]:py-1.5 [&_th]:font-semibold [&_th]:bg-gray-100"
               dangerouslySetInnerHTML={{ __html: formatContentHtml(news.description) }}
             />
           )}
 
           {/* 참고 글 AI 구조 분석 — 제목 오른쪽 끝에 참고 글 전체 원문 보기 링크 */}
           {(news.content || (news.url && news.url !== '#')) && (
-            <div className="mb-8 border-t border-gray-100 pt-6 mt-2">
+            <div className="mb-8 border-t border-page pt-6 mt-2">
               <div className="flex justify-between items-center gap-4 mb-3">
-                <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-500 uppercase tracking-wider shrink-0">
+                <h3 className="flex items-center gap-2 text-sm font-semibold text-page-secondary uppercase tracking-wider shrink-0">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
                   </svg>
@@ -397,7 +397,7 @@ export default function NewsDetailPage() {
                     href={news.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-primary-500 transition-colors shrink-0"
+                    className="flex items-center gap-1.5 text-sm text-page-secondary hover:text-primary-500 transition-colors shrink-0"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -407,7 +407,7 @@ export default function NewsDetailPage() {
                 )}
               </div>
               {news.content && (
-                <div className="p-4 bg-gray-50 rounded-lg border border-gray-100 text-sm text-gray-600 leading-relaxed whitespace-pre-wrap [&_mark]:rounded-sm [&_mark]:px-0.5 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-0.5 [&_table]:border-collapse [&_table]:w-full [&_table]:my-2 [&_td]:border [&_td]:border-gray-300 [&_td]:px-2 [&_td]:py-1.5 [&_th]:border [&_th]:border-gray-300 [&_th]:px-2 [&_th]:py-1.5 [&_th]:font-semibold [&_th]:bg-gray-100"
+                <div className="p-4 bg-page-secondary rounded-lg border border-page text-sm text-page-secondary leading-relaxed whitespace-pre-wrap [&_mark]:rounded-sm [&_mark]:px-0.5 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-0.5 [&_table]:border-collapse [&_table]:w-full [&_table]:my-2 [&_td]:border [&_td]:border-gray-300 [&_td]:px-2 [&_td]:py-1.5 [&_th]:border [&_th]:border-gray-300 [&_th]:px-2 [&_th]:py-1.5 [&_th]:font-semibold [&_th]:bg-gray-100"
                   dangerouslySetInnerHTML={{ __html: formatContentHtml(news.content) }}
                 />
               )}
@@ -419,13 +419,13 @@ export default function NewsDetailPage() {
       {/* 다음 기사 보기 - 우측 사이드바 (데스크톱) / 본문 하단 (모바일) */}
       {news.next_article && (
         <aside className="lg:w-64 flex-shrink-0 order-last lg:order-none">
-          <div className="lg:sticky lg:top-20 pt-6 lg:pt-8 border-t lg:border-t-0 lg:border-l border-gray-100 lg:pl-6 mt-6 lg:mt-0">
+          <div className="apply-grayscale lg:sticky lg:top-20 pt-6 lg:pt-8 border-t lg:border-t-0 lg:border-l border-page lg:pl-6 mt-6 lg:mt-0">
             <Link
               to={`/news/${news.next_article.id}`}
-              className="block p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors group"
+              className="block p-4 rounded-xl bg-page-secondary hover:opacity-90 transition-colors group"
             >
-              <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">다음 기사</span>
-              <p className="mt-1 text-sm font-medium text-gray-900 line-clamp-2 group-hover:text-primary-600 transition-colors">
+              <span className="text-xs font-medium text-page-muted uppercase tracking-wider">다음 기사</span>
+              <p className="mt-1 text-sm font-medium text-page line-clamp-2 group-hover:text-primary-600 transition-colors">
                 {news.next_article.title}
               </p>
               <span className="inline-flex items-center gap-1 mt-2 text-sm text-primary-500 font-medium">

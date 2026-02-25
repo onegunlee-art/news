@@ -53,22 +53,22 @@ export default function SearchPage() {
   }, [q])
 
   return (
-    <div className="min-h-screen bg-white pb-8">
+    <div className="min-h-screen bg-page pb-8">
       <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 md:px-6 pt-6 md:pt-8">
         {/* 검색 결과 헤더 */}
-        <div className="mb-6">
-          <h1 className="text-xl md:text-2xl font-semibold text-gray-900">
+        <div className="apply-grayscale mb-6">
+          <h1 className="text-xl md:text-2xl font-semibold text-page">
             {q ? `"${q}" 검색 결과` : '키워드 검색'}
           </h1>
           {q && (
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-page-secondary mt-1">
               {!isLoading && searched && `${news.length}건의 기사`}
             </p>
           )}
         </div>
 
         {!q ? (
-          <div className="text-center py-16 text-gray-500">
+          <div className="apply-grayscale text-center py-16 text-page-secondary">
             <p className="mb-2">상단 검색 아이콘을 눌러 검색어를 입력하세요.</p>
             <p className="text-sm">제목·내용·요약에서 키워드로 검색됩니다.</p>
           </div>
@@ -77,11 +77,11 @@ export default function SearchPage() {
             <LoadingSpinner size="large" />
           </div>
         ) : news.length === 0 ? (
-          <div className="text-center py-20 text-gray-500">
+          <div className="apply-grayscale text-center py-20 text-page-secondary">
             검색 결과가 없습니다. 다른 키워드로 시도해 보세요.
           </div>
         ) : (
-          <div className="space-y-0 lg:grid lg:grid-cols-2 lg:gap-x-12 lg:gap-y-0 lg:border-t lg:border-gray-100">
+          <div className="space-y-0 lg:grid lg:grid-cols-2 lg:gap-x-12 lg:gap-y-0 lg:border-t lg:border-page">
             {news.map((item, index) => (
               <SearchArticleCard key={item.id ?? index} article={item} />
             ))}
@@ -213,21 +213,21 @@ function SearchArticleCard({ article }: { article: NewsItem }) {
   const detailUrl = `/news/${article.id ?? ''}`
 
   return (
-    <article className="flex gap-4 py-5 border-b border-gray-100 last:border-0 lg:border-b lg:border-gray-100">
+    <article className="flex gap-4 py-5 border-b border-page last:border-0 lg:border-b lg:border-page">
       <Link to={detailUrl} className="flex-1 min-w-0 flex gap-4">
-        <div className="flex-1 min-w-0">
-          <h2 className="text-lg font-bold text-gray-900 leading-snug mb-1.5 line-clamp-2">{article.title}</h2>
+        <div className="apply-grayscale flex-1 min-w-0">
+          <h2 className="text-lg font-bold text-page leading-snug mb-1.5 line-clamp-2">{article.title}</h2>
           {article.description && (
-            <p className="text-sm text-gray-600 leading-relaxed mb-2 line-clamp-2">{stripHtml(article.description)}</p>
+            <p className="text-sm text-page-secondary leading-relaxed mb-2 line-clamp-2">{stripHtml(article.description)}</p>
           )}
-          <div className="flex items-center gap-2 text-xs text-gray-500">
+          <div className="flex items-center gap-2 text-xs text-page-secondary">
             <span className="font-medium text-primary-500">{getSourceName()}</span>
-            <span className="text-gray-300"> | </span>
+            <span className="text-page-muted"> | </span>
             <span>{formatDate()}</span>
           </div>
         </div>
         <div className="w-24 h-24 flex-shrink-0">
-          <div className="w-full h-full bg-gray-100 rounded-lg overflow-hidden">
+          <div className="w-full h-full bg-page-secondary rounded-lg overflow-hidden">
             <img
               src={imageUrl}
               alt={article.title}
@@ -251,11 +251,11 @@ function SearchArticleCard({ article }: { article: NewsItem }) {
           </div>
         </div>
       </Link>
-      <div className="flex flex-col justify-between py-1" role="group" aria-label="기사 액션">
+      <div className="apply-grayscale flex flex-col justify-between py-1" role="group" aria-label="기사 액션">
         <button
           type="button"
           onClick={handlePlayAudio}
-          className="p-1 text-gray-300 hover:text-gray-500 transition-colors"
+          className="p-1 text-page-muted hover:text-page-secondary transition-colors"
           title="음성으로 듣기"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
@@ -267,14 +267,14 @@ function SearchArticleCard({ article }: { article: NewsItem }) {
           description={article.description || ''}
           imageUrl={imageUrl}
           webUrl={shareWebUrl}
-          className="text-gray-300 hover:text-gray-500"
+          className="text-page-muted hover:text-page-secondary"
           titleAttr="공유하기"
         />
         <button
           type="button"
           onClick={handleBookmark}
           disabled={isBookmarking}
-          className={`p-1 transition-colors ${isBookmarked ? 'text-primary-500' : 'text-gray-300 hover:text-gray-500'} ${isBookmarking ? 'opacity-60 cursor-wait' : ''}`}
+          className={`p-1 transition-colors ${isBookmarked ? 'text-primary-500' : 'text-page-muted hover:text-page-secondary'} ${isBookmarking ? 'opacity-60 cursor-wait' : ''}`}
           title="즐겨찾기"
         >
           {isBookmarking ? (

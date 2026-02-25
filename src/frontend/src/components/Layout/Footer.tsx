@@ -24,7 +24,7 @@ export default function Footer() {
   }, [])
 
   return (
-    <footer className="bg-gray-50 border-t border-gray-100 pb-6 md:pb-0">
+    <footer className="apply-grayscale bg-page-secondary border-t border-page pb-6 md:pb-0">
       <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 py-12">
         <div className="flex flex-col items-center text-center">
           <Link to="/" className="inline-block group">
@@ -35,19 +35,19 @@ export default function Footer() {
               The Gist
             </h2>
           </Link>
-          <p className="text-gray-500 text-sm mt-2">{vision}</p>
+          <p className="text-page-secondary text-sm mt-2">{vision}</p>
           <div className="flex items-center gap-4 mt-6">
             <button
               type="button"
               onClick={() => setShowTermsModal(true)}
-              className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-xs text-page-muted hover:text-page-secondary transition-colors"
             >
               이용 약관
             </button>
             <button
               type="button"
               onClick={() => setShowPrivacyModal(true)}
-              className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-xs text-page-muted hover:text-page-secondary transition-colors"
             >
               개인정보처리방침
             </button>
@@ -55,9 +55,9 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="border-t border-gray-100">
+      <div className="border-t border-page">
         <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 py-4">
-          <p className="text-xs text-gray-400 text-center">{copyright}</p>
+          <p className="text-xs text-page-muted text-center">{copyright}</p>
         </div>
       </div>
 

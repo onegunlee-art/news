@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuthStore } from '../store/authStore'
 import { useAudioListStore, type AudioListItem } from '../store/audioListStore'
-import { useViewSettingsStore, type FontSize } from '../store/viewSettingsStore'
+import { useViewSettingsStore, type FontSize, type Theme } from '../store/viewSettingsStore'
 import { newsApi, siteSettingsApi, contactApi } from '../services/api'
 import LoadingSpinner from '../components/Common/LoadingSpinner'
 import { formatSourceDisplayName } from '../utils/formatSource'
@@ -308,7 +308,7 @@ function NotificationToggle() {
 }
 
 function ViewSettingsBlock() {
-  const { fontSize, grayscale, setFontSize, toggleGrayscale } = useViewSettingsStore()
+  const { fontSize, grayscale, theme, setFontSize, toggleGrayscale, setTheme } = useViewSettingsStore()
   const options: { value: FontSize; label: string }[] = [
     { value: 'small', label: '작게' },
     { value: 'normal', label: '보통' },
@@ -317,7 +317,7 @@ function ViewSettingsBlock() {
   return (
     <div className="space-y-4">
       <div>
-        <p className="text-sm text-gray-500 mb-2">글씨 크기</p>
+        <p className="text-sm text-page-secondary mb-2">글씨 크기</p>
         <div className="flex gap-2">
           {options.map((opt) => (
             <button
@@ -327,7 +327,7 @@ function ViewSettingsBlock() {
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 fontSize === opt.value
                   ? 'bg-primary-500 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  : 'bg-page-secondary text-page-secondary hover:opacity-80'
               }`}
             >
               {opt.label}
@@ -335,14 +335,31 @@ function ViewSettingsBlock() {
           ))}
         </div>
       </div>
-      <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-        <span className="text-sm text-gray-700">화면 흑백</span>
+      <div className="flex items-center justify-between pt-2 border-t border-page">
+        <span className="text-sm text-page">다크 모드</span>
+        <div className="flex gap-2">
+          {(['light', 'dark'] as Theme[]).map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setTheme(t)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                theme === t ? 'bg-primary-500 text-white' : 'bg-page-secondary text-page-secondary hover:opacity-80'
+              }`}
+            >
+              {t === 'light' ? '라이트' : '다크'}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="flex items-center justify-between pt-2 border-t border-page">
+        <span className="text-sm text-page">화면 흑백</span>
         <button
           type="button"
           role="switch"
           aria-checked={grayscale}
           onClick={toggleGrayscale}
-          className={`relative w-11 h-6 rounded-full transition-colors ${grayscale ? 'bg-gray-700' : 'bg-gray-200'}`}
+          className={`relative w-11 h-6 rounded-full transition-colors ${grayscale ? 'bg-gray-700' : 'bg-page-secondary'}`}
         >
           <span
             className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${grayscale ? 'translate-x-5' : 'translate-x-0'}`}

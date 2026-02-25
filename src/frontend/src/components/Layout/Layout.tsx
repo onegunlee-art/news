@@ -5,16 +5,20 @@ import Footer from './Footer'
 import { useViewSettingsStore } from '../../store/viewSettingsStore'
 
 export default function Layout() {
-  const { fontSize, grayscale } = useViewSettingsStore()
+  const { fontSize, grayscale, theme } = useViewSettingsStore()
 
   useEffect(() => {
     const html = document.documentElement
     html.setAttribute('data-font-size', fontSize)
     html.setAttribute('data-grayscale', grayscale ? 'true' : 'false')
-  }, [fontSize, grayscale])
+    html.setAttribute('data-theme', theme)
+    try {
+      localStorage.setItem('view-theme', theme)
+    } catch (_) {}
+  }, [fontSize, grayscale, theme])
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-page">
       <Header />
       <main className="flex-1">
         <Outlet />

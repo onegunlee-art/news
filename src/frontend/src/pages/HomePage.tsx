@@ -105,9 +105,9 @@ export default function HomePage() {
   const tabs: TabType[] = ['최신', '외교', '경제', '특집', '인기']
 
   return (
-    <div className="min-h-screen bg-white pb-8">
+    <div className="min-h-screen bg-page pb-8">
       {/* 탭 네비게이션 - PC: Foreign Affairs 스타일 넓은 레이아웃 */}
-      <div className="sticky top-14 bg-white z-30 border-b border-gray-200">
+      <div className="apply-grayscale sticky top-14 bg-page z-30 border-b border-page">
         <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 md:px-8 lg:px-12 xl:px-16">
           <div className="flex">
             {tabs.map((tab) => (
@@ -116,13 +116,13 @@ export default function HomePage() {
                 onClick={() => setActiveTab(tab)}
                 className={`flex-1 py-3 text-sm font-medium transition-colors relative ${
                   activeTab === tab
-                    ? 'text-gray-900'
-                    : 'text-gray-500 hover:text-gray-900'
+                    ? 'text-page'
+                    : 'text-page-secondary hover:text-page'
                 }`}
               >
                 {tab}
                 {activeTab === tab && (
-                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gray-900" />
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--text-primary)]" />
                 )}
               </button>
             ))}
@@ -137,23 +137,23 @@ export default function HomePage() {
             <LoadingSpinner size="large" />
           </div>
         ) : news.length === 0 ? (
-          <div className="text-center py-20 text-gray-500">
+          <div className="text-center py-20 text-page-secondary">
             기사가 없습니다.
           </div>
         ) : (
           <>
-            <div className="space-y-0 lg:grid lg:grid-cols-2 lg:gap-x-12 lg:gap-y-0 lg:border-t lg:border-gray-100">
+            <div className="space-y-0 lg:grid lg:grid-cols-2 lg:gap-x-12 lg:gap-y-0 lg:border-t lg:border-page">
               {news.map((item, index) => (
                 <ArticleCard key={item.id || index} article={item} />
               ))}
             </div>
             {page < totalPages && (
-              <div className="flex justify-center pt-8 pb-4">
+              <div className="apply-grayscale flex justify-center pt-8 pb-4">
                 <button
                   type="button"
                   onClick={loadMore}
                   disabled={isLoadingMore}
-                  className="text-gray-600 hover:text-gray-900 underline-offset-2 hover:underline font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="text-page-secondary hover:text-page underline-offset-2 hover:underline font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isLoadingMore ? '불러오는 중...' : '더 보기'}
                 </button>
@@ -290,16 +290,16 @@ function ArticleCard({ article }: { article: NewsItem }) {
   const detailUrl = `/news/${newsId || ''}`
 
   return (
-    <article className="py-5 border-b border-gray-100 last:border-0 lg:border-b lg:border-gray-100">
-      {/* 글 + 메타 | 썸네일 (높이 동일, 메타는 글 바로 밑·아래는 썸네일과 맞춤) */}
+    <article className="py-5 border-b border-page last:border-0 lg:border-b lg:border-page">
+      {/* 글 + 메타 | 썸네일 (높이 동일, 메타는 글 바로 밑·아래는 썸네일과 맞춤) - 왼쪽만 흑백 적용 */}
       <div className="grid grid-cols-[1fr_auto] items-stretch gap-4">
-        <div className="min-w-0 flex flex-col min-h-[7rem]">
+        <div className="apply-grayscale min-w-0 flex flex-col min-h-[7rem]">
           <Link to={detailUrl} className="flex flex-col">
-            <h2 className="text-lg font-bold text-gray-900 leading-snug mb-1.5 line-clamp-2">
+            <h2 className="text-lg font-bold text-page leading-snug mb-1.5 line-clamp-2">
               {article.title}
             </h2>
             {(article.narration || article.description) && (
-              <p className="text-xs text-gray-600 leading-relaxed line-clamp-3">
+              <p className="text-xs text-page-secondary leading-relaxed line-clamp-3">
                 {stripHtml(article.narration?.trim() || article.description)}
               </p>
             )}
@@ -308,14 +308,14 @@ function ArticleCard({ article }: { article: NewsItem }) {
           <div className="flex items-center gap-3 flex-nowrap mt-auto pt-2">
             <Link to={detailUrl} className="flex items-center gap-1.5 text-xs shrink-0">
               <span className="font-medium text-primary-500">{getCategoryLabel()}</span>
-              <span className="text-gray-300"> | </span>
-              <span className="text-gray-400">{formatDate()}</span>
+              <span className="text-page-muted"> | </span>
+              <span className="text-page-secondary">{formatDate()}</span>
             </Link>
             <div className="flex items-center gap-3 shrink-0" role="group" aria-label="기사 액션">
               <button
                 type="button"
                 onClick={handlePlayAudio}
-                className="p-1 transition-colors text-gray-400 hover:text-gray-600"
+                className="p-1 transition-colors text-page-secondary hover:text-page"
                 title="음성으로 듣기"
                 aria-label="재생"
               >
@@ -328,14 +328,14 @@ function ArticleCard({ article }: { article: NewsItem }) {
                 description={article.description || ''}
                 imageUrl={imageUrl}
                 webUrl={shareWebUrl}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-page-secondary hover:text-page"
                 titleAttr="공유하기"
               />
               <button
                 type="button"
                 onClick={handleBookmark}
                 disabled={isBookmarking}
-                className={`p-1 transition-colors ${isBookmarked ? 'text-primary-500' : 'text-gray-400 hover:text-gray-600'} ${isBookmarking ? 'opacity-60 cursor-wait' : ''}`}
+                className={`p-1 transition-colors ${isBookmarked ? 'text-primary-500' : 'text-page-secondary hover:text-page'} ${isBookmarking ? 'opacity-60 cursor-wait' : ''}`}
                 title="즐겨찾기"
                 aria-label={isBookmarked ? '즐겨찾기 해제' : '즐겨찾기 추가'}
               >
@@ -351,7 +351,7 @@ function ArticleCard({ article }: { article: NewsItem }) {
           </div>
         </div>
 
-        <Link to={detailUrl} className="w-28 h-full min-h-[7rem] flex-shrink-0 rounded-none overflow-hidden bg-gray-100 block self-stretch">
+        <Link to={detailUrl} className="w-28 h-full min-h-[7rem] flex-shrink-0 rounded-none overflow-hidden bg-page-secondary block self-stretch">
           <img
             src={imageUrl}
             alt={article.title}

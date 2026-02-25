@@ -38,10 +38,10 @@ export default function NewsCard({ news, index = 0 }: NewsCardProps) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
-      className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow h-full flex flex-col overflow-hidden"
+      className="bg-page rounded-xl shadow-md hover:shadow-lg transition-shadow h-full flex flex-col overflow-hidden"
     >
-      {/* 썸네일 이미지 */}
-      <div className="relative h-48 overflow-hidden bg-gray-100">
+      {/* 썸네일 이미지 (흑백 제외) */}
+      <div className="relative h-48 overflow-hidden bg-page-secondary">
         <img
           src={imageUrl}
           alt={news.title}
@@ -63,28 +63,28 @@ export default function NewsCard({ news, index = 0 }: NewsCardProps) {
         )}
       </div>
 
-      {/* 콘텐츠 */}
-      <div className="p-4 flex flex-col flex-1">
+      {/* 콘텐츠 (흑백 적용) */}
+      <div className="apply-grayscale p-4 flex flex-col flex-1">
         {/* 시간 */}
         {news.time_ago && (
-          <span className="text-xs text-gray-500 mb-2">{news.time_ago}</span>
+          <span className="text-xs text-page-secondary mb-2">{news.time_ago}</span>
         )}
 
         {/* 제목 */}
-        <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2 leading-snug group-hover:text-primary-600 transition-colors">
+        <h3 className="text-lg font-bold text-page mb-2 line-clamp-2 leading-snug group-hover:text-primary-600 transition-colors">
           {news.title}
         </h3>
 
         {/* 설명 */}
         {news.description && (
-          <p className="text-gray-600 text-sm line-clamp-2 mb-4 flex-1">
+          <p className="text-page-secondary text-sm line-clamp-2 mb-4 flex-1">
             {stripHtml(news.description)}
           </p>
         )}
 
         {/* 하단 */}
-        <div className="flex items-center justify-between mt-auto pt-3 border-t border-gray-100">
-          <span className="text-xs text-gray-400">
+        <div className="flex items-center justify-between mt-auto pt-3 border-t border-page">
+          <span className="text-xs text-page-muted">
             {news.published_at && new Date(news.published_at).toLocaleDateString('ko-KR')}
           </span>
           <span className="text-primary-600 text-sm font-medium flex items-center gap-1">
