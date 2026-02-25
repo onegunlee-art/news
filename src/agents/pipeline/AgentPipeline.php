@@ -64,10 +64,7 @@ class AgentPipeline
         $scraper = new WebScraperService($this->config['scraper'] ?? []);
         $this->addAgent(new ValidationAgent($this->openai, $scraper, $this->config['validation'] ?? []));
 
-        // 2. Thumbnail Agent (저작권 회피: og:image → 일러스트 스타일)
-        $this->addAgent(new ThumbnailAgent($this->openai, $this->config));
-
-        // 3. Analysis Agent (Google TTS, RAG, Persona 사용 시 주입)
+        // 2. Analysis Agent (Google TTS, RAG, Persona 사용 시 주입) — 썸네일보다 먼저 실행해 narration 전달
         $googleTts = isset($this->config['google_tts']) && is_array($this->config['google_tts'])
             ? new GoogleTTSService($this->config['google_tts'])
             : null;
@@ -77,6 +74,9 @@ class AgentPipeline
             $personaService = $this->config['analysis']['persona_service'];
         }
         $this->addAgent(new AnalysisAgent($this->openai, $this->config['analysis'] ?? [], $googleTts, $ragService, $personaService));
+
+        // 3. Thumbnail Agent (저작권 회피: og:image → 일러스트 스타일. Analysis 결과 narration 사용해 본문과 일치)
+        $this->addAgent(new ThumbnailAgent($this->openai, $this->config));
 
         // 4. Interpret Agent (옵션)
         if ($this->config['enable_interpret'] ?? true) {

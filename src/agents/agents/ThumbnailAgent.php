@@ -135,6 +135,24 @@ class ThumbnailAgent extends BaseAgent
         $category = $article->getMetadata()['category'] ?? '';
         $originalImageUrl = $article->getImageUrl();
 
+        // 분석 결과(narration)가 있으면 우선 사용 → 썸네일이 기사 메시지와 일치하도록
+        $analysis = $context->getAnalysisResult();
+        $contentInput = '';
+        if ($analysis !== null && trim((string) $analysis->getNarration()) !== '') {
+            $contentInput = (string) $analysis->getNarration();
+            $why = $analysis->getWhyImportant();
+            if ($why !== null && trim($why) !== '') {
+                $contentInput = $contentInput . "\n\n[Why it matters] " . mb_substr(trim($why), 0, 800);
+            }
+        }
+        if (trim($contentInput) === '') {
+            $contentInput = $description;
+            if (trim($contentInput) === '') {
+                $contentInput = (string) $article->getContent();
+            }
+        }
+        $contentInput = mb_substr(trim($contentInput), 0, 4000);
+
         $newImageUrl = null;
         $thumbnailSource = 'none';
         $usedPrompt = '';
@@ -143,14 +161,7 @@ class ThumbnailAgent extends BaseAgent
         if ($this->openai->isConfigured()) {
             try {
                 $this->ensureThumbnailPromptLoaded();
-                $contentInput = $description;
-                if (trim($contentInput) === '') {
-                    $contentInput = (string) $article->getContent();
-                }
-                $contentInput = mb_substr(trim($contentInput), 0, 4000);
-                $articleUrl = $article->getUrl() ?? '';
-
-                $contentLayer = \App\Utils\ThumbnailPrompt::extractContentLayerFromArticle($title, $contentInput, $this->openai, $articleUrl);
+                $contentLayer = \App\Utils\ThumbnailPrompt::extractContentLayerFromArticle($title, $contentInput, $this->openai, '');
                 $prompt = \App\Utils\ThumbnailPrompt::buildFullPromptFromContentBlock($contentLayer['content_block']);
                 $usedPrompt = $prompt;
                 $generated = $this->openai->createImage($prompt);
