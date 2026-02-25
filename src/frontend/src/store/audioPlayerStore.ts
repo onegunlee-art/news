@@ -51,7 +51,8 @@ export const useAudioPlayerStore = create<AudioPlayerState & AudioPlayerActions>
     const m = (meta || '').trim()
     const n = (narration || '').trim()
     const c = (critiquePart || '').trim()
-    const fullText = [t, m, n, c].filter(Boolean).join(' ')
+    // 페이지 표시 순서와 동일: 제목 → 매체설명 → The Gist → 내레이션
+    const fullText = [t, m, c, n].filter(Boolean).join(' ')
     if (!fullText) return
     // 브라우저 TTS 완전 정지
     if ('speechSynthesis' in window) window.speechSynthesis.cancel()
@@ -67,7 +68,7 @@ export const useAudioPlayerStore = create<AudioPlayerState & AudioPlayerActions>
       isTtsLoading: true,
       ttsError: null,
     })
-    // 서버 Google TTS (구조화: 제목 pause 매체설명 pause 내레이션 pause Critique. 캐시 있으면 즉시 반환)
+    // 서버 Google TTS (구조화: 제목 pause 매체설명 pause The Gist pause 내레이션. 캐시 있으면 즉시 반환)
     ttsApi
       .generateStructured(t, m, n, c, newsId)
       .then((res) => {

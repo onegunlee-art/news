@@ -191,7 +191,7 @@ class GoogleTTSService
     }
 
     /**
-     * 제목 → 1초 휴식 → 편집 문구(매체설명) → 1초 휴식 → 내레이션 → 1초 휴식 → The Gist's Critique 순으로 WAV 생성
+     * 제목 → 1초 휴식 → 편집 문구(매체설명) → 1초 휴식 → The Gist's Critique → 1초 휴식 → 내레이션 순으로 WAV 생성 (기사 페이지 표시 순서와 동일)
      * @param string $critiquePart "The Gist's Critique. ..." (선택)
      */
     public function textToSpeechStructured(string $title, string $meta, string $narration, array $options = [], string $critiquePart = ''): ?string
@@ -226,17 +226,19 @@ class GoogleTTSService
             $this->lastError = '';
             set_time_limit(1200);
             $pcm1 = $this->synthesizeSsmlLinear16($ssmlIntro, $voice);
-            if ($narration !== '' && self::CHUNK_DELAY_SEC > 0) {
-                usleep((int) (self::CHUNK_DELAY_SEC * 1000000));
-            }
-            $pcm2 = $narration !== '' ? $this->generateAudioPcm($narration, ['voice' => $voice]) : '';
-            $pcm = $pcm1 . $pcm2;
+            // 재생 순서: 페이지와 동일하게 The Gist(critique) → 내레이션(narration)
+            $pcm = $pcm1;
             if ($critiquePart !== '') {
                 if (self::CHUNK_DELAY_SEC > 0) {
                     usleep((int) (self::CHUNK_DELAY_SEC * 1000000));
                 }
-                $pcm3 = $this->generateAudioPcm($critiquePart, ['voice' => $voice]);
-                $pcm .= $pcm3;
+                $pcm .= $this->generateAudioPcm($critiquePart, ['voice' => $voice]);
+            }
+            if ($narration !== '') {
+                if (self::CHUNK_DELAY_SEC > 0) {
+                    usleep((int) (self::CHUNK_DELAY_SEC * 1000000));
+                }
+                $pcm .= $this->generateAudioPcm($narration, ['voice' => $voice]);
             }
             if ($pcm === '') {
                 return null;

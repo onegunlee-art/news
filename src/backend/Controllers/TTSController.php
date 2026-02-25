@@ -112,7 +112,8 @@ final class TTSController
         string $storageDir,
         ?int $newsId
     ): Response {
-        $fullPayload = $title . '|' . $meta . '|' . $narration . '|' . $critiquePart . '|' . $ttsVoice;
+        // 재생 순서와 일치: The Gist(critique) → narration (기존 캐시와 키 분리)
+        $fullPayload = $title . '|' . $meta . '|' . $critiquePart . '|' . $narration . '|' . $ttsVoice;
         $cacheHash = hash('sha256', $fullPayload);
 
         $this->logTtsDebug('structured_request', [
