@@ -46,17 +46,6 @@ interface NewsDetail {
   next_article?: { id: number; title: string } | null
 }
 
-/** API category 값 → 목록 라벨 (상위 탭용) */
-const categoryToLabel: Record<string, string> = {
-  diplomacy: '외교',
-  economy: '경제',
-  special: '특집',
-  entertainment: '특집',
-  technology: '기술',
-  tech: '기술',
-  security: '안보/군사',
-}
-
 /** 기사 본문/목록에 표시할 하위 카테고리 라벨 */
 const subCategoryToLabel: Record<string, string> = {
   politics_diplomacy: 'Politics/Diplomacy',

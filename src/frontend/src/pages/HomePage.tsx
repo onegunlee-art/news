@@ -36,15 +36,6 @@ const tabToCategory: Record<TabType, string | null> = {
   '인기': null,
 }
 
-const categoryToLabel: Record<string, string> = {
-  diplomacy: '외교',
-  economy: '경제',
-  special: '특집',
-  technology: '기술',
-  tech: '기술',
-  security: '안보/군사',
-}
-
 /** 기사 카드/본문에 표시할 하위 카테고리 라벨 (8개 + 직접입력은 그대로) */
 const subCategoryToLabel: Record<string, string> = {
   politics_diplomacy: 'Politics/Diplomacy',
