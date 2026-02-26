@@ -398,7 +398,7 @@ export default function NewsDetailPage() {
           {(news.content || (news.url && news.url !== '#')) && (
             <div className="mb-8 border-t border-page pt-6 mt-2">
               <div className="flex justify-between items-center gap-4 mb-3">
-                <h3 className="flex items-center gap-2 text-sm font-semibold text-page-secondary uppercase tracking-wider shrink-0">
+                <h3 className="flex items-center gap-2 text-sm font-semibold text-primary-500 uppercase tracking-wider shrink-0">
                   <SparklesIcon className="w-4 h-4" strokeWidth={2} />
                   원문 AI 분석
                 </h3>
@@ -407,7 +407,7 @@ export default function NewsDetailPage() {
                     href={news.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 text-sm text-page-secondary hover:text-primary-500 transition-colors shrink-0"
+                    className="flex items-center gap-1.5 text-sm text-primary-500 hover:text-primary-600 transition-colors shrink-0"
                   >
                     <ArrowTopRightOnSquareIcon className="w-4 h-4" strokeWidth={2} />
                     원문 보러가기
