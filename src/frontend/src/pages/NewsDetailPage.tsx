@@ -171,6 +171,14 @@ export default function NewsDetailPage() {
     return news?.time_ago || ''
   }
 
+  // 매체 설명용 날짜 (YYYY년 M월 D일, 원문 게재일 우선)
+  const formatMediaDate = () => {
+    const dateStr = news?.published_at || news?.updated_at || news?.created_at
+    if (!dateStr) return ''
+    const date = new Date(dateStr)
+    return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`
+  }
+
   // 소스 이름 매핑 (표시 시 " Magazine" 제거, e.g. Foreign Affairs Magazine → Foreign Affairs)
   const getSourceName = () => {
     let raw: string
@@ -335,7 +343,7 @@ export default function NewsDetailPage() {
 
           {/* 매체 설명 */}
           <p className="text-sm text-page-secondary mb-6">
-            이 글은 &quot;{((news.original_source && news.original_source.trim()) || news.source || 'The Gist')}&quot;에 게재된 &quot;{(news.original_title && news.original_title.trim()) || extractTitleFromUrl(news.url) || '원문'}&quot; 글의 시각을 참조하여 The Gist가 작성한 글 입니다.
+            이 글은 {formatMediaDate()}{formatMediaDate() ? ' ' : ''}{getSourceName()}에 게재된 &quot;{(news.original_title && news.original_title.trim()) || extractTitleFromUrl(news.url) || '원문'}&quot; 글의 시각을 참고하여 작성되었습니다.
           </p>
 
           {/* 저자 정보 (있을 경우) */}
@@ -392,7 +400,7 @@ export default function NewsDetailPage() {
               <div className="flex justify-between items-center gap-4 mb-3">
                 <h3 className="flex items-center gap-2 text-sm font-semibold text-page-secondary uppercase tracking-wider shrink-0">
                   <SparklesIcon className="w-4 h-4" strokeWidth={2} />
-                  참고 글 AI 구조 분석
+                  원문 AI 분석
                 </h3>
                 {news.url && news.url !== '#' && (
                   <a
@@ -402,7 +410,7 @@ export default function NewsDetailPage() {
                     className="flex items-center gap-1.5 text-sm text-page-secondary hover:text-primary-500 transition-colors shrink-0"
                   >
                     <ArrowTopRightOnSquareIcon className="w-4 h-4" strokeWidth={2} />
-                    참고 글 전체 원문 보기
+                    원문 보러가기
                   </a>
                 )}
               </div>
