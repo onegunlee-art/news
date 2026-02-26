@@ -207,3 +207,11 @@ input, textarea, select {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* Policy: 모바일에서 한글 단어 중간 줄바꿈 금지 (예: "위협" → "위" / "협" 분리 방지) */
+@media (max-width: 767px) {
+  .break-keep-ko-mobile {
+    word-break: keep-all;
+    overflow-wrap: normal;
+  }
+}

@@ -327,11 +327,11 @@ function ArticleCard({ article }: { article: NewsItem }) {
       <div className="grid grid-cols-[1fr_auto] items-stretch gap-4">
         <div className="apply-grayscale min-w-0 flex flex-col">
           <Link to={detailUrl} className="flex flex-col min-h-[7rem] justify-center">
-            <h2 className="text-lg font-bold text-page leading-snug mb-1.5 line-clamp-2">
+            <h2 className="text-lg font-bold text-page leading-snug mb-1.5 line-clamp-2 break-keep-ko-mobile">
               {article.title}
             </h2>
             {(article.narration || article.description) && (
-              <p className="text-xs text-page-secondary leading-relaxed line-clamp-3">
+              <p className="text-xs text-page-secondary leading-relaxed line-clamp-3 break-keep-ko-mobile">
                 {stripHtml(article.narration?.trim() || article.description)}
               </p>
             )}
