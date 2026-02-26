@@ -26,6 +26,7 @@ export interface DraftArticle {
   image_url?: string | null
   author?: string | null
   category?: string | null
+  category_parent?: string | null
   status?: string
 }
 

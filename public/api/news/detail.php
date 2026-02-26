@@ -139,8 +139,18 @@ try {
         $hasStatus = $checkCol->rowCount() > 0;
     } catch (Exception $e) {}
     
+    // category_parent 컬럼 존재 여부 (상위: 외교/경제/특집)
+    $hasCategoryParent = false;
+    try {
+        $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'category_parent'");
+        $hasCategoryParent = $checkCol->rowCount() > 0;
+    } catch (Exception $e) {}
+    
     // 기본 컬럼 (url: extractTitleFromUrl용, source_url 없을 때 fallback)
     $columns = 'id, category, title, description, content, source, url, image_url, created_at';
+    if ($hasCategoryParent) {
+        $columns = 'id, category_parent, category, title, description, content, source, url, image_url, created_at';
+    }
     if ($hasUpdatedAt) {
         $columns .= ', updated_at';
     }
@@ -246,20 +256,20 @@ try {
         }
     } catch (Exception $e) { /* bookmarks 테이블 없을 수 있음 */ }
 
-    // 다음 기사 (같은 카테고리, id < 현재, 최신순 1건, 공개된 기사만)
+    // 다음 기사 (같은 상위 카테고리, id < 현재, 최신순 1건, 공개된 기사만)
     $nextArticle = null;
-    $category = $news['category'] ?? null;
+    $categoryParent = $news['category_parent'] ?? $news['category'] ?? null;
     try {
-        $nextWhere = $category
-            ? "category = ? AND id < ?"
+        $nextWhere = $categoryParent
+            ? "category_parent = ? AND id < ?"
             : "id < ?";
         if ($hasStatus) {
             $nextWhere .= " AND (status = 'published' OR status IS NULL)";
         }
         $nextSql = "SELECT id, title FROM news WHERE $nextWhere ORDER BY id DESC LIMIT 1";
         $nextStmt = $db->prepare($nextSql);
-        if ($category) {
-            $nextStmt->execute([$category, $news['id']]);
+        if ($categoryParent) {
+            $nextStmt->execute([$categoryParent, $news['id']]);
         } else {
             $nextStmt->execute([$news['id']]);
         }

@@ -32,17 +32,29 @@ const tabToCategory: Record<TabType, string | null> = {
   '최신': null,
   '외교': 'diplomacy',
   '경제': 'economy',
-  '특집': 'entertainment',
+  '특집': 'special',
   '인기': null,
 }
 
 const categoryToLabel: Record<string, string> = {
   diplomacy: '외교',
   economy: '경제',
-  entertainment: '특집',
+  special: '특집',
   technology: '기술',
   tech: '기술',
   security: '안보/군사',
+}
+
+/** 기사 카드/본문에 표시할 하위 카테고리 라벨 (8개 + 직접입력은 그대로) */
+const subCategoryToLabel: Record<string, string> = {
+  politics_diplomacy: 'Politics/Diplomacy',
+  economy_industry: 'Economy/Industry',
+  society: 'Society',
+  security_conflict: 'Security/Conflict',
+  environment: 'Environment',
+  science_technology: 'Science/Technology',
+  culture: 'Culture',
+  health_development: 'Health/Development',
 }
 
 const PER_PAGE = 20
@@ -227,9 +239,9 @@ function ArticleCard({ article }: { article: NewsItem }) {
     return ''
   }
 
-  // 카테고리 라벨 (없으면 The Gist)
+  // 카테고리 라벨: 하위만 표시 (subCategoryToLabel 또는 직접입력값 그대로)
   const getCategoryLabel = () => {
-    if (article.category) return categoryToLabel[article.category] ?? article.category
+    if (article.category) return subCategoryToLabel[article.category] ?? article.category
     if (article.source === 'Admin') return 'The Gist'
     return formatSourceDisplayName(article.source) || 'The Gist'
   }

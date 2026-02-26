@@ -89,6 +89,7 @@ const GOOGLE_TTS_VOICES = [
 interface NewsArticle {
   id?: number;
   category: string;
+  category_parent?: string;
   title: string;
   subtitle?: string;
   description?: string;
@@ -110,9 +111,20 @@ interface NewsArticle {
 }
 
 const categories = [
-  { id: 'diplomacy', name: 'Foreign Affairs', color: 'from-blue-500 to-cyan-500' },
-  { id: 'economy', name: 'Economy', color: 'from-emerald-500 to-green-500' },
-  { id: 'entertainment', name: 'Entertainment', color: 'from-orange-500 to-red-500' },
+  { id: 'diplomacy', name: '외교', color: 'from-blue-500 to-cyan-500' },
+  { id: 'economy', name: '경제', color: 'from-emerald-500 to-green-500' },
+  { id: 'special', name: '특집', color: 'from-orange-500 to-red-500' },
+];
+
+const SUB_CATEGORY_OPTIONS: { value: string; label: string }[] = [
+  { value: 'politics_diplomacy', label: 'Politics/Diplomacy' },
+  { value: 'economy_industry', label: 'Economy/Industry' },
+  { value: 'society', label: 'Society' },
+  { value: 'security_conflict', label: 'Security/Conflict' },
+  { value: 'environment', label: 'Environment' },
+  { value: 'science_technology', label: 'Science/Technology' },
+  { value: 'culture', label: 'Culture' },
+  { value: 'health_development', label: 'Health/Development' },
 ];
 
 // Feedback / Revision 인터페이스
@@ -378,6 +390,8 @@ const AdminPage: React.FC = () => {
 
   // 뉴스 관리 상태
   const [selectedCategory, setSelectedCategory] = useState<string>('diplomacy');
+  const [categorySub, setCategorySub] = useState<string>('');
+  const [categorySubCustom, setCategorySubCustom] = useState<string>('');
   const [newsSearchQuery, _setNewsSearchQuery] = useState('');
   const [newsTitle, setNewsTitle] = useState('');
   const [newsSubtitle, setNewsSubtitle] = useState('');
@@ -909,6 +923,7 @@ const AdminPage: React.FC = () => {
   // 임시저장 편집 시작 (뉴스와 동일: 목록 데이터 직접 사용, API 단건 조회 없음)
   const handleEditDraft = (draft: NewsArticle) => {
     const urlVal = (draft.source_url && draft.source_url.trim()) || (draft.url && draft.url.trim()) || '#';
+    const parent = draft.category_parent ?? (draft.category === 'entertainment' ? 'special' : draft.category ?? 'diplomacy');
     setEditingDraftId(draft.id ?? null);
     setDraftDetail({
       id: draft.id!,
@@ -930,6 +945,7 @@ const AdminPage: React.FC = () => {
       image_url: draft.image_url ?? null,
       author: draft.author ?? null,
       category: draft.category ?? null,
+      category_parent: parent,
       status: draft.status ?? 'draft',
     });
   };
@@ -942,6 +958,16 @@ const AdminPage: React.FC = () => {
     setNewsContent(news.content);
     setNewsWhyImportant(news.why_important || '');
     setNewsNarration(news.narration || '');
+    const parent = news.category_parent ?? (news.category === 'entertainment' ? 'special' : news.category);
+    setSelectedCategory(parent);
+    const sub = news.category || '';
+    if (SUB_CATEGORY_OPTIONS.some((o) => o.value === sub)) {
+      setCategorySub(sub);
+      setCategorySubCustom('');
+    } else {
+      setCategorySub(sub ? '__custom__' : '');
+      setCategorySubCustom(sub);
+    }
     // 추가 메타데이터 (출처, 작성자, 작성일, 사진) - source_url 우선, 없으면 url (API가 url 반환)
     const urlToShow = (news.source_url && news.source_url.trim()) || (news.url && news.url.trim()) || '';
     setArticleUrl(urlToShow);
@@ -952,7 +978,6 @@ const AdminPage: React.FC = () => {
     setArticleImageUrl(news.image_url || '');
     setArticleSummary(news.description || '');
     setShowExtractedInfo(true); // 메타데이터 섹션 펼치기
-    // 스크롤을 폼 위치로 이동
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -966,7 +991,8 @@ const AdminPage: React.FC = () => {
     setNewsNarration('');
     setArticleUrl('');
     setRegeneratedTtsUrl(null);
-    // 메타데이터 필드 초기화
+    setCategorySub('');
+    setCategorySubCustom('');
     setArticleSource('');
     setArticleAuthor('');
     setArticlePublishedAt('');
@@ -1488,11 +1514,12 @@ const AdminPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* 카테고리 선택 네비게이션 */}
+              {/* 1단계: 상위 카테고리 */}
               <div className="flex gap-3 flex-wrap">
                 {categories.map((cat) => (
                   <button
                     key={cat.id}
+                    type="button"
                     onClick={() => setSelectedCategory(cat.id)}
                     className={`px-5 py-3 rounded-xl font-medium transition-all ${
                       selectedCategory === cat.id
@@ -1503,6 +1530,39 @@ const AdminPage: React.FC = () => {
                     {cat.name}
                   </button>
                 ))}
+              </div>
+
+              {/* 2단계: 하위 카테고리 (선택 또는 직접 입력) */}
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="text-slate-400 text-sm font-medium">하위 카테고리:</span>
+                <select
+                  value={categorySub}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (v === '__custom__') {
+                      setCategorySub('__custom__');
+                    } else {
+                      setCategorySub(v);
+                      setCategorySubCustom('');
+                    }
+                  }}
+                  className="bg-slate-800/50 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm min-w-[180px]"
+                >
+                  <option value="">선택 (선택사항)</option>
+                  {SUB_CATEGORY_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                  <option value="__custom__">직접 입력</option>
+                </select>
+                {categorySub === '__custom__' ? (
+                  <input
+                    type="text"
+                    value={categorySubCustom}
+                    onChange={(e) => setCategorySubCustom(e.target.value)}
+                    placeholder="직접 입력 시 여기에 입력"
+                    className="bg-slate-800/50 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm w-48 placeholder-slate-500"
+                  />
+                ) : null}
               </div>
 
               {/* 뉴스 작성/수정 폼 */}
@@ -2298,9 +2358,11 @@ const AdminPage: React.FC = () => {
                           const cleanContent = normalizeEditorHtml(newsContent);
                           const cleanNarration = normalizeEditorHtml(newsNarration);
                           const cleanWhyImportant = normalizeEditorHtml(newsWhyImportant);
+                          const subCategory = categorySub === '__custom__' ? (categorySubCustom || '').trim() : (categorySub || '');
                           const requestBody = {
                             ...(editingNewsId && { id: editingNewsId }),
-                            category: selectedCategory,
+                            category_parent: selectedCategory,
+                            category: subCategory || undefined,
                             title: newsTitle,
                             subtitle: newsSubtitle.trim() || null,
                             description: articleSummary.trim() || null,
@@ -2382,9 +2444,11 @@ const AdminPage: React.FC = () => {
                           const cleanContent = normalizeEditorHtml(newsContent)
                           const cleanNarration = normalizeEditorHtml(newsNarration)
                           const cleanWhyImportant = normalizeEditorHtml(newsWhyImportant)
+                          const subCategory = categorySub === '__custom__' ? (categorySubCustom || '').trim() : (categorySub || '');
                           const requestBody = {
                             ...(isEditing && { id: editingNewsId }),
-                            category: selectedCategory,
+                            category_parent: selectedCategory,
+                            category: subCategory || undefined,
                             title: newsTitle,
                             subtitle: newsSubtitle.trim() || null,
                             description: articleSummary.trim() || null,
@@ -2686,7 +2750,8 @@ const AdminPage: React.FC = () => {
                       headers: { 'Content-Type': 'application/json; charset=utf-8' },
                       body: JSON.stringify({
                         id: draftDetail.id,
-                        category: updates.category ?? (draftDetail.category || 'diplomacy'),
+                        category_parent: updates.category_parent ?? draftDetail.category_parent ?? 'diplomacy',
+                        category: updates.category ?? draftDetail.category ?? null,
                         title: updates.title ?? draftDetail.title,
                         subtitle: updates.subtitle ?? draftDetail.subtitle ?? null,
                         description: updates.description ?? draftDetail.description ?? null,
@@ -2727,7 +2792,8 @@ const AdminPage: React.FC = () => {
                       headers: { 'Content-Type': 'application/json; charset=utf-8' },
                       body: JSON.stringify({
                         id: currentState.id,
-                        category: currentState.category || 'diplomacy',
+                        category_parent: currentState.category_parent ?? 'diplomacy',
+                        category: currentState.category ?? null,
                         title: currentState.title,
                         subtitle: currentState.subtitle ?? null,
                         description: currentState.description ?? null,

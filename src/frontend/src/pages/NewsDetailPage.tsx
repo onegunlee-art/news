@@ -46,14 +46,27 @@ interface NewsDetail {
   next_article?: { id: number; title: string } | null
 }
 
-/** API category 값 → 목록 라벨 (외교, 경제 등) */
+/** API category 값 → 목록 라벨 (상위 탭용) */
 const categoryToLabel: Record<string, string> = {
   diplomacy: '외교',
   economy: '경제',
+  special: '특집',
   entertainment: '특집',
   technology: '기술',
   tech: '기술',
   security: '안보/군사',
+}
+
+/** 기사 본문/목록에 표시할 하위 카테고리 라벨 */
+const subCategoryToLabel: Record<string, string> = {
+  politics_diplomacy: 'Politics/Diplomacy',
+  economy_industry: 'Economy/Industry',
+  society: 'Society',
+  security_conflict: 'Security/Conflict',
+  environment: 'Environment',
+  science_technology: 'Science/Technology',
+  culture: 'Culture',
+  health_development: 'Health/Development',
 }
 
 export default function NewsDetailPage() {
@@ -188,10 +201,10 @@ export default function NewsDetailPage() {
     return formatSourceDisplayName(raw) || 'The Gist'
   }
 
-  // 글 목록 라벨 (카테고리 → 외교, 금융 등; 없으면 최신)
+  // 글 목록 라벨: 하위 카테고리만 표시 (없으면 최신)
   const getListLabel = () => {
     if (!news?.category) return '최신'
-    return categoryToLabel[news.category] ?? news.category
+    return subCategoryToLabel[news.category] ?? news.category
   }
 
   // 이미지 URL (기사별 고유 시드, 중복 없음)

@@ -125,6 +125,7 @@ $hasPublishedAt    = isset($newsColumns['published_at']);
 $hasSubtitle       = isset($newsColumns['subtitle']);
 $hasStatus         = isset($newsColumns['status']);
 $hasUpdatedAt      = isset($newsColumns['updated_at']);
+$hasCategoryParent = isset($newsColumns['category_parent']);
 
 $method = $_SERVER['REQUEST_METHOD'];
 
@@ -153,7 +154,8 @@ if ($method === 'POST') {
         exit;
     }
     
-    $category = $input['category'] ?? '';
+    $categoryParent = $input['category_parent'] ?? '';
+    $category = $input['category'] ?? '';  // 하위 카테고리 (slug 또는 직접 입력)
     $title = $input['title'] ?? '';
     $subtitle = $input['subtitle'] ?? null;
     $content = $input['content'] ?? '';
@@ -209,13 +211,13 @@ if ($method === 'POST') {
         exit;
     }
     
-    $validCategories = ['diplomacy', 'economy', 'technology', 'entertainment'];
-    if (!in_array($category, $validCategories)) {
+    $validParents = ['diplomacy', 'economy', 'special'];
+    if (!in_array($categoryParent, $validParents)) {
         http_response_code(400);
-        echo json_encode(['success' => false, 'message' => '유효하지 않은 카테고리입니다.']);
+        echo json_encode(['success' => false, 'message' => '상위 카테고리(외교/경제/특집)를 선택해주세요.']);
         exit;
     }
-    
+    $category = mb_substr(trim($category), 0, 100) ?: $categoryParent;  // 하위 없으면 상위와 동일
     try {
         logError('Starting database insert process');
         
@@ -247,10 +249,16 @@ if ($method === 'POST') {
         
         // ★ 컬럼 존재 여부는 이미 상단 DESCRIBE에서 한 번만 조회 → SHOW COLUMNS 제거
         
-        // 동적 INSERT 쿼리 생성
-        $columns = ['category', 'title', 'description', 'content', 'source', 'url', 'image_url', 'created_at'];
-        $values = [$category, $title, $description, $content, $sourceValue, $url, $imageUrl];
-        $placeholders = ['?', '?', '?', '?', '?', '?', '?', 'NOW()'];
+        // 동적 INSERT 쿼리 생성 (category_parent + category; 없으면 category만)
+        if ($hasCategoryParent) {
+            $columns = ['category_parent', 'category', 'title', 'description', 'content', 'source', 'url', 'image_url', 'created_at'];
+            $values = [$categoryParent, $category, $title, $description, $content, $sourceValue, $url, $imageUrl];
+            $placeholders = ['?', '?', '?', '?', '?', '?', '?', '?', 'NOW()'];
+        } else {
+            $columns = ['category', 'title', 'description', 'content', 'source', 'url', 'image_url', 'created_at'];
+            $values = [$categoryParent, $title, $description, $content, $sourceValue, $url, $imageUrl];
+            $placeholders = ['?', '?', '?', '?', '?', '?', '?', 'NOW()'];
+        }
         
         if ($hasSubtitle) {
             $columns[] = 'subtitle';
@@ -383,7 +391,9 @@ if ($method === 'GET') {
     // 단건 조회: Admin용 (draft 포함, status 무관)
     if ($id > 0) {
         try {
-            $selCols = 'id, category, title, description, content, source, url, image_url, created_at, updated_at';
+            $selCols = $hasCategoryParent
+                ? 'id, category_parent, category, title, description, content, source, url, image_url, created_at, updated_at'
+                : 'id, category, title, description, content, source, url, image_url, created_at, updated_at';
             if ($hasSubtitle) $selCols .= ', subtitle';
             if ($hasWhyImportant) $selCols .= ', why_important';
             if ($hasNarration) $selCols .= ', narration';
@@ -431,10 +441,15 @@ if ($method === 'GET') {
         $conditions = [];
         $params = [];
         
-        // 카테고리 필터
+        // 카테고리 필터 (상위: 외교/경제/특집)
         if ($category) {
-            $conditions[] = 'category = ?';
-            $params[] = $category;
+            if ($hasCategoryParent) {
+                $conditions[] = 'category_parent = ?';
+                $params[] = $category;
+            } else {
+                $conditions[] = 'category = ?';
+                $params[] = ($category === 'special' ? 'entertainment' : $category);
+            }
         }
         
         // 키워드 검색 (제목, 내용, 설명에서 검색)
@@ -464,9 +479,13 @@ if ($method === 'GET') {
         $total = (int) $stmt->fetchColumn();
         
         // ★ 컬럼 존재 여부는 상단 DESCRIBE에서 이미 조회됨 (SHOW COLUMNS 제거)
-        $selectColumns = 'id, category, title, description, content, source, url, image_url, created_at';
+        $selectColumns = $hasCategoryParent
+            ? 'id, category_parent, category, title, description, content, source, url, image_url, created_at'
+            : 'id, category, title, description, content, source, url, image_url, created_at';
         if ($hasSourceUrl) {
-            $selectColumns = 'id, category, title, description, content, source, url, source_url, image_url, created_at';
+            $selectColumns = $hasCategoryParent
+                ? 'id, category_parent, category, title, description, content, source, url, source_url, image_url, created_at'
+                : 'id, category, title, description, content, source, url, source_url, image_url, created_at';
         }
         if ($hasWhyImportant) {
             $selectColumns = str_replace('content,', 'content, why_important,', $selectColumns);
@@ -555,6 +574,7 @@ if ($method === 'PUT') {
     }
     
     $id = $input['id'] ?? 0;
+    $categoryParent = $input['category_parent'] ?? '';
     $category = $input['category'] ?? '';
     $title = $input['title'] ?? '';
     $subtitle = $input['subtitle'] ?? null;
@@ -615,13 +635,13 @@ if ($method === 'PUT') {
         exit;
     }
     
-    $validCategories = ['diplomacy', 'economy', 'technology', 'entertainment'];
-    if (!in_array($category, $validCategories)) {
+    $validParents = ['diplomacy', 'economy', 'special'];
+    if (!in_array($categoryParent, $validParents)) {
         http_response_code(400);
-        echo json_encode(['success' => false, 'message' => '유효하지 않은 카테고리입니다.']);
+        echo json_encode(['success' => false, 'message' => '상위 카테고리(외교/경제/특집)를 선택해주세요.']);
         exit;
     }
-    
+    $category = mb_substr(trim($category), 0, 100) ?: $categoryParent;
     try {
         // 뉴스 존재 여부 확인
         $stmt = $db->prepare("SELECT id FROM news WHERE id = ?");
@@ -670,9 +690,14 @@ if ($method === 'PUT') {
         
         // ★ 컬럼 존재 여부는 상단 DESCRIBE에서 이미 조회됨 (SHOW COLUMNS 제거)
         
-        // 동적 UPDATE 쿼리 생성
-        $setClauses = ['category = ?', 'title = ?', 'description = ?', 'content = ?', 'image_url = ?'];
-        $values = [$category, $title, $description, $content, $imageUrl];
+        // 동적 UPDATE 쿼리 생성 (category_parent + category; 없으면 category만)
+        if ($hasCategoryParent) {
+            $setClauses = ['category_parent = ?', 'category = ?', 'title = ?', 'description = ?', 'content = ?', 'image_url = ?'];
+            $values = [$categoryParent, $category, $title, $description, $content, $imageUrl];
+        } else {
+            $setClauses = ['category = ?', 'title = ?', 'description = ?', 'content = ?', 'image_url = ?'];
+            $values = [$categoryParent, $title, $description, $content, $imageUrl];
+        }
         if ($hasUpdatedAt) {
             $setClauses[] = 'updated_at = NOW()';
         }
