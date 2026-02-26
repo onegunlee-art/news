@@ -361,6 +361,7 @@ function ArticleCard({ article }: { article: NewsItem }) {
           <span className="text-page-muted">|</span>
           <span className="text-page-secondary">{formatDate()}</span>
         </Link>
+        {/* 메인 페이지: Play · Share · Bookmark 아이콘 크기 완전 동일 (w-5 h-5) */}
         <div className="flex items-center gap-2 shrink-0" role="group" aria-label="기사 액션">
           <button
             type="button"
@@ -369,7 +370,7 @@ function ArticleCard({ article }: { article: NewsItem }) {
             title="음성으로 듣기"
             aria-label="재생"
           >
-            <PlayIcon className="w-5 h-5" strokeWidth={1.5} />
+            <PlayIcon className="w-5 h-5 shrink-0" strokeWidth={1.5} />
           </button>
           <ShareMenu
             title={article.title}
@@ -378,6 +379,7 @@ function ArticleCard({ article }: { article: NewsItem }) {
             webUrl={shareWebUrl}
             className="text-page-secondary hover:text-page"
             titleAttr="공유하기"
+            iconClassName="w-5 h-5"
           />
           <button
             type="button"
@@ -388,11 +390,11 @@ function ArticleCard({ article }: { article: NewsItem }) {
             aria-label={isBookmarked ? '즐겨찾기 해제' : '즐겨찾기 추가'}
           >
             {isBookmarking ? (
-              <span className="inline-block w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+              <span className="inline-block w-5 h-5 shrink-0 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
             ) : isBookmarked ? (
-              <BookmarkIconSolid className="w-5 h-5 text-primary-500" />
+              <BookmarkIconSolid className="w-5 h-5 shrink-0 text-primary-500" />
             ) : (
-              <BookmarkIcon className="w-5 h-5" strokeWidth={1.5} />
+              <BookmarkIcon className="w-5 h-5 shrink-0" strokeWidth={1.5} />
             )}
           </button>
         </div>

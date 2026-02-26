@@ -1,6 +1,15 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { DocumentMagnifyingGlassIcon, ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline'
+import {
+  SparklesIcon,
+  ArrowTopRightOnSquareIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  PlayIcon,
+  BookmarkIcon,
+  ExclamationTriangleIcon,
+} from '@heroicons/react/24/outline'
+import { BookmarkIcon as BookmarkIconSolid } from '@heroicons/react/24/solid'
 import { motion } from 'framer-motion'
 import { newsApi } from '../services/api'
 import ShareMenu from '../components/Common/ShareMenu'
@@ -200,9 +209,7 @@ export default function NewsDetailPage() {
     return (
       <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 py-16 text-center">
         <div className="text-page-muted mb-4">
-          <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-          </svg>
+          <ExclamationTriangleIcon className="w-16 h-16 mx-auto" strokeWidth={1} />
         </div>
         <h2 className="text-xl font-bold text-page mb-2">오류 발생</h2>
         <p className="text-page-secondary mb-6">{error}</p>
@@ -229,9 +236,7 @@ export default function NewsDetailPage() {
               onClick={() => navigate(-1)}
               className="flex items-center gap-1 text-page-secondary hover:text-page transition-colors"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
+              <ChevronLeftIcon className="w-5 h-5" strokeWidth={2} />
               <span className="text-sm">{getListLabel()}</span>
             </button>
 
@@ -244,9 +249,7 @@ export default function NewsDetailPage() {
                 title="음성으로 듣기"
                 aria-label="재생"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 18v-6a9 9 0 0118 0v6M3 18h2a2 2 0 002-2v-4a2 2 0 00-2-2H3v8zm14 0h2a2 2 0 002-2v-4a2 2 0 00-2-2h-2v8z" />
-                </svg>
+                <PlayIcon className="w-5 h-5" strokeWidth={2} />
               </button>
               {/* 공유하기 (메뉴: 카카오톡 / 링크 복사 / 시스템 공유) */}
               {news && (
@@ -277,9 +280,11 @@ export default function NewsDetailPage() {
                 title="즐겨찾기"
                 aria-label={isBookmarked ? '즐겨찾기 해제' : '즐겨찾기 추가'}
               >
-                <svg className="w-5 h-5" fill={isBookmarked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                </svg>
+                {isBookmarked ? (
+                  <BookmarkIconSolid className="w-5 h-5 text-primary-500" />
+                ) : (
+                  <BookmarkIcon className="w-5 h-5" strokeWidth={2} />
+                )}
               </button>
             </div>
           </div>
@@ -345,9 +350,7 @@ export default function NewsDetailPage() {
             onClick={playArticle}
             className="inline-flex items-center gap-2 text-base text-primary-500 hover:text-primary-600 transition-colors mb-6 pb-6 border-b border-page w-full"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 18v-6a9 9 0 0118 0v6M3 18h2a2 2 0 002-2v-4a2 2 0 00-2-2H3v8zm14 0h2a2 2 0 002-2v-4a2 2 0 00-2-2h-2v8z" />
-            </svg>
+            <PlayIcon className="w-5 h-5 shrink-0" strokeWidth={2} />
             <span className="font-medium">AI 보이스로 듣기</span>
           </button>
 
@@ -388,7 +391,7 @@ export default function NewsDetailPage() {
             <div className="mb-8 border-t border-page pt-6 mt-2">
               <div className="flex justify-between items-center gap-4 mb-3">
                 <h3 className="flex items-center gap-2 text-sm font-semibold text-page-secondary uppercase tracking-wider shrink-0">
-                  <DocumentMagnifyingGlassIcon className="w-4 h-4" strokeWidth={2} />
+                  <SparklesIcon className="w-4 h-4" strokeWidth={2} />
                   참고 글 AI 구조 분석
                 </h3>
                 {news.url && news.url !== '#' && (
@@ -427,9 +430,7 @@ export default function NewsDetailPage() {
               </p>
               <span className="inline-flex items-center gap-1 mt-2 text-sm text-primary-500 font-medium">
                 보기
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
+                <ChevronRightIcon className="w-4 h-4" strokeWidth={2} />
               </span>
             </Link>
           </div>
