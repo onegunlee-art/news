@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
+import { DocumentMagnifyingGlassIcon, ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline'
 import { motion } from 'framer-motion'
 import { newsApi } from '../services/api'
 import ShareMenu from '../components/Common/ShareMenu'
@@ -387,9 +388,7 @@ export default function NewsDetailPage() {
             <div className="mb-8 border-t border-page pt-6 mt-2">
               <div className="flex justify-between items-center gap-4 mb-3">
                 <h3 className="flex items-center gap-2 text-sm font-semibold text-page-secondary uppercase tracking-wider shrink-0">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" />
-                  </svg>
+                  <DocumentMagnifyingGlassIcon className="w-4 h-4" strokeWidth={2} />
                   참고 글 AI 구조 분석
                 </h3>
                 {news.url && news.url !== '#' && (
@@ -399,9 +398,7 @@ export default function NewsDetailPage() {
                     rel="noopener noreferrer"
                     className="flex items-center gap-1.5 text-sm text-page-secondary hover:text-primary-500 transition-colors shrink-0"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                    </svg>
+                    <ArrowTopRightOnSquareIcon className="w-4 h-4" strokeWidth={2} />
                     참고 글 전체 원문 보기
                   </a>
                 )}

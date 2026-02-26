@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { PlayIcon, BookmarkIcon } from '@heroicons/react/24/outline'
+import { BookmarkIcon as BookmarkIconSolid } from '@heroicons/react/24/solid'
 import { newsApi } from '../services/api'
 import ShareMenu from '../components/Common/ShareMenu'
 import { useAuthStore } from '../store/authStore'
@@ -367,9 +369,7 @@ function ArticleCard({ article }: { article: NewsItem }) {
             title="음성으로 듣기"
             aria-label="재생"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 18v-6a9 9 0 0118 0v6M3 18h2a2 2 0 002-2v-4a2 2 0 00-2-2H3v8zm14 0h2a2 2 0 002-2v-4a2 2 0 00-2-2h-2v8z" />
-            </svg>
+            <PlayIcon className="w-5 h-5" strokeWidth={1.5} />
           </button>
           <ShareMenu
             title={article.title}
@@ -389,10 +389,10 @@ function ArticleCard({ article }: { article: NewsItem }) {
           >
             {isBookmarking ? (
               <span className="inline-block w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+            ) : isBookmarked ? (
+              <BookmarkIconSolid className="w-5 h-5 text-primary-500" />
             ) : (
-              <svg className="w-5 h-5" fill={isBookmarked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-              </svg>
+              <BookmarkIcon className="w-5 h-5" strokeWidth={1.5} />
             )}
           </button>
         </div>
