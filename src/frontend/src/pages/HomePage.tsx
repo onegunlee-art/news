@@ -299,7 +299,8 @@ function ArticleCard({ article }: { article: NewsItem }) {
       return
     }
 
-    if (!isAuthenticated) {
+    const hasAuth = isAuthenticated || !!localStorage.getItem('access_token')
+    if (!hasAuth) {
       if (confirm('로그인이 필요합니다. 로그인 페이지로 이동하시겠습니까?')) {
         navigate('/login')
       }

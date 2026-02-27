@@ -143,7 +143,8 @@ export default function NewsDetailPage() {
   }
 
   const handleBookmark = async () => {
-    if (!isAuthenticated || !id) return
+    const hasAuth = isAuthenticated || !!localStorage.getItem('access_token')
+    if (!hasAuth || !id) return
 
     try {
       if (isBookmarked) {
@@ -274,7 +275,8 @@ export default function NewsDetailPage() {
                 onClick={(e) => {
                   e.preventDefault()
                   e.stopPropagation()
-                  if (!isAuthenticated) {
+                  const hasAuth = isAuthenticated || !!localStorage.getItem('access_token')
+                  if (!hasAuth) {
                     if (confirm('로그인이 필요합니다. 로그인 페이지로 이동하시겠습니까?')) {
                       navigate('/login')
                     }
