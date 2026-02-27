@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
+import { BellIcon } from '@heroicons/react/24/outline'
 import { useAuthStore } from '../store/authStore'
 import { useAudioListStore, type AudioListItem } from '../store/audioListStore'
 import { useViewSettingsStore, type FontSize, type Theme } from '../store/viewSettingsStore'
@@ -13,7 +14,7 @@ import TermsModal from '../components/Common/TermsModal'
 const CONTAINER_CLASS = 'max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4'
 
 export default function ProfilePage() {
-  const { user, isAuthenticated, logout, initializeAuth } = useAuthStore()
+  const { user, isAuthenticated, isSubscribed, logout, initializeAuth } = useAuthStore()
   const hasAuth = !!user || isAuthenticated || !!localStorage.getItem('access_token')
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<'bookmarks' | 'audio'>('bookmarks')
@@ -26,6 +27,9 @@ export default function ProfilePage() {
   } | null>(null)
   const [showTerms, setShowTerms] = useState(false)
   const [showPrivacy, setShowPrivacy] = useState(false)
+  const [showNotificationPanel, setShowNotificationPanel] = useState(false)
+  const [expandedActivity, setExpandedActivity] = useState<'none' | 'alarm' | 'view' | 'contact'>('none')
+  const [aiFeedExpanded, setAiFeedExpanded] = useState(false)
   const activeTabRef = useRef(activeTab)
   activeTabRef.current = activeTab
 
@@ -71,45 +75,86 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-neutral-50 pb-24">
       <div className={CONTAINER_CLASS}>
-        {/* Profile header block: avatar, membership badge only */}
-        <header className="pt-12 pb-10">
-          <h1 className="font-serif text-3xl md:text-4xl text-neutral-900 tracking-tight mb-8">
-            My Page
-          </h1>
+        {/* Header: My Page title + bell (alarm) icon */}
+        <header className="pt-12 pb-6">
+          <div className="flex items-center justify-between">
+            <h1 className="font-serif text-3xl md:text-4xl text-neutral-900 tracking-tight">
+              My Page
+            </h1>
+            <button
+              type="button"
+              onClick={() => setShowNotificationPanel((v) => !v)}
+              className="p-2 text-neutral-600 hover:text-neutral-900 transition-colors rounded-full hover:bg-neutral-100"
+              aria-label="알림 설정"
+            >
+              <BellIcon className="w-6 h-6" strokeWidth={2} />
+            </button>
+          </div>
+        </header>
+
+        {/* Notification panel (below header, when bell clicked) */}
+        <AnimatePresence>
+          {showNotificationPanel && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="mb-6 p-4 bg-white rounded-xl border border-neutral-100 shadow-sm">
+                <p className="text-neutral-600 text-sm mb-3">새 글이 올라오면 푸시 알림</p>
+                <NotificationToggle />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Profile card: avatar, name, membership, SUBSCRIBER, Reading/Focus */}
+        <div className="pb-8">
           {hasAuth ? (
             user ? (
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                {user.profile_image ? (
-                  <img
-                    src={user.profile_image}
-                    alt={user.nickname}
-                    className="w-16 h-16 rounded-full object-cover ring-1 ring-neutral-200"
-                  />
-                ) : (
-                  <div className="w-16 h-16 rounded-full bg-neutral-200 flex items-center justify-center ring-1 ring-neutral-200">
-                    <span className="text-xl font-serif text-neutral-600">{user.nickname.charAt(0)}</span>
+              <div className="p-5 bg-[#f5f0e8] rounded-xl border border-neutral-200">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-4">
+                    {user.profile_image ? (
+                      <img
+                        src={user.profile_image}
+                        alt={user.nickname}
+                        className="w-16 h-16 rounded-full object-cover ring-1 ring-neutral-200"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 rounded-full bg-neutral-200 flex items-center justify-center ring-1 ring-neutral-200">
+                        <span className="text-xl font-serif text-neutral-600">{user.nickname.charAt(0)}</span>
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-neutral-900 font-medium text-base">{user.nickname}</p>
+                      <p className="text-neutral-600 text-sm mt-0.5">
+                        {user.role === 'admin' ? '관리자' : 'Premium Member'}
+                      </p>
+                      {isSubscribed && (
+                        <span className="inline-block mt-2 px-2.5 py-0.5 text-[10px] font-medium tracking-wide uppercase text-primary-700 bg-primary-100 rounded-md">
+                          SUBSCRIBER
+                        </span>
+                      )}
+                    </div>
                   </div>
-                )}
-                <div>
-                  <p className="text-neutral-900 font-medium text-sm">{user.nickname}</p>
-                  {user.email && <p className="text-neutral-500 text-xs mt-0.5">{user.email}</p>}
-                  <span className="inline-block mt-2 px-2.5 py-0.5 text-[10px] font-medium tracking-wide uppercase text-neutral-600 bg-neutral-100 rounded-full">
-                    {user.role === 'admin' ? '관리자' : '회원'}
-                  </span>
+                  <button
+                    onClick={handleLogout}
+                    className="text-neutral-500 hover:text-neutral-900 text-xs font-medium transition-colors"
+                  >
+                    로그아웃
+                  </button>
+                </div>
+                <div className="flex gap-4 text-neutral-600 text-xs">
+                  <span>Reading Score: --</span>
+                  <span>Focus: -- --</span>
                 </div>
               </div>
-              <button
-                onClick={handleLogout}
-                className="text-neutral-500 hover:text-neutral-900 text-xs font-medium transition-colors"
-              >
-                로그아웃
-              </button>
-            </div>
             ) : (
-            <div className="py-8 flex justify-center">
-              <LoadingSpinner size="large" />
-            </div>
+              <div className="py-8 flex justify-center">
+                <LoadingSpinner size="large" />
+              </div>
             )
           ) : (
             <div className="text-center py-8">
@@ -122,20 +167,24 @@ export default function ProfilePage() {
               </Link>
             </div>
           )}
-        </header>
+        </div>
 
-        {/* Library section: two list items */}
+        {/* My Library: icon + label + chevron rows */}
         <section className="bg-white rounded-xl overflow-hidden shadow-sm border border-neutral-100">
+          <h2 className="px-5 py-4 text-sm font-medium text-neutral-700 uppercase tracking-wider">My Library</h2>
           <ul className="divide-y divide-neutral-100">
             <li>
               <button
                 type="button"
                 onClick={() => setActiveTab('bookmarks')}
-                className={`w-full flex items-center justify-between px-5 py-4 text-left transition-colors ${
+                className={`w-full flex items-center gap-3 px-5 py-4 text-left transition-colors ${
                   activeTab === 'bookmarks' ? 'bg-neutral-50' : 'hover:bg-neutral-50/50'
                 }`}
               >
-                <span className="text-neutral-900 text-sm font-medium">저장한 콘텐츠</span>
+                <svg className="w-5 h-5 text-neutral-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                </svg>
+                <span className="flex-1 text-neutral-900 text-sm font-medium">저장한 콘텐츠</span>
                 <svg className={`w-5 h-5 text-neutral-400 transition-transform ${activeTab === 'bookmarks' ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
@@ -159,11 +208,14 @@ export default function ProfilePage() {
               <button
                 type="button"
                 onClick={() => setActiveTab('audio')}
-                className={`w-full flex items-center justify-between px-5 py-4 text-left transition-colors ${
+                className={`w-full flex items-center gap-3 px-5 py-4 text-left transition-colors ${
                   activeTab === 'audio' ? 'bg-neutral-50' : 'hover:bg-neutral-50/50'
                 }`}
               >
-                <span className="text-neutral-900 text-sm font-medium">들었던 오디오</span>
+                <svg className="w-5 h-5 text-neutral-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                </svg>
+                <span className="flex-1 text-neutral-900 text-sm font-medium">들었던 오디오</span>
                 <svg className={`w-5 h-5 text-neutral-400 transition-transform ${activeTab === 'audio' ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
@@ -184,22 +236,134 @@ export default function ProfilePage() {
           </ul>
         </section>
 
-        {/* Activity section: list items */}
+        {/* My Subscription: Current Plan + MANAGE */}
         <section className="mt-6 bg-white rounded-xl overflow-hidden shadow-sm border border-neutral-100">
-          <h2 className="px-5 py-4 text-xs font-medium text-neutral-500 uppercase tracking-wider">활동</h2>
+          <h2 className="px-5 py-4 text-sm font-medium text-neutral-700 uppercase tracking-wider">My Subscription</h2>
           <ul className="divide-y divide-neutral-100">
-            <li className="px-5 py-4">
-              <p className="text-neutral-500 text-xs mb-3">새 글이 올라오면 푸시 알림</p>
-              <NotificationToggle />
-            </li>
-            <li className="px-5 py-4">
-              <ViewSettingsBlock />
-            </li>
-            <li className="px-5 py-4">
-              <h3 className="text-neutral-900 text-sm font-medium mb-3">문의하기</h3>
-              <ContactForm />
+            <li className="flex items-center justify-between px-5 py-4">
+              <span className="text-neutral-900 text-sm font-medium">현재 플랜</span>
+              <button
+                type="button"
+                className="px-3 py-1.5 text-xs font-medium tracking-wide uppercase text-white bg-primary-500 hover:bg-primary-600 rounded transition-colors"
+              >
+                MANAGE
+              </button>
             </li>
           </ul>
+        </section>
+
+        {/* Recent Activity: icon + label + chevron rows (푸시 알림, 보기 설정, 문의하기) */}
+        <section className="mt-6 bg-white rounded-xl overflow-hidden shadow-sm border border-neutral-100">
+          <h2 className="px-5 py-4 text-sm font-medium text-neutral-700 uppercase tracking-wider">Recent Activity</h2>
+          <ul className="divide-y divide-neutral-100">
+            <li>
+              <button
+                type="button"
+                onClick={() => setExpandedActivity(expandedActivity === 'alarm' ? 'none' : 'alarm')}
+                className={`w-full flex items-center gap-3 px-5 py-4 text-left transition-colors ${expandedActivity === 'alarm' ? 'bg-neutral-50' : 'hover:bg-neutral-50/50'}`}
+              >
+                <BellIcon className="w-5 h-5 text-neutral-500 flex-shrink-0" strokeWidth={2} />
+                <span className="flex-1 text-neutral-900 text-sm font-medium">푸시 알림</span>
+                <svg className={`w-5 h-5 text-neutral-400 transition-transform ${expandedActivity === 'alarm' ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+              <AnimatePresence>
+                {expandedActivity === 'alarm' && (
+                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                    <div className="px-5 pb-4 pt-1 border-t border-neutral-100">
+                      <NotificationToggle />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </li>
+            <li>
+              <button
+                type="button"
+                onClick={() => setExpandedActivity(expandedActivity === 'view' ? 'none' : 'view')}
+                className={`w-full flex items-center gap-3 px-5 py-4 text-left transition-colors ${expandedActivity === 'view' ? 'bg-neutral-50' : 'hover:bg-neutral-50/50'}`}
+              >
+                <svg className="w-5 h-5 text-neutral-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span className="flex-1 text-neutral-900 text-sm font-medium">보기 설정</span>
+                <svg className={`w-5 h-5 text-neutral-400 transition-transform ${expandedActivity === 'view' ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+              <AnimatePresence>
+                {expandedActivity === 'view' && (
+                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                    <div className="px-5 pb-4 pt-1 border-t border-neutral-100">
+                      <ViewSettingsBlock />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </li>
+            <li>
+              <button
+                type="button"
+                onClick={() => setExpandedActivity(expandedActivity === 'contact' ? 'none' : 'contact')}
+                className={`w-full flex items-center gap-3 px-5 py-4 text-left transition-colors ${expandedActivity === 'contact' ? 'bg-neutral-50' : 'hover:bg-neutral-50/50'}`}
+              >
+                <svg className="w-5 h-5 text-neutral-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                </svg>
+                <span className="flex-1 text-neutral-900 text-sm font-medium">문의하기</span>
+                <svg className={`w-5 h-5 text-neutral-400 transition-transform ${expandedActivity === 'contact' ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+              <AnimatePresence>
+                {expandedActivity === 'contact' && (
+                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                    <div className="px-5 pb-4 pt-1 border-t border-neutral-100">
+                      <ContactForm />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </li>
+          </ul>
+        </section>
+
+        {/* AI Intelligence Feed: placeholder + Edit + expand/collapse */}
+        <section className="mt-6 bg-white rounded-xl overflow-hidden shadow-sm border border-neutral-100">
+          <div className="flex items-center justify-between px-5 py-4">
+            <h2 className="text-sm font-medium text-neutral-700 uppercase tracking-wider">AI Intelligence Feed</h2>
+            <div className="flex items-center gap-2">
+              <button type="button" className="text-xs font-medium text-neutral-600 hover:text-neutral-900">Edit</button>
+              <button
+                type="button"
+                onClick={() => setAiFeedExpanded((v) => !v)}
+                className="p-1 text-neutral-500 hover:text-neutral-700"
+                aria-label={aiFeedExpanded ? '접기' : '펼치기'}
+              >
+                <svg className={`w-5 h-5 transition-transform ${aiFeedExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          <AnimatePresence>
+            {aiFeedExpanded && (
+              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                <div className="px-5 pb-5 pt-1 border-t border-neutral-100">
+                  <div className="space-y-3">
+                    {['80%', '60%', '100%', '40%'].map((w, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-primary-400 flex-shrink-0" />
+                        <div className="h-3 bg-neutral-100 rounded" style={{ width: w }} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </section>
 
         {/* Footer: The Gist, 저작권, 이용약관 */}
