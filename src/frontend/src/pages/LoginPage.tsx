@@ -135,7 +135,7 @@ const LoginPage: React.FC = () => {
             <p className="text-gray-500 text-sm">
               아직 계정이 없으신가요?{' '}
               <Link to="/register" className="text-primary-500 hover:text-primary-600 font-medium">
-                구독하기
+                회원가입
               </Link>
             </p>
           </div>

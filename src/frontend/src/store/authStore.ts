@@ -206,6 +206,18 @@ export const useAuthStore = create<AuthState>()(
         refreshToken: state.refreshToken,
         isSubscribed: state.isSubscribed,
       }),
+      onRehydrateStorage: () => (state) => {
+        if (state && state.accessToken) {
+          state.isAuthenticated = true
+          const userStr = localStorage.getItem('user')
+          if (userStr) {
+            try { state.user = JSON.parse(userStr) } catch { /* ignore */ }
+          }
+        }
+        if (state) {
+          state.isInitialized = true
+        }
+      },
     }
   )
 )

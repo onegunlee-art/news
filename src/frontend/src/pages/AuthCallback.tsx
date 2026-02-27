@@ -4,6 +4,15 @@ import { useAuthStore } from '../store/authStore'
 import LoadingSpinner from '../components/Common/LoadingSpinner'
 import { getAuthCodeFromUrl, getAuthErrorFromUrl } from '../services/kakaoAuth'
 
+function syncAuthStorage(accessToken: string, refreshToken: string) {
+  try {
+    localStorage.setItem('auth-storage', JSON.stringify({
+      state: { accessToken, refreshToken, isSubscribed: false },
+      version: 0,
+    }))
+  } catch { /* ignore */ }
+}
+
 export default function AuthCallback() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
@@ -36,18 +45,18 @@ export default function AuthCallback() {
       if (token && refreshToken) {
         localStorage.setItem('access_token', token)
         localStorage.setItem('refresh_token', refreshToken)
+        syncAuthStorage(token, refreshToken)
 
-        // callback.php가 저장한 user 정보 복원
         const userStr = localStorage.getItem('user')
+        let user = null
         if (userStr) {
           try {
-            const user = JSON.parse(userStr)
+            user = JSON.parse(userStr)
             setUser(user)
           } catch { /* ignore parse error */ }
         }
 
         setTokens(token, refreshToken)
-        const user = (() => { try { const u = localStorage.getItem('user'); return u ? JSON.parse(u) : null; } catch { return null; } })()
         navigate(user?.role === 'admin' ? '/admin' : '/')
         return
       }
@@ -104,6 +113,7 @@ export default function AuthCallback() {
         if (data.success && data.access_token) {
           localStorage.setItem('access_token', data.access_token)
           localStorage.setItem('refresh_token', data.refresh_token || '')
+          syncAuthStorage(data.access_token, data.refresh_token || '')
           
           if (data.user) {
             localStorage.setItem('user', JSON.stringify(data.user))

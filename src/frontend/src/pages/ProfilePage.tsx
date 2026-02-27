@@ -13,7 +13,7 @@ import TermsModal from '../components/Common/TermsModal'
 const CONTAINER_CLASS = 'max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4'
 
 export default function ProfilePage() {
-  const { user, isAuthenticated, logout, isSubscribed, setSubscribed } = useAuthStore()
+  const { user, isAuthenticated, logout } = useAuthStore()
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<'bookmarks' | 'audio'>('bookmarks')
   const audioItems = useAudioListStore((s) => s.items)
@@ -171,14 +171,6 @@ export default function ProfilePage() {
               )}
             </li>
           </ul>
-        </section>
-
-        {/* Subscription section: single row */}
-        <section className="mt-6 bg-white rounded-xl overflow-hidden shadow-sm border border-neutral-100">
-          <div className="px-5 py-4">
-            <h2 className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-3">구독</h2>
-            <SubscriptionBlock isSubscribed={isSubscribed} onCancel={() => setSubscribed(false)} />
-          </div>
         </section>
 
         {/* Activity section: list items */}
@@ -373,31 +365,6 @@ function ContactForm() {
         </p>
       )}
     </form>
-  )
-}
-
-function SubscriptionBlock({
-  isSubscribed,
-  onCancel,
-}: {
-  isSubscribed: boolean
-  onCancel: () => void
-}) {
-  return (
-    <div className="flex items-center justify-between py-1">
-      <p className="text-sm text-neutral-700">
-        {isSubscribed ? <strong>구독 중</strong> : '구독 안 함'}
-      </p>
-      {isSubscribed ? (
-        <button type="button" onClick={onCancel} className="text-xs text-neutral-500 hover:text-neutral-900 underline underline-offset-2">
-          해지하기
-        </button>
-      ) : (
-        <Link to="/register" className="text-sm text-neutral-900 font-medium hover:underline underline-offset-2">
-          구독하러 가기 →
-        </Link>
-      )}
-    </div>
   )
 }
 

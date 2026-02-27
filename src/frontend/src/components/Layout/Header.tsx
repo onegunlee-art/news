@@ -51,9 +51,9 @@ export default function Header() {
             {/* 모바일: 햄버거 아이콘 */}
             <button
               type="button"
-              onClick={() => navigate(isAuthenticated ? '/profile' : '/register')}
+              onClick={() => navigate(isAuthenticated ? '/profile' : '/login')}
               className="md:hidden p-2 -ml-2 text-page-secondary hover:text-page transition-colors"
-              aria-label={isAuthenticated ? 'My Page' : '구독하기'}
+              aria-label={isAuthenticated ? 'My Page' : '로그인/회원가입'}
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -65,8 +65,8 @@ export default function Header() {
                 My Page
               </Link>
             ) : (
-              <Link to="/register" className="hidden md:inline text-xs text-page-secondary hover:text-page transition-colors">
-                구독하기
+              <Link to="/login" className="hidden md:inline text-xs text-page-secondary hover:text-page transition-colors">
+                로그인/회원가입
               </Link>
             )}
           </div>

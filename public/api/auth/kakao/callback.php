@@ -296,7 +296,7 @@ try {
     localStorage.setItem("access_token", ' . json_encode($accessTokenJwt) . ');
     localStorage.setItem("refresh_token", ' . json_encode($refreshTokenJwt) . ');
     localStorage.setItem("user", JSON.stringify(' . json_encode($userObj) . '));
-    var authStorage = { state: { accessToken: ' . json_encode($accessTokenJwt) . ', refreshToken: ' . json_encode($refreshTokenJwt) . ', isSubscribed: false }, version: 1 };
+    var authStorage = { state: { accessToken: ' . json_encode($accessTokenJwt) . ', refreshToken: ' . json_encode($refreshTokenJwt) . ', isSubscribed: false }, version: 0 };
     localStorage.setItem("auth-storage", JSON.stringify(authStorage));
     ' . $welcomePopupJs . '
 } catch(e) { console.error("localStorage error:", e); }

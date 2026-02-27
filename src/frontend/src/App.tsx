@@ -26,6 +26,9 @@ function App() {
 
   useEffect(() => {
     initializeAuth()
+    // persist rehydration 이후에도 localStorage 토큰이 있으면 상태 복구
+    const timer = setTimeout(() => initializeAuth(), 150)
+    return () => clearTimeout(timer)
   }, [initializeAuth])
 
   useEffect(() => {
