@@ -98,6 +98,15 @@ const RegisterPage: React.FC = () => {
     }).catch(() => {})
   }, [])
 
+  // 이미 로그인된 사용자가 구독 페이지 접근 시 마이 페이지로 리다이렉트
+  // (카카오 로그인 직후 persist 재수화 지연 시 isAuthenticated가 false일 수 있어 localStorage도 확인)
+  useEffect(() => {
+    const hasToken = typeof localStorage !== 'undefined' && localStorage.getItem('access_token')
+    if ((isAuthenticated || hasToken) && !showSuccess) {
+      navigate('/profile', { replace: true })
+    }
+  }, [isAuthenticated, showSuccess, navigate])
+
   const handleCloseWelcome = () => {
     setShowSuccess(false)
     setWelcomePopupData(null)
