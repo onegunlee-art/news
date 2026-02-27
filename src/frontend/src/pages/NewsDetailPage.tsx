@@ -362,9 +362,9 @@ export default function NewsDetailPage() {
             <span className="font-medium">AI 보이스로 듣기</span>
           </button>
 
-          {/* The Gist — 단일 배경 박스 */}
+          {/* The Gist — 단일 배경 박스 (아래 내레이션과 간격 2.5배) */}
           {news.why_important && (
-            <div className="mb-8 bg-amber-50 rounded-xl shadow-sm overflow-hidden">
+            <div className="mb-20 bg-amber-50 rounded-xl shadow-sm overflow-hidden">
               <div className="px-5 py-5 sm:px-6 sm:py-6">
                 <h2
                   className="text-xl font-semibold mb-3 tracking-wide"
@@ -380,23 +380,23 @@ export default function NewsDetailPage() {
             </div>
           )}
 
-          {/* 내레이션 — 메인 콘텐츠 */}
+          {/* 내레이션 — 메인 콘텐츠 (아래 원문 AI 분석과 간격 5배) */}
           {news.narration && (
-            <div className="prose prose-lg max-w-none mb-8 text-page-secondary leading-relaxed whitespace-pre-wrap [&_mark]:rounded-sm [&_mark]:px-0.5 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-0.5 [&_table]:border-collapse [&_table]:w-full [&_table]:my-2 [&_td]:border [&_td]:border-gray-300 [&_td]:px-2 [&_td]:py-1.5 [&_th]:border [&_th]:border-gray-300 [&_th]:px-2 [&_th]:py-1.5 [&_th]:font-semibold [&_th]:bg-gray-100"
+            <div className="prose prose-lg max-w-none mb-20 text-page-secondary leading-relaxed whitespace-pre-wrap [&_mark]:rounded-sm [&_mark]:px-0.5 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-0.5 [&_table]:border-collapse [&_table]:w-full [&_table]:my-2 [&_td]:border [&_td]:border-gray-300 [&_td]:px-2 [&_td]:py-1.5 [&_th]:border [&_th]:border-gray-300 [&_th]:px-2 [&_th]:py-1.5 [&_th]:font-semibold [&_th]:bg-gray-100"
               dangerouslySetInnerHTML={{ __html: formatContentHtml(news.narration) }}
             />
           )}
 
           {/* 내레이션이 없는 경우: description 표시 */}
           {!news.narration && news.description && (
-            <div className="prose prose-lg max-w-none mb-8 text-page-secondary leading-relaxed [&_mark]:rounded-sm [&_mark]:px-0.5 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-0.5 [&_table]:border-collapse [&_table]:w-full [&_table]:my-2 [&_td]:border [&_td]:border-gray-300 [&_td]:px-2 [&_td]:py-1.5 [&_th]:border [&_th]:border-gray-300 [&_th]:px-2 [&_th]:py-1.5 [&_th]:font-semibold [&_th]:bg-gray-100"
+            <div className="prose prose-lg max-w-none mb-20 text-page-secondary leading-relaxed [&_mark]:rounded-sm [&_mark]:px-0.5 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-0.5 [&_table]:border-collapse [&_table]:w-full [&_table]:my-2 [&_td]:border [&_td]:border-gray-300 [&_td]:px-2 [&_td]:py-1.5 [&_th]:border [&_th]:border-gray-300 [&_th]:px-2 [&_th]:py-1.5 [&_th]:font-semibold [&_th]:bg-gray-100"
               dangerouslySetInnerHTML={{ __html: formatContentHtml(news.description) }}
             />
           )}
 
-          {/* 참고 글 AI 구조 분석 — 제목 오른쪽 끝에 참고 글 전체 원문 보기 링크 */}
+          {/* 참고 글 AI 구조 분석 — 내레이션과 간격 5배 */}
           {(news.content || (news.url && news.url !== '#')) && (
-            <div className="mb-8 border-t border-page pt-6 mt-2">
+            <div className="mb-8 border-t border-page pt-6 mt-20">
               <div className="flex justify-between items-center gap-4 mb-3">
                 <h3 className="flex items-center gap-2 text-sm font-semibold text-primary-500 uppercase tracking-wider shrink-0">
                   <SparklesIcon className="w-4 h-4" strokeWidth={2} />
@@ -407,7 +407,7 @@ export default function NewsDetailPage() {
                     href={news.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 text-sm text-primary-500 hover:text-primary-600 transition-colors shrink-0"
+                    className="flex items-center gap-1.5 text-sm font-semibold text-primary-500 hover:text-primary-600 transition-colors shrink-0"
                   >
                     <ArrowTopRightOnSquareIcon className="w-4 h-4" strokeWidth={2} />
                     원문 보러가기
