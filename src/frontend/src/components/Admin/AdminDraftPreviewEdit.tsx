@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import RichTextEditor from '../Common/RichTextEditor'
 import { formatContentHtml, normalizeEditorHtml, ensureBrForEditor } from '../../utils/sanitizeHtml'
 import { getPlaceholderImageUrl } from '../../utils/imagePolicy'
@@ -47,6 +47,23 @@ const sanitizeText = (text: string): string =>
 
 type EditSection = 'title' | 'subtitle' | 'why_important' | 'narration' | 'content' | null
 
+const CATEGORIES = [
+  { id: 'diplomacy', name: '외교', color: 'from-blue-500 to-cyan-500' },
+  { id: 'economy', name: '경제', color: 'from-emerald-500 to-green-500' },
+  { id: 'special', name: '특집', color: 'from-orange-500 to-red-500' },
+] as const
+
+const SUB_CATEGORY_OPTIONS: { value: string; label: string }[] = [
+  { value: 'politics_diplomacy', label: 'Politics/Diplomacy' },
+  { value: 'economy_industry', label: 'Economy/Industry' },
+  { value: 'society', label: 'Society' },
+  { value: 'security_conflict', label: 'Security/Conflict' },
+  { value: 'environment', label: 'Environment' },
+  { value: 'science_technology', label: 'Science/Technology' },
+  { value: 'culture', label: 'Culture' },
+  { value: 'health_development', label: 'Health/Development' },
+]
+
 interface AdminDraftPreviewEditProps {
   news: DraftArticle
   onUpdate: (updates: Partial<DraftArticle>) => Promise<void>
@@ -64,6 +81,32 @@ export default function AdminDraftPreviewEdit({
   const [editingSection, setEditingSection] = useState<EditSection>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false)
+  const [categoryParent, setCategoryParent] = useState<string>(() =>
+    initialNews.category_parent ?? (initialNews.category === 'entertainment' ? 'special' : initialNews.category ?? 'diplomacy')
+  )
+  const [categorySub, setCategorySub] = useState<string>(() => {
+    const sub = initialNews.category || ''
+    return SUB_CATEGORY_OPTIONS.some((o) => o.value === sub) ? sub : sub ? '__custom__' : ''
+  })
+  const [categorySubCustom, setCategorySubCustom] = useState<string>(() => {
+    const sub = initialNews.category || ''
+    return SUB_CATEGORY_OPTIONS.some((o) => o.value === sub) ? '' : sub
+  })
+
+  useEffect(() => {
+    setNews(initialNews)
+    const parent =
+      initialNews.category_parent ?? (initialNews.category === 'entertainment' ? 'special' : initialNews.category ?? 'diplomacy')
+    setCategoryParent(parent)
+    const sub = initialNews.category || ''
+    if (SUB_CATEGORY_OPTIONS.some((o) => o.value === sub)) {
+      setCategorySub(sub)
+      setCategorySubCustom('')
+    } else {
+      setCategorySub(sub ? '__custom__' : '')
+      setCategorySubCustom(sub)
+    }
+  }, [initialNews.id])
 
   const formatDate = () => {
     if (news.published_at) {
@@ -110,16 +153,23 @@ export default function AdminDraftPreviewEdit({
     []
   )
 
+  const getSubCategoryValue = () =>
+    categorySub === '__custom__' ? (categorySubCustom || '').trim() : categorySub || ''
+
   const handleSaveDraft = async () => {
     setIsSaving(true)
     try {
+      const subVal = getSubCategoryValue()
       await onUpdate({
+        category_parent: categoryParent,
+        category: subVal || null,
         title: news.title,
         subtitle: news.subtitle ?? null,
         why_important: news.why_important ? normalizeEditorHtml(news.why_important) : null,
         narration: news.narration ? normalizeEditorHtml(news.narration) : null,
         content: news.content ? normalizeEditorHtml(news.content) : null,
       })
+      setNews((prev) => ({ ...prev, category_parent: categoryParent, category: subVal || null }))
       setEditingSection(null)
     } finally {
       setIsSaving(false)
@@ -129,8 +179,11 @@ export default function AdminDraftPreviewEdit({
   const handlePublish = async () => {
     setIsPublishing(true)
     try {
+      const subVal = getSubCategoryValue()
       const current: DraftArticle = {
         ...news,
+        category_parent: categoryParent,
+        category: subVal || null,
         why_important: news.why_important ? normalizeEditorHtml(news.why_important) : null,
         narration: news.narration ? normalizeEditorHtml(news.narration) : null,
         content: news.content ? normalizeEditorHtml(news.content) : null,
@@ -174,6 +227,59 @@ export default function AdminDraftPreviewEdit({
           {isPublishing ? '게시 중...' : '게시하기'}
         </button>
         <span className="text-amber-400/80 text-sm">(유저 페이지와 동일한 형상)</span>
+      </div>
+
+      {/* 카테고리 선택 (뉴스 작성과 동일: 상위 → 하위) */}
+      <div className="mb-6 space-y-3">
+        <div className="flex gap-3 flex-wrap">
+          {CATEGORIES.map((cat) => (
+            <button
+              key={cat.id}
+              type="button"
+              onClick={() => setCategoryParent(cat.id)}
+              className={`px-5 py-3 rounded-xl font-medium transition-all ${
+                categoryParent === cat.id
+                  ? `bg-gradient-to-r ${cat.color} text-white shadow-lg`
+                  : 'bg-slate-800/50 text-slate-300 hover:bg-slate-700/50 border border-slate-700/50'
+              }`}
+            >
+              {cat.name}
+            </button>
+          ))}
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="text-slate-400 text-sm font-medium">하위 카테고리:</span>
+          <select
+            value={categorySub}
+            onChange={(e) => {
+              const v = e.target.value
+              if (v === '__custom__') {
+                setCategorySub('__custom__')
+              } else {
+                setCategorySub(v)
+                setCategorySubCustom('')
+              }
+            }}
+            className="bg-slate-800/50 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm min-w-[180px]"
+          >
+            <option value="">선택 (선택사항)</option>
+            {SUB_CATEGORY_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+            <option value="__custom__">직접 입력</option>
+          </select>
+          {categorySub === '__custom__' ? (
+            <input
+              type="text"
+              value={categorySubCustom}
+              onChange={(e) => setCategorySubCustom(e.target.value)}
+              placeholder="직접 입력 시 여기에 입력"
+              className="bg-slate-800/50 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm w-48 placeholder-slate-500"
+            />
+          ) : null}
+        </div>
       </div>
 
       {/* 유저 페이지 형상 */}
