@@ -92,15 +92,25 @@ export default function HomePage() {
       setIsLoading(true)
     }
     try {
-      const category = tabToCategory[activeTab]
-      const response = await newsApi.getList(pageNum, PER_PAGE, category || undefined)
-      if (response.data.success) {
-        const items = response.data.data.items || []
-        const filtered = filterPlaceholder(items)
-        const pagination = response.data.data.pagination || {}
-        const total = pagination.total_pages ?? 1
-        setTotalPages(total)
-        setNews((prev) => (append ? [...prev, ...filtered] : filtered))
+      if (activeTab === '인기') {
+        const response = await newsApi.getPopular()
+        if (response.data.success) {
+          const items = response.data.data.items || []
+          const filtered = filterPlaceholder(items)
+          setTotalPages(1)
+          setNews(filtered)
+        }
+      } else {
+        const category = tabToCategory[activeTab]
+        const response = await newsApi.getList(pageNum, PER_PAGE, category || undefined)
+        if (response.data.success) {
+          const items = response.data.data.items || []
+          const filtered = filterPlaceholder(items)
+          const pagination = response.data.data.pagination || {}
+          const total = pagination.total_pages ?? 1
+          setTotalPages(total)
+          setNews((prev) => (append ? [...prev, ...filtered] : filtered))
+        }
       }
     } catch (error) {
       console.error('Failed to fetch news:', error)
@@ -121,7 +131,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-page pb-8">
       {/* 탭 네비게이션 - 이미지처럼 연한 배경으로 본문과 구분 */}
-      <div className="apply-grayscale sticky top-14 bg-page-secondary z-30 border-b border-page">
+      <div className="sticky top-14 bg-page-secondary z-30 border-b border-page">
         <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 md:px-8 lg:px-12 xl:px-16">
           <div className="flex">
             {tabs.map((tab) => (
@@ -184,8 +194,8 @@ export default function HomePage() {
                 ))}
               </div>
             </div>
-            {page < totalPages && (
-              <div className="apply-grayscale flex justify-center pt-8 pb-4">
+            {page < totalPages && activeTab !== '인기' && (
+              <div className="flex justify-center pt-8 pb-4">
                 <button
                   type="button"
                   onClick={loadMore}
@@ -331,7 +341,7 @@ function ArticleCard({ article }: { article: NewsItem }) {
     <article className="bg-page py-5">
       {/* 상단: 글 블록과 썸네일 높이 동일하게 맞춤 */}
       <div className="grid grid-cols-[1fr_auto] items-stretch gap-4">
-        <div className="apply-grayscale min-w-0 flex flex-col">
+        <div className="min-w-0 flex flex-col">
           <Link to={detailUrl} className="flex flex-col min-h-[7rem] justify-center">
             <h2 className="text-lg font-bold text-page leading-snug mb-1.5 line-clamp-2 break-keep-ko-mobile">
               {article.title}
@@ -359,7 +369,7 @@ function ArticleCard({ article }: { article: NewsItem }) {
         </Link>
       </div>
       {/* 구분선 아래: 매체 | 날짜(왼쪽) / 아이콘 3개만(오른쪽, 아이콘 옆 구분자 없음) */}
-      <div className="apply-grayscale flex items-center justify-between pt-2 mt-2 border-t border-page">
+      <div className="flex items-center justify-between pt-2 mt-2 border-t border-page">
         <Link to={detailUrl} className="flex items-center gap-1.5 text-xs shrink-0">
           <span className="font-medium text-primary-500">{getCategoryLabel()}</span>
           <span className="text-page-muted">|</span>

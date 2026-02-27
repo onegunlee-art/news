@@ -111,6 +111,12 @@ export const newsApi = {
   getBookmarks: (page = 1, perPage = 20) =>
     api.get('/user/bookmarks', { params: { page, per_page: perPage } }),
   
+  /** 가장 많이 조회한 기사 최대 20개 (인기 탭용, 페이지네이션 없음) */
+  getPopular: () =>
+    api.get('/admin/news.php', {
+      params: { published_only: '1', popular: '1', per_page: 20 },
+    }),
+  
   // NYT API
   nytTop: (section = 'home') =>
     api.get('/news/nyt/top', { params: { section } }),

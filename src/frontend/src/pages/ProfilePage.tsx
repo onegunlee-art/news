@@ -75,16 +75,69 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-neutral-50 pb-24">
       <div className={CONTAINER_CLASS}>
-        {/* Header: My Page title + bell (alarm) icon */}
+        {/* Header: 유저 영역(왼쪽) + 알림 종(오른쪽) */}
         <header className="pt-12 pb-6">
-          <div className="flex items-center justify-between">
-            <h1 className="font-serif text-3xl md:text-4xl text-neutral-900 tracking-tight">
-              My Page
-            </h1>
+          <div className="flex items-center justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              {hasAuth ? (
+                user ? (
+                  <div className="p-4 md:p-5 bg-[#f5f0e8] rounded-xl border border-neutral-200 flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 md:gap-4 min-w-0">
+                      {user.profile_image ? (
+                        <img
+                          src={user.profile_image}
+                          alt={user.nickname}
+                          className="w-12 h-12 md:w-14 md:h-14 rounded-full object-cover ring-1 ring-neutral-200 shrink-0"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-neutral-200 flex items-center justify-center ring-1 ring-neutral-200 shrink-0">
+                          <span className="text-lg font-serif text-neutral-600">{user.nickname.charAt(0)}</span>
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <p className="text-neutral-900 font-medium text-sm md:text-base truncate">{user.nickname}</p>
+                        <p className="text-neutral-600 text-xs md:text-sm mt-0.5">
+                          {user.role === 'admin' ? '관리자' : 'Premium Member'}
+                        </p>
+                        {isSubscribed && (
+                          <span className="inline-block mt-1.5 px-2.5 py-0.5 text-[10px] font-medium tracking-wide uppercase text-primary-700 bg-primary-100 rounded-md">
+                            SUBSCRIBER
+                          </span>
+                        )}
+                        <div className="flex gap-3 text-neutral-600 text-xs mt-1">
+                          <span>Reading Score: --</span>
+                          <span>Focus: -- --</span>
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleLogout}
+                      className="text-neutral-500 hover:text-neutral-900 text-xs font-medium transition-colors shrink-0"
+                    >
+                      로그아웃
+                    </button>
+                  </div>
+                ) : (
+                  <div className="py-6 flex justify-center">
+                    <LoadingSpinner size="large" />
+                  </div>
+                )
+              ) : (
+                <div className="p-4 bg-white rounded-xl border border-neutral-200">
+                  <p className="text-neutral-600 text-sm mb-3">로그인하면 즐겨찾기와 설정을 이용할 수 있어요.</p>
+                  <Link
+                    to="/login"
+                    className="inline-block px-4 py-2.5 bg-neutral-900 text-white text-sm font-medium rounded-lg hover:bg-neutral-800 transition-colors"
+                  >
+                    로그인
+                  </Link>
+                </div>
+              )}
+            </div>
             <button
               type="button"
               onClick={() => setShowNotificationPanel((v) => !v)}
-              className="p-2 text-neutral-600 hover:text-neutral-900 transition-colors rounded-full hover:bg-neutral-100"
+              className="p-2 text-neutral-600 hover:text-neutral-900 transition-colors rounded-full hover:bg-neutral-100 shrink-0"
               aria-label="알림 설정"
             >
               <BellIcon className="w-6 h-6" strokeWidth={2} />
@@ -108,66 +161,6 @@ export default function ProfilePage() {
             </motion.div>
           )}
         </AnimatePresence>
-
-        {/* Profile card: avatar, name, membership, SUBSCRIBER, Reading/Focus */}
-        <div className="pb-8">
-          {hasAuth ? (
-            user ? (
-              <div className="p-5 bg-[#f5f0e8] rounded-xl border border-neutral-200">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-4">
-                    {user.profile_image ? (
-                      <img
-                        src={user.profile_image}
-                        alt={user.nickname}
-                        className="w-16 h-16 rounded-full object-cover ring-1 ring-neutral-200"
-                      />
-                    ) : (
-                      <div className="w-16 h-16 rounded-full bg-neutral-200 flex items-center justify-center ring-1 ring-neutral-200">
-                        <span className="text-xl font-serif text-neutral-600">{user.nickname.charAt(0)}</span>
-                      </div>
-                    )}
-                    <div>
-                      <p className="text-neutral-900 font-medium text-base">{user.nickname}</p>
-                      <p className="text-neutral-600 text-sm mt-0.5">
-                        {user.role === 'admin' ? '관리자' : 'Premium Member'}
-                      </p>
-                      {isSubscribed && (
-                        <span className="inline-block mt-2 px-2.5 py-0.5 text-[10px] font-medium tracking-wide uppercase text-primary-700 bg-primary-100 rounded-md">
-                          SUBSCRIBER
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <button
-                    onClick={handleLogout}
-                    className="text-neutral-500 hover:text-neutral-900 text-xs font-medium transition-colors"
-                  >
-                    로그아웃
-                  </button>
-                </div>
-                <div className="flex gap-4 text-neutral-600 text-xs">
-                  <span>Reading Score: --</span>
-                  <span>Focus: -- --</span>
-                </div>
-              </div>
-            ) : (
-              <div className="py-8 flex justify-center">
-                <LoadingSpinner size="large" />
-              </div>
-            )
-          ) : (
-            <div className="text-center py-8">
-              <p className="text-neutral-600 text-sm mb-4">로그인하면 즐겨찾기와 설정을 이용할 수 있어요.</p>
-              <Link
-                to="/login"
-                className="inline-block px-5 py-2.5 bg-neutral-900 text-white text-sm font-medium rounded-lg hover:bg-neutral-800 transition-colors"
-              >
-                로그인
-              </Link>
-            </div>
-          )}
-        </div>
 
         {/* My Library: icon + label + chevron rows */}
         <section className="bg-white rounded-xl overflow-hidden shadow-sm border border-neutral-100">
@@ -366,16 +359,16 @@ export default function ProfilePage() {
           </AnimatePresence>
         </section>
 
-        {/* Footer: The Gist, 저작권, 이용약관 */}
-        <footer className="mt-12 pt-8 pb-16 border-t border-neutral-200">
-          <div className="space-y-4 text-neutral-500 text-xs">
+        {/* Footer: The Gist, 저작권, 이용약관 — 정가운데 정렬 */}
+        <footer className="mt-12 pt-8 pb-16 border-t border-neutral-200 text-center">
+          <div className="space-y-4 text-neutral-500 text-xs flex flex-col items-center justify-center">
             {siteSettings && (
               <>
                 <p className="font-serif text-neutral-700 text-sm leading-relaxed whitespace-pre-wrap">{siteSettings.the_gist_vision}</p>
                 <p>{siteSettings.copyright_text}</p>
               </>
             )}
-            <div className="flex gap-4 pt-2">
+            <div className="flex gap-4 pt-2 justify-center">
               <button type="button" onClick={() => setShowTerms(true)} className="hover:text-neutral-900 transition-colors underline underline-offset-2">
                 이용약관
               </button>
@@ -414,7 +407,7 @@ function NotificationToggle() {
 }
 
 function ViewSettingsBlock() {
-  const { fontSize, grayscale, theme, setFontSize, toggleGrayscale, setTheme } = useViewSettingsStore()
+  const { fontSize, theme, setFontSize, setTheme } = useViewSettingsStore()
   const options: { value: FontSize; label: string }[] = [
     { value: 'small', label: '작게' },
     { value: 'normal', label: '보통' },
@@ -455,20 +448,6 @@ function ViewSettingsBlock() {
             </button>
           ))}
         </div>
-      </div>
-      <div className="flex items-center justify-between pt-4 border-t border-neutral-100">
-        <span className="text-sm text-neutral-700">화면 흑백</span>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={grayscale}
-          onClick={toggleGrayscale}
-          className={`relative w-11 h-6 rounded-full transition-colors ${grayscale ? 'bg-neutral-900' : 'bg-neutral-200'}`}
-        >
-          <span
-            className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${grayscale ? 'translate-x-5' : 'translate-x-0'}`}
-          />
-        </button>
       </div>
     </div>
   )

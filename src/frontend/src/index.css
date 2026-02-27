@@ -35,11 +35,6 @@ html[data-font-size="normal"] {
 html[data-font-size="large"] {
   --text-size: 18px;
 }
-/* 보기 설정 - 흑백: 썸네일 제외, .apply-grayscale 블록에만 적용 */
-html[data-grayscale="true"] .apply-grayscale {
-  filter: grayscale(1);
-}
-
 [data-theme="dark"] {
   --bg-light: #171717;
   --bg-gray: #262626;

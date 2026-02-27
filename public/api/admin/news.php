@@ -126,6 +126,7 @@ $hasSubtitle       = isset($newsColumns['subtitle']);
 $hasStatus         = isset($newsColumns['status']);
 $hasUpdatedAt      = isset($newsColumns['updated_at']);
 $hasCategoryParent = isset($newsColumns['category_parent']);
+$hasViewCount      = isset($newsColumns['view_count']);
 
 $method = $_SERVER['REQUEST_METHOD'];
 
@@ -433,16 +434,28 @@ if ($method === 'GET') {
     $query = $_GET['query'] ?? '';  // 검색어
     $statusFilter = $_GET['status_filter'] ?? '';  // draft | published
     $publishedOnly = isset($_GET['published_only']) && ($_GET['published_only'] === '1' || $_GET['published_only'] === 'true');
+    $popular = isset($_GET['popular']) && ($_GET['popular'] === '1' || $_GET['popular'] === 'true');
     $page = max(1, (int)($_GET['page'] ?? 1));
     $perPage = min((int)($_GET['per_page'] ?? 20), 100);
-    $offset = ($page - 1) * $perPage;
+    if ($popular) {
+        $perPage = 20;
+        $page = 1;
+        $offset = 0;
+    } else {
+        $offset = ($page - 1) * $perPage;
+    }
     
     try {
         $conditions = [];
         $params = [];
         
-        // 카테고리 필터 (상위: 외교/경제/특집)
-        if ($category) {
+        // 인기 탭: published만, 카테고리/검색 무시
+        if ($popular && $hasStatus) {
+            $conditions[] = "status = 'published'";
+        }
+        
+        // 카테고리 필터 (상위: 외교/경제/특집) — popular일 때는 적용 안 함
+        if ($category && !$popular) {
             if ($hasCategoryParent) {
                 $conditions[] = 'category_parent = ?';
                 $params[] = $category;
@@ -452,8 +465,8 @@ if ($method === 'GET') {
             }
         }
         
-        // 키워드 검색 (제목, 내용, 설명에서 검색)
-        if ($query) {
+        // 키워드 검색 (제목, 내용, 설명에서 검색) — popular일 때는 적용 안 함
+        if ($query && !$popular) {
             $searchTerm = '%' . $query . '%';
             $conditions[] = '(title LIKE ? OR content LIKE ? OR description LIKE ?)';
             $params[] = $searchTerm;
@@ -526,28 +539,37 @@ if ($method === 'GET') {
         if ($hasStatus) {
             $selectColumns .= ', status';
         }
+        if ($hasViewCount) {
+            $selectColumns .= ', view_count';
+        }
+        
+        $orderBy = 'ORDER BY COALESCE(published_at, created_at) DESC';
+        if ($popular && $hasViewCount) {
+            $orderBy = 'ORDER BY view_count DESC';
+        }
         
         $stmt = $db->prepare("
             SELECT $selectColumns
             FROM news 
             $where
-            ORDER BY COALESCE(published_at, created_at) DESC 
+            $orderBy
             LIMIT $perPage OFFSET $offset
         ");
         $stmt->execute($params);
         $news = $stmt->fetchAll(PDO::FETCH_ASSOC);
         api_log('admin/news', 'GET', 200);
+        $totalPages = $popular ? 1 : (int) ceil($total / $perPage);
         echo json_encode([
             'success' => true,
-            'message' => $query ? '검색 결과' : '뉴스 목록 조회 성공',
+            'message' => $popular ? '인기 기사' : ($query ? '검색 결과' : '뉴스 목록 조회 성공'),
             'data' => [
                 'items' => $news,
                 'query' => $query,
                 'pagination' => [
                     'page' => $page,
                     'per_page' => $perPage,
-                    'total' => $total,
-                    'total_pages' => ceil($total / $perPage),
+                    'total' => $popular ? count($news) : $total,
+                    'total_pages' => $totalPages,
                 ]
             ]
         ]);

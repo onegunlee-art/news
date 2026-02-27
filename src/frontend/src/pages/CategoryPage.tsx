@@ -81,7 +81,7 @@ const CategoryPage: React.FC = () => {
   if (!config) {
     return (
       <div className="min-h-screen bg-page flex items-center justify-center">
-        <div className="apply-grayscale text-center">
+        <div className="text-center">
           <h1 className="text-4xl font-semibold text-page mb-4">카테고리를 찾을 수 없습니다</h1>
           <Link to="/" className="text-primary-500 hover:underline">홈으로 돌아가기</Link>
         </div>
@@ -92,7 +92,7 @@ const CategoryPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-page">
       {/* 카테고리 헤더 */}
-      <section className="apply-grayscale border-b border-page">
+      <section className="border-b border-page">
         <div className="max-w-7xl mx-auto px-4 py-12">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -121,7 +121,7 @@ const CategoryPage: React.FC = () => {
               <p className="text-red-500">{error}</p>
             </div>
           ) : news.length === 0 ? (
-            <div className="apply-grayscale text-center py-20">
+            <div className="text-center py-20">
               <p className="text-page-secondary">기사가 없습니다.</p>
             </div>
           ) : (
@@ -170,7 +170,7 @@ function ArticleCard({ article, index }: { article: NewsItem; index: number }) {
         </div>
         
         {/* 콘텐츠 (흑백 적용) */}
-        <div className="apply-grayscale">
+        <div>
           <span className="text-xs font-semibold text-primary-500 uppercase tracking-wider">
             {formatSourceDisplayName(article.source) || 'News'}
           </span>

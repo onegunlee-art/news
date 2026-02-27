@@ -318,7 +318,7 @@ export default function AudioPlayerPopup() {
       <div className="max-w-7xl mx-auto px-4 py-3">
         {/* 로딩 상태 */}
         {isTtsLoading && (
-          <div className="apply-grayscale flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-2 mb-2">
             <div className="w-4 h-4 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
             <p className="text-sm text-page-secondary">Google Voice로 오디오 생성 중...</p>
           </div>
@@ -330,7 +330,7 @@ export default function AudioPlayerPopup() {
         )}
 
         {/* 재생 시간 + 진행 바 (흑백 적용) */}
-        <div className="apply-grayscale flex items-center gap-2 mb-2">
+        <div className="flex items-center gap-2 mb-2">
           <span className="text-xs text-page-secondary tabular-nums w-10">{formatTime(currentSec)}</span>
           <input
             type="range"
@@ -363,7 +363,7 @@ export default function AudioPlayerPopup() {
                 }}
               />
             )}
-            <div className="apply-grayscale min-w-0">
+            <div className="min-w-0">
               <h3 className="text-sm font-medium text-page truncate" title={title}>
                 {title || '재생 중'}
               </h3>
@@ -374,7 +374,7 @@ export default function AudioPlayerPopup() {
           </div>
 
           {/* 오른쪽: 컨트롤 버튼들 (흑백 적용) */}
-          <div className="apply-grayscale flex items-center gap-1 flex-shrink-0">
+          <div className="flex items-center gap-1 flex-shrink-0">
             {/* 15초 뒤로 */}
             <button
               type="button"

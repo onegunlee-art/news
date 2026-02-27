@@ -37,7 +37,7 @@ export default function Header() {
   }
 
   return (
-    <header className="apply-grayscale relative sticky top-0 z-40 border-b border-page overflow-hidden bg-page">
+    <header className="relative sticky top-0 z-40 border-b border-page overflow-hidden bg-page">
       {/* 스크롤 비율에 따라 왼쪽→오른쪽으로 연한 회색이 진행 */}
       <div
         className="absolute inset-y-0 left-0 bg-page-secondary transition-[width] duration-200 ease-out"
@@ -100,7 +100,7 @@ export default function Header() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="apply-grayscale fixed inset-0 bg-page z-50"
+            className="fixed inset-0 bg-page z-50"
           >
             <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 md:px-6 pt-4">
               <div className="flex items-center gap-3">

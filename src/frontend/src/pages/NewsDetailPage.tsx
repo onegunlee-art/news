@@ -235,7 +235,7 @@ export default function NewsDetailPage() {
   return (
     <div className="min-h-screen bg-page pb-8">
       {/* 상단 헤더 - Layout Header(h-14) 바로 아래에 붙도록 top-14 */}
-      <div className="apply-grayscale sticky top-14 z-30 bg-page border-b border-page">
+      <div className="sticky top-14 z-30 bg-page border-b border-page">
         <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between h-12">
             {/* 뒤로가기 */}
@@ -321,7 +321,7 @@ export default function NewsDetailPage() {
           />
         </div>
 
-        <div className="apply-grayscale px-4 pt-5 pb-8">
+        <div className="px-4 pt-5 pb-8">
           {/* 소스 및 날짜 (매체 옆 = admin에서 업데이트한 날짜) */}
           <div className="flex items-center gap-2 text-sm mb-4">
             <span className="text-primary-500 font-medium">{getSourceName()}</span>
@@ -427,7 +427,7 @@ export default function NewsDetailPage() {
       {/* 다음 기사 보기 - 우측 사이드바 (데스크톱) / 본문 하단 (모바일) */}
       {news.next_article && (
         <aside className="lg:w-64 flex-shrink-0 order-last lg:order-none">
-          <div className="apply-grayscale lg:sticky lg:top-20 pt-6 lg:pt-8 border-t lg:border-t-0 lg:border-l border-page lg:pl-6 mt-6 lg:mt-0">
+          <div className="lg:sticky lg:top-20 pt-6 lg:pt-8 border-t lg:border-t-0 lg:border-l border-page lg:pl-6 mt-6 lg:mt-0">
             <Link
               to={`/news/${news.next_article.id}`}
               className="block p-4 rounded-xl bg-page-secondary hover:opacity-90 transition-colors group"

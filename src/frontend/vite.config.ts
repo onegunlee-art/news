@@ -14,7 +14,7 @@ export default defineConfig({
     port: 3000,
     proxy: {
       '/api': {
-        target: 'http://ailand.dothome.co.kr',
+        target: 'https://www.thegist.co.kr',
         changeOrigin: true,
       },
     },

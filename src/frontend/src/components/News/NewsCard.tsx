@@ -64,7 +64,7 @@ export default function NewsCard({ news, index = 0 }: NewsCardProps) {
       </div>
 
       {/* 콘텐츠 (흑백 적용) */}
-      <div className="apply-grayscale p-4 flex flex-col flex-1">
+      <div className="p-4 flex flex-col flex-1">
         {/* 시간 */}
         {news.time_ago && (
           <span className="text-xs text-page-secondary mb-2">{news.time_ago}</span>

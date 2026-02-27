@@ -146,6 +146,13 @@ try {
         $hasCategoryParent = $checkCol->rowCount() > 0;
     } catch (Exception $e) {}
     
+    // view_count 컬럼 존재 여부 (인기 탭 정렬용)
+    $hasViewCount = false;
+    try {
+        $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'view_count'");
+        $hasViewCount = $checkCol->rowCount() > 0;
+    } catch (Exception $e) {}
+    
     // 기본 컬럼 (url: extractTitleFromUrl용, source_url 없을 때 fallback)
     $columns = 'id, category, title, description, content, source, url, image_url, created_at';
     if ($hasCategoryParent) {
@@ -223,6 +230,13 @@ try {
         http_response_code(404);
         echo json_encode(['success' => false, 'message' => '뉴스를 찾을 수 없습니다.']);
         exit;
+    }
+    
+    // 조회수 증가 (GET 1회당 1회, view_count 컬럼 있을 때만)
+    if ($hasViewCount) {
+        try {
+            $db->prepare("UPDATE news SET view_count = view_count + 1 WHERE id = ?")->execute([$news['id']]);
+        } catch (Exception $e) { /* 무시 */ }
     }
     
     // 표시용 날짜: URL/매체에서 올린 원문 게재일(published_at) 우선, 없으면 우리 포스팅일(created_at)
