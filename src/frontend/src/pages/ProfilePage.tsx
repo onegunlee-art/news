@@ -13,7 +13,8 @@ import TermsModal from '../components/Common/TermsModal'
 const CONTAINER_CLASS = 'max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4'
 
 export default function ProfilePage() {
-  const { user, isAuthenticated, logout } = useAuthStore()
+  const { user, isAuthenticated, logout, initializeAuth } = useAuthStore()
+  const hasAuth = !!user || isAuthenticated || !!localStorage.getItem('access_token')
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<'bookmarks' | 'audio'>('bookmarks')
   const audioItems = useAudioListStore((s) => s.items)
@@ -29,9 +30,13 @@ export default function ProfilePage() {
   activeTabRef.current = activeTab
 
   useEffect(() => {
-    if (!isAuthenticated) return
+    if (!user && localStorage.getItem('access_token')) initializeAuth()
+  }, [user, initializeAuth])
+
+  useEffect(() => {
+    if (!hasAuth) return
     if (activeTab === 'bookmarks') fetchBookmarks()
-  }, [activeTab, isAuthenticated])
+  }, [activeTab, hasAuth])
 
   useEffect(() => {
     siteSettingsApi.getSite().then((res) => {
@@ -71,7 +76,8 @@ export default function ProfilePage() {
           <h1 className="font-serif text-3xl md:text-4xl text-neutral-900 tracking-tight mb-8">
             My Page
           </h1>
-          {user ? (
+          {hasAuth ? (
+            user ? (
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 {user.profile_image ? (
@@ -100,6 +106,11 @@ export default function ProfilePage() {
                 로그아웃
               </button>
             </div>
+            ) : (
+            <div className="py-8 flex justify-center">
+              <LoadingSpinner size="large" />
+            </div>
+            )
           ) : (
             <div className="text-center py-8">
               <p className="text-neutral-600 text-sm mb-4">로그인하면 즐겨찾기와 설정을 이용할 수 있어요.</p>
@@ -131,7 +142,7 @@ export default function ProfilePage() {
               </button>
               {activeTab === 'bookmarks' && (
                 <div className="px-5 pb-5 pt-1 min-h-[180px] border-t border-neutral-100">
-                  {!isAuthenticated ? (
+                  {!hasAuth ? (
                     <div className="text-center py-10">
                       <p className="text-neutral-500 text-sm mb-4">로그인하면 볼 수 있어요.</p>
                       <Link to="/login" className="inline-block px-5 py-2 bg-neutral-900 text-white text-sm rounded-lg hover:bg-neutral-800">로그인</Link>
@@ -159,7 +170,7 @@ export default function ProfilePage() {
               </button>
               {activeTab === 'audio' && (
                 <div className="px-5 pb-5 pt-1 min-h-[180px] border-t border-neutral-100">
-                  {!isAuthenticated ? (
+                  {!hasAuth ? (
                     <div className="text-center py-10">
                       <p className="text-neutral-500 text-sm mb-4">로그인하면 볼 수 있어요.</p>
                       <Link to="/login" className="inline-block px-5 py-2 bg-neutral-900 text-white text-sm rounded-lg hover:bg-neutral-800">로그인</Link>
