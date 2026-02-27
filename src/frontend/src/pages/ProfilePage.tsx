@@ -64,221 +64,160 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-12">
-      {/* 페이지 헤더 */}
-      <div className="bg-primary-500 pt-8 pb-16">
-        <div className={CONTAINER_CLASS}>
-          <h1
-            className="text-3xl text-black text-center"
-            style={{ fontFamily: "'Lobster', cursive", fontWeight: 400 }}
-          >
+    <div className="min-h-screen bg-neutral-50 pb-24">
+      <div className={CONTAINER_CLASS}>
+        {/* Profile header block: avatar, membership badge only */}
+        <header className="pt-12 pb-10">
+          <h1 className="font-serif text-3xl md:text-4xl text-neutral-900 tracking-tight mb-8">
             My Page
           </h1>
-        </div>
-      </div>
+          {user ? (
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                {user.profile_image ? (
+                  <img
+                    src={user.profile_image}
+                    alt={user.nickname}
+                    className="w-16 h-16 rounded-full object-cover ring-1 ring-neutral-200"
+                  />
+                ) : (
+                  <div className="w-16 h-16 rounded-full bg-neutral-200 flex items-center justify-center ring-1 ring-neutral-200">
+                    <span className="text-xl font-serif text-neutral-600">{user.nickname.charAt(0)}</span>
+                  </div>
+                )}
+                <div>
+                  <p className="text-neutral-900 font-medium text-sm">{user.nickname}</p>
+                  {user.email && <p className="text-neutral-500 text-xs mt-0.5">{user.email}</p>}
+                  <span className="inline-block mt-2 px-2.5 py-0.5 text-[10px] font-medium tracking-wide uppercase text-neutral-600 bg-neutral-100 rounded-full">
+                    {user.role === 'admin' ? '관리자' : '회원'}
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="text-neutral-500 hover:text-neutral-900 text-xs font-medium transition-colors"
+              >
+                로그아웃
+              </button>
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-neutral-600 text-sm mb-4">로그인하면 즐겨찾기와 설정을 이용할 수 있어요.</p>
+              <Link
+                to="/login"
+                className="inline-block px-5 py-2.5 bg-neutral-900 text-white text-sm font-medium rounded-lg hover:bg-neutral-800 transition-colors"
+              >
+                로그인
+              </Link>
+            </div>
+          )}
+        </header>
 
-      <div className={`${CONTAINER_CLASS} -mt-10 space-y-6`}>
-        {/* 프로필 카드 */}
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-2xl shadow-lg p-6"
-        >
-          <div className="flex flex-col sm:flex-row items-center gap-6">
-            {user ? (
-              <>
-                <div className="relative">
-                  {user.profile_image ? (
-                    <img
-                      src={user.profile_image}
-                      alt={user.nickname}
-                      className="w-20 h-20 rounded-full object-cover ring-4 ring-primary-500/30"
-                    />
-                  ) : (
-                    <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center ring-4 ring-primary-500/30">
-                      <span className="text-2xl font-bold text-white">{user.nickname.charAt(0)}</span>
+        {/* Library section: two list items */}
+        <section className="bg-white rounded-xl overflow-hidden shadow-sm border border-neutral-100">
+          <ul className="divide-y divide-neutral-100">
+            <li>
+              <button
+                type="button"
+                onClick={() => setActiveTab('bookmarks')}
+                className={`w-full flex items-center justify-between px-5 py-4 text-left transition-colors ${
+                  activeTab === 'bookmarks' ? 'bg-neutral-50' : 'hover:bg-neutral-50/50'
+                }`}
+              >
+                <span className="text-neutral-900 text-sm font-medium">저장한 콘텐츠</span>
+                <svg className={`w-5 h-5 text-neutral-400 transition-transform ${activeTab === 'bookmarks' ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+              {activeTab === 'bookmarks' && (
+                <div className="px-5 pb-5 pt-1 min-h-[180px] border-t border-neutral-100">
+                  {!isAuthenticated ? (
+                    <div className="text-center py-10">
+                      <p className="text-neutral-500 text-sm mb-4">로그인하면 볼 수 있어요.</p>
+                      <Link to="/login" className="inline-block px-5 py-2 bg-neutral-900 text-white text-sm rounded-lg hover:bg-neutral-800">로그인</Link>
                     </div>
+                  ) : isLoading ? (
+                    <div className="flex justify-center py-12"><LoadingSpinner size="large" /></div>
+                  ) : (
+                    <BookmarkList bookmarks={bookmarks} />
                   )}
                 </div>
-                <div className="flex-1 text-center sm:text-left">
-                  <h2 className="text-xl font-bold text-gray-900 mb-1">{user.nickname}</h2>
-                  {user.email && <p className="text-gray-500 text-sm mb-2">{user.email}</p>}
-                  <div className="flex flex-wrap justify-center sm:justify-start gap-3 text-xs">
-                    <span className="px-3 py-1 bg-primary-50 text-primary-600 rounded-full font-medium">
-                      {user.role === 'admin' ? '관리자' : '회원'}
-                    </span>
-                    <span className="text-gray-400">
-                      가입일: {new Date(user.created_at).toLocaleDateString('ko-KR')}
-                    </span>
-                  </div>
-                </div>
-                <button
-                  onClick={handleLogout}
-                  className="px-4 py-2 text-sm text-gray-500 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                >
-                  로그아웃
-                </button>
-              </>
-            ) : (
-              <div className="flex-1 text-center py-2">
-                <p className="text-gray-600 mb-3">로그인하면 즐겨찾기와 설정을 이용할 수 있어요.</p>
-                <Link
-                  to="/login"
-                  className="inline-block px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors text-sm"
-                >
-                  로그인
-                </Link>
-              </div>
-            )}
-          </div>
-        </motion.section>
-
-        {/* 즐겨찾기 · 들었던 오디오 탭 */}
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05 }}
-          className="bg-white rounded-2xl shadow-lg overflow-hidden"
-        >
-          <div className="flex border-b border-gray-100">
-            <button
-              onClick={() => setActiveTab('bookmarks')}
-              className={`flex-1 py-3 text-sm font-medium transition-colors relative ${
-                activeTab === 'bookmarks' ? 'text-primary-500' : 'text-gray-500 hover:text-gray-900'
-              }`}
-            >
-              즐겨찾기
-              {activeTab === 'bookmarks' && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-500" />
               )}
-            </button>
-            <button
-              onClick={() => setActiveTab('audio')}
-              className={`flex-1 py-3 text-sm font-medium transition-colors relative ${
-                activeTab === 'audio' ? 'text-primary-500' : 'text-gray-500 hover:text-gray-900'
-              }`}
-            >
-              들었던 오디오
+            </li>
+            <li>
+              <button
+                type="button"
+                onClick={() => setActiveTab('audio')}
+                className={`w-full flex items-center justify-between px-5 py-4 text-left transition-colors ${
+                  activeTab === 'audio' ? 'bg-neutral-50' : 'hover:bg-neutral-50/50'
+                }`}
+              >
+                <span className="text-neutral-900 text-sm font-medium">들었던 오디오</span>
+                <svg className={`w-5 h-5 text-neutral-400 transition-transform ${activeTab === 'audio' ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
               {activeTab === 'audio' && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-500" />
+                <div className="px-5 pb-5 pt-1 min-h-[180px] border-t border-neutral-100">
+                  {!isAuthenticated ? (
+                    <div className="text-center py-10">
+                      <p className="text-neutral-500 text-sm mb-4">로그인하면 볼 수 있어요.</p>
+                      <Link to="/login" className="inline-block px-5 py-2 bg-neutral-900 text-white text-sm rounded-lg hover:bg-neutral-800">로그인</Link>
+                    </div>
+                  ) : (
+                    <AudioList items={Array.isArray(audioItems) ? audioItems : []} />
+                  )}
+                </div>
               )}
-            </button>
+            </li>
+          </ul>
+        </section>
+
+        {/* Subscription section: single row */}
+        <section className="mt-6 bg-white rounded-xl overflow-hidden shadow-sm border border-neutral-100">
+          <div className="px-5 py-4">
+            <h2 className="text-xs font-medium text-neutral-500 uppercase tracking-wider mb-3">구독</h2>
+            <SubscriptionBlock isSubscribed={isSubscribed} onCancel={() => setSubscribed(false)} />
           </div>
-          <div className="p-4 min-h-[200px]">
-            {!isAuthenticated ? (
-              <div className="text-center py-10">
-                <p className="text-gray-500 mb-4">로그인하면 볼 수 있어요.</p>
-                <Link to="/login" className="inline-block px-6 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors">
-                  로그인
-                </Link>
-              </div>
-            ) : activeTab === 'audio' ? (
-              <AudioList items={Array.isArray(audioItems) ? audioItems : []} />
-            ) : isLoading ? (
-              <div className="flex justify-center py-12">
-                <LoadingSpinner size="large" />
-              </div>
-            ) : (
-              <BookmarkList bookmarks={bookmarks} />
+        </section>
+
+        {/* Activity section: list items */}
+        <section className="mt-6 bg-white rounded-xl overflow-hidden shadow-sm border border-neutral-100">
+          <h2 className="px-5 py-4 text-xs font-medium text-neutral-500 uppercase tracking-wider">활동</h2>
+          <ul className="divide-y divide-neutral-100">
+            <li className="px-5 py-4">
+              <p className="text-neutral-500 text-xs mb-3">새 글이 올라오면 푸시 알림</p>
+              <NotificationToggle />
+            </li>
+            <li className="px-5 py-4">
+              <ViewSettingsBlock />
+            </li>
+            <li className="px-5 py-4">
+              <h3 className="text-neutral-900 text-sm font-medium mb-3">문의하기</h3>
+              <ContactForm />
+            </li>
+          </ul>
+        </section>
+
+        {/* Footer: The Gist, 저작권, 이용약관 */}
+        <footer className="mt-12 pt-8 pb-16 border-t border-neutral-200">
+          <div className="space-y-4 text-neutral-500 text-xs">
+            {siteSettings && (
+              <>
+                <p className="font-serif text-neutral-700 text-sm leading-relaxed whitespace-pre-wrap">{siteSettings.the_gist_vision}</p>
+                <p>{siteSettings.copyright_text}</p>
+              </>
             )}
+            <div className="flex gap-4 pt-2">
+              <button type="button" onClick={() => setShowTerms(true)} className="hover:text-neutral-900 transition-colors underline underline-offset-2">
+                이용약관
+              </button>
+              <button type="button" onClick={() => setShowPrivacy(true)} className="hover:text-neutral-900 transition-colors underline underline-offset-2">
+                개인정보 처리방침
+              </button>
+            </div>
           </div>
-        </motion.section>
-
-        {/* 알림 설정 */}
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-white rounded-2xl shadow-lg p-6"
-        >
-          <h3 className="text-base font-semibold text-gray-900 mb-3">알림 설정</h3>
-          <p className="text-sm text-gray-500 mb-4">새 글이 올라오면 푸시 알림을 받을 수 있습니다.</p>
-          <NotificationToggle />
-        </motion.section>
-
-        {/* 보기 설정 */}
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.12 }}
-          className="bg-white rounded-2xl shadow-lg p-6"
-        >
-          <h3 className="text-base font-semibold text-gray-900 mb-3">보기 설정</h3>
-          <ViewSettingsBlock />
-        </motion.section>
-
-        {/* 문의하기 */}
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.14 }}
-          className="bg-white rounded-2xl shadow-lg p-6"
-        >
-          <h3 className="text-base font-semibold text-gray-900 mb-3">문의하기</h3>
-          <ContactForm />
-        </motion.section>
-
-        {/* 구독 */}
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.16 }}
-          className="bg-white rounded-2xl shadow-lg p-6"
-        >
-          <h3 className="text-base font-semibold text-gray-900 mb-3">구독</h3>
-          <SubscriptionBlock isSubscribed={isSubscribed} onCancel={() => setSubscribed(false)} />
-        </motion.section>
-
-        {/* The Gist */}
-        {siteSettings && (
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.18 }}
-            className="bg-white rounded-2xl shadow-lg p-6"
-          >
-            <h3 className="text-base font-semibold text-gray-900 mb-2">The Gist</h3>
-            <p className="text-sm text-gray-600 whitespace-pre-wrap">{siteSettings.the_gist_vision}</p>
-          </motion.section>
-        )}
-
-        {/* 저작권 */}
-        {siteSettings && (
-          <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="bg-white rounded-2xl shadow-lg p-6"
-          >
-            <h3 className="text-base font-semibold text-gray-900 mb-2">저작권</h3>
-            <p className="text-sm text-gray-500">{siteSettings.copyright_text}</p>
-          </motion.section>
-        )}
-
-        {/* 이용약관 · 개인정보처리방침 */}
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.22 }}
-          className="bg-white rounded-2xl shadow-lg p-6"
-        >
-          <div className="flex flex-wrap gap-4">
-            <button
-              type="button"
-              onClick={() => setShowTerms(true)}
-              className="text-sm text-gray-600 hover:text-primary-500 transition-colors underline underline-offset-2"
-            >
-              이용약관
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowPrivacy(true)}
-              className="text-sm text-gray-600 hover:text-primary-500 transition-colors underline underline-offset-2"
-            >
-              개인정보 처리 방침
-            </button>
-          </div>
-        </motion.section>
+        </footer>
       </div>
 
       <TermsModal isOpen={showTerms} onClose={() => setShowTerms(false)} />
@@ -291,13 +230,13 @@ function NotificationToggle() {
   const [on, setOn] = useState(false)
   return (
     <div className="flex items-center justify-between">
-      <span className="text-sm text-gray-700">새 글 푸시 알림</span>
+      <span className="text-sm text-neutral-700">새 글 푸시 알림</span>
       <button
         type="button"
         role="switch"
         aria-checked={on}
         onClick={() => setOn(!on)}
-        className={`relative w-11 h-6 rounded-full transition-colors ${on ? 'bg-primary-500' : 'bg-gray-200'}`}
+        className={`relative w-11 h-6 rounded-full transition-colors ${on ? 'bg-neutral-900' : 'bg-neutral-200'}`}
       >
         <span
           className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${on ? 'translate-x-5' : 'translate-x-0'}`}
@@ -317,7 +256,7 @@ function ViewSettingsBlock() {
   return (
     <div className="space-y-4">
       <div>
-        <p className="text-sm text-page-secondary mb-2">글씨 크기</p>
+        <p className="text-sm text-neutral-600 mb-2">글씨 크기</p>
         <div className="flex gap-2">
           {options.map((opt) => (
             <button
@@ -325,9 +264,7 @@ function ViewSettingsBlock() {
               type="button"
               onClick={() => setFontSize(opt.value)}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                fontSize === opt.value
-                  ? 'bg-primary-500 text-white'
-                  : 'bg-page-secondary text-page-secondary hover:opacity-80'
+                fontSize === opt.value ? 'bg-neutral-900 text-white' : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
               }`}
             >
               {opt.label}
@@ -335,8 +272,8 @@ function ViewSettingsBlock() {
           ))}
         </div>
       </div>
-      <div className="flex items-center justify-between pt-2 border-t border-page">
-        <span className="text-sm text-page">다크 모드</span>
+      <div className="flex items-center justify-between pt-4 border-t border-neutral-100">
+        <span className="text-sm text-neutral-700">다크 모드</span>
         <div className="flex gap-2">
           {(['light', 'dark'] as Theme[]).map((t) => (
             <button
@@ -344,7 +281,7 @@ function ViewSettingsBlock() {
               type="button"
               onClick={() => setTheme(t)}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                theme === t ? 'bg-primary-500 text-white' : 'bg-page-secondary text-page-secondary hover:opacity-80'
+                theme === t ? 'bg-neutral-900 text-white' : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
               }`}
             >
               {t === 'light' ? '라이트' : '다크'}
@@ -352,14 +289,14 @@ function ViewSettingsBlock() {
           ))}
         </div>
       </div>
-      <div className="flex items-center justify-between pt-2 border-t border-page">
-        <span className="text-sm text-page">화면 흑백</span>
+      <div className="flex items-center justify-between pt-4 border-t border-neutral-100">
+        <span className="text-sm text-neutral-700">화면 흑백</span>
         <button
           type="button"
           role="switch"
           aria-checked={grayscale}
           onClick={toggleGrayscale}
-          className={`relative w-11 h-6 rounded-full transition-colors ${grayscale ? 'bg-gray-700' : 'bg-page-secondary'}`}
+          className={`relative w-11 h-6 rounded-full transition-colors ${grayscale ? 'bg-neutral-900' : 'bg-neutral-200'}`}
         >
           <span
             className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${grayscale ? 'translate-x-5' : 'translate-x-0'}`}
@@ -402,36 +339,36 @@ function ContactForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label htmlFor="contact-subject" className="block text-sm text-gray-500 mb-1">제목 (선택)</label>
+        <label htmlFor="contact-subject" className="block text-sm text-neutral-500 mb-1">제목 (선택)</label>
         <input
           id="contact-subject"
           type="text"
           value={subject}
           onChange={(e) => setSubject(e.target.value)}
           placeholder="문의 제목"
-          className="w-full px-4 py-2 border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+          className="w-full px-4 py-2 border border-neutral-200 rounded-lg text-neutral-900 placeholder-neutral-400 focus:ring-2 focus:ring-neutral-900 focus:border-transparent bg-white"
         />
       </div>
       <div>
-        <label htmlFor="contact-message" className="block text-sm text-gray-500 mb-1">내용 *</label>
+        <label htmlFor="contact-message" className="block text-sm text-neutral-500 mb-1">내용 *</label>
         <textarea
           id="contact-message"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           placeholder="문의 내용을 입력하세요."
           rows={4}
-          className="w-full px-4 py-2 border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+          className="w-full px-4 py-2 border border-neutral-200 rounded-lg text-neutral-900 placeholder-neutral-400 focus:ring-2 focus:ring-neutral-900 focus:border-transparent resize-none bg-white"
         />
       </div>
       <button
         type="submit"
         disabled={sending}
-        className="w-full py-2.5 bg-primary-500 text-white rounded-lg font-medium hover:bg-primary-600 disabled:opacity-50 transition-colors"
+        className="w-full py-2.5 bg-neutral-900 text-white rounded-lg text-sm font-medium hover:bg-neutral-800 disabled:opacity-50 transition-colors"
       >
         {sending ? '전송 중...' : '보내기'}
       </button>
       {result && (
-        <p className={`text-sm ${result.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
+        <p className={`text-sm ${result.type === 'success' ? 'text-neutral-600' : 'text-neutral-700'}`}>
           {result.text}
         </p>
       )}
@@ -447,24 +384,16 @@ function SubscriptionBlock({
   onCancel: () => void
 }) {
   return (
-    <div className="space-y-3">
-      <p className="text-sm text-gray-700">
-        사용 중인 구독 플랜: <strong>{isSubscribed ? '구독 중' : '구독 안 함'}</strong>
+    <div className="flex items-center justify-between py-1">
+      <p className="text-sm text-neutral-700">
+        {isSubscribed ? <strong>구독 중</strong> : '구독 안 함'}
       </p>
-      {isSubscribed && (
-        <button
-          type="button"
-          onClick={onCancel}
-          className="text-sm text-red-500 hover:text-red-600 hover:underline"
-        >
+      {isSubscribed ? (
+        <button type="button" onClick={onCancel} className="text-xs text-neutral-500 hover:text-neutral-900 underline underline-offset-2">
           해지하기
         </button>
-      )}
-      {!isSubscribed && (
-        <Link
-          to="/register"
-          className="inline-block text-sm text-primary-500 hover:text-primary-600 font-medium"
-        >
+      ) : (
+        <Link to="/register" className="text-sm text-neutral-900 font-medium hover:underline underline-offset-2">
           구독하러 가기 →
         </Link>
       )}
@@ -477,13 +406,13 @@ function AudioList({ items }: { items: AudioListItem[] }) {
   if (safeItems.length === 0) {
     return (
       <div className="text-center py-8">
-        <p className="text-gray-500 text-sm">들었던 오디오가 없습니다.</p>
-        <p className="text-gray-400 text-xs mt-1">기사에서 음성 재생 버튼을 누르면 여기에 기록됩니다.</p>
+        <p className="text-neutral-500 text-sm">들었던 오디오가 없습니다.</p>
+        <p className="text-neutral-400 text-xs mt-1">기사에서 음성 재생 버튼을 누르면 여기에 기록됩니다.</p>
       </div>
     )
   }
   return (
-    <div className="space-y-0 divide-y divide-gray-100">
+    <div className="space-y-0 divide-y divide-neutral-100">
       {safeItems.map((item, index) => (
         <motion.div
           key={item.listenedAt ? `${item.id}-${item.listenedAt}` : `audio-${item.id}-${index}`}
@@ -491,13 +420,14 @@ function AudioList({ items }: { items: AudioListItem[] }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: index * 0.05 }}
         >
-          <Link to={`/news/${item.id}`} className="block py-4 hover:bg-gray-50 transition-colors -mx-4 px-4">
-            <h3 className="font-bold text-gray-900 mb-2 line-clamp-2 hover:text-primary-500 transition-colors text-sm">
+          <Link to={`/news/${item.id}`} className="block py-4 hover:bg-neutral-50 transition-colors -mx-5 px-5 rounded-lg">
+            <h3 className="font-medium text-neutral-900 mb-1 line-clamp-2 hover:text-neutral-600 transition-colors text-sm">
               {item.title}
             </h3>
-            <div className="flex items-center gap-2 text-xs">
-              <span className="text-primary-500 font-medium">{formatSourceDisplayName(item.source) || 'The Gist'}</span>
-              <span className="text-gray-400">들은 날짜: {new Date(item.listenedAt).toLocaleDateString('ko-KR')}</span>
+            <div className="flex items-center gap-2 text-xs text-neutral-500">
+              <span>{formatSourceDisplayName(item.source) || 'The Gist'}</span>
+              <span>·</span>
+              <span>{item.listenedAt ? new Date(item.listenedAt).toLocaleDateString('ko-KR') : ''}</span>
             </div>
           </Link>
         </motion.div>
@@ -510,15 +440,15 @@ function BookmarkList({ bookmarks }: { bookmarks: any[] }) {
   if (bookmarks.length === 0) {
     return (
       <div className="text-center py-8">
-        <div className="text-gray-300 mb-3">
-          <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+        <div className="text-neutral-300 mb-3">
+          <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
           </svg>
         </div>
-        <p className="text-gray-500 text-sm">즐겨 찾기 등록한 컨텐츠가 없습니다.</p>
+        <p className="text-neutral-500 text-sm">저장한 콘텐츠가 없습니다.</p>
         <Link
           to="/"
-          className="inline-block mt-3 px-5 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors text-sm"
+          className="inline-block mt-3 px-5 py-2 bg-neutral-900 text-white text-sm rounded-lg hover:bg-neutral-800 transition-colors"
         >
           뉴스 둘러보기
         </Link>
@@ -526,7 +456,7 @@ function BookmarkList({ bookmarks }: { bookmarks: any[] }) {
     )
   }
   return (
-    <div className="space-y-0 divide-y divide-gray-100">
+    <div className="space-y-0 divide-y divide-neutral-100">
       {bookmarks.map((item, index) => (
         <motion.div
           key={item.id}
@@ -534,14 +464,17 @@ function BookmarkList({ bookmarks }: { bookmarks: any[] }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: index * 0.05 }}
         >
-          <Link to={`/news/${item.id}`} className="block py-4 hover:bg-gray-50 transition-colors -mx-4 px-4">
-            <h3 className="font-bold text-gray-900 mb-2 line-clamp-2 hover:text-primary-500 transition-colors text-sm">
+          <Link to={`/news/${item.id}`} className="block py-4 hover:bg-neutral-50 transition-colors -mx-5 px-5 rounded-lg">
+            <h3 className="font-medium text-neutral-900 mb-1 line-clamp-2 hover:text-neutral-600 transition-colors text-sm">
               {item.title}
             </h3>
-            <div className="flex items-center gap-2 text-xs">
-              <span className="text-primary-500 font-medium">{formatSourceDisplayName(item.source) || 'The Gist'}</span>
+            <div className="flex items-center gap-2 text-xs text-neutral-500">
+              <span>{formatSourceDisplayName(item.source) || 'The Gist'}</span>
               {item.bookmarked_at && (
-                <span className="text-gray-400">저장일: {new Date(item.bookmarked_at).toLocaleDateString('ko-KR')}</span>
+                <>
+                  <span>·</span>
+                  <span>{new Date(item.bookmarked_at).toLocaleDateString('ko-KR')}</span>
+                </>
               )}
             </div>
           </Link>
