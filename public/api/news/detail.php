@@ -276,10 +276,22 @@ try {
         $nextArticle = $nextStmt->fetch(PDO::FETCH_ASSOC);
     } catch (Exception $e) {}
 
+    // category_parent: 기사 소속 상위 카테고리 (외교/경제/특집) - 상세 back 버튼 등에 사용
+    $categoryParent = null;
+    if ($hasCategoryParent && isset($news['category_parent'])) {
+        $categoryParent = $news['category_parent'];
+    } else {
+        $cat = $news['category'] ?? null;
+        if ($cat === 'economy') $categoryParent = 'economy';
+        elseif (in_array($cat, ['entertainment', 'technology', 'special'], true)) $categoryParent = 'special';
+        else $categoryParent = $cat ?: 'diplomacy'; // diplomacy 또는 기타
+    }
+
     // 응답 데이터 구성 (published_at = 포스팅 날짜로 표시)
     $responseData = [
         'id' => (int)$news['id'],
         'category' => $news['category'] ?? null,
+        'category_parent' => $categoryParent,
         'title' => $news['title'],
         'subtitle' => $hasSubtitle ? ($news['subtitle'] ?? null) : null,
         'description' => $news['description'],

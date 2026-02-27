@@ -43,19 +43,15 @@ interface NewsDetail {
   image_url?: string | null
   author?: string | null
   category?: string | null
+  category_parent?: string | null
   next_article?: { id: number; title: string } | null
 }
 
-/** 기사 본문/목록에 표시할 하위 카테고리 라벨 */
-const subCategoryToLabel: Record<string, string> = {
-  politics_diplomacy: 'Politics/Diplomacy',
-  economy_industry: 'Economy/Industry',
-  society: 'Society',
-  security_conflict: 'Security/Conflict',
-  environment: 'Environment',
-  science_technology: 'Science/Technology',
-  culture: 'Culture',
-  health_development: 'Health/Development',
+/** 상위 카테고리 (기사 소속) → 표시 라벨 - back 버튼에 사용 */
+const parentCategoryToLabel: Record<string, string> = {
+  diplomacy: '외교',
+  economy: '경제',
+  special: '특집',
 }
 
 export default function NewsDetailPage() {
@@ -192,8 +188,8 @@ export default function NewsDetailPage() {
 
   // 글 목록 라벨: 하위 카테고리만 표시 (없으면 최신)
   const getListLabel = () => {
-    if (!news?.category) return '최신'
-    return subCategoryToLabel[news.category] ?? news.category
+    const parent = news?.category_parent ?? (news?.category === 'economy' ? 'economy' : news?.category === 'entertainment' || news?.category === 'technology' ? 'special' : 'diplomacy')
+    return parentCategoryToLabel[parent] ?? '최신'
   }
 
   // 이미지 URL (기사별 고유 시드, 중복 없음)
