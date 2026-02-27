@@ -70,6 +70,7 @@ api.interceptors.response.use(
           localStorage.removeItem('access_token')
           localStorage.removeItem('refresh_token')
           localStorage.removeItem('user')
+          localStorage.removeItem('auth-storage')
           window.location.href = '/'
         }
       }

@@ -92,6 +92,7 @@ export const useAuthStore = create<AuthState>()(
           localStorage.removeItem('refresh_token')
           localStorage.removeItem('user')
           localStorage.removeItem('is_subscribed')
+          localStorage.removeItem('auth-storage')
         }
       },
 
@@ -209,6 +210,8 @@ export const useAuthStore = create<AuthState>()(
       onRehydrateStorage: () => (state) => {
         if (state && state.accessToken) {
           state.isAuthenticated = true
+          localStorage.setItem('access_token', state.accessToken)
+          localStorage.setItem('refresh_token', state.refreshToken || '')
           const userStr = localStorage.getItem('user')
           if (userStr) {
             try { state.user = JSON.parse(userStr) } catch { /* ignore */ }
