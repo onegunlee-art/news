@@ -400,6 +400,8 @@ const AdminPage: React.FC = () => {
   const [newsNarration, setNewsNarration] = useState('');
   const [isContentFullscreen, setIsContentFullscreen] = useState(false);
   const [newsList, setNewsList] = useState<NewsArticle[]>([]);
+  const [newsPage, setNewsPage] = useState(1);
+  const [newsPagination, setNewsPagination] = useState({ page: 1, per_page: 20, total: 0, total_pages: 1 });
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<{ type: 'success' | 'error' | 'info'; text: string } | null>(null);
   const [isLoadingNews, setIsLoadingNews] = useState(false);
@@ -419,6 +421,8 @@ const AdminPage: React.FC = () => {
 
   // 임시저장 탭 상태
   const [draftList, setDraftList] = useState<NewsArticle[]>([]);
+  const [draftPage, setDraftPage] = useState(1);
+  const [draftPagination, setDraftPagination] = useState({ page: 1, per_page: 20, total: 0, total_pages: 1 });
   const [editingDraftId, setEditingDraftId] = useState<number | null>(null);
   const [draftDetail, setDraftDetail] = useState<DraftArticle | null>(null);
   const [isLoadingDrafts, setIsLoadingDrafts] = useState(false);
@@ -842,31 +846,37 @@ const AdminPage: React.FC = () => {
     loadDashboardData();
   }, []);
 
-  // 기존 뉴스 목록 로드 (전체/검색 지원)
+  // 기존 뉴스 목록 로드 (전체/검색 지원, 20개씩 페이지네이션)
   const loadNewsList = useCallback(async () => {
     setIsLoadingNews(true);
     try {
       const params = new URLSearchParams();
       if (selectedCategory !== 'all') params.set('category', selectedCategory);
       if (newsSearchQuery.trim()) params.set('query', newsSearchQuery.trim());
-      if (selectedCategory === 'all' || newsSearchQuery.trim()) params.set('per_page', '50');
+      params.set('per_page', '20');
+      params.set('page', String(newsPage));
       const response = await adminFetch(`/api/admin/news.php?${params.toString()}`);
       const data = await response.json();
       if (data.success && data.data?.items) {
         setNewsList(data.data.items);
+        if (data.data.pagination) setNewsPagination(data.data.pagination);
       }
     } catch (error) {
       console.error('Failed to load news:', error);
     } finally {
       setIsLoadingNews(false);
     }
-  }, [selectedCategory, newsSearchQuery]);
+  }, [selectedCategory, newsSearchQuery, newsPage]);
 
-  // 임시저장 목록 로드 (뉴스 목록과 동일한 API 패턴)
+  // 임시저장 목록 로드 (20개씩 페이지네이션)
   const loadDraftsList = useCallback(async () => {
     setIsLoadingDrafts(true);
     try {
-      const response = await adminFetch('/api/admin/news.php?status_filter=draft');
+      const params = new URLSearchParams();
+      params.set('status_filter', 'draft');
+      params.set('per_page', '20');
+      params.set('page', String(draftPage));
+      const response = await adminFetch(`/api/admin/news.php?${params.toString()}`);
       const text = await response.text();
       if (!text || text.trim().startsWith('<')) {
         console.error('Drafts API returned HTML instead of JSON');
@@ -876,6 +886,7 @@ const AdminPage: React.FC = () => {
       const data = JSON.parse(text);
       if (data.success && data.data?.items) {
         setDraftList(data.data.items);
+        if (data.data.pagination) setDraftPagination(data.data.pagination);
       } else {
         setDraftList([]);
       }
@@ -885,7 +896,12 @@ const AdminPage: React.FC = () => {
     } finally {
       setIsLoadingDrafts(false);
     }
-  }, []);
+  }, [draftPage]);
+
+  // 카테고리·검색 변경 시 첫 페이지로 초기화
+  useEffect(() => {
+    setNewsPage(1);
+  }, [selectedCategory, newsSearchQuery]);
 
   // 뉴스 탭이 활성화되거나 카테고리가 변경될 때 뉴스 목록 로드, 비활성 시 편집 상태 초기화
   useEffect(() => {
@@ -2615,7 +2631,7 @@ const AdminPage: React.FC = () => {
                     {categories.find(c => c.id === selectedCategory)?.name} 뉴스 목록
                   </h3>
                   <span className="text-slate-400 text-sm">
-                    총 {newsList.length}개
+                    총 {newsPagination.total}개
                   </span>
                 </div>
 
@@ -2694,6 +2710,27 @@ const AdminPage: React.FC = () => {
                         </div>
                       </div>
                     ))}
+                  </div>
+                )}
+                {!isLoadingNews && newsList.length > 0 && newsPagination.total_pages > 1 && (
+                  <div className="flex justify-center gap-2 mt-4">
+                    <button
+                      type="button"
+                      disabled={newsPagination.page <= 1}
+                      onClick={() => setNewsPage(p => p - 1)}
+                      className="px-3 py-1 rounded bg-slate-700 disabled:opacity-50 text-slate-300"
+                    >
+                      이전
+                    </button>
+                    <span className="py-1 text-slate-400">{newsPagination.page} / {newsPagination.total_pages}</span>
+                    <button
+                      type="button"
+                      disabled={newsPagination.page >= newsPagination.total_pages}
+                      onClick={() => setNewsPage(p => p + 1)}
+                      className="px-3 py-1 rounded bg-slate-700 disabled:opacity-50 text-slate-300"
+                    >
+                      다음
+                    </button>
                   </div>
                 )}
               </div>
@@ -2843,7 +2880,7 @@ const AdminPage: React.FC = () => {
                 <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold text-white">임시저장 목록</h3>
-                    <span className="text-slate-400 text-sm">총 {draftList.length}개</span>
+                    <span className="text-slate-400 text-sm">총 {draftPagination.total}개</span>
                   </div>
                   {isLoadingDrafts ? (
                     <div className="flex items-center justify-center py-12">
@@ -2901,6 +2938,27 @@ const AdminPage: React.FC = () => {
                           </div>
                         </div>
                       ))}
+                    </div>
+                  )}
+                  {!isLoadingDrafts && draftList.length > 0 && draftPagination.total_pages > 1 && (
+                    <div className="flex justify-center gap-2 mt-4">
+                      <button
+                        type="button"
+                        disabled={draftPagination.page <= 1}
+                        onClick={() => setDraftPage(p => p - 1)}
+                        className="px-3 py-1 rounded bg-slate-700 disabled:opacity-50 text-slate-300"
+                      >
+                        이전
+                      </button>
+                      <span className="py-1 text-slate-400">{draftPagination.page} / {draftPagination.total_pages}</span>
+                      <button
+                        type="button"
+                        disabled={draftPagination.page >= draftPagination.total_pages}
+                        onClick={() => setDraftPage(p => p + 1)}
+                        className="px-3 py-1 rounded bg-slate-700 disabled:opacity-50 text-slate-300"
+                      >
+                        다음
+                      </button>
                     </div>
                   )}
                 </div>
