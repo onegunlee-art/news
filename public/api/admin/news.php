@@ -460,8 +460,15 @@ if ($method === 'GET') {
                 $conditions[] = 'category_parent = ?';
                 $params[] = $category;
             } else {
-                $conditions[] = 'category = ?';
-                $params[] = ($category === 'special' ? 'entertainment' : $category);
+                // 특집: 새 저장은 category='special', 구 데이터는 'entertainment' → 둘 다 포함
+                if ($category === 'special') {
+                    $conditions[] = '(category = ? OR category = ?)';
+                    $params[] = 'special';
+                    $params[] = 'entertainment';
+                } else {
+                    $conditions[] = 'category = ?';
+                    $params[] = $category;
+                }
             }
         }
         
