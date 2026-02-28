@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuthStore } from '../../store/authStore'
 
@@ -11,6 +11,7 @@ export default function Header() {
   const [searchQuery, setSearchQuery] = useState('')
   const [scrollFill, setScrollFill] = useState(0)
   const navigate = useNavigate()
+  const location = useLocation()
 
   useEffect(() => {
     const onScroll = () => {
@@ -49,12 +50,18 @@ export default function Header() {
         <div className="flex items-center justify-between h-14">
           {/* 왼쪽 - 모바일: 세로 3선(햄버거) → My Page/구독 이동, PC: 텍스트 링크 */}
           <div className="w-16 md:w-auto flex items-center">
-            {/* 모바일: 햄버거 아이콘 */}
+            {/* 모바일: 햄버거 아이콘 - My Page에 있으면 홈으로, 그 외에는 My Page/로그인으로 */}
             <button
               type="button"
-              onClick={() => navigate(hasAuth ? '/profile' : '/login')}
+              onClick={() => {
+                if (location.pathname === '/profile') {
+                  navigate('/')
+                } else {
+                  navigate(hasAuth ? '/profile' : '/login')
+                }
+              }}
               className="md:hidden p-2 -ml-2 text-page-secondary hover:text-page transition-colors"
-              aria-label={hasAuth ? 'My Page' : '로그인/회원가입'}
+              aria-label={location.pathname === '/profile' ? '홈으로' : hasAuth ? 'My Page' : '로그인/회원가입'}
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
