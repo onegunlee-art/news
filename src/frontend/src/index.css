@@ -62,6 +62,7 @@ html {
   scroll-behavior: smooth;
 }
 
+/* 절대 원칙: 한글 잘림 금지 - 단어/어절 중간에서 줄바꿈 되지 않도록 */
 body {
   font-family: var(--font-korean);
   font-size: var(--text-size);
@@ -73,6 +74,8 @@ body {
   line-height: 1.7;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  word-break: keep-all;
+  overflow-wrap: normal;
 }
 
 /* 제목용 폰트 - 한글은 Noto Sans KR, 영문은 Lobster */
@@ -181,7 +184,14 @@ input, textarea, select {
   }
 }
 
-/* line-clamp 유틸리티 */
+/* line-clamp 유틸리티 - 한글 잘림 금지(줄바꿈 시 단어 중간 끊김 방지) */
+.line-clamp-1,
+.line-clamp-2,
+.line-clamp-3 {
+  word-break: keep-all;
+  overflow-wrap: normal;
+}
+
 .line-clamp-1 {
   display: -webkit-box;
   -webkit-line-clamp: 1;
@@ -203,10 +213,16 @@ input, textarea, select {
   overflow: hidden;
 }
 
-/* Policy: 모바일에서 한글 단어 중간 줄바꿈 금지 (예: "위협" → "위" / "협" 분리 방지) */
-@media (max-width: 767px) {
-  .break-keep-ko-mobile {
-    word-break: keep-all;
-    overflow-wrap: normal;
-  }
+/* 한글 잘림 금지 유틸 (필요 시 특정 블록에 추가) */
+.break-keep-ko,
+.break-keep-ko-mobile {
+  word-break: keep-all;
+  overflow-wrap: normal;
+}
+
+/* 기사 본문(prose) 한글 잘림 금지 */
+.prose,
+.prose-lg {
+  word-break: keep-all;
+  overflow-wrap: normal;
 }
