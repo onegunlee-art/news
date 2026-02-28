@@ -226,3 +226,5 @@ input, textarea, select {
   word-break: keep-all;
   overflow-wrap: normal;
 }
+
+/* 썸네일 정책: 모든 기사 썸네일은 정사각형(1:1). 홈/상세/검색/카테고리/카드 동일 적용. 오디오 플레이어 작은 아이콘 제외. */

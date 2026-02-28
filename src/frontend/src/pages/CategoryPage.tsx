@@ -158,7 +158,7 @@ function ArticleCard({ article, index }: { article: NewsItem; index: number }) {
     >
       <a href={article.url} target="_blank" rel="noopener noreferrer" className="block">
         {/* 이미지 (흑백 제외) */}
-        <div className="aspect-[16/10] overflow-hidden mb-4">
+        <div className="aspect-square overflow-hidden mb-4">
           <img
             src={imageUrl}
             alt={article.title}

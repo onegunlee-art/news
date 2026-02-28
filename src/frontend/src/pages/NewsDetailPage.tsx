@@ -306,8 +306,8 @@ export default function NewsDetailPage() {
         animate={{ opacity: 1 }}
         className="flex-1 min-w-0"
       >
-        {/* 대표 이미지 (흑백 제외) */}
-        <div className="aspect-video bg-page-secondary overflow-hidden">
+        {/* 대표 이미지 - 썸네일 정책: 정사각형(1:1) */}
+        <div className="aspect-square bg-page-secondary overflow-hidden">
           <img
             src={getImageUrl()}
             alt={news.title}

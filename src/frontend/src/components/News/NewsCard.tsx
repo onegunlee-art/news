@@ -40,8 +40,8 @@ export default function NewsCard({ news, index = 0 }: NewsCardProps) {
       transition={{ delay: index * 0.05 }}
       className="bg-page rounded-xl shadow-md hover:shadow-lg transition-shadow h-full flex flex-col overflow-hidden"
     >
-      {/* 썸네일 이미지 (흑백 제외) */}
-      <div className="relative h-48 overflow-hidden bg-page-secondary">
+      {/* 썸네일 이미지 - 정사각형(1:1) 정책 */}
+      <div className="relative aspect-square w-full overflow-hidden bg-page-secondary">
         <img
           src={imageUrl}
           alt={news.title}

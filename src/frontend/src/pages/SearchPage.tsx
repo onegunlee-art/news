@@ -227,8 +227,7 @@ function SearchArticleCard({ article }: { article: NewsItem }) {
             <span>{formatDate()}</span>
           </div>
         </div>
-        <div className="w-24 h-24 flex-shrink-0">
-          <div className="w-full h-full bg-page-secondary rounded-lg overflow-hidden">
+        <div className="w-28 h-28 flex-shrink-0 aspect-square bg-page-secondary rounded-lg overflow-hidden">
             <img
               src={imageUrl}
               alt={article.title}
@@ -249,7 +248,6 @@ function SearchArticleCard({ article }: { article: NewsItem }) {
                 )
               }}
             />
-          </div>
         </div>
       </Link>
       <div className="flex flex-col justify-between py-1" role="group" aria-label="기사 액션">

@@ -339,10 +339,10 @@ function ArticleCard({ article }: { article: NewsItem }) {
 
   return (
     <article className="bg-page py-5">
-      {/* 상단: 글 블록과 썸네일 높이 동일하게 맞춤 */}
-      <div className="grid grid-cols-[1fr_auto] items-stretch gap-4">
+      {/* 상단: 썸네일 정사각형(1:1) 정책 통일 */}
+      <div className="grid grid-cols-[1fr_auto] items-start gap-4">
         <div className="min-w-0 flex flex-col">
-          <Link to={detailUrl} className="flex flex-col min-h-[7rem] justify-center">
+          <Link to={detailUrl} className="flex flex-col justify-center">
             <h2 className="text-lg font-bold text-page leading-snug mb-1.5 line-clamp-2 break-keep-ko-mobile">
               {article.title}
             </h2>
@@ -353,11 +353,11 @@ function ArticleCard({ article }: { article: NewsItem }) {
             )}
           </Link>
         </div>
-        <Link to={detailUrl} className="w-28 min-h-[7rem] flex-shrink-0 rounded-none overflow-hidden bg-page-secondary block self-stretch">
+        <Link to={detailUrl} className="w-28 h-28 flex-shrink-0 rounded-none overflow-hidden bg-page-secondary block aspect-square">
           <img
             src={imageUrl}
             alt={article.title}
-            className="w-full h-full min-h-[7rem] object-cover"
+            className="w-full h-full object-cover"
             onError={(e) => {
               (e.target as HTMLImageElement).src = getPlaceholderImageUrl(
                 { id: article.id, title: article.title, description: article.description, published_at: article.published_at, category: article.category, url: article.url, source: article.source },
