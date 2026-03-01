@@ -109,23 +109,43 @@ export default function RichTextToolbar({
       return
     }
 
-    const findAndUnwrap = (tagName: string, checkStyle?: (el: HTMLElement) => boolean) => {
+    const unwrapElement = (elem: HTMLElement) => {
+      const parent = elem.parentElement
+      if (!parent) return
+      while (elem.firstChild) parent.insertBefore(elem.firstChild, elem)
+      parent.removeChild(elem)
+      onChange(el.innerHTML)
+    }
+
+    const findAndUnwrapAncestor = (tagName: string, checkStyle?: (el: HTMLElement) => boolean) => {
       let node: Node | null = range.commonAncestorContainer
       if (node.nodeType === Node.TEXT_NODE) node = node.parentElement
       if (!node) return false
       let elem: HTMLElement | null = node as HTMLElement
       while (elem && elem !== el) {
         if (elem.tagName === tagName && el.contains(elem) && (!checkStyle || checkStyle(elem))) {
-          const parent = elem.parentElement
-          if (!parent) return false
-          while (elem.firstChild) parent.insertBefore(elem.firstChild, elem)
-          parent.removeChild(elem)
-          onChange(el.innerHTML)
+          unwrapElement(elem)
           return true
         }
         elem = elem.parentElement
       }
       return false
+    }
+
+    /** 선택 영역과 겹치는 모든 MARK/SPAN(배경) 요소를 찾아 제거 */
+    const unwrapAllInRange = (tagName: string, checkStyle?: (el: HTMLElement) => boolean) => {
+      const toUnwrap: HTMLElement[] = []
+      const walker = document.createTreeWalker(el, NodeFilter.SHOW_ELEMENT, null)
+      let node: Node | null
+      while ((node = walker.nextNode())) {
+        if (node.nodeType !== Node.ELEMENT_NODE) continue
+        const elem = node as HTMLElement
+        if (elem.tagName !== tagName || !el.contains(elem)) continue
+        if (checkStyle && !checkStyle(elem)) continue
+        if (range.intersectsNode(elem)) toUnwrap.push(elem)
+      }
+      toUnwrap.forEach(unwrapElement)
+      return toUnwrap.length > 0
     }
 
     if (range.collapsed) {
@@ -136,13 +156,13 @@ export default function RichTextToolbar({
         while (elem && elem !== el) {
           if (elem.tagName === 'MARK') {
             range.selectNodeContents(elem)
-            findAndUnwrap('MARK')
+            findAndUnwrapAncestor('MARK')
             el.focus()
             return
           }
           if (elem.tagName === 'SPAN' && elem.style?.background) {
             range.selectNodeContents(elem)
-            findAndUnwrap('SPAN', (e) => !!e.style?.background)
+            findAndUnwrapAncestor('SPAN', (e) => !!e.style?.background)
             el.focus()
             return
           }
@@ -150,11 +170,11 @@ export default function RichTextToolbar({
         }
       }
     } else {
-      if (findAndUnwrap('MARK')) {
+      if (unwrapAllInRange('MARK')) {
         el.focus()
         return
       }
-      if (findAndUnwrap('SPAN', (e) => !!e.style?.background)) {
+      if (unwrapAllInRange('SPAN', (e) => !!e.style?.background)) {
         el.focus()
         return
       }
@@ -223,12 +243,13 @@ export default function RichTextToolbar({
 
       <span className="w-px h-5 bg-slate-600 mx-0.5" aria-hidden />
 
-      {/* 하이라이트 */}
+      {/* 하이라이트 — onMouseDown preventDefault로 클릭 시 선택 영역 유지 */}
       {HIGHLIGHT_OPTIONS.map((opt) =>
         'isRemove' in opt && opt.isRemove ? (
           <button
             key="none"
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => handleHighlight(opt)}
             disabled={disabled}
             className="flex items-center gap-1 px-2 py-1.5 rounded-md bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs disabled:opacity-50 disabled:cursor-not-allowed transition border border-slate-600"
@@ -241,6 +262,7 @@ export default function RichTextToolbar({
           <button
             key={opt.bg}
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={() => handleHighlight(opt)}
             disabled={disabled}
             className="w-7 h-7 rounded border border-slate-600 hover:ring-2 hover:ring-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed transition"

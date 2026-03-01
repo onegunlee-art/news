@@ -333,7 +333,7 @@ export default function AdminDraftPreviewEdit({
                 type="text"
                 value={news.title}
                 onChange={(e) => handleSectionChange('title', e.target.value)}
-                className="w-full text-2xl font-bold text-gray-900 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2"
+                className="w-full text-2xl font-bold text-gray-900 bg-slate-50 border border-slate-200 px-3 py-2"
                 placeholder="제목"
               />
             ) : (
@@ -359,7 +359,7 @@ export default function AdminDraftPreviewEdit({
                 value={news.subtitle ?? ''}
                 onChange={(e) => handleSectionChange('subtitle', e.target.value)}
                 rows={2}
-                className="w-full text-lg text-gray-500 italic bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 leading-relaxed"
+                className="w-full text-lg text-gray-500 italic bg-slate-50 border border-slate-200 px-3 py-2 leading-relaxed"
                 placeholder="부제목 (선택)"
               />
             ) : (
@@ -405,7 +405,7 @@ export default function AdminDraftPreviewEdit({
               </button>
             </div>
             {editingSection === 'why_important' ? (
-              <div className="border-l-4 border-orange-500 bg-gradient-to-r from-orange-50/50 via-amber-50/50 to-white rounded-r-xl p-4 min-w-0 overflow-x-hidden">
+              <div className="border-l-4 border-orange-500 bg-gradient-to-r from-orange-50/50 via-amber-50/50 to-white p-4 min-w-0 overflow-x-hidden">
                 <RichTextEditor
                   value={ensureBrForEditor(news.why_important)}
                   onChange={(v) => handleSectionChange('why_important', v)}
@@ -414,7 +414,7 @@ export default function AdminDraftPreviewEdit({
                   }
                   placeholder="The Gist's Critique..."
                   rows={6}
-                  className="w-full bg-slate-800/30 border border-slate-600 rounded-lg text-slate-200"
+                  className="w-full bg-slate-800/30 border border-slate-600 rounded-none text-slate-200"
                 />
               </div>
             ) : (
@@ -445,7 +445,7 @@ export default function AdminDraftPreviewEdit({
               </button>
             </div>
             {editingSection === 'narration' ? (
-              <div className="p-4 bg-gray-50 rounded-lg border border-gray-100 min-w-0 overflow-x-hidden">
+              <div className="p-4 bg-gray-50 border border-gray-100 min-w-0 overflow-x-hidden">
                 <div className="prose prose-lg max-w-none min-w-0 overflow-x-hidden">
                   <RichTextEditor
                     value={ensureBrForEditor(news.narration)}
@@ -455,7 +455,7 @@ export default function AdminDraftPreviewEdit({
                     }
                     placeholder="내레이션..."
                     rows={10}
-                    className="w-full bg-slate-800/30 border border-slate-600 rounded-lg text-slate-200"
+                    className="w-full bg-slate-800/30 border border-slate-600 rounded-none text-slate-200"
                     noMaxHeight
                   />
                 </div>
@@ -499,7 +499,7 @@ export default function AdminDraftPreviewEdit({
               </button>
             </div>
             {editingSection === 'content' ? (
-              <div className="p-4 bg-gray-50 rounded-lg border border-gray-100 min-w-0 overflow-x-hidden">
+              <div className="p-4 bg-gray-50 border border-gray-100 min-w-0 overflow-x-hidden">
                 <RichTextEditor
                   value={ensureBrForEditor(news.content)}
                   onChange={(v) => handleSectionChange('content', v)}
@@ -508,7 +508,7 @@ export default function AdminDraftPreviewEdit({
                   }
                   placeholder="원문 AI 요약..."
                   rows={12}
-                  className="w-full bg-slate-800/30 border border-slate-600 rounded-lg text-slate-200"
+                  className="w-full bg-slate-800/30 border border-slate-600 rounded-none text-slate-200"
                 />
               </div>
             ) : (
