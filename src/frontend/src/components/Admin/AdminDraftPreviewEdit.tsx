@@ -447,16 +447,15 @@ export default function AdminDraftPreviewEdit({
             {editingSection === 'narration' ? (
               <div className="p-4 bg-gray-50 border border-gray-100 min-w-0 overflow-x-hidden">
                 <RichTextEditor
-                  value={ensureBrForEditor(news.narration)}
-                  onChange={(v) => handleSectionChange('narration', v)}
-                  sanitizePaste={(t) =>
-                    sanitizeText(t).replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')
-                  }
-                  placeholder="내레이션..."
-                  rows={10}
-                  className="w-full bg-slate-800/30 border border-slate-600 rounded-none text-slate-200"
-                  noMaxHeight
-                />
+                    value={ensureBrForEditor(news.narration)}
+                    onChange={(v) => handleSectionChange('narration', v)}
+                    sanitizePaste={(t) =>
+                      sanitizeText(t).replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')
+                    }
+                    placeholder="내레이션..."
+                    rows={10}
+                    className="w-full bg-slate-800/30 border border-slate-600 rounded-none text-slate-200"
+                  />
               </div>
             ) : (
               <div
