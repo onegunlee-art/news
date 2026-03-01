@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useState, useEffect, useRef } from 'react'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { PlayIcon, BookmarkIcon } from '@heroicons/react/24/outline'
 import { BookmarkIcon as BookmarkIconSolid } from '@heroicons/react/24/solid'
 import { newsApi } from '../services/api'
@@ -49,6 +49,7 @@ const subCategoryToLabel: Record<string, string> = {
 }
 
 const PER_PAGE = 20
+const SCROLL_SAVE_KEY = 'home_scroll_'
 
 function filterPlaceholder(items: NewsItem[]): NewsItem[] {
   const placeholderPhrases = ['무엇이 처음부터 왔었']
@@ -72,18 +73,70 @@ function chunkBy2<T>(arr: T[]): T[][] {
   return out
 }
 
+const TABS: TabType[] = ['최신', '외교', '경제', '특집', '인기']
+
 export default function HomePage() {
+  const location = useLocation()
+  const navigate = useNavigate()
   const [news, setNews] = useState<NewsItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
-  const [activeTab, setActiveTab] = useState<TabType>('최신')
+  const [activeTab, setActiveTab] = useState<TabType>(() => {
+    const s = (location.state as { restoreTab?: TabType } | null) ?? null
+    const tab = s?.restoreTab
+    return tab && TABS.includes(tab) ? tab : '최신'
+  })
 
   useEffect(() => {
     setPage(1)
     fetchNews(1, false)
   }, [activeTab])
+
+  // 탭별 스크롤 위치 저장 (상세에서 카테고리 버튼으로 돌아왔을 때 복원용)
+  useEffect(() => {
+    let raf = 0
+    const onScroll = () => {
+      if (raf) return
+      raf = requestAnimationFrame(() => {
+        raf = 0
+        try {
+          sessionStorage.setItem(SCROLL_SAVE_KEY + activeTab, String(window.scrollY))
+        } catch {
+          // ignore
+        }
+      })
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      if (raf) cancelAnimationFrame(raf)
+    }
+  }, [activeTab])
+
+  // 상세 페이지에서 카테고리 버튼으로 돌아온 경우: 로딩 완료 후 스크롤 복원 후 state 제거
+  const didRestoreRef = useRef(false)
+  useEffect(() => {
+    const restoreTab = (location.state as { restoreTab?: TabType } | null)?.restoreTab
+    if (!restoreTab) {
+      didRestoreRef.current = false
+      return
+    }
+    if (isLoading || didRestoreRef.current) return
+    didRestoreRef.current = true
+    const raw = sessionStorage.getItem(SCROLL_SAVE_KEY + restoreTab)
+    const y = raw ? parseInt(raw, 10) : 0
+    if (!Number.isFinite(y) || y <= 0) {
+      navigate('/', { replace: true, state: {} })
+      return
+    }
+    const id = requestAnimationFrame(() => {
+      window.scrollTo(0, y)
+      navigate('/', { replace: true, state: {} })
+    })
+    return () => cancelAnimationFrame(id)
+  }, [isLoading, location.state, navigate])
 
   const fetchNews = async (pageNum: number, append: boolean) => {
     if (append) {
@@ -126,15 +179,13 @@ export default function HomePage() {
     fetchNews(nextPage, true)
   }
 
-  const tabs: TabType[] = ['최신', '외교', '경제', '특집', '인기']
-
   return (
     <div className="min-h-screen bg-page pb-8">
       {/* 탭 네비게이션 - 이미지처럼 연한 배경으로 본문과 구분 */}
       <div className="sticky top-14 bg-page-secondary z-30 border-b border-page">
         <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 md:px-8 lg:px-12 xl:px-16">
           <div className="flex">
-            {tabs.map((tab) => (
+            {TABS.map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}

@@ -239,9 +239,9 @@ export default function NewsDetailPage() {
       <div className="sticky top-14 z-30 bg-page border-b border-page">
         <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between h-12">
-            {/* 뒤로가기 */}
+            {/* 뒤로가기: 해당 카테고리 탭으로 홈 이동 + 마지막 스크롤 위치 복원 */}
             <button
-              onClick={() => navigate(-1)}
+              onClick={() => navigate('/', { state: { restoreTab: getListLabel() } })}
               className="flex items-center gap-1 text-page-secondary hover:text-page transition-colors"
             >
               <ChevronLeftIcon className="w-5 h-5" strokeWidth={2} />
