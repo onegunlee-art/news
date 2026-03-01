@@ -283,7 +283,7 @@ export default function AdminDraftPreviewEdit({
       </div>
 
       {/* 유저 페이지 형상 */}
-      <article className="bg-white rounded-xl shadow-sm overflow-hidden">
+      <article className="bg-white rounded-xl shadow-sm overflow-visible">
         {/* 대표 이미지 */}
         <div className="aspect-video bg-gray-100 overflow-hidden">
           <img
@@ -405,7 +405,7 @@ export default function AdminDraftPreviewEdit({
               </button>
             </div>
             {editingSection === 'why_important' ? (
-              <div className="border-l-4 border-orange-500 bg-gradient-to-r from-orange-50/50 via-amber-50/50 to-white rounded-r-xl p-4">
+              <div className="border-l-4 border-orange-500 bg-gradient-to-r from-orange-50/50 via-amber-50/50 to-white rounded-r-xl p-4 min-w-0 overflow-x-hidden">
                 <RichTextEditor
                   value={ensureBrForEditor(news.why_important)}
                   onChange={(v) => handleSectionChange('why_important', v)}
@@ -445,8 +445,8 @@ export default function AdminDraftPreviewEdit({
               </button>
             </div>
             {editingSection === 'narration' ? (
-              <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
-                <div className="prose prose-lg max-w-none">
+              <div className="p-4 bg-gray-50 rounded-lg border border-gray-100 min-w-0 overflow-x-hidden">
+                <div className="prose prose-lg max-w-none min-w-0 overflow-x-hidden">
                   <RichTextEditor
                     value={ensureBrForEditor(news.narration)}
                     onChange={(v) => handleSectionChange('narration', v)}
@@ -499,7 +499,7 @@ export default function AdminDraftPreviewEdit({
               </button>
             </div>
             {editingSection === 'content' ? (
-              <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
+              <div className="p-4 bg-gray-50 rounded-lg border border-gray-100 min-w-0 overflow-x-hidden">
                 <RichTextEditor
                   value={ensureBrForEditor(news.content)}
                   onChange={(v) => handleSectionChange('content', v)}
