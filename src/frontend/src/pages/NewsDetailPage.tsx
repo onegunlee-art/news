@@ -54,6 +54,18 @@ const parentCategoryToLabel: Record<string, string> = {
   special: '특집',
 }
 
+/** 하위 카테고리 → 표시 라벨 (리스트와 본문 통일) */
+const subCategoryToLabel: Record<string, string> = {
+  politics_diplomacy: 'Politics/Diplomacy',
+  economy_industry: 'Economy/Industry',
+  society: 'Society',
+  security_conflict: 'Security/Conflict',
+  environment: 'Environment',
+  science_technology: 'Science/Technology',
+  culture: 'Culture',
+  health_development: 'Health/Development',
+}
+
 /** 홈 탭 타입 (진입 탭 전달 시 back이 이 탭으로 복귀) */
 const HOME_TABS = ['최신', '외교', '경제', '특집', '인기'] as const
 type HomeTabType = (typeof HOME_TABS)[number]
@@ -185,13 +197,19 @@ export default function NewsDetailPage() {
     return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`
   }
 
-  // 소스 이름 매핑 (표시 시 " Magazine" 제거, e.g. Foreign Affairs Magazine → Foreign Affairs)
+  // 소스 이름 매핑 (표시 시 " Magazine" 제거, e.g. Foreign Affairs Magazine → Foreign Affairs) - 매체 설명용
   const getSourceName = () => {
     let raw: string
     if (news?.original_source && news.original_source.trim()) raw = news.original_source
     else if (news?.source === 'Admin') return 'The Gist'
     else raw = news?.source || 'The Gist'
     return formatSourceDisplayName(raw) || 'The Gist'
+  }
+
+  // 카테고리 라벨: 리스트와 동일하게 하위 카테고리 표시 (제목 위 오렌지색)
+  const getCategoryLabel = () => {
+    if (news?.category) return subCategoryToLabel[news.category] ?? news.category
+    return 'The Gist'
   }
 
   // 글 목록 라벨: 하위 카테고리만 표시 (없으면 최신)
@@ -334,9 +352,9 @@ export default function NewsDetailPage() {
         </div>
 
         <div className="px-4 pt-5 pb-8">
-          {/* 소스 및 날짜 (매체 옆 = admin에서 업데이트한 날짜) */}
+          {/* 카테고리 및 날짜 (리스트와 동일한 하부 카테고리 표시) */}
           <div className="flex items-center gap-2 text-sm mb-4">
-            <span className="text-primary-500 font-medium">{getSourceName()}</span>
+            <span className="text-primary-500 font-medium">{getCategoryLabel()}</span>
             <span className="text-page-muted"> | </span>
             <span className="text-page-secondary">{formatHeaderDate()}</span>
           </div>
