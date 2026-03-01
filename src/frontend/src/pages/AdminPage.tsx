@@ -851,6 +851,7 @@ const AdminPage: React.FC = () => {
     setIsLoadingNews(true);
     try {
       const params = new URLSearchParams();
+      params.set('status_filter', 'published'); // 게시된 글만 표시 (임시저장 제외)
       if (selectedCategory !== 'all') params.set('category', selectedCategory);
       if (newsSearchQuery.trim()) params.set('query', newsSearchQuery.trim());
       params.set('per_page', '20');
