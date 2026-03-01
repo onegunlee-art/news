@@ -1,11 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { BellIcon } from '@heroicons/react/24/outline'
 import { useAuthStore } from '../store/authStore'
 import { useAudioListStore, type AudioListItem } from '../store/audioListStore'
 import { useViewSettingsStore, type FontSize, type Theme } from '../store/viewSettingsStore'
-import { newsApi, siteSettingsApi, contactApi, pushSubscriptionApi } from '../services/api'
+import { newsApi, siteSettingsApi, contactApi } from '../services/api'
 import LoadingSpinner from '../components/Common/LoadingSpinner'
 import { formatSourceDisplayName } from '../utils/formatSource'
 import PrivacyPolicyModal from '../components/Common/PrivacyPolicyModal'
@@ -27,8 +26,7 @@ export default function ProfilePage() {
   } | null>(null)
   const [showTerms, setShowTerms] = useState(false)
   const [showPrivacy, setShowPrivacy] = useState(false)
-  const [showNotificationPanel, setShowNotificationPanel] = useState(false)
-  const [expandedActivity, setExpandedActivity] = useState<'none' | 'alarm' | 'view' | 'contact'>('none')
+  const [expandedActivity, setExpandedActivity] = useState<'none' | 'view' | 'contact'>('none')
   const [aiFeedExpanded, setAiFeedExpanded] = useState(false)
   const activeTabRef = useRef(activeTab)
   activeTabRef.current = activeTab
@@ -75,7 +73,6 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-neutral-50 pb-24">
       <div className={CONTAINER_CLASS}>
-        {/* Header: 유저 영역(왼쪽) + 알림 종(오른쪽) */}
         <header className="pt-12 pb-6">
           <div className="flex items-center justify-between gap-4">
             <div className="min-w-0 flex-1">
@@ -134,33 +131,8 @@ export default function ProfilePage() {
                 </div>
               )}
             </div>
-            <button
-              type="button"
-              onClick={() => setShowNotificationPanel((v) => !v)}
-              className="p-2 text-neutral-600 hover:text-neutral-900 transition-colors rounded-full hover:bg-neutral-100 shrink-0"
-              aria-label="알림 설정"
-            >
-              <BellIcon className="w-6 h-6" strokeWidth={2} />
-            </button>
           </div>
         </header>
-
-        {/* Notification panel (below header, when bell clicked) */}
-        <AnimatePresence>
-          {showNotificationPanel && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="overflow-hidden"
-            >
-              <div className="mb-6 p-4 bg-white rounded-xl border border-neutral-100 shadow-sm">
-                <p className="text-neutral-600 text-sm mb-3">새 글이 올라오면 푸시 알림</p>
-                <NotificationToggle />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         {/* My Library: icon + label + chevron rows */}
         <section className="bg-white rounded-xl overflow-hidden shadow-sm border border-neutral-100">
@@ -245,32 +217,10 @@ export default function ProfilePage() {
           </ul>
         </section>
 
-        {/* Recent Activity: icon + label + chevron rows (푸시 알림, 보기 설정, 문의하기) */}
+        {/* Recent Activity: 보기 설정, 문의하기 */}
         <section className="mt-6 bg-white rounded-xl overflow-hidden shadow-sm border border-neutral-100">
           <h2 className="px-5 py-4 text-sm font-medium text-neutral-700 uppercase tracking-wider">Recent Activity</h2>
           <ul className="divide-y divide-neutral-100">
-            <li>
-              <button
-                type="button"
-                onClick={() => setExpandedActivity(expandedActivity === 'alarm' ? 'none' : 'alarm')}
-                className={`w-full flex items-center gap-3 px-5 py-4 text-left transition-colors ${expandedActivity === 'alarm' ? 'bg-neutral-50' : 'hover:bg-neutral-50/50'}`}
-              >
-                <BellIcon className="w-5 h-5 text-neutral-500 flex-shrink-0" strokeWidth={2} />
-                <span className="flex-1 text-neutral-900 text-sm font-medium">푸시 알림</span>
-                <svg className={`w-5 h-5 text-neutral-400 transition-transform ${expandedActivity === 'alarm' ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-              <AnimatePresence>
-                {expandedActivity === 'alarm' && (
-                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                    <div className="px-5 pb-4 pt-1 border-t border-neutral-100">
-                      <NotificationToggle />
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </li>
             <li>
               <button
                 type="button"
@@ -384,126 +334,6 @@ export default function ProfilePage() {
       <PrivacyPolicyModal isOpen={showPrivacy} onClose={() => setShowPrivacy(false)} />
     </div>
   )
-}
-
-function NotificationToggle() {
-  const hasAuth = !!useAuthStore((s) => s.user) || !!localStorage.getItem('access_token')
-  const [on, setOn] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [supported, setSupported] = useState(true)
-
-  // 현재 구독 상태 확인
-  useEffect(() => {
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-      setSupported(false)
-      return
-    }
-    navigator.serviceWorker.ready.then((reg) => {
-      reg.pushManager.getSubscription().then((sub) => {
-        setOn(!!sub)
-      }).catch(() => {})
-    }).catch(() => setSupported(false))
-  }, [])
-
-  const handleToggle = async () => {
-    if (!hasAuth) {
-      setError('로그인 후 이용 가능합니다.')
-      return
-    }
-    if (!supported || loading) return
-    setError(null)
-    setLoading(true)
-    try {
-      const reg = await navigator.serviceWorker.ready
-      if (on) {
-        const sub = await reg.pushManager.getSubscription()
-        if (sub) {
-          await pushSubscriptionApi.unsubscribe(sub.endpoint)
-          await sub.unsubscribe()
-        }
-        setOn(false)
-      } else {
-        if (Notification.permission === 'denied') {
-          setError('알림이 차단되어 있습니다. 브라우저 설정에서 허용해주세요.')
-          return
-        }
-        let perm: 'granted' | 'denied' | 'default' = Notification.permission
-        if (perm === 'default') {
-          perm = (await Notification.requestPermission()) as 'granted' | 'denied' | 'default'
-        }
-        if (perm !== 'granted') {
-          setError('알림 권한이 필요합니다.')
-          return
-        }
-        const res = await pushSubscriptionApi.getVapidKey()
-        const vapidPublicKey = res.data?.data?.vapidPublicKey
-        if (!vapidPublicKey) {
-          setError('푸시 알림 설정에 실패했습니다.')
-          return
-        }
-        const sub = await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(vapidPublicKey) as BufferSource,
-        })
-        await pushSubscriptionApi.subscribe(sub)
-        setOn(true)
-      }
-    } catch (e: any) {
-      setError(e.response?.data?.message ?? '설정에 실패했습니다.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  if (!hasAuth) {
-    return (
-      <div className="flex items-center justify-between">
-        <span className="text-sm text-neutral-700">새 글 푸시 알림</span>
-        <span className="text-xs text-neutral-500">로그인 후 이용 가능합니다</span>
-      </div>
-    )
-  }
-  if (!supported) {
-    return (
-      <div className="flex items-center justify-between">
-        <span className="text-sm text-neutral-700">새 글 푸시 알림</span>
-        <span className="text-xs text-neutral-500">이 브라우저에서는 사용할 수 없습니다</span>
-      </div>
-    )
-  }
-
-  return (
-    <div className="space-y-1">
-      <div className="flex items-center justify-between">
-        <span className="text-sm text-neutral-700">새 글 푸시 알림</span>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={on}
-          disabled={loading}
-          onClick={handleToggle}
-          className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${on ? 'bg-neutral-900' : 'bg-neutral-200'} ${loading ? 'opacity-60 cursor-wait' : ''}`}
-        >
-          <span
-            className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${on ? 'translate-x-5' : 'translate-x-0'}`}
-          />
-        </button>
-      </div>
-      {error && <p className="text-xs text-red-600">{error}</p>}
-    </div>
-  )
-}
-
-function urlBase64ToUint8Array(base64String: string): Uint8Array {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
-  const rawData = window.atob(base64)
-  const outputArray = new Uint8Array(rawData.length)
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i)
-  }
-  return outputArray
 }
 
 function ViewSettingsBlock() {

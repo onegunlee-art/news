@@ -335,12 +335,6 @@ if ($method === 'POST') {
         
         logError('Insert successful', ['news_id' => $newsId]);
         
-        // 게시 상태면 푸시 알림 발송
-        if ($status === 'published') {
-            require_once __DIR__ . '/../lib/sendPushNotification.php';
-            sendPushToAllSubscribers($db, $title, '/news/' . $newsId, '새 글이 올라왔습니다.');
-        }
-        
         http_response_code(201);
         echo json_encode([
             'success' => true,
@@ -369,10 +363,6 @@ if ($method === 'POST') {
                 $stmt->execute($values);
                 $newsId = $db->lastInsertId();
                 logError('Retry insert successful', ['news_id' => $newsId]);
-                if ($status === 'published') {
-                    require_once __DIR__ . '/../lib/sendPushNotification.php';
-                    sendPushToAllSubscribers($db, $title, '/news/' . $newsId, '새 글이 올라왔습니다.');
-                }
                 http_response_code(201);
                 echo json_encode([
                     'success' => true,
@@ -806,13 +796,7 @@ if ($method === 'PUT') {
         // TTS 캐시 무효화 (기사 수정 시 Supabase media_cache 삭제)
         require_once __DIR__ . '/../lib/invalidateTtsCache.php';
         invalidateTtsCacheForNews((int) $id);
-        
-        // 게시로 변경 시 푸시 알림 발송
-        if ($status === 'published') {
-            require_once __DIR__ . '/../lib/sendPushNotification.php';
-            sendPushToAllSubscribers($db, $title, '/news/' . $id, '새 글이 올라왔습니다.');
-        }
-        
+
         echo json_encode([
             'success' => true,
             'message' => '뉴스가 수정되었습니다.',

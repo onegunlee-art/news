@@ -302,24 +302,6 @@ $router->group(['prefix' => '/user'], function (Router $router) {
     
     // 분석 내역
     $router->get('/analyses', [AnalysisController::class, 'userHistory']);
-
-    // 푸시 구독 (Router 우회용 - .htaccess 미적용 시 api.php로 들어오는 요청 처리)
-    $pushScript = dirname(__DIR__) . '/public/api/user/push-subscription.php';
-    $router->get('/push-subscription', function () use ($pushScript): void {
-        if (is_file($pushScript)) {
-            require $pushScript;
-        }
-    });
-    $router->post('/push-subscription', function () use ($pushScript): void {
-        if (is_file($pushScript)) {
-            require $pushScript;
-        }
-    });
-    $router->delete('/push-subscription', function () use ($pushScript): void {
-        if (is_file($pushScript)) {
-            require $pushScript;
-        }
-    });
 });
 
 // ==================== 관리자 라우트 ====================
