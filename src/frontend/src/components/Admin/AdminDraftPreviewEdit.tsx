@@ -445,17 +445,19 @@ export default function AdminDraftPreviewEdit({
               </button>
             </div>
             {editingSection === 'narration' ? (
-              <div className="prose prose-lg max-w-none">
-                <RichTextEditor
-                  value={ensureBrForEditor(news.narration)}
-                  onChange={(v) => handleSectionChange('narration', v)}
-                  sanitizePaste={(t) =>
-                    sanitizeText(t).replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')
-                  }
-                  placeholder="내레이션..."
-                  rows={10}
-                  className="w-full bg-slate-800/30 border border-slate-600 rounded-lg text-slate-200"
-                />
+              <div className="p-4 bg-gray-50 rounded-lg border border-gray-100">
+                <div className="prose prose-lg max-w-none">
+                  <RichTextEditor
+                    value={ensureBrForEditor(news.narration)}
+                    onChange={(v) => handleSectionChange('narration', v)}
+                    sanitizePaste={(t) =>
+                      sanitizeText(t).replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')
+                    }
+                    placeholder="내레이션..."
+                    rows={10}
+                    className="w-full bg-slate-800/30 border border-slate-600 rounded-lg text-slate-200"
+                  />
+                </div>
               </div>
             ) : (
               <div
