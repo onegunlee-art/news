@@ -197,6 +197,25 @@ export const adminTtsApi = {
     ),
 }
 
+/** 푸시 구독 API */
+export const pushSubscriptionApi = {
+  /** VAPID 공개키 조회 */
+  getVapidKey: () =>
+    api.get<{ success: boolean; data: { vapidPublicKey: string } }>('/user/push-subscription?vapid=1'),
+  /** 구독 등록 */
+  subscribe: (subscription: PushSubscription) =>
+    api.post('/user/push-subscription', {
+      endpoint: subscription.endpoint,
+      keys: {
+        p256dh: btoa(String.fromCharCode(...new Uint8Array(subscription.getKey('p256dh')!))),
+        auth: btoa(String.fromCharCode(...new Uint8Array(subscription.getKey('auth')!))),
+      },
+    }),
+  /** 구독 해제 */
+  unsubscribe: (endpoint: string) =>
+    api.delete('/user/push-subscription', { data: { endpoint } }),
+}
+
 export const authApi = {
   /** 이메일/비밀번호 로그인 */
   login: (email: string, password: string) =>

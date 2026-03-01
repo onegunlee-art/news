@@ -5,7 +5,7 @@ import { BellIcon } from '@heroicons/react/24/outline'
 import { useAuthStore } from '../store/authStore'
 import { useAudioListStore, type AudioListItem } from '../store/audioListStore'
 import { useViewSettingsStore, type FontSize, type Theme } from '../store/viewSettingsStore'
-import { newsApi, siteSettingsApi, contactApi } from '../services/api'
+import { newsApi, siteSettingsApi, contactApi, pushSubscriptionApi } from '../services/api'
 import LoadingSpinner from '../components/Common/LoadingSpinner'
 import { formatSourceDisplayName } from '../utils/formatSource'
 import PrivacyPolicyModal from '../components/Common/PrivacyPolicyModal'
@@ -387,23 +387,123 @@ export default function ProfilePage() {
 }
 
 function NotificationToggle() {
+  const hasAuth = !!useAuthStore((s) => s.user) || !!localStorage.getItem('access_token')
   const [on, setOn] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [supported, setSupported] = useState(true)
+
+  // 현재 구독 상태 확인
+  useEffect(() => {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      setSupported(false)
+      return
+    }
+    navigator.serviceWorker.ready.then((reg) => {
+      reg.pushManager.getSubscription().then((sub) => {
+        setOn(!!sub)
+      }).catch(() => {})
+    }).catch(() => setSupported(false))
+  }, [])
+
+  const handleToggle = async () => {
+    if (!hasAuth) {
+      setError('로그인 후 이용 가능합니다.')
+      return
+    }
+    if (!supported || loading) return
+    setError(null)
+    setLoading(true)
+    try {
+      const reg = await navigator.serviceWorker.ready
+      if (on) {
+        const sub = await reg.pushManager.getSubscription()
+        if (sub) {
+          await pushSubscriptionApi.unsubscribe(sub.endpoint)
+          await sub.unsubscribe()
+        }
+        setOn(false)
+      } else {
+        if (Notification.permission === 'denied') {
+          setError('알림이 차단되어 있습니다. 브라우저 설정에서 허용해주세요.')
+          return
+        }
+        let perm = Notification.permission
+        if (perm === 'default') {
+          perm = await Notification.requestPermission()
+        }
+        if (perm !== 'granted') {
+          setError('알림 권한이 필요합니다.')
+          return
+        }
+        const res = await pushSubscriptionApi.getVapidKey()
+        const vapidPublicKey = res.data?.data?.vapidPublicKey
+        if (!vapidPublicKey) {
+          setError('푸시 알림 설정에 실패했습니다.')
+          return
+        }
+        const sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+        })
+        await pushSubscriptionApi.subscribe(sub)
+        setOn(true)
+      }
+    } catch (e: any) {
+      setError(e.response?.data?.message ?? '설정에 실패했습니다.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (!hasAuth) {
+    return (
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-neutral-700">새 글 푸시 알림</span>
+        <span className="text-xs text-neutral-500">로그인 후 이용 가능합니다</span>
+      </div>
+    )
+  }
+  if (!supported) {
+    return (
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-neutral-700">새 글 푸시 알림</span>
+        <span className="text-xs text-neutral-500">이 브라우저에서는 사용할 수 없습니다</span>
+      </div>
+    )
+  }
+
   return (
-    <div className="flex items-center justify-between">
-      <span className="text-sm text-neutral-700">새 글 푸시 알림</span>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={on}
-        onClick={() => setOn(!on)}
-        className={`relative w-11 h-6 rounded-full transition-colors ${on ? 'bg-neutral-900' : 'bg-neutral-200'}`}
-      >
-        <span
-          className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${on ? 'translate-x-5' : 'translate-x-0'}`}
-        />
-      </button>
+    <div className="space-y-1">
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-neutral-700">새 글 푸시 알림</span>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={on}
+          disabled={loading}
+          onClick={handleToggle}
+          className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${on ? 'bg-neutral-900' : 'bg-neutral-200'} ${loading ? 'opacity-60 cursor-wait' : ''}`}
+        >
+          <span
+            className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${on ? 'translate-x-5' : 'translate-x-0'}`}
+          />
+        </button>
+      </div>
+      {error && <p className="text-xs text-red-600">{error}</p>}
     </div>
   )
+}
+
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
+  const rawData = window.atob(base64)
+  const outputArray = new Uint8Array(rawData.length)
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i)
+  }
+  return outputArray
 }
 
 function ViewSettingsBlock() {
