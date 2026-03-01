@@ -203,14 +203,13 @@ export const pushSubscriptionApi = {
   getVapidKey: () =>
     api.get<{ success: boolean; data: { vapidPublicKey: string } }>('/user/push-subscription?vapid=1'),
   /** 구독 등록 */
-  subscribe: (subscription: PushSubscription) =>
-    api.post('/user/push-subscription', {
-      endpoint: subscription.endpoint,
-      keys: {
-        p256dh: btoa(String.fromCharCode(...new Uint8Array(subscription.getKey('p256dh')!))),
-        auth: btoa(String.fromCharCode(...new Uint8Array(subscription.getKey('auth')!))),
-      },
-    }),
+  subscribe: (subscription: PushSubscription) => {
+    const p256dhBuf = subscription.getKey('p256dh')
+    const authBuf = subscription.getKey('auth')
+    const p256dh = p256dhBuf ? btoa(String.fromCharCode(...new Uint8Array(p256dhBuf))) : ''
+    const auth = authBuf ? btoa(String.fromCharCode(...new Uint8Array(authBuf))) : ''
+    return api.post('/user/push-subscription', { endpoint: subscription.endpoint, keys: { p256dh, auth } })
+  },
   /** 구독 해제 */
   unsubscribe: (endpoint: string) =>
     api.delete('/user/push-subscription', { data: { endpoint } }),

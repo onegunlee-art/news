@@ -428,9 +428,9 @@ function NotificationToggle() {
           setError('알림이 차단되어 있습니다. 브라우저 설정에서 허용해주세요.')
           return
         }
-        let perm = Notification.permission
+        let perm: 'granted' | 'denied' | 'default' = Notification.permission
         if (perm === 'default') {
-          perm = await Notification.requestPermission()
+          perm = (await Notification.requestPermission()) as 'granted' | 'denied' | 'default'
         }
         if (perm !== 'granted') {
           setError('알림 권한이 필요합니다.')
@@ -444,7 +444,7 @@ function NotificationToggle() {
         }
         const sub = await reg.pushManager.subscribe({
           userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+          applicationServerKey: urlBase64ToUint8Array(vapidPublicKey) as BufferSource,
         })
         await pushSubscriptionApi.subscribe(sub)
         setOn(true)
