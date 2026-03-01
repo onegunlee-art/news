@@ -222,7 +222,7 @@ export default function HomePage() {
               <div className="lg:hidden">
                 {news.map((item, i) => (
                   <div key={item.id ?? i}>
-                    <ArticleCard article={item} />
+                    <ArticleCard article={item} activeTab={activeTab} />
                     {i < news.length - 1 && (
                       <div className="h-2 bg-page-secondary" aria-hidden />
                     )}
@@ -235,7 +235,7 @@ export default function HomePage() {
                   <div key={rowIndex}>
                     <div className="grid grid-cols-2 gap-x-12">
                       {row.map((item, idx) => (
-                        <ArticleCard key={item.id ?? rowIndex * 2 + idx} article={item} />
+                        <ArticleCard key={item.id ?? rowIndex * 2 + idx} article={item} activeTab={activeTab} />
                       ))}
                     </div>
                     {rowIndex < chunkBy2(news).length - 1 && (
@@ -267,7 +267,7 @@ export default function HomePage() {
 }
 
 // 기사 카드 - 왼쪽 텍스트 + 오른쪽 이미지. 기사는 흰 배경, 기사 사이 간격에 회색 배경이 비침.
-function ArticleCard({ article }: { article: NewsItem }) {
+function ArticleCard({ article, activeTab }: { article: NewsItem; activeTab: TabType }) {
   const navigate = useNavigate()
   const { isAuthenticated } = useAuthStore()
   const addAudioItem = useAudioListStore((s) => s.addItem)
@@ -393,7 +393,7 @@ function ArticleCard({ article }: { article: NewsItem }) {
       {/* 상단: 썸네일 정사각형(1:1) 정책 통일 */}
       <div className="grid grid-cols-[1fr_auto] items-start gap-4">
         <div className="min-w-0 flex flex-col">
-          <Link to={detailUrl} className="flex flex-col justify-center">
+          <Link to={detailUrl} state={{ fromTab: activeTab }} className="flex flex-col justify-center">
             <h2 className="text-lg font-bold text-page leading-snug mb-1.5 line-clamp-2 break-keep-ko-mobile">
               {article.title}
             </h2>
@@ -404,7 +404,7 @@ function ArticleCard({ article }: { article: NewsItem }) {
             )}
           </Link>
         </div>
-        <Link to={detailUrl} className="w-28 h-28 flex-shrink-0 rounded-none overflow-hidden bg-page-secondary block aspect-square">
+        <Link to={detailUrl} state={{ fromTab: activeTab }} className="w-28 h-28 flex-shrink-0 rounded-none overflow-hidden bg-page-secondary block aspect-square">
           <img
             src={imageUrl}
             alt={article.title}
@@ -421,7 +421,7 @@ function ArticleCard({ article }: { article: NewsItem }) {
       </div>
       {/* 구분선 아래: 매체 | 날짜(왼쪽) / 아이콘 3개만(오른쪽, 아이콘 옆 구분자 없음) */}
       <div className="flex items-center justify-between pt-2 mt-2 border-t border-page">
-        <Link to={detailUrl} className="flex items-center gap-1.5 text-xs shrink-0">
+        <Link to={detailUrl} state={{ fromTab: activeTab }} className="flex items-center gap-1.5 text-xs shrink-0">
           <span className="font-medium text-primary-500">{getCategoryLabel()}</span>
           <span className="text-page-muted">|</span>
           <span className="text-page-secondary">{formatDate()}</span>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom'
 import {
   SparklesIcon,
   ArrowTopRightOnSquareIcon,
@@ -47,16 +47,22 @@ interface NewsDetail {
   next_article?: { id: number; title: string } | null
 }
 
-/** 상위 카테고리 (기사 소속) → 표시 라벨 - back 버튼에 사용 */
+/** 상위 카테고리 (기사 소속) → 표시 라벨 - back 버튼 fallback용 */
 const parentCategoryToLabel: Record<string, string> = {
   diplomacy: '외교',
   economy: '경제',
   special: '특집',
 }
 
+/** 홈 탭 타입 (진입 탭 전달 시 back이 이 탭으로 복귀) */
+const HOME_TABS = ['최신', '외교', '경제', '특집', '인기'] as const
+type HomeTabType = (typeof HOME_TABS)[number]
+
 export default function NewsDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const location = useLocation()
+  const fromTab = (location.state as { fromTab?: HomeTabType } | null)?.fromTab
   const { isAuthenticated } = useAuthStore()
   const addAudioItem = useAudioListStore((s) => s.addItem)
   const openAndPlay = useAudioPlayerStore((s) => s.openAndPlay)
@@ -239,14 +245,19 @@ export default function NewsDetailPage() {
       <div className="sticky top-14 z-30 bg-page border-b border-page">
         <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between h-12">
-            {/* 뒤로가기: 해당 카테고리 탭으로 홈 이동 + 마지막 스크롤 위치 복원 */}
-            <button
-              onClick={() => navigate('/', { state: { restoreTab: getListLabel() } })}
-              className="flex items-center gap-1 text-page-secondary hover:text-page transition-colors"
-            >
-              <ChevronLeftIcon className="w-5 h-5" strokeWidth={2} />
-              <span className="text-sm">{getListLabel()}</span>
-            </button>
+            {/* 뒤로가기: 진입 탭(최신/인기/외교/경제/특집)으로 홈 이동 + 해당 탭 스크롤 복원 */}
+            {(() => {
+              const backTab: HomeTabType = fromTab && HOME_TABS.includes(fromTab) ? fromTab : (getListLabel() as HomeTabType)
+              return (
+                <button
+                  onClick={() => navigate('/', { state: { restoreTab: backTab } })}
+                  className="flex items-center gap-1 text-page-secondary hover:text-page transition-colors"
+                >
+                  <ChevronLeftIcon className="w-5 h-5" strokeWidth={2} />
+                  <span className="text-sm">{backTab}</span>
+                </button>
+              )
+            })()}
 
             {/* 오른쪽 액션 버튼들 */}
             <div className="flex items-center gap-4">
