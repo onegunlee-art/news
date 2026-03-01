@@ -10,6 +10,8 @@ interface RichTextEditorProps {
   rows?: number
   className?: string
   disabled?: boolean
+  /** true면 높이 제한 없음(내레이션 등 한 블록 전체를 회색으로 쓸 때) */
+  noMaxHeight?: boolean
 }
 
 /**
@@ -24,6 +26,7 @@ export default function RichTextEditor({
   rows = 6,
   className = '',
   disabled = false,
+  noMaxHeight = false,
 }: RichTextEditorProps) {
   const divRef = useRef<HTMLDivElement>(null)
 
@@ -99,7 +102,7 @@ export default function RichTextEditor({
   const minHeight = rows * 24
 
   return (
-    <div className="flex flex-col overflow-auto max-h-[60vh]">
+    <div className={`flex flex-col ${noMaxHeight ? '' : 'overflow-auto max-h-[60vh]'}`}>
       <div className="sticky top-0 z-10 flex-shrink-0 py-1 pr-1 pl-0 bg-slate-900">
         <RichTextToolbar
           editableRef={divRef}

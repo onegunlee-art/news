@@ -456,6 +456,7 @@ export default function AdminDraftPreviewEdit({
                     placeholder="내레이션..."
                     rows={10}
                     className="w-full bg-slate-800/30 border border-slate-600 rounded-lg text-slate-200"
+                    noMaxHeight
                   />
                 </div>
               </div>
