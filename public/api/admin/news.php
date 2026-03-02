@@ -175,7 +175,7 @@ if ($method === 'POST') {
     $author = $input['author'] ?? null;  // 원본 작성자
     $customImageUrl = $input['image_url'] ?? null;  // 사용자 지정 이미지 URL
     
-    // published_at 처리: 빈 문자열이면 null, 그렇지 않으면 날짜 형식 변환 시도
+    // published_at 처리: 빈 문자열이면 null, 그렇지 않으면 날짜 형식 변환 시도. 비어있으면 현재 날짜(우리 게시일)로 설정
     $publishedAtRaw = $input['published_at'] ?? null;
     $publishedAt = null;
     if (!empty($publishedAtRaw)) {
@@ -188,6 +188,10 @@ if ($method === 'POST') {
             $publishedAt = null;
             logError('Failed to parse published_at: ' . $publishedAtRaw);
         }
+    }
+    // 우리 정책: published_at 비어있으면 현재 날짜(우리 게시일)로 자동 설정
+    if ($publishedAt === null) {
+        $publishedAt = date('Y-m-d H:i:s');
     }
     
     // status: draft(임시저장) | published(공개). hasStatus 없으면 published로 저장
@@ -564,6 +568,13 @@ if ($method === 'GET') {
         ");
         $stmt->execute($params);
         $news = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        // 우리 정책: published_at 비어있으면 created_at(우리 게시일)으로 표시
+        foreach ($news as &$item) {
+            if (empty($item['published_at']) && !empty($item['created_at'])) {
+                $item['published_at'] = $item['created_at'];
+            }
+        }
+        unset($item);
         api_log('admin/news', 'GET', 200);
         $totalPages = $popular ? 1 : (int) ceil($total / $perPage);
         echo json_encode([

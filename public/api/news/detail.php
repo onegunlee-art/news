@@ -239,11 +239,8 @@ try {
         } catch (Exception $e) { /* 무시 */ }
     }
     
-    // 표시용 날짜: URL/매체에서 올린 원문 게재일(published_at) 우선, 없으면 우리 포스팅일(created_at)
+    // 표시용 날짜: 우리 정책 - 모든 기사는 우리가 게시한 날짜(created_at)로 통일
     $dateForDisplay = $news['created_at'];
-    if ($hasPublishedAt && !empty($news['published_at'])) {
-        $dateForDisplay = $news['published_at'];
-    }
     
     // time_ago 계산 (표시용 날짜 기준)
     $refDate = new DateTime($dateForDisplay);
