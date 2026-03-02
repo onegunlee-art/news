@@ -16,7 +16,7 @@ export default function ProfilePage() {
   const { user, isAuthenticated, isSubscribed, logout, initializeAuth } = useAuthStore()
   const hasAuth = !!user || isAuthenticated || !!localStorage.getItem('access_token')
   const navigate = useNavigate()
-  const [activeTab, setActiveTab] = useState<'bookmarks' | 'audio'>('bookmarks')
+  const [activeTab, setActiveTab] = useState<'bookmarks' | 'audio' | null>(null)
   const audioItems = useAudioListStore((s) => s.items)
   const [bookmarks, setBookmarks] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(false)
