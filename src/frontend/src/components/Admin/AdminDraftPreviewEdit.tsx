@@ -429,88 +429,7 @@ export default function AdminDraftPreviewEdit({
             </div>
           )}
 
-          {/* The Gist — 유저 페이지와 동일: 주황색 박스, 문맥별 구분 */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-2">
-              <h2
-                className="text-xl font-semibold tracking-wide"
-                style={{ fontFamily: "'Lobster', cursive", color: '#FF6F00' }}
-              >
-                The Gist
-              </h2>
-              <button
-                onClick={() =>
-                  setEditingSection(editingSection === 'why_important' ? null : 'why_important')
-                }
-                className="text-xs px-2 py-1 rounded bg-slate-600 hover:bg-slate-500 text-slate-200"
-              >
-                {editingSection === 'why_important' ? '적용' : '수정'}
-              </button>
-            </div>
-            {editingSection === 'why_important' ? (
-              <div className="border-l-4 border-orange-500 bg-gradient-to-r from-orange-50/50 via-amber-50/50 to-white p-4 min-w-0 overflow-x-hidden">
-                <RichTextEditor
-                  value={ensureBrForEditor(news.why_important)}
-                  onChange={(v) => handleSectionChange('why_important', v)}
-                  sanitizePaste={(t) =>
-                    sanitizeText(t).replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')
-                  }
-                  placeholder="The Gist's Critique..."
-                  rows={6}
-                  className="w-full bg-slate-800/30 border border-slate-600 rounded-none text-slate-200"
-                />
-              </div>
-            ) : (
-              <div className="border-l-4 border-orange-500 bg-gradient-to-r from-orange-50 via-amber-50 to-white rounded-r-xl shadow-sm overflow-hidden">
-                <div className="px-5 py-5 sm:px-6 sm:py-6">
-                  <div
-                    className={`text-gray-800 ${proseClasses}`}
-                    dangerouslySetInnerHTML={{
-                      __html: formatContentHtml(news.why_important || ''),
-                    }}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* 내레이션 — 유저 페이지와 동일: prose, 문맥별 구분 */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-lg font-semibold text-gray-800">내레이션</h3>
-              <button
-                onClick={() =>
-                  setEditingSection(editingSection === 'narration' ? null : 'narration')
-                }
-                className="text-xs px-2 py-1 rounded bg-slate-600 hover:bg-slate-500 text-slate-200"
-              >
-                {editingSection === 'narration' ? '적용' : '수정'}
-              </button>
-            </div>
-            {editingSection === 'narration' ? (
-              <div className="p-4 bg-gray-50 border border-gray-100 min-w-0 overflow-x-hidden">
-                <RichTextEditor
-                    value={ensureBrForEditor(news.narration)}
-                    onChange={(v) => handleSectionChange('narration', v)}
-                    sanitizePaste={(t) =>
-                      sanitizeText(t).replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')
-                    }
-                    placeholder="내레이션..."
-                    rows={10}
-                    className="w-full bg-slate-800/30 border border-slate-600 rounded-none text-slate-200"
-                  />
-              </div>
-            ) : (
-              <div
-                className={`prose prose-lg max-w-none text-gray-700 ${proseClasses}`}
-                dangerouslySetInnerHTML={{
-                  __html: formatContentHtml(news.narration || news.description || ''),
-                }}
-              />
-            )}
-          </div>
-
-          {/* 원문 AI 요약/구조 분석 — 유저 페이지와 동일: border-t 구분, 회색 박스 */}
+          {/* 1. AI 분석 (원문 요약) — 작업 순서: AI 분석 → 내레이션 → The Gist */}
           <div className="mb-8 border-t border-gray-100 pt-6 mt-2">
             <div className="flex items-center justify-between mb-3">
               <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-500 uppercase tracking-wider">
@@ -558,6 +477,87 @@ export default function AdminDraftPreviewEdit({
                   __html: formatContentHtml(news.content || ''),
                 }}
               />
+            )}
+          </div>
+
+          {/* 2. 내레이션 */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-lg font-semibold text-gray-800">내레이션</h3>
+              <button
+                onClick={() =>
+                  setEditingSection(editingSection === 'narration' ? null : 'narration')
+                }
+                className="text-xs px-2 py-1 rounded bg-slate-600 hover:bg-slate-500 text-slate-200"
+              >
+                {editingSection === 'narration' ? '적용' : '수정'}
+              </button>
+            </div>
+            {editingSection === 'narration' ? (
+              <div className="p-4 bg-gray-50 border border-gray-100 min-w-0 overflow-x-hidden">
+                <RichTextEditor
+                    value={ensureBrForEditor(news.narration)}
+                    onChange={(v) => handleSectionChange('narration', v)}
+                    sanitizePaste={(t) =>
+                      sanitizeText(t).replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')
+                    }
+                    placeholder="내레이션..."
+                    rows={10}
+                    className="w-full bg-slate-800/30 border border-slate-600 rounded-none text-slate-200"
+                  />
+              </div>
+            ) : (
+              <div
+                className={`prose prose-lg max-w-none text-gray-700 ${proseClasses}`}
+                dangerouslySetInnerHTML={{
+                  __html: formatContentHtml(news.narration || news.description || ''),
+                }}
+              />
+            )}
+          </div>
+
+          {/* 3. The Gist */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-2">
+              <h2
+                className="text-xl font-semibold tracking-wide"
+                style={{ fontFamily: "'Lobster', cursive", color: '#FF6F00' }}
+              >
+                The Gist
+              </h2>
+              <button
+                onClick={() =>
+                  setEditingSection(editingSection === 'why_important' ? null : 'why_important')
+                }
+                className="text-xs px-2 py-1 rounded bg-slate-600 hover:bg-slate-500 text-slate-200"
+              >
+                {editingSection === 'why_important' ? '적용' : '수정'}
+              </button>
+            </div>
+            {editingSection === 'why_important' ? (
+              <div className="border-l-4 border-orange-500 bg-gradient-to-r from-orange-50/50 via-amber-50/50 to-white p-4 min-w-0 overflow-x-hidden">
+                <RichTextEditor
+                  value={ensureBrForEditor(news.why_important)}
+                  onChange={(v) => handleSectionChange('why_important', v)}
+                  sanitizePaste={(t) =>
+                    sanitizeText(t).replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')
+                  }
+                  placeholder="The Gist's Critique..."
+                  rows={6}
+                  className="w-full bg-slate-800/30 border border-slate-600 rounded-none text-slate-200"
+                />
+              </div>
+            ) : (
+              <div className="border-l-4 border-orange-500 bg-gradient-to-r from-orange-50 via-amber-50 to-white rounded-r-xl shadow-sm overflow-hidden">
+                <div className="px-5 py-5 sm:px-6 sm:py-6">
+                  <div
+                    className={`text-gray-800 ${proseClasses}`}
+                    dangerouslySetInnerHTML={{
+                      __html: formatContentHtml(news.why_important || ''),
+                    }}
+                  />
+                </div>
+              </div>
             )}
           </div>
 

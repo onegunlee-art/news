@@ -315,11 +315,14 @@ final class AdminController
                 ];
             }
             
-            // 최근 분석
+            // 최근 분석 (analyses에 title 없음 → news JOIN 또는 summary 사용)
             $stmt = $this->db->prepare("
-                SELECT 'analysis' as type, title as message, created_at as time 
-                FROM analyses 
-                ORDER BY created_at DESC 
+                SELECT 'analysis' as type,
+                    COALESCE(n.title, LEFT(a.summary, 80), LEFT(a.input_text, 80), '제목 없음') as message,
+                    a.created_at as time
+                FROM analyses a
+                LEFT JOIN news n ON a.news_id = n.id
+                ORDER BY a.created_at DESC
                 LIMIT ?
             ");
             $stmt->execute([$limit]);
