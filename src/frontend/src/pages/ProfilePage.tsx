@@ -132,7 +132,7 @@ export default function ProfilePage() {
 
         {/* My Library: icon + label + chevron rows */}
         <section className="bg-white rounded-xl overflow-hidden shadow-sm border border-neutral-100">
-          <h2 className="px-5 py-4 text-sm font-medium text-neutral-700 uppercase tracking-wider">My Library</h2>
+          <h2 className="px-5 py-4 text-sm font-bold text-primary-500 uppercase tracking-wider">My Library</h2>
           <ul className="divide-y divide-neutral-100">
             <li>
               <button
@@ -199,7 +199,7 @@ export default function ProfilePage() {
 
         {/* My Subscription: Current Plan + MANAGE */}
         <section className="mt-6 bg-white rounded-xl overflow-hidden shadow-sm border border-neutral-100">
-          <h2 className="px-5 py-4 text-sm font-medium text-neutral-700 uppercase tracking-wider">My Subscription</h2>
+          <h2 className="px-5 py-4 text-sm font-bold text-primary-500 uppercase tracking-wider">My Subscription</h2>
           <ul className="divide-y divide-neutral-100">
             <li className="flex items-center justify-between px-5 py-4">
               <span className="text-neutral-900 text-sm font-medium">현재 플랜</span>
@@ -213,9 +213,9 @@ export default function ProfilePage() {
           </ul>
         </section>
 
-        {/* Recent Activity: 보기 설정, 문의하기 */}
+        {/* Settings: 보기 설정, 문의하기 */}
         <section className="mt-6 bg-white rounded-xl overflow-hidden shadow-sm border border-neutral-100">
-          <h2 className="px-5 py-4 text-sm font-medium text-neutral-700 uppercase tracking-wider">Recent Activity</h2>
+          <h2 className="px-5 py-4 text-sm font-bold text-primary-500 uppercase tracking-wider">Settings</h2>
           <ul className="divide-y divide-neutral-100">
             <li>
               <button
@@ -358,15 +358,15 @@ function ViewSettingsBlock() {
           ))}
         </div>
       </div>
-      <div className="flex items-center justify-between pt-4 border-t border-neutral-100">
-        <span className="text-sm text-neutral-700">다크 모드</span>
+      <div>
+        <p className="text-sm text-neutral-600 mb-2">다크 모드</p>
         <div className="flex gap-2">
           {(['light', 'dark'] as Theme[]).map((t) => (
             <button
               key={t}
               type="button"
               onClick={() => setTheme(t)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 theme === t ? 'bg-neutral-900 text-white' : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
               }`}
             >
