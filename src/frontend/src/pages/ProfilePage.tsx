@@ -101,10 +101,6 @@ export default function ProfilePage() {
                             SUBSCRIBER
                           </span>
                         )}
-                        <div className="flex gap-3 text-neutral-600 text-xs mt-1">
-                          <span>Reading Score: --</span>
-                          <span>Focus: -- --</span>
-                        </div>
                       </div>
                     </div>
                     <button
@@ -141,7 +137,7 @@ export default function ProfilePage() {
             <li>
               <button
                 type="button"
-                onClick={() => setActiveTab('bookmarks')}
+                onClick={() => setActiveTab((prev) => (prev === 'bookmarks' ? null : 'bookmarks'))}
                 className={`w-full flex items-center gap-3 px-5 py-4 text-left transition-colors ${
                   activeTab === 'bookmarks' ? 'bg-neutral-50' : 'hover:bg-neutral-50/50'
                 }`}
@@ -149,7 +145,7 @@ export default function ProfilePage() {
                 <svg className="w-5 h-5 text-neutral-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
                 </svg>
-                <span className="flex-1 text-neutral-900 text-sm font-medium">저장한 콘텐츠</span>
+                <span className="flex-1 text-neutral-900 text-sm font-medium">즐겨찾기</span>
                 <svg className={`w-5 h-5 text-neutral-400 transition-transform ${activeTab === 'bookmarks' ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
@@ -172,7 +168,7 @@ export default function ProfilePage() {
             <li>
               <button
                 type="button"
-                onClick={() => setActiveTab('audio')}
+                onClick={() => setActiveTab((prev) => (prev === 'audio' ? null : 'audio'))}
                 className={`w-full flex items-center gap-3 px-5 py-4 text-left transition-colors ${
                   activeTab === 'audio' ? 'bg-neutral-50' : 'hover:bg-neutral-50/50'
                 }`}
@@ -496,7 +492,7 @@ function BookmarkList({ bookmarks }: { bookmarks: any[] }) {
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
           </svg>
         </div>
-        <p className="text-neutral-500 text-sm">저장한 콘텐츠가 없습니다.</p>
+        <p className="text-neutral-500 text-sm">즐겨찾기가 없습니다.</p>
         <Link
           to="/"
           className="inline-block mt-3 px-5 py-2 bg-neutral-900 text-white text-sm rounded-lg hover:bg-neutral-800 transition-colors"
