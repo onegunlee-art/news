@@ -82,7 +82,7 @@ export default function NewsDetailPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isBookmarked, setIsBookmarked] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [analysisCollapsed, setAnalysisCollapsed] = useState(false)
+  const [analysisCollapsed, setAnalysisCollapsed] = useState(true)
 
   // 전역 팝업 플레이어에서 재생 (제목 → 매체설명 → 내레이션 → The Gist)
   // Listen 클릭 시 최신 기사 데이터를 강제 조회하여 stale state로 인한 이전 보이스 재생 방지
@@ -424,20 +424,32 @@ export default function NewsDetailPage() {
             />
           )}
 
-          {/* 참고 글 AI 구조 분석 — 내레이션과 간격 5배, 접기/펼치기 */}
+          {/* 참고 글 AI 구조 분석 — 내레이션과 간격 5배, 접기/펼치기 (디폴트 접힘) */}
           {(news.content || (news.url && news.url !== '#')) && (
             <div className="mb-8 border-t border-page pt-6 mt-20">
               <div className="flex justify-between items-center gap-4 mb-3">
                 <h3 className="flex items-center gap-2 text-sm font-semibold text-primary-500 uppercase tracking-wider shrink-0">
                   <SparklesIcon className="w-4 h-4" strokeWidth={2} />
-                  원문 AI 분석
-                  <button
-                    type="button"
-                    onClick={() => setAnalysisCollapsed((c) => !c)}
-                    className="font-semibold text-primary-500 hover:text-primary-600 underline underline-offset-2 cursor-pointer"
-                  >
-                    {analysisCollapsed ? '(펼치기)' : '(접기)'}
-                  </button>
+                  {analysisCollapsed ? (
+                    <button
+                      type="button"
+                      onClick={() => setAnalysisCollapsed(false)}
+                      className="font-semibold text-primary-500 hover:text-primary-600 cursor-pointer"
+                    >
+                      원문 AI 분석 보기
+                    </button>
+                  ) : (
+                    <>
+                      원문 AI 분석
+                      <button
+                        type="button"
+                        onClick={() => setAnalysisCollapsed(true)}
+                        className="font-semibold text-primary-500 hover:text-primary-600 cursor-pointer"
+                      >
+                        접기
+                      </button>
+                    </>
+                  )}
                 </h3>
                 {news.url && news.url !== '#' && (
                   <a
