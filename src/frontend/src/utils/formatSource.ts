@@ -13,16 +13,31 @@ export function formatSourceDisplayName(source: string | null | undefined): stri
   return trimmed
 }
 
+/** 매체 설명 기본 포맷 (날짜 제외) */
+const EDITORIAL_LINE_FORMAT = '이 글은 {source}에 게재된 {title} 글의 시각을 참고하였습니다.'
+
 /**
  * 화면/TTS 공통 매체 설명 문장 생성
- * "이 글은 {date}자, {source}에 게재된 "{original_title}" 기사를 The Gist가 AI를 통해 분석/정리한 것 입니다."
+ * "이 글은 {source}에 게재된 {originalTitle} 글의 시각을 참고하였습니다."
  */
 export function buildEditorialLine(params: {
-  dateStr: string
+  dateStr?: string
   sourceDisplay: string
   originalTitle: string
 }): string {
-  const { dateStr, sourceDisplay, originalTitle } = params
-  const datePart = dateStr ? `${dateStr}자, ` : ''
-  return `이 글은 ${datePart}${sourceDisplay}에 게재된 "${originalTitle}" 기사를 The Gist가 AI를 통해 분석/정리한 것 입니다.`
+  const { sourceDisplay, originalTitle } = params
+  return EDITORIAL_LINE_FORMAT.replace('{source}', sourceDisplay).replace('{title}', originalTitle)
+}
+
+/**
+ * 매체 설명 한 줄에서 매체(source)와 원문 제목(title) 추출
+ * 포맷: "이 글은 {source}에 게재된 {title} 글의 시각을 참고하였습니다."
+ */
+export function parseEditorialLine(line: string): { source: string; title: string } | null {
+  const trimmed = line.trim()
+  const match = trimmed.match(/^이 글은 (.+?)에 게재된 (.+?) 글의 시각을 참고하였습니다\.?$/)
+  if (match) {
+    return { source: match[1].trim(), title: match[2].trim() }
+  }
+  return null
 }

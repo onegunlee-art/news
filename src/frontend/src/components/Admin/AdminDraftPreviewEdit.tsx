@@ -1,8 +1,8 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import RichTextEditor from '../Common/RichTextEditor'
 import { formatContentHtml, normalizeEditorHtml, ensureBrForEditor } from '../../utils/sanitizeHtml'
 import { getPlaceholderImageUrl } from '../../utils/imagePolicy'
-import { formatSourceDisplayName } from '../../utils/formatSource'
+import { formatSourceDisplayName, buildEditorialLine, parseEditorialLine } from '../../utils/formatSource'
 import { extractTitleFromUrl } from '../../utils/extractTitleFromUrl'
 
 /** Admin draft article (from admin/news.php?id=X) */
@@ -45,7 +45,7 @@ const sanitizeText = (text: string): string =>
     .join('\n')
     .replace(/\n{3,}/g, '\n\n')
 
-type EditSection = 'title' | 'subtitle' | 'why_important' | 'narration' | 'content' | null
+type EditSection = 'title' | 'subtitle' | 'editorial' | 'why_important' | 'narration' | 'content' | null
 
 const CATEGORIES = [
   { id: 'diplomacy', name: '외교', color: 'from-blue-500 to-cyan-500' },
@@ -92,6 +92,7 @@ export default function AdminDraftPreviewEdit({
     const sub = initialNews.category || ''
     return SUB_CATEGORY_OPTIONS.some((o) => o.value === sub) ? '' : sub
   })
+  const editorialInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     setNews(initialNews)
@@ -107,14 +108,6 @@ export default function AdminDraftPreviewEdit({
       setCategorySubCustom(sub)
     }
   }, [initialNews.id])
-
-  const formatDate = () => {
-    if (news.published_at) {
-      const d = new Date(news.published_at)
-      return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`
-    }
-    return ''
-  }
 
   const formatHeaderDate = () => {
     const s = news.updated_at || news.created_at
@@ -153,6 +146,12 @@ export default function AdminDraftPreviewEdit({
     []
   )
 
+  const getEditorialLine = () =>
+    buildEditorialLine({
+      sourceDisplay: formatSourceDisplayName(news.original_source?.trim() || news.source || 'The Gist') || 'The Gist',
+      originalTitle: news.original_title?.trim() || extractTitleFromUrl(news.url) || '원문',
+    })
+
   const getSubCategoryValue = () =>
     categorySub === '__custom__' ? (categorySubCustom || '').trim() : categorySub || ''
 
@@ -165,6 +164,8 @@ export default function AdminDraftPreviewEdit({
         category: subVal || null,
         title: news.title,
         subtitle: news.subtitle ?? null,
+        original_source: news.original_source ?? null,
+        original_title: news.original_title ?? null,
         why_important: news.why_important ? normalizeEditorHtml(news.why_important) : null,
         narration: news.narration ? normalizeEditorHtml(news.narration) : null,
         content: news.content ? normalizeEditorHtml(news.content) : null,
@@ -184,6 +185,8 @@ export default function AdminDraftPreviewEdit({
         ...news,
         category_parent: categoryParent,
         category: subVal || null,
+        original_source: news.original_source ?? null,
+        original_title: news.original_title ?? null,
         why_important: news.why_important ? normalizeEditorHtml(news.why_important) : null,
         narration: news.narration ? normalizeEditorHtml(news.narration) : null,
         content: news.content ? normalizeEditorHtml(news.content) : null,
@@ -371,13 +374,53 @@ export default function AdminDraftPreviewEdit({
             )}
           </div>
 
-          {/* 매체 설명 */}
-          <p className="text-sm text-gray-500 mb-6">
-            이 글은 {formatDate() ? `${formatDate()}자, ` : ''}
-            {(news.original_source?.trim() || news.source || 'The Gist')}에 게재된 &quot;
-            {(news.original_title?.trim() || extractTitleFromUrl(news.url) || '원문')}&quot; 기사를
-            The Gist가 AI를 통해 분석/정리한 것 입니다.
-          </p>
+          {/* 매체 설명 — 수정 가능 */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between gap-2 mb-1">
+              <span className="text-xs text-gray-400">매체 설명</span>
+              <button
+                onClick={() => {
+                  if (editingSection === 'editorial') {
+                    const val = editorialInputRef.current?.value?.trim()
+                    if (val) {
+                      const parsed = parseEditorialLine(val)
+                      if (parsed) {
+                        setNews((prev) => ({
+                          ...prev,
+                          original_source: parsed.source,
+                          original_title: parsed.title,
+                        }))
+                      }
+                    }
+                    setEditingSection(null)
+                  } else {
+                    setEditingSection('editorial')
+                  }
+                }}
+                className="text-xs px-2 py-1 rounded bg-slate-600 hover:bg-slate-500 text-slate-200"
+              >
+                {editingSection === 'editorial' ? '적용' : '수정'}
+              </button>
+            </div>
+            {editingSection === 'editorial' ? (
+              <div className="p-4 bg-gray-50 border border-gray-100 rounded-lg">
+                <input
+                  ref={editorialInputRef}
+                  type="text"
+                  defaultValue={getEditorialLine()}
+                  placeholder="이 글은 {매체}에 게재된 {원문 제목} 글의 시각을 참고하였습니다."
+                  className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-800 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                />
+                <p className="text-xs text-gray-500 mt-2">
+                  포맷: 이 글은 [매체]에 게재된 [원문 제목] 글의 시각을 참고하였습니다.
+                </p>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500 mb-0">
+                {getEditorialLine()}
+              </p>
+            )}
+          </div>
 
           {/* 저자 */}
           {news.author && (

@@ -189,14 +189,6 @@ export default function NewsDetailPage() {
     return news?.time_ago || ''
   }
 
-  // 매체 설명용 날짜 (YYYY년 M월 D일, 원문 게재일 우선)
-  const formatMediaDate = () => {
-    const dateStr = news?.published_at || news?.updated_at || news?.created_at
-    if (!dateStr) return ''
-    const date = new Date(dateStr)
-    return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`
-  }
-
   // 소스 이름 매핑 (표시 시 " Magazine" 제거, e.g. Foreign Affairs Magazine → Foreign Affairs) - 매체 설명용
   const getSourceName = () => {
     let raw: string
@@ -373,7 +365,7 @@ export default function NewsDetailPage() {
 
           {/* 매체 설명 */}
           <p className="text-sm text-page-secondary mb-6">
-            이 글은 {formatMediaDate()}{formatMediaDate() ? ' ' : ''}{getSourceName()}에 게재된 &quot;{(news.original_title && news.original_title.trim()) || extractTitleFromUrl(news.url) || '원문'}&quot; 글의 시각을 참고하여 작성되었습니다.
+            이 글은 {getSourceName()}에 게재된 {(news.original_title && news.original_title.trim()) || extractTitleFromUrl(news.url) || '원문'} 글의 시각을 참고하였습니다.
           </p>
 
           {/* 저자 정보 (있을 경우) */}
