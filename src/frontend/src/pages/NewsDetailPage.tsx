@@ -381,16 +381,10 @@ export default function NewsDetailPage() {
             <span className="font-medium">AI 보이스로 듣기</span>
           </button>
 
-          {/* The Gist — 단일 배경 박스 (아래 내레이션과 간격 2.5배) */}
+          {/* 비평 영역 — 단일 배경 박스 (아래 내레이션과 간격 2.5배) */}
           {news.why_important && (
             <div className="mb-20 bg-amber-50 rounded-xl shadow-sm overflow-hidden">
               <div className="px-5 py-5 sm:px-6 sm:py-6">
-                <h2
-                  className="text-xl font-semibold mb-3 tracking-wide"
-                  style={{ fontFamily: "'Lobster', cursive", color: '#FF6F00' }}
-                >
-                  The Gist
-                </h2>
                 <div
                   className="text-page leading-relaxed whitespace-pre-wrap [&_mark]:rounded-sm [&_mark]:px-0.5 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-0.5 [&_table]:border-collapse [&_table]:w-full [&_table]:my-2 [&_td]:border [&_td]:border-gray-300 [&_td]:px-2 [&_td]:py-1.5 [&_th]:border [&_th]:border-gray-300 [&_th]:px-2 [&_th]:py-1.5 [&_th]:font-semibold [&_th]:bg-gray-100"
                   dangerouslySetInnerHTML={{ __html: formatContentHtml(news.why_important) }}
