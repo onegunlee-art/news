@@ -132,6 +132,11 @@ export default function NewsDetailPage() {
     }
   }, [id])
 
+  // 기사가 바뀌면 AI 분석 보기는 항상 접힌 상태로 리셋
+  useEffect(() => {
+    setAnalysisCollapsed(true)
+  }, [id])
+
   // 기사 상세 진입 시 항상 맨 위로 스크롤 (진입 직후 + 로딩 완료 후)
   useEffect(() => {
     window.scrollTo(0, 0)
