@@ -413,26 +413,13 @@ export default function NewsDetailPage() {
               <div className="flex justify-between items-center gap-4 mb-3">
                 <h3 className="flex items-center gap-2 text-sm font-semibold text-primary-500 uppercase tracking-wider shrink-0">
                   <SparklesIcon className="w-4 h-4" strokeWidth={2} />
-                  {analysisCollapsed ? (
-                    <button
-                      type="button"
-                      onClick={() => setAnalysisCollapsed(false)}
-                      className="font-semibold text-primary-500 hover:text-primary-600 cursor-pointer"
-                    >
-                      원문 AI 분석 보기
-                    </button>
-                  ) : (
-                    <>
-                      원문 AI 분석
-                      <button
-                        type="button"
-                        onClick={() => setAnalysisCollapsed(true)}
-                        className="font-semibold text-primary-500 hover:text-primary-600 cursor-pointer"
-                      >
-                        접기
-                      </button>
-                    </>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => setAnalysisCollapsed((c) => !c)}
+                    className="font-semibold text-primary-500 hover:text-primary-600 cursor-pointer"
+                  >
+                    {analysisCollapsed ? '원문 AI 분석 펼치기' : '원문 AI 분석 접기'}
+                  </button>
                 </h3>
                 {news.url && news.url !== '#' && (
                   <a
