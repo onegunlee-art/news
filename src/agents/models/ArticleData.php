@@ -25,8 +25,7 @@ final class ArticleData
         private readonly ?string $imageUrl = null,
         private readonly ?string $language = null,
         private readonly ?string $source = null,
-        private readonly array $metadata = [],
-        private readonly ?string $subtitle = null
+        private readonly array $metadata = []
     ) {}
 
     public function getUrl(): string
@@ -64,11 +63,6 @@ final class ArticleData
         return $this->source;
     }
 
-    public function getSubtitle(): ?string
-    {
-        return $this->subtitle;
-    }
-
     public function getImageUrl(): ?string
     {
         return $this->imageUrl;
@@ -89,8 +83,7 @@ final class ArticleData
             imageUrl: $imageUrl,
             language: $this->language,
             source: $this->source,
-            metadata: $this->metadata,
-            subtitle: $this->subtitle
+            metadata: $this->metadata
         );
     }
 
@@ -136,7 +129,6 @@ final class ArticleData
             'image_url' => $this->imageUrl,
             'language' => $this->language,
             'metadata' => $this->metadata,
-            'subtitle' => $this->subtitle,
             'content_length' => $this->getContentLength(),
             'word_count' => $this->getWordCount()
         ];
@@ -157,8 +149,7 @@ final class ArticleData
             imageUrl: $data['image_url'] ?? null,
             language: $data['language'] ?? null,
             source: $data['source'] ?? null,
-            metadata: $data['metadata'] ?? [],
-            subtitle: $data['subtitle'] ?? null
+            metadata: $data['metadata'] ?? []
         );
     }
 }

@@ -122,7 +122,6 @@ $hasOriginalSource = isset($newsColumns['original_source']);
 $hasOriginalTitle  = isset($newsColumns['original_title']);
 $hasAuthor         = isset($newsColumns['author']);
 $hasPublishedAt    = isset($newsColumns['published_at']);
-$hasSubtitle       = isset($newsColumns['subtitle']);
 $hasStatus         = isset($newsColumns['status']);
 $hasUpdatedAt      = isset($newsColumns['updated_at']);
 $hasCategoryParent = isset($newsColumns['category_parent']);
@@ -158,7 +157,6 @@ if ($method === 'POST') {
     $categoryParent = $input['category_parent'] ?? '';
     $category = $input['category'] ?? '';  // 하위 카테고리 (slug 또는 직접 입력)
     $title = $input['title'] ?? '';
-    $subtitle = $input['subtitle'] ?? null;
     $content = $input['content'] ?? '';
     $whyImportant = $input['why_important'] ?? null;
     $narration = $input['narration'] ?? null;
@@ -265,12 +263,6 @@ if ($method === 'POST') {
             $placeholders = ['?', '?', '?', '?', '?', '?', '?', 'NOW()'];
         }
         
-        if ($hasSubtitle) {
-            $columns[] = 'subtitle';
-            $values[] = $subtitle;
-            $placeholders[] = '?';
-        }
-
         if ($hasWhyImportant) {
             $columns[] = 'why_important';
             $values[] = $whyImportant;
@@ -399,7 +391,6 @@ if ($method === 'GET') {
             $selCols = $hasCategoryParent
                 ? 'id, category_parent, category, title, description, content, source, url, image_url, created_at, updated_at'
                 : 'id, category, title, description, content, source, url, image_url, created_at, updated_at';
-            if ($hasSubtitle) $selCols .= ', subtitle';
             if ($hasWhyImportant) $selCols .= ', why_important';
             if ($hasNarration) $selCols .= ', narration';
             if ($hasFuturePrediction) $selCols .= ', future_prediction';
@@ -544,9 +535,6 @@ if ($method === 'GET') {
         if ($hasPublishedAt) {
             $selectColumns .= ', published_at';
         }
-        if ($hasSubtitle) {
-            $selectColumns = str_replace('title,', 'title, subtitle,', $selectColumns);
-        }
         if ($hasStatus) {
             $selectColumns .= ', status';
         }
@@ -617,7 +605,6 @@ if ($method === 'PUT') {
     $categoryParent = $input['category_parent'] ?? '';
     $category = $input['category'] ?? '';
     $title = $input['title'] ?? '';
-    $subtitle = $input['subtitle'] ?? null;
     $content = $input['content'] ?? '';
     $whyImportant = $input['why_important'] ?? null;
     $narration = $input['narration'] ?? null;
@@ -786,11 +773,6 @@ if ($method === 'PUT') {
         if ($hasPublishedAt) {
             $setClauses[] = 'published_at = ?';
             $values[] = $publishedAt;
-        }
-        
-        if ($hasSubtitle) {
-            $setClauses[] = 'subtitle = ?';
-            $values[] = $subtitle;
         }
         
         if ($hasStatus && $status !== null) {

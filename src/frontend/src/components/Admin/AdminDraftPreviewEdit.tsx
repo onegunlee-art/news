@@ -9,7 +9,6 @@ import { extractTitleFromUrl } from '../../utils/extractTitleFromUrl'
 export interface DraftArticle {
   id: number
   title: string
-  subtitle?: string | null
   description?: string | null
   content: string | null
   why_important: string | null
@@ -45,7 +44,7 @@ const sanitizeText = (text: string): string =>
     .join('\n')
     .replace(/\n{3,}/g, '\n\n')
 
-type EditSection = 'title' | 'subtitle' | 'editorial' | 'why_important' | 'narration' | 'content' | null
+type EditSection = 'title' | 'editorial' | 'why_important' | 'narration' | 'content' | null
 
 const CATEGORIES = [
   { id: 'diplomacy', name: '외교', color: 'from-blue-500 to-cyan-500' },
@@ -140,7 +139,7 @@ export default function AdminDraftPreviewEdit({
   }
 
   const handleSectionChange = useCallback(
-    (field: 'title' | 'subtitle' | 'why_important' | 'narration' | 'content', value: string) => {
+    (field: 'title' | 'why_important' | 'narration' | 'content', value: string) => {
       setNews((prev) => ({ ...prev, [field]: value }))
     },
     []
@@ -163,7 +162,6 @@ export default function AdminDraftPreviewEdit({
         category_parent: categoryParent,
         category: subVal || null,
         title: news.title,
-        subtitle: news.subtitle ?? null,
         original_source: news.original_source ?? null,
         original_title: news.original_title ?? null,
         why_important: news.why_important ? normalizeEditorHtml(news.why_important) : null,
@@ -341,36 +339,6 @@ export default function AdminDraftPreviewEdit({
               />
             ) : (
               <h1 className="text-2xl font-bold text-gray-900 leading-snug">{news.title}</h1>
-            )}
-          </div>
-
-          {/* 부제목 — 수정/미리보기 토글 */}
-          <div className="mb-3">
-            <div className="flex items-center justify-between gap-2 mb-2">
-              <span className="text-xs text-gray-400">부제목</span>
-              <button
-                onClick={() =>
-                  setEditingSection(editingSection === 'subtitle' ? null : 'subtitle')
-                }
-                className="text-xs px-2 py-1 rounded bg-slate-600 hover:bg-slate-500 text-slate-200"
-              >
-                {editingSection === 'subtitle' ? '적용' : '수정'}
-              </button>
-            </div>
-            {editingSection === 'subtitle' ? (
-              <textarea
-                value={news.subtitle ?? ''}
-                onChange={(e) => handleSectionChange('subtitle', e.target.value)}
-                rows={2}
-                className="w-full text-lg text-gray-500 italic bg-slate-50 border border-slate-200 px-3 py-2 leading-relaxed"
-                placeholder="부제목 (선택)"
-              />
-            ) : (
-              (news.subtitle && (
-                <p className="text-lg text-gray-500 italic leading-relaxed whitespace-pre-wrap">
-                  {news.subtitle}
-                </p>
-              )) || null
             )}
           </div>
 

@@ -118,13 +118,6 @@ try {
         $hasOriginalTitle = $checkCol->rowCount() > 0;
     } catch (Exception $e) {}
     
-    // subtitle 컬럼 존재 여부 확인 (부제목)
-    $hasSubtitle = false;
-    try {
-        $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'subtitle'");
-        $hasSubtitle = $checkCol->rowCount() > 0;
-    } catch (Exception $e) {}
-    
     // updated_at 컬럼 존재 여부 확인 (admin에서 업데이트한 날짜; 없을 수 있음)
     $hasUpdatedAt = false;
     try {
@@ -201,10 +194,6 @@ try {
     if ($hasOriginalTitle) {
         $columns .= ', original_title';
     }
-    if ($hasSubtitle) {
-        $columns = str_replace('title,', 'title, subtitle,', $columns);
-    }
-    
     // #region agent log
     $debugPayload('detail.php:columns', 'optional columns built', ['hasWhyImportant' => $hasWhyImportant, 'hasNarration' => $hasNarration, 'hasSourceUrl' => $hasSourceUrl, 'hasPublishedAt' => $hasPublishedAt, 'hasOriginalSource' => $hasOriginalSource, 'hasOriginalTitle' => $hasOriginalTitle, 'hasUpdatedAt' => $hasUpdatedAt, 'columns' => $columns], 'H1');
     // #endregion
@@ -304,7 +293,6 @@ try {
         'category' => $news['category'] ?? null,
         'category_parent' => $categoryParent,
         'title' => $news['title'],
-        'subtitle' => $hasSubtitle ? ($news['subtitle'] ?? null) : null,
         'description' => $news['description'],
         'content' => $news['content'],
         'why_important' => $hasWhyImportant ? ($news['why_important'] ?? null) : null,

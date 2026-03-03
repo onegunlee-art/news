@@ -91,7 +91,6 @@ interface NewsArticle {
   category: string;
   category_parent?: string;
   title: string;
-  subtitle?: string;
   description?: string;
   content: string;
   why_important?: string;
@@ -394,7 +393,6 @@ const AdminPage: React.FC = () => {
   const [categorySubCustom, setCategorySubCustom] = useState<string>('');
   const [newsSearchQuery, _setNewsSearchQuery] = useState('');
   const [newsTitle, setNewsTitle] = useState('');
-  const [newsSubtitle, setNewsSubtitle] = useState('');
   const [newsContent, setNewsContent] = useState('');
   const [newsWhyImportant, setNewsWhyImportant] = useState('');
   const [newsNarration, setNewsNarration] = useState('');
@@ -911,7 +909,6 @@ const AdminPage: React.FC = () => {
     } else {
       setEditingNewsId(null);
       setNewsTitle('');
-      setNewsSubtitle('');
       setNewsContent('');
       setNewsWhyImportant('');
       setNewsNarration('');
@@ -945,7 +942,6 @@ const AdminPage: React.FC = () => {
     setDraftDetail({
       id: draft.id!,
       title: draft.title,
-      subtitle: draft.subtitle ?? null,
       description: draft.description ?? null,
       content: draft.content ?? '',
       why_important: draft.why_important ?? null,
@@ -971,7 +967,6 @@ const AdminPage: React.FC = () => {
   const handleEditNews = (news: NewsArticle) => {
     setEditingNewsId(news.id || null);
     setNewsTitle(news.title);
-    setNewsSubtitle(news.subtitle || '');
     setNewsContent(news.content);
     setNewsWhyImportant(news.why_important || '');
     setNewsNarration(news.narration || '');
@@ -1002,7 +997,6 @@ const AdminPage: React.FC = () => {
   const handleCancelEdit = () => {
     setEditingNewsId(null);
     setNewsTitle('');
-    setNewsSubtitle('');
     setNewsContent('');
     setNewsWhyImportant('');
     setNewsNarration('');
@@ -1739,7 +1733,6 @@ const AdminPage: React.FC = () => {
                             const article = data.article as Record<string, unknown> | undefined;
                             setAiUrl(articleUrl.trim());
                             setNewsTitle((a.news_title as string) || (article?.title as string) || '');
-                            setNewsSubtitle((a.subtitle as string) || '');
                             if (article) {
                               setArticleImageUrl((article.image_url as string) || '');
                               setArticleSummary((article.description as string) || '');
@@ -2192,26 +2185,6 @@ const AdminPage: React.FC = () => {
                     />
                   </div>
 
-                  {/* 부제목 입력 */}
-                  <div>
-                    <label className="block text-slate-300 mb-2 text-sm font-medium">
-                      부제목 <span className="text-slate-500 text-xs">(Subtitle)</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={newsSubtitle}
-                      onChange={(e) => setNewsSubtitle(e.target.value)}
-                      onPaste={(e) => {
-                        e.preventDefault();
-                        const pastedText = e.clipboardData.getData('text');
-                        const sanitized = sanitizeText(pastedText).replace(/\n/g, ' ');
-                        setNewsSubtitle(sanitized);
-                      }}
-                      placeholder="부제목 (Foreign Affairs 등 매체의 서브타이틀)"
-                      className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition text-sm"
-                    />
-                  </div>
-
                   {/* gpt 요약 입력 */}
                   <div>
                     <div className="flex items-center justify-between mb-2">
@@ -2381,7 +2354,6 @@ const AdminPage: React.FC = () => {
                             category_parent: selectedCategory,
                             category: subCategory || undefined,
                             title: newsTitle,
-                            subtitle: newsSubtitle.trim() || null,
                             description: articleSummary.trim() || null,
                             content: cleanContent,
                             why_important: cleanWhyImportant || null,
@@ -2467,7 +2439,6 @@ const AdminPage: React.FC = () => {
                             category_parent: selectedCategory,
                             category: subCategory || undefined,
                             title: newsTitle,
-                            subtitle: newsSubtitle.trim() || null,
                             description: articleSummary.trim() || null,
                             content: cleanContent,
                             why_important: cleanWhyImportant || null,
@@ -2539,7 +2510,6 @@ const AdminPage: React.FC = () => {
                             await loadNewsList();
                             // 폼 초기화
                             setNewsTitle('');
-                            setNewsSubtitle('');
                             setNewsContent('');
                             setNewsWhyImportant('');
                             setNewsNarration('');
@@ -2791,7 +2761,6 @@ const AdminPage: React.FC = () => {
                         category_parent: updates.category_parent ?? draftDetail.category_parent ?? 'diplomacy',
                         category: updates.category ?? draftDetail.category ?? null,
                         title: updates.title ?? draftDetail.title,
-                        subtitle: updates.subtitle ?? draftDetail.subtitle ?? null,
                         description: updates.description ?? draftDetail.description ?? null,
                         content: updates.content ?? draftDetail.content ?? '',
                         why_important: updates.why_important ?? draftDetail.why_important ?? null,
@@ -2834,7 +2803,6 @@ const AdminPage: React.FC = () => {
                         category_parent: currentState.category_parent ?? 'diplomacy',
                         category: currentState.category ?? null,
                         title: currentState.title,
-                        subtitle: currentState.subtitle ?? null,
                         description: currentState.description ?? null,
                         content: currentState.content ?? '',
                         why_important: currentState.why_important ?? null,
@@ -3154,9 +3122,6 @@ const AdminPage: React.FC = () => {
                             GPT 생성 제목
                           </h4>
                           <p className="text-white text-lg font-semibold">{aiResult.news_title}</p>
-                          {!!(aiResult as Record<string, unknown>).subtitle && (
-                            <p className="text-slate-400 text-sm italic mt-1">{String((aiResult as Record<string, unknown>).subtitle)}</p>
-                          )}
                         </div>
                       )}
 
@@ -3474,7 +3439,6 @@ const AdminPage: React.FC = () => {
                             (aiResult.key_points?.map((p, i) => `${i + 1}번. ${p}`).join(' ') || ''))
                           );
                           setNewsWhyImportant('');
-                          setNewsSubtitle(((aiResult as Record<string, unknown>).subtitle as string) || '');
                           setArticleUrl(aiUrl);
                           setArticleOriginalTitle((aiResult.original_title as string) || '');
                         }}

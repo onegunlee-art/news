@@ -25,7 +25,6 @@ import { formatContentHtml, stripHtml } from '../utils/sanitizeHtml'
 interface NewsDetail {
   id: number
   title: string
-  subtitle?: string | null
   description: string | null
   content: string | null
   why_important: string | null
@@ -355,13 +354,6 @@ export default function NewsDetailPage() {
           <h1 className="text-2xl font-bold text-page leading-snug mb-2">
             {news.title}
           </h1>
-
-          {/* 부제목 (Foreign Affairs 등 매체의 서브타이틀) */}
-          {news.subtitle && (
-            <p className="text-lg text-page-secondary italic mb-3 leading-relaxed">
-              {news.subtitle}
-            </p>
-          )}
 
           {/* 매체 설명 */}
           <p className="text-sm text-page-secondary mb-6">

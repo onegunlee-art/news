@@ -25,8 +25,7 @@ final class AnalysisResult
         private readonly ?string $narration = null,
         private readonly ?string $contentSummary = null,
         private readonly ?string $originalTitle = null,
-        private readonly ?string $author = null,
-        private readonly ?string $subtitle = null
+        private readonly ?string $author = null
     ) {}
 
     public function getTranslationSummary(): string
@@ -89,11 +88,6 @@ final class AnalysisResult
         return $this->author;
     }
 
-    public function getSubtitle(): ?string
-    {
-        return $this->subtitle;
-    }
-
     /**
      * 오디오 URL 추가된 새 인스턴스 반환
      */
@@ -109,8 +103,7 @@ final class AnalysisResult
             narration: $this->narration,
             contentSummary: $this->contentSummary,
             originalTitle: $this->originalTitle,
-            author: $this->author,
-            subtitle: $this->subtitle
+            author: $this->author
         );
     }
 
@@ -129,8 +122,7 @@ final class AnalysisResult
             narration: $this->narration,
             contentSummary: $this->contentSummary,
             originalTitle: $this->originalTitle,
-            author: $this->author,
-            subtitle: $this->subtitle
+            author: $this->author
         );
     }
 
@@ -141,7 +133,6 @@ final class AnalysisResult
     {
         return [
             'news_title' => $this->newsTitle,
-            'subtitle' => $this->subtitle,
             'original_title' => $this->originalTitle,
             'author' => $this->author,
             'translation_summary' => $this->translationSummary,
@@ -177,8 +168,7 @@ final class AnalysisResult
             narration: $data['narration'] ?? null,
             contentSummary: $data['content_summary'] ?? null,
             originalTitle: $data['original_title'] ?? null,
-            author: $data['author'] ?? null,
-            subtitle: $data['subtitle'] ?? null
+            author: $data['author'] ?? null
         );
     }
 
