@@ -75,7 +75,7 @@ function chunkBy2<T>(arr: T[]): T[][] {
 
 const TABS: TabType[] = ['최신', '외교', '경제', '특집', '인기']
 /** 특집 탭 위에 표시할 신규 콘텐츠 배지 문구 (변경 시 이 상수만 수정) */
-const SPECIAL_FEATURE_BADGE = 'MSC 2026'
+const SPECIAL_FEATURE_BADGE = 'MSC'
 
 export default function HomePage() {
   const location = useLocation()
@@ -199,10 +199,10 @@ export default function HomePage() {
               >
                 {tab === '특집' ? (
                   <span className="relative inline-block">
-                    {tab}
-                    <span className="absolute -top-1 right-0 translate-x-1/2 rounded-full bg-primary-500 px-1 py-0.5 text-[8px] font-medium leading-none text-white whitespace-nowrap">
+                    <span className="absolute -top-2 right-0 translate-x-1 rounded-full bg-primary-500 px-1 py-0.5 text-[8px] font-medium leading-none text-white whitespace-nowrap">
                       {SPECIAL_FEATURE_BADGE}
                     </span>
+                    {tab}
                   </span>
                 ) : (
                   tab
