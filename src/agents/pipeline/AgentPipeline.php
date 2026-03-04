@@ -60,8 +60,17 @@ class AgentPipeline
      */
     public function setupDefaultPipeline(): self
     {
-        // 1. Validation Agent
-        $scraper = new WebScraperService($this->config['scraper'] ?? []);
+        // 1. Validation Agent (scraper: config/agents.php 기반 + 호출부 오버라이드)
+        $scraperConfig = $this->config['scraper'] ?? [];
+        if (!empty($this->config['project_root'])) {
+            $agentsPath = rtrim($this->config['project_root'], '/\\') . '/config/agents.php';
+            if (is_file($agentsPath)) {
+                $agents = require $agentsPath;
+                $base = $agents['scraper'] ?? [];
+                $scraperConfig = array_merge($base, $scraperConfig);
+            }
+        }
+        $scraper = new WebScraperService($scraperConfig);
         $this->addAgent(new ValidationAgent($this->openai, $scraper, $this->config['validation'] ?? []));
 
         // 2. Analysis Agent (Google TTS, RAG, Persona 사용 시 주입) — 썸네일보다 먼저 실행해 narration 전달

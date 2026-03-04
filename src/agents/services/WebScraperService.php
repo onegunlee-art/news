@@ -20,6 +20,8 @@ class WebScraperService
 {
     private array $config;
     private string $userAgent;
+    /** @var int|null Last HTTP code from isAccessible (for debugging) */
+    private ?int $lastHttpCode = null;
 
     public function __construct(array $config = [])
     {
@@ -48,8 +50,8 @@ class WebScraperService
      */
     private function fetchHtml(string $url): string
     {
-        $ch = curl_init($url);
-        curl_setopt_array($ch, [
+        $ch = \curl_init($url);
+        \curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_MAXREDIRS => 5,
@@ -72,10 +74,10 @@ class WebScraperService
             CURLOPT_COOKIEFILE => '',
         ]);
 
-        $html = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $error = curl_error($ch);
-        curl_close($ch);
+        $html = \curl_exec($ch);
+        $httpCode = \curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = \curl_error($ch);
+        \curl_close($ch);
 
         if ($httpCode !== 200) {
             // 403/451 등 → 봇 차단 가능성
@@ -443,13 +445,31 @@ class WebScraperService
     }
 
     /**
-     * URL 접근 가능 여부 확인 (HEAD → GET fallback)
+     * Last HTTP code from isAccessible (for debugging). Null before first call.
+     */
+    public function getLastHttpCode(): ?int
+    {
+        return $this->lastHttpCode;
+    }
+
+    /**
+     * URL 접근 가능 여부 확인 (HEAD → GET fallback).
+     * skip_head_domains에 포함된 호스트는 HEAD를 건너뛰고 GET만 사용 (일부 사이트 HEAD 차단 대응).
      */
     public function isAccessible(string $url): bool
     {
+        $this->lastHttpCode = null;
+        $host = parse_url($url, PHP_URL_HOST);
+        $skipHeadDomains = $this->config['skip_head_domains'] ?? [];
+        $skipHead = $host !== null && in_array($host, $skipHeadDomains, true);
+
+        if ($skipHead) {
+            return $this->isAccessibleGetOnly($url);
+        }
+
         // HEAD 요청 먼저 시도
-        $ch = curl_init($url);
-        curl_setopt_array($ch, [
+        $ch = \curl_init($url);
+        \curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_NOBODY => true,
             CURLOPT_FOLLOWLOCATION => true,
@@ -461,34 +481,40 @@ class WebScraperService
             CURLOPT_SSL_VERIFYPEER => $this->config['verify_ssl'] ?? true,
         ]);
 
-        curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
+        \curl_exec($ch);
+        $httpCode = (int) \curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $this->lastHttpCode = $httpCode;
+        \curl_close($ch);
 
         if ($httpCode >= 200 && $httpCode < 400) {
             return true;
         }
 
-        // HEAD가 실패하면 GET으로 재시도 (일부 사이트는 HEAD를 차단)
-        if ($httpCode === 403 || $httpCode === 405 || $httpCode === 0) {
-            $ch = curl_init($url);
-            curl_setopt_array($ch, [
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_FOLLOWLOCATION => true,
-                CURLOPT_TIMEOUT => 15,
-                CURLOPT_USERAGENT => $this->userAgent,
-                CURLOPT_HTTPHEADER => [
-                    'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                ],
-                CURLOPT_SSL_VERIFYPEER => $this->config['verify_ssl'] ?? true,
-            ]);
-            curl_exec($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            curl_close($ch);
+        // HEAD가 실패하면 무조건 GET으로 한 번 재시도 (HEAD를 막는 사이트 대응)
+        return $this->isAccessibleGetOnly($url);
+    }
 
-            return $httpCode >= 200 && $httpCode < 400;
-        }
+    /**
+     * GET 요청만으로 접근 가능 여부 확인 (HEAD 미사용)
+     */
+    private function isAccessibleGetOnly(string $url): bool
+    {
+        $ch = \curl_init($url);
+        \curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_TIMEOUT => 15,
+            CURLOPT_USERAGENT => $this->userAgent,
+            CURLOPT_HTTPHEADER => [
+                'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            ],
+            CURLOPT_SSL_VERIFYPEER => $this->config['verify_ssl'] ?? true,
+        ]);
+        \curl_exec($ch);
+        $httpCode = (int) \curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $this->lastHttpCode = $httpCode;
+        \curl_close($ch);
 
-        return false;
+        return $httpCode >= 200 && $httpCode < 400;
     }
 }

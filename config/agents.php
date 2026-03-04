@@ -54,6 +54,12 @@ return [
         ],
     ],
 
+    // WebScraperService (URL 접근 검사·스크래핑). HEAD를 막는 사이트는 skip_head_domains에 추가
+    'scraper' => [
+        'timeout' => 60,
+        'skip_head_domains' => ['www.economist.com', 'economist.com'],
+    ],
+
     // 파이프라인 순서
     'pipeline' => [
         'validation',
