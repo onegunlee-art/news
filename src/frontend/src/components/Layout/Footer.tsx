@@ -56,8 +56,9 @@ export default function Footer() {
       </div>
 
       <div className="border-t border-page">
-        <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 py-4">
-          <p className="text-xs text-page-muted text-center">{copyright}</p>
+        <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 py-4 text-center">
+          <p className="text-xs text-page-muted">사업자등록번호: 178-86-03814 | 대표: 이원근</p>
+          <p className="text-xs text-page-muted mt-1">{copyright}</p>
         </div>
       </div>
 
