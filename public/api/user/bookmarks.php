@@ -39,7 +39,7 @@ try {
     $total = (int) $countStmt->fetchColumn();
 
     $sql = "SELECT b.id AS bookmark_id, b.news_id, b.memo, b.created_at,
-            n.title, n.description, n.content, n.source, n.image_url, n.published_at
+            n.title, n.description, n.content, n.source, n.image_url, n.published_at, n.category
             FROM bookmarks b
             INNER JOIN news n ON n.id = b.news_id
             WHERE b.user_id = ?
@@ -60,6 +60,7 @@ try {
             'source' => $r['source'],
             'image_url' => $r['image_url'],
             'published_at' => $r['published_at'],
+            'category' => $r['category'] ?? null,
             'memo' => $r['memo'],
             'created_at' => $r['created_at'],
             'bookmarked_at' => $r['created_at'],

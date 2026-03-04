@@ -12,6 +12,18 @@ import TermsModal from '../components/Common/TermsModal'
 
 const CONTAINER_CLASS = 'max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4'
 
+/** 기사 리스트와 동일: 하위 카테고리 라벨 (8개 + 직접입력은 그대로) */
+const subCategoryToLabel: Record<string, string> = {
+  politics_diplomacy: 'Politics/Diplomacy',
+  economy_industry: 'Economy/Industry',
+  society: 'Society',
+  security_conflict: 'Security/Conflict',
+  environment: 'Environment',
+  science_technology: 'Science/Technology',
+  culture: 'Culture',
+  health_development: 'Health/Development',
+}
+
 export default function ProfilePage() {
   const { user, isAuthenticated, isSubscribed, logout, initializeAuth } = useAuthStore()
   const hasAuth = !!user || isAuthenticated || !!localStorage.getItem('access_token')
@@ -504,29 +516,35 @@ function BookmarkList({ bookmarks }: { bookmarks: any[] }) {
   }
   return (
     <div className="space-y-0 divide-y divide-[var(--border-color)]">
-      {bookmarks.map((item, index) => (
-        <motion.div
-          key={item.id}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: index * 0.05 }}
-        >
-          <Link to={`/news/${item.id}`} className="block py-4 hover:bg-page-secondary/50 transition-colors -mx-5 px-5 rounded-lg">
-            <h3 className="font-medium text-page mb-1 line-clamp-2 hover:text-page-secondary transition-colors text-sm">
-              {item.title}
-            </h3>
-            <div className="flex items-center gap-2 text-xs text-page-secondary">
-              <span>{formatSourceDisplayName(item.source) || 'The Gist'}</span>
-              {item.bookmarked_at && (
-                <>
-                  <span>·</span>
-                  <span>{new Date(item.bookmarked_at).toLocaleDateString('ko-KR')}</span>
-                </>
-              )}
-            </div>
-          </Link>
-        </motion.div>
-      ))}
+      {bookmarks.map((item, index) => {
+        const categoryLabel = item.category ? (subCategoryToLabel[item.category] ?? item.category) : (formatSourceDisplayName(item.source) || 'The Gist')
+        const dateStr = item.published_at
+          ? `${new Date(item.published_at).getFullYear()}년 ${new Date(item.published_at).getMonth() + 1}월 ${new Date(item.published_at).getDate()}일`
+          : ''
+        return (
+          <motion.div
+            key={item.id}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.05 }}
+          >
+            <Link to={`/news/${item.id}`} className="block py-4 hover:bg-page-secondary/50 transition-colors -mx-5 px-5 rounded-lg">
+              <h3 className="font-medium text-page mb-1 line-clamp-2 hover:text-page-secondary transition-colors text-sm">
+                {item.title}
+              </h3>
+              <div className="flex items-center gap-2 text-xs text-page-secondary">
+                <span className="font-medium text-primary-500">{categoryLabel}</span>
+                {dateStr && (
+                  <>
+                    <span className="text-page-muted">|</span>
+                    <span>{dateStr}</span>
+                  </>
+                )}
+              </div>
+            </Link>
+          </motion.div>
+        )
+      })}
     </div>
   )
 }
