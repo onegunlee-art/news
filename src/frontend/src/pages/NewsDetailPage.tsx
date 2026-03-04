@@ -117,6 +117,8 @@ export default function NewsDetailPage() {
       title: data.title,
       description: data.description ?? data.content ?? null,
       source: data.source ?? null,
+      category: data.category ?? null,
+      published_at: data.published_at ?? null,
     })
     const imageUrl = data.image_url || getPlaceholderImageUrl(
       { id: data.id, title: data.title, description: data.description, published_at: data.published_at, url: data.url, source: data.source },

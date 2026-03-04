@@ -165,6 +165,8 @@ function SearchArticleCard({ article }: { article: NewsItem }) {
       title: article.title,
       description: article.description ?? null,
       source: article.source ?? null,
+      category: article.category ?? null,
+      published_at: article.published_at ?? null,
     })
 
     try {

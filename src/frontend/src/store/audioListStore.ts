@@ -6,6 +6,8 @@ export interface AudioListItem {
   title: string
   description?: string | null
   source?: string | null
+  category?: string | null
+  published_at?: string | null
   listenedAt: string // ISO date
 }
 

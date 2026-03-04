@@ -484,9 +484,21 @@ function AudioList({ items }: { items: AudioListItem[] }) {
               {item.title}
             </h3>
             <div className="flex items-center gap-2 text-xs text-page-secondary">
-              <span>{formatSourceDisplayName(item.source) || 'The Gist'}</span>
-              <span>·</span>
-              <span>{item.listenedAt ? new Date(item.listenedAt).toLocaleDateString('ko-KR') : ''}</span>
+              <span className="font-medium text-primary-500">
+                {item.category ? (subCategoryToLabel[item.category] ?? item.category) : (formatSourceDisplayName(item.source) || 'The Gist')}
+              </span>
+              {(item.published_at || item.listenedAt) && (
+                <>
+                  <span className="text-page-muted">|</span>
+                  <span>
+                    {item.published_at
+                      ? `${new Date(item.published_at).getFullYear()}년 ${new Date(item.published_at).getMonth() + 1}월 ${new Date(item.published_at).getDate()}일`
+                      : item.listenedAt
+                        ? new Date(item.listenedAt).toLocaleDateString('ko-KR')
+                        : ''}
+                  </span>
+                </>
+              )}
             </div>
           </Link>
         </motion.div>
