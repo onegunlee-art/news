@@ -198,12 +198,12 @@ export default function HomePage() {
                 }`}
               >
                 {tab === '특집' ? (
-                  <>
-                    <span className="mb-1 rounded-full bg-primary-500 px-2.5 py-1 text-xs font-medium text-white">
+                  <span className="relative inline-block">
+                    {tab}
+                    <span className="absolute -top-1 right-0 translate-x-1/2 rounded-full bg-primary-500 px-1 py-0.5 text-[8px] font-medium leading-none text-white whitespace-nowrap">
                       {SPECIAL_FEATURE_BADGE}
                     </span>
-                    <span>{tab}</span>
-                  </>
+                  </span>
                 ) : (
                   tab
                 )}
