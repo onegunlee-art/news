@@ -32,23 +32,28 @@ class WebScraperService
     }
 
     /**
-     * URL에서 기사 데이터 추출
+     * URL에서 기사 데이터 추출 (cURL 실패 시 Jina fallback 사용 가능)
      */
     public function scrape(string $url): ArticleData
     {
-        $html = $this->fetchHtml($url);
-        
-        if (empty($html)) {
-            throw new \RuntimeException("Failed to fetch URL: {$url}");
+        try {
+            $html = $this->fetchHtmlDirect($url);
+            if (empty($html)) {
+                throw new \RuntimeException("Failed to fetch URL: {$url}");
+            }
+            return $this->parseHtml($url, $html);
+        } catch (\Throwable $e) {
+            if ($this->config['jina_fallback'] ?? false) {
+                return $this->scrapeViaJina($url);
+            }
+            throw $e;
         }
-
-        return $this->parseHtml($url, $html);
     }
 
     /**
-     * HTML 가져오기 (브라우저 수준 헤더로 페이월/봇 차단 우회)
+     * HTML 가져오기 - cURL 직접 요청 (브라우저 수준 헤더로 페이월/봇 차단 우회)
      */
-    private function fetchHtml(string $url): string
+    private function fetchHtmlDirect(string $url): string
     {
         $ch = \curl_init($url);
         \curl_setopt_array($ch, [
@@ -88,6 +93,105 @@ class WebScraperService
         }
 
         return $html ?: '';
+    }
+
+    /**
+     * Jina AI Reader로 URL 콘텐츠 가져오기 (cURL 차단 사이트 우회)
+     * @return array{title?: string, description?: string, content?: string, url?: string, image?: string}
+     */
+    private function fetchViaJina(string $url): array
+    {
+        $jinaUrl = 'https://r.jina.ai/' . $url;
+        $ch = \curl_init($jinaUrl);
+        \curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_TIMEOUT => $this->config['timeout'] ?? 60,
+            CURLOPT_USERAGENT => $this->userAgent,
+            CURLOPT_HTTPHEADER => [
+                'Accept: application/json',
+                'X-Return-Format: json',
+            ],
+            CURLOPT_SSL_VERIFYPEER => $this->config['verify_ssl'] ?? true,
+        ]);
+
+        $body = \curl_exec($ch);
+        $httpCode = (int) \curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        \curl_close($ch);
+
+        if ($httpCode < 200 || $httpCode >= 300 || $body === false || $body === '') {
+            throw new \RuntimeException("Jina Reader failed (HTTP {$httpCode}) for: {$url}");
+        }
+
+        $decoded = json_decode($body, true);
+        if (!is_array($decoded)) {
+            throw new \RuntimeException("Jina Reader returned invalid JSON for: {$url}");
+        }
+
+        // 지원하는 응답 형식: { "data": { ... } } 또는 최상위 필드
+        $data = $decoded['data'] ?? $decoded;
+        if (!is_array($data)) {
+            throw new \RuntimeException("Jina Reader response missing data for: {$url}");
+        }
+
+        return $data;
+    }
+
+    /**
+     * Jina AI Reader로 기사 추출 후 ArticleData 구성
+     */
+    private function scrapeViaJina(string $url): ArticleData
+    {
+        $data = $this->fetchViaJina($url);
+
+        $title = $data['title'] ?? '';
+        $content = $data['content'] ?? '';
+        $description = $data['description'] ?? null;
+        $imageUrl = null;
+        if (!empty($data['image'])) {
+            $imageUrl = is_string($data['image']) ? $data['image'] : ($data['image']['src'] ?? null);
+        }
+        if ($imageUrl === null && !empty($data['images']) && is_array($data['images'])) {
+            $img = $data['images'][0] ?? $data['images'];
+            $imageUrl = is_string($img) ? $img : ($img['src'] ?? null);
+        }
+
+        if ($title === '' && $content === '') {
+            throw new \RuntimeException("Jina Reader returned no title or content for: {$url}");
+        }
+
+        if ($title === '' && $content !== '') {
+            $title = mb_substr(strip_tags($content), 0, 80) . '…';
+        }
+
+        return new ArticleData(
+            url: $data['url'] ?? $url,
+            title: $title,
+            content: $content,
+            description: $description,
+            author: $data['author'] ?? null,
+            publishedAt: $data['publishedDate'] ?? $data['published_at'] ?? null,
+            imageUrl: $imageUrl,
+            language: $data['language'] ?? null,
+            source: $this->extractSourceFromUrl($url),
+            metadata: ['via_jina' => true]
+        );
+    }
+
+    /**
+     * URL에서 도메인을 소스명으로 추출
+     */
+    private function extractSourceFromUrl(string $url): ?string
+    {
+        $host = parse_url($url, PHP_URL_HOST);
+        if ($host === null || $host === '') {
+            return null;
+        }
+        $host = strtolower($host);
+        if (str_starts_with($host, 'www.')) {
+            $host = substr($host, 4);
+        }
+        return $host;
     }
 
     /**
@@ -464,7 +568,14 @@ class WebScraperService
         $skipHead = $host !== null && in_array($host, $skipHeadDomains, true);
 
         if ($skipHead) {
-            return $this->isAccessibleGetOnly($url);
+            $ok = $this->isAccessibleGetOnly($url);
+            if ($ok) {
+                return true;
+            }
+            if ($this->config['jina_fallback'] ?? false) {
+                return true;
+            }
+            return false;
         }
 
         // HEAD 요청 먼저 시도
@@ -491,7 +602,15 @@ class WebScraperService
         }
 
         // HEAD가 실패하면 무조건 GET으로 한 번 재시도 (HEAD를 막는 사이트 대응)
-        return $this->isAccessibleGetOnly($url);
+        $getOk = $this->isAccessibleGetOnly($url);
+        if ($getOk) {
+            return true;
+        }
+        // cURL 모두 실패했지만 Jina fallback이 켜져 있으면 접근 가능으로 간주
+        if ($this->config['jina_fallback'] ?? false) {
+            return true;
+        }
+        return false;
     }
 
     /**

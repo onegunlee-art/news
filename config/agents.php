@@ -58,6 +58,7 @@ return [
     'scraper' => [
         'timeout' => 60,
         'skip_head_domains' => ['www.economist.com', 'economist.com'],
+        'jina_fallback' => true,  // cURL 실패 시 Jina AI Reader로 우회
     ],
 
     // 파이프라인 순서
