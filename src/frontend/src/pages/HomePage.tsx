@@ -326,7 +326,7 @@ function ArticleCard({ article, activeTab }: { article: NewsItem; activeTab: Tab
         const sourceDisplay = formatSourceDisplayName(rawSource) || 'The Gist'
         const editorialLine = buildEditorialLine({ dateStr, sourceDisplay, originalTitle })
         const mainContent = stripHtml(detail.narration || detail.content || detail.description || article.description || '')
-        const critiquePart = detail.why_important ? `The Gist's Critique. ${stripHtml(detail.why_important)}` : ''
+        const critiquePart = detail.why_important ? stripHtml(detail.why_important) : ''
         const img = detail.image_url || article.image_url || ''
         openAndPlay(detail.title, editorialLine, mainContent, critiquePart, 1.0, img, Number(newsId))
         return

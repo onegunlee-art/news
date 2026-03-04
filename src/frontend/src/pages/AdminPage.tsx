@@ -66,7 +66,7 @@ function buildTtsParamsForListen(params: {
   const sourceDisplay = formatSourceDisplayName(rawSource) || 'The Gist'
   const meta = buildEditorialLine({ dateStr, sourceDisplay, originalTitle })
   const narration = (params.narration || '').trim()
-  const critiquePart = params.whyImportant ? `The Gist's Critique. ${params.whyImportant.trim()}` : ''
+  const critiquePart = params.whyImportant ? params.whyImportant.trim() : ''
   return { title, meta, narration, critique_part: critiquePart }
 }
 

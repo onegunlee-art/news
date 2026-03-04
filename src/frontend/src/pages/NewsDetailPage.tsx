@@ -106,7 +106,7 @@ export default function NewsDetailPage() {
     const sourceDisplay = formatSourceDisplayName(rawSource) || 'The Gist'
     const originalTitle = (data.original_title && String(data.original_title).trim()) || extractTitleFromUrl(data.url) || '원문'
     const editorialLine = buildEditorialLine({ dateStr, sourceDisplay, originalTitle })
-    const critiqueText = data.why_important ? `The Gist. ${stripHtml(data.why_important)}` : ''
+    const critiqueText = data.why_important ? stripHtml(data.why_important) : ''
     const narrationText = stripHtml(data.narration || data.content || data.description || '')
     if (!narrationText && !critiqueText) {
       alert('재생할 본문 내용이 없습니다.')
