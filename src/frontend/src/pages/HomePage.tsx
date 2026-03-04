@@ -74,6 +74,8 @@ function chunkBy2<T>(arr: T[]): T[][] {
 }
 
 const TABS: TabType[] = ['최신', '외교', '경제', '특집', '인기']
+/** 특집 탭 위에 표시할 신규 콘텐츠 배지 문구 (변경 시 이 상수만 수정) */
+const SPECIAL_FEATURE_BADGE = 'MSC 2026'
 
 export default function HomePage() {
   const location = useLocation()
@@ -189,13 +191,22 @@ export default function HomePage() {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`flex-1 py-3 text-sm font-medium transition-colors relative ${
+                className={`flex-1 py-3 text-sm font-medium transition-colors relative flex flex-col items-center justify-center gap-0 ${
                   activeTab === tab
                     ? 'text-page'
                     : 'text-page-secondary hover:text-page'
                 }`}
               >
-                {tab}
+                {tab === '특집' ? (
+                  <>
+                    <span className="mb-1 rounded-full bg-primary-500 px-2.5 py-1 text-xs font-medium text-white">
+                      {SPECIAL_FEATURE_BADGE}
+                    </span>
+                    <span>{tab}</span>
+                  </>
+                ) : (
+                  tab
+                )}
                 {activeTab === tab && (
                   <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--text-primary)]" />
                 )}
