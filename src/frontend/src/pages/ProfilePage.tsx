@@ -113,6 +113,14 @@ export default function ProfilePage() {
                             SUBSCRIBER
                           </span>
                         )}
+                        {hasAuth && !isSubscribed && (
+                          <Link
+                            to="/subscribe"
+                            className="inline-block mt-2 px-3 py-1.5 text-xs font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors"
+                          >
+                            구독하기
+                          </Link>
+                        )}
                       </div>
                     </div>
                     <button

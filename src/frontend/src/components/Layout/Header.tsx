@@ -69,9 +69,14 @@ export default function Header() {
             </button>
             {/* PC: 텍스트 링크 */}
             {hasAuth ? (
-              <Link to="/profile" className="hidden md:inline text-xs text-page-secondary hover:text-page transition-colors">
-                My Page
-              </Link>
+              <div className="hidden md:flex items-center gap-3">
+                <Link to="/profile" className="text-xs text-page-secondary hover:text-page transition-colors">
+                  My Page
+                </Link>
+                <Link to="/subscribe" className="text-xs text-page-secondary hover:text-page transition-colors">
+                  구독
+                </Link>
+              </div>
             ) : (
               <Link to="/login" className="hidden md:inline text-xs text-page-secondary hover:text-page transition-colors">
                 로그인/회원가입
