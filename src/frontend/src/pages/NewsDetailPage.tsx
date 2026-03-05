@@ -484,7 +484,7 @@ export default function NewsDetailPage() {
           {(() => {
             const backTab: HomeTabType = fromTab && HOME_TABS.includes(fromTab) ? fromTab : (getListLabel() as HomeTabType)
             return (
-              <nav className="flex items-center gap-3 text-sm pt-6 mt-8 border-t border-page" aria-label="기사 네비게이션">
+              <nav className="flex items-center justify-center gap-3 text-sm pt-6 mt-8 border-t border-page" aria-label="기사 네비게이션">
                 {news.prev_article ? (
                   <Link
                     to={`/news/${news.prev_article.id}`}

@@ -284,14 +284,15 @@ try {
             $prevStmt->execute([$boundary, $currentPub, $currentPub, $news['id']]);
             $prevArticle = $prevStmt->fetch(PDO::FETCH_ASSOC);
         } elseif ($fromTab === 'popular' && $hasViewCount) {
-            $ourVc = (int)($news['view_count'] ?? 0) + 1;
+            // 조회수는 이미 이 요청에서 +1 반영됨. 이전/다음은 '현재 기사 기준'으로만 비교 (원래 view_count 사용)
+            $currentVc = (int)($news['view_count'] ?? 0);
             $nextSql = "SELECT id, title FROM news WHERE 1=1 $statusCond AND (view_count < ? OR (view_count = ? AND id < ?)) ORDER BY view_count DESC, id DESC LIMIT 1";
             $nextStmt = $db->prepare($nextSql);
-            $nextStmt->execute([$ourVc, $ourVc, $news['id']]);
+            $nextStmt->execute([$currentVc, $currentVc, $news['id']]);
             $nextArticle = $nextStmt->fetch(PDO::FETCH_ASSOC);
-            $prevSql = "SELECT id, title FROM news WHERE 1=1 $statusCond AND (view_count > ? OR (view_count = ? AND id > ?)) ORDER BY view_count ASC, id ASC LIMIT 1";
+            $prevSql = "SELECT id, title FROM news WHERE 1=1 $statusCond AND id != ? AND (view_count > ? OR (view_count = ? AND id > ?)) ORDER BY view_count ASC, id ASC LIMIT 1";
             $prevStmt = $db->prepare($prevSql);
-            $prevStmt->execute([$ourVc, $ourVc, $news['id']]);
+            $prevStmt->execute([$news['id'], $currentVc, $currentVc, $news['id']]);
             $prevArticle = $prevStmt->fetch(PDO::FETCH_ASSOC);
         } elseif (in_array($fromTab, ['diplomacy', 'economy', 'special'], true) && $hasCategoryParent) {
             $nextSql = "SELECT id, title FROM news WHERE category_parent = ? $statusCond AND ($pubCol < ? OR ($pubCol = ? AND id < ?)) ORDER BY $pubCol DESC, id DESC LIMIT 1";
