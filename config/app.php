@@ -44,7 +44,7 @@ return [
     */
     
     'security' => [
-        'jwt_secret' => getenv('JWT_SECRET') ?: 'your-super-secret-jwt-key-change-in-production',
+        'jwt_secret' => getenv('JWT_SECRET') ?: 'news-context-jwt-secret-key-2026',
         'jwt_expiry' => 3600 * 24, // 24시간
         'jwt_refresh_expiry' => 3600 * 24 * 7, // 7일
         'bcrypt_rounds' => 12,

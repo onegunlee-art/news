@@ -176,11 +176,28 @@ if (!$dbUserId) {
     exit;
 }
 
-// JWT 토큰 생성
-$jwtSecret = 'news-context-jwt-secret-key-2026';
+// JWT secret: config/app.php와 동일한 값 사용 (AuthController 검증과 일치)
+$appConfigPath = null;
+$appConfigTryPaths = [
+    $_SERVER['DOCUMENT_ROOT'] . '/config/app.php',
+    $_SERVER['DOCUMENT_ROOT'] . '/../config/app.php',
+    dirname(__DIR__, 3) . '/config/app.php',
+    dirname(__DIR__, 4) . '/config/app.php',
+    __DIR__ . '/../../../../config/app.php',
+];
+foreach ($appConfigTryPaths as $p) {
+    if (file_exists($p)) { $appConfigPath = $p; break; }
+}
+$appConfig = $appConfigPath ? (require $appConfigPath) : [];
+$jwtSecret = $appConfig['security']['jwt_secret'] ?? 'news-context-jwt-secret-key-2026';
+if (empty($jwtSecret)) {
+    $jwtSecret = 'news-context-jwt-secret-key-2026';
+}
 
+// JWT 토큰 생성 (AuthService::getUserFromToken 검증에 맞춤: type 필드 필수)
 $jwtPayload = [
     'user_id' => $dbUserId,
+    'type' => 'access',
     'kakao_id' => (string)$kakaoId,
     'nickname' => $nickname,
     'provider' => 'kakao',
