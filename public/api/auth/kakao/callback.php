@@ -292,10 +292,11 @@ $userObj = [
 
 kakaoLog('success', ['dbUserId' => $dbUserId, 'nickname' => $nickname]);
 
-// 신규 가입 시 환영 팝업용 데이터 (프로모션 코드 없음)
+// 신규 가입 시: 이용약관 동의 팝업 + 환영 팝업 데이터
 $welcomePopupJs = '';
 if ($isNewUser) {
-    $welcomePopupJs = 'localStorage.setItem("welcome_popup", JSON.stringify({userName:' . json_encode($nickname) . ',ts:Date.now()}));';
+    $welcomePopupJs = 'localStorage.setItem("consent_required", "1");';
+    $welcomePopupJs .= 'localStorage.setItem("welcome_popup", JSON.stringify({userName:' . json_encode($nickname) . ',ts:Date.now()}));';
 }
 
 // HTML → localStorage 저장 후 프론트엔드로 이동

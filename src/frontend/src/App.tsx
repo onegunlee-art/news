@@ -4,6 +4,7 @@ import { useAuthStore } from './store/authStore'
 import Layout from './components/Layout/Layout'
 import AudioPlayerPopup from './components/AudioPlayer/AudioPlayerPopup'
 import WelcomePopup from './components/Common/WelcomePopup'
+import ConsentModal from './components/Common/ConsentModal'
 import { welcomeSettingsApi } from './services/api'
 import HomePage from './pages/HomePage'
 import AllNewsPage from './pages/AllNewsPage'
@@ -23,15 +24,17 @@ import SearchPage from './pages/SearchPage'
 function App() {
   const { initializeAuth } = useAuthStore()
   const [welcomeData, setWelcomeData] = useState<{ userName: string; welcomeMessage: string } | null>(null)
+  const [showConsent, setShowConsent] = useState(() => localStorage.getItem('consent_required') === '1')
 
   useEffect(() => {
     initializeAuth()
-    // persist rehydration 이후에도 localStorage 토큰이 있으면 상태 복구
     const timer = setTimeout(() => initializeAuth(), 150)
     return () => clearTimeout(timer)
   }, [initializeAuth])
 
+  // 동의 팝업이 닫힌 후에만 환영 팝업 처리
   useEffect(() => {
+    if (showConsent) return
     const raw = localStorage.getItem('welcome_popup')
     if (!raw) return
     try {
@@ -52,11 +55,45 @@ function App() {
       }
       localStorage.removeItem('welcome_popup')
     } catch { localStorage.removeItem('welcome_popup') }
-  }, [])
+  }, [showConsent])
+
+  const handleConsentAgree = () => {
+    localStorage.removeItem('consent_required')
+    setShowConsent(false)
+  }
+
+  const handleConsentCancel = async () => {
+    try {
+      const token = localStorage.getItem('access_token')
+      if (token) {
+        await fetch('/api/auth/withdraw', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+            'X-Authorization': `Bearer ${token}`,
+          },
+        })
+      }
+    } catch {}
+    localStorage.removeItem('consent_required')
+    localStorage.removeItem('welcome_popup')
+    localStorage.removeItem('access_token')
+    localStorage.removeItem('refresh_token')
+    localStorage.removeItem('user')
+    localStorage.removeItem('auth-storage')
+    localStorage.removeItem('is_subscribed')
+    window.location.href = '/login'
+  }
 
   return (
     <div className="min-h-screen bg-page">
       <AudioPlayerPopup />
+      <ConsentModal
+        isOpen={showConsent}
+        onAgree={handleConsentAgree}
+        onCancel={handleConsentCancel}
+      />
       {welcomeData && (
         <WelcomePopup
           isOpen={!!welcomeData}
