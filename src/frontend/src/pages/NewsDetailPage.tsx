@@ -69,6 +69,15 @@ const subCategoryToLabel: Record<string, string> = {
 const HOME_TABS = ['최신', '외교', '경제', '특집', '인기'] as const
 type HomeTabType = (typeof HOME_TABS)[number]
 
+/** 진입 탭 → API from_tab (다음 기사가 해당 탭 리스트 기준이 되도록) */
+const fromTabToApi: Record<HomeTabType, string> = {
+  '최신': 'latest',
+  '외교': 'diplomacy',
+  '경제': 'economy',
+  '특집': 'special',
+  '인기': 'popular',
+}
+
 export default function NewsDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -89,7 +98,9 @@ export default function NewsDetailPage() {
     if (!news) return
     let data = news
     try {
-      const res = await newsApi.getDetail(news.id, { _t: Date.now() })
+      const params: Record<string, unknown> = { _t: Date.now() }
+      if (fromTab && fromTabToApi[fromTab]) params.from_tab = fromTabToApi[fromTab]
+      const res = await newsApi.getDetail(news.id, params)
       if (res.data?.success && res.data?.data) {
         data = res.data.data as NewsDetail
         setNews(data)
@@ -154,7 +165,8 @@ export default function NewsDetailPage() {
     setError(null)
 
     try {
-      const response = await newsApi.getDetail(newsId)
+      const params = fromTab && fromTabToApi[fromTab] ? { from_tab: fromTabToApi[fromTab] } : undefined
+      const response = await newsApi.getDetail(newsId, params)
       if (response.data.success) {
         const d = response.data.data
         setNews(d)
@@ -451,6 +463,7 @@ export default function NewsDetailPage() {
           <div className="lg:sticky lg:top-20 pt-6 lg:pt-8 border-t lg:border-t-0 lg:border-l border-page lg:pl-6 mt-6 lg:mt-0">
             <Link
               to={`/news/${news.next_article.id}`}
+              state={fromTab ? { fromTab } : undefined}
               className="block p-4 rounded-xl bg-page-secondary hover:opacity-90 transition-colors group"
             >
               <span className="text-xs font-medium text-page-muted uppercase tracking-wider">다음 기사</span>

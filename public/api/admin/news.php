@@ -467,6 +467,15 @@ if ($method === 'GET') {
             }
         }
         
+        // 최신 탭: 최근 5일(한국시간 기준, 오늘 포함 캘린더 5일) 기사만 — category 없고 published_only일 때
+        if (!$category && !$popular && $publishedOnly && $hasPublishedAt) {
+            $tz = new \DateTimeZone('Asia/Seoul');
+            $nowKst = new \DateTime('now', $tz);
+            $boundary = (clone $nowKst)->modify('-4 days')->setTime(0, 0, 0)->format('Y-m-d H:i:s');
+            $conditions[] = 'COALESCE(published_at, created_at) >= ?';
+            $params[] = $boundary;
+        }
+        
         // 키워드 검색 (제목, 내용, 설명에서 검색) — popular일 때는 적용 안 함
         if ($query && !$popular) {
             $searchTerm = '%' . $query . '%';
