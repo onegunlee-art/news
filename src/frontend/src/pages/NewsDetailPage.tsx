@@ -3,8 +3,6 @@ import { useParams, Link, useNavigate, useLocation } from 'react-router-dom'
 import {
   SparklesIcon,
   ArrowTopRightOnSquareIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
   PlayIcon,
   BookmarkIcon,
   ExclamationTriangleIcon,
@@ -43,6 +41,7 @@ interface NewsDetail {
   author?: string | null
   category?: string | null
   category_parent?: string | null
+  prev_article?: { id: number; title: string } | null
   next_article?: { id: number; title: string } | null
 }
 
@@ -273,17 +272,43 @@ export default function NewsDetailPage() {
       <div className="sticky top-14 z-30 bg-page border-b border-page">
         <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between h-12">
-            {/* 뒤로가기: 진입 탭(최신/인기/외교/경제/특집)으로 홈 이동 + 해당 탭 스크롤 복원 */}
+            {/* 이전 | 목록 | 다음글 */}
             {(() => {
               const backTab: HomeTabType = fromTab && HOME_TABS.includes(fromTab) ? fromTab : (getListLabel() as HomeTabType)
               return (
-                <button
-                  onClick={() => navigate('/', { state: { restoreTab: backTab } })}
-                  className="flex items-center gap-1 text-page-secondary hover:text-page transition-colors"
-                >
-                  <ChevronLeftIcon className="w-5 h-5" strokeWidth={2} />
-                  <span className="text-sm">{backTab}</span>
-                </button>
+                <nav className="flex items-center gap-3 text-sm" aria-label="기사 네비게이션">
+                  {news.prev_article ? (
+                    <Link
+                      to={`/news/${news.prev_article.id}`}
+                      state={fromTab ? { fromTab } : undefined}
+                      className="text-page-secondary hover:text-page transition-colors"
+                    >
+                      이전
+                    </Link>
+                  ) : (
+                    <span className="text-page-muted cursor-default">이전</span>
+                  )}
+                  <span className="text-page-muted" aria-hidden>|</span>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/', { state: { restoreTab: backTab } })}
+                    className="text-page-secondary hover:text-page transition-colors"
+                  >
+                    목록
+                  </button>
+                  <span className="text-page-muted" aria-hidden>|</span>
+                  {news.next_article ? (
+                    <Link
+                      to={`/news/${news.next_article.id}`}
+                      state={fromTab ? { fromTab } : undefined}
+                      className="text-page-secondary hover:text-page transition-colors"
+                    >
+                      다음글
+                    </Link>
+                  ) : (
+                    <span className="text-page-muted cursor-default">다음글</span>
+                  )}
+                </nav>
               )
             })()}
 
@@ -454,30 +479,48 @@ export default function NewsDetailPage() {
               )}
             </div>
           )}
+
+          {/* 하단 네비: 이전 | 목록 | 다음글 */}
+          {(() => {
+            const backTab: HomeTabType = fromTab && HOME_TABS.includes(fromTab) ? fromTab : (getListLabel() as HomeTabType)
+            return (
+              <nav className="flex items-center gap-3 text-sm pt-6 mt-8 border-t border-page" aria-label="기사 네비게이션">
+                {news.prev_article ? (
+                  <Link
+                    to={`/news/${news.prev_article.id}`}
+                    state={fromTab ? { fromTab } : undefined}
+                    className="text-page-secondary hover:text-page transition-colors"
+                  >
+                    이전
+                  </Link>
+                ) : (
+                  <span className="text-page-muted cursor-default">이전</span>
+                )}
+                <span className="text-page-muted" aria-hidden>|</span>
+                <button
+                  type="button"
+                  onClick={() => navigate('/', { state: { restoreTab: backTab } })}
+                  className="text-page-secondary hover:text-page transition-colors"
+                >
+                  목록
+                </button>
+                <span className="text-page-muted" aria-hidden>|</span>
+                {news.next_article ? (
+                  <Link
+                    to={`/news/${news.next_article.id}`}
+                    state={fromTab ? { fromTab } : undefined}
+                    className="text-page-secondary hover:text-page transition-colors"
+                  >
+                    다음글
+                  </Link>
+                ) : (
+                  <span className="text-page-muted cursor-default">다음글</span>
+                )}
+              </nav>
+            )
+          })()}
         </div>
       </motion.article>
-
-      {/* 다음 기사 보기 - 우측 사이드바 (데스크톱) / 본문 하단 (모바일) */}
-      {news.next_article && (
-        <aside className="lg:w-64 flex-shrink-0 order-last lg:order-none">
-          <div className="lg:sticky lg:top-20 pt-6 lg:pt-8 border-t lg:border-t-0 lg:border-l border-page lg:pl-6 mt-6 lg:mt-0">
-            <Link
-              to={`/news/${news.next_article.id}`}
-              state={fromTab ? { fromTab } : undefined}
-              className="block p-4 rounded-xl bg-page-secondary hover:opacity-90 transition-colors group"
-            >
-              <span className="text-xs font-medium text-page-muted uppercase tracking-wider">다음 기사</span>
-              <p className="mt-1 text-sm font-medium text-page line-clamp-2 group-hover:text-primary-600 transition-colors">
-                {news.next_article.title}
-              </p>
-              <span className="inline-flex items-center gap-1 mt-2 text-sm text-primary-500 font-medium">
-                보기
-                <ChevronRightIcon className="w-4 h-4" strokeWidth={2} />
-              </span>
-            </Link>
-          </div>
-        </aside>
-      )}
       </div>
 
       {error && (

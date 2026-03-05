@@ -259,8 +259,9 @@ try {
         }
     } catch (Exception $e) { /* bookmarks 테이블 없을 수 있음 */ }
 
-    // 다음 기사: from_tab(진입 탭)에 따라 해당 리스트에서의 다음 기사 1건
+    // 이전/다음 기사: from_tab(진입 탭)에 따라 해당 리스트에서의 이전·다음 기사 각 1건
     $fromTab = isset($_GET['from_tab']) ? trim((string)$_GET['from_tab']) : '';
+    $prevArticle = null;
     $nextArticle = null;
     $categoryParent = $news['category_parent'] ?? $news['category'] ?? null;
     $statusCond = $hasStatus ? " AND (status = 'published' OR status IS NULL)" : "";
@@ -269,29 +270,39 @@ try {
 
     try {
         if ($fromTab === 'latest') {
-            // 최신 탭: 최근 5일(한국시간) + 작성일 DESC, 리스트에서 다음
             $tz = new DateTimeZone('Asia/Seoul');
             $nowKst = new DateTime('now', $tz);
             $boundary = (clone $nowKst)->modify('-4 days')->setTime(0, 0, 0)->format('Y-m-d H:i:s');
+            // 다음: 리스트에서 더 오래된 글 (pub DESC → 더 작은 pub)
             $nextSql = "SELECT id, title FROM news WHERE 1=1 $statusCond AND $pubCol >= ? AND ($pubCol < ? OR ($pubCol = ? AND id < ?)) ORDER BY $pubCol DESC, id DESC LIMIT 1";
             $nextStmt = $db->prepare($nextSql);
             $nextStmt->execute([$boundary, $currentPub, $currentPub, $news['id']]);
             $nextArticle = $nextStmt->fetch(PDO::FETCH_ASSOC);
+            // 이전: 리스트에서 더 최신 글 (pub ASC → 더 큰 pub)
+            $prevSql = "SELECT id, title FROM news WHERE 1=1 $statusCond AND $pubCol >= ? AND ($pubCol > ? OR ($pubCol = ? AND id > ?)) ORDER BY $pubCol ASC, id ASC LIMIT 1";
+            $prevStmt = $db->prepare($prevSql);
+            $prevStmt->execute([$boundary, $currentPub, $currentPub, $news['id']]);
+            $prevArticle = $prevStmt->fetch(PDO::FETCH_ASSOC);
         } elseif ($fromTab === 'popular' && $hasViewCount) {
-            // 인기 탭: view_count DESC, 리스트에서 다음 (조회수 반영 후 기준)
             $ourVc = (int)($news['view_count'] ?? 0) + 1;
             $nextSql = "SELECT id, title FROM news WHERE 1=1 $statusCond AND (view_count < ? OR (view_count = ? AND id < ?)) ORDER BY view_count DESC, id DESC LIMIT 1";
             $nextStmt = $db->prepare($nextSql);
             $nextStmt->execute([$ourVc, $ourVc, $news['id']]);
             $nextArticle = $nextStmt->fetch(PDO::FETCH_ASSOC);
+            $prevSql = "SELECT id, title FROM news WHERE 1=1 $statusCond AND (view_count > ? OR (view_count = ? AND id > ?)) ORDER BY view_count ASC, id ASC LIMIT 1";
+            $prevStmt = $db->prepare($prevSql);
+            $prevStmt->execute([$ourVc, $ourVc, $news['id']]);
+            $prevArticle = $prevStmt->fetch(PDO::FETCH_ASSOC);
         } elseif (in_array($fromTab, ['diplomacy', 'economy', 'special'], true) && $hasCategoryParent) {
-            // 외교/경제/특집: 같은 category_parent, 작성일 DESC, 리스트에서 다음
             $nextSql = "SELECT id, title FROM news WHERE category_parent = ? $statusCond AND ($pubCol < ? OR ($pubCol = ? AND id < ?)) ORDER BY $pubCol DESC, id DESC LIMIT 1";
             $nextStmt = $db->prepare($nextSql);
             $nextStmt->execute([$fromTab, $currentPub, $currentPub, $news['id']]);
             $nextArticle = $nextStmt->fetch(PDO::FETCH_ASSOC);
+            $prevSql = "SELECT id, title FROM news WHERE category_parent = ? $statusCond AND ($pubCol > ? OR ($pubCol = ? AND id > ?)) ORDER BY $pubCol ASC, id ASC LIMIT 1";
+            $prevStmt = $db->prepare($prevSql);
+            $prevStmt->execute([$fromTab, $currentPub, $currentPub, $news['id']]);
+            $prevArticle = $prevStmt->fetch(PDO::FETCH_ASSOC);
         } else {
-            // from_tab 없거나 미지원: 기존 동작 (같은 category_parent, id DESC)
             $nextWhere = $categoryParent ? "category_parent = ? AND id < ?" : "id < ?";
             $nextSql = "SELECT id, title FROM news WHERE $nextWhere $statusCond ORDER BY id DESC LIMIT 1";
             $nextStmt = $db->prepare($nextSql);
@@ -301,6 +312,15 @@ try {
                 $nextStmt->execute([$news['id']]);
             }
             $nextArticle = $nextStmt->fetch(PDO::FETCH_ASSOC);
+            $prevWhere = $categoryParent ? "category_parent = ? AND id > ?" : "id > ?";
+            $prevSql = "SELECT id, title FROM news WHERE $prevWhere $statusCond ORDER BY id ASC LIMIT 1";
+            $prevStmt = $db->prepare($prevSql);
+            if ($categoryParent) {
+                $prevStmt->execute([$categoryParent, $news['id']]);
+            } else {
+                $prevStmt->execute([$news['id']]);
+            }
+            $prevArticle = $prevStmt->fetch(PDO::FETCH_ASSOC);
         }
     } catch (Exception $e) {}
 
@@ -336,6 +356,7 @@ try {
         'updated_at' => $news['updated_at'] ?? null,
         'time_ago' => $timeAgo,
         'is_bookmarked' => $isBookmarked,
+        'prev_article' => $prevArticle ? ['id' => (int)$prevArticle['id'], 'title' => $prevArticle['title']] : null,
         'next_article' => $nextArticle ? ['id' => (int)$nextArticle['id'], 'title' => $nextArticle['title']] : null,
     ];
     api_log('news/detail', 'GET', 200);
