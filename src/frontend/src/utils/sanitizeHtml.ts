@@ -122,10 +122,21 @@ function normalizeBlockTags(s: string): string {
 /**
  * 텍스트를 HTML로 렌더링할 때 사용
  */
+/**
+ * 스마트 따옴표(curly quotes)를 Noto Sans KR과 일관된 직선 따옴표로 치환
+ */
+function normalizeQuotes(s: string): string {
+  return s
+    .replace(/[\u201C\u201D\u201E\u201F\u2033\u2036]/g, '"')
+    .replace(/[\u2018\u2019\u201A\u201B\u2032\u2035]/g, "'")
+    .replace(/[\u00AB\u00BB]/g, '"')
+}
+
 export function formatContentHtml(text: string | null | undefined): string {
   if (text == null || text === '') return ''
   let s = String(text).replace(/\n/g, '<br/>')
   s = unescapeHtmlEntities(s)
+  s = normalizeQuotes(s)
   s = normalizeBlockTags(s)
   return sanitizeHtml(s)
 }
@@ -137,6 +148,7 @@ export function stripHtml(text: string | null | undefined): string {
   if (text == null || text === '') return ''
   let s = String(text)
   s = unescapeHtmlEntities(s)
+  s = normalizeQuotes(s)
   s = s.replace(/<br\s*\/?>/gi, ' ')
   s = s.replace(/<\/(?:p|div|li|h[1-6])>/gi, ' ')
   s = s.replace(/<[^>]*>/g, '')
