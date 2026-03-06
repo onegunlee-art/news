@@ -11,7 +11,7 @@ header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store, no-cache, must-revalidate');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
 // OPTIONS 요청 처리
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -250,14 +250,24 @@ try {
     }
     
     $isBookmarked = false;
+    $authUserId = null;
+    $userRole = null;
+    $userIsSubscribed = false;
     try {
         $authUserId = getAuthUserId($db);
         if ($authUserId !== null) {
+            $uStmt = $db->prepare("SELECT role, is_subscribed FROM users WHERE id = ?");
+            $uStmt->execute([$authUserId]);
+            $uRow = $uStmt->fetch();
+            if ($uRow) {
+                $userRole = $uRow['role'];
+                $userIsSubscribed = (bool)$uRow['is_subscribed'];
+            }
             $chk = $db->prepare("SELECT 1 FROM bookmarks WHERE user_id = ? AND news_id = ?");
             $chk->execute([$authUserId, $news['id']]);
             $isBookmarked = (bool) $chk->fetch();
         }
-    } catch (Exception $e) { /* bookmarks 테이블 없을 수 있음 */ }
+    } catch (Exception $e) { /* bookmarks/users 테이블 오류 무시 */ }
 
     // 이전/다음 기사: from_tab(진입 탭)에 따라 해당 리스트에서의 이전·다음 기사 각 1건
     $fromTab = isset($_GET['from_tab']) ? trim((string)$_GET['from_tab']) : '';
@@ -360,6 +370,46 @@ try {
         'prev_article' => $prevArticle ? ['id' => (int)$prevArticle['id'], 'title' => $prevArticle['title']] : null,
         'next_article' => $nextArticle ? ['id' => (int)$nextArticle['id'], 'title' => $nextArticle['title']] : null,
     ];
+    // 페이월: 접근 권한 판단
+    $accessGranted = true;
+    $restrictionType = null;
+    try {
+        $statusFilter = $hasStatus ? "(status = 'published' OR status IS NULL)" : "1=1";
+        $latestCol = $hasPublishedAt ? 'COALESCE(published_at, created_at)' : 'created_at';
+        $latestStmt = $db->query(
+            "SELECT id FROM news WHERE $statusFilter ORDER BY $latestCol DESC LIMIT 2"
+        );
+        $latestIds = array_map('intval', $latestStmt->fetchAll(PDO::FETCH_COLUMN));
+    } catch (Exception $e) {
+        $latestIds = [];
+    }
+
+    if ($userRole === 'admin' || $userIsSubscribed) {
+        $accessGranted = true;
+    } elseif (in_array((int)$news['id'], $latestIds, true)) {
+        $accessGranted = true;
+    } elseif ($authUserId && ($news['category_parent'] ?? '') === 'special') {
+        $accessGranted = true;
+    } else {
+        $accessGranted = false;
+        $restrictionType = $authUserId ? 'subscription_required' : 'login_or_subscribe';
+    }
+
+    if (!$accessGranted) {
+        $truncate = function($text, $len = 200) {
+            if (!$text) return $text;
+            $stripped = strip_tags($text);
+            return mb_strlen($stripped) > $len ? mb_substr($stripped, 0, $len) . '...' : $stripped;
+        };
+        $responseData['description'] = $truncate($responseData['description']);
+        $responseData['why_important'] = $truncate($responseData['why_important']);
+        $responseData['narration'] = $truncate($responseData['narration']);
+        $responseData['content'] = null;
+        $responseData['future_prediction'] = null;
+        $responseData['access_restricted'] = true;
+        $responseData['restriction_type'] = $restrictionType;
+    }
+
     api_log('news/detail', 'GET', 200);
     echo json_encode([
         'success' => true,
