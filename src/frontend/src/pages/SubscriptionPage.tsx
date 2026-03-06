@@ -1,5 +1,8 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import { useAuthStore } from '../store/authStore'
+import { api } from '../services/api'
 
 const CONTAINER_CLASS = 'max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4'
 
@@ -87,6 +90,42 @@ function PlanIcon({ type }: { type: string }) {
 
 export default function SubscriptionPage() {
   const [expandedInclude, setExpandedInclude] = useState<string | null>(null)
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const { isAuthenticated, isSubscribed, accessToken } = useAuthStore()
+  const navigate = useNavigate()
+
+  const handleSelectPlan = async (planId: string) => {
+    if (!isAuthenticated) {
+      navigate('/login')
+      return
+    }
+
+    if (isSubscribed) {
+      setError('이미 구독 중입니다.')
+      return
+    }
+
+    setLoadingPlan(planId)
+    setError(null)
+
+    try {
+      const res = await api.post('/subscription/order', { planId }, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      })
+
+      if (res.data?.success && res.data?.data?.paymentUrl) {
+        window.location.href = res.data.data.paymentUrl
+      } else {
+        setError(res.data?.message || '주문 생성에 실패했습니다.')
+      }
+    } catch (err: any) {
+      const msg = err.response?.data?.message || '결제 요청 중 오류가 발생했습니다.'
+      setError(msg)
+    } finally {
+      setLoadingPlan(null)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-page">
@@ -101,6 +140,19 @@ export default function SubscriptionPage() {
           <p className="text-page-muted text-sm md:text-base mt-2">
             기간에 맞는 플랜을 선택하고 The Gist를 이용하세요.
           </p>
+          {isSubscribed && (
+            <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-200 rounded-lg">
+              <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              <span className="text-green-700 text-sm font-medium">현재 구독 중입니다</span>
+            </div>
+          )}
+          {error && (
+            <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-red-50 border border-red-200 rounded-lg">
+              <span className="text-red-700 text-sm">{error}</span>
+            </div>
+          )}
         </motion.section>
 
         <motion.div
@@ -135,9 +187,17 @@ export default function SubscriptionPage() {
                 <div className="mt-5 flex flex-col gap-2">
                   <button
                     type="button"
-                    className="w-full py-2.5 rounded-lg bg-primary-500 hover:bg-primary-600 text-white text-sm font-semibold transition-colors"
+                    disabled={!!loadingPlan || isSubscribed}
+                    onClick={() => handleSelectPlan(plan.id)}
+                    className={`w-full py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+                      isSubscribed
+                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        : loadingPlan === plan.id
+                          ? 'bg-primary-400 text-white cursor-wait'
+                          : 'bg-primary-500 hover:bg-primary-600 text-white'
+                    }`}
                   >
-                    선택
+                    {loadingPlan === plan.id ? '처리 중...' : isSubscribed ? '구독 중' : '선택'}
                   </button>
                   <button
                     type="button"

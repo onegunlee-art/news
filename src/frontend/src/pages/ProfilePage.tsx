@@ -109,9 +109,16 @@ export default function ProfilePage() {
                           {user.role === 'admin' ? '관리자' : 'Premium Member'}
                         </p>
                         {isSubscribed && (
-                          <span className="inline-block mt-1.5 px-2.5 py-0.5 text-[10px] font-medium tracking-wide uppercase text-primary-700 bg-primary-100 rounded-md">
-                            SUBSCRIBER
-                          </span>
+                          <div className="mt-1.5 space-y-1">
+                            <span className="inline-block px-2.5 py-0.5 text-[10px] font-medium tracking-wide uppercase text-primary-700 bg-primary-100 rounded-md">
+                              SUBSCRIBER
+                            </span>
+                            {user?.subscription_expires_at && (
+                              <p className="text-[10px] text-gray-400">
+                                만료일: {new Date(user.subscription_expires_at).toLocaleDateString('ko-KR')}
+                              </p>
+                            )}
+                          </div>
                         )}
                         {hasAuth && !isSubscribed && (
                           <Link

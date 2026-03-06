@@ -91,7 +91,9 @@ export default function HomePage() {
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  const { isSubscribed: globalIsSubscribed } = useAuthStore()
   const [showSubscriptionPopup, setShowSubscriptionPopup] = useState(() => {
+    if (globalIsSubscribed) return false
     const dismissed = localStorage.getItem(SUBSCRIPTION_POPUP_DISMISSED_KEY)
     const today = getTodayYYYYMMDD()
     return dismissed !== today

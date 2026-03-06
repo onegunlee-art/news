@@ -29,6 +29,8 @@ final class User
     private ?\DateTimeImmutable $lastLoginAt = null;
     private ?\DateTimeImmutable $createdAt = null;
     private ?\DateTimeImmutable $updatedAt = null;
+    private bool $isSubscribed = false;
+    private ?string $subscriptionExpiresAt = null;
 
     /**
      * 생성자
@@ -63,6 +65,9 @@ final class User
         if (isset($data['updated_at'])) {
             $user->updatedAt = new \DateTimeImmutable($data['updated_at']);
         }
+
+        $user->isSubscribed = (bool) ($data['is_subscribed'] ?? false);
+        $user->subscriptionExpiresAt = $data['subscription_expires_at'] ?? null;
         
         return $user;
     }
@@ -237,6 +242,8 @@ final class User
             'profile_image' => $this->profileImage,
             'role' => $this->role,
             'created_at' => $this->createdAt?->format('c'),
+            'is_subscribed' => $this->isSubscribed,
+            'subscription_expires_at' => $this->subscriptionExpiresAt,
         ];
     }
 }

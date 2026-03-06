@@ -220,6 +220,20 @@ $refreshPayloadEncoded = rtrim(strtr(base64_encode(json_encode($refreshPayload))
 $refreshSignature = rtrim(strtr(base64_encode(hash_hmac('sha256', "$jwtHeader.$refreshPayloadEncoded", $jwtSecret, true)), '+/', '-_'), '=');
 $refreshTokenJwt = "$jwtHeader.$refreshPayloadEncoded.$refreshSignature";
 
+// 구독 상태를 DB에서 조회
+$subStmt = $pdo->prepare("SELECT is_subscribed, subscription_expires_at FROM users WHERE id = ?");
+$subStmt->execute([$dbUserId]);
+$subRow = $subStmt->fetch(PDO::FETCH_ASSOC);
+$dbIsSubscribed = false;
+$dbSubExpiresAt = null;
+if ($subRow) {
+    $dbIsSubscribed = (bool)($subRow['is_subscribed'] ?? false);
+    $dbSubExpiresAt = $subRow['subscription_expires_at'] ?? null;
+    if ($dbIsSubscribed && $dbSubExpiresAt && strtotime($dbSubExpiresAt) < time()) {
+        $dbIsSubscribed = false;
+    }
+}
+
 $response = [
     'success' => true,
     'message' => '로그인 성공',
@@ -232,7 +246,8 @@ $response = [
         'profile_image' => $profileImage,
         'role' => 'user',
         'created_at' => date('c'),
-        'is_subscribed' => false,
+        'is_subscribed' => $dbIsSubscribed,
+        'subscription_expires_at' => $dbSubExpiresAt,
     ],
 ];
 if ($isNewUser) {

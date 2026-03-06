@@ -280,6 +280,20 @@ $refreshPayloadEncoded = rtrim(strtr(base64_encode(json_encode($refreshPayload))
 $refreshSignature = rtrim(strtr(base64_encode(hash_hmac('sha256', "$jwtHeader.$refreshPayloadEncoded", $jwtSecret, true)), '+/', '-_'), '=');
 $refreshTokenJwt = "$jwtHeader.$refreshPayloadEncoded.$refreshSignature";
 
+// 구독 상태를 DB에서 조회
+$subStmt = $pdo->prepare("SELECT is_subscribed, subscription_expires_at FROM users WHERE id = ?");
+$subStmt->execute([$dbUserId]);
+$subRow = $subStmt->fetch(PDO::FETCH_ASSOC);
+$dbIsSubscribed = false;
+$dbSubExpiresAt = null;
+if ($subRow) {
+    $dbIsSubscribed = (bool)($subRow['is_subscribed'] ?? false);
+    $dbSubExpiresAt = $subRow['subscription_expires_at'] ?? null;
+    if ($dbIsSubscribed && $dbSubExpiresAt && strtotime($dbSubExpiresAt) < time()) {
+        $dbIsSubscribed = false;
+    }
+}
+
 $userObj = [
     'id' => $dbUserId,
     'nickname' => $nickname,
@@ -287,7 +301,8 @@ $userObj = [
     'profile_image' => $profileImage,
     'role' => 'user',
     'created_at' => date('c'),
-    'is_subscribed' => false,
+    'is_subscribed' => $dbIsSubscribed,
+    'subscription_expires_at' => $dbSubExpiresAt,
 ];
 
 kakaoLog('success', ['dbUserId' => $dbUserId, 'nickname' => $nickname]);
@@ -313,7 +328,7 @@ try {
     localStorage.setItem("access_token", ' . json_encode($accessTokenJwt) . ');
     localStorage.setItem("refresh_token", ' . json_encode($refreshTokenJwt) . ');
     localStorage.setItem("user", JSON.stringify(' . json_encode($userObj) . '));
-    var authStorage = { state: { accessToken: ' . json_encode($accessTokenJwt) . ', refreshToken: ' . json_encode($refreshTokenJwt) . ', isSubscribed: false }, version: 0 };
+    var authStorage = { state: { accessToken: ' . json_encode($accessTokenJwt) . ', refreshToken: ' . json_encode($refreshTokenJwt) . ', isSubscribed: ' . ($dbIsSubscribed ? 'true' : 'false') . ' }, version: 0 };
     localStorage.setItem("auth-storage", JSON.stringify(authStorage));
     ' . $welcomePopupJs . '
 } catch(e) { console.error("localStorage error:", e); }

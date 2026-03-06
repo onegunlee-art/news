@@ -88,4 +88,26 @@ return [
         'path' => dirname(__DIR__) . '/storage/logs',
         'level' => 'debug',
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | StepPay 구독 결제 설정
+    |--------------------------------------------------------------------------
+    */
+
+    'steppay' => [
+        'secret_token' => getenv('STEPPAY_SECRET_TOKEN') ?: '',
+        'payment_key' => getenv('STEPPAY_PAYMENT_KEY') ?: '',
+        'api_url' => 'https://api.steppay.kr/api/v1',
+        'public_api_url' => 'https://api.steppay.kr/api/public',
+        'product_code' => 'product_FsBDgadkF',
+        'plans' => [
+            '1m'  => ['price_code' => 'price_NIXgpyLfN', 'amount' => 7700,  'months' => 1,  'label' => '1개월'],
+            '3m'  => ['price_code' => 'price_BMMfkyJhl', 'amount' => 18480, 'months' => 3,  'label' => '3개월'],
+            '6m'  => ['price_code' => 'price_6bZGMnvVg', 'amount' => 32340, 'months' => 6,  'label' => '6개월'],
+            '12m' => ['price_code' => 'price_u8G79YOU8', 'amount' => 55400, 'months' => 12, 'label' => '12개월'],
+        ],
+        'success_url' => getenv('APP_URL') ? getenv('APP_URL') . '/subscribe/success' : 'https://www.thegist.co.kr/subscribe/success',
+        'error_url'   => getenv('APP_URL') ? getenv('APP_URL') . '/subscribe/error'   : 'https://www.thegist.co.kr/subscribe/error',
+    ],
 ];
