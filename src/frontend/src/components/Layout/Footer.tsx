@@ -36,23 +36,23 @@ export default function Footer() {
             </h2>
           </Link>
           <p className="text-page-secondary text-sm mt-2">{vision}</p>
-          <div className="flex items-center justify-center gap-1 mt-6 flex-wrap">
+          <p className="text-xs text-page-muted mt-6 whitespace-nowrap">
             <button
               type="button"
               onClick={() => setShowTermsModal(true)}
-              className="text-xs text-page-muted hover:text-page-secondary transition-colors"
+              className="text-inherit hover:text-page-secondary transition-colors"
             >
               이용 약관
             </button>
-            <span className="text-xs text-page-muted">·</span>
+            <span className="mx-1">·</span>
             <button
               type="button"
               onClick={() => setShowPrivacyModal(true)}
-              className="text-xs text-page-muted hover:text-page-secondary transition-colors"
+              className="text-inherit hover:text-page-secondary transition-colors"
             >
               개인정보처리방침
             </button>
-          </div>
+          </p>
         </div>
       </div>
 
