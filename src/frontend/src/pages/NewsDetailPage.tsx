@@ -502,65 +502,73 @@ export default function NewsDetailPage() {
             </>
           )}
 
-          {/* 하단 네비: 박스 3칸 (이전 | 목록 | 다음) - 라벨은 가로선상, 제목은 하위 작은글씨 */}
+          {/* 하단 네비: 이전 · 목록 · 다음 */}
           {(() => {
             const backTab: HomeTabType = fromTab && HOME_TABS.includes(fromTab) ? fromTab : (getListLabel() as HomeTabType)
             return (
-              <nav
-                className="pt-6 mt-8 border-t border-page"
-                aria-label="기사 네비게이션"
-              >
-                <div className="grid grid-cols-3 gap-px bg-page overflow-hidden rounded-lg border border-page">
-                  {/* 이전 글 박스 */}
-                  <div className="bg-page-secondary min-w-0">
-                    <div className="p-4 h-full flex flex-col">
-                      <span className="text-sm font-semibold text-page mb-1">이전</span>
-                      {news.prev_article ? (
-                        <Link
-                          to={`/news/${news.prev_article.id}`}
-                          state={fromTab ? { fromTab } : undefined}
-                          className="text-[11px] text-page-secondary hover:text-page transition-colors truncate block"
-                          title={news.prev_article.title}
-                        >
-                          {news.prev_article.title}
-                        </Link>
-                      ) : (
-                        <span className="text-[11px] text-page-muted">이전 글이 없습니다.</span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* 목록 박스 */}
-                  <div className="bg-page-secondary min-w-0">
-                    <div className="p-4 h-full flex flex-col items-center justify-center">
-                      <span className="text-sm font-semibold text-page mb-1">목록</span>
-                      <button
-                        type="button"
-                        onClick={() => navigate('/', { state: { restoreTab: backTab } })}
-                        className="text-[11px] text-page-secondary hover:text-page font-medium transition-colors"
+              <nav className="mt-12 mb-4" aria-label="기사 네비게이션">
+                <div className="border-t border-b border-page divide-x divide-page flex">
+                  {/* 이전 */}
+                  <div className="flex-1 min-w-0">
+                    {news.prev_article ? (
+                      <Link
+                        to={`/news/${news.prev_article.id}`}
+                        state={fromTab ? { fromTab } : undefined}
+                        className="flex items-center gap-3 px-4 py-5 group transition-colors hover:bg-page-secondary"
                       >
-                        목록으로
-                      </button>
-                    </div>
+                        <span className="text-page-muted text-lg shrink-0 group-hover:text-page transition-colors">←</span>
+                        <div className="min-w-0">
+                          <p className="text-[11px] text-page-muted uppercase tracking-wider mb-0.5">이전 기사</p>
+                          <p className="text-sm text-page font-medium truncate group-hover:text-primary-500 transition-colors" title={news.prev_article.title}>
+                            {news.prev_article.title}
+                          </p>
+                        </div>
+                      </Link>
+                    ) : (
+                      <div className="flex items-center gap-3 px-4 py-5">
+                        <span className="text-page-muted text-lg shrink-0 opacity-30">←</span>
+                        <p className="text-[11px] text-page-muted">이전 기사가 없습니다</p>
+                      </div>
+                    )}
                   </div>
 
-                  {/* 다음 글 박스 */}
-                  <div className="bg-page-secondary min-w-0">
-                    <div className="p-4 h-full flex flex-col text-right">
-                      <span className="text-sm font-semibold text-page mb-1">다음글</span>
-                      {news.next_article ? (
-                        <Link
-                          to={`/news/${news.next_article.id}`}
-                          state={fromTab ? { fromTab } : undefined}
-                          className="text-[11px] text-page-secondary hover:text-page transition-colors truncate block"
-                          title={news.next_article.title}
-                        >
-                          {news.next_article.title}
-                        </Link>
-                      ) : (
-                        <span className="text-[11px] text-page-muted">다음 글이 없습니다.</span>
-                      )}
-                    </div>
+                  {/* 목록 */}
+                  <div className="shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => navigate('/', { state: { restoreTab: backTab } })}
+                      className="flex flex-col items-center justify-center px-5 py-5 h-full
+                        text-page-muted hover:text-page hover:bg-page-secondary transition-colors"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 mb-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                      </svg>
+                      <span className="text-[10px] tracking-wider">목록</span>
+                    </button>
+                  </div>
+
+                  {/* 다음 */}
+                  <div className="flex-1 min-w-0">
+                    {news.next_article ? (
+                      <Link
+                        to={`/news/${news.next_article.id}`}
+                        state={fromTab ? { fromTab } : undefined}
+                        className="flex items-center justify-end gap-3 px-4 py-5 group transition-colors hover:bg-page-secondary"
+                      >
+                        <div className="min-w-0 text-right">
+                          <p className="text-[11px] text-page-muted uppercase tracking-wider mb-0.5">다음 기사</p>
+                          <p className="text-sm text-page font-medium truncate group-hover:text-primary-500 transition-colors" title={news.next_article.title}>
+                            {news.next_article.title}
+                          </p>
+                        </div>
+                        <span className="text-page-muted text-lg shrink-0 group-hover:text-page transition-colors">→</span>
+                      </Link>
+                    ) : (
+                      <div className="flex items-center justify-end gap-3 px-4 py-5">
+                        <p className="text-[11px] text-page-muted">다음 기사가 없습니다</p>
+                        <span className="text-page-muted text-lg shrink-0 opacity-30">→</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </nav>
