@@ -4,331 +4,260 @@ import { motion } from 'framer-motion'
 import { useAuthStore } from '../store/authStore'
 import { api } from '../services/api'
 
-const CONTAINER_CLASS = 'max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4'
+interface Plan {
+  id: string
+  label: string
+  monthlyPrice: string
+  discount: string | null
+  billing: string
+  renewal: string
+  bestValue: boolean
+}
 
-const PLANS = [
+const PLANS: Plan[] = [
   {
-    id: '1m',
-    months: 1,
-    title: '1개월',
-    price: 7700,
-    priceLabel: '7,700원',
-    periodLabel: '1개월',
-    description: 'The Gist의 뉴스 요약와 인사이트를 1개월간 이용합니다. 언제든 해지 가능합니다.',
-    icon: '1m',
-    badge: null as string | null,
-  },
-  {
-    id: '3m',
-    months: 3,
-    title: '3개월',
-    price: 18480,
-    priceLabel: '18,480원',
-    periodLabel: '3개월',
-    description: '3개월 구독으로 안정적으로 이용하세요. 월 기준 약 6,160원입니다.',
-    icon: '3m',
-    badge: null as string | null,
+    id: '12m',
+    label: '연간 구독',
+    monthlyPrice: '4,620',
+    discount: '월간 구독 대비 40% 할인',
+    billing: '최초 55,440₩ 결제, 이후 매년 자동 연장',
+    renewal: '',
+    bestValue: true,
   },
   {
     id: '6m',
-    months: 6,
-    title: '6개월',
-    price: 32340,
-    priceLabel: '32,340원',
-    periodLabel: '6개월',
-    description: '6개월 구독 시 더 유리한 가격. 월 기준 약 5,390원입니다.',
-    icon: '6m',
-    badge: '인기' as string | null,
+    label: '6개월 구독',
+    monthlyPrice: '5,390',
+    discount: '월간 구독 대비 30% 할인',
+    billing: '최초 32,340₩ 결제, 기간 종료후 6개월씩 자동 연장',
+    renewal: '',
+    bestValue: false,
   },
   {
-    id: '12m',
-    months: 12,
-    title: '12개월',
-    price: 55400,
-    priceLabel: '55,400원',
-    periodLabel: '12개월',
-    description: '1년 구독 시 최저가. 월 기준 약 4,617원으로 가장 합리적입니다.',
-    icon: '12m',
-    badge: '최저가' as string | null,
+    id: '3m',
+    label: '3개월 구독',
+    monthlyPrice: '6,160',
+    discount: '월간 구독 대비 20% 할인',
+    billing: '최초 18,480₩ 결제, 기간 종료후 3개월씩 자동 연장',
+    renewal: '',
+    bestValue: false,
+  },
+  {
+    id: '1m',
+    label: '1개월 구독',
+    monthlyPrice: '7,700',
+    discount: null,
+    billing: '기간 종료후 1개월씩 자동 연장',
+    renewal: '',
+    bestValue: false,
   },
 ]
 
-function PlanIcon({ type }: { type: string }) {
-  const base = 'w-10 h-10 flex items-center justify-center rounded-lg bg-gray-100 text-gray-600'
-  if (type === '1m')
-    return (
-      <div className={base}>
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      </div>
-    )
-  if (type === '3m')
-    return (
-      <div className={base}>
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-        </svg>
-      </div>
-    )
-  if (type === '6m')
-    return (
-      <div className={base}>
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
-      </div>
-    )
-  return (
-    <div className={base}>
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-      </svg>
-    </div>
-  )
-}
-
 export default function SubscriptionPage() {
-  const [expandedInclude, setExpandedInclude] = useState<string | null>(null)
-  const [loadingPlan, setLoadingPlan] = useState<string | null>(null)
+  const [selectedPlan, setSelectedPlan] = useState('12m')
+  const [loading, setLoading] = useState(false)
   const [loadingOnetime, setLoadingOnetime] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const { isAuthenticated, isSubscribed, accessToken } = useAuthStore()
   const navigate = useNavigate()
 
-  const handleSelectPlan = async (planId: string) => {
-    if (!isAuthenticated) {
-      navigate('/login')
-      return
-    }
+  const handleCheckout = async () => {
+    if (!isAuthenticated) { navigate('/login'); return }
+    if (isSubscribed) { setError('이미 구독 중입니다.'); return }
 
-    if (isSubscribed) {
-      setError('이미 구독 중입니다.')
-      return
-    }
-
-    setLoadingPlan(planId)
+    setLoading(true)
     setError(null)
-
     try {
-      const res = await api.post('/subscription/order', { planId }, {
+      const res = await api.post('/subscription/order', { planId: selectedPlan }, {
         headers: { Authorization: `Bearer ${accessToken}` },
       })
-
       if (res.data?.success && res.data?.data?.paymentUrl) {
         window.location.href = res.data.data.paymentUrl
       } else {
         setError(res.data?.message || '주문 생성에 실패했습니다.')
       }
     } catch (err: any) {
-      const msg = err.response?.data?.message || '결제 요청 중 오류가 발생했습니다.'
-      setError(msg)
+      setError(err.response?.data?.message || '결제 요청 중 오류가 발생했습니다.')
     } finally {
-      setLoadingPlan(null)
+      setLoading(false)
     }
   }
 
   const handleBuyOnetime = async (onetimeId: string) => {
-    if (!isAuthenticated) {
-      navigate('/login')
-      return
-    }
-
+    if (!isAuthenticated) { navigate('/login'); return }
     setLoadingOnetime(onetimeId)
     setError(null)
-
     try {
       const res = await api.post('/subscription/order', { onetimeId }, {
         headers: { Authorization: `Bearer ${accessToken}` },
       })
-
       if (res.data?.success && res.data?.data?.paymentUrl) {
         window.location.href = res.data.data.paymentUrl
       } else {
         setError(res.data?.message || '주문 생성에 실패했습니다.')
       }
     } catch (err: any) {
-      const msg = err.response?.data?.message || '결제 요청 중 오류가 발생했습니다.'
-      setError(msg)
+      setError(err.response?.data?.message || '결제 요청 중 오류가 발생했습니다.')
     } finally {
       setLoadingOnetime(null)
     }
   }
 
   return (
-    <div className="min-h-screen bg-page">
-      <div className={`${CONTAINER_CLASS} py-10 md:py-14`}>
-        <motion.section
+    <div className="min-h-screen bg-[#1a1a2e]">
+      <div className="max-w-lg mx-auto px-5 py-10 md:py-16">
+        {/* 헤더 */}
+        <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="text-center mb-10 md:mb-12"
+          className="text-center mb-10"
         >
-          <h1 className="text-2xl md:text-3xl font-bold text-page">구독 플랜</h1>
-          <p className="text-page-muted text-sm md:text-base mt-2">
-            기간에 맞는 플랜을 선택하고 The Gist를 이용하세요.
+          <h1 className="text-2xl md:text-3xl font-bold text-white leading-snug">
+            The Gist의 모든 컨텐츠를 만나세요
+          </h1>
+          <p className="mt-4 text-sm text-gray-400 leading-relaxed">
+            외교·정치·안보·분쟁에서 비즈니스·에너지·첨단기술·사회문화에
+            이르기까지 글로벌 이슈를 관통하는 품격 있는 가치와 생각으로
+            하루를 시작하세요
           </p>
-          {isSubscribed && (
-            <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-200 rounded-lg">
-              <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              <span className="text-green-700 text-sm font-medium">현재 구독 중입니다</span>
-            </div>
-          )}
-          {error && (
-            <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-red-50 border border-red-200 rounded-lg">
-              <span className="text-red-700 text-sm">{error}</span>
-            </div>
-          )}
-        </motion.section>
+        </motion.div>
 
+        {/* 구독 중 안내 */}
+        {isSubscribed && (
+          <div className="mb-6 flex items-center justify-center gap-2 px-4 py-3 bg-green-900/30 border border-green-700 rounded-lg">
+            <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            <span className="text-green-300 text-sm font-medium">현재 구독 중입니다</span>
+          </div>
+        )}
+
+        {/* 에러 */}
+        {error && (
+          <div className="mb-6 px-4 py-3 bg-red-900/30 border border-red-700 rounded-lg text-center">
+            <span className="text-red-300 text-sm">{error}</span>
+          </div>
+        )}
+
+        {/* 플랜 선택 */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.1 }}
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6"
+          className="space-y-3"
         >
-          {PLANS.map((plan, i) => (
-            <motion.article
-              key={plan.id}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.05 * i }}
-              className="flex flex-col bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300 transition-all duration-200 overflow-hidden"
-            >
-              <div className="p-5 md:p-6 flex flex-col flex-1">
-                {plan.badge && (
-                  <span className="inline-flex self-start mb-3 px-2.5 py-1 text-[11px] font-semibold text-primary-700 bg-primary-100 rounded-full">
-                    {plan.badge}
-                  </span>
-                )}
-                <PlanIcon type={plan.icon} />
-                <h2 className="mt-4 text-lg font-bold text-gray-900">{plan.title}</h2>
-                <p className="mt-1 text-gray-900 font-semibold">
-                  {plan.priceLabel}
-                  <span className="text-sm font-normal text-gray-500 ml-1">/ {plan.periodLabel}</span>
-                </p>
-                <p className="mt-3 text-sm text-gray-600 leading-relaxed flex-1">
-                  {plan.description}
-                </p>
-                <div className="mt-5 flex flex-col gap-2">
-                  <button
-                    type="button"
-                    disabled={!!loadingPlan || isSubscribed}
-                    onClick={() => handleSelectPlan(plan.id)}
-                    className={`w-full py-2.5 rounded-lg text-sm font-semibold transition-colors ${
-                      isSubscribed
-                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                        : loadingPlan === plan.id
-                          ? 'bg-primary-400 text-white cursor-wait'
-                          : 'bg-primary-500 hover:bg-primary-600 text-white'
-                    }`}
-                  >
-                    {loadingPlan === plan.id ? '처리 중...' : isSubscribed ? '구독 중' : '선택'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setExpandedInclude(expandedInclude === plan.id ? null : plan.id)}
-                    className="w-full py-2 rounded-lg border border-gray-200 text-primary-600 text-sm font-medium hover:bg-gray-50 transition-colors flex items-center justify-center gap-1"
-                  >
-                    포함 내용
-                    <svg
-                      className={`w-4 h-4 transition-transform ${expandedInclude === plan.id ? 'rotate-180' : ''}`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                </div>
-                {expandedInclude === plan.id && (
-                  <div className="mt-3 p-3 bg-gray-50 rounded-lg text-xs text-gray-600 space-y-1">
-                    <p>· The Gist 전체 뉴스 요약 열람</p>
-                    <p>· 카테고리별·인기 기사 목록</p>
-                    <p>· 오디오 요약 (지원 시)</p>
-                    <p>· 기기 제한 없이 이용</p>
+          {PLANS.map((plan) => {
+            const isSelected = selectedPlan === plan.id
+            return (
+              <button
+                key={plan.id}
+                type="button"
+                onClick={() => setSelectedPlan(plan.id)}
+                className={`w-full text-left rounded-xl border-2 transition-all duration-200 ${
+                  isSelected
+                    ? 'border-primary-500 bg-[#22223a]'
+                    : 'border-gray-700 bg-[#22223a]/60 hover:border-gray-500'
+                } ${plan.bestValue && isSelected ? 'ring-1 ring-primary-500/30' : ''}`}
+              >
+                {/* Best Value 배지 */}
+                {plan.bestValue && (
+                  <div className="px-5 pt-3">
+                    <span className="inline-block px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-primary-500 border border-primary-500 rounded">
+                      Best Value
+                    </span>
                   </div>
                 )}
-              </div>
-            </motion.article>
-          ))}
+
+                <div className={`px-5 ${plan.bestValue ? 'pt-2 pb-4' : 'py-4'}`}>
+                  {/* 라디오 + 플랜명 + 가격 */}
+                  <div className="flex items-center gap-3">
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
+                      isSelected ? 'border-primary-500' : 'border-gray-500'
+                    }`}>
+                      {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-primary-500" />}
+                    </div>
+                    <div className="flex-1 flex items-baseline justify-between gap-2">
+                      <span className="text-white font-semibold">{plan.label}</span>
+                      <span className="text-white font-bold whitespace-nowrap">
+                        {plan.monthlyPrice}₩<span className="text-sm font-normal text-gray-400">/월</span>
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* 할인/설명 */}
+                  <div className="ml-8 mt-1.5 space-y-0.5">
+                    {plan.discount && (
+                      <p className="text-xs text-primary-400 font-medium">{plan.discount}</p>
+                    )}
+                    <p className="text-xs text-gray-500">{plan.billing}</p>
+                  </div>
+                </div>
+              </button>
+            )
+          })}
         </motion.div>
 
-        <motion.section
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.25 }}
-          className="mt-12 md:mt-16 pt-8 border-t border-gray-200"
-        >
-          <div className="text-center mb-6">
-            <h3 className="text-lg font-semibold text-gray-900">단건 상품</h3>
-            <p className="text-sm text-gray-500 mt-1">구독 없이 개별 구매할 수 있는 콘텐츠입니다.</p>
-          </div>
-
-          <div className="max-w-md mx-auto">
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300 transition-all duration-200 overflow-hidden">
-              <div className="p-5 md:p-6">
-                <span className="inline-flex mb-3 px-2.5 py-1 text-[11px] font-semibold text-blue-700 bg-blue-50 rounded-full">
-                  단건 구매
-                </span>
-                <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
-                  </svg>
-                </div>
-                <h2 className="mt-4 text-lg font-bold text-gray-900">The Gist 2월호 News Letter</h2>
-                <p className="mt-1 text-gray-900 font-semibold">
-                  10,900원
-                  <span className="text-sm font-normal text-gray-500 ml-1">/ 1회</span>
-                </p>
-                <p className="mt-3 text-sm text-gray-600 leading-relaxed">
-                  The Gist 1,2월호 뉴스레터를 단건으로 구매하실 수 있습니다. 구독 없이도 핵심 인사이트를 확인하세요.
-                </p>
-                <div className="mt-5">
-                  <button
-                    type="button"
-                    disabled={!!loadingOnetime}
-                    onClick={() => handleBuyOnetime('newsletter_feb')}
-                    className={`w-full py-2.5 rounded-lg text-sm font-semibold transition-colors ${
-                      loadingOnetime === 'newsletter_feb'
-                        ? 'bg-blue-400 text-white cursor-wait'
-                        : 'bg-blue-600 hover:bg-blue-700 text-white'
-                    }`}
-                  >
-                    {loadingOnetime === 'newsletter_feb' ? '처리 중...' : '구매하기'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </motion.section>
-
-        <motion.section
+        {/* 결제 버튼 */}
+        <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.4, delay: 0.35 }}
-          className="mt-12 md:mt-16 pt-8 border-t border-gray-200"
+          transition={{ duration: 0.4, delay: 0.2 }}
+          className="mt-8"
         >
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">플랜 비교</h3>
-              <p className="text-sm text-gray-500 mt-0.5">
-                기간별 요금과 혜택을 비교해 나에게 맞는 플랜을 선택하세요.
-              </p>
+          <button
+            type="button"
+            disabled={loading || isSubscribed}
+            onClick={handleCheckout}
+            className={`w-full py-4 rounded-xl text-base font-bold transition-all duration-200 ${
+              isSubscribed
+                ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                : loading
+                  ? 'bg-primary-400 text-white cursor-wait'
+                  : 'bg-primary-500 hover:bg-primary-600 text-white shadow-lg shadow-primary-500/20'
+            }`}
+          >
+            {loading ? '처리 중...' : isSubscribed ? '구독 중' : '결제하기'}
+          </button>
+          <p className="text-center text-[11px] text-gray-600 mt-3">
+            언제든지 자동 갱신을 취소할 수 있습니다
+          </p>
+        </motion.div>
+
+        {/* 단건 상품 */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.3 }}
+          className="mt-14 pt-8 border-t border-gray-700/50"
+        >
+          <h3 className="text-center text-sm font-semibold text-gray-400 mb-4">단건 상품</h3>
+          <div className="rounded-xl border border-gray-700 bg-[#22223a]/60 p-5">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h4 className="text-white font-semibold text-sm">The Gist 2월호 News Letter</h4>
+                <p className="text-xs text-gray-500 mt-0.5">The Gist 1,2월호 뉴스레터 단건 구매</p>
+              </div>
+              <span className="text-white font-bold whitespace-nowrap">10,900₩</span>
             </div>
             <button
               type="button"
-              className="self-start sm:self-center px-5 py-2.5 rounded-lg bg-gray-900 text-white text-sm font-medium hover:bg-gray-800 transition-colors"
+              disabled={!!loadingOnetime}
+              onClick={() => handleBuyOnetime('newsletter_feb')}
+              className={`w-full mt-4 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+                loadingOnetime === 'newsletter_feb'
+                  ? 'bg-gray-500 text-white cursor-wait'
+                  : 'border border-gray-500 text-gray-300 hover:bg-gray-700 hover:text-white'
+              }`}
             >
-              플랜 비교
+              {loadingOnetime === 'newsletter_feb' ? '처리 중...' : '구매하기'}
             </button>
           </div>
-          <p className="text-xs text-gray-400 mt-4 text-center">
-            이용 시 약관 및 결제 정책이 적용됩니다.
-          </p>
-        </motion.section>
+        </motion.div>
+
+        <p className="text-center text-[10px] text-gray-700 mt-8">
+          이용 시 약관 및 결제 정책이 적용됩니다.
+        </p>
       </div>
     </div>
   )
