@@ -275,43 +275,19 @@ export default function NewsDetailPage() {
       <div className="sticky top-14 z-30 bg-page border-b border-page">
         <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4">
           <div className="flex items-center justify-between h-12">
-            {/* 이전 | 목록 | 다음글 */}
+            {/* 상단 Back 버튼 - 상위 카테고리 라벨만 표시 */}
             {(() => {
               const backTab: HomeTabType = fromTab && HOME_TABS.includes(fromTab) ? fromTab : (getListLabel() as HomeTabType)
               return (
-                <nav className="flex items-center gap-3 text-sm" aria-label="기사 네비게이션">
-                  {news.prev_article ? (
-                    <Link
-                      to={`/news/${news.prev_article.id}`}
-                      state={fromTab ? { fromTab } : undefined}
-                      className="text-page-secondary hover:text-page transition-colors"
-                    >
-                      이전
-                    </Link>
-                  ) : (
-                    <span className="text-page-muted cursor-default">이전</span>
-                  )}
-                  <span className="text-page-muted" aria-hidden>|</span>
-                  <button
-                    type="button"
-                    onClick={() => navigate('/', { state: { restoreTab: backTab } })}
-                    className="text-page-secondary hover:text-page transition-colors"
-                  >
-                    목록
-                  </button>
-                  <span className="text-page-muted" aria-hidden>|</span>
-                  {news.next_article ? (
-                    <Link
-                      to={`/news/${news.next_article.id}`}
-                      state={fromTab ? { fromTab } : undefined}
-                      className="text-page-secondary hover:text-page transition-colors"
-                    >
-                      다음글
-                    </Link>
-                  ) : (
-                    <span className="text-page-muted cursor-default">다음글</span>
-                  )}
-                </nav>
+                <button
+                  type="button"
+                  onClick={() => navigate('/', { state: { restoreTab: backTab } })}
+                  className="inline-flex items-center gap-2 text-sm text-page-secondary hover:text-page transition-colors"
+                  aria-label={`${backTab} 목록으로 돌아가기`}
+                >
+                  <span className="text-lg leading-none">←</span>
+                  <span className="font-medium">{backTab}</span>
+                </button>
               )
             })()}
 
@@ -523,48 +499,64 @@ export default function NewsDetailPage() {
                   )}
                 </div>
               )}
+            </>
+          )}
 
-              {/* 하단 네비: 이전 | 목록 | 다음글 */}
-              {(() => {
-                const backTab: HomeTabType = fromTab && HOME_TABS.includes(fromTab) ? fromTab : (getListLabel() as HomeTabType)
-                return (
-                  <nav className="flex items-center justify-center gap-3 text-sm pt-6 mt-8 border-t border-page" aria-label="기사 네비게이션">
+          {/* 하단 네비: 이전/목록/다음 (제목 포함, 전체 폭 사용) */}
+          {(() => {
+            const backTab: HomeTabType = fromTab && HOME_TABS.includes(fromTab) ? fromTab : (getListLabel() as HomeTabType)
+            return (
+              <nav
+                className="pt-6 mt-8 border-t border-page text-sm"
+                aria-label="기사 네비게이션"
+              >
+                <div className="flex items-start gap-4">
+                  {/* 이전 글 영역 (좌측) */}
+                  <div className="flex-1 text-left min-w-0">
                     {news.prev_article ? (
                       <Link
                         to={`/news/${news.prev_article.id}`}
                         state={fromTab ? { fromTab } : undefined}
-                        className="text-page-secondary hover:text-page transition-colors"
+                        className="block text-page-secondary hover:text-page transition-colors"
                       >
-                        이전
+                        <span className="font-semibold">이전: </span>
+                        <span className="break-words">{news.prev_article.title}</span>
                       </Link>
                     ) : (
-                      <span className="text-page-muted cursor-default">이전</span>
+                      <span className="text-page-muted">이전 글이 없습니다.</span>
                     )}
-                    <span className="text-page-muted" aria-hidden>|</span>
+                  </div>
+
+                  {/* 목록 버튼 (가운데) */}
+                  <div className="flex-shrink-0 text-center px-2">
                     <button
                       type="button"
                       onClick={() => navigate('/', { state: { restoreTab: backTab } })}
-                      className="text-page-secondary hover:text-page transition-colors"
+                      className="text-page-secondary hover:text-page font-medium transition-colors whitespace-nowrap"
                     >
                       목록
                     </button>
-                    <span className="text-page-muted" aria-hidden>|</span>
+                  </div>
+
+                  {/* 다음 글 영역 (우측) */}
+                  <div className="flex-1 text-right min-w-0">
                     {news.next_article ? (
                       <Link
                         to={`/news/${news.next_article.id}`}
                         state={fromTab ? { fromTab } : undefined}
-                        className="text-page-secondary hover:text-page transition-colors"
+                        className="block text-page-secondary hover:text-page transition-colors"
                       >
-                        다음글
+                        <span className="font-semibold">다음: </span>
+                        <span className="break-words">{news.next_article.title}</span>
                       </Link>
                     ) : (
-                      <span className="text-page-muted cursor-default">다음글</span>
+                      <span className="text-page-muted">다음 글이 없습니다.</span>
                     )}
-                  </nav>
-                )
-              })()}
-            </>
-          )}
+                  </div>
+                </div>
+              </nav>
+            )
+          })()}
         </div>
       </motion.article>
       </div>
