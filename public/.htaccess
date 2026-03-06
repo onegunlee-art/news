@@ -29,6 +29,7 @@ ErrorDocument 404 /index.php
     RewriteRule ^api/subscription/status$ api/subscription/status.php [QSA,L]
     # StepPay 웹훅
     RewriteRule ^api/webhook/steppay$ api/webhook/steppay.php [QSA,L]
+    RewriteRule ^api/subscription/test-steppay$ api/subscription/test-steppay.php [QSA,L]
     # 관리자 계정 생성 (1회 실행용)
     RewriteRule ^api/auth/seed-admin-user$ api/auth/seed-admin-user.php [QSA,L]
     # 분석 API 직접 처리
