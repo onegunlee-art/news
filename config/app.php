@@ -96,8 +96,8 @@ return [
     */
 
     'steppay' => [
-        'secret_token' => getenv('STEPPAY_SECRET_TOKEN') ?: '',
-        'payment_key' => getenv('STEPPAY_PAYMENT_KEY') ?: '',
+        'secret_token' => getenv('STEPPAY_SECRET_TOKEN') ?: '17cab52d68451a765eaacf90c2390d739a0e99b4849c01f139431f266b18ee5e',
+        'payment_key' => getenv('STEPPAY_PAYMENT_KEY') ?: 'p9up7apk1o1jxh4z',
         'api_url' => 'https://api.steppay.kr/api/v1',
         'public_api_url' => 'https://api.steppay.kr/api/public',
         'product_code' => 'product_FsBDgadkF',
