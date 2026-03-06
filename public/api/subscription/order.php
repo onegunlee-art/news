@@ -40,18 +40,29 @@ if (!$userId) {
 
 $input = json_decode(file_get_contents('php://input'), true) ?: [];
 $planId = $input['planId'] ?? '';
+$onetimeId = $input['onetimeId'] ?? '';
 
 $cfg = getSteppayConfig();
 $plans = $cfg['plans'] ?? [];
-if (!isset($plans[$planId])) {
+$onetimeProducts = $cfg['onetime_products'] ?? [];
+
+$plan = null;
+$productCode = null;
+$priceCode = null;
+
+if ($onetimeId && isset($onetimeProducts[$onetimeId])) {
+    $plan = $onetimeProducts[$onetimeId];
+    $productCode = $plan['product_code'];
+    $priceCode = $plan['price_code'];
+} elseif ($planId && isset($plans[$planId])) {
+    $plan = $plans[$planId];
+    $productCode = $cfg['product_code'];
+    $priceCode = $plan['price_code'];
+} else {
     http_response_code(400);
-    echo json_encode(['success' => false, 'message' => '유효하지 않은 플랜입니다.'], JSON_UNESCAPED_UNICODE);
+    echo json_encode(['success' => false, 'message' => '유효하지 않은 상품입니다.'], JSON_UNESCAPED_UNICODE);
     exit;
 }
-
-$plan = $plans[$planId];
-$productCode = $cfg['product_code'];
-$priceCode = $plan['price_code'];
 
 $stmt = $pdo->prepare("SELECT id, nickname, email, steppay_customer_id FROM users WHERE id = ?");
 $stmt->execute([$userId]);

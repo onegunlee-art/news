@@ -107,6 +107,15 @@ return [
             '6m'  => ['price_code' => 'price_6bZGMnvVg', 'amount' => 32340, 'months' => 6,  'label' => '6개월'],
             '12m' => ['price_code' => 'price_u8G79YOU8', 'amount' => 55400, 'months' => 12, 'label' => '12개월'],
         ],
+        'onetime_products' => [
+            'newsletter_feb' => [
+                'product_code' => 'product_FsBDgadkF',
+                'price_code'   => 'price_FwZJBelQZ',
+                'amount'       => 10900,
+                'label'        => 'The Gist 2월호 News Letter',
+                'description'  => 'The Gist 1,2월호 news letter',
+            ],
+        ],
         'success_url' => getenv('APP_URL') ? getenv('APP_URL') . '/subscribe/success' : 'https://www.thegist.co.kr/subscribe/success',
         'error_url'   => getenv('APP_URL') ? getenv('APP_URL') . '/subscribe/error'   : 'https://www.thegist.co.kr/subscribe/error',
     ],

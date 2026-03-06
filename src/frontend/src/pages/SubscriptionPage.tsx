@@ -91,6 +91,7 @@ function PlanIcon({ type }: { type: string }) {
 export default function SubscriptionPage() {
   const [expandedInclude, setExpandedInclude] = useState<string | null>(null)
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null)
+  const [loadingOnetime, setLoadingOnetime] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const { isAuthenticated, isSubscribed, accessToken } = useAuthStore()
   const navigate = useNavigate()
@@ -124,6 +125,33 @@ export default function SubscriptionPage() {
       setError(msg)
     } finally {
       setLoadingPlan(null)
+    }
+  }
+
+  const handleBuyOnetime = async (onetimeId: string) => {
+    if (!isAuthenticated) {
+      navigate('/login')
+      return
+    }
+
+    setLoadingOnetime(onetimeId)
+    setError(null)
+
+    try {
+      const res = await api.post('/subscription/order', { onetimeId }, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      })
+
+      if (res.data?.success && res.data?.data?.paymentUrl) {
+        window.location.href = res.data.data.paymentUrl
+      } else {
+        setError(res.data?.message || '주문 생성에 실패했습니다.')
+      }
+    } catch (err: any) {
+      const msg = err.response?.data?.message || '결제 요청 중 오류가 발생했습니다.'
+      setError(msg)
+    } finally {
+      setLoadingOnetime(null)
     }
   }
 
@@ -229,9 +257,58 @@ export default function SubscriptionPage() {
         </motion.div>
 
         <motion.section
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.25 }}
+          className="mt-12 md:mt-16 pt-8 border-t border-gray-200"
+        >
+          <div className="text-center mb-6">
+            <h3 className="text-lg font-semibold text-gray-900">단건 상품</h3>
+            <p className="text-sm text-gray-500 mt-1">구독 없이 개별 구매할 수 있는 콘텐츠입니다.</p>
+          </div>
+
+          <div className="max-w-md mx-auto">
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300 transition-all duration-200 overflow-hidden">
+              <div className="p-5 md:p-6">
+                <span className="inline-flex mb-3 px-2.5 py-1 text-[11px] font-semibold text-blue-700 bg-blue-50 rounded-full">
+                  단건 구매
+                </span>
+                <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                  </svg>
+                </div>
+                <h2 className="mt-4 text-lg font-bold text-gray-900">The Gist 2월호 News Letter</h2>
+                <p className="mt-1 text-gray-900 font-semibold">
+                  10,900원
+                  <span className="text-sm font-normal text-gray-500 ml-1">/ 1회</span>
+                </p>
+                <p className="mt-3 text-sm text-gray-600 leading-relaxed">
+                  The Gist 1,2월호 뉴스레터를 단건으로 구매하실 수 있습니다. 구독 없이도 핵심 인사이트를 확인하세요.
+                </p>
+                <div className="mt-5">
+                  <button
+                    type="button"
+                    disabled={!!loadingOnetime}
+                    onClick={() => handleBuyOnetime('newsletter_feb')}
+                    className={`w-full py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+                      loadingOnetime === 'newsletter_feb'
+                        ? 'bg-blue-400 text-white cursor-wait'
+                        : 'bg-blue-600 hover:bg-blue-700 text-white'
+                    }`}
+                  >
+                    {loadingOnetime === 'newsletter_feb' ? '처리 중...' : '구매하기'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.section>
+
+        <motion.section
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.4, delay: 0.3 }}
+          transition={{ duration: 0.4, delay: 0.35 }}
           className="mt-12 md:mt-16 pt-8 border-t border-gray-200"
         >
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
