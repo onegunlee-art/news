@@ -502,56 +502,65 @@ export default function NewsDetailPage() {
             </>
           )}
 
-          {/* 하단 네비: 이전/목록/다음 (제목 포함, 전체 폭 사용) */}
+          {/* 하단 네비: 박스 3칸 (이전 | 목록 | 다음) - 라벨은 가로선상, 제목은 하위 작은글씨 */}
           {(() => {
             const backTab: HomeTabType = fromTab && HOME_TABS.includes(fromTab) ? fromTab : (getListLabel() as HomeTabType)
             return (
               <nav
-                className="pt-6 mt-8 border-t border-page text-sm"
+                className="pt-6 mt-8 border-t border-page"
                 aria-label="기사 네비게이션"
               >
-                <div className="flex items-start gap-4">
-                  {/* 이전 글 영역 (좌측) */}
-                  <div className="flex-1 text-left min-w-0">
-                    {news.prev_article ? (
-                      <Link
-                        to={`/news/${news.prev_article.id}`}
-                        state={fromTab ? { fromTab } : undefined}
-                        className="block text-page-secondary hover:text-page transition-colors"
-                      >
-                        <span className="font-semibold">이전: </span>
-                        <span className="break-words">{news.prev_article.title}</span>
-                      </Link>
-                    ) : (
-                      <span className="text-page-muted">이전 글이 없습니다.</span>
-                    )}
+                <div className="grid grid-cols-3 gap-px bg-page overflow-hidden rounded-lg border border-page">
+                  {/* 이전 글 박스 */}
+                  <div className="bg-page-secondary min-w-0">
+                    <div className="p-4 h-full flex flex-col">
+                      <span className="text-sm font-semibold text-page mb-1">이전</span>
+                      {news.prev_article ? (
+                        <Link
+                          to={`/news/${news.prev_article.id}`}
+                          state={fromTab ? { fromTab } : undefined}
+                          className="text-[11px] text-page-secondary hover:text-page transition-colors truncate block"
+                          title={news.prev_article.title}
+                        >
+                          {news.prev_article.title}
+                        </Link>
+                      ) : (
+                        <span className="text-[11px] text-page-muted">이전 글이 없습니다.</span>
+                      )}
+                    </div>
                   </div>
 
-                  {/* 목록 버튼 (가운데) */}
-                  <div className="flex-shrink-0 text-center px-2">
-                    <button
-                      type="button"
-                      onClick={() => navigate('/', { state: { restoreTab: backTab } })}
-                      className="text-page-secondary hover:text-page font-medium transition-colors whitespace-nowrap"
-                    >
-                      목록
-                    </button>
+                  {/* 목록 박스 */}
+                  <div className="bg-page-secondary min-w-0">
+                    <div className="p-4 h-full flex flex-col items-center justify-center">
+                      <span className="text-sm font-semibold text-page mb-1">목록</span>
+                      <button
+                        type="button"
+                        onClick={() => navigate('/', { state: { restoreTab: backTab } })}
+                        className="text-[11px] text-page-secondary hover:text-page font-medium transition-colors"
+                      >
+                        목록으로
+                      </button>
+                    </div>
                   </div>
 
-                  {/* 다음 글 영역 (우측) */}
-                  <div className="flex-1 text-right min-w-0">
-                    {news.next_article ? (
-                      <Link
-                        to={`/news/${news.next_article.id}`}
-                        state={fromTab ? { fromTab } : undefined}
-                        className="block text-page-secondary hover:text-page transition-colors"
-                      >
-                        <span className="font-semibold">다음: </span>
-                        <span className="break-words">{news.next_article.title}</span>
-                      </Link>
-                    ) : (
-                      <span className="text-page-muted">다음 글이 없습니다.</span>
-                    )}
+                  {/* 다음 글 박스 */}
+                  <div className="bg-page-secondary min-w-0">
+                    <div className="p-4 h-full flex flex-col text-right">
+                      <span className="text-sm font-semibold text-page mb-1">다음글</span>
+                      {news.next_article ? (
+                        <Link
+                          to={`/news/${news.next_article.id}`}
+                          state={fromTab ? { fromTab } : undefined}
+                          className="text-[11px] text-page-secondary hover:text-page transition-colors truncate block"
+                          title={news.next_article.title}
+                        >
+                          {news.next_article.title}
+                        </Link>
+                      ) : (
+                        <span className="text-[11px] text-page-muted">다음 글이 없습니다.</span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </nav>
