@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "clean:assets": "node -e \"const fs=require('fs'),p=require('path'),d=p.resolve(__dirname,'../../public/assets');if(fs.existsSync(d))fs.readdirSync(d).filter(f=>f!=='.gitkeep').forEach(f=>fs.unlinkSync(p.join(d,f)))\"",
+    "build": "npm run clean:assets && tsc && vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "test": "vitest",

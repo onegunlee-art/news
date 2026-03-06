@@ -188,6 +188,15 @@ jobs:
           fi
           ls -la deploy/env.txt deploy/.env 2>/dev/null || true
 
+      - name: Clean remote assets via FTP
+        run: |
+          lftp -c "
+            open -u ${{ secrets.FTP_USERNAME }},${{ secrets.FTP_PASSWORD }} ${{ secrets.FTP_SERVER }};
+            rm -rf /html/assets/;
+            mkdir -p /html/assets/;
+            bye
+          " || echo "Remote assets cleanup skipped (non-critical)"
+
       - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
