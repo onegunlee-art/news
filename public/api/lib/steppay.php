@@ -75,6 +75,13 @@ function steppayCreateCustomer(string $name, ?string $email = null, ?string $cus
 }
 
 /**
+ * StepPay 고객 코드로 검색
+ */
+function steppaySearchCustomerByCode(string $code): array {
+    return steppayRequest('GET', '/customers?code=' . urlencode($code));
+}
+
+/**
  * StepPay 주문 생성
  */
 function steppayCreateOrder(int $customerId, string $priceCode, string $productCode): array {
