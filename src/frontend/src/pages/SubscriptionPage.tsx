@@ -117,11 +117,13 @@ export default function SubscriptionPage() {
             <span style={{ fontFamily: "'Lobster', cursive" }}>The Gist</span>의 모든 컨텐츠를 만나세요
           </h1>
           <p className="mt-4 text-sm text-gray-600 leading-relaxed">
-            외교·정치·안보·분쟁에서 비즈니스·에너지·첨단기술·사회문화에
-            이르기까지
+            외교·정치·안보·분쟁에서
             <br />
-            글로벌 이슈를 관통하는 품격 있는 가치와 생각으로
-            하루를 시작하세요
+            비즈니스·에너지·첨단기술·사회문화에 이르기까지
+            <br />
+            글로벌 이슈를 관통하는
+            <br />
+            품격 있는 가치와 생각으로 하루를 시작하세요
           </p>
         </motion.div>
 
