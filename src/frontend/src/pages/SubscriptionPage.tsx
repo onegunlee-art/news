@@ -239,10 +239,10 @@ export default function SubscriptionPage() {
           <div className="rounded-xl border border-gray-200 bg-gray-50 p-5">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <h4 className="text-gray-900 font-semibold text-sm">The Gist 2월호 News Letter</h4>
-                <p className="text-xs text-gray-600 mt-0.5">The Gist 1,2월호 뉴스레터 단건 구매</p>
+                <h4 className="text-gray-900 font-semibold text-sm">The Gist 컨텐츠 1건</h4>
+                <p className="text-xs text-gray-600 mt-0.5">구독자가 직접 선택하는 The Gist 컨텐츠 1건</p>
               </div>
-              <span className="text-gray-900 font-bold whitespace-nowrap">10,900₩</span>
+              <span className="text-gray-900 font-bold whitespace-nowrap">500₩</span>
             </div>
             <button
               type="button"
