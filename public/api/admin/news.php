@@ -441,7 +441,7 @@ if ($method === 'GET') {
     $publishedOnly = isset($_GET['published_only']) && ($_GET['published_only'] === '1' || $_GET['published_only'] === 'true');
     $popular = isset($_GET['popular']) && ($_GET['popular'] === '1' || $_GET['popular'] === 'true');
     $page = max(1, (int)($_GET['page'] ?? 1));
-    $perPage = min((int)($_GET['per_page'] ?? 20), 100);
+    $perPage = max(1, (int)($_GET['per_page'] ?? 20));
     if ($popular) {
         $perPage = 20;
         $page = 1;
@@ -475,15 +475,6 @@ if ($method === 'GET') {
                     $params[] = $category;
                 }
             }
-        }
-        
-        // 최신 탭: 최근 5일(한국시간 기준, 오늘 포함 캘린더 5일) 기사만 — category 없고 published_only일 때
-        if (!$category && !$popular && $publishedOnly && $hasPublishedAt) {
-            $tz = new \DateTimeZone('Asia/Seoul');
-            $nowKst = new \DateTime('now', $tz);
-            $boundary = (clone $nowKst)->modify('-4 days')->setTime(0, 0, 0)->format('Y-m-d H:i:s');
-            $conditions[] = 'COALESCE(published_at, created_at) >= ?';
-            $params[] = $boundary;
         }
         
         // 키워드 검색 (제목, 내용, 설명에서 검색) — popular일 때는 적용 안 함
