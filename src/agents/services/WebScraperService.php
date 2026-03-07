@@ -164,6 +164,9 @@ class WebScraperService
             $title = mb_substr(strip_tags($content), 0, 80) . '…';
         }
 
+        $metadata = ['via_jina' => true];
+        $this->addShortContentWarning($url, $content, $metadata);
+
         return new ArticleData(
             url: $data['url'] ?? $url,
             title: $title,
@@ -174,7 +177,7 @@ class WebScraperService
             imageUrl: $imageUrl,
             language: $data['language'] ?? null,
             source: $this->extractSourceFromUrl($url),
-            metadata: ['via_jina' => true]
+            metadata: $metadata
         );
     }
 
@@ -228,6 +231,12 @@ class WebScraperService
         // 본문 추출 (Readability 스타일)
         $content = $this->extractContent($xpath, $doc);
 
+        $metadata = [
+            'scraped_at' => date('c'),
+            'content_length' => strlen($content),
+        ];
+        $this->addShortContentWarning($url, $content, $metadata);
+
         return new ArticleData(
             url: $url,
             title: $title,
@@ -238,11 +247,32 @@ class WebScraperService
             imageUrl: $imageUrl,
             language: $language,
             source: $source,
-            metadata: [
-                'scraped_at' => date('c'),
-                'content_length' => strlen($content)
-            ]
+            metadata: $metadata
         );
+    }
+
+    /** 최소 본문 길이 (이하면 불완전 본문 경고) */
+    private const MIN_CONTENT_LENGTH_WARNING = 500;
+
+    /**
+     * economist.com / ft.com 등에서 본문이 너무 짧으면 메타에 경고 추가 및 로그
+     */
+    private function addShortContentWarning(string $url, string $content, array &$metadata): void
+    {
+        $host = strtolower(parse_url($url, PHP_URL_HOST) ?? '');
+        $len = mb_strlen($content);
+        if ($len >= self::MIN_CONTENT_LENGTH_WARNING) {
+            return;
+        }
+        if (!str_contains($host, 'economist.com') && !str_contains($host, 'ft.com')) {
+            return;
+        }
+        $metadata['content_short_warning'] = true;
+        error_log(sprintf(
+            '[WebScraperService] Short or incomplete article body (%d chars) for %s - paywall or ad break may have truncated content.',
+            $len,
+            $url
+        ));
     }
 
     /**
@@ -406,7 +436,7 @@ class WebScraperService
      */
     private function extractContent(\DOMXPath $xpath, \DOMDocument $doc): string
     {
-        // 불필요한 요소 제거 (구독/뉴스레터 블록 포함)
+        // 불필요한 요소 제거 (구독/뉴스레터/광고 블록 포함, The Economist 등 강화)
         $removeSelectors = [
             '//script', '//style', '//nav', '//header', '//footer',
             '//aside', '//form', '//iframe', '//noscript',
@@ -417,6 +447,11 @@ class WebScraperService
             '//*[contains(@class, "newsletter")]', '//*[contains(@class, "subscribe")]',
             '//*[contains(@class, "signup")]', '//*[contains(@class, "email-signup")]',
             '//*[contains(@id, "newsletter")]', '//*[contains(@id, "subscribe")]',
+            // The Economist / FT 등: CTA, 페이월 유도, 추천 블록
+            '//*[contains(@class, "paywall")]', '//*[contains(@class, "paywall-cta")]',
+            '//*[contains(@class, "cta")]', '//*[contains(@class, "recommended")]',
+            '//*[contains(@class, "inline-ad")]', '//*[contains(@class, "article-recommendations")]',
+            '//*[contains(@class, "sign-in-gate")]', '//*[contains(@data-component, "SignInGate")]',
         ];
 
         foreach ($removeSelectors as $selector) {
@@ -496,6 +531,14 @@ class WebScraperService
             '/delivered free to your inbox[^.]{0,100}\.?/iu',
             '/Our editors\'?\s*top picks[^.]{0,150}\.?/iu',
             '/Get the latest[^.]{0,150}\.?/iu',
+            // The Economist 전용
+            '/This article appeared in[^.]{0,200}\.?/iu',
+            '/For more expert analysis[^.]{0,200}\.?/iu',
+            '/Subscribe to The Economist[^.]{0,150}\.?/iu',
+            '/Sign up for our[^.]{0,150}\.?/iu',
+            '/Recommended for you[^.]{0,150}\.?/iu',
+            '/Read more from[^.]{0,150}\.?/iu',
+            '/\bAdvertisement\s*[\s\S]{0,100}?(?=\n\n|\n[A-Z]|$)/iu',
         ];
 
         $result = $text;

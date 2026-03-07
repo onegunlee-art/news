@@ -204,6 +204,49 @@ class RAGService
         return $stored;
     }
 
+    /**
+     * 기사 게시 시 최종 output 임베딩 저장 (기존 해당 news_id 임베딩 삭제 후 재저장).
+     * narration + why_important + description/content 요약을 합쳐 저장.
+     */
+    public function storePublishedArticleEmbedding(
+        int $newsId,
+        string $articleUrl,
+        string $narration,
+        string $whyImportant,
+        string $descriptionOrContent
+    ): int {
+        if (!$this->isConfigured()) {
+            return 0;
+        }
+        $text = trim(implode("\n\n", array_filter([
+            $whyImportant,
+            $narration,
+            mb_substr(strip_tags($descriptionOrContent), 0, 2000),
+        ])));
+        if ($text === '') {
+            return 0;
+        }
+        $this->deleteAnalysisEmbeddingsByNewsId($newsId);
+        return $this->storeAnalysisEmbedding(
+            $newsId,
+            $articleUrl,
+            $text,
+            'published',
+            ['source' => 'published_article']
+        );
+    }
+
+    /**
+     * 해당 기사(news_id)의 analysis_embeddings 행 삭제 (재저장 전 정리용).
+     */
+    public function deleteAnalysisEmbeddingsByNewsId(int $newsId): bool
+    {
+        if (!$this->supabase->isConfigured()) {
+            return false;
+        }
+        return $this->supabase->delete('analysis_embeddings', "news_id=eq.{$newsId}");
+    }
+
     // ── Helpers ──────────────────────────────────────────
 
     /**

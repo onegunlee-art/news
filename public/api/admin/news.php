@@ -331,6 +331,12 @@ if ($method === 'POST') {
         
         logError('Insert successful', ['news_id' => $newsId]);
         
+        // 기사 게시 시 최종 output RAG 임베딩 저장
+        if ($status === 'published') {
+            require_once __DIR__ . '/../lib/storePublishedNewsEmbedding.php';
+            storePublishedNewsEmbedding($db, (int) $newsId);
+        }
+        
         http_response_code(201);
         echo json_encode([
             'success' => true,
@@ -359,6 +365,10 @@ if ($method === 'POST') {
                 $stmt->execute($values);
                 $newsId = $db->lastInsertId();
                 logError('Retry insert successful', ['news_id' => $newsId]);
+                if ($status === 'published') {
+                    require_once __DIR__ . '/../lib/storePublishedNewsEmbedding.php';
+                    storePublishedNewsEmbedding($db, (int) $newsId);
+                }
                 http_response_code(201);
                 echo json_encode([
                     'success' => true,
@@ -798,6 +808,12 @@ if ($method === 'PUT') {
         // TTS 캐시 무효화 (기사 수정 시 Supabase media_cache 삭제)
         require_once __DIR__ . '/../lib/invalidateTtsCache.php';
         invalidateTtsCacheForNews((int) $id);
+
+        // 기사 게시 시 최종 output RAG 임베딩 저장
+        if ($status === 'published') {
+            require_once __DIR__ . '/../lib/storePublishedNewsEmbedding.php';
+            storePublishedNewsEmbedding($db, (int) $id);
+        }
 
         echo json_encode([
             'success' => true,

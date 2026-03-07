@@ -1,0 +1,50 @@
+[
+  {
+    "category": "ir_theory",
+    "framework_name": "realism",
+    "title": "현실주의 (Realism) 국제관계 이론",
+    "content": "국가를 합리적 행위자로 보며, 국제체제는 무정부 상태이므로 국가는 생존과 권력 극대화를 추구한다. 군사력과 균형(balance of power)이 핵심. 구조적 현실주의(왈츠)는 체제 수준의 균형, 신현실주의는 상대적 이득을 강조.",
+    "keywords": ["국가", "권력", "균형", "무정부", "생존", "군사력"],
+    "source": "The Gist 지식 라이브러리"
+  },
+  {
+    "category": "ir_theory",
+    "framework_name": "liberalism",
+    "title": "자유주의 (Liberalism) 국제관계 이론",
+    "content": "국제기구, 민주주의, 무역·상호의존이 갈등을 완화하고 협력을 증대시킨다. 민주평화론, 자유주의적 제도주의. 국가 내부 가치와 제도가 대외정책에 영향을 미침.",
+    "keywords": ["민주주의", "국제기구", "상호의존", "협력", "제도"],
+    "source": "The Gist 지식 라이브러리"
+  },
+  {
+    "category": "ir_theory",
+    "framework_name": "constructivism",
+    "title": "구성주의 (Constructivism) 국제관계 이론",
+    "content": "국제정치의 구조는 물질적 힘만이 아니라 아이디어·규범·정체성으로 구성된다. 사회적 구성, 담론, 규범 확산. 적과 동맹의 구분도 사회적으로 구축됨.",
+    "keywords": ["아이디어", "규범", "정체성", "사회적 구성", "담론"],
+    "source": "The Gist 지식 라이브러리"
+  },
+  {
+    "category": "geopolitics",
+    "framework_name": "geopolitics",
+    "title": "지리정치 (Geopolitics) 기본 개념",
+    "content": "지리(영토, 자원, 해양·육상 통로)가 국가 전략과 권력에 미치는 영향. 하트랜드, 림랜드, 해양 세력 대 육상 세력. 에너지·물류·인프라가 현대 지리정치의 핵심.",
+    "keywords": ["지리", "영토", "자원", "하트랜드", "물류", "에너지"],
+    "source": "The Gist 지식 라이브러리"
+  },
+  {
+    "category": "economics",
+    "framework_name": "macroeconomics",
+    "title": "거시경제 정책 프레임워크",
+    "content": "통화정책(금리, 양적완화·긴축)과 재정정책(지출, 세금)이 경기·인플레이션·고용에 미치는 영향. 중앙은행 독립성, 재정 건전성, 환율과 자본이동. 글로벌 금융위기 이후 비전통적 통화정책.",
+    "keywords": ["금리", "인플레이션", "재정", "통화정책", "중앙은행", "경기"],
+    "source": "The Gist 지식 라이브러리"
+  },
+  {
+    "category": "economics",
+    "framework_name": "markets",
+    "title": "금융시장·시장 분석 기본",
+    "content": "주식·채권·외환·원자재 시장의 동작과 정책·이벤트 반응. 위험 프리미엄, 수익률 곡선, 달러 강세/약세와 신흥국 자본유출. 시장 기대와 중앙은행 커뮤니케이션.",
+    "keywords": ["주식", "채권", "외환", "원자재", "수익률", "달러"],
+    "source": "The Gist 지식 라이브러리"
+  }
+]
