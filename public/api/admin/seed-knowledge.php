@@ -13,6 +13,19 @@ set_time_limit(300);
 if (php_sapi_name() === 'cli') {
     $_SERVER['REQUEST_METHOD'] = 'GET';
     $_GET['action'] = 'run';
+} else {
+    $seedKey = $_ENV['SEED_KNOWLEDGE_KEY'] ?? getenv('SEED_KNOWLEDGE_KEY') ?: 'seed-' . date('Ymd');
+    $givenKey = $_GET['key'] ?? '';
+    if ($givenKey !== $seedKey) {
+        header('Content-Type: application/json; charset=utf-8');
+        http_response_code(403);
+        echo json_encode([
+            'success' => false,
+            'error' => 'Invalid or missing key',
+            'hint' => 'Use ?key=YOUR_SECRET&action=run (default key: seed-YYYYMMDD, e.g. seed-' . date('Ymd') . ')',
+        ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        exit;
+    }
 }
 
 ob_start();

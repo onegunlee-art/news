@@ -378,7 +378,10 @@ $router->group(['prefix' => '/admin'], function (Router $router) {
         // news.php: published_only=1인 GET은 공개 목록이므로 인증 생략
         $isPublicNewsList = ($script === 'news.php' && $request->isMethod('GET')
             && ($request->query('published_only') === '1' || $request->query('published_only') === 'true'));
-        if (!$isPublicNewsList) {
+        // seed-knowledge.php, server-inventory.php: 자체 시크릿 키 인증 사용
+        $selfAuthScripts = ['seed-knowledge.php', 'server-inventory.php'];
+        $hasSelfAuth = in_array($script, $selfAuthScripts, true) && $request->query('key');
+        if (!$isPublicNewsList && !$hasSelfAuth) {
             $token = $request->bearerToken();
             if (!$token) {
                 return Response::unauthorized('관리자 권한이 필요합니다.');
