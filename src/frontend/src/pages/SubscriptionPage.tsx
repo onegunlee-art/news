@@ -104,7 +104,7 @@ export default function SubscriptionPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#1a1a2e]">
+    <div className="min-h-screen bg-white">
       <div className="max-w-lg mx-auto px-5 py-10 md:py-16">
         {/* 헤더 */}
         <motion.div
@@ -113,30 +113,32 @@ export default function SubscriptionPage() {
           transition={{ duration: 0.4 }}
           className="text-center mb-10"
         >
-          <h1 className="text-2xl md:text-3xl font-bold text-white leading-snug">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 leading-snug">
             <span style={{ fontFamily: "'Lobster', cursive" }}>The Gist</span>의 모든 컨텐츠를 만나세요
           </h1>
-          <p className="mt-4 text-sm text-gray-400 leading-relaxed">
+          <p className="mt-4 text-sm text-gray-600 leading-relaxed">
             외교·정치·안보·분쟁에서 비즈니스·에너지·첨단기술·사회문화에
-            이르기까지 글로벌 이슈를 관통하는 품격 있는 가치와 생각으로
+            이르기까지
+            <br />
+            글로벌 이슈를 관통하는 품격 있는 가치와 생각으로
             하루를 시작하세요
           </p>
         </motion.div>
 
         {/* 구독 중 안내 */}
         {isSubscribed && (
-          <div className="mb-6 flex items-center justify-center gap-2 px-4 py-3 bg-green-900/30 border border-green-700 rounded-lg">
-            <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="mb-6 flex items-center justify-center gap-2 px-4 py-3 bg-green-50 border border-green-200 rounded-lg">
+            <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
-            <span className="text-green-300 text-sm font-medium">현재 구독 중입니다</span>
+            <span className="text-green-700 text-sm font-medium">현재 구독 중입니다</span>
           </div>
         )}
 
         {/* 에러 */}
         {error && (
-          <div className="mb-6 px-4 py-3 bg-red-900/30 border border-red-700 rounded-lg text-center">
-            <span className="text-red-300 text-sm">{error}</span>
+          <div className="mb-6 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-center">
+            <span className="text-red-700 text-sm">{error}</span>
           </div>
         )}
 
@@ -156,8 +158,8 @@ export default function SubscriptionPage() {
                 onClick={() => setSelectedPlan(plan.id)}
                 className={`w-full text-left rounded-xl border-2 transition-all duration-200 ${
                   isSelected
-                    ? 'border-primary-500 bg-[#22223a]'
-                    : 'border-gray-700 bg-[#22223a]/60 hover:border-gray-500'
+                    ? 'border-primary-500 bg-gray-100'
+                    : 'border-gray-200 bg-gray-50 hover:border-gray-300'
                 } ${plan.bestValue && isSelected ? 'ring-1 ring-primary-500/30' : ''}`}
               >
                 {/* Best Value 배지 */}
@@ -173,14 +175,14 @@ export default function SubscriptionPage() {
                   {/* 라디오 + 플랜명 + 가격 */}
                   <div className="flex items-center gap-3">
                     <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
-                      isSelected ? 'border-primary-500' : 'border-gray-500'
+                      isSelected ? 'border-primary-500' : 'border-gray-400'
                     }`}>
                       {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-primary-500" />}
                     </div>
                     <div className="flex-1 flex items-baseline justify-between gap-2">
-                      <span className="text-white font-semibold">{plan.label}</span>
-                      <span className="text-white font-bold whitespace-nowrap">
-                        {plan.monthlyPrice}₩<span className="text-sm font-normal text-gray-400">/월</span>
+                      <span className="text-gray-900 font-semibold">{plan.label}</span>
+                      <span className="text-gray-900 font-bold whitespace-nowrap">
+                        {plan.monthlyPrice}₩<span className="text-sm font-normal text-gray-900">/월</span>
                       </span>
                     </div>
                   </div>
@@ -188,9 +190,9 @@ export default function SubscriptionPage() {
                   {/* 할인/설명 */}
                   <div className="ml-8 mt-1.5 space-y-0.5">
                     {plan.discount && (
-                      <p className="text-xs text-primary-400 font-medium">{plan.discount}</p>
+                      <p className="text-xs text-primary-600 font-medium">{plan.discount}</p>
                     )}
-                    <p className="text-xs text-gray-500">{plan.billing}</p>
+                    <p className="text-xs text-gray-600">{plan.billing}</p>
                   </div>
                 </div>
               </button>
@@ -229,16 +231,16 @@ export default function SubscriptionPage() {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.3 }}
-          className="mt-14 pt-8 border-t border-gray-700/50"
+          className="mt-14 pt-8 border-t border-gray-200"
         >
-          <h3 className="text-center text-sm font-semibold text-gray-400 mb-4">단건 상품</h3>
-          <div className="rounded-xl border border-gray-700 bg-[#22223a]/60 p-5">
+          <h3 className="text-center text-sm font-semibold text-gray-600 mb-4">단건 상품</h3>
+          <div className="rounded-xl border border-gray-200 bg-gray-50 p-5">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <h4 className="text-white font-semibold text-sm">The Gist 2월호 News Letter</h4>
-                <p className="text-xs text-gray-500 mt-0.5">The Gist 1,2월호 뉴스레터 단건 구매</p>
+                <h4 className="text-gray-900 font-semibold text-sm">The Gist 2월호 News Letter</h4>
+                <p className="text-xs text-gray-600 mt-0.5">The Gist 1,2월호 뉴스레터 단건 구매</p>
               </div>
-              <span className="text-white font-bold whitespace-nowrap">10,900₩</span>
+              <span className="text-gray-900 font-bold whitespace-nowrap">10,900₩</span>
             </div>
             <button
               type="button"
@@ -246,8 +248,8 @@ export default function SubscriptionPage() {
               onClick={() => handleBuyOnetime('newsletter_feb')}
               className={`w-full mt-4 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
                 loadingOnetime === 'newsletter_feb'
-                  ? 'bg-gray-500 text-white cursor-wait'
-                  : 'border border-gray-500 text-gray-300 hover:bg-gray-700 hover:text-white'
+                  ? 'bg-gray-400 text-white cursor-wait'
+                  : 'border border-gray-300 text-gray-700 hover:bg-gray-100'
               }`}
             >
               {loadingOnetime === 'newsletter_feb' ? '처리 중...' : '구매하기'}
@@ -255,7 +257,7 @@ export default function SubscriptionPage() {
           </div>
         </motion.div>
 
-        <p className="text-center text-[10px] text-gray-700 mt-8">
+        <p className="text-center text-[10px] text-gray-500 mt-8">
           이용 시 약관 및 결제 정책이 적용됩니다.
         </p>
       </div>
