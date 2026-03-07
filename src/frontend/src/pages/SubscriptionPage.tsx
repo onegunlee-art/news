@@ -114,7 +114,7 @@ export default function SubscriptionPage() {
           className="text-center mb-10"
         >
           <h1 className="text-2xl md:text-3xl font-bold text-white leading-snug">
-            The Gist의 모든 컨텐츠를 만나세요
+            <span style={{ fontFamily: "'Lobster', cursive" }}>The Gist</span>의 모든 컨텐츠를 만나세요
           </h1>
           <p className="mt-4 text-sm text-gray-400 leading-relaxed">
             외교·정치·안보·분쟁에서 비즈니스·에너지·첨단기술·사회문화에

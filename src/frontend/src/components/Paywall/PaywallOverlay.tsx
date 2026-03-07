@@ -35,7 +35,7 @@ export default function PaywallOverlay({ isAuthenticated, onLogin }: PaywallOver
 
         {/* 메인 헤딩 */}
         <h2 className="text-2xl font-bold text-page leading-snug mb-6">
-          구독하고 The Gist의
+          구독하고 <span style={{ fontFamily: "'Lobster', cursive" }}>The Gist</span>의
           <br />
           모든 컨텐츠를 만나세요
         </h2>
