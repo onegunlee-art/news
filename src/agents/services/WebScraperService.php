@@ -31,8 +31,15 @@ class WebScraperService
             ?? 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
     }
 
+    /** 페이월 우회 시 사용할 Googlebot UA */
+    private const GOOGLEBOT_UA = 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)';
+
+    /** 페이월 우회를 시도할 도메인 목록 */
+    private const PAYWALL_DOMAINS = ['economist.com', 'ft.com'];
+
     /**
-     * URL에서 기사 데이터 추출 (cURL 실패 시 Jina fallback 사용 가능)
+     * URL에서 기사 데이터 추출.
+     * 페이월 사이트에서 본문이 짧으면 JSON-LD → Googlebot UA 순으로 전문 재시도.
      */
     public function scrape(string $url): ArticleData
     {
@@ -41,13 +48,155 @@ class WebScraperService
             if (empty($html)) {
                 throw new \RuntimeException("Failed to fetch URL: {$url}");
             }
-            return $this->parseHtml($url, $html);
+            $article = $this->parseHtml($url, $html);
+
+            if ($this->isPaywalledDomain($url)
+                && mb_strlen($article->getContent()) < self::MIN_CONTENT_LENGTH_WARNING
+            ) {
+                $enhanced = $this->retryWithPaywallBypass($url, $html, $article);
+                if ($enhanced !== null) {
+                    return $enhanced;
+                }
+            }
+
+            return $article;
         } catch (\Throwable $e) {
             if ($this->config['jina_fallback'] ?? false) {
                 return $this->scrapeViaJina($url);
             }
             throw $e;
         }
+    }
+
+    private function isPaywalledDomain(string $url): bool
+    {
+        $host = strtolower(parse_url($url, PHP_URL_HOST) ?? '');
+        foreach (self::PAYWALL_DOMAINS as $domain) {
+            if (str_contains($host, $domain)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 페이월로 본문이 짧을 때 전문 획득 시도:
+     *  1) 원본 HTML의 JSON-LD articleBody
+     *  2) Googlebot UA로 재요청
+     */
+    private function retryWithPaywallBypass(string $url, string $originalHtml, ArticleData $shortArticle): ?ArticleData
+    {
+        $originalLen = mb_strlen($shortArticle->getContent());
+
+        // Strategy 1: JSON-LD articleBody (추가 요청 없이 원본 HTML에서 추출)
+        $jsonLdBody = $this->extractArticleBodyFromJsonLd($originalHtml);
+        if ($jsonLdBody !== null && mb_strlen($jsonLdBody) > $originalLen) {
+            error_log("[WebScraperService] Paywall bypass: JSON-LD articleBody found (" . mb_strlen($jsonLdBody) . " chars) for {$url}");
+            return $this->buildEnhancedArticle($shortArticle, $jsonLdBody, 'json-ld');
+        }
+
+        // Strategy 2: Googlebot UA로 재요청
+        try {
+            $botHtml = $this->fetchHtmlWithUA($url, self::GOOGLEBOT_UA);
+            if (!empty($botHtml)) {
+                $botArticle = $this->parseHtml($url, $botHtml);
+                if (mb_strlen($botArticle->getContent()) > $originalLen) {
+                    error_log("[WebScraperService] Paywall bypass: Googlebot UA got more content (" . mb_strlen($botArticle->getContent()) . " chars) for {$url}");
+                    return $botArticle;
+                }
+                $jsonLdBody2 = $this->extractArticleBodyFromJsonLd($botHtml);
+                if ($jsonLdBody2 !== null && mb_strlen($jsonLdBody2) > $originalLen) {
+                    error_log("[WebScraperService] Paywall bypass: Googlebot JSON-LD articleBody (" . mb_strlen($jsonLdBody2) . " chars) for {$url}");
+                    return $this->buildEnhancedArticle($shortArticle, $jsonLdBody2, 'googlebot-json-ld');
+                }
+            }
+        } catch (\Throwable $e) {
+            error_log("[WebScraperService] Googlebot UA retry failed for {$url}: " . $e->getMessage());
+        }
+
+        return null;
+    }
+
+    /**
+     * JSON-LD structured data에서 articleBody 추출
+     */
+    private function extractArticleBodyFromJsonLd(string $html): ?string
+    {
+        if (!preg_match_all('/<script[^>]*type\s*=\s*["\']application\/ld\+json["\'][^>]*>(.*?)<\/script>/is', $html, $matches)) {
+            return null;
+        }
+        foreach ($matches[1] as $jsonStr) {
+            $decoded = json_decode(trim($jsonStr), true);
+            if (!is_array($decoded)) {
+                continue;
+            }
+            $items = isset($decoded['@graph']) ? $decoded['@graph'] : [$decoded];
+            foreach ($items as $item) {
+                if (!is_array($item)) {
+                    continue;
+                }
+                $body = $item['articleBody'] ?? null;
+                if (is_string($body) && mb_strlen($body) > 200) {
+                    return $this->cleanNewsletterBlocks(trim($body));
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 특정 User-Agent로 HTML 요청
+     */
+    private function fetchHtmlWithUA(string $url, string $ua): string
+    {
+        $ch = \curl_init($url);
+        \curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_MAXREDIRS => 5,
+            CURLOPT_TIMEOUT => $this->config['timeout'] ?? 60,
+            CURLOPT_USERAGENT => $ua,
+            CURLOPT_HTTPHEADER => [
+                'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                'Accept-Language: en-US,en;q=0.9',
+                'Accept-Encoding: gzip, deflate, br',
+            ],
+            CURLOPT_ENCODING => '',
+            CURLOPT_SSL_VERIFYPEER => $this->config['verify_ssl'] ?? true,
+        ]);
+        $html = \curl_exec($ch);
+        $httpCode = (int) \curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        \curl_close($ch);
+
+        if ($httpCode !== 200 || $html === false) {
+            return '';
+        }
+        return $html;
+    }
+
+    /**
+     * 짧은 ArticleData의 메타를 유지하면서 content만 교체한 새 ArticleData 생성
+     */
+    private function buildEnhancedArticle(ArticleData $original, string $fullContent, string $via): ArticleData
+    {
+        $metadata = [
+            'scraped_at' => date('c'),
+            'content_length' => mb_strlen($fullContent),
+            'paywall_bypass' => $via,
+        ];
+
+        return new ArticleData(
+            url: $original->getUrl(),
+            title: $original->getTitle(),
+            content: $fullContent,
+            description: $original->getDescription(),
+            author: $original->getAuthor(),
+            publishedAt: $original->getPublishedAt(),
+            imageUrl: $original->getImageUrl(),
+            language: $original->getLanguage(),
+            source: $original->getSource(),
+            metadata: $metadata
+        );
     }
 
     /**
