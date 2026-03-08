@@ -299,6 +299,10 @@ const AdminPage: React.FC = () => {
   const [articleUrl, setArticleUrl] = useState('');
   const [editingNewsId, setEditingNewsId] = useState<number | null>(null);
 
+  // 본문 붙여넣기 분석
+  const [pastedContent, setPastedContent] = useState('');
+  const [isAnalyzingContent, setIsAnalyzingContent] = useState(false);
+
   // AI 분석 상태
   const [aiUrl, setAiUrl] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -1815,6 +1819,153 @@ const AdminPage: React.FC = () => {
                     >
                       API 상태 확인
                     </button>
+                  </div>
+
+                  {/* 본문 붙여넣기 → GPT 분석 (페이월 기사용) */}
+                  <div>
+                    <label className="block text-slate-300 mb-2 text-sm font-medium">기사 본문 붙여넣기 <span className="text-slate-500 font-normal">(페이월 기사용 - Economist, FT 등)</span></label>
+                    <div className="flex gap-2 items-start">
+                      <textarea
+                        value={pastedContent}
+                        onChange={(e) => setPastedContent(e.target.value)}
+                        placeholder="브라우저에서 기사 전문을 복사해서 여기에 붙여넣으세요. 제목, 본문을 함께 붙여넣어도 됩니다. (Save, Share, Illustration 등 잡음은 GPT가 자동 제거합니다)"
+                        rows={4}
+                        className="flex-1 bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none transition resize-y text-sm"
+                      />
+                      <button
+                        onClick={async () => {
+                          const content = pastedContent.trim();
+                          if (!content || content.length < 100) {
+                            setSaveMessage({ type: 'error', text: '기사 본문이 너무 짧습니다. 최소 100자 이상 붙여넣어주세요.' });
+                            return;
+                          }
+                          setIsAnalyzingContent(true);
+                          setSaveMessage({ type: 'info', text: '붙여넣은 본문을 분석 중...' });
+                          setAiError(null);
+                          setAiResult(null);
+                          const apiUrl = '/api/admin/ai-analyze.php';
+                          try {
+                            const startRes = await adminFetch(apiUrl, {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                action: 'analyze_content',
+                                content,
+                                url: articleUrl.trim() || 'https://pasted-content.local/article',
+                                title: '',
+                                enable_tts: false,
+                                enable_interpret: false,
+                                enable_learning: false
+                              }),
+                            });
+                            const startData = await startRes.json();
+                            const jobId = startData.job_id;
+                            let data: Record<string, unknown> | null = null;
+
+                            if (jobId && startData.status === 'processing') {
+                              const pollInterval = 3000;
+                              const maxPolls = 120;
+                              for (let i = 0; i < maxPolls; i++) {
+                                if (i > 0) await new Promise((r) => setTimeout(r, pollInterval));
+                                setSaveMessage({ type: 'info', text: `본문 분석 중... (${i + 1}회 확인)` });
+                                const pollRes = await adminFetch(`${apiUrl}?action=job_status&job_id=${encodeURIComponent(jobId)}`);
+                                const pollJson = await pollRes.json().catch(() => ({}));
+                                if (pollJson.status === 'processing') continue;
+                                data = pollJson as Record<string, unknown>;
+                                break;
+                              }
+                              if (!data) {
+                                setSaveMessage({ type: 'error', text: '분석 시간이 초과되었습니다.' });
+                                setIsAnalyzingContent(false);
+                                return;
+                              }
+                            } else {
+                              data = startData as Record<string, unknown>;
+                            }
+
+                            if (!data.success || !data.analysis) {
+                              setSaveMessage({ type: 'error', text: (data.error as string) || '본문 분석 실패' });
+                              setIsAnalyzingContent(false);
+                              return;
+                            }
+
+                            const a = data.analysis as Record<string, unknown>;
+                            const article = data.article as Record<string, unknown> | undefined;
+                            setNewsTitle((a.news_title as string) || '');
+                            if (article) {
+                              setArticleImageUrl((article.image_url as string) || '');
+                              setArticleSummary((article.description as string) || '');
+                              setArticleSource((article.source as string) || '');
+                              if (article.published_at) setArticlePublishedAt(article.published_at as string);
+                              if (article.author) setArticleAuthor((article.author as string) || '');
+                            }
+                            setArticleOriginalTitle((a.original_title as string) || '');
+                            setNewsContent(
+                              (a.content_summary as string) ||
+                              ('## 주요 포인트\n' + ((a.key_points as string[])?.map((p: string) => `- ${p}`).join('\n') || ''))
+                            );
+                            setNewsNarration(
+                              (a.narration as string) ||
+                              (((a.translation_summary as string) || '') + ' ' + ((a.key_points as string[])?.map((p: string, i: number) => `${i + 1}번. ${p}`).join(' ') || ''))
+                            );
+                            setNewsWhyImportant('');
+                            setShowExtractedInfo(true);
+
+                            const narrationForTts = (a.narration as string) || ((a.key_points as string[]) || []).join(' ');
+                            if (!narrationForTts?.trim()) {
+                              setAiResult(a as Record<string, unknown>);
+                              setSaveMessage({ type: 'success', text: '본문 분석 완료! (내레이션 없어 TTS 생략)' });
+                              setIsAnalyzingContent(false);
+                              return;
+                            }
+
+                            setSaveMessage({ type: 'info', text: '분석 완료. TTS 생성 중...' });
+                            const ttsParams = buildTtsParamsForListen({
+                              title: (a.news_title as string) || '',
+                              narration: narrationForTts,
+                              whyImportant: (a as { critical_analysis?: { why_important?: string }; why_important?: string })?.critical_analysis?.why_important ?? (a as { why_important?: string })?.why_important ?? '',
+                              publishedAt: article?.published_at,
+                              source: article?.source,
+                              originalSource: (article as { original_source?: string })?.original_source,
+                              sourceUrl: (article as { source_url?: string; url?: string })?.source_url ?? (article as { url?: string })?.url,
+                              originalTitle: (a.original_title as string) || undefined,
+                            });
+                            const ttsRes = await adminFetch(apiUrl, {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ action: 'generate_tts', ...ttsParams }),
+                            });
+                            const ttsData = ttsRes.ok ? await ttsRes.json().catch(() => ({})) : {};
+                            const audioUrl = ttsData.success && ttsData.audio_url ? ttsData.audio_url : null;
+                            setAiResult({ ...a, audio_url: audioUrl ?? undefined } as Record<string, unknown>);
+                            if (audioUrl) {
+                              setSaveMessage({ type: 'success', text: '본문 분석·TTS 완료!' });
+                            } else {
+                              setSaveMessage({ type: 'error', text: ttsData?.error ? `TTS 실패: ${ttsData.error}` : 'TTS 생성만 실패. 내레이션은 사용 가능합니다.' });
+                            }
+                          } catch (error: unknown) {
+                            const err = error as Error;
+                            setSaveMessage({ type: 'error', text: '본문 분석 오류: ' + (err.message || String(error)) });
+                          } finally {
+                            setIsAnalyzingContent(false);
+                          }
+                        }}
+                        disabled={isAnalyzingContent || isAnalyzing || pastedContent.trim().length < 100}
+                        className={`px-5 py-3 rounded-xl font-medium transition-all whitespace-nowrap self-start mt-0 ${
+                          isAnalyzingContent || isAnalyzing || pastedContent.trim().length < 100
+                            ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
+                            : 'bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:opacity-90'
+                        }`}
+                      >
+                        {isAnalyzingContent ? (
+                          <span className="flex items-center gap-2">
+                            <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></span>
+                            분석 중...
+                          </span>
+                        ) : 'GPT 분석'}
+                      </button>
+                    </div>
+                    <p className="text-slate-500 text-xs mt-1">Economist, FT 등 페이월 기사를 브라우저에서 전문 복사 후 붙여넣기하세요. 위 URL도 함께 입력하면 출처 정보가 자동 설정됩니다.</p>
                   </div>
 
                   {/* 추출된 정보 섹션 (편집 가능) */}

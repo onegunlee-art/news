@@ -123,15 +123,20 @@ class AgentPipeline
     }
 
     /**
-     * 파이프라인 실행
+     * 파이프라인 실행.
+     * $preloadedArticle이 주어지면 ValidationAgent(스크래핑)를 건너뛰고 바로 분석합니다.
      */
-    public function run(string $url): PipelineResult
+    public function run(string $url, ?ArticleData $preloadedArticle = null): PipelineResult
     {
         $this->results = [];
         $this->lastError = null;
 
         $startTime = microtime(true);
         $context = new AgentContext($url);
+
+        if ($preloadedArticle !== null) {
+            $context = $context->withArticleData($preloadedArticle);
+        }
 
         // 모든 Agent 초기화
         foreach ($this->agents as $agent) {
@@ -141,7 +146,11 @@ class AgentPipeline
         // 순차 실행
         foreach ($this->agents as $agent) {
             $agentName = $agent->getName();
-            
+
+            if ($preloadedArticle !== null && $agentName === 'ValidationAgent') {
+                continue;
+            }
+
             try {
                 $result = $agent->process($context);
                 $this->results[$agentName] = $result;

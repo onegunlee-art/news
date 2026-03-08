@@ -414,6 +414,133 @@ function analyzeUrl(string $url, array $options = []): array {
 }
 
 /**
+ * 붙여넣은 기사 본문으로 직접 분석 (스크래핑 건너뜀).
+ * analyzeUrl과 동일한 결과 형식을 반환합니다.
+ */
+function analyzeContent(string $content, string $url, string $title, array $options = []): array {
+    global $projectRoot, $envLoaded, $envTried;
+    $startTime = microtime(true);
+
+    $openaiKey = $_ENV['OPENAI_API_KEY'] ?? getenv('OPENAI_API_KEY');
+    $openaiKey = is_string($openaiKey) ? $openaiKey : '';
+    $debug = [
+        'project_root' => $projectRoot,
+        'source' => 'pasted_content',
+        'content_length' => mb_strlen($content),
+        'openai_key_set' => $openaiKey !== '',
+    ];
+
+    $googleTtsConfig = file_exists($projectRoot . 'config/google_tts.php')
+        ? require $projectRoot . 'config/google_tts.php'
+        : [];
+    $ttsVoice = $googleTtsConfig['default_voice'] ?? 'ko-KR-Standard-A';
+
+    if (file_exists($projectRoot . 'src/backend/Core/Database.php')) {
+        require_once $projectRoot . 'src/backend/Core/Database.php';
+        try {
+            $db = \App\Core\Database::getInstance()->getConnection();
+            $stmt = $db->prepare("SELECT `value` FROM settings WHERE `key` = ?");
+            $stmt->execute(['tts_voice']);
+            $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+            if ($row && $row['value'] !== '') {
+                $ttsVoice = $row['value'];
+            }
+        } catch (\Throwable $e) {}
+    }
+
+    $ragService = null;
+    $personaService = null;
+    $supabase = new SupabaseService([]);
+    if ($supabase->isConfigured()) {
+        $ragService = new RAGService(new OpenAIService([]), $supabase);
+        $personaService = new \Agents\Services\PersonaService($supabase);
+    }
+
+    $host = parse_url($url, PHP_URL_HOST) ?? '';
+    $source = $host ?: 'pasted';
+
+    $article = new \Agents\Models\ArticleData(
+        url: $url,
+        title: $title ?: mb_substr(strip_tags($content), 0, 80),
+        content: $content,
+        source: $source,
+        language: 'en',
+        metadata: ['pasted_content' => true, 'scraped_at' => date('c'), 'content_length' => mb_strlen($content)]
+    );
+
+    $pipelineConfig = [
+        'project_root' => rtrim($projectRoot, '/\\'),
+        'openai' => [],
+        'scraper' => ['timeout' => 60],
+        'enable_interpret' => $options['enable_interpret'] ?? true,
+        'enable_learning' => $options['enable_learning'] ?? true,
+        'google_tts' => $googleTtsConfig,
+        'rag_service' => $ragService,
+        'persona_service' => $personaService,
+        'analysis' => [
+            'enable_tts' => $options['enable_tts'] ?? false,
+            'summary_length' => 3,
+            'key_points_count' => 4,
+            'tts_voice' => $ttsVoice,
+        ],
+        'stop_on_failure' => true
+    ];
+
+    $pipeline = new AgentPipeline($pipelineConfig);
+    $pipeline->setupDefaultPipeline();
+
+    try {
+        $result = $pipeline->run($url, $article);
+    } catch (\Throwable $e) {
+        $durationMs = round((microtime(true) - $startTime) * 1000, 2);
+        return [
+            'success' => false, 'url' => $url, 'mock_mode' => false,
+            'article' => null, 'analysis' => null,
+            'duration_ms' => $durationMs, 'debug' => $debug,
+            'error' => 'Pipeline 예외: ' . $e->getMessage(),
+        ];
+    }
+
+    $durationMs = round((microtime(true) - $startTime) * 1000, 2);
+    $agentsExecuted = array_keys($result->results);
+
+    if ($result->isSuccess()) {
+        $finalAnalysis = $result->getFinalAnalysis();
+        $narration = $finalAnalysis['narration'] ?? null;
+        if (empty($narration) && !empty($finalAnalysis['key_points'])) {
+            $narration = implode(' ', $finalAnalysis['key_points']);
+        }
+
+        return [
+            'success' => true, 'url' => $url, 'mock_mode' => false,
+            'needs_clarification' => false, 'clarification_data' => null,
+            'article' => $article->toArray(),
+            'analysis' => [
+                'news_title' => $finalAnalysis['news_title'] ?? null,
+                'original_title' => $finalAnalysis['original_title'] ?? null,
+                'author' => $finalAnalysis['author'] ?? null,
+                'translation_summary' => $finalAnalysis['translation_summary'] ?? ($narration ? mb_substr($narration, 0, 200) : ''),
+                'key_points' => $finalAnalysis['key_points'] ?? [],
+                'content_summary' => $finalAnalysis['content_summary'] ?? null,
+                'narration' => $narration,
+                'critical_analysis' => $finalAnalysis['critical_analysis'] ?? [],
+                'audio_url' => $finalAnalysis['audio_url'] ?? null
+            ],
+            'duration_ms' => $durationMs, 'agents_executed' => $agentsExecuted,
+            'phase' => 'success', 'failed_step' => null, 'debug' => $debug, 'error' => null
+        ];
+    }
+
+    return [
+        'success' => false, 'url' => $url, 'mock_mode' => false,
+        'article' => null, 'analysis' => null,
+        'duration_ms' => $durationMs, 'agents_executed' => $agentsExecuted,
+        'phase' => 'agent_failure', 'debug' => $debug,
+        'error' => $result->getError()
+    ];
+}
+
+/**
  * TTS 생성 (2단계: 분석 완료 후 호출)
  * 순서: 제목 → 1초 휴식 → 편집 문구(날짜·출처) → 1초 휴식 → 내레이션(발췌)
  * 입력: narration (필수), tts_voice (선택), news_title, source, published_at (선택, 있으면 구조화 재생)
@@ -868,6 +995,53 @@ try {
                     // 백그라운드: 파이프라인 실행
                     try {
                         $result = analyzeUrl($url, $options);
+                        $result['job_id'] = $jobId;
+                        $result['status'] = $result['success'] ? 'done' : 'failed';
+                        writeJobStatus($jobId, $result);
+                    } catch (\Throwable $e) {
+                        writeJobStatus($jobId, [
+                            'status' => 'failed',
+                            'job_id' => $jobId,
+                            'success' => false,
+                            'error' => 'Pipeline 예외: ' . $e->getMessage(),
+                            'analysis' => null,
+                        ]);
+                    }
+                    exit;
+
+                case 'analyze_content':
+                    $content = $input['content'] ?? '';
+                    $contentUrl = $input['url'] ?? 'https://pasted-content.local/article';
+                    $contentTitle = $input['title'] ?? '';
+
+                    if (mb_strlen(trim($content)) < 100) {
+                        sendError('본문이 너무 짧습니다. 최소 100자 이상의 기사 본문을 붙여넣어주세요.');
+                    }
+
+                    $contentOptions = [
+                        'enable_tts' => $input['enable_tts'] ?? false,
+                        'enable_interpret' => $input['enable_interpret'] ?? true,
+                        'enable_learning' => $input['enable_learning'] ?? true
+                    ];
+
+                    $jobId = 'job_' . bin2hex(random_bytes(12));
+                    writeJobStatus($jobId, [
+                        'status' => 'processing',
+                        'url' => $contentUrl,
+                        'source' => 'pasted_content',
+                        'created_at' => date('c'),
+                    ]);
+
+                    sendResponseAndContinue([
+                        'success' => true,
+                        'job_id' => $jobId,
+                        'status' => 'processing',
+                        'message' => '붙여넣은 본문을 분석 중입니다. 잠시만 기다려주세요.',
+                        'analysis' => null,
+                    ]);
+
+                    try {
+                        $result = analyzeContent($content, $contentUrl, $contentTitle, $contentOptions);
                         $result['job_id'] = $jobId;
                         $result['status'] = $result['success'] ? 'done' : 'failed';
                         writeJobStatus($jobId, $result);
