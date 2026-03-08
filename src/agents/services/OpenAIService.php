@@ -759,6 +759,7 @@ class OpenAIService
     public function createImage(string $prompt, array $options = []): ?string
     {
         if ($this->mockMode || $prompt === '') {
+            $this->lastError = $this->mockMode ? 'Mock mode active' : 'Empty prompt';
             return null;
         }
 
@@ -774,6 +775,8 @@ class OpenAIService
         ];
 
         $endpoint = $this->config['endpoints']['images'] ?? 'https://api.openai.com/v1/images/generations';
+        $dalleTimeout = (int) ($options['timeout'] ?? $imgConfig['timeout'] ?? 90);
+
         $ch = curl_init($endpoint);
         curl_setopt_array($ch, [
             CURLOPT_RETURNTRANSFER => true,
@@ -783,18 +786,26 @@ class OpenAIService
                 'Content-Type: application/json',
                 'Authorization: Bearer ' . $this->apiKey,
             ],
-            CURLOPT_TIMEOUT => (int) ($options['timeout'] ?? $this->config['timeout'] ?? 60),
+            CURLOPT_TIMEOUT => $dalleTimeout,
+            CURLOPT_CONNECTTIMEOUT => 15,
         ]);
 
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch);
         curl_close($ch);
+
+        if ($curlError !== '') {
+            $this->lastError = 'cURL error: ' . $curlError;
+            error_log('[DALL-E] ' . $this->lastError . ' | timeout=' . $dalleTimeout . 's');
+            return null;
+        }
 
         if ($httpCode !== 200) {
             $errData = json_decode($response, true);
             $errMsg = $errData['error']['message'] ?? $errData['error']['code'] ?? substr((string)$response, 0, 500);
             $this->lastError = 'HTTP ' . $httpCode . ': ' . $errMsg;
-            error_log('OpenAI Images API error: ' . $this->lastError);
+            error_log('[DALL-E] API error: ' . $this->lastError);
             return null;
         }
 
@@ -803,30 +814,41 @@ class OpenAIService
         $imageUrl = $data['data'][0]['url'] ?? null;
         if ($imageUrl === null) {
             $this->lastError = 'Invalid response: no image URL in response';
+            error_log('[DALL-E] ' . $this->lastError);
             return null;
         }
 
-        // 만료되는 URL에서 다운로드 후 저장 (cURL 사용 - allow_url_fopen 미필요)
         $storagePath = $imgConfig['storage_path'] ?? dirname(__DIR__, 3) . '/storage/thumbnails';
+
         if (!is_dir($storagePath)) {
-            @mkdir($storagePath, 0755, true);
+            $mkResult = @mkdir($storagePath, 0755, true);
+            if (!$mkResult) {
+                $this->lastError = 'Cannot create storage dir: ' . $storagePath;
+                error_log('[DALL-E] ' . $this->lastError);
+                return null;
+            }
         }
+        if (!is_writable($storagePath)) {
+            $this->lastError = 'Storage dir not writable: ' . $storagePath;
+            error_log('[DALL-E] ' . $this->lastError);
+            return null;
+        }
+
         $filename = 'dalle_' . uniqid() . '.png';
         $filePath = $storagePath . '/' . $filename;
 
         $imgData = $this->downloadImageUrl($imageUrl);
         if ($imgData === null || strlen($imgData) === 0) {
-            $this->lastError = 'Failed to download generated image (curl or allow_url_fopen may be blocked)';
-            error_log('OpenAI Images: ' . $this->lastError);
+            $this->lastError = 'Failed to download generated image from OpenAI temp URL';
+            error_log('[DALL-E] ' . $this->lastError);
             return null;
         }
         if (@file_put_contents($filePath, $imgData) === false) {
-            $this->lastError = 'Failed to write to storage (check storage/thumbnails permissions)';
-            error_log('OpenAI Images: ' . $this->lastError . ' - ' . $filePath);
+            $this->lastError = 'file_put_contents failed: ' . $filePath;
+            error_log('[DALL-E] ' . $this->lastError);
             return null;
         }
 
-        // API 사용량 로깅 (DALL-E)
         $root = dirname(__DIR__, 3);
         $logPath = file_exists($root . '/public/api/lib/usage_log.php')
             ? $root . '/public/api/lib/usage_log.php'

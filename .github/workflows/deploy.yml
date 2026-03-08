@@ -212,6 +212,8 @@ jobs:
             **/.git*/**
             **/node_modules/**
             **/README.md
+            storage/thumbnails/**
+            storage/audio/**
 
       - name: Deployment notification
         run: |

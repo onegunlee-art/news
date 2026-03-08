@@ -159,6 +159,7 @@ class ThumbnailAgent extends BaseAgent
 
         // ── 1) GPT로 CONTENT 변수 추출 → buildFullPrompt → DALL·E 3 생성 (최우선) ──
         if ($this->openai->isConfigured()) {
+            // 1-a) 내레이션 기반 프롬프트로 DALL-E 3 시도
             try {
                 $this->ensureThumbnailPromptLoaded();
                 $contentLayer = \App\Utils\ThumbnailPrompt::extractContentLayerFromArticle($title, $contentInput, $this->openai, '');
@@ -169,10 +170,17 @@ class ThumbnailAgent extends BaseAgent
                     $newImageUrl = $generated;
                     $thumbnailSource = 'dall-e-3';
                     $this->log('Thumbnail generated with DALL·E 3: ' . $newImageUrl, 'info');
+                } else {
+                    $this->log('DALL·E 3 returned null (API error: ' . ($this->openai->getLastError() ?? 'unknown') . ')', 'warning');
                 }
             } catch (\Throwable $e) {
-                $this->log('DALL·E 3 thumbnail generation failed: ' . $e->getMessage(), 'warning');
+                $this->log('DALL·E 3 content-layer exception: ' . $e->getMessage(), 'warning');
+            }
+
+            // 1-b) 1차 실패 시 제목 기반 간소화 프롬프트로 재시도
+            if ($newImageUrl === null || $newImageUrl === '') {
                 try {
+                    $this->ensureThumbnailPromptLoaded();
                     $prompt = \App\Utils\ThumbnailPrompt::buildFallbackPromptFromTitle($title);
                     $usedPrompt = $prompt;
                     $generated = $this->openai->createImage($prompt);
@@ -180,9 +188,11 @@ class ThumbnailAgent extends BaseAgent
                         $newImageUrl = $generated;
                         $thumbnailSource = 'dall-e-3';
                         $this->log('Thumbnail fallback (title-only) DALL·E 3: ' . $newImageUrl, 'info');
+                    } else {
+                        $this->log('Fallback DALL·E 3 also returned null (API error: ' . ($this->openai->getLastError() ?? 'unknown') . ')', 'warning');
                     }
                 } catch (\Throwable $e2) {
-                    $this->log('Fallback DALL·E 3 also failed: ' . $e2->getMessage(), 'warning');
+                    $this->log('Fallback DALL·E 3 exception: ' . $e2->getMessage(), 'warning');
                 }
             }
         } else {
