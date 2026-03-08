@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import MaterialIcon from './MaterialIcon'
 
 export interface WelcomePopupProps {
   isOpen: boolean
@@ -58,9 +59,7 @@ const WelcomePopup: React.FC<WelcomePopupProps> = ({
                   className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-full"
                   style={{ background: 'linear-gradient(135deg, #f97316, #ea580c)' }}
                 >
-                  <svg className="h-7 w-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
+                  <MaterialIcon name="check_circle" className="h-7 w-7 text-white" size={28} filled />
                 </div>
 
                 {/* 이름 */}

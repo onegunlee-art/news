@@ -1,14 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom'
-import {
-  SparklesIcon,
-  ArrowTopRightOnSquareIcon,
-  PlayIcon,
-  BookmarkIcon,
-  ExclamationTriangleIcon,
-} from '@heroicons/react/24/outline'
-import { BookmarkIcon as BookmarkIconSolid } from '@heroicons/react/24/solid'
 import { motion } from 'framer-motion'
+import MaterialIcon from '../components/Common/MaterialIcon'
 import { newsApi } from '../services/api'
 import ShareMenu from '../components/Common/ShareMenu'
 import { useAuthStore } from '../store/authStore'
@@ -253,7 +246,7 @@ export default function NewsDetailPage() {
     return (
       <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 py-16 text-center">
         <div className="text-page-muted mb-4">
-          <ExclamationTriangleIcon className="w-16 h-16 mx-auto" strokeWidth={1} />
+          <MaterialIcon name="warning" className="w-16 h-16 mx-auto" size={64} />
         </div>
         <h2 className="text-xl font-bold text-page mb-2">오류 발생</h2>
         <p className="text-page-secondary mb-6">{error}</p>
@@ -301,7 +294,7 @@ export default function NewsDetailPage() {
                 aria-label="재생"
                 disabled={news?.access_restricted}
               >
-                <PlayIcon className="w-5 h-5" strokeWidth={2} />
+                <MaterialIcon name="headphones" className="w-5 h-5" size={20} />
               </button>
               {/* 공유하기 (메뉴: 카카오톡 / 링크 복사 / 시스템 공유) */}
               {news && (
@@ -334,9 +327,9 @@ export default function NewsDetailPage() {
                 aria-label={isBookmarked ? '즐겨찾기 해제' : '즐겨찾기 추가'}
               >
                 {isBookmarked ? (
-                  <BookmarkIconSolid className="w-5 h-5 text-primary-500" />
+                  <MaterialIcon name="bookmark" filled className="w-5 h-5 text-primary-500" size={20} />
                 ) : (
-                  <BookmarkIcon className="w-5 h-5" strokeWidth={2} />
+                  <MaterialIcon name="bookmark_border" className="w-5 h-5" size={20} />
                 )}
               </button>
             </div>
@@ -397,7 +390,7 @@ export default function NewsDetailPage() {
               onClick={playArticle}
               className="inline-flex items-center gap-2 text-base text-primary-500 hover:text-primary-600 transition-colors mb-6 pb-6 border-b border-page w-full"
             >
-              <PlayIcon className="w-5 h-5 shrink-0" strokeWidth={2} />
+              <MaterialIcon name="headphones" className="w-5 h-5 shrink-0" size={20} />
               <span className="font-medium">AI 보이스로 듣기</span>
             </button>
           )}
@@ -471,7 +464,7 @@ export default function NewsDetailPage() {
                 <div className="mb-8 border-t border-page pt-6 mt-20">
                   <div className="flex justify-between items-center gap-4 mb-3">
                     <h3 className="flex items-center gap-2 text-sm font-semibold text-primary-500 uppercase tracking-wider shrink-0">
-                      <SparklesIcon className="w-4 h-4" strokeWidth={2} />
+                      <MaterialIcon name="cognition_2" className="w-4 h-4" size={16} />
                       <button
                         type="button"
                         onClick={() => setAnalysisCollapsed((c) => !c)}
@@ -487,7 +480,7 @@ export default function NewsDetailPage() {
                         rel="noopener noreferrer"
                         className="flex items-center gap-1.5 text-sm font-semibold text-primary-500 hover:text-primary-600 transition-colors shrink-0"
                       >
-                        <ArrowTopRightOnSquareIcon className="w-4 h-4" strokeWidth={2} />
+                        <MaterialIcon name="open_in_new" className="w-4 h-4" size={16} />
                         원문 보러가기
                       </a>
                     )}
@@ -537,9 +530,7 @@ export default function NewsDetailPage() {
                       onClick={() => navigate('/', { state: { restoreTab: backTab } })}
                       className="w-full flex items-center justify-center gap-1.5 py-2 text-page-muted hover:text-page hover:bg-page-secondary transition-colors"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-                      </svg>
+                      <MaterialIcon name="menu" className="w-3.5 h-3.5" size={14} />
                       <span className="text-[10px] tracking-wider">목록으로 돌아가기</span>
                     </button>
                   </div>

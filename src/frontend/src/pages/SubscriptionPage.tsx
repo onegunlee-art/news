@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuthStore } from '../store/authStore'
 import { api } from '../services/api'
+import MaterialIcon from '../components/Common/MaterialIcon'
 
 interface Plan {
   id: string
@@ -130,9 +131,7 @@ export default function SubscriptionPage() {
         {/* 구독 중 안내 */}
         {isSubscribed && (
           <div className="mb-6 flex items-center justify-center gap-2 px-4 py-3 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 rounded-lg">
-            <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
+            <MaterialIcon name="check_circle" className="w-5 h-5 text-green-600 dark:text-green-400" size={20} filled />
             <span className="text-green-700 dark:text-green-300 text-sm font-medium">현재 구독 중입니다</span>
           </div>
         )}

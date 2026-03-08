@@ -1,5 +1,6 @@
 import { useRef, useEffect, useState, useCallback } from 'react'
 import { useAudioPlayerStore } from '../../store/audioPlayerStore'
+import MaterialIcon from '../Common/MaterialIcon'
 
 function formatTime(seconds: number): string {
   if (!isFinite(seconds) || seconds < 0) return '0:00'
@@ -383,10 +384,7 @@ export default function AudioPlayerPopup() {
               className="w-10 h-10 flex items-center justify-center text-page-secondary hover:text-page transition-colors disabled:opacity-40"
               aria-label="15초 뒤로"
             >
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M11.99 5V1l-5 5 5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6h-2c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z" />
-                <text x="12" y="15.5" textAnchor="middle" fontSize="7" fontWeight="bold" fill="currentColor">15</text>
-              </svg>
+              <MaterialIcon name="replay_15" className="w-5 h-5" size={20} />
             </button>
 
             {/* 재생 / 일시정지 */}
@@ -398,13 +396,9 @@ export default function AudioPlayerPopup() {
               aria-label={isPlaying ? '일시정지' : '재생'}
             >
               {isPlaying ? (
-                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
-                </svg>
+                <MaterialIcon name="pause" className="w-6 h-6" size={24} />
               ) : (
-                <svg className="w-6 h-6 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M8 5v14l11-7L8 5z" />
-                </svg>
+                <MaterialIcon name="play_arrow" className="w-6 h-6 ml-0.5" size={24} />
               )}
             </button>
 
@@ -416,10 +410,7 @@ export default function AudioPlayerPopup() {
               className="w-10 h-10 flex items-center justify-center text-gray-600 hover:text-gray-900 transition-colors disabled:opacity-40"
               aria-label="15초 앞으로"
             >
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M12.01 5V1l5 5-5 5V7c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6h2c0 4.42-3.58 8-8 8s-8-3.58-8-8 3.58-8 8-8z" />
-                <text x="12" y="15.5" textAnchor="middle" fontSize="7" fontWeight="bold" fill="currentColor">15</text>
-              </svg>
+              <MaterialIcon name="forward_15" className="w-5 h-5" size={20} />
             </button>
 
             {/* 닫기 */}
@@ -429,9 +420,7 @@ export default function AudioPlayerPopup() {
               className="w-8 h-8 flex items-center justify-center text-page-muted hover:text-page-secondary transition-colors ml-1"
               aria-label="닫기"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <MaterialIcon name="close" className="w-5 h-5" size={20} />
             </button>
           </div>
         </div>

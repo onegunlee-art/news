@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeftIcon } from '@heroicons/react/24/outline'
+import MaterialIcon from '../components/Common/MaterialIcon'
 import { api } from '../services/api'
 import { PRIVACY_POLICY_CONTENT } from '../components/Common/PrivacyPolicyContent'
 
@@ -22,7 +22,7 @@ export default function PrivacyPage() {
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-3xl mx-auto px-4 py-12">
         <Link to="/" className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-8">
-          <ArrowLeftIcon className="w-4 h-4" />
+          <MaterialIcon name="arrow_back" className="w-4 h-4" size={16} />
           홈으로
         </Link>
         <h1 className="text-2xl font-bold text-gray-900 mb-6">개인정보처리방침</h1>

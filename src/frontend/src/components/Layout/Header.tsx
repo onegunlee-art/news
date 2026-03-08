@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuthStore } from '../../store/authStore'
+import MaterialIcon from '../Common/MaterialIcon'
 
 export default function Header() {
   const { isAuthenticated, login } = useAuthStore()
@@ -97,9 +98,7 @@ export default function Header() {
               onClick={() => setIsSearchOpen(true)}
               className="p-2 text-page-secondary hover:text-page transition-colors"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
+              <MaterialIcon name="search" className="w-5 h-5" size={20} />
             </button>
           </div>
         </div>
@@ -120,9 +119,7 @@ export default function Header() {
                   onClick={() => setIsSearchOpen(false)}
                   className="p-2 text-page-secondary"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
+                  <MaterialIcon name="arrow_back" className="w-5 h-5" size={20} />
                 </button>
                 <form onSubmit={handleSearch} className="flex-1 flex gap-2">
                   <input

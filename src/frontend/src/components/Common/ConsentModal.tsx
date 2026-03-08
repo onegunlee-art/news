@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { api } from '../../services/api'
 import { PRIVACY_POLICY_CONTENT } from './PrivacyPolicyContent'
+import MaterialIcon from './MaterialIcon'
 
 const DEFAULT_TERMS = `이용약관
 
@@ -126,9 +127,7 @@ const ConsentModal: React.FC<ConsentModalProps> = ({ isOpen, onAgree, onCancel }
                     />
                     <div className="w-5 h-5 rounded-md border-2 border-gray-300 peer-checked:border-primary-500 peer-checked:bg-primary-500 transition-all duration-150 flex items-center justify-center group-hover:border-gray-400">
                       {agreed && (
-                        <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                        </svg>
+                        <MaterialIcon name="check" className="w-3.5 h-3.5 text-white" size={14} filled />
                       )}
                     </div>
                   </div>

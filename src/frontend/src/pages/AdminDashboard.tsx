@@ -2,18 +2,10 @@
  * Admin Dashboard - 기본 관리자 기능
  * 대시보드, 회원 관리, 개인정보처리방침, 설정, 뉴스 관리
  */
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
-import {
-  ChartBarIcon,
-  UsersIcon,
-  NewspaperIcon,
-  CogIcon,
-  DocumentTextIcon,
-  ArrowLeftIcon,
-  XMarkIcon,
-} from '@heroicons/react/24/outline'
+import MaterialIcon from '../components/Common/MaterialIcon'
 import { api } from '../services/api'
 import { adminSettingsApi } from '../services/api'
 import { PRIVACY_POLICY_CONTENT } from '../components/Common/PrivacyPolicyContent'
@@ -52,12 +44,12 @@ interface NewsItem {
   created_at: string
 }
 
-const TABS: { id: TabId; name: string; icon: React.ElementType }[] = [
-  { id: 'dashboard', name: '대시보드', icon: ChartBarIcon },
-  { id: 'members', name: '회원 관리', icon: UsersIcon },
-  { id: 'privacy', name: '개인정보처리방침', icon: DocumentTextIcon },
-  { id: 'settings', name: '설정', icon: CogIcon },
-  { id: 'news', name: '뉴스 관리', icon: NewspaperIcon },
+const TABS: { id: TabId; name: string; iconName: string }[] = [
+  { id: 'dashboard', name: '대시보드', iconName: 'bar_chart' },
+  { id: 'members', name: '회원 관리', iconName: 'group' },
+  { id: 'privacy', name: '개인정보처리방침', iconName: 'description' },
+  { id: 'settings', name: '설정', iconName: 'settings' },
+  { id: 'news', name: '뉴스 관리', iconName: 'newspaper' },
 ]
 
 export default function AdminDashboard() {
@@ -269,13 +261,13 @@ export default function AdminDashboard() {
                   activeTab === tab.id ? 'bg-cyan-600 text-white' : 'text-slate-400 hover:bg-slate-700 hover:text-white'
                 }`}
               >
-                <tab.icon className="w-4 h-4" />
+                <MaterialIcon name={tab.iconName} className="w-4 h-4" size={16} />
                 {tab.name}
               </button>
             ))}
           </nav>
           <button onClick={() => navigate('/')} className="mt-8 flex items-center gap-2 text-slate-400 hover:text-white text-sm">
-            <ArrowLeftIcon className="w-4 h-4" />
+            <MaterialIcon name="arrow_back" className="w-4 h-4" size={16} />
             홈으로
           </button>
         </div>
@@ -379,7 +371,7 @@ export default function AdminDashboard() {
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="text-lg font-bold text-white">회원 상세</h3>
                       <button onClick={() => setSelectedUser(null)} className="text-slate-400 hover:text-white">
-                        <XMarkIcon className="w-5 h-5" />
+                        <MaterialIcon name="close" className="w-5 h-5" size={20} />
                       </button>
                     </div>
                     <div className="space-y-2 text-sm">

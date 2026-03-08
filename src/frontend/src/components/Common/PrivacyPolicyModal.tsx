@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { api } from '../../services/api'
 import { PRIVACY_POLICY_CONTENT } from './PrivacyPolicyContent'
+import MaterialIcon from './MaterialIcon'
 
 interface PrivacyPolicyModalProps {
   isOpen: boolean
@@ -53,9 +54,7 @@ const PrivacyPolicyModal: React.FC<PrivacyPolicyModalProps> = ({ isOpen, onClose
                   className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded-lg transition-colors"
                   aria-label="닫기"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                  <MaterialIcon name="close" className="w-5 h-5" size={20} />
                 </button>
               </div>
               <div className="flex-1 overflow-y-auto px-6 py-5 text-sm text-gray-700 leading-relaxed whitespace-pre-line">

@@ -3,32 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { formatSourceDisplayName, buildEditorialLine } from '../utils/formatSource'
 import { extractTitleFromUrl } from '../utils/extractTitleFromUrl';
-import {
-  ChartBarIcon,
-  UsersIcon,
-  NewspaperIcon,
-  CogIcon,
-  CheckCircleIcon,
-  ExclamationTriangleIcon,
-  PencilSquareIcon,
-  TrashIcon,
-  XMarkIcon,
-  SparklesIcon,
-  PlayIcon,
-  DocumentTextIcon,
-  DocumentDuplicateIcon,
-  SpeakerWaveIcon,
-  AcademicCapIcon,
-  BookOpenIcon,
-  ChatBubbleLeftRightIcon,
-  ArrowPathIcon,
-  HandThumbUpIcon,
-  StarIcon,
-  CurrencyDollarIcon,
-  ClipboardDocumentIcon,
-  UserCircleIcon,
-  ArrowsPointingOutIcon,
-} from '@heroicons/react/24/outline';
+import MaterialIcon from '../components/Common/MaterialIcon';
 import RichTextEditor from '../components/Common/RichTextEditor';
 import { normalizeEditorHtml } from '../utils/sanitizeHtml';
 import AIWorkspace from '../components/AIWorkspace/AIWorkspace';
@@ -1099,16 +1074,16 @@ const AdminPage: React.FC = () => {
   } : null;
 
   const tabs = [
-    { id: 'dashboard', name: '대시보드', icon: ChartBarIcon },
-    { id: 'users', name: '사용자 관리', icon: UsersIcon },
-    { id: 'news', name: '뉴스 관리', icon: NewspaperIcon },
-    { id: 'drafts', name: '임시저장', icon: DocumentDuplicateIcon },
-    { id: 'ai', name: 'AI 분석', icon: SparklesIcon },
-    { id: 'workspace', name: 'AI Workspace', icon: AcademicCapIcon },
-    { id: 'persona', name: '페르소나', icon: UserCircleIcon },
-    { id: 'knowledge', name: '이론 라이브러리', icon: BookOpenIcon },
-    { id: 'usage', name: 'API 과금', icon: CurrencyDollarIcon },
-    { id: 'settings', name: '설정', icon: CogIcon },
+    { id: 'dashboard', name: '대시보드', iconName: 'bar_chart' },
+    { id: 'users', name: '사용자 관리', iconName: 'group' },
+    { id: 'news', name: '뉴스 관리', iconName: 'newspaper' },
+    { id: 'drafts', name: '임시저장', iconName: 'content_copy' },
+    { id: 'ai', name: 'AI 분석', iconName: 'cognition_2' },
+    { id: 'workspace', name: 'AI Workspace', iconName: 'school' },
+    { id: 'persona', name: '페르소나', iconName: 'account_circle' },
+    { id: 'knowledge', name: '이론 라이브러리', iconName: 'menu_book' },
+    { id: 'usage', name: 'API 과금', iconName: 'payments' },
+    { id: 'settings', name: '설정', iconName: 'settings' },
   ] as const;
 
   // 인증 초기화/검증 중 또는 권한 없음(리다이렉트 예정)에는 로딩 표시 (새로고침 시 어드민 유지)
@@ -1152,7 +1127,7 @@ const AdminPage: React.FC = () => {
                     : 'text-slate-400 hover:bg-slate-800/50 hover:text-white'
                 }`}
               >
-                <tab.icon className="w-5 h-5" />
+                <MaterialIcon name={tab.iconName} className="w-5 h-5" size={20} />
                 {tab.name}
               </button>
             ))}
@@ -1492,9 +1467,7 @@ const AdminPage: React.FC = () => {
                     }}
                     className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-500 to-teal-500 text-white rounded-xl hover:opacity-90 transition text-sm"
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-                    </svg>
+                    <MaterialIcon name="headphones" className="w-5 h-5" size={20} />
                     TTS 전체 갱신
                   </button>
                   <button
@@ -1517,9 +1490,7 @@ const AdminPage: React.FC = () => {
                     }}
                     className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:opacity-90 transition text-sm"
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
+                    <MaterialIcon name="image" className="w-5 h-5" size={20} />
                     썸네일 전체 갱신
                   </button>
                 </div>
@@ -1590,7 +1561,7 @@ const AdminPage: React.FC = () => {
                       onClick={handleCancelEdit}
                       className="flex items-center gap-1 px-3 py-1.5 text-sm text-amber-400 hover:text-amber-300 border border-amber-500/30 rounded-lg hover:bg-amber-500/10 transition"
                     >
-                      <XMarkIcon className="w-4 h-4" />
+                      <MaterialIcon name="close" className="w-4 h-4" size={16} />
                       수정 취소
                     </button>
                   )}
@@ -1851,9 +1822,7 @@ const AdminPage: React.FC = () => {
                     <div className="bg-slate-900/30 border border-slate-700/50 rounded-xl p-5 space-y-4">
                       <div className="flex items-center justify-between mb-2">
                         <h4 className="text-slate-300 font-medium flex items-center gap-2">
-                          <svg className="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                          </svg>
+                          <MaterialIcon name="description" className="w-5 h-5 text-cyan-400" size={20} />
                           추출된 정보 (편집 가능)
                         </h4>
                         <button
@@ -2198,7 +2167,7 @@ const AdminPage: React.FC = () => {
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs transition"
                         title="전체 화면 편집"
                       >
-                        <ArrowsPointingOutIcon className="w-4 h-4" />
+                        <MaterialIcon name="open_in_full" className="w-4 h-4" size={16} />
                         확대
                       </button>
                     </div>
@@ -2233,7 +2202,7 @@ const AdminPage: React.FC = () => {
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs transition disabled:opacity-40 disabled:cursor-not-allowed"
                         title="전체 복사"
                       >
-                        <ClipboardDocumentIcon className="w-4 h-4" />
+                        <MaterialIcon name="content_copy" className="w-4 h-4" size={16} />
                         전체 복사
                       </button>
                     </div>
@@ -2286,7 +2255,7 @@ const AdminPage: React.FC = () => {
                           }}
                           className="px-4 py-2 bg-emerald-700/70 hover:bg-emerald-600 text-white text-sm rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
                         >
-                          <SpeakerWaveIcon className="w-4 h-4" />
+                          <MaterialIcon name="headphones" className="w-4 h-4" size={16} />
                           {isRegeneratingTts ? 'TTS 생성 중...' : 'TTS 재생성'}
                         </button>
                       </div>
@@ -2319,7 +2288,7 @@ const AdminPage: React.FC = () => {
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs transition disabled:opacity-40 disabled:cursor-not-allowed"
                         title="전체 복사"
                       >
-                        <ClipboardDocumentIcon className="w-4 h-4" />
+                        <MaterialIcon name="content_copy" className="w-4 h-4" size={16} />
                         전체 복사
                       </button>
                     </div>
@@ -2415,7 +2384,7 @@ const AdminPage: React.FC = () => {
                           : 'bg-slate-600 hover:bg-slate-500 text-slate-200'
                       }`}
                     >
-                      <DocumentDuplicateIcon className="w-5 h-5" />
+                      <MaterialIcon name="content_copy" className="w-5 h-5" size={20} />
                       임시 저장
                     </button>
                     <button
@@ -2556,12 +2525,12 @@ const AdminPage: React.FC = () => {
                         </>
                       ) : editingNewsId ? (
                         <>
-                          <PencilSquareIcon className="w-5 h-5" />
+                          <MaterialIcon name="edit_square" className="w-5 h-5" size={20} />
                           뉴스 수정
                         </>
                       ) : (
                         <>
-                          <NewspaperIcon className="w-5 h-5" />
+                          <MaterialIcon name="newspaper" className="w-5 h-5" size={20} />
                           뉴스 저장
                         </>
                       )}
@@ -2585,9 +2554,9 @@ const AdminPage: React.FC = () => {
                         : 'bg-red-500/20 text-red-400 border border-red-500/30'
                     }`}>
                       {saveMessage.type === 'success' ? (
-                        <CheckCircleIcon className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                        <MaterialIcon name="check_circle" className="w-5 h-5 flex-shrink-0 mt-0.5" size={20} />
                       ) : (
-                        <ExclamationTriangleIcon className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                        <MaterialIcon name="warning" className="w-5 h-5 flex-shrink-0 mt-0.5" size={20} />
                       )}
                       {saveMessage.text}
                     </div>
@@ -2668,14 +2637,14 @@ const AdminPage: React.FC = () => {
                               }`}
                               title="수정"
                             >
-                              <PencilSquareIcon className="w-5 h-5" />
+                              <MaterialIcon name="edit_square" className="w-5 h-5" size={20} />
                             </button>
                             <button
                               onClick={() => setDeleteConfirmId(news.id || null)}
                               className="p-2 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition"
                               title="삭제"
                             >
-                              <TrashIcon className="w-5 h-5" />
+                              <MaterialIcon name="delete" className="w-5 h-5" size={20} />
                             </button>
                           </div>
                         </div>
@@ -2712,7 +2681,7 @@ const AdminPage: React.FC = () => {
                   <div className="bg-slate-800 rounded-2xl p-6 border border-slate-700 max-w-md w-full mx-4 shadow-2xl">
                     <div className="flex items-center gap-3 mb-4">
                       <div className="p-3 bg-red-500/20 rounded-full">
-                        <TrashIcon className="w-6 h-6 text-red-400" />
+                        <MaterialIcon name="delete" className="w-6 h-6 text-red-400" size={24} />
                       </div>
                       <div>
                         <h3 className="text-lg font-semibold text-white">뉴스 삭제</h3>
@@ -2896,14 +2865,14 @@ const AdminPage: React.FC = () => {
                                 className="p-2 rounded-lg text-slate-400 hover:text-cyan-400 hover:bg-cyan-500/10 transition"
                                 title="편집"
                               >
-                                <PencilSquareIcon className="w-5 h-5" />
+                                <MaterialIcon name="edit_square" className="w-5 h-5" size={20} />
                               </button>
                               <button
                                 onClick={() => setDeleteDraftConfirmId(draft.id ?? null)}
                                 className="p-2 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition"
                                 title="삭제"
                               >
-                                <TrashIcon className="w-5 h-5" />
+                                <MaterialIcon name="delete" className="w-5 h-5" size={20} />
                               </button>
                             </div>
                           </div>
@@ -2941,7 +2910,7 @@ const AdminPage: React.FC = () => {
                   <div className="bg-slate-800 rounded-2xl p-6 border border-slate-700 max-w-md w-full mx-4 shadow-2xl">
                     <div className="flex items-center gap-3 mb-4">
                       <div className="p-3 bg-red-500/20 rounded-full">
-                        <TrashIcon className="w-6 h-6 text-red-400" />
+                        <MaterialIcon name="delete" className="w-6 h-6 text-red-400" size={24} />
                       </div>
                       <div>
                         <h3 className="text-lg font-semibold text-white">임시저장 삭제</h3>
@@ -2981,7 +2950,7 @@ const AdminPage: React.FC = () => {
               {/* 상태 표시 */}
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                  <SparklesIcon className="w-5 h-5" />
+                  <MaterialIcon name="cognition_2" className="w-5 h-5" size={20} />
                   The Gist AI 분석 시스템
                 </div>
 {/* 상태 새로고침 버튼 제거 - The Gist AI로 통합 */}
@@ -2990,7 +2959,7 @@ const AdminPage: React.FC = () => {
               {/* URL 분석 섹션 */}
               <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50">
                 <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                  <DocumentTextIcon className="w-5 h-5 text-cyan-400" />
+                  <MaterialIcon name="description" className="w-5 h-5 text-cyan-400" size={20} />
                   기사 URL 분석
                 </h3>
                 
@@ -3096,7 +3065,7 @@ const AdminPage: React.FC = () => {
                         </>
                       ) : (
                         <>
-                          <PlayIcon className="w-5 h-5" />
+                          <MaterialIcon name="headphones" className="w-5 h-5" size={20} />
                           AI 분석 실행
                         </>
                       )}
@@ -3106,7 +3075,7 @@ const AdminPage: React.FC = () => {
                   {/* 에러 메시지 */}
                   {aiError && (
                     <div className="p-4 rounded-xl bg-red-500/20 text-red-400 border border-red-500/30 flex items-center gap-2">
-                      <ExclamationTriangleIcon className="w-5 h-5" />
+                      <MaterialIcon name="warning" className="w-5 h-5" size={20} />
                       {aiError}
                     </div>
                   )}
@@ -3118,7 +3087,7 @@ const AdminPage: React.FC = () => {
                       {aiResult.news_title && (
                         <div className="p-4 bg-slate-900/50 rounded-xl">
                           <h4 className="text-yellow-400 font-medium mb-2 flex items-center gap-2">
-                            <DocumentTextIcon className="w-4 h-4" />
+                            <MaterialIcon name="description" className="w-4 h-4" size={16} />
                             GPT 생성 제목
                           </h4>
                           <p className="text-white text-lg font-semibold">{aiResult.news_title}</p>
@@ -3130,7 +3099,7 @@ const AdminPage: React.FC = () => {
                         <div className="p-4 bg-slate-900/50 rounded-xl">
                           <div className="flex items-center justify-between mb-2">
                             <h4 className="text-cyan-400 font-medium flex items-center gap-2">
-                              <DocumentTextIcon className="w-4 h-4" />
+                              <MaterialIcon name="description" className="w-4 h-4" size={16} />
                               내레이션
                             </h4>
                             <button
@@ -3144,7 +3113,7 @@ const AdminPage: React.FC = () => {
                               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs transition"
                               title="전체 복사"
                             >
-                              <ClipboardDocumentIcon className="w-4 h-4" />
+                              <MaterialIcon name="content_copy" className="w-4 h-4" size={16} />
                               전체 복사
                             </button>
                           </div>
@@ -3183,7 +3152,7 @@ const AdminPage: React.FC = () => {
                               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs transition"
                               title="전체 복사"
                             >
-                              <ClipboardDocumentIcon className="w-4 h-4" />
+                              <MaterialIcon name="content_copy" className="w-4 h-4" size={16} />
                               전체 복사
                             </button>
                           </div>
@@ -3195,7 +3164,7 @@ const AdminPage: React.FC = () => {
                       {aiResult.audio_url && (
                         <div className="p-4 bg-slate-900/50 rounded-xl">
                           <h4 className="text-orange-400 font-medium mb-2 flex items-center gap-2">
-                            <SpeakerWaveIcon className="w-4 h-4" />
+                            <MaterialIcon name="headphones" className="w-4 h-4" size={16} />
                             오디오 분석
                           </h4>
                           <audio controls className="w-full">
@@ -3208,7 +3177,7 @@ const AdminPage: React.FC = () => {
                       <div className="p-4 bg-slate-900/50 rounded-xl">
                         <div className="flex items-center justify-between mb-3">
                           <h4 className="text-orange-400 font-medium flex items-center gap-2">
-                            <SpeakerWaveIcon className="w-4 h-4" />
+                            <MaterialIcon name="headphones" className="w-4 h-4" size={16} />
                             AI 음성 읽기
                           </h4>
                           <div className="flex items-center gap-2">
@@ -3240,12 +3209,12 @@ const AdminPage: React.FC = () => {
                           >
                             {isSpeaking ? (
                               <>
-                                <XMarkIcon className="w-5 h-5" />
+                                <MaterialIcon name="close" className="w-5 h-5" size={20} />
                                 읽기 중지
                               </>
                             ) : (
                               <>
-                                <SpeakerWaveIcon className="w-5 h-5" />
+                                <MaterialIcon name="headphones" className="w-5 h-5" size={20} />
                                 전체 분석 읽어주기
                               </>
                             )}
@@ -3281,7 +3250,7 @@ const AdminPage: React.FC = () => {
                       {/* ── 피드백 & 재분석 패널 ─────────────── */}
                       <div className="p-5 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 rounded-xl border border-indigo-500/20 space-y-4">
                         <h4 className="text-indigo-400 font-semibold flex items-center gap-2">
-                          <ChatBubbleLeftRightIcon className="w-5 h-5" />
+                          <MaterialIcon name="chat" className="w-5 h-5" size={20} />
                           피드백 & 재분석 (학습 루프)
                         </h4>
 
@@ -3299,7 +3268,7 @@ const AdminPage: React.FC = () => {
                           </div>
                           <div className="flex items-center gap-4">
                             <label className="text-slate-400 text-sm whitespace-nowrap flex items-center gap-1">
-                              <StarIcon className="w-4 h-4 text-yellow-400" />
+                              <MaterialIcon name="star" className="w-4 h-4 text-yellow-400" size={16} />
                               품질 점수
                             </label>
                             <input
@@ -3327,7 +3296,7 @@ const AdminPage: React.FC = () => {
                             {isSavingFeedback ? (
                               <span className="animate-spin rounded-full h-3.5 w-3.5 border-2 border-white border-t-transparent" />
                             ) : (
-                              <ChatBubbleLeftRightIcon className="w-4 h-4" />
+                              <MaterialIcon name="chat" className="w-4 h-4" size={16} />
                             )}
                             피드백 저장
                           </button>
@@ -3339,7 +3308,7 @@ const AdminPage: React.FC = () => {
                             {isRequestingRevision ? (
                               <span className="animate-spin rounded-full h-3.5 w-3.5 border-2 border-white border-t-transparent" />
                             ) : (
-                              <ArrowPathIcon className="w-4 h-4" />
+                              <MaterialIcon name="refresh" className="w-4 h-4" size={16} />
                             )}
                             {isRequestingRevision ? 'GPT 재분석 중...' : 'GPT 재분석 요청'}
                           </button>
@@ -3351,7 +3320,7 @@ const AdminPage: React.FC = () => {
                             {isApprovingAnalysis ? (
                               <span className="animate-spin rounded-full h-3.5 w-3.5 border-2 border-white border-t-transparent" />
                             ) : (
-                              <HandThumbUpIcon className="w-4 h-4" />
+                              <MaterialIcon name="thumb_up" className="w-4 h-4" size={16} />
                             )}
                             최종 승인
                           </button>
@@ -3364,7 +3333,7 @@ const AdminPage: React.FC = () => {
                               ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                               : 'bg-red-500/20 text-red-400 border border-red-500/30'
                           }`}>
-                            {feedbackMessage.type === 'success' ? <CheckCircleIcon className="w-4 h-4" /> : <ExclamationTriangleIcon className="w-4 h-4" />}
+                            {feedbackMessage.type === 'success' ? <MaterialIcon name="check_circle" className="w-4 h-4" size={16} /> : <MaterialIcon name="warning" className="w-4 h-4" size={16} />}
                             {feedbackMessage.text}
                           </div>
                         )}
@@ -3394,7 +3363,7 @@ const AdminPage: React.FC = () => {
                                     <div className="flex items-center gap-2">
                                       {fb.score && (
                                         <span className="flex items-center gap-0.5 text-yellow-400 text-xs">
-                                          <StarIcon className="w-3 h-3" />
+                                          <MaterialIcon name="star" className="w-3 h-3" size={12} />
                                           {fb.score}/10
                                         </span>
                                       )}
@@ -3444,7 +3413,7 @@ const AdminPage: React.FC = () => {
                         }}
                         className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-medium hover:opacity-90 transition flex items-center justify-center gap-2"
                       >
-                        <NewspaperIcon className="w-5 h-5" />
+                        <MaterialIcon name="newspaper" className="w-5 h-5" size={20} />
                         이 분석을 뉴스로 저장
                       </button>
                     </div>
@@ -3455,7 +3424,7 @@ const AdminPage: React.FC = () => {
               {/* 학습 섹션 */}
               <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50">
                 <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                  <AcademicCapIcon className="w-5 h-5 text-purple-400" />
+                  <MaterialIcon name="school" className="w-5 h-5 text-purple-400" size={20} />
                   스타일 학습
                 </h3>
                 <p className="text-slate-400 text-sm mb-4">
@@ -3513,7 +3482,7 @@ const AdminPage: React.FC = () => {
                         </>
                       ) : (
                         <>
-                          <AcademicCapIcon className="w-5 h-5" />
+                          <MaterialIcon name="school" className="w-5 h-5" size={20} />
                           스타일 학습
                         </>
                       )}
@@ -3587,7 +3556,7 @@ const AdminPage: React.FC = () => {
               {/* 1. Persona Playground */}
               <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50">
                 <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-                  <ChatBubbleLeftRightIcon className="w-5 h-5 text-cyan-400" />
+                  <MaterialIcon name="chat" className="w-5 h-5 text-cyan-400" size={20} />
                   Persona Playground
                 </h3>
                 <p className="text-slate-400 text-sm mb-4">GPT와 대화하며 The Gist 에디터 페르소나(톤·스타일·원칙)를 정의하세요. 완료 후 &quot;페르소나 추출 &amp; 저장&quot;을 누르면 system prompt로 DB에 저장됩니다.</p>
@@ -3780,7 +3749,7 @@ const AdminPage: React.FC = () => {
               {/* 3. Persona Tester - 일관성 점검 */}
               <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50">
                 <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-                  <CheckCircleIcon className="w-5 h-5 text-emerald-400" />
+                  <MaterialIcon name="check_circle" className="w-5 h-5 text-emerald-400" size={20} />
                   일관성 점검 (Persona Tester)
                 </h3>
                 <p className="text-slate-400 text-sm mb-4">실제 파이프라인으로 기사를 분석하고, 페르소나 일관성(지스터 언급, 글자 수 등)을 점검합니다.</p>
@@ -3852,7 +3821,7 @@ const AdminPage: React.FC = () => {
                         {personaTestResult.checklist && Object.entries(personaTestResult.checklist).map(([k, v]) => (
                           <li key={k} className="flex items-center gap-2">
                             {typeof v === 'boolean' ? (
-                              v ? <CheckCircleIcon className="w-4 h-4 text-emerald-400" /> : <ExclamationTriangleIcon className="w-4 h-4 text-amber-400" />
+                              v ? <MaterialIcon name="check_circle" className="w-4 h-4 text-emerald-400" size={16} /> : <MaterialIcon name="warning" className="w-4 h-4 text-amber-400" size={16} />
                             ) : null}
                             <span className="text-slate-400">{k}:</span>
                             <span className="text-slate-200">{String(v)}</span>
@@ -3878,7 +3847,7 @@ const AdminPage: React.FC = () => {
               {/* 프레임워크 추가 폼 */}
               <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 space-y-4">
                 <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                  <BookOpenIcon className="w-5 h-5 text-amber-400" />
+                  <MaterialIcon name="menu_book" className="w-5 h-5 text-amber-400" size={20} />
                   프레임워크 추가
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -3955,7 +3924,7 @@ const AdminPage: React.FC = () => {
                     {isAddingKnowledge ? (
                       <span className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
                     ) : (
-                      <BookOpenIcon className="w-5 h-5" />
+                      <MaterialIcon name="menu_book" className="w-5 h-5" size={20} />
                     )}
                     {isAddingKnowledge ? '추가 중...' : '프레임워크 추가'}
                   </button>
@@ -3967,7 +3936,7 @@ const AdminPage: React.FC = () => {
                       ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                       : 'bg-red-500/20 text-red-400 border border-red-500/30'
                   }`}>
-                    {knowledgeMessage.type === 'success' ? <CheckCircleIcon className="w-4 h-4" /> : <ExclamationTriangleIcon className="w-4 h-4" />}
+                    {knowledgeMessage.type === 'success' ? <MaterialIcon name="check_circle" className="w-4 h-4" size={16} /> : <MaterialIcon name="warning" className="w-4 h-4" size={16} />}
                     {knowledgeMessage.text}
                   </div>
                 )}
@@ -4040,7 +4009,7 @@ const AdminPage: React.FC = () => {
                             className="p-2 rounded-lg text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition shrink-0"
                             title="삭제"
                           >
-                            <TrashIcon className="w-5 h-5" />
+                            <MaterialIcon name="delete" className="w-5 h-5" size={20} />
                           </button>
                         </div>
                       </div>
@@ -4072,7 +4041,7 @@ const AdminPage: React.FC = () => {
                   disabled={usageLoading}
                   className="flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-sm transition disabled:opacity-50"
                 >
-                  <ArrowPathIcon className={`w-4 h-4 ${usageLoading ? 'animate-spin' : ''}`} />
+                  <MaterialIcon name="refresh" className={`w-4 h-4 ${usageLoading ? 'animate-spin' : ''}`} size={16} />
                   새로고침
                 </button>
               </div>
@@ -4102,9 +4071,9 @@ const AdminPage: React.FC = () => {
                           <div className="flex items-center justify-between">
                             <span className="font-semibold text-white">{name}</span>
                             {configured ? (
-                              <CheckCircleIcon className="w-5 h-5 text-emerald-400" />
+                              <MaterialIcon name="check_circle" className="w-5 h-5 text-emerald-400" size={20} />
                             ) : (
-                              <ExclamationTriangleIcon className="w-5 h-5 text-amber-400" />
+                              <MaterialIcon name="warning" className="w-5 h-5 text-amber-400" size={20} />
                             )}
                           </div>
                           <p className="text-slate-400 text-xs mt-1">{label}</p>
@@ -4379,7 +4348,7 @@ const AdminPage: React.FC = () => {
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold text-white">회원 상세</h3>
             <button type="button" onClick={() => setSelectedUserDetail(null)} className="p-1 rounded hover:bg-slate-700 text-slate-400">
-              <XMarkIcon className="w-5 h-5" />
+              <MaterialIcon name="close" className="w-5 h-5" size={20} />
             </button>
           </div>
           <div className="space-y-3 text-sm">
@@ -4411,7 +4380,7 @@ const AdminPage: React.FC = () => {
             onClick={() => setIsContentFullscreen(false)}
             className="p-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 transition"
           >
-            <XMarkIcon className="w-5 h-5" />
+            <MaterialIcon name="close" className="w-5 h-5" size={20} />
           </button>
         </div>
         <div className="flex-1 overflow-auto p-6">

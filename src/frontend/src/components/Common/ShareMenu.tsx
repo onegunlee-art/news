@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import MaterialIcon from './MaterialIcon'
 
 export interface ShareMenuProps {
   title: string
@@ -71,9 +72,7 @@ export default function ShareMenu({ title, description = '', webUrl, className =
         aria-expanded={open}
         aria-haspopup="true"
       >
-        <svg className={iconClassName} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5} aria-hidden>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-        </svg>
+        <MaterialIcon name="ios_share" className={iconClassName} size={iconClassName.includes('w-5') ? 20 : 16} />
       </button>
 
       {open && (
@@ -87,9 +86,7 @@ export default function ShareMenu({ title, description = '', webUrl, className =
             onClick={handleCopyLink}
             className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
           >
-            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-3M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-            </svg>
+            <MaterialIcon name="link" className="w-4 h-4 text-gray-500" size={16} />
             링크 복사
           </button>
           {typeof navigator !== 'undefined' && 'share' in navigator && typeof navigator.share === 'function' && (
@@ -99,9 +96,7 @@ export default function ShareMenu({ title, description = '', webUrl, className =
               onClick={handleNativeShare}
               className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
             >
-              <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-              </svg>
+              <MaterialIcon name="ios_share" className="w-4 h-4 text-gray-500" size={16} />
               공유하기
             </button>
           )}

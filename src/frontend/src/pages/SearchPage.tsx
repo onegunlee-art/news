@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { PlayIcon, BookmarkIcon } from '@heroicons/react/24/outline'
-import { BookmarkIcon as BookmarkIconSolid } from '@heroicons/react/24/solid'
+import MaterialIcon from '../components/Common/MaterialIcon'
 import { newsApi } from '../services/api'
 import ShareMenu from '../components/Common/ShareMenu'
 import { useAuthStore } from '../store/authStore'
@@ -289,7 +288,7 @@ function SearchArticleCard({ article }: { article: NewsItem }) {
             title="음성으로 듣기"
             aria-label="재생"
           >
-            <PlayIcon className="w-5 h-5 shrink-0" strokeWidth={1.5} />
+            <MaterialIcon name="headphones" className="w-5 h-5 shrink-0" size={20} />
           </button>
           <ShareMenu
             title={article.title}
@@ -311,9 +310,9 @@ function SearchArticleCard({ article }: { article: NewsItem }) {
             {isBookmarking ? (
               <span className="inline-block w-5 h-5 shrink-0 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
             ) : isBookmarked ? (
-              <BookmarkIconSolid className="w-5 h-5 shrink-0 text-primary-500" />
+              <MaterialIcon name="bookmark" filled className="w-5 h-5 shrink-0 text-primary-500" size={20} />
             ) : (
-              <BookmarkIcon className="w-5 h-5 shrink-0" strokeWidth={1.5} />
+              <MaterialIcon name="bookmark_border" className="w-5 h-5 shrink-0" size={20} />
             )}
           </button>
         </div>

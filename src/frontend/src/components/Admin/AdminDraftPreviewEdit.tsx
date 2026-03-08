@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
+import MaterialIcon from '../Common/MaterialIcon'
 import RichTextEditor from '../Common/RichTextEditor'
 import { formatContentHtml, normalizeEditorHtml, ensureBrForEditor } from '../../utils/sanitizeHtml'
 import { getPlaceholderImageUrl } from '../../utils/imagePolicy'
@@ -207,9 +208,7 @@ export default function AdminDraftPreviewEdit({
           onClick={onBack}
           className="flex items-center gap-1 text-slate-400 hover:text-white transition"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
+          <MaterialIcon name="arrow_back" className="w-5 h-5" size={20} />
           <span className="text-sm">목록으로</span>
         </button>
         <span className="text-slate-500">|</span>
