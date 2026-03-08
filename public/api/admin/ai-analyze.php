@@ -459,14 +459,47 @@ function analyzeContent(string $content, string $url, string $title, array $opti
     $host = parse_url($url, PHP_URL_HOST) ?? '';
     $source = $host ?: 'pasted';
 
-    $article = new \Agents\Models\ArticleData(
-        url: $url,
-        title: $title ?: mb_substr(strip_tags($content), 0, 80),
-        content: $content,
-        source: $source,
-        language: 'en',
-        metadata: ['pasted_content' => true, 'scraped_at' => date('c'), 'content_length' => mb_strlen($content)]
-    );
+    $article = null;
+    $isExternalUrl = filter_var($url, FILTER_VALIDATE_URL)
+        && $host !== ''
+        && stripos($url, 'pasted-content.local') === false;
+
+    if ($isExternalUrl) {
+        try {
+            $scraperConfig = ['timeout' => 60];
+            if (is_file($projectRoot . 'config/agents.php')) {
+                $agents = require $projectRoot . 'config/agents.php';
+                $scraperConfig = array_merge($agents['scraper'] ?? [], $scraperConfig);
+            }
+            $scraper = new \Agents\Services\WebScraperService($scraperConfig);
+            $scraped = $scraper->scrape($url);
+            $article = new \Agents\Models\ArticleData(
+                url: $url,
+                title: $title !== '' ? $title : $scraped->getTitle(),
+                content: $content,
+                description: $scraped->getDescription(),
+                author: $scraped->getAuthor(),
+                publishedAt: $scraped->getPublishedAt(),
+                imageUrl: $scraped->getImageUrl(),
+                language: $scraped->getLanguage() ?? 'en',
+                source: $scraped->getSource() !== null && $scraped->getSource() !== '' ? $scraped->getSource() : $source,
+                metadata: ['pasted_content' => true, 'scraped_at' => date('c'), 'content_length' => mb_strlen($content), 'metadata_from_url' => true]
+            );
+        } catch (\Throwable $e) {
+            // fallback: create without URL metadata below
+        }
+    }
+
+    if ($article === null) {
+        $article = new \Agents\Models\ArticleData(
+            url: $url,
+            title: $title ?: mb_substr(strip_tags($content), 0, 80),
+            content: $content,
+            source: $source,
+            language: 'en',
+            metadata: ['pasted_content' => true, 'scraped_at' => date('c'), 'content_length' => mb_strlen($content)]
+        );
+    }
 
     $pipelineConfig = [
         'project_root' => rtrim($projectRoot, '/\\'),
@@ -511,10 +544,13 @@ function analyzeContent(string $content, string $url, string $title, array $opti
             $narration = implode(' ', $finalAnalysis['key_points']);
         }
 
+        $finalArticle = $result->context?->getArticleData();
+        $articleForResponse = $finalArticle !== null ? $finalArticle->toArray() : $article->toArray();
+
         return [
             'success' => true, 'url' => $url, 'mock_mode' => false,
             'needs_clarification' => false, 'clarification_data' => null,
-            'article' => $article->toArray(),
+            'article' => $articleForResponse,
             'analysis' => [
                 'news_title' => $finalAnalysis['news_title'] ?? null,
                 'original_title' => $finalAnalysis['original_title'] ?? null,
