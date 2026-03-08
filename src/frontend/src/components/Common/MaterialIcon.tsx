@@ -28,6 +28,8 @@ export default function MaterialIcon({
         fontSize: size,
         width: size,
         height: size,
+        overflow: 'hidden',
+        textOverflow: 'clip',
       }}
       aria-hidden
     >
