@@ -344,6 +344,9 @@ const AdminPage: React.FC = () => {
   const [personaLoading, setPersonaLoading] = useState(false);
   const [personaExtracting, setPersonaExtracting] = useState(false);
   const [personaName, setPersonaName] = useState('The Gist 수석 에디터 v1');
+  const [personaDirectPrompt, setPersonaDirectPrompt] = useState('');
+  const [personaDirectName, setPersonaDirectName] = useState('');
+  const [personaDirectSaving, setPersonaDirectSaving] = useState(false);
   const [personaList, setPersonaList] = useState<{ id: string; name: string; system_prompt: string; is_active: boolean }[]>([]);
   const [activePersona, setActivePersona] = useState<{ id: string; name: string; system_prompt: string } | null>(null);
   const [personaTestUrl, setPersonaTestUrl] = useState('');
@@ -3837,6 +3840,79 @@ const AdminPage: React.FC = () => {
                       className="px-4 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {personaExtracting ? '추출 중...' : '페르소나 추출 & 저장'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* 1-B. 직접 저장 */}
+              <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50">
+                <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                  <MaterialIcon name="edit_square" className="w-5 h-5 text-amber-400" size={20} />
+                  페르소나 직접 저장
+                </h3>
+                <p className="text-slate-400 text-sm mb-4">System prompt를 직접 입력하여 페르소나로 저장합니다. 저장 후 자동으로 활성화됩니다.</p>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-slate-400 text-xs mb-1">페르소나 이름</label>
+                    <input
+                      type="text"
+                      value={personaDirectName}
+                      onChange={(e) => setPersonaDirectName(e.target.value)}
+                      placeholder="예: The Gist 수석 에디터 v2"
+                      className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-500 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none transition"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-400 text-xs mb-1">System Prompt</label>
+                    <textarea
+                      value={personaDirectPrompt}
+                      onChange={(e) => setPersonaDirectPrompt(e.target.value)}
+                      placeholder="페르소나 system prompt를 붙여넣으세요..."
+                      rows={8}
+                      className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-500 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none transition resize-y"
+                    />
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (!personaDirectName.trim() || !personaDirectPrompt.trim()) {
+                          setSaveMessage({ type: 'error', text: '이름과 프롬프트를 모두 입력해주세요.' });
+                          return;
+                        }
+                        setPersonaDirectSaving(true);
+                        setSaveMessage(null);
+                        try {
+                          const res = await adminFetch('/api/admin/persona-api.php', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              action: 'direct_save',
+                              name: personaDirectName.trim(),
+                              system_prompt: personaDirectPrompt.trim(),
+                            }),
+                          });
+                          const d = await res.json();
+                          if (d.success) {
+                            setSaveMessage({ type: 'success', text: '페르소나가 저장 및 활성화되었습니다.' });
+                            setPersonaDirectName('');
+                            setPersonaDirectPrompt('');
+                            adminFetch('/api/admin/persona-api.php?action=active').then((x) => x.json()).then((x) => x.success && x.persona && setActivePersona(x.persona));
+                            adminFetch('/api/admin/persona-api.php?action=list').then((x) => x.json()).then((x) => x.success && Array.isArray(x.personas) && setPersonaList(x.personas));
+                          } else {
+                            setSaveMessage({ type: 'error', text: d.error || '저장 실패' });
+                          }
+                        } catch (e) {
+                          setSaveMessage({ type: 'error', text: '요청 실패: ' + (e as Error).message });
+                        } finally {
+                          setPersonaDirectSaving(false);
+                        }
+                      }}
+                      disabled={personaDirectSaving || !personaDirectName.trim() || !personaDirectPrompt.trim()}
+                      className="px-5 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed transition"
+                    >
+                      {personaDirectSaving ? '저장 중...' : '저장 & 활성화'}
                     </button>
                   </div>
                 </div>

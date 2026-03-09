@@ -221,6 +221,32 @@ if ($action === 'extract_and_save') {
     ]);
 }
 
+// ── action=direct_save ──────────────────────────────────
+if ($action === 'direct_save') {
+    $name = trim($input['name'] ?? '');
+    $systemPrompt = trim($input['system_prompt'] ?? '');
+
+    if ($name === '') {
+        sendJson(['success' => false, 'error' => '페르소나 이름을 입력해주세요.']);
+    }
+    if ($systemPrompt === '') {
+        sendJson(['success' => false, 'error' => 'System prompt를 입력해주세요.']);
+    }
+
+    $personaService = new PersonaService(new SupabaseService([]));
+    $saved = $personaService->savePersona($name, $systemPrompt, [
+        'extracted_at' => date('c'),
+        'source' => 'direct_input',
+    ]);
+
+    sendJson([
+        'success' => true,
+        'persona' => $saved,
+        'system_prompt' => $systemPrompt,
+        'message' => '페르소나가 직접 저장되었습니다.',
+    ]);
+}
+
 // ── action=test_consistency ─────────────────────────────
 if ($action === 'test_consistency') {
     $url = trim($input['url'] ?? '');
