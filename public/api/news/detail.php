@@ -280,18 +280,14 @@ try {
 
     try {
         if ($fromTab === 'latest') {
-            $tz = new DateTimeZone('Asia/Seoul');
-            $nowKst = new DateTime('now', $tz);
-            $boundary = (clone $nowKst)->modify('-4 days')->setTime(0, 0, 0)->format('Y-m-d H:i:s');
-            // 다음: 리스트에서 더 오래된 글 (pub DESC → 더 작은 pub)
-            $nextSql = "SELECT id, title FROM news WHERE 1=1 $statusCond AND $pubCol >= ? AND ($pubCol < ? OR ($pubCol = ? AND id < ?)) ORDER BY $pubCol DESC, id DESC LIMIT 1";
+            // 전체 published 기사 대상 (날짜순, 4일 제한 제거)
+            $nextSql = "SELECT id, title FROM news WHERE 1=1 $statusCond AND ($pubCol < ? OR ($pubCol = ? AND id < ?)) ORDER BY $pubCol DESC, id DESC LIMIT 1";
             $nextStmt = $db->prepare($nextSql);
-            $nextStmt->execute([$boundary, $currentPub, $currentPub, $news['id']]);
+            $nextStmt->execute([$currentPub, $currentPub, $news['id']]);
             $nextArticle = $nextStmt->fetch(PDO::FETCH_ASSOC);
-            // 이전: 리스트에서 더 최신 글 (pub ASC → 더 큰 pub)
-            $prevSql = "SELECT id, title FROM news WHERE 1=1 $statusCond AND $pubCol >= ? AND ($pubCol > ? OR ($pubCol = ? AND id > ?)) ORDER BY $pubCol ASC, id ASC LIMIT 1";
+            $prevSql = "SELECT id, title FROM news WHERE 1=1 $statusCond AND ($pubCol > ? OR ($pubCol = ? AND id > ?)) ORDER BY $pubCol ASC, id ASC LIMIT 1";
             $prevStmt = $db->prepare($prevSql);
-            $prevStmt->execute([$boundary, $currentPub, $currentPub, $news['id']]);
+            $prevStmt->execute([$currentPub, $currentPub, $news['id']]);
             $prevArticle = $prevStmt->fetch(PDO::FETCH_ASSOC);
         } elseif ($fromTab === 'popular' && $hasViewCount) {
             // 조회수는 이미 이 요청에서 +1 반영됨. 이전/다음은 '현재 기사 기준'으로만 비교 (원래 view_count 사용)
@@ -314,24 +310,26 @@ try {
             $prevStmt->execute([$fromTab, $currentPub, $currentPub, $news['id']]);
             $prevArticle = $prevStmt->fetch(PDO::FETCH_ASSOC);
         } else {
-            $nextWhere = $categoryParent ? "category_parent = ? AND id < ?" : "id < ?";
-            $nextSql = "SELECT id, title FROM news WHERE $nextWhere $statusCond ORDER BY id DESC LIMIT 1";
-            $nextStmt = $db->prepare($nextSql);
+            // fallback: 목록과 동일하게 pub 기준 정렬 (id 대신 published_at/created_at)
             if ($categoryParent) {
-                $nextStmt->execute([$categoryParent, $news['id']]);
+                $nextSql = "SELECT id, title FROM news WHERE category_parent = ? $statusCond AND ($pubCol < ? OR ($pubCol = ? AND id < ?)) ORDER BY $pubCol DESC, id DESC LIMIT 1";
+                $nextStmt = $db->prepare($nextSql);
+                $nextStmt->execute([$categoryParent, $currentPub, $currentPub, $news['id']]);
+                $nextArticle = $nextStmt->fetch(PDO::FETCH_ASSOC);
+                $prevSql = "SELECT id, title FROM news WHERE category_parent = ? $statusCond AND ($pubCol > ? OR ($pubCol = ? AND id > ?)) ORDER BY $pubCol ASC, id ASC LIMIT 1";
+                $prevStmt = $db->prepare($prevSql);
+                $prevStmt->execute([$categoryParent, $currentPub, $currentPub, $news['id']]);
+                $prevArticle = $prevStmt->fetch(PDO::FETCH_ASSOC);
             } else {
-                $nextStmt->execute([$news['id']]);
+                $nextSql = "SELECT id, title FROM news WHERE 1=1 $statusCond AND ($pubCol < ? OR ($pubCol = ? AND id < ?)) ORDER BY $pubCol DESC, id DESC LIMIT 1";
+                $nextStmt = $db->prepare($nextSql);
+                $nextStmt->execute([$currentPub, $currentPub, $news['id']]);
+                $nextArticle = $nextStmt->fetch(PDO::FETCH_ASSOC);
+                $prevSql = "SELECT id, title FROM news WHERE 1=1 $statusCond AND ($pubCol > ? OR ($pubCol = ? AND id > ?)) ORDER BY $pubCol ASC, id ASC LIMIT 1";
+                $prevStmt = $db->prepare($prevSql);
+                $prevStmt->execute([$currentPub, $currentPub, $news['id']]);
+                $prevArticle = $prevStmt->fetch(PDO::FETCH_ASSOC);
             }
-            $nextArticle = $nextStmt->fetch(PDO::FETCH_ASSOC);
-            $prevWhere = $categoryParent ? "category_parent = ? AND id > ?" : "id > ?";
-            $prevSql = "SELECT id, title FROM news WHERE $prevWhere $statusCond ORDER BY id ASC LIMIT 1";
-            $prevStmt = $db->prepare($prevSql);
-            if ($categoryParent) {
-                $prevStmt->execute([$categoryParent, $news['id']]);
-            } else {
-                $prevStmt->execute([$news['id']]);
-            }
-            $prevArticle = $prevStmt->fetch(PDO::FETCH_ASSOC);
         }
     } catch (Exception $e) {}
 

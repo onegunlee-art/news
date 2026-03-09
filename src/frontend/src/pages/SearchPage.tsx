@@ -240,7 +240,7 @@ function SearchArticleCard({ article }: { article: NewsItem }) {
     <article className="bg-page py-5">
       <div className="grid grid-cols-[1fr_auto] items-start gap-4">
         <div className="min-w-0 flex flex-col">
-          <Link to={detailUrl} state={{ fromSearch: true }} className="flex flex-col justify-center">
+          <Link to={detailUrl} state={{ fromTab: '최신' }} className="flex flex-col justify-center">
             <h2 className="text-lg font-bold text-page leading-snug mb-1.5 line-clamp-2 break-keep-ko-mobile">
               {article.title}
             </h2>
@@ -251,7 +251,7 @@ function SearchArticleCard({ article }: { article: NewsItem }) {
             )}
           </Link>
         </div>
-        <Link to={detailUrl} state={{ fromSearch: true }} className="w-28 h-28 flex-shrink-0 rounded-none overflow-hidden bg-page-secondary block aspect-square">
+        <Link to={detailUrl} state={{ fromTab: '최신' }} className="w-28 h-28 flex-shrink-0 rounded-none overflow-hidden bg-page-secondary block aspect-square">
           <img
             src={imageUrl}
             alt={article.title}
@@ -275,7 +275,7 @@ function SearchArticleCard({ article }: { article: NewsItem }) {
         </Link>
       </div>
       <div className="flex items-center justify-between pt-2 mt-2 border-t border-page">
-        <Link to={detailUrl} state={{ fromSearch: true }} className="flex items-center gap-1.5 text-xs shrink-0">
+        <Link to={detailUrl} state={{ fromTab: '최신' }} className="flex items-center gap-1.5 text-xs shrink-0">
           <span className="font-medium text-primary-500">{getCategoryLabel()}</span>
           <span className="text-page-muted">|</span>
           <span className="text-page-secondary">{formatDate()}</span>

@@ -87,7 +87,7 @@ export default function AllNewsPage() {
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
             >
               {news.map((item, index) => (
-                <NewsCard key={item.url + index} news={item} index={index} />
+                <NewsCard key={item.url + index} news={item} index={index} linkState={{ fromTab: '최신' }} />
               ))}
             </motion.div>
 

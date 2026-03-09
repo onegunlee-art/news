@@ -21,9 +21,11 @@ interface NewsItem {
 interface NewsCardProps {
   news: NewsItem
   index?: number
+  /** 기사 상세 진입 시 from_tab 등 prev/next 정렬에 사용할 state */
+  linkState?: Record<string, unknown>
 }
 
-export default function NewsCard({ news, index = 0 }: NewsCardProps) {
+export default function NewsCard({ news, index = 0, linkState }: NewsCardProps) {
   // 이미지 URL: 저장된 image_url 우선, 없으면 기사별 고유 시드로 placeholder (중복 없음)
   const imageUrl = useMemo(() => {
     if (news.image_url) return news.image_url
@@ -100,7 +102,7 @@ export default function NewsCard({ news, index = 0 }: NewsCardProps) {
   // ID가 있으면 내부 링크, 없으면 외부 링크
   if (news.id) {
     return (
-      <Link to={`/news/${news.id}`} className="group block h-full">
+      <Link to={`/news/${news.id}`} state={linkState} className="group block h-full">
         {content}
       </Link>
     )
