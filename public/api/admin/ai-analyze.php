@@ -332,23 +332,6 @@ function analyzeUrl(string $url, array $options = []): array {
             $narration = implode(' ', $finalAnalysis['key_points']);
         }
 
-        // RAG: 분석 결과 임베딩 저장 (AI 학습용)
-        if ($ragService !== null && $ragService->isConfigured()) {
-            $toStore = ($finalAnalysis['content_summary'] ?? '') . "\n\n" . ($narration ?? '');
-            if (!empty($finalAnalysis['key_points'])) {
-                $toStore .= "\n\n" . implode("\n", $finalAnalysis['key_points']);
-            }
-            if (trim($toStore) !== '') {
-                $ragService->storeAnalysisEmbedding(
-                    null,
-                    $url,
-                    $toStore,
-                    'analysis',
-                    ['news_title' => $finalAnalysis['news_title'] ?? '']
-                );
-            }
-        }
-
         return [
             'success' => true,
             'url' => $url,

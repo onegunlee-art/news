@@ -18,8 +18,8 @@ class RAGService
     private OpenAIService $openai;
     private SupabaseService $supabase;
 
-    /** 청크 최대 문자 수 (한국어 기준 ~300 토큰) */
-    private const CHUNK_MAX_CHARS = 800;
+    /** 청크 최대 문자 수 (한국어 기준 ~700 토큰, narration 전체 맥락 보존) */
+    private const CHUNK_MAX_CHARS = 2000;
 
     public function __construct(?OpenAIService $openai = null, ?SupabaseService $supabase = null)
     {
