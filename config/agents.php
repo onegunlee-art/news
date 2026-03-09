@@ -30,7 +30,7 @@ return [
         'analysis' => [
             'enabled' => true,
             'model' => 'gpt-5.2',
-            'temperature' => 0.7,
+            'temperature' => 0.45,
             'max_tokens' => 4000,
             'summary_length' => 3, // 문장 수
             'key_points_count' => 3,
