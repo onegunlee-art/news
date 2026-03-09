@@ -21,7 +21,7 @@ const PLANS: Plan[] = [
     label: '연간 구독',
     monthlyPrice: '4,620',
     discount: '월간 구독 대비 40% 할인',
-    billing: '최초 55,440원 결제, 이후 매년 자동 갱신',
+    billing: '최초 55,440원 결제, 이후 매년 자동 연장',
     renewal: '',
     bestValue: true,
   },
@@ -30,7 +30,7 @@ const PLANS: Plan[] = [
     label: '6개월 구독',
     monthlyPrice: '5,390',
     discount: '월간 구독 대비 30% 할인',
-    billing: '최초 32,340원 결제, 기간 종료후 6개월씩 자동 갱신',
+    billing: '최초 32,340원 결제, 기간 종료후 6개월씩 자동 연장',
     renewal: '',
     bestValue: false,
   },
@@ -39,7 +39,7 @@ const PLANS: Plan[] = [
     label: '3개월 구독',
     monthlyPrice: '6,160',
     discount: '월간 구독 대비 20% 할인',
-    billing: '최초 18,480원 결제, 기간 종료후 3개월씩 자동 갱신',
+    billing: '최초 18,480원 결제, 기간 종료후 3개월씩 자동 연장',
     renewal: '',
     bestValue: false,
   },
@@ -48,7 +48,7 @@ const PLANS: Plan[] = [
     label: '1개월 구독',
     monthlyPrice: '7,700',
     discount: null,
-    billing: '기간 종료후 1개월씩 자동 갱신',
+    billing: '기간 종료후 1개월씩 자동 연장',
     renewal: '',
     bestValue: false,
   },
@@ -235,8 +235,8 @@ export default function SubscriptionPage() {
           >
             {loading ? '처리 중...' : isSubscribed ? '구독 중' : '결제하기'}
           </button>
-          <p className="text-center text-base font-bold text-gray-600 dark:text-gray-500 mt-3">
-            언제든지 자동 갱신을 취소할 수 있습니다
+          <p className="text-center text-xs font-bold text-gray-600 dark:text-gray-500 mt-3">
+            언제든지 자동 연장을 취소할 수 있습니다
           </p>
         </motion.div>
 
