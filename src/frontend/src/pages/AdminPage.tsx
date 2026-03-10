@@ -354,6 +354,8 @@ const AdminPage: React.FC = () => {
   const [personaTestLoading, setPersonaTestLoading] = useState(false);
   const [personaTestResult, setPersonaTestResult] = useState<{ analysis_result?: Record<string, unknown>; checklist?: Record<string, unknown> } | null>(null);
   const personaChatEndRef = useRef<HTMLDivElement>(null);
+  // 페르소나 실험 모드 (기본값: false = 운영 분석, true = 페르소나 적용)
+  const [usePersonaExperiment, setUsePersonaExperiment] = useState(false);
 
   // API 과금 대시보드
   const [usageData, setUsageData] = useState<{
@@ -1577,7 +1579,20 @@ const AdminPage: React.FC = () => {
                 <div className="space-y-4">
                   {/* URL → GPT 분석 (버튼 1개) */}
                   <div>
-                    <label className="block text-slate-300 mb-2 text-sm font-medium">기사 URL</label>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-slate-300 text-sm font-medium">기사 URL</label>
+                      <label className="flex items-center gap-2 text-xs text-slate-400 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={usePersonaExperiment}
+                          onChange={(e) => setUsePersonaExperiment(e.target.checked)}
+                          className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-amber-500 focus:ring-amber-500/50 focus:ring-offset-0"
+                        />
+                        <span className={usePersonaExperiment ? 'text-amber-400' : ''}>
+                          페르소나 실험모드 {usePersonaExperiment && '(활성)'}
+                        </span>
+                      </label>
+                    </div>
                     <div className="flex gap-2 flex-wrap items-center">
                       <input
                         type="url"
@@ -1645,7 +1660,8 @@ const AdminPage: React.FC = () => {
                                 url: articleUrl.trim(),
                                 enable_tts: false,
                                 enable_interpret: false,
-                                enable_learning: false
+                                enable_learning: false,
+                                use_persona: usePersonaExperiment,
                               }),
                             });
                             clearTimeout(startTimer);
@@ -1858,7 +1874,8 @@ const AdminPage: React.FC = () => {
                                 title: '',
                                 enable_tts: false,
                                 enable_interpret: false,
-                                enable_learning: false
+                                enable_learning: false,
+                                use_persona: usePersonaExperiment,
                               }),
                             });
                             const startData = await startRes.json();

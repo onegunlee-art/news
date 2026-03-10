@@ -264,10 +264,15 @@ function analyzeUrl(string $url, array $options = []): array {
 
     $ragService = null;
     $personaService = null;
+    // 페르소나는 기본 비활성화 (RAG는 유지)
+    // use_persona=true 옵션으로 실험/비교 시에만 활성화
     $supabase = new SupabaseService([]);
     if ($supabase->isConfigured()) {
         $ragService = new RAGService(new OpenAIService([]), $supabase);
-        $personaService = new \Agents\Services\PersonaService($supabase);
+        // 실험 모드: use_persona=true 일때만 페르소나 활성화
+        if (!empty($options['use_persona'])) {
+            $personaService = new \Agents\Services\PersonaService($supabase);
+        }
     }
 
     $pipelineConfig = [
@@ -278,7 +283,7 @@ function analyzeUrl(string $url, array $options = []): array {
         'enable_learning' => $options['enable_learning'] ?? true,
         'google_tts' => $googleTtsConfig,
         'rag_service' => $ragService,
-        'persona_service' => $personaService,
+        'persona_service' => $personaService,  // 기본 null, use_persona=true 시에만 활성화
         'analysis' => [
             'enable_tts' => $options['enable_tts'] ?? false,
             'summary_length' => 3,
@@ -433,10 +438,14 @@ function analyzeContent(string $content, string $url, string $title, array $opti
 
     $ragService = null;
     $personaService = null;
+    // 페르소나는 기본 비활성화 (RAG는 유지)
+    // use_persona=true 옵션으로 실험/비교 시에만 활성화
     $supabase = new SupabaseService([]);
     if ($supabase->isConfigured()) {
         $ragService = new RAGService(new OpenAIService([]), $supabase);
-        $personaService = new \Agents\Services\PersonaService($supabase);
+        if (!empty($options['use_persona'])) {
+            $personaService = new \Agents\Services\PersonaService($supabase);
+        }
     }
 
     $host = parse_url($url, PHP_URL_HOST) ?? '';
@@ -492,7 +501,7 @@ function analyzeContent(string $content, string $url, string $title, array $opti
         'enable_learning' => $options['enable_learning'] ?? true,
         'google_tts' => $googleTtsConfig,
         'rag_service' => $ragService,
-        'persona_service' => $personaService,
+        'persona_service' => $personaService,  // 기본 null, use_persona=true 시에만 활성화
         'analysis' => [
             'enable_tts' => $options['enable_tts'] ?? false,
             'summary_length' => 3,
