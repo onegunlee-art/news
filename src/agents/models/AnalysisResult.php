@@ -15,6 +15,12 @@ namespace Agents\Models;
 
 final class AnalysisResult
 {
+    /**
+     * @param array $sections 구조화된 섹션 배열. 각 요소는:
+     *   - original_heading: string (원문 소제목, 예: "DON'T SETTLE")
+     *   - translated_heading: string (한글 소제목, 예: "정착하지 말 것")
+     *   - summary: string (해당 섹션 요약)
+     */
     public function __construct(
         private readonly string $translationSummary,
         private readonly array $keyPoints,
@@ -25,7 +31,8 @@ final class AnalysisResult
         private readonly ?string $narration = null,
         private readonly ?string $contentSummary = null,
         private readonly ?string $originalTitle = null,
-        private readonly ?string $author = null
+        private readonly ?string $author = null,
+        private readonly array $sections = []
     ) {}
 
     public function getTranslationSummary(): string
@@ -89,6 +96,15 @@ final class AnalysisResult
     }
 
     /**
+     * 구조화된 섹션 배열 반환
+     * @return array 각 요소: ['original_heading' => string, 'translated_heading' => string, 'summary' => string]
+     */
+    public function getSections(): array
+    {
+        return $this->sections;
+    }
+
+    /**
      * 오디오 URL 추가된 새 인스턴스 반환
      */
     public function withAudioUrl(string $audioUrl): self
@@ -103,7 +119,8 @@ final class AnalysisResult
             narration: $this->narration,
             contentSummary: $this->contentSummary,
             originalTitle: $this->originalTitle,
-            author: $this->author
+            author: $this->author,
+            sections: $this->sections
         );
     }
 
@@ -122,7 +139,8 @@ final class AnalysisResult
             narration: $this->narration,
             contentSummary: $this->contentSummary,
             originalTitle: $this->originalTitle,
-            author: $this->author
+            author: $this->author,
+            sections: $this->sections
         );
     }
 
@@ -139,6 +157,7 @@ final class AnalysisResult
             'key_points' => $this->keyPoints,
             'narration' => $this->narration,
             'content_summary' => $this->contentSummary,
+            'sections' => $this->sections,
             'critical_analysis' => $this->criticalAnalysis,
             'audio_url' => $this->audioUrl,
             'metadata' => $this->metadata
@@ -168,7 +187,8 @@ final class AnalysisResult
             narration: $data['narration'] ?? null,
             contentSummary: $data['content_summary'] ?? null,
             originalTitle: $data['original_title'] ?? null,
-            author: $data['author'] ?? null
+            author: $data['author'] ?? null,
+            sections: $data['sections'] ?? []
         );
     }
 
@@ -181,7 +201,8 @@ final class AnalysisResult
             translationSummary: '',
             keyPoints: [],
             criticalAnalysis: [],
-            contentSummary: null
+            contentSummary: null,
+            sections: []
         );
     }
 }
