@@ -700,18 +700,98 @@ class WebScraperService
     }
 
     /**
-     * 노드에서 텍스트 추출
+     * 노드에서 텍스트 추출 (헤딩과 문단 경계 보존)
      */
     private function extractTextFromNode(\DOMNode $node): string
     {
-        $text = $node->textContent;
+        $text = $this->extractTextWithStructure($node);
         
-        // 정리
-        $text = preg_replace('/\s+/', ' ', $text); // 연속 공백 제거
-        $text = preg_replace('/\n\s*\n/', "\n\n", $text); // 연속 줄바꿈 정리
+        // 연속 줄바꿈 정리 (최대 2개까지 유지)
+        $text = preg_replace('/\n{3,}/', "\n\n", $text);
         $text = trim($text);
         
         return $text;
+    }
+
+    /**
+     * DOM 노드에서 구조 보존하며 텍스트 추출
+     * - h1~h6, p 태그 경계에서 줄바꿈 삽입
+     * - ALL CAPS 라인은 별도 줄로 유지
+     */
+    private function extractTextWithStructure(\DOMNode $node): string
+    {
+        $result = '';
+        
+        foreach ($node->childNodes as $child) {
+            if ($child->nodeType === XML_TEXT_NODE) {
+                $text = $child->textContent;
+                // 연속 공백은 단일 공백으로 (줄바꿈 보존)
+                $text = preg_replace('/[ \t]+/', ' ', $text);
+                $result .= $text;
+            } elseif ($child->nodeType === XML_ELEMENT_NODE) {
+                $tagName = strtolower($child->nodeName);
+                
+                // 블록 요소 전에 줄바꿈
+                $blockTags = ['p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'article', 'section', 'blockquote', 'li', 'br'];
+                if (in_array($tagName, $blockTags)) {
+                    $result = rtrim($result) . "\n";
+                }
+                
+                // 헤딩 태그는 별도 줄로 강조
+                if (in_array($tagName, ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])) {
+                    $headingText = trim($child->textContent);
+                    if ($headingText !== '') {
+                        // ALL CAPS 헤딩 또는 일반 헤딩 - 별도 줄로 보존
+                        $result .= "\n[HEADING] " . $headingText . "\n\n";
+                    }
+                } else {
+                    // 일반 요소에서 ALL CAPS 짧은 라인 감지 (소제목 후보)
+                    $innerText = trim($child->textContent);
+                    if ($this->isLikelySubheading($innerText)) {
+                        $result .= "\n[SUBHEADING] " . $innerText . "\n\n";
+                    } else {
+                        $result .= $this->extractTextWithStructure($child);
+                    }
+                }
+                
+                // 블록 요소 후에 줄바꿈
+                if (in_array($tagName, $blockTags)) {
+                    $result = rtrim($result) . "\n";
+                }
+            }
+        }
+        
+        return $result;
+    }
+
+    /**
+     * ALL CAPS 또는 짧은 독립 라인이 소제목일 가능성 판단
+     */
+    private function isLikelySubheading(string $text): bool
+    {
+        $text = trim($text);
+        
+        // 빈 문자열이면 아님
+        if ($text === '') {
+            return false;
+        }
+        
+        // 3~60자 사이의 짧은 텍스트
+        $len = mb_strlen($text);
+        if ($len < 3 || $len > 60) {
+            return false;
+        }
+        
+        // 문장 끝 마침표가 없어야 함 (문장이 아닌 헤딩)
+        if (preg_match('/[.。!?]$/', $text)) {
+            return false;
+        }
+        
+        // ALL CAPS인지 확인 (영문 기준)
+        $upperText = mb_strtoupper($text);
+        $isAllCaps = ($text === $upperText) && preg_match('/[A-Z]/', $text);
+        
+        return $isAllCaps;
     }
 
     /**

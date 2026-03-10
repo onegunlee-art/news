@@ -1,0 +1,67 @@
+# 기사 품질 검증 체크리스트
+
+## 기준 글 스타일 (Foreign Affairs 예시)
+
+### 원문
+- **제목**: America Needs an Alliance Audit
+- **부제**: Not All Partnerships Are Worth Sustaining
+- **소제목**: DON'T SETTLE, TRIM THE FAT, BANG FOR YOUR BUCK, TIME FOR AN AUDIT
+
+### 완성본 스타일
+- **제목**: 미 동맹국들에 대한 평가표
+- **소제목 형식**: 번호 + 한글 (영문)
+  - 예: "1. 정착하지 말 것 (DON'T SETTLE)"
+- **본문 구조**: 도입 → 섹션별 분석 → 결론
+- **톤**: 객관적이지만 독자에게 설명하듯이
+
+## 필수 체크 항목
+
+### 1. 제목
+- [ ] 영문 원제를 직역한 한국어 제목
+- [ ] 15~30자 내외
+- [ ] 임팩트 문구가 아닌 내용 전달 중심
+
+### 2. 소제목 (sections)
+- [ ] 원문의 ALL CAPS 헤딩 모두 포함
+- [ ] `번호. 한글 (영문)` 형식
+- [ ] 각 섹션별 요약 2~4문장
+
+### 3. 내레이션 (narration)
+- [ ] 인사말 없이 바로 본문 시작
+- [ ] 섹션별 구분 명확 (번호 + 소제목)
+- [ ] 섹션 전환 시 연결어 사용
+- [ ] 최소 1000자 이상
+
+### 4. 금지 표현
+- [ ] `지스터` 사용 금지
+- [ ] `여러분` 인사말 금지
+- [ ] `시청자`, `청취자` 호칭 금지
+
+### 5. 구조화
+- [ ] `sections` 배열에 구조화된 소제목 포함
+- [ ] `content_summary`에 번호 + 소제목 형식
+
+## 회귀 테스트 케이스
+
+### Case 1: Foreign Affairs 기사
+- URL: foreignaffairs.com 계열
+- 검증: ALL CAPS 소제목 4개 이상 추출
+- 기대: sections 배열에 정확히 매핑
+
+### Case 2: Economist 기사
+- URL: economist.com 계열
+- 검증: Leader/Briefing 섹션 구분
+- 기대: 섹션별 요약 포함
+
+### Case 3: FT 기사
+- URL: ft.com 계열
+- 검증: 본문 구조 보존
+- 기대: 1000자+ narration
+
+## 자동 검증 API
+
+`/api/admin/persona-api.php?action=test` 응답의 `checklist` 항목:
+- `has_sections`: sections 배열 존재 여부
+- `narration_length`: 내레이션 길이 (1000+ 권장)
+- `no_jister`: 지스터 표현 미포함 여부
+- `has_subheadings`: 소제목 포함 여부
