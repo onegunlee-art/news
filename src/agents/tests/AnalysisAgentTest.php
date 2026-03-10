@@ -154,9 +154,9 @@ class AnalysisAgentTest extends TestCase
     }
 
     /**
-     * 기본 프롬프트가 가독성을 위한 구조적 narration 지시를 포함하는지 검증
+     * 기본 프롬프트가 자연스러운 narration 지시를 포함하는지 검증 (번호/구조 강제 없음)
      */
-    public function testDefaultPromptRestoresStructuredNarrationGuidance(): void
+    public function testDefaultPromptHasNaturalNarrationGuidance(): void
     {
         $article = new ArticleData(
             url: 'https://foreignaffairs.com/example/test-article',
@@ -170,9 +170,9 @@ class AnalysisAgentTest extends TestCase
         $method->setAccessible(true);
         $prompt = $method->invoke($this->agent, $article);
 
-        $this->assertStringContainsString("'번호 + 소제목' 형식", $prompt);
-        $this->assertStringContainsString('줄바꿈해 가독성을 확보', $prompt);
+        $this->assertStringContainsString('자연스럽게 이어서 말하듯 작성', $prompt);
         $this->assertStringContainsString("위 '기사 제목'과 동일하게 그대로", $prompt);
+        $this->assertStringNotContainsString("'번호 + 소제목' 형식", $prompt);
     }
 
     /**
