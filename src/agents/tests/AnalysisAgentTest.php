@@ -150,6 +150,29 @@ class AnalysisAgentTest extends TestCase
         $this->assertIsArray($config);
         $this->assertArrayHasKey('model', $config);
         $this->assertArrayHasKey('temperature', $config);
+        $this->assertSame(0.7, $config['temperature']);
+    }
+
+    /**
+     * 기본 프롬프트가 가독성을 위한 구조적 narration 지시를 포함하는지 검증
+     */
+    public function testDefaultPromptRestoresStructuredNarrationGuidance(): void
+    {
+        $article = new ArticleData(
+            url: 'https://foreignaffairs.com/example/test-article',
+            title: 'Test Article',
+            content: str_repeat('Content. ', 50),
+            language: 'en'
+        );
+
+        $reflection = new \ReflectionClass($this->agent);
+        $method = $reflection->getMethod('buildDefaultPrompt');
+        $method->setAccessible(true);
+        $prompt = $method->invoke($this->agent, $article);
+
+        $this->assertStringContainsString("'번호 + 소제목' 형식", $prompt);
+        $this->assertStringContainsString('줄바꿈해 가독성을 확보', $prompt);
+        $this->assertStringContainsString("위 '기사 제목'과 동일하게 그대로", $prompt);
     }
 
     /**
