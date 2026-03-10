@@ -26,6 +26,7 @@ interface NewsDetail {
   original_source?: string | null
   original_title?: string | null
   url: string
+  display_date?: string | null
   published_at: string | null
   created_at?: string | null
   updated_at?: string | null
