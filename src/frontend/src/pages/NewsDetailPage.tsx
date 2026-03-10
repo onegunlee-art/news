@@ -191,14 +191,14 @@ export default function NewsDetailPage() {
     }
   }
 
-  // admin에서 업데이트한 날짜 → 사진 밑 매체 옆 표시용
+  // 표시용 날짜: display_date 우선 (created_at 기준, docs/DATE_POLICY.md). updated_at는 사용하지 않음.
   const formatHeaderDate = () => {
-    const dateStr = news?.updated_at || news?.created_at
+    const dateStr = news?.display_date ?? news?.published_at ?? news?.created_at
     if (dateStr) {
       const date = new Date(dateStr)
       return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`
     }
-    return news?.time_ago || ''
+    return news?.time_ago ?? ''
   }
 
   // 소스 이름 매핑 (표시 시 " Magazine" 제거, e.g. Foreign Affairs Magazine → Foreign Affairs) - 매체 설명용

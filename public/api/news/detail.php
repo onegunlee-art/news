@@ -231,7 +231,7 @@ try {
         } catch (Exception $e) { /* 무시 */ }
     }
     
-    // 표시용 날짜: 우리 정책 - 모든 기사는 우리가 게시한 날짜(created_at)로 통일
+    // 표시용 날짜 정책: created_at 기준 (docs/DATE_POLICY.md). published_at은 원문 메타데이터용.
     $dateForDisplay = $news['created_at'];
     
     // time_ago 계산 (표시용 날짜 기준)
@@ -275,8 +275,9 @@ try {
     $nextArticle = null;
     $categoryParent = $news['category_parent'] ?? $news['category'] ?? null;
     $statusCond = $hasStatus ? " AND (status = 'published' OR status IS NULL)" : "";
-    $pubCol = $hasPublishedAt ? 'COALESCE(published_at, created_at)' : 'created_at';
-    $currentPub = $news['published_at'] ?? $news['created_at'] ?? null;
+    // 표시용 날짜 정책: 정렬·이전/다음 모두 created_at 기준 (목록과 동일)
+    $pubCol = 'created_at';
+    $currentPub = $news['created_at'] ?? null;
 
     try {
         if ($fromTab === 'latest') {
@@ -344,7 +345,7 @@ try {
         else $categoryParent = $cat ?: 'diplomacy'; // diplomacy 또는 기타
     }
 
-    // 응답 데이터 구성 (published_at = 포스팅 날짜로 표시)
+    // 응답 데이터 구성 (display_date = created_at 기준, docs/DATE_POLICY.md)
     $responseData = [
         'id' => (int)$news['id'],
         'category' => $news['category'] ?? null,
@@ -360,6 +361,7 @@ try {
         'original_title' => $hasOriginalTitle ? ($news['original_title'] ?? null) : null,
         'url' => (!empty($news['source_url'] ?? '')) ? ($news['source_url'] ?? '') : ($news['url'] ?? ''),
         'image_url' => $news['image_url'],
+        'display_date' => $dateForDisplay,
         'published_at' => $dateForDisplay,
         'created_at' => $news['created_at'],
         'updated_at' => $news['updated_at'] ?? null,
@@ -373,7 +375,7 @@ try {
     $restrictionType = null;
     try {
         $statusFilter = $hasStatus ? "(status = 'published' OR status IS NULL)" : "1=1";
-        $latestCol = $hasPublishedAt ? 'COALESCE(published_at, created_at)' : 'created_at';
+        $latestCol = 'created_at';
         $latestStmt = $db->query(
             "SELECT id FROM news WHERE $statusFilter ORDER BY $latestCol DESC LIMIT 2"
         );

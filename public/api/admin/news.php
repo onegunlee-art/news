@@ -552,7 +552,7 @@ if ($method === 'GET') {
             $selectColumns .= ', view_count';
         }
         
-        $orderBy = 'ORDER BY COALESCE(published_at, created_at) DESC';
+        $orderBy = 'ORDER BY created_at DESC';
         if ($popular && $hasViewCount) {
             $orderBy = 'ORDER BY view_count DESC';
         }
@@ -566,11 +566,9 @@ if ($method === 'GET') {
         ");
         $stmt->execute($params);
         $news = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        // 우리 정책: published_at 비어있으면 created_at(우리 게시일)으로 표시
+        // 표시용 날짜 정책: display_date = created_at (docs/DATE_POLICY.md). published_at은 원문 메타.
         foreach ($news as &$item) {
-            if (empty($item['published_at']) && !empty($item['created_at'])) {
-                $item['published_at'] = $item['created_at'];
-            }
+            $item['display_date'] = $item['created_at'] ?? null;
         }
         unset($item);
         api_log('admin/news', 'GET', 200);

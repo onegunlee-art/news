@@ -312,11 +312,12 @@ function ArticleCard({ article, activeTab }: { article: NewsItem; activeTab: Tab
     200
   )
 
-  // 날짜 포맷팅
+  // 날짜 포맷팅 (표시용: display_date 우선, docs/DATE_POLICY.md)
   const formatDate = () => {
     if (article.time_ago) return article.time_ago
-    if (article.published_at) {
-      const date = new Date(article.published_at)
+    const dateStr = (article as { display_date?: string }).display_date ?? article.published_at ?? (article as { created_at?: string }).created_at
+    if (dateStr) {
+      const date = new Date(dateStr)
       return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`
     }
     return ''
@@ -350,11 +351,10 @@ function ArticleCard({ article, activeTab }: { article: NewsItem; activeTab: Tab
       const detail = res.data?.data
       if (detail) {
         const originalTitle = (detail.original_title && String(detail.original_title).trim()) || extractTitleFromUrl(detail.url) || '원문'
-        const dateStr = detail.published_at
-          ? `${new Date(detail.published_at).getFullYear()}년 ${new Date(detail.published_at).getMonth() + 1}월 ${new Date(detail.published_at).getDate()}일`
-          : (detail.updated_at || detail.created_at)
-            ? `${new Date(detail.updated_at || detail.created_at).getFullYear()}년 ${new Date(detail.updated_at || detail.created_at).getMonth() + 1}월 ${new Date(detail.updated_at || detail.created_at).getDate()}일`
-            : ''
+        const displayDate = (detail as { display_date?: string }).display_date ?? detail.published_at ?? detail.created_at
+        const dateStr = displayDate
+          ? `${new Date(displayDate).getFullYear()}년 ${new Date(displayDate).getMonth() + 1}월 ${new Date(displayDate).getDate()}일`
+          : ''
         const rawSource = (detail.original_source && String(detail.original_source).trim()) || (detail.source === 'Admin' ? 'The Gist' : detail.source || 'The Gist')
         const sourceDisplay = formatSourceDisplayName(rawSource) || 'The Gist'
         const editorialLine = buildEditorialLine({ dateStr, sourceDisplay, originalTitle })
@@ -372,8 +372,9 @@ function ArticleCard({ article, activeTab }: { article: NewsItem; activeTab: Tab
       const url = (article as { url?: string; source_url?: string }).url || (article as { source_url?: string }).source_url
       const originalTitle = extractTitleFromUrl(url) || '원문'
       const sourceDisplay = formatSourceDisplayName(article.source) || 'The Gist'
-      const dateStr = article.published_at
-        ? `${new Date(article.published_at).getFullYear()}년 ${new Date(article.published_at).getMonth() + 1}월 ${new Date(article.published_at).getDate()}일`
+      const displayDate = (article as { display_date?: string }).display_date ?? article.published_at
+      const dateStr = displayDate
+        ? `${new Date(displayDate).getFullYear()}년 ${new Date(displayDate).getMonth() + 1}월 ${new Date(displayDate).getDate()}일`
         : ''
       const editorialLine = buildEditorialLine({ dateStr, sourceDisplay, originalTitle })
       openAndPlay(article.title, editorialLine, text, '', 1.0, undefined, Number(newsId))
@@ -393,10 +394,9 @@ function ArticleCard({ article, activeTab }: { article: NewsItem; activeTab: Tab
       return
     }
 
-    const hasAuth = isAuthenticated || !!localStorage.getItem('access_token')
-    if (!hasAuth) {
+    if (!isAuthenticated) {
       if (confirm('로그인이 필요합니다. 로그인 페이지로 이동하시겠습니까?')) {
-        navigate('/login')
+        navigate('/login', { state: { returnTo: window.location.pathname } })
       }
       return
     }

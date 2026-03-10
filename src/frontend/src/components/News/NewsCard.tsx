@@ -12,6 +12,8 @@ interface NewsItem {
   description: string | null
   url: string
   source: string | null
+  /** 표시용 날짜 (created_at 기준). docs/DATE_POLICY.md */
+  display_date?: string | null
   published_at: string | null
   time_ago?: string
   image_url?: string | null
@@ -88,7 +90,9 @@ export default function NewsCard({ news, index = 0, linkState }: NewsCardProps) 
         {/* 하단 */}
         <div className="flex items-center justify-between mt-auto pt-3 border-t border-page">
           <span className="text-xs text-page-muted">
-            {news.published_at && new Date(news.published_at).toLocaleDateString('ko-KR')}
+            {(news.display_date ?? news.published_at)
+              ? new Date(news.display_date ?? news.published_at!).toLocaleDateString('ko-KR')
+              : null}
           </span>
           <span className="text-primary-600 text-sm font-medium flex items-center gap-1">
             자세히 보기
