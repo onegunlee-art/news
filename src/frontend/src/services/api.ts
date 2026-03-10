@@ -38,42 +38,74 @@ api.interceptors.request.use(
   }
 )
 
-// 응답 인터셉터
+// 응답 인터셉터: 401 시 토큰 갱신 (단일 책임 — store와 localStorage 모두 갱신)
+let isRefreshing = false
+let failedQueue: { resolve: (v: unknown) => void; reject: (e: unknown) => void }[] = []
+
+function processQueue(error: unknown, token: string | null) {
+  failedQueue.forEach((p) => (error ? p.reject(error) : p.resolve(token)))
+  failedQueue = []
+}
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config
+    if (error.response?.status !== 401 || originalRequest._retry) {
+      return Promise.reject(error)
+    }
 
-    // 401 에러이고 재시도하지 않은 경우
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true
+    if (isRefreshing) {
+      return new Promise((resolve, reject) => {
+        failedQueue.push({ resolve, reject })
+      }).then((token) => {
+        const bearer = `Bearer ${token}`
+        originalRequest.headers.Authorization = bearer
+        originalRequest.headers['X-Authorization'] = bearer
+        return api(originalRequest)
+      })
+    }
 
-      const refreshToken = localStorage.getItem('refresh_token')
-      if (refreshToken) {
+    originalRequest._retry = true
+    isRefreshing = true
+
+    const refreshToken = localStorage.getItem('refresh_token')
+    if (!refreshToken) {
+      isRefreshing = false
+      return Promise.reject(error)
+    }
+
+    try {
+      const res = await axios.post(`${API_BASE_URL}/auth/refresh`, {
+        refresh_token: refreshToken,
+      })
+
+      if (res.data.success) {
+        const { access_token, refresh_token: newRefresh } = res.data.data
+        localStorage.setItem('access_token', access_token)
+        localStorage.setItem('refresh_token', newRefresh)
+
         try {
-          const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
-            refresh_token: refreshToken,
-          })
+          const { useAuthStore } = await import('../store/authStore')
+          useAuthStore.getState().setTokens(access_token, newRefresh)
+        } catch { /* store not ready */ }
 
-          if (response.data.success) {
-            const { access_token, refresh_token } = response.data.data
-            localStorage.setItem('access_token', access_token)
-            localStorage.setItem('refresh_token', refresh_token)
+        processQueue(null, access_token)
 
-            const bearer = `Bearer ${access_token}`
-            originalRequest.headers.Authorization = bearer
-            originalRequest.headers['X-Authorization'] = bearer
-            return api(originalRequest)
-          }
-        } catch (refreshError) {
-          // 리프레시 실패 시 로그아웃 처리
-          localStorage.removeItem('access_token')
-          localStorage.removeItem('refresh_token')
-          localStorage.removeItem('user')
-          localStorage.removeItem('auth-storage')
-          window.location.href = '/'
-        }
+        const bearer = `Bearer ${access_token}`
+        originalRequest.headers.Authorization = bearer
+        originalRequest.headers['X-Authorization'] = bearer
+        return api(originalRequest)
       }
+    } catch (refreshError) {
+      processQueue(refreshError, null)
+      localStorage.removeItem('access_token')
+      localStorage.removeItem('refresh_token')
+      localStorage.removeItem('user')
+      localStorage.removeItem('auth-storage')
+      window.location.href = '/'
+    } finally {
+      isRefreshing = false
     }
 
     return Promise.reject(error)

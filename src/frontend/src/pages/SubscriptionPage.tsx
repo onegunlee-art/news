@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuthStore } from '../store/authStore'
 import { api } from '../services/api'
@@ -59,11 +59,15 @@ export default function SubscriptionPage() {
   const [loading, setLoading] = useState(false)
   const [loadingOnetime, setLoadingOnetime] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const { isAuthenticated, isSubscribed, accessToken } = useAuthStore()
+  const { isAuthenticated, isSubscribed, accessToken, isInitialized } = useAuthStore()
   const navigate = useNavigate()
 
   const handleCheckout = async () => {
-    if (!isAuthenticated) { navigate('/login'); return }
+    if (!isInitialized) return
+    if (!isAuthenticated) {
+      navigate('/login', { state: { returnTo: '/subscribe', intent: 'subscribe' } })
+      return
+    }
     if (isSubscribed) { setError('이미 구독 중입니다.'); return }
 
     setLoading(true)
@@ -85,7 +89,11 @@ export default function SubscriptionPage() {
   }
 
   const handleBuyOnetime = async (onetimeId: string) => {
-    if (!isAuthenticated) { navigate('/login'); return }
+    if (!isInitialized) return
+    if (!isAuthenticated) {
+      navigate('/login', { state: { returnTo: '/subscribe', intent: 'subscribe' } })
+      return
+    }
     setLoadingOnetime(onetimeId)
     setError(null)
     try {
@@ -127,6 +135,20 @@ export default function SubscriptionPage() {
             품격 있는 가치와 생각으로 하루를 시작하세요
           </p>
         </motion.div>
+
+        {/* 비회원: 이미 회원이신가요? 로그인 */}
+        {isInitialized && !isAuthenticated && (
+          <p className="text-center text-sm text-gray-600 dark:text-gray-400 mb-6">
+            이미 계정이 있으신가요?{' '}
+            <Link
+              to="/login"
+              state={{ returnTo: '/subscribe', intent: 'subscribe' }}
+              className="text-primary-500 hover:text-primary-600 font-semibold underline underline-offset-2"
+            >
+              로그인
+            </Link>
+          </p>
+        )}
 
         {/* 구독 중 안내 */}
         {isSubscribed && (

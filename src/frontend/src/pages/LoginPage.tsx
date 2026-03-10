@@ -1,11 +1,16 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuthStore } from '../store/authStore';
 import { authApi } from '../services/api';
+import { saveAuthReturnState, getAuthRedirectTarget } from '../utils/authReturnState';
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const state = location.state as { returnTo?: string; intent?: string } | undefined;
+  const returnTo = state?.returnTo;
+  const intent = state?.intent;
   const { login, setTokens, setUser } = useAuthStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -27,7 +32,9 @@ const LoginPage: React.FC = () => {
         setTokens(access_token, refresh_token);
         setUser(user);
         localStorage.setItem('user', JSON.stringify(user));
-        navigate((user as { role?: string })?.role === 'admin' ? '/admin' : '/', { replace: true });
+        const isAdmin = (user as { role?: string })?.role === 'admin';
+        const target = getAuthRedirectTarget(returnTo, intent, isAdmin);
+        navigate(target, { replace: true });
       } else {
         throw new Error(res.data.message || '로그인에 실패했습니다.');
       }
@@ -40,6 +47,7 @@ const LoginPage: React.FC = () => {
   };
 
   const handleKakaoLogin = () => {
+    saveAuthReturnState(returnTo, intent);
     login();
   };
 
@@ -134,7 +142,7 @@ const LoginPage: React.FC = () => {
           <div className="mt-6 text-center">
             <p className="text-gray-500 text-sm">
               아직 계정이 없으신가요?{' '}
-              <Link to="/register" className="text-primary-500 hover:text-primary-600 font-medium">
+              <Link to="/register" state={returnTo ? { returnTo, intent } : undefined} className="text-primary-500 hover:text-primary-600 font-medium">
                 회원가입
               </Link>
             </p>

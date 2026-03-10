@@ -170,14 +170,6 @@ export const useAuthStore = create<AuthState>()(
             localStorage.setItem('is_subscribed', String(isSubscribed))
           }
         } catch (error: any) {
-          if (error.response?.status === 401) {
-            // 토큰 만료 시 갱신 시도
-            const refreshed = await get().refreshAccessToken()
-            if (refreshed) {
-              await get().fetchUser()
-              return
-            }
-          }
           set({ isLoading: false, error: 'Failed to fetch user' })
         }
       },

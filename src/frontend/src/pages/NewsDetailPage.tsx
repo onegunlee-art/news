@@ -175,8 +175,7 @@ export default function NewsDetailPage() {
   }
 
   const handleBookmark = async () => {
-    const hasAuth = isAuthenticated || !!localStorage.getItem('access_token')
-    if (!hasAuth || !id) return
+    if (!isAuthenticated || !id) return
 
     try {
       if (isBookmarked) {
@@ -313,10 +312,9 @@ export default function NewsDetailPage() {
                 onClick={(e) => {
                   e.preventDefault()
                   e.stopPropagation()
-                  const hasAuth = isAuthenticated || !!localStorage.getItem('access_token')
-                  if (!hasAuth) {
+                  if (!isAuthenticated) {
                     if (confirm('로그인이 필요합니다. 로그인 페이지로 이동하시겠습니까?')) {
-                      navigate('/login')
+                      navigate('/login', { state: { returnTo: id ? `/news/${id}` : undefined } })
                     }
                     return
                   }
@@ -427,7 +425,14 @@ export default function NewsDetailPage() {
               {/* 페이월 오버레이 */}
               <PaywallOverlay
                 isAuthenticated={isAuthenticated}
-                onLogin={login}
+                restrictionType={
+                  (news.restriction_type === 'subscription_required' ||
+                    news.restriction_type === 'login_or_subscribe'
+                    ? news.restriction_type
+                    : null) as 'subscription_required' | 'login_or_subscribe' | undefined
+                }
+                returnTo={id ? `/news/${id}` : undefined}
+                onKakaoLogin={login}
               />
             </div>
           ) : (

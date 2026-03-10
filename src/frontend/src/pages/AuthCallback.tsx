@@ -4,6 +4,7 @@ import { useAuthStore } from '../store/authStore'
 import LoadingSpinner from '../components/Common/LoadingSpinner'
 import MaterialIcon from '../components/Common/MaterialIcon'
 import { getAuthCodeFromUrl, getAuthErrorFromUrl } from '../services/kakaoAuth'
+import { consumeAuthReturnState, getAuthRedirectTarget } from '../utils/authReturnState'
 
 function syncAuthStorage(accessToken: string, refreshToken: string) {
   try {
@@ -58,7 +59,10 @@ export default function AuthCallback() {
         }
 
         setTokens(token, refreshToken)
-        navigate(user?.role === 'admin' ? '/admin' : '/')
+
+        const saved = consumeAuthReturnState()
+        const isAdmin = user?.role === 'admin'
+        navigate(getAuthRedirectTarget(saved.returnTo, saved.intent, isAdmin), { replace: true })
         return
       }
     }
@@ -68,7 +72,6 @@ export default function AuthCallback() {
     
     if (code) {
       try {
-        // 백엔드에서 토큰 교환
         const response = await fetch('/api/auth/kakao/token', {
           method: 'POST',
           headers: {
@@ -93,7 +96,6 @@ export default function AuthCallback() {
             url: response.url,
           })
           
-          // 상세한 에러 메시지 구성
           let errorMessage = errorData.message || `HTTP ${response.status}: ${response.statusText}`;
           if (errorData.error) {
             if (typeof errorData.error === 'string') {
@@ -131,7 +133,10 @@ export default function AuthCallback() {
           }
           
           setTokens(data.access_token, data.refresh_token || '')
-          navigate(data.user?.role === 'admin' ? '/admin' : '/')
+
+          const saved = consumeAuthReturnState()
+          const isAdmin = data.user?.role === 'admin'
+          navigate(getAuthRedirectTarget(saved.returnTo, saved.intent, isAdmin), { replace: true })
           return
         } else {
           console.error('Token exchange failed:', data)
@@ -150,12 +155,12 @@ export default function AuthCallback() {
       }
     }
 
-    // localStorage에서 토큰 확인
     const accessToken = localStorage.getItem('access_token')
     
     if (accessToken) {
       initializeAuth()
-      navigate('/')
+      const saved = consumeAuthReturnState()
+      navigate(getAuthRedirectTarget(saved.returnTo, saved.intent), { replace: true })
     } else {
       setError('로그인에 실패했습니다.')
       setTimeout(() => navigate('/'), 3000)

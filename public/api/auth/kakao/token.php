@@ -149,12 +149,14 @@ try {
         [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]
     );
 
-    $stmt = $pdo->prepare("SELECT id FROM users WHERE kakao_id = ? LIMIT 1");
+    $stmt = $pdo->prepare("SELECT id, role FROM users WHERE kakao_id = ? LIMIT 1");
     $stmt->execute([(string)$kakaoId]);
     $row = $stmt->fetch();
 
+    $userRole = 'user';
     if ($row) {
         $dbUserId = (int)$row['id'];
+        $userRole = $row['role'] ?? 'user';
         $pdo->prepare("UPDATE users SET nickname = ?, profile_image = ?, last_login_at = NOW() WHERE id = ?")
             ->execute([$nickname, $profileImage, $dbUserId]);
     } else {
@@ -220,6 +222,20 @@ $refreshPayloadEncoded = rtrim(strtr(base64_encode(json_encode($refreshPayload))
 $refreshSignature = rtrim(strtr(base64_encode(hash_hmac('sha256', "$jwtHeader.$refreshPayloadEncoded", $jwtSecret, true)), '+/', '-_'), '=');
 $refreshTokenJwt = "$jwtHeader.$refreshPayloadEncoded.$refreshSignature";
 
+// refresh token을 user_tokens 테이블에 저장 (이메일 로그인과 동일한 정책)
+try {
+    $pdo->prepare(
+        "INSERT INTO user_tokens (user_id, token, token_type, expires_at, created_at)
+         VALUES (?, ?, 'refresh', ?, NOW())"
+    )->execute([
+        $dbUserId,
+        $refreshTokenJwt,
+        date('Y-m-d H:i:s', time() + 86400 * 30),
+    ]);
+} catch (Throwable $e) {
+    error_log('[kakao-token] Failed to save refresh token: ' . $e->getMessage());
+}
+
 // 구독 상태를 DB에서 조회
 $subStmt = $pdo->prepare("SELECT is_subscribed, subscription_expires_at FROM users WHERE id = ?");
 $subStmt->execute([$dbUserId]);
@@ -244,7 +260,7 @@ $response = [
         'nickname' => $nickname,
         'email' => $email,
         'profile_image' => $profileImage,
-        'role' => 'user',
+        'role' => $userRole,
         'created_at' => date('c'),
         'is_subscribed' => $dbIsSubscribed,
         'subscription_expires_at' => $dbSubExpiresAt,

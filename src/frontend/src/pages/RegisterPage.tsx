@@ -1,14 +1,19 @@
 import React, { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuthStore } from '../store/authStore'
 import { authApi, welcomeSettingsApi } from '../services/api'
+import { saveAuthReturnState } from '../utils/authReturnState'
 import PrivacyPolicyModal from '../components/Common/PrivacyPolicyModal'
 import TermsModal from '../components/Common/TermsModal'
 import WelcomePopup from '../components/Common/WelcomePopup'
 
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate()
+  const location = useLocation()
+  const locState = location.state as { returnTo?: string; intent?: string } | undefined
+  const returnTo = locState?.returnTo
+  const intent = locState?.intent
   const { login, setTokens, setUser, isAuthenticated } = useAuthStore()
   const [formData, setFormData] = useState({
     email: '',
@@ -94,16 +99,16 @@ const RegisterPage: React.FC = () => {
   }, [])
 
   useEffect(() => {
-    const hasToken = typeof localStorage !== 'undefined' && localStorage.getItem('access_token')
-    if ((isAuthenticated || hasToken) && !showSuccess) {
-      navigate('/profile', { replace: true })
+    if (isAuthenticated && !showSuccess) {
+      navigate(returnTo || '/profile', { replace: true })
     }
-  }, [isAuthenticated, showSuccess, navigate])
+  }, [isAuthenticated, showSuccess, navigate, returnTo])
 
   const handleCloseWelcome = () => {
     setShowSuccess(false)
     setWelcomePopupData(null)
-    navigate('/', { replace: true })
+    const target = intent === 'subscribe' ? (returnTo || '/subscribe') : (returnTo || '/')
+    navigate(target, { replace: true })
   }
 
   if (showSuccess && welcomePopupData) {
@@ -276,7 +281,7 @@ const RegisterPage: React.FC = () => {
           </div>
 
           <button
-            onClick={() => login()}
+            onClick={() => { saveAuthReturnState(returnTo, intent); login() }}
             className="w-full flex items-center justify-center gap-3 py-3 bg-[#FEE500] hover:bg-[#FDD835] text-[#3C1E1E] font-semibold rounded-lg transition-all"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
@@ -288,7 +293,7 @@ const RegisterPage: React.FC = () => {
           <div className="mt-6 text-center">
             <p className="text-gray-500 text-sm">
               이미 계정이 있으신가요?{' '}
-              <Link to="/login" className="text-primary-500 hover:text-primary-600 font-medium">
+              <Link to="/login" state={returnTo ? { returnTo, intent } : undefined} className="text-primary-500 hover:text-primary-600 font-medium">
                 로그인
               </Link>
             </p>
