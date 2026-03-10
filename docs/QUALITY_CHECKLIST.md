@@ -28,7 +28,7 @@
 
 ### 3. 내레이션 (narration)
 - [ ] 인사말 없이 바로 본문 시작
-- [ ] 섹션별 구분 명확 (번호 + 소제목)
+- [ ] 번호·소제목 형식(1. 2. 등) 없이 자연스러운 말하기 흐름
 - [ ] 섹션 전환 시 연결어 사용
 - [ ] 최소 1000자 이상
 
@@ -57,6 +57,28 @@
 - URL: ft.com 계열
 - 검증: 본문 구조 보존
 - 기대: 1000자+ narration
+
+### Case 4: 영문 원제 마지막 단어 보존 (제목 회귀)
+- 예시 제목: **Why Escalation Favors Iran**
+- 검증: original_title이 "Why Escalation Favors Iran" 전체로 나와야 함. "Iran" 등 마지막 단어가 슬러그 재구성으로 잘리지 않음.
+- 기대: 스크래퍼 메타(og:title 등)에서 추출한 제목이 그대로 original_title로 사용됨.
+
+### Case 5: Foreign Affairs 식 ALL CAPS 소제목 기사
+- 검증: content_summary·sections에 소제목 한글(영문) 형식 반영.
+- 기대: narration에는 번호+소제목 형식 없이 자연스러운 본문만.
+
+### Case 6: Economist 부분 본문 기사
+- 검증: 본문이 중간에 잘렸거나 광고로 끊긴 경우에도 분석 가능.
+- 기대: narration 끝에 "[기사 일부만 분석됨]" 문구가 본문에 포함되지 않음 (별도 메타/배지 처리 권장).
+
+### Case 7: 품질 양호 기존 샘플
+- 검증: 과거에 품질이 좋다고 확인된 기사로 재분석 시 제목·소제목·메타 문구가 누락/왜곡되지 않음.
+- 기대: The Gist's Critique, 참고자료, 참조 프레임워크 등 메타 문구가 사용자-facing 요약/내레이션에 노출되지 않음.
+
+### Case 8: 프롬프트 품질 복원 회귀 (2025-03)
+- **영문 제목**: "Why escalation favors Iran" 등 메타 제목이 original_title에 그대로 유지되는지 확인. (AnalysisAgent에서 article->getTitle() 1순위 적용)
+- **내레이션**: 1번, 2번 같은 번호+소제목 형식 없이 말하듯이만 작성되는지 확인.
+- **메타 문구 미노출**: narration·content_summary 저장 전 백엔드 `stripMetaPhrasesFromText` 적용, 원문 AI 분석 표시 시 프론트 `stripAnalysisMetaPhrases` 적용. "지스터 관점의 시사점", "[기사 일부만 분석됨]", "참고자료를 제대로 반영하지 못했습니다" 등이 최종 노출되지 않는지 확인.
 
 ## 자동 검증 API
 

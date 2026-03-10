@@ -26,8 +26,8 @@ const subCategoryToLabel: Record<string, string> = {
 }
 
 export default function ProfilePage() {
-  const { user, isAuthenticated, isSubscribed, logout, initializeAuth } = useAuthStore()
-  const hasAuth = !!user || isAuthenticated || !!localStorage.getItem('access_token')
+  const { user, isAuthenticated, isSubscribed, logout } = useAuthStore()
+  const hasAuth = isAuthenticated
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<'bookmarks' | 'audio' | null>(null)
   const audioItems = useAudioListStore((s) => s.items)
@@ -43,10 +43,6 @@ export default function ProfilePage() {
   const [aiFeedExpanded, setAiFeedExpanded] = useState(false)
   const activeTabRef = useRef(activeTab)
   activeTabRef.current = activeTab
-
-  useEffect(() => {
-    if (!user && localStorage.getItem('access_token')) initializeAuth()
-  }, [user, initializeAuth])
 
   useEffect(() => {
     if (!hasAuth) return

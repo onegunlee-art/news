@@ -3996,7 +3996,7 @@ const AdminPage: React.FC = () => {
                   <MaterialIcon name="check_circle" className="w-5 h-5 text-emerald-400" size={20} />
                   일관성 점검 (Persona Tester)
                 </h3>
-                <p className="text-slate-400 text-sm mb-4">실제 파이프라인으로 기사를 분석하고, 페르소나 일관성(지스터 언급, 글자 수 등)을 점검합니다.</p>
+                <p className="text-slate-400 text-sm mb-4">실제 파이프라인으로 기사를 분석하고, 페르소나 일관성(글자 수 등)을 점검합니다.</p>
                 <div className="flex gap-2 flex-wrap mb-4">
                   <input
                     type="text"

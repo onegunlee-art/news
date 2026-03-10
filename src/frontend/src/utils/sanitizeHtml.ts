@@ -176,3 +176,25 @@ export function normalizeEditorHtml(html: string): string {
   s = s.replace(/(<br\s*\/?>)+$/gi, '')
   return s.trim()
 }
+
+/** 원문 AI 분석(content_summary)에 섞일 수 있는 메타/브랜드 문구 제거 후 표시용 텍스트 반환 */
+export function stripAnalysisMetaPhrases(text: string | null | undefined): string {
+  if (text == null || text === '') return ''
+  let s = String(text)
+  // 블록 단위 제거: RAG/참고자료 섹션 헤더 및 유사도 라인
+  s = s.replace(/\n?---\s*RAG Context[^\n]*\n[\s\S]*/g, '')
+  s = s.replace(/\n?##\s*과거 분석 참고자료\n?/g, '\n')
+  s = s.replace(/\n?##\s*참조 프레임워크[^\n]*\n(?:아래 프레임워크를[^\n]*\n)?/g, '\n')
+  s = s.replace(/\n?##\s*편집자 크리틱[^\n]*\n?/g, '\n')
+  s = s.replace(/\n-\s*\[유사도\s*[\d.]+\][^\n]*/g, '')
+  // 문구 단위 제거
+  s = s.replace(/\s*The Gist's Critique\.?\s*:?/gi, ' ')
+  s = s.replace(/\s*지스터\s*(관점의\s*)?시사점\.?\s*:?/g, ' ')
+  s = s.replace(/\s*\[기사 일부만 분석됨\]\s*/g, ' ')
+  s = s.replace(/\s*참고자료\s*:?/g, ' ')
+  s = s.replace(/\s*참고자료를\s*제대로\s*반영하지\s*못했습니다\.?\s*/g, ' ')
+  s = s.replace(/\s*참고글을\s*제대로\s*못했다\.?\s*/g, ' ')
+  s = s.replace(/\s*참조 프레임워크[^\n.]*\.?/g, ' ')
+  s = s.replace(/\s{2,}/g, ' ')
+  return s.trim()
+}

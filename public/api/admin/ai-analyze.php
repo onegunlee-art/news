@@ -351,6 +351,7 @@ function analyzeUrl(string $url, array $options = []): array {
                 'translation_summary' => $finalAnalysis['translation_summary'] ?? ($narration ? mb_substr($narration, 0, 200) : ''),
                 'key_points' => $finalAnalysis['key_points'] ?? [],
                 'content_summary' => $finalAnalysis['content_summary'] ?? null,
+                'sections' => $finalAnalysis['sections'] ?? [],
                 'narration' => $narration,
                 'critical_analysis' => $finalAnalysis['critical_analysis'] ?? [],
                 'audio_url' => $finalAnalysis['audio_url'] ?? null
@@ -550,6 +551,7 @@ function analyzeContent(string $content, string $url, string $title, array $opti
                 'translation_summary' => $finalAnalysis['translation_summary'] ?? ($narration ? mb_substr($narration, 0, 200) : ''),
                 'key_points' => $finalAnalysis['key_points'] ?? [],
                 'content_summary' => $finalAnalysis['content_summary'] ?? null,
+                'sections' => $finalAnalysis['sections'] ?? [],
                 'narration' => $narration,
                 'critical_analysis' => $finalAnalysis['critical_analysis'] ?? [],
                 'audio_url' => $finalAnalysis['audio_url'] ?? null

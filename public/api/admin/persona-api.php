@@ -312,7 +312,7 @@ if ($action === 'test_consistency') {
     $newsTitle = $finalAnalysis['news_title'] ?? '';
 
     $checklist = [
-        'has_jister' => (bool) preg_match('/지스터/', $narration),
+        'no_jister' => !(bool) preg_match('/지스터/', $narration),
         'narration_min_900' => mb_strlen($narration) >= 900,
         'content_summary_min_600' => mb_strlen($contentSummary) >= 600,
         'has_news_title' => !empty(trim($newsTitle ?? '')),

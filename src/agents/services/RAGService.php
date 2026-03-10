@@ -119,7 +119,9 @@ class RAGService
             return $basePrompt;
         }
 
-        return $basePrompt . "\n\n--- RAG Context (편집 전문가 지식) ---\n" . implode("\n\n", $sections);
+        $ragBlock = implode("\n\n", $sections);
+        $instruction = "\n\n[중요] 위 RAG Context는 분석 깊이를 위한 참고용입니다. content_summary, narration, key_points 등 최종 출력에는 '참고자료', '참조 프레임워크', '편집자 크리틱', '유사도' 등 메타 문구나 섹션 제목을 그대로 포함하지 마세요.";
+        return $basePrompt . "\n\n--- RAG Context (편집 전문가 지식) ---\n" . $ragBlock . $instruction;
     }
 
     // ── Storage ─────────────────────────────────────────

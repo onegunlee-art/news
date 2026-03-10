@@ -11,7 +11,7 @@ import LoadingSpinner from '../components/Common/LoadingSpinner'
 import { getPlaceholderImageUrl } from '../utils/imagePolicy'
 import { formatSourceDisplayName, buildEditorialLine } from '../utils/formatSource'
 import { extractTitleFromUrl } from '../utils/extractTitleFromUrl'
-import { formatContentHtml, stripHtml } from '../utils/sanitizeHtml'
+import { formatContentHtml, stripHtml, stripAnalysisMetaPhrases } from '../utils/sanitizeHtml'
 import PaywallOverlay from '../components/Paywall/PaywallOverlay'
 
 interface NewsDetail {
@@ -493,7 +493,7 @@ export default function NewsDetailPage() {
                   </div>
                   {!analysisCollapsed && news.content && (
                     <div className="p-4 bg-page-secondary rounded-lg border border-page text-sm text-page-secondary leading-relaxed whitespace-pre-wrap [&_mark]:rounded-sm [&_mark]:px-0.5 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-0.5 [&_table]:border-collapse [&_table]:w-full [&_table]:my-2 [&_td]:border [&_td]:border-gray-300 [&_td]:px-2 [&_td]:py-1.5 [&_th]:border [&_th]:border-gray-300 [&_th]:px-2 [&_th]:py-1.5 [&_th]:font-semibold [&_th]:bg-gray-100"
-                      dangerouslySetInnerHTML={{ __html: formatContentHtml(news.content) }}
+                      dangerouslySetInnerHTML={{ __html: formatContentHtml(stripAnalysisMetaPhrases(news.content)) }}
                     />
                   )}
                 </div>

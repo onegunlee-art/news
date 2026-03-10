@@ -1,0 +1,11 @@
+﻿# Cursor ?몃뜳???쒖쇅 - ?꾨줈?앺듃 援ъ“ 湲곗?
+
+# ?섏〈??node_modules/
+
+# 踰꾩쟾 愿由?.git/
+
+# 鍮뚮뱶 寃곌낵臾?(public/assets??Vite 鍮뚮뱶 ?곗텧臾?
+public/assets/
+
+# 濡쒓렇
+*.log

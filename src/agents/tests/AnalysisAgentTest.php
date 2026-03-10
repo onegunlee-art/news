@@ -151,6 +151,33 @@ class AnalysisAgentTest extends TestCase
         $this->assertArrayHasKey('model', $config);
         $this->assertArrayHasKey('temperature', $config);
     }
+
+    /**
+     * original_title이 스크래퍼 메타(ArticleData.title) 1순위로 사용되는지 검증 (제목 회귀 방지)
+     * 예: "Why Escalation Favors Iran"에서 마지막 단어가 잘리지 않아야 함.
+     */
+    public function testOriginalTitleFromArticleMeta(): void
+    {
+        $title = 'Why Escalation Favors Iran';
+        $article = new ArticleData(
+            url: 'https://foreignaffairs.com/example/why-escalation-favors-iran-some-author',
+            title: $title,
+            content: 'Article body about escalation and Iran. ' . str_repeat('Content. ', 50),
+            language: 'en'
+        );
+
+        $context = new AgentContext($article->getUrl());
+        $reflection = new \ReflectionClass($context);
+        $property = $reflection->getProperty('articleData');
+        $property->setAccessible(true);
+        $property->setValue($context, $article);
+
+        $result = $this->agent->process($context);
+        $this->assertTrue($result->isSuccess(), $result->getFirstError() ?? '');
+        $data = $result->getData();
+        $this->assertArrayHasKey('original_title', $data);
+        $this->assertSame($title, $data['original_title'], 'original_title must be taken from ArticleData.title (scraper meta), not slug reconstruction');
+    }
 }
 
 // 간단한 테스트 러너

@@ -161,7 +161,7 @@ if ($method === 'POST') {
     $whyImportant = $input['why_important'] ?? null;
     $narration = $input['narration'] ?? null;
     if ($narration !== null && is_string($narration)) {
-        $narration = trim(preg_replace('/^(지스터\s+여러분|시청자\s+여러분|청취자\s+여러분)[,.\s]*/u', '', trim($narration)));
+        $narration = trim(preg_replace('/^(여러분|시청자\s+여러분|청취자\s+여러분)[,.\s]*/u', '', trim($narration)));
         $narration = $narration !== '' ? $narration : null;
     }
     $futurePrediction = $input['future_prediction'] ?? null;
@@ -617,7 +617,7 @@ if ($method === 'PUT') {
     $whyImportant = $input['why_important'] ?? null;
     $narration = $input['narration'] ?? null;
     if ($narration !== null && is_string($narration)) {
-        $narration = trim(preg_replace('/^(지스터\s+여러분|시청자\s+여러분|청취자\s+여러분)[,.\s]*/u', '', trim($narration)));
+        $narration = trim(preg_replace('/^(여러분|시청자\s+여러분|청취자\s+여러분)[,.\s]*/u', '', trim($narration)));
         $narration = $narration !== '' ? $narration : null;
     }
     $futurePrediction = $input['future_prediction'] ?? null;

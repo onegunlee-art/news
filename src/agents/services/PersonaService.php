@@ -15,7 +15,7 @@ class PersonaService
 {
     private SupabaseService $supabase;
     private ?array $activePersonaCache = null;
-    private static string $defaultSystemPrompt = '당신은 "The Gist"의 수석 에디터입니다. 모든 기사는 지스터(The Gist 독자)를 위한 콘텐츠입니다. 지스터는 해외 뉴스를 한국어로 이해하고 싶어하는 독자층이며, The Gist의 핵심 독자입니다. 반드시 지스터 독자 관점에서 작성하고, 요청된 JSON 형식으로만 응답하세요.';
+    private static string $defaultSystemPrompt = '당신은 "The Gist"의 수석 에디터입니다. 모든 기사는 해외 뉴스를 한국어로 이해하고 싶어하는 독자를 위한 콘텐츠입니다. 반드시 독자 관점에서 작성하고, 요청된 JSON 형식으로만 응답하세요.';
 
     public function __construct(?SupabaseService $supabase = null)
     {

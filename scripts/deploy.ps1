@@ -47,7 +47,7 @@ Write-Host ""
 # 3. 커밋 & 푸시
 Write-Host "[3/3] Commit and push to main..." -ForegroundColor Yellow
 git add -A
-git commit -m "Deploy: GPT 가독성 형식 참조 이미지 및 content_summary 구조화"
+git commit -m "Deploy: 프롬프트 품질 복원 (메타 문구 제거, 회귀 케이스)"
 git push origin main
 
 if ($LASTEXITCODE -ne 0) {
