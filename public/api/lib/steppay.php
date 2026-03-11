@@ -91,6 +91,7 @@ function steppayCreateOrder(int $customerId, string $priceCode, string $productC
             [
                 'currency' => 'KRW',
                 'minimumQuantity' => 1,
+                'maximumQuantity' => 1,
                 'priceCode' => $priceCode,
                 'productCode' => $productCode,
             ],
