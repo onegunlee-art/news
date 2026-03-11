@@ -2,6 +2,14 @@
 
 이 문서는 기사 분석 시 실제로 GPT에 전달되는 프롬프트의 구성을 설명합니다.
 
+단, **Admin 뉴스 작성 화면의 GPT 분석**은 현재 별도 모드로 동작합니다.
+
+- 기본 system prompt만 사용
+- Persona 비활성
+- RAG 비활성
+- `gpt-5.4`
+- 1차 구조화 분석 → 2차 narration 생성
+
 ## 프롬프트 흐름
 
 ```
@@ -9,13 +17,13 @@
 │                        System Prompt                             │
 │  ┌─────────────────────────────────────────────────────────────┐│
 │  │ 1. 기본 시스템 프롬프트 (analysis.yaml 또는 PersonaService) ││
-│  │    - 페르소나 비활성화 시: analysis.yaml의 system 사용      ││
-│  │    - 페르소나 활성화 시: PersonaService.getSystemPrompt()   ││
+│  │    - 일반 경로: PersonaService 가능                         ││
+│  │    - Admin 뉴스 작성 GPT 분석: 기본 system만 사용           ││
 │  └─────────────────────────────────────────────────────────────┘│
 │  ┌─────────────────────────────────────────────────────────────┐│
 │  │ 2. RAG 컨텍스트 (Supabase 설정 시)                          ││
-│  │    - 기본 프롬프트 뒤에 덧붙임                               ││
-│  │    - 비평/분석/지식 세 가지 유형의 유사 문서 포함           ││
+│  │    - 일반 경로에서만 기본 프롬프트 뒤에 덧붙임              ││
+│  │    - Admin 뉴스 작성 GPT 분석에서는 사용하지 않음           ││
 │  └─────────────────────────────────────────────────────────────┘│
 └─────────────────────────────────────────────────────────────────┘
 
@@ -27,9 +35,9 @@
 │  └─────────────────────────────────────────────────────────────┘│
 │  ┌─────────────────────────────────────────────────────────────┐│
 │  │ 2. 도메인별 분석 프롬프트                                    ││
-│  │    - ft.com: buildFTPrompt()                                 ││
-│  │    - economist.com: buildEconomistPrompt()                  ││
-│  │    - 기타: buildDefaultPrompt() (Foreign Affairs 등)        ││
+│  │    - 일반 경로: buildFTPrompt / buildEconomistPrompt /      ││
+│  │      buildDefaultPrompt                                     ││
+│  │    - Admin 경로: 1차 구조화 분석 후 2차 narration 생성      ││
 │  └─────────────────────────────────────────────────────────────┘│
 └─────────────────────────────────────────────────────────────────┘
 
@@ -89,12 +97,29 @@
 }
 ```
 
+## Admin 뉴스 작성 GPT 분석 경로
+
+1. `public/api/admin/ai-analyze.php`에서 Persona/RAG 없이 별도 설정을 주입합니다.
+2. 모델은 `gpt-5.4`를 사용합니다.
+3. 1차 단계:
+   - `news_title`
+   - `author`
+   - `original_title`
+   - `sections`
+   - `content_summary`
+   - `key_points`
+   - `critical_analysis.why_important`
+4. 2차 단계:
+   - 기사 원문 + 1차 분석 결과를 함께 넣고 narration만 생성합니다.
+5. Economist는 문단(paragraph) 단위로 먼저 읽고 요약합니다.
+6. `content_summary`, `why_important`, `narration` 모두 paragraph별 한 줄 띄기를 강제합니다.
+
 ## 소제목 처리 규칙
 
 1. **식별**: ALL CAPS 또는 큰 글씨의 짧은 문구
 2. **저장**: `sections` 배열에 구조화하여 저장
 3. **표시**: `content_summary`에 "1. 한글 (영문)" 형식으로 포함
-4. **narration**: 섹션 전환 시 명확한 문장으로 구분
+4. **narration**: 섹션 전환 시 명확한 문장으로 구분하고 paragraph별 한 줄 띄기
 
 ## 무시할 패턴
 
@@ -109,6 +134,7 @@
 | 단계 | 처리 내용 |
 |------|-----------|
 | 내레이션 정규화 | 인사말 제거 (여러분, 시청자 등) |
+| 문단 간격 정규화 | 3줄 이상 공백을 1줄 공백으로 압축 |
 | translation_summary | narration 앞 200자로 자동 생성 |
 | Admin 저장 | content_summary → content, narration → narration |
 

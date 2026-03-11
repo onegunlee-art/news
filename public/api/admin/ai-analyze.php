@@ -262,33 +262,29 @@ function analyzeUrl(string $url, array $options = []): array {
         }
     }
 
+    // 관리자 뉴스 작성의 GPT 분석에서는 Persona/RAG를 생성 프롬프트에 개입시키지 않는다.
     $ragService = null;
     $personaService = null;
-    // 페르소나는 기본 비활성화 (RAG는 유지)
-    // use_persona=true 옵션으로 실험/비교 시에만 활성화
-    $supabase = new SupabaseService([]);
-    if ($supabase->isConfigured()) {
-        $ragService = new RAGService(new OpenAIService([]), $supabase);
-        // 실험 모드: use_persona=true 일때만 페르소나 활성화
-        if (!empty($options['use_persona'])) {
-            $personaService = new \Agents\Services\PersonaService($supabase);
-        }
-    }
 
     $pipelineConfig = [
         'project_root' => rtrim($projectRoot, '/\\'),
         'openai' => [],
         'scraper' => ['timeout' => 60],
-        'enable_interpret' => $options['enable_interpret'] ?? true,
-        'enable_learning' => $options['enable_learning'] ?? true,
+        'enable_interpret' => false,
+        'enable_learning' => $options['enable_learning'] ?? false,
         'google_tts' => $googleTtsConfig,
         'rag_service' => $ragService,
-        'persona_service' => $personaService,  // 기본 null, use_persona=true 시에만 활성화
+        'persona_service' => $personaService,
         'analysis' => [
             'enable_tts' => $options['enable_tts'] ?? false,
             'summary_length' => 3,
             'key_points_count' => 4,
             'tts_voice' => $ttsVoice,
+            'model' => 'gpt-5.4',
+            'temperature' => 0.45,
+            'timeout' => 180,
+            'max_tokens' => 8000,
+            'admin_pure_prompt_mode' => true,
         ],
         'stop_on_failure' => true
     ];
@@ -437,17 +433,9 @@ function analyzeContent(string $content, string $url, string $title, array $opti
         } catch (\Throwable $e) {}
     }
 
+    // 관리자 뉴스 작성의 GPT 분석에서는 Persona/RAG를 생성 프롬프트에 개입시키지 않는다.
     $ragService = null;
     $personaService = null;
-    // 페르소나는 기본 비활성화 (RAG는 유지)
-    // use_persona=true 옵션으로 실험/비교 시에만 활성화
-    $supabase = new SupabaseService([]);
-    if ($supabase->isConfigured()) {
-        $ragService = new RAGService(new OpenAIService([]), $supabase);
-        if (!empty($options['use_persona'])) {
-            $personaService = new \Agents\Services\PersonaService($supabase);
-        }
-    }
 
     $host = parse_url($url, PHP_URL_HOST) ?? '';
     $source = $host ?: 'pasted';
@@ -498,16 +486,21 @@ function analyzeContent(string $content, string $url, string $title, array $opti
         'project_root' => rtrim($projectRoot, '/\\'),
         'openai' => [],
         'scraper' => ['timeout' => 60],
-        'enable_interpret' => $options['enable_interpret'] ?? true,
-        'enable_learning' => $options['enable_learning'] ?? true,
+        'enable_interpret' => false,
+        'enable_learning' => $options['enable_learning'] ?? false,
         'google_tts' => $googleTtsConfig,
         'rag_service' => $ragService,
-        'persona_service' => $personaService,  // 기본 null, use_persona=true 시에만 활성화
+        'persona_service' => $personaService,
         'analysis' => [
             'enable_tts' => $options['enable_tts'] ?? false,
             'summary_length' => 3,
             'key_points_count' => 4,
             'tts_voice' => $ttsVoice,
+            'model' => 'gpt-5.4',
+            'temperature' => 0.45,
+            'timeout' => 180,
+            'max_tokens' => 8000,
+            'admin_pure_prompt_mode' => true,
         ],
         'stop_on_failure' => true
     ];

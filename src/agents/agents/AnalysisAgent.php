@@ -145,37 +145,28 @@ class AnalysisAgent extends BaseAgent
      */
     private function performFullAnalysis(ArticleData $article): AnalysisResult
     {
-        $prompt = $this->buildFullAnalysisPrompt($article);
+        if ($this->isAdminPurePromptMode()) {
+            $options = $this->buildAnalysisOptions($article, false);
+            $analysisPrompt = $this->withReferenceImages(
+                $this->buildStructuredAnalysisPrompt($article),
+                $options
+            );
+            $analysisResponse = $this->callGPT($analysisPrompt, $options);
+            $data = $this->parseJsonResponse($analysisResponse);
 
-        $options = ['model' => 'gpt-5.2', 'timeout' => 180, 'max_tokens' => 8000];
-        $basePrompt = $this->personaService ? $this->personaService->getSystemPrompt() : ($this->prompts['system'] ?? '당신은 "The Gist"의 수석 에디터입니다.');
-        if ($this->ragService && $this->ragService->isConfigured()) {
-            $query = $article->getTitle() . ' ' . mb_substr($article->getContent(), 0, 500);
-            $ragContext = $this->ragService->retrieveRelevantContext($query, 3);
-            $options['system_prompt'] = $this->ragService->buildSystemPromptWithRAG($basePrompt, $ragContext);
+            $narrationPrompt = $this->buildNarrationFromAnalysisPrompt($article, $data);
+            $narrationResponse = $this->callGPT($narrationPrompt, $options);
+            $narrationData = $this->parseJsonResponse($narrationResponse);
+            if (!empty($narrationData['narration'])) {
+                $data['narration'] = $narrationData['narration'];
+            }
         } else {
-            $options['system_prompt'] = $basePrompt;
+            $prompt = $this->buildFullAnalysisPrompt($article);
+            $options = $this->buildAnalysisOptions($article, true);
+            $prompt = $this->withReferenceImages($prompt, $options);
+            $response = $this->callGPT($prompt, $options);
+            $data = $this->parseJsonResponse($response);
         }
-
-        $imageUrls = $this->loadAllReferenceImages();
-        if (!empty($imageUrls)) {
-            $options['image_urls'] = $imageUrls;
-            $prompt = "[참조 이미지 - 반드시 확인] 첨부된 참조 이미지를 순서대로 확인하세요.\n\n"
-                . "1) 제목: Foreign Affairs 기사 상단 스크린샷. 제목(가장 큰 볼드체) 위치를 확인하세요.\n"
-                . "2) 소제목: 본문 중간의 섹션 헤딩(큰 글씨/대문자) 예시. content_summary에서 소제목 한글(영문) 형식으로 나열하세요.\n"
-                . "3) 무시할 부분: pull quote 스타일의 큰 볼드 텍스트. content_summary, key_points, narration에 포함하지 마세요.\n"
-                . "4) 요약 룰: content_summary 작성 형식(영한 교차 등) 참고.\n"
-                . "5) [가독성 형식 - 필수] The Gist 스타일 content_summary 예시. 줄글이 아닌 구조화된 형식을 학습하세요:\n"
-                . "   - 섹션별 명확한 제목/헤딩 (한글 (영문) 형식)\n"
-                . "   - 영문 1줄 → 한글 1줄 교차 (짧은 문단)\n"
-                . "   - 여백과 문단 구분으로 가독성 확보\n"
-                . "   - 연속된 줄글 금지. 반드시 위 이미지처럼 구분된 형식으로 작성.\n\n"
-                . "기사 본문에서 위 패턴에 맞게 분석하세요.\n\n" . $prompt;
-        }
-
-        $response = $this->callGPT($prompt, $options);
-        
-        $data = $this->parseJsonResponse($response);
 
         // original_title: 스크래퍼 메타(ArticleData.title) 1순위. GPT가 슬러그 재구성으로 잘못 바꾸는 것 방지.
         $originalTitle = $article->getTitle() !== '' && $article->getTitle() !== null
@@ -185,8 +176,17 @@ class AnalysisAgent extends BaseAgent
         // narration 정규화: 인사말 제거, 메타 문구 제거
         $narration = $this->normalizeNarration($data['narration'] ?? null);
         $narration = $this->stripMetaPhrasesFromText($narration);
+        $narration = $this->normalizeParagraphBreaks($narration);
 
         $contentSummary = $this->stripMetaPhrasesFromText($data['content_summary'] ?? null);
+        $contentSummary = $this->normalizeParagraphBreaks($contentSummary);
+
+        $criticalAnalysis = $data['critical_analysis'] ?? [];
+        if (is_array($criticalAnalysis) && isset($criticalAnalysis['why_important'])) {
+            $criticalAnalysis['why_important'] = $this->normalizeParagraphBreaks(
+                $this->stripMetaPhrasesFromText($criticalAnalysis['why_important'])
+            );
+        }
 
         // narration이 있으면 translation_summary로도 사용 (하위 호환)
         $translationSummary = $data['translation_summary'] ?? '';
@@ -197,7 +197,7 @@ class AnalysisAgent extends BaseAgent
         return new AnalysisResult(
             translationSummary: $translationSummary,
             keyPoints: $data['key_points'] ?? [],
-            criticalAnalysis: $data['critical_analysis'] ?? [],
+            criticalAnalysis: $criticalAnalysis,
             newsTitle: $data['news_title'] ?? null,
             narration: $narration,
             contentSummary: $contentSummary,
@@ -205,6 +205,285 @@ class AnalysisAgent extends BaseAgent
             author: $data['author'] ?? null,
             sections: $data['sections'] ?? []
         );
+    }
+
+    private function isAdminPurePromptMode(): bool
+    {
+        return (bool) ($this->config['admin_pure_prompt_mode'] ?? false);
+    }
+
+    private function buildAnalysisOptions(ArticleData $article, bool $allowRuntimeContext): array
+    {
+        $options = [
+            'model' => $this->config['model'] ?? 'gpt-5.2',
+            'timeout' => (int) ($this->config['timeout'] ?? 180),
+            'max_tokens' => (int) ($this->config['max_tokens'] ?? 8000),
+        ];
+
+        $basePrompt = $this->prompts['system'] ?? '당신은 "The Gist"의 수석 에디터입니다.';
+        if (!$allowRuntimeContext) {
+            $options['system_prompt'] = $basePrompt;
+            return $options;
+        }
+
+        $basePrompt = $this->personaService ? $this->personaService->getSystemPrompt() : $basePrompt;
+        if ($this->ragService && $this->ragService->isConfigured()) {
+            $query = $article->getTitle() . ' ' . mb_substr($article->getContent(), 0, 500);
+            $ragContext = $this->ragService->retrieveRelevantContext($query, 3);
+            $options['system_prompt'] = $this->ragService->buildSystemPromptWithRAG($basePrompt, $ragContext);
+        } else {
+            $options['system_prompt'] = $basePrompt;
+        }
+
+        return $options;
+    }
+
+    private function withReferenceImages(string $prompt, array &$options): string
+    {
+        $imageUrls = $this->loadAllReferenceImages();
+        if (empty($imageUrls)) {
+            return $prompt;
+        }
+
+        $options['image_urls'] = $imageUrls;
+        return "[참조 이미지 - 반드시 확인] 첨부된 참조 이미지를 순서대로 확인하세요.\n\n"
+            . "1) 제목: Foreign Affairs 기사 상단 스크린샷. 제목(가장 큰 볼드체) 위치를 확인하세요.\n"
+            . "2) 소제목: 본문 중간의 섹션 헤딩(큰 글씨/대문자) 예시. content_summary에서 소제목 한글(영문) 형식으로 나열하세요.\n"
+            . "3) 무시할 부분: pull quote 스타일의 큰 볼드 텍스트. content_summary, key_points, narration에 포함하지 마세요.\n"
+            . "4) 요약 룰: content_summary 작성 형식(영한 교차 등) 참고.\n"
+            . "5) [가독성 형식 - 필수] The Gist 스타일 content_summary 예시. 줄글이 아닌 구조화된 형식을 학습하세요:\n"
+            . "   - 섹션별 명확한 제목/헤딩 (한글 (영문) 형식)\n"
+            . "   - 영문 1줄 → 한글 1줄 교차 (짧은 문단)\n"
+            . "   - 여백과 문단 구분으로 가독성 확보\n"
+            . "   - 연속된 줄글 금지. 반드시 위 이미지처럼 구분된 형식으로 작성.\n\n"
+            . "기사 본문에서 위 패턴에 맞게 분석하세요.\n\n" . $prompt;
+    }
+
+    private function buildStructuredAnalysisPrompt(ArticleData $article): string
+    {
+        $url = $article->getUrl();
+        $host = parse_url($url, PHP_URL_HOST) ?? '';
+
+        if (str_contains($host, 'ft.com')) {
+            return $this->buildFTStructuredPrompt($article);
+        }
+        if (str_contains($host, 'economist.com')) {
+            return $this->buildEconomistStructuredPrompt($article);
+        }
+        return $this->buildDefaultStructuredPrompt($article);
+    }
+
+    private function buildFTStructuredPrompt(ArticleData $article): string
+    {
+        $title = $article->getTitle();
+        $content = $this->truncateContent($article->getContent(), 40000);
+        $url = $article->getUrl();
+
+        return <<<PROMPT
+기사 URL: {$url}
+기사 제목: {$title}
+
+기사 본문:
+{$content}
+
+[FT.com 분석 규칙]
+- 이 단계에서는 narration을 만들지 말고, 먼저 분석 결과만 구조화하세요.
+- FT는 소제목이 약할 수 있으므로 도입, 핵심 주장, 데이터, 반론, 결론 흐름으로 정리하세요.
+- 차트, 수치, 비율, 추세가 있으면 key_points와 content_summary에 반드시 반영하세요.
+- Premium content, Recommended, Related, Save, Share, Listen, Print, Sign up, 캡션, 크레딧, 날짜 단독 라인은 모두 제거하세요.
+
+[문단 규칙]
+- content_summary와 critical_analysis.why_important는 반드시 짧은 문단으로 쓰세요.
+- 각 문단은 1~3문장.
+- 문단이 바뀔 때마다 반드시 빈 줄 하나(\n\n)를 넣으세요.
+- 한 문단에는 하나의 논점만 담으세요.
+
+[출력 목표]
+- content_summary: 한국 독자가 기사 전체 논리를 빠르게 이해하게 하는 구조화 요약
+- key_points: 사실, 수치, 핵심 주장 중심
+- critical_analysis.why_important: 왜 중요한지 한 단계 위에서 설명
+
+아래 JSON 형식으로만 응답하세요.
+
+{
+  "news_title": "기사 제목을 과장 없이 자연스러운 한국어로 옮긴 제목",
+  "author": "저자 이름 (없으면 빈 문자열)",
+  "original_title": "위 기사 제목을 그대로 유지",
+  "sections": [],
+  "content_summary": "짧은 문단들로 구성된 구조화 요약. 최소 700자 이상",
+  "key_points": [
+    "핵심 포인트 1",
+    "핵심 포인트 2",
+    "핵심 포인트 3",
+    "핵심 포인트 4"
+  ],
+  "critical_analysis": {
+    "why_important": "짧은 문단들로 구성된 중요성 설명"
+  }
+}
+PROMPT;
+    }
+
+    private function buildEconomistStructuredPrompt(ArticleData $article): string
+    {
+        $title = $article->getTitle();
+        $content = $this->truncateContent($article->getContent(), 40000);
+        $url = $article->getUrl();
+
+        return <<<PROMPT
+기사 URL: {$url}
+기사 제목: {$title}
+
+기사 본문:
+{$content}
+
+[The Economist 분석 규칙]
+- 이 단계에서는 narration을 만들지 말고, 먼저 분석 결과만 구조화하세요.
+- 이 기사는 반드시 문단(paragraph) 단위로 읽으세요.
+- 각 문단이 어떤 역할인지 먼저 파악하세요: 도입 / 문제 제기 / 핵심 주장 / 근거 / 반론 / 결론.
+- 각 문단의 핵심을 짧게 머릿속에 정리한 뒤, 그 문단 흐름을 따라 content_summary를 다시 구성하세요.
+- 문단 순서를 무시한 채 한 번에 뭉뚱그려 요약하지 마세요.
+
+[반드시 무시할 잡음]
+- "This article appeared in...", "Subscribe to...", "For more expert analysis..." 같은 편집/구독 유도 문구
+- Save, Share, Listen to this story, Reuse this content, Sign up, Log in, Menu, Skip to content
+- Illustration:, Photo:, Getty Images, Reuters 등 캡션/크레딧
+- Mar 5th 2026, 3 min read 같은 날짜/읽기시간 단독 라인
+- Recommended, Related, newsletter 블록
+- Leaders |, Briefing |, Finance & economics | 같은 앞쪽 네비게이션 라벨
+
+[문단 규칙]
+- content_summary와 critical_analysis.why_important는 반드시 짧은 문단으로 쓰세요.
+- 각 문단은 1~3문장.
+- 문단이 바뀔 때마다 반드시 빈 줄 하나(\n\n)를 넣으세요.
+- 한 문단에는 하나의 논점만 담으세요.
+
+[출력 목표]
+- content_summary: 문단 흐름이 살아 있는 구조화 요약
+- key_points: 각 문단의 핵심 주장/사실/수치가 빠지지 않게 정리
+- critical_analysis.why_important: 이 논지가 외교, 경제, 안보, 정책에 왜 중요한지 설명
+
+아래 JSON 형식으로만 응답하세요.
+
+{
+  "news_title": "기사 제목을 과장 없이 자연스러운 한국어로 옮긴 제목",
+  "author": "저자 이름 (없으면 빈 문자열)",
+  "original_title": "위 기사 제목을 그대로 유지",
+  "sections": [],
+  "content_summary": "문단 흐름을 따라 재구성한 구조화 요약. 최소 700자 이상",
+  "key_points": [
+    "핵심 포인트 1",
+    "핵심 포인트 2",
+    "핵심 포인트 3",
+    "핵심 포인트 4"
+  ],
+  "critical_analysis": {
+    "why_important": "짧은 문단들로 구성된 중요성 설명"
+  }
+}
+PROMPT;
+    }
+
+    private function buildDefaultStructuredPrompt(ArticleData $article): string
+    {
+        $title = $article->getTitle();
+        $content = $this->truncateContent($article->getContent(), 40000);
+        $url = $article->getUrl();
+
+        return <<<PROMPT
+기사 URL: {$url}
+기사 제목: {$title}
+
+기사 본문:
+{$content}
+
+[기본 분석 규칙]
+- 이 단계에서는 narration을 만들지 말고, 먼저 분석 결과만 구조화하세요.
+- 기존 Foreign Affairs 스타일의 강점은 유지하세요. 다만 과도하게 새 형식으로 갈아엎지 마세요.
+- 소제목이 보이면 sections와 content_summary에 반영하세요.
+- pull quote, 캡션, 날짜 단독 라인, UI 문구, 구독 유도 문구는 제거하세요.
+- 한국 독자가 기사 핵심 논리와 맥락을 빠르게 이해할 수 있도록 설명형으로 정리하세요.
+
+[문단 규칙]
+- content_summary와 critical_analysis.why_important는 반드시 짧은 문단으로 쓰세요.
+- 각 문단은 1~3문장.
+- 문단이 바뀔 때마다 반드시 빈 줄 하나(\n\n)를 넣으세요.
+- 한 문단에는 하나의 논점만 담으세요.
+
+[출력 목표]
+- content_summary: 기사 논지를 재구성한 구조화 요약
+- key_points: 핵심 사실, 주장, 수치, 배경 중심
+- critical_analysis.why_important: 왜 중요한지 The Gist 에디터 톤으로 설명
+
+아래 JSON 형식으로만 응답하세요.
+
+{
+  "news_title": "기사 제목을 과장 없이 자연스러운 한국어로 옮긴 제목",
+  "author": "저자 이름 (없으면 빈 문자열)",
+  "original_title": "위 기사 제목을 그대로 유지",
+  "sections": [],
+  "content_summary": "짧은 문단들로 구성된 구조화 요약. 최소 700자 이상",
+  "key_points": [
+    "핵심 포인트 1",
+    "핵심 포인트 2",
+    "핵심 포인트 3",
+    "핵심 포인트 4"
+  ],
+  "critical_analysis": {
+    "why_important": "짧은 문단들로 구성된 중요성 설명"
+  }
+}
+PROMPT;
+    }
+
+    private function buildNarrationFromAnalysisPrompt(ArticleData $article, array $analysisData): string
+    {
+        $title = $article->getTitle();
+        $content = $this->truncateContent($article->getContent(), 25000);
+        $analysisJson = json_encode([
+            'news_title' => $analysisData['news_title'] ?? null,
+            'author' => $analysisData['author'] ?? null,
+            'original_title' => $analysisData['original_title'] ?? null,
+            'content_summary' => $analysisData['content_summary'] ?? null,
+            'key_points' => $analysisData['key_points'] ?? [],
+            'critical_analysis' => $analysisData['critical_analysis'] ?? [],
+        ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+
+        return <<<PROMPT
+기사 제목: {$title}
+
+기사 원문:
+{$content}
+
+1차 분석 결과:
+{$analysisJson}
+
+위 기사 원문과 1차 분석 결과를 함께 참고하여 The Gist 스타일의 narration만 작성하세요.
+
+[narration 작성 목표]
+- 청자가 기사 원문을 읽지 않아도 전체 맥락을 이해하게 만드세요.
+- 단순 요약이 아니라 핵심 논지, 배경, 중요한 근거, 의미를 자연스럽게 설명하세요.
+- 첫 문장은 바로 핵심으로 들어가세요.
+- 인사말로 시작하지 마세요.
+- 기사에 없는 주장이나 과도한 확신을 덧붙이지 마세요.
+- key_points를 기계적으로 나열하지 말고 흐름 있는 설명문으로 다시 쓰세요.
+
+[문단 규칙]
+- 각 문단은 1~3문장.
+- 문단이 바뀔 때마다 반드시 빈 줄 하나(\n\n)를 넣으세요.
+- 한 문단에는 하나의 논점만 담으세요.
+- paragraph별 한 줄 띄기 규칙을 반드시 지키세요.
+
+[분량]
+- 최소 1000자 이상.
+- 가능하면 1100~1500자 밀도로 작성하세요.
+
+아래 JSON 형식으로만 응답하세요.
+
+{
+  "narration": "짧은 문단들로 구성된 The Gist 스타일 narration"
+}
+PROMPT;
     }
 
     /**
@@ -549,6 +828,17 @@ PROMPT;
         $out = preg_replace('/\s*참고글을\s*제대로\s*못했다\.?\s*/u', ' ', $out);
         $out = preg_replace('/\s*참조 프레임워크[^\n.]*\.?/u', ' ', $out);
         $out = preg_replace('/\s{2,}/u', ' ', $out);
+        return trim($out) ?: $text;
+    }
+
+    private function normalizeParagraphBreaks(?string $text): ?string
+    {
+        if ($text === null || trim($text) === '') {
+            return $text;
+        }
+
+        $out = str_replace(["\r\n", "\r"], "\n", trim($text));
+        $out = preg_replace("/\n{3,}/u", "\n\n", $out);
         return trim($out) ?: $text;
     }
 
