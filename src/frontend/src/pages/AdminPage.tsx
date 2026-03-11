@@ -2307,7 +2307,7 @@ const AdminPage: React.FC = () => {
                     </div>
                   )}
 
-                  {/* 제목 입력 */}
+                  {/* 제목 입력 + 부제목(description) 표시 */}
                   <div>
                     <label className="block text-slate-300 mb-2 text-sm font-medium">뉴스 제목</label>
                     <input
@@ -2323,6 +2323,11 @@ const AdminPage: React.FC = () => {
                       placeholder="뉴스 제목을 입력하세요"
                       className="w-full bg-slate-900/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition"
                     />
+                    {articleSummary?.trim() && (
+                      <p className="text-slate-400 text-sm mt-2 leading-relaxed" title="부제목 (standfirst/description)">
+                        {articleSummary.trim()}
+                      </p>
+                    )}
                   </div>
 
                   {/* gpt 요약 입력 */}
@@ -3254,7 +3259,7 @@ const AdminPage: React.FC = () => {
                   {/* 분석 결과 */}
                   {aiResult && (
                     <div className="space-y-4 pt-4 border-t border-slate-700/50">
-                      {/* GPT 생성 제목 */}
+                      {/* GPT 생성 제목 + 부제목(description/standfirst) */}
                       {aiResult.news_title && (
                         <div className="p-4 bg-slate-900/50 rounded-xl">
                           <h4 className="text-yellow-400 font-medium mb-2 flex items-center gap-2">
@@ -3262,6 +3267,11 @@ const AdminPage: React.FC = () => {
                             GPT 생성 제목
                           </h4>
                           <p className="text-white text-lg font-semibold">{aiResult.news_title}</p>
+                          {articleSummary?.trim() && (
+                            <p className="text-slate-400 text-sm mt-2 leading-relaxed" title="부제목 (standfirst/description)">
+                              {articleSummary.trim()}
+                            </p>
+                          )}
                         </div>
                       )}
 

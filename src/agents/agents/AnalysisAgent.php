@@ -327,17 +327,22 @@ PROMPT;
     private function buildEconomistStructuredPrompt(ArticleData $article): string
     {
         $title = $article->getTitle();
+        $description = $article->getDescription();
         $content = $this->truncateContent($article->getContent(), 40000);
         $url = $article->getUrl();
+        $subtitleLine = $description !== null && trim($description) !== ''
+            ? "\n기사 부제목(standfirst): " . trim($description) . "\n"
+            : '';
 
         return <<<PROMPT
 기사 URL: {$url}
-기사 제목: {$title}
+기사 제목: {$title}{$subtitleLine}
 
 기사 본문:
 {$content}
 
 [The Economist 분석 규칙]
+- 기사 제목(title)과 부제목(description)은 위에 주어진 추출 메타를 우선 신뢰하세요. "Leaders", "Briefing", "Finance & economics" 같은 섹션 라벨을 제목으로 재해석하거나 news_title로 사용하지 마세요.
 - 이 단계에서는 narration을 만들지 말고, 먼저 분석 결과만 구조화하세요.
 - 이 기사는 반드시 문단(paragraph) 단위로 읽으세요.
 - 각 문단이 어떤 역할인지 먼저 파악하세요: 도입 / 문제 제기 / 핵심 주장 / 근거 / 반론 / 결론.

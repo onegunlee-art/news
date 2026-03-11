@@ -399,6 +399,46 @@ function analyzeUrl(string $url, array $options = []): array {
 }
 
 /**
+ * 붙여넣은 본문에서 Economist 섹션 라벨을 제거한 뒤 fallback 제목 후보 추출
+ */
+function fallbackTitleFromPastedContent(string $content, string $url): string {
+    $plain = strip_tags($content);
+    $host = strtolower(parse_url($url, PHP_URL_HOST) ?? '');
+    $isEconomist = str_contains($host, 'economist.com');
+    $prefixes = [
+        'Leaders | ', 'Leaders |', 'Briefing | ', 'Briefing |',
+        'Finance & economics | ', 'Finance & economics |',
+        'Science and technology | ', 'Science and technology |',
+        'Culture | ', 'Culture |', 'By invitation | ', 'By invitation |',
+        'Obituary | ', 'Obituary |', 'International | ', 'International |',
+        'United States | ', 'United States |', 'The Americas | ', 'The Americas |',
+        'Middle East & Africa | ', 'Middle East & Africa |', 'Europe | ', 'Europe |',
+        'Asia | ', 'Asia |', 'China | ', 'China |', 'Britain | ', 'Britain |',
+        'Print edition | ', 'Print edition |',
+    ];
+    if ($isEconomist) {
+        $trimmed = trim($plain);
+        foreach ($prefixes as $prefix) {
+            if (stripos($trimmed, $prefix) === 0) {
+                $trimmed = trim(mb_substr($trimmed, mb_strlen($prefix)));
+                break;
+            }
+            $prefixNoSpace = rtrim($prefix);
+            if (stripos($trimmed, $prefixNoSpace) === 0) {
+                $trimmed = trim(mb_substr($trimmed, mb_strlen($prefixNoSpace)));
+                break;
+            }
+        }
+        $plain = $trimmed;
+    }
+    $firstLine = preg_replace('/\s+/u', ' ', trim(explode("\n", $plain)[0] ?? ''));
+    if ($firstLine === '') {
+        $firstLine = trim($plain);
+    }
+    return mb_substr($firstLine, 0, 80) ?: mb_substr($plain, 0, 80);
+}
+
+/**
  * 붙여넣은 기사 본문으로 직접 분석 (스크래핑 건너뜀).
  * analyzeUrl과 동일한 결과 형식을 반환합니다.
  */
@@ -472,9 +512,10 @@ function analyzeContent(string $content, string $url, string $title, array $opti
     }
 
     if ($article === null) {
+        $fallbackTitle = $title ?: fallbackTitleFromPastedContent($content, $url);
         $article = new \Agents\Models\ArticleData(
             url: $url,
-            title: $title ?: mb_substr(strip_tags($content), 0, 80),
+            title: $fallbackTitle,
             content: $content,
             source: $source,
             language: 'en',

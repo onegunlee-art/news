@@ -369,8 +369,8 @@ class WebScraperService
         $xpath = new \DOMXPath($doc);
 
         // 메타데이터 추출
-        $title = $this->extractTitle($xpath);
-        $description = $this->extractMetaContent($xpath, 'description');
+        $title = $this->extractTitle($xpath, $url);
+        $description = $this->extractDescription($xpath, $doc, $url);
         $author = $this->extractAuthor($xpath);
         $publishedAt = $this->extractPublishedDate($xpath, $html);
         $imageUrl = $this->extractMetaContent($xpath, 'og:image');
@@ -424,36 +424,190 @@ class WebScraperService
         ));
     }
 
+    /** The Economist 섹션 라벨 prefix (제목에서 제거, 단독이면 폐기) */
+    private const ECONOMIST_SECTION_PREFIXES = [
+        'Leaders | ',
+        'Leaders |',
+        'Briefing | ',
+        'Briefing |',
+        'Finance & economics | ',
+        'Finance & economics |',
+        'Science and technology | ',
+        'Science and technology |',
+        'Culture | ',
+        'Culture |',
+        'By invitation | ',
+        'By invitation |',
+        'Obituary | ',
+        'Obituary |',
+        'International | ',
+        'International |',
+        'United States | ',
+        'United States |',
+        'The Americas | ',
+        'The Americas |',
+        'Middle East & Africa | ',
+        'Middle East & Africa |',
+        'Europe | ',
+        'Europe |',
+        'Asia | ',
+        'Asia |',
+        'China | ',
+        'China |',
+        'Britain | ',
+        'Britain |',
+        'Print edition | ',
+        'Print edition |',
+    ];
+
     /**
-     * 제목 추출
+     * Economist 제목 정규화: 섹션 prefix 제거, 단독 라벨이면 빈 문자열 반환
      */
-    private function extractTitle(\DOMXPath $xpath): string
+    private function normalizeEconomistTitle(string $raw, string $url): string
     {
-        // og:title 우선
+        $host = strtolower(parse_url($url, PHP_URL_HOST) ?? '');
+        if (!str_contains($host, 'economist.com')) {
+            return trim($raw);
+        }
+        $trimmed = trim($raw);
+        foreach (self::ECONOMIST_SECTION_PREFIXES as $prefix) {
+            if (stripos($trimmed, $prefix) === 0) {
+                $trimmed = trim(mb_substr($trimmed, mb_strlen($prefix)));
+                break;
+            }
+            $prefixNoSpace = rtrim($prefix);
+            if (stripos($trimmed, $prefixNoSpace) === 0) {
+                $trimmed = trim(mb_substr($trimmed, mb_strlen($prefixNoSpace)));
+                break;
+            }
+        }
+        // 단독 섹션 라벨(너무 짧거나 알려진 라벨만 있음)이면 제목으로 쓰지 않음
+        if ($trimmed === '' || $this->isEconomistSectionLabelOnly($trimmed)) {
+            return '';
+        }
+        return $trimmed;
+    }
+
+    /**
+     * "Leaders", "Briefing" 등 섹션 이름만 있는지 여부
+     */
+    private function isEconomistSectionLabelOnly(string $title): bool
+    {
+        $t = trim($title);
+        if ($t === '') {
+            return true;
+        }
+        $len = mb_strlen($t);
+        if ($len > 50) {
+            return false;
+        }
+        $lower = mb_strtolower($t);
+        $standaloneLabels = [
+            'leaders', 'briefing', 'finance & economics', 'science and technology',
+            'culture', 'by invitation', 'obituary', 'international', 'united states',
+            'the americas', 'middle east & africa', 'europe', 'asia', 'china', 'britain',
+            'print edition', 'daily summary', 'essay', 'special report',
+        ];
+        foreach ($standaloneLabels as $label) {
+            if ($lower === $label) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 제목 추출 (Economist일 경우 섹션 prefix 제거, 단독 라벨 폐기)
+     */
+    private function extractTitle(\DOMXPath $xpath, string $url = ''): string
+    {
+        $candidates = [];
+
         $ogTitle = $xpath->query('//meta[@property="og:title"]/@content');
         if ($ogTitle->length > 0) {
-            return trim($ogTitle->item(0)->nodeValue);
+            $candidates[] = trim($ogTitle->item(0)->nodeValue);
         }
-
-        // twitter:title
         $twitterTitle = $xpath->query('//meta[@name="twitter:title"]/@content');
         if ($twitterTitle->length > 0) {
-            return trim($twitterTitle->item(0)->nodeValue);
+            $candidates[] = trim($twitterTitle->item(0)->nodeValue);
         }
-
-        // h1 태그
         $h1 = $xpath->query('//h1');
         if ($h1->length > 0) {
-            return trim($h1->item(0)->textContent);
+            $candidates[] = trim($h1->item(0)->textContent);
+        }
+        $titleTag = $xpath->query('//title');
+        if ($titleTag->length > 0) {
+            $candidates[] = trim($titleTag->item(0)->textContent);
         }
 
-        // title 태그
-        $title = $xpath->query('//title');
-        if ($title->length > 0) {
-            return trim($title->item(0)->textContent);
+        $isEconomist = str_contains(strtolower(parse_url($url, PHP_URL_HOST) ?? ''), 'economist.com');
+        foreach ($candidates as $raw) {
+            if ($raw === '') {
+                continue;
+            }
+            $normalized = $isEconomist ? $this->normalizeEconomistTitle($raw, $url) : trim($raw);
+            if ($normalized !== '') {
+                return $normalized;
+            }
         }
-
         return '';
+    }
+
+    /**
+     * 설명/부제목 추출 (Economist일 경우 standfirst/deck 우선, 없으면 og:description 등)
+     */
+    private function extractDescription(\DOMXPath $xpath, \DOMDocument $doc, string $url): ?string
+    {
+        $host = strtolower(parse_url($url, PHP_URL_HOST) ?? '');
+        $isEconomist = str_contains($host, 'economist.com');
+
+        if ($isEconomist) {
+            $standfirst = $this->extractEconomistStandfirst($xpath, $doc);
+            if ($standfirst !== null && trim($standfirst) !== '') {
+                return trim($standfirst);
+            }
+        }
+
+        $ogDesc = $this->extractMetaContent($xpath, 'og:description');
+        if ($ogDesc !== null && trim($ogDesc) !== '') {
+            return trim($ogDesc);
+        }
+        $twitterDesc = $this->extractMetaContent($xpath, 'twitter:description');
+        if ($twitterDesc !== null && trim($twitterDesc) !== '') {
+            return trim($twitterDesc);
+        }
+        $metaDesc = $this->extractMetaContent($xpath, 'description');
+        if ($metaDesc !== null && trim($metaDesc) !== '') {
+            return trim($metaDesc);
+        }
+        return null;
+    }
+
+    /**
+     * The Economist 페이지에서 standfirst/deck(도입 요약) 추출
+     */
+    private function extractEconomistStandfirst(\DOMXPath $xpath, \DOMDocument $doc): ?string
+    {
+        $selectors = [
+            "//*[contains(@class, 'article__standfirst')]",
+            "//*[contains(@class, 'standfirst')]",
+            "//*[contains(@class, 'article__deck')]",
+            "//*[contains(@class, 'deck')]",
+            "//*[contains(@data-testid, 'standfirst')]",
+            "//*[contains(@data-testid, 'deck')]",
+            "//p[contains(@class, 'article__lead')]",
+            "//*[@itemprop='description']",
+        ];
+        foreach ($selectors as $selector) {
+            $nodes = $xpath->query($selector);
+            if ($nodes->length > 0) {
+                $text = trim($nodes->item(0)->textContent ?? '');
+                if ($text !== '' && mb_strlen($text) >= 20) {
+                    return $text;
+                }
+            }
+        }
+        return null;
     }
 
     /**
