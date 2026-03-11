@@ -552,7 +552,7 @@ if ($method === 'GET') {
             $selectColumns .= ', view_count';
         }
         
-        $orderBy = 'ORDER BY created_at DESC';
+        $orderBy = 'ORDER BY COALESCE(published_at, created_at) DESC';
         if ($popular && $hasViewCount) {
             $orderBy = 'ORDER BY view_count DESC';
         }
@@ -566,9 +566,9 @@ if ($method === 'GET') {
         ");
         $stmt->execute($params);
         $news = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        // 표시용 날짜 정책: display_date = created_at (docs/DATE_POLICY.md). published_at은 원문 메타.
+        // 표시용 날짜 정책: display_date = published_at 우선 (게시 시점). 없으면 created_at (docs/DATE_POLICY.md)
         foreach ($news as &$item) {
-            $item['display_date'] = $item['created_at'] ?? null;
+            $item['display_date'] = $item['published_at'] ?? $item['created_at'] ?? null;
         }
         unset($item);
         api_log('admin/news', 'GET', 200);
@@ -645,6 +645,10 @@ if ($method === 'PUT') {
     $status = null;
     if ($hasStatus && isset($input['status'])) {
         $status = in_array($input['status'], ['draft', 'published']) ? $input['status'] : null;
+    }
+    // 게시일 정책: draft→published 전환 시 published_at이 비어있으면 게시 시점으로 설정
+    if ($publishedAt === null && $status === 'published') {
+        $publishedAt = date('Y-m-d H:i:s');
     }
     
     // 디버그 로깅

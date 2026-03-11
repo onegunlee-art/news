@@ -231,8 +231,8 @@ try {
         } catch (Exception $e) { /* 무시 */ }
     }
     
-    // 표시용 날짜 정책: created_at 기준 (docs/DATE_POLICY.md). published_at은 원문 메타데이터용.
-    $dateForDisplay = $news['created_at'];
+    // 표시용 날짜 정책: published_at 우선 (게시 시점). 없으면 created_at (docs/DATE_POLICY.md)
+    $dateForDisplay = $news['published_at'] ?? $news['created_at'];
     
     // time_ago 계산 (표시용 날짜 기준)
     $refDate = new DateTime($dateForDisplay);
@@ -275,9 +275,9 @@ try {
     $nextArticle = null;
     $categoryParent = $news['category_parent'] ?? $news['category'] ?? null;
     $statusCond = $hasStatus ? " AND (status = 'published' OR status IS NULL)" : "";
-    // 표시용 날짜 정책: 정렬·이전/다음 모두 created_at 기준 (목록과 동일)
-    $pubCol = 'created_at';
-    $currentPub = $news['created_at'] ?? null;
+    // 표시용 날짜 정책: 정렬·이전/다음 모두 published_at 기준 (게시 시점). 없으면 created_at
+    $pubCol = 'COALESCE(published_at, created_at)';
+    $currentPub = $news['published_at'] ?? $news['created_at'] ?? null;
 
     try {
         if ($fromTab === 'latest') {
@@ -375,7 +375,7 @@ try {
     $restrictionType = null;
     try {
         $statusFilter = $hasStatus ? "(status = 'published' OR status IS NULL)" : "1=1";
-        $latestCol = 'created_at';
+        $latestCol = 'COALESCE(published_at, created_at)';
         $latestStmt = $db->query(
             "SELECT id FROM news WHERE $statusFilter ORDER BY $latestCol DESC LIMIT 2"
         );
