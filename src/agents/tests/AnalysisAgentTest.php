@@ -171,8 +171,10 @@ class AnalysisAgentTest extends TestCase
         $prompt = $method->invoke($this->agent, $article);
 
         $this->assertStringContainsString('자연스럽게 이어서 말하듯 작성', $prompt);
-        $this->assertStringContainsString('문단과 문단 사이에는 반드시 한 줄을 비워', $prompt);
-        $this->assertStringContainsString('1~3문장 단위로 끊어 쓰세요', $prompt);
+        $this->assertStringContainsString('문단 규칙 - 반드시 준수', $prompt);
+        $this->assertStringContainsString('한 문단은 1~3문장', $prompt);
+        $this->assertStringContainsString('좋은 예', $prompt);
+        $this->assertStringContainsString('나쁜 예', $prompt);
         $this->assertStringContainsString("위 '기사 제목'과 동일하게 그대로", $prompt);
         $this->assertStringNotContainsString("'번호 + 소제목' 형식", $prompt);
     }
