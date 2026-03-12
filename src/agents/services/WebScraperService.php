@@ -764,6 +764,31 @@ class WebScraperService
             }
         }
 
+        // Economist 전용 본문 셀렉터 (먼저 시도)
+        $currentUrl = $doc->documentURI ?? '';
+        $currentHost = strtolower(parse_url($currentUrl, PHP_URL_HOST) ?? '');
+        
+        if (str_contains($currentHost, 'economist.com')) {
+            $economistSelectors = [
+                '//*[contains(@class, "article__body")]',
+                '//*[contains(@class, "article-body")]',
+                '//*[contains(@class, "ds-body")]',
+                '//*[@data-component="ArticleBody"]',
+                '//article//*[contains(@class, "body")]',
+                '//*[contains(@class, "layout-article-body")]',
+                '//*[contains(@class, "css-") and contains(@class, "body")]',
+            ];
+            foreach ($economistSelectors as $selector) {
+                $elements = $xpath->query($selector);
+                if ($elements->length > 0) {
+                    $content = $this->extractTextFromNode($elements->item(0));
+                    if (strlen($content) > 200) {
+                        return $this->cleanNewsletterBlocks($content);
+                    }
+                }
+            }
+        }
+
         // 본문 후보 찾기 (Foreign Affairs, NYT, Reuters 등 주요 매체 대응)
         $contentSelectors = [
             '//*[@itemprop="articleBody"]',
@@ -834,13 +859,20 @@ class WebScraperService
             '/delivered free to your inbox[^.]{0,100}\.?/iu',
             '/Our editors\'?\s*top picks[^.]{0,150}\.?/iu',
             '/Get the latest[^.]{0,150}\.?/iu',
-            // The Economist 전용
+            // The Economist 전용 (강화)
             '/This article appeared in[^.]{0,200}\.?/iu',
             '/For more expert analysis[^.]{0,200}\.?/iu',
             '/Subscribe to The Economist[^.]{0,150}\.?/iu',
             '/Sign up for our[^.]{0,150}\.?/iu',
             '/Recommended for you[^.]{0,150}\.?/iu',
             '/Read more from[^.]{0,150}\.?/iu',
+            '/This article is from the Economist[^.]{0,200}\.?/iu',
+            '/View all\s+\d*\s*(?:stories|articles)?[^.]{0,100}\.?/iu',
+            '/Explore more[^.]{0,100}\.?/iu',
+            '/More from The Economist[^.]{0,150}\.?/iu',
+            '/You\'ve seen the news[^.]{0,200}\.?/iu',
+            '/Keep reading with one of these options[^.]{0,200}\.?/iu',
+            '/Already a subscriber\?[^.]{0,100}\.?/iu',
             '/\bAdvertisement\s*[\s\S]{0,100}?(?=\n\n|\n[A-Z]|$)/iu',
         ];
 
