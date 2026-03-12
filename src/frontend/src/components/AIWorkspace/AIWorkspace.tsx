@@ -192,7 +192,7 @@ const AIWorkspace: React.FC<AIWorkspaceProps> = ({ articleContext }) => {
 
       if (reader) {
         let currentEvent = '';
-        while (true) {
+        for (;;) {
           const { done, value } = await reader.read();
           if (done) break;
           buffer += decoder.decode(value, { stream: true });

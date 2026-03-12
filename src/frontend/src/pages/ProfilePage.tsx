@@ -381,7 +381,7 @@ export default function ProfilePage() {
                         },
                       })
                     }
-                  } catch {}
+                  } catch { /* ignore */ }
                   localStorage.removeItem('consent_required')
                   localStorage.removeItem('welcome_popup')
                   localStorage.removeItem('access_token')

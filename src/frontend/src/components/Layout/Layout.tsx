@@ -13,7 +13,7 @@ export default function Layout() {
     html.setAttribute('data-theme', theme)
     try {
       localStorage.setItem('view-theme', theme)
-    } catch (_) {}
+    } catch { /* ignore */ }
   }, [fontSize, theme])
 
   return (

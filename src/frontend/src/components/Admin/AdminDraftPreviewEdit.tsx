@@ -291,7 +291,7 @@ export default function AdminDraftPreviewEdit({
             alt={news.title}
             className="w-full h-full object-cover"
             onError={(e) => {
-              ;(e.target as HTMLImageElement).src = getPlaceholderImageUrl(
+              (e.target as HTMLImageElement).src = getPlaceholderImageUrl(
                 {
                   id: news.id,
                   title: news.title,

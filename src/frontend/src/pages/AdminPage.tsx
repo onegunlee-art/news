@@ -375,7 +375,7 @@ const AdminPage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('diplomacy');
   const [categorySub, setCategorySub] = useState<string>('');
   const [categorySubCustom, setCategorySubCustom] = useState<string>('');
-  const [newsSearchQuery, _setNewsSearchQuery] = useState('');
+  const [newsSearchQuery] = useState('');
   const [newsTitle, setNewsTitle] = useState('');
   const [newsContent, setNewsContent] = useState('');
   const [newsWhyImportant, setNewsWhyImportant] = useState('');
@@ -3791,7 +3791,7 @@ const AdminPage: React.FC = () => {
                                 const decoder = new TextDecoder();
                                 let buf = '';
                                 let fullText = '';
-                                while (true) {
+                                for (;;) {
                                   const { done, value } = await reader.read();
                                   if (done) break;
                                   buf += decoder.decode(value, { stream: true });
@@ -3805,7 +3805,7 @@ const AdminPage: React.FC = () => {
                                         const data = JSON.parse(raw);
                                         if (data.full_text) fullText = data.full_text;
                                         else if (data.text) fullText += data.text;
-                                      } catch {}
+                                      } catch { /* ignore parse errors */ }
                                     }
                                   }
                                 }

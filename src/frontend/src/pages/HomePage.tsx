@@ -196,7 +196,7 @@ export default function HomePage() {
   const handleCloseSubscriptionPopup = () => {
     try {
       localStorage.setItem(SUBSCRIPTION_POPUP_DISMISSED_KEY, getTodayYYYYMMDD())
-    } catch {}
+    } catch { /* ignore */ }
     setShowSubscriptionPopup(false)
   }
 
