@@ -13,11 +13,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-require_once dirname(__DIR__, 3) . '/vendor/autoload.php';
-require_once dirname(__DIR__, 3) . '/src/agents/services/ClaudeService.php';
+require_once dirname(__DIR__) . '/src/agents/autoload.php';
 
 // .env 로드
-$envPath = dirname(__DIR__, 3) . '/.env';
+$envPath = dirname(__DIR__) . '/.env';
+$envTxtPath = dirname(__DIR__) . '/env.txt';
+
+// env.txt 우선 (서버 배포용)
+if (file_exists($envTxtPath)) {
+    $envPath = $envTxtPath;
+}
 if (file_exists($envPath)) {
     $envContent = file_get_contents($envPath);
     $lines = explode("\n", $envContent);
