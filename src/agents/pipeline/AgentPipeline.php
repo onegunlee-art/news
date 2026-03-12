@@ -4,16 +4,17 @@
  * 
  * 모든 Agent를 순차적으로 실행하는 통합 파이프라인
  * 
- * 실행 순서:
+ * 실행 순서 (v4.0):
  * 1. ValidationAgent - URL 검증 및 콘텐츠 추출
- * 2. ThumbnailAgent - 썸네일을 일러스트/캐리커처 스타일로 교체 (저작권 회피)
- * 3. AnalysisAgent - 분석, 요약, 번역
- * 4. InterpretAgent - RAG 기반 해석
- * 5. LearningAgent - 스타일 적용
+ * 2. AnalysisAgent - 구조화된 분석 (introduction_summary, section_analysis[], key_points, geopolitical_implication)
+ * 3. NarrationAgent - 분석 결과 + 원문 → narration 생성
+ * 4. EditingAgent - 문체/톤 교정 + 스타일 가이드 적용
+ * 5. TTS 생성 - Google TTS (EditingAgent 이후)
+ * 6. ThumbnailAgent - 썸네일 생성 (맨 마지막)
  * 
  * @package Agents\Pipeline
  * @author The Gist AI System
- * @version 1.0.0
+ * @version 4.0.0 - 구조화된 분석 파이프라인
  */
 
 declare(strict_types=1);
@@ -26,16 +27,14 @@ use Agents\Models\AgentResult;
 use Agents\Models\ArticleData;
 use Agents\Models\AnalysisResult;
 use Agents\Agents\ValidationAgent;
-use Agents\Agents\ThumbnailAgent;
 use Agents\Agents\AnalysisAgent;
-use Agents\Agents\InterpretAgent;
-use Agents\Agents\LearningAgent;
+use Agents\Agents\NarrationAgent;
+use Agents\Agents\EditingAgent;
+use Agents\Agents\ThumbnailAgent;
 use Agents\Services\OpenAIService;
+use Agents\Services\ClaudeService;
 use Agents\Services\GoogleTTSService;
 use Agents\Services\WebScraperService;
-use Agents\Services\RAGService;
-use Agents\Services\SupabaseService;
-use Agents\Services\PersonaService;
 
 class AgentPipeline
 {
@@ -44,6 +43,8 @@ class AgentPipeline
     private bool $stopOnFailure = true;
     private array $config;
     private OpenAIService $openai;
+    private ?ClaudeService $claude = null;
+    private ?GoogleTTSService $googleTts = null;
     private ?string $lastError = null;
 
     public function __construct(array $config = [])
@@ -51,16 +52,20 @@ class AgentPipeline
         $this->config = $config;
         $this->stopOnFailure = $config['stop_on_failure'] ?? true;
         
-        // OpenAI 서비스 초기화
         $this->openai = new OpenAIService($config['openai'] ?? []);
+        $this->claude = new ClaudeService($config['claude'] ?? []);
+        
+        if (isset($this->config['google_tts']) && is_array($this->config['google_tts'])) {
+            $this->googleTts = new GoogleTTSService($this->config['google_tts']);
+        }
     }
 
     /**
-     * 기본 파이프라인 설정 (모든 Agent 포함)
+     * 기본 파이프라인 설정 (v4.0 구조)
      */
     public function setupDefaultPipeline(): self
     {
-        // 1. Validation Agent (scraper: config/agents.php 기반 + 호출부 오버라이드)
+        // 1. ValidationAgent - 스크래핑
         $scraperConfig = $this->config['scraper'] ?? [];
         if (!empty($this->config['project_root'])) {
             $agentsPath = rtrim($this->config['project_root'], '/\\') . '/config/agents.php';
@@ -73,29 +78,17 @@ class AgentPipeline
         $scraper = new WebScraperService($scraperConfig);
         $this->addAgent(new ValidationAgent($this->openai, $scraper, $this->config['validation'] ?? []));
 
-        // 2. Analysis Agent (Google TTS, RAG, Persona 사용 시 주입) — 썸네일보다 먼저 실행해 narration 전달
-        $googleTts = isset($this->config['google_tts']) && is_array($this->config['google_tts'])
-            ? new GoogleTTSService($this->config['google_tts'])
-            : null;
-        $ragService = $this->config['rag_service'] ?? null;
-        $personaService = $this->config['persona_service'] ?? null;
-        if ($personaService === null && ($this->config['analysis']['persona_service'] ?? null) instanceof PersonaService) {
-            $personaService = $this->config['analysis']['persona_service'];
-        }
-        $this->addAgent(new AnalysisAgent($this->openai, $this->config['analysis'] ?? [], $googleTts, $ragService, $personaService));
+        // 2. AnalysisAgent - 구조화된 분석 (Claude)
+        $this->addAgent(new AnalysisAgent($this->openai, $this->config['analysis'] ?? [], $this->claude));
 
-        // 3. Thumbnail Agent (저작권 회피: og:image → 일러스트 스타일. Analysis 결과 narration 사용해 본문과 일치)
+        // 3. NarrationAgent - Narration 생성 (Claude)
+        $this->addAgent(new NarrationAgent($this->openai, $this->config['narration'] ?? [], $this->claude));
+
+        // 4. EditingAgent - 문체/톤 교정 (Claude)
+        $this->addAgent(new EditingAgent($this->openai, $this->config['editing'] ?? [], $this->claude));
+
+        // 5. ThumbnailAgent - 썸네일 생성 (OpenAI DALL·E, 맨 마지막)
         $this->addAgent(new ThumbnailAgent($this->openai, $this->config));
-
-        // 4. Interpret Agent (옵션)
-        if ($this->config['enable_interpret'] ?? true) {
-            $this->addAgent(new InterpretAgent($this->openai, $this->config['interpret'] ?? []));
-        }
-
-        // 5. Learning Agent (옵션)
-        if ($this->config['enable_learning'] ?? true) {
-            $this->addAgent(new LearningAgent($this->openai, $this->config['learning'] ?? []));
-        }
 
         return $this;
     }
@@ -123,8 +116,7 @@ class AgentPipeline
     }
 
     /**
-     * 파이프라인 실행.
-     * $preloadedArticle이 주어지면 ValidationAgent(스크래핑)를 건너뛰고 바로 분석합니다.
+     * 파이프라인 실행
      */
     public function run(string $url, ?ArticleData $preloadedArticle = null): PipelineResult
     {
@@ -138,12 +130,10 @@ class AgentPipeline
             $context = $context->withArticleData($preloadedArticle);
         }
 
-        // 모든 Agent 초기화
         foreach ($this->agents as $agent) {
             $agent->initialize();
         }
 
-        // 순차 실행
         foreach ($this->agents as $agent) {
             $agentName = $agent->getName();
 
@@ -155,7 +145,6 @@ class AgentPipeline
                 $result = $agent->process($context);
                 $this->results[$agentName] = $result;
 
-                // 실패 시 처리
                 if (!$result->isSuccess() && !$result->isPartial()) {
                     $this->lastError = $result->getFirstError();
                     
@@ -170,7 +159,6 @@ class AgentPipeline
                     }
                 }
 
-                // 명확화 필요 (partial) 시 처리
                 if ($result->isPartial()) {
                     return new PipelineResult(
                         success: false,
@@ -182,19 +170,22 @@ class AgentPipeline
                     );
                 }
 
-                // 컨텍스트 업데이트: Agent가 'article'을 반환하면 다음 Agent에 전달
                 $articleData = $result->get('article');
                 if (is_array($articleData)) {
                     $context = $context->withArticleData(ArticleData::fromArray($articleData));
                 }
 
-                // AnalysisAgent 성공 시 분석 결과를 context에 넣어 InterpretAgent 등이 사용할 수 있게 함
-                if ($agentName === 'AnalysisAgent' && $result->isSuccess()) {
+                if (in_array($agentName, ['AnalysisAgent', 'NarrationAgent', 'EditingAgent']) && $result->isSuccess()) {
                     $data = $result->getData();
-                    if (is_array($data) && (isset($data['key_points']) || isset($data['translation_summary']))) {
+                    if (is_array($data)) {
                         $context = $context->withAnalysisResult(AnalysisResult::fromArray($data));
                     }
                 }
+
+                if ($agentName === 'EditingAgent' && $result->isSuccess()) {
+                    $context = $this->generateTTS($context);
+                }
+
             } catch (\Throwable $e) {
                 $this->lastError = "[{$agentName}] " . $e->getMessage();
                 $this->results[$agentName] = AgentResult::failure($e->getMessage(), $agentName);
@@ -217,6 +208,51 @@ class AgentPipeline
             duration: microtime(true) - $startTime,
             context: $context
         );
+    }
+
+    /**
+     * TTS 생성 (EditingAgent 이후 실행)
+     */
+    private function generateTTS(AgentContext $context): AgentContext
+    {
+        $analysisResult = $context->getAnalysisResult();
+        if ($analysisResult === null) {
+            return $context;
+        }
+
+        $narration = $analysisResult->getNarration();
+        if (empty($narration)) {
+            return $context;
+        }
+
+        $enableTTS = $this->config['analysis']['enable_tts'] ?? false;
+        if (!$enableTTS) {
+            return $context;
+        }
+
+        try {
+            $audioUrl = null;
+            
+            if ($this->googleTts !== null) {
+                $voice = $this->config['analysis']['tts_voice'] ?? null;
+                $options = $voice !== null ? ['voice' => $voice] : [];
+                $audioUrl = $this->googleTts->textToSpeech($narration, $options);
+            } else {
+                $audioUrl = $this->openai->textToSpeech($narration);
+            }
+
+            if ($audioUrl) {
+                $updatedResult = $analysisResult->withAudioUrl($audioUrl);
+                $context = $context->withAnalysisResult($updatedResult);
+                
+                $this->results['TTS'] = AgentResult::success(['audio_url' => $audioUrl], ['agent' => 'TTS']);
+            }
+        } catch (\Throwable $e) {
+            error_log("TTS generation failed: " . $e->getMessage());
+            $this->results['TTS'] = AgentResult::failure($e->getMessage(), 'TTS');
+        }
+
+        return $context;
     }
 
     /**
@@ -243,7 +279,7 @@ class AgentPipeline
     }
 
     /**
-     * 최종 결과 (마지막 Agent의 결과)
+     * 최종 결과
      */
     public function getFinalResult(): ?AgentResult
     {
@@ -278,11 +314,35 @@ class AgentPipeline
     }
 
     /**
-     * OpenAI 서비스 반환
+     * 분석 결과 추출
      */
-    public function getOpenAIService(): OpenAIService
+    public function getAnalysisResult(): ?AnalysisResult
     {
-        return $this->openai;
+        $editingResult = $this->results['EditingAgent'] ?? null;
+        if ($editingResult && $editingResult->isSuccess()) {
+            $data = $editingResult->getData();
+            if (is_array($data)) {
+                return AnalysisResult::fromArray($data);
+            }
+        }
+
+        $narrationResult = $this->results['NarrationAgent'] ?? null;
+        if ($narrationResult && $narrationResult->isSuccess()) {
+            $data = $narrationResult->getData();
+            if (is_array($data)) {
+                return AnalysisResult::fromArray($data);
+            }
+        }
+
+        $analysisResult = $this->results['AnalysisAgent'] ?? null;
+        if ($analysisResult && $analysisResult->isSuccess()) {
+            $data = $analysisResult->getData();
+            if (is_array($data)) {
+                return AnalysisResult::fromArray($data);
+            }
+        }
+
+        return null;
     }
 }
 
@@ -294,96 +354,45 @@ class PipelineResult
     public function __construct(
         public readonly bool $success,
         public readonly array $results,
+        public readonly float $duration,
+        public readonly AgentContext $context,
         public readonly ?string $error = null,
         public readonly bool $needsClarification = false,
-        public readonly ?array $clarificationData = null,
-        public readonly float $duration = 0,
-        public readonly ?AgentContext $context = null
+        public readonly ?array $clarificationData = null
     ) {}
 
-    /**
-     * 성공 여부
-     */
     public function isSuccess(): bool
     {
         return $this->success;
     }
 
-    /**
-     * 명확화 필요 여부
-     */
-    public function needsClarification(): bool
+    public function getResults(): array
     {
-        return $this->needsClarification;
+        return $this->results;
     }
 
-    /**
-     * 에러 메시지
-     */
     public function getError(): ?string
     {
         return $this->error;
     }
 
-    /**
-     * 특정 Agent 결과
-     */
-    public function getAgentResult(string $name): ?AgentResult
+    public function getDuration(): float
     {
-        return $this->results[$name] ?? null;
+        return $this->duration;
     }
 
-    /**
-     * 최종 분석 결과 추출
-     */
-    public function getFinalAnalysis(): ?array
+    public function getContext(): AgentContext
     {
-        // AnalysisAgent 결과 우선
-        $analysisResult = $this->getAgentResult('AnalysisAgent');
-        if ($analysisResult && $analysisResult->isSuccess()) {
-            return $analysisResult->getData();
-        }
-
-        // LearningAgent에서 스타일 적용된 결과
-        $learningResult = $this->getAgentResult('LearningAgent');
-        if ($learningResult && $learningResult->isSuccess()) {
-            $data = $learningResult->getData();
-            if ($data['styled'] ?? false) {
-                return $data['output'];
-            }
-            return $data['original'] ?? null;
-        }
-
-        return null;
+        return $this->context;
     }
 
-    /**
-     * 배열로 변환
-     */
-    public function toArray(): array
+    public function needsClarification(): bool
     {
-        $resultsArray = [];
-        foreach ($this->results as $name => $result) {
-            $resultsArray[$name] = $result->toArray();
-        }
-
-        return [
-            'success' => $this->success,
-            'error' => $this->error,
-            'needs_clarification' => $this->needsClarification,
-            'clarification_data' => $this->clarificationData,
-            'duration_ms' => round($this->duration * 1000, 2),
-            'agents' => array_keys($this->results),
-            'results' => $resultsArray,
-            'final_analysis' => $this->getFinalAnalysis()
-        ];
+        return $this->needsClarification;
     }
 
-    /**
-     * JSON 변환
-     */
-    public function toJson(int $flags = 0): string
+    public function getClarificationData(): ?array
     {
-        return json_encode($this->toArray(), $flags | JSON_UNESCAPED_UNICODE);
+        return $this->clarificationData;
     }
 }

@@ -6,7 +6,7 @@
  * 
  * @package Agents\Models
  * @author The Gist AI System
- * @version 2.0.0
+ * @version 3.0.0 - 구조화된 섹션 분석 추가
  */
 
 declare(strict_types=1);
@@ -16,10 +16,20 @@ namespace Agents\Models;
 final class AnalysisResult
 {
     /**
-     * @param array $sections 구조화된 섹션 배열. 각 요소는:
-     *   - original_heading: string (원문 소제목, 예: "DON'T SETTLE")
-     *   - translated_heading: string (한글 소제목, 예: "정착하지 말 것")
-     *   - summary: string (해당 섹션 요약)
+     * @param string $translationSummary 번역 요약 (하위 호환)
+     * @param array $keyPoints 핵심 포인트 배열
+     * @param array $criticalAnalysis 비판적 분석 (why_important 등)
+     * @param string|null $audioUrl TTS 오디오 URL
+     * @param array $metadata 메타데이터
+     * @param string|null $newsTitle 뉴스 제목 (한글)
+     * @param string|null $narration 내레이션 스크립트
+     * @param string|null $contentSummary 콘텐츠 요약
+     * @param string|null $originalTitle 원문 제목 (영문)
+     * @param string|null $author 저자
+     * @param array $sections 구조화된 섹션 배열 (하위 호환)
+     * @param string|null $introductionSummary 서론 요약 (v3.0 신규)
+     * @param array $sectionAnalysis 섹션별 분석 배열 (v3.0 신규)
+     * @param string|null $geopoliticalImplication 지정학적 함의 (v3.0 신규)
      */
     public function __construct(
         private readonly string $translationSummary,
@@ -32,7 +42,10 @@ final class AnalysisResult
         private readonly ?string $contentSummary = null,
         private readonly ?string $originalTitle = null,
         private readonly ?string $author = null,
-        private readonly array $sections = []
+        private readonly array $sections = [],
+        private readonly ?string $introductionSummary = null,
+        private readonly array $sectionAnalysis = [],
+        private readonly ?string $geopoliticalImplication = null
     ) {}
 
     public function getTranslationSummary(): string
@@ -96,12 +109,37 @@ final class AnalysisResult
     }
 
     /**
-     * 구조화된 섹션 배열 반환
+     * 구조화된 섹션 배열 반환 (하위 호환)
      * @return array 각 요소: ['original_heading' => string, 'translated_heading' => string, 'summary' => string]
      */
     public function getSections(): array
     {
         return $this->sections;
+    }
+
+    /**
+     * 서론 요약 반환 (v3.0)
+     */
+    public function getIntroductionSummary(): ?string
+    {
+        return $this->introductionSummary;
+    }
+
+    /**
+     * 섹션별 분석 배열 반환 (v3.0)
+     * @return array 각 요소: ['section_title' => string, 'section_title_ko' => string, 'summary' => string, 'key_insight' => string]
+     */
+    public function getSectionAnalysis(): array
+    {
+        return $this->sectionAnalysis;
+    }
+
+    /**
+     * 지정학적 함의 반환 (v3.0)
+     */
+    public function getGeopoliticalImplication(): ?string
+    {
+        return $this->geopoliticalImplication;
     }
 
     /**
@@ -120,7 +158,10 @@ final class AnalysisResult
             contentSummary: $this->contentSummary,
             originalTitle: $this->originalTitle,
             author: $this->author,
-            sections: $this->sections
+            sections: $this->sections,
+            introductionSummary: $this->introductionSummary,
+            sectionAnalysis: $this->sectionAnalysis,
+            geopoliticalImplication: $this->geopoliticalImplication
         );
     }
 
@@ -140,7 +181,33 @@ final class AnalysisResult
             contentSummary: $this->contentSummary,
             originalTitle: $this->originalTitle,
             author: $this->author,
-            sections: $this->sections
+            sections: $this->sections,
+            introductionSummary: $this->introductionSummary,
+            sectionAnalysis: $this->sectionAnalysis,
+            geopoliticalImplication: $this->geopoliticalImplication
+        );
+    }
+
+    /**
+     * Narration 업데이트된 새 인스턴스 반환 (v3.0)
+     */
+    public function withNarration(string $narration): self
+    {
+        return new self(
+            translationSummary: $this->translationSummary,
+            keyPoints: $this->keyPoints,
+            criticalAnalysis: $this->criticalAnalysis,
+            audioUrl: $this->audioUrl,
+            metadata: $this->metadata,
+            newsTitle: $this->newsTitle,
+            narration: $narration,
+            contentSummary: $this->contentSummary,
+            originalTitle: $this->originalTitle,
+            author: $this->author,
+            sections: $this->sections,
+            introductionSummary: $this->introductionSummary,
+            sectionAnalysis: $this->sectionAnalysis,
+            geopoliticalImplication: $this->geopoliticalImplication
         );
     }
 
@@ -158,6 +225,9 @@ final class AnalysisResult
             'narration' => $this->narration,
             'content_summary' => $this->contentSummary,
             'sections' => $this->sections,
+            'introduction_summary' => $this->introductionSummary,
+            'section_analysis' => $this->sectionAnalysis,
+            'geopolitical_implication' => $this->geopoliticalImplication,
             'critical_analysis' => $this->criticalAnalysis,
             'audio_url' => $this->audioUrl,
             'metadata' => $this->metadata
@@ -188,7 +258,10 @@ final class AnalysisResult
             contentSummary: $data['content_summary'] ?? null,
             originalTitle: $data['original_title'] ?? null,
             author: $data['author'] ?? null,
-            sections: $data['sections'] ?? []
+            sections: $data['sections'] ?? [],
+            introductionSummary: $data['introduction_summary'] ?? null,
+            sectionAnalysis: $data['section_analysis'] ?? [],
+            geopoliticalImplication: $data['geopolitical_implication'] ?? null
         );
     }
 
@@ -202,7 +275,8 @@ final class AnalysisResult
             keyPoints: [],
             criticalAnalysis: [],
             contentSummary: null,
-            sections: []
+            sections: [],
+            sectionAnalysis: []
         );
     }
 }
