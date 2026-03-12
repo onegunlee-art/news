@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuthStore } from '../store/authStore'
 import { useAudioListStore, type AudioListItem } from '../store/audioListStore'
-import { useViewSettingsStore, type FontSize, type Theme } from '../store/viewSettingsStore'
+import { useViewSettingsStore, type Theme } from '../store/viewSettingsStore'
 import { newsApi, siteSettingsApi, contactApi } from '../services/api'
 import LoadingSpinner from '../components/Common/LoadingSpinner'
 import { formatSourceDisplayName } from '../utils/formatSource'
@@ -27,6 +27,7 @@ const subCategoryToLabel: Record<string, string> = {
 
 export default function ProfilePage() {
   const { user, isAuthenticated, isSubscribed, logout } = useAuthStore()
+  const { theme, setTheme } = useViewSettingsStore()
   const hasAuth = isAuthenticated
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<'bookmarks' | 'audio' | null>(null)
@@ -39,7 +40,9 @@ export default function ProfilePage() {
   } | null>(null)
   const [showTerms, setShowTerms] = useState(false)
   const [showPrivacy, setShowPrivacy] = useState(false)
-  const [expandedActivity, setExpandedActivity] = useState<'none' | 'view' | 'contact'>('none')
+  const [expandedActivity, setExpandedActivity] = useState<'none' | 'contact'>('none')
+  const [showWithdrawConfirm, setShowWithdrawConfirm] = useState(false)
+  const [withdrawing, setWithdrawing] = useState(false)
   const [aiFeedExpanded, setAiFeedExpanded] = useState(false)
   const activeTabRef = useRef(activeTab)
   activeTabRef.current = activeTab
@@ -232,29 +235,29 @@ export default function ProfilePage() {
           </ul>
         </section>
 
-        {/* Settings: 보기 설정, 문의하기 */}
+        {/* Settings: 다크 모드, 문의하기, 회원 탈퇴 */}
         <section className="mt-6 bg-page rounded-xl overflow-hidden shadow-sm border border-page">
           <h2 className="px-5 py-4 text-sm font-bold text-primary-500 uppercase tracking-wider">Settings</h2>
           <ul className="divide-y divide-[var(--border-color)]">
-            <li>
-              <button
-                type="button"
-                onClick={() => setExpandedActivity(expandedActivity === 'view' ? 'none' : 'view')}
-                className={`w-full flex items-center gap-3 px-5 py-4 text-left transition-colors ${expandedActivity === 'view' ? 'bg-page-secondary' : 'hover:bg-page-secondary/50'}`}
-              >
+            <li className="flex items-center justify-between gap-3 px-5 py-4">
+              <span className="flex items-center gap-3 text-page text-sm font-medium">
                 <MaterialIcon name="eyeglasses_2" className="w-5 h-5 text-page-secondary flex-shrink-0" size={20} />
-                <span className="flex-1 text-page text-sm font-medium">보기 설정</span>
-                <MaterialIcon name="chevron_right" className={`w-5 h-5 text-page-muted transition-transform ${expandedActivity === 'view' ? 'rotate-90' : ''}`} size={20} />
-              </button>
-              <AnimatePresence>
-                {expandedActivity === 'view' && (
-                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                    <div className="px-5 pb-4 pt-1 border-t border-page">
-                      <ViewSettingsBlock />
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                다크 모드
+              </span>
+              <div className="flex gap-2">
+                {(['light', 'dark'] as Theme[]).map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setTheme(t)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                      theme === t ? 'bg-primary-500 text-white' : 'bg-page-secondary text-page-secondary hover:opacity-90'
+                    }`}
+                  >
+                    {t === 'light' ? '라이트' : '다크'}
+                  </button>
+                ))}
+              </div>
             </li>
             <li>
               <button
@@ -276,6 +279,18 @@ export default function ProfilePage() {
                 )}
               </AnimatePresence>
             </li>
+            {hasAuth && (
+              <li>
+                <button
+                  type="button"
+                  onClick={() => setShowWithdrawConfirm(true)}
+                  className="w-full flex items-center gap-3 px-5 py-4 text-left transition-colors hover:bg-page-secondary/50 text-page-secondary"
+                >
+                  <MaterialIcon name="delete" className="w-5 h-5 text-page-muted flex-shrink-0" size={20} />
+                  <span className="flex-1 text-sm font-medium">회원 탈퇴</span>
+                </button>
+              </li>
+            )}
           </ul>
         </section>
 
@@ -336,53 +351,55 @@ export default function ProfilePage() {
 
       <TermsModal isOpen={showTerms} onClose={() => setShowTerms(false)} />
       <PrivacyPolicyModal isOpen={showPrivacy} onClose={() => setShowPrivacy(false)} />
-    </div>
-  )
-}
-
-function ViewSettingsBlock() {
-  const { fontSize, theme, setFontSize, setTheme } = useViewSettingsStore()
-  const options: { value: FontSize; label: string }[] = [
-    { value: 'small', label: '작게' },
-    { value: 'normal', label: '보통' },
-    { value: 'large', label: '크게' },
-  ]
-  return (
-    <div className="space-y-4">
-      <div>
-        <p className="text-sm text-page-secondary mb-2">글씨 크기</p>
-        <div className="flex gap-2">
-          {options.map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => setFontSize(opt.value)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                fontSize === opt.value ? 'bg-primary-500 text-white' : 'bg-page-secondary text-page-secondary hover:opacity-90'
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
+      {showWithdrawConfirm && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="withdraw-title">
+          <div className="bg-page border border-page rounded-xl shadow-xl max-w-sm w-full p-6">
+            <h3 id="withdraw-title" className="text-lg font-semibold text-page mb-2">회원 탈퇴</h3>
+            <p className="text-sm text-page-secondary mb-6">탈퇴하면 계정과 데이터가 삭제되며 복구할 수 없습니다. 정말 탈퇴하시겠습니까?</p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowWithdrawConfirm(false)}
+                disabled={withdrawing}
+                className="flex-1 py-2.5 rounded-lg border border-page text-page text-sm font-medium hover:bg-page-secondary transition-colors disabled:opacity-50"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  setWithdrawing(true)
+                  try {
+                    const token = localStorage.getItem('access_token')
+                    if (token) {
+                      await fetch('/api/auth/withdraw', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'Authorization': `Bearer ${token}`,
+                          'X-Authorization': `Bearer ${token}`,
+                        },
+                      })
+                    }
+                  } catch {}
+                  localStorage.removeItem('consent_required')
+                  localStorage.removeItem('welcome_popup')
+                  localStorage.removeItem('access_token')
+                  localStorage.removeItem('refresh_token')
+                  localStorage.removeItem('user')
+                  localStorage.removeItem('auth-storage')
+                  localStorage.removeItem('is_subscribed')
+                  window.location.href = '/login'
+                }}
+                disabled={withdrawing}
+                className="flex-1 py-2.5 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 transition-colors disabled:opacity-50"
+              >
+                {withdrawing ? '처리 중...' : '탈퇴하기'}
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
-      <div>
-        <p className="text-sm text-page-secondary mb-2">다크 모드</p>
-        <div className="flex gap-2">
-          {(['light', 'dark'] as Theme[]).map((t) => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => setTheme(t)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                theme === t ? 'bg-primary-500 text-white' : 'bg-page-secondary text-page-secondary hover:opacity-90'
-              }`}
-            >
-              {t === 'light' ? '라이트' : '다크'}
-            </button>
-          ))}
-        </div>
-      </div>
+      )}
     </div>
   )
 }
