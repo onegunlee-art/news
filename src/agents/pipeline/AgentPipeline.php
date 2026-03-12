@@ -395,4 +395,27 @@ class PipelineResult
     {
         return $this->clarificationData;
     }
+
+    /**
+     * 최종 분석 결과 반환 (하위 호환)
+     */
+    public function getFinalAnalysis(): ?array
+    {
+        $analysisResult = $this->context->getAnalysisResult();
+        if ($analysisResult !== null) {
+            return $analysisResult->toArray();
+        }
+
+        foreach (['EditingAgent', 'NarrationAgent', 'AnalysisAgent'] as $agentName) {
+            $result = $this->results[$agentName] ?? null;
+            if ($result && $result->isSuccess()) {
+                $data = $result->getData();
+                if (is_array($data) && !empty($data)) {
+                    return $data;
+                }
+            }
+        }
+
+        return null;
+    }
 }
