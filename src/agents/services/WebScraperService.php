@@ -898,6 +898,14 @@ class WebScraperService
                         // ALL CAPS 헤딩 또는 일반 헤딩 - 별도 줄로 보존
                         $result .= "\n[HEADING] " . $headingText . "\n\n";
                     }
+                } elseif (in_array($tagName, ['strong', 'b'])) {
+                    // Foreign Affairs 등: 볼드 안의 ALL CAPS 텍스트를 소제목으로 감지
+                    $innerText = trim($child->textContent);
+                    if ($this->isLikelySubheading($innerText)) {
+                        $result .= "\n[SUBHEADING] " . $innerText . "\n\n";
+                    } else {
+                        $result .= $this->extractTextWithStructure($child);
+                    }
                 } else {
                     // 일반 요소에서 ALL CAPS 짧은 라인 감지 (소제목 후보)
                     $innerText = trim($child->textContent);

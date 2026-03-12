@@ -277,26 +277,24 @@ PROMPT;
      */
     private function buildContentSummaryFromSections(array $data): string
     {
-        $lines = [];
+        // 섹션 간 반드시 한 줄 띄우기: 블록 단위로 모아서 "\n\n"로 연결
+        $blocks = [];
         
         // 제목 (한글 + 영문 원제)
         $newsTitle = $data['news_title'] ?? '';
         $originalTitle = $data['original_title'] ?? '';
         if ($newsTitle) {
-            if ($originalTitle && $originalTitle !== $newsTitle) {
-                $lines[] = "{$newsTitle} ({$originalTitle})";
-            } else {
-                $lines[] = $newsTitle;
-            }
+            $blocks[] = $originalTitle && $originalTitle !== $newsTitle
+                ? "{$newsTitle} ({$originalTitle})"
+                : $newsTitle;
         }
         
-        // 서론 요약 (부제목처럼)
+        // 서론 요약 (부제목) — 끝나고 한 줄 띄움
         if (!empty($data['introduction_summary'])) {
-            $lines[] = "- " . $data['introduction_summary'];
-            $lines[] = ""; // 빈 줄
+            $blocks[] = "- " . trim($data['introduction_summary']);
         }
         
-        // 섹션별 분석
+        // 섹션별 분석 — 각 소제목 앞·뒤 한 줄 띄움
         if (!empty($data['section_analysis']) && is_array($data['section_analysis'])) {
             $sectionNum = 1;
             foreach ($data['section_analysis'] as $section) {
@@ -305,58 +303,41 @@ PROMPT;
                 $summary = $section['summary'] ?? '';
                 $keyInsight = $section['key_insight'] ?? '';
                 
-                // 소제목 (번호. 한글 (영문))
+                $sectionLines = [];
                 if ($titleKo || $titleEn) {
                     if ($titleKo && $titleEn && $titleKo !== $titleEn) {
-                        $lines[] = "{$sectionNum}. {$titleKo} ({$titleEn})";
+                        $sectionLines[] = "{$sectionNum}. {$titleKo} ({$titleEn})";
                     } elseif ($titleKo) {
-                        $lines[] = "{$sectionNum}. {$titleKo}";
+                        $sectionLines[] = "{$sectionNum}. {$titleKo}";
                     } else {
-                        $lines[] = "{$sectionNum}. {$titleEn}";
+                        $sectionLines[] = "{$sectionNum}. {$titleEn}";
                     }
-                    $lines[] = ""; // 빈 줄
                 }
-                
-                // 요약을 글머리 기호로 분리
                 if ($summary) {
-                    // 문장 단위로 분리하여 글머리 기호 추가
                     $sentences = $this->splitIntoSentences($summary);
                     foreach ($sentences as $sentence) {
                         $sentence = trim($sentence);
                         if ($sentence) {
-                            $lines[] = "- " . $sentence;
+                            $sectionLines[] = "- " . $sentence;
                         }
                     }
                 }
-                
-                // key_insight가 있으면 추가
                 if ($keyInsight && $keyInsight !== $summary) {
-                    $lines[] = "- " . trim($keyInsight);
+                    $sectionLines[] = "- " . trim($keyInsight);
                 }
-                
-                $lines[] = ""; // 섹션 간 빈 줄
+                if ($sectionLines !== []) {
+                    $blocks[] = implode("\n", $sectionLines);
+                }
                 $sectionNum++;
             }
         }
         
-        // 지정학적 함의 (왜 중요한가)
+        // 왜 중요한가 — 앞에 한 줄 띄움
         if (!empty($data['geopolitical_implication'])) {
-            // 마지막 빈 줄 제거 후 추가
-            while (!empty($lines) && $lines[count($lines) - 1] === "") {
-                array_pop($lines);
-            }
-            $lines[] = "";
-            $lines[] = "왜 중요한가";
-            $lines[] = "";
-            $lines[] = "- " . $data['geopolitical_implication'];
+            $blocks[] = "왜 중요한가\n\n- " . trim($data['geopolitical_implication']);
         }
         
-        // 마지막 불필요한 빈 줄 제거
-        while (!empty($lines) && $lines[count($lines) - 1] === "") {
-            array_pop($lines);
-        }
-        
-        return implode("\n", $lines);
+        return implode("\n\n", $blocks);
     }
     
     /**
