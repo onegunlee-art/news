@@ -246,31 +246,112 @@ PROMPT;
     }
 
     /**
-     * 섹션 분석에서 content_summary 생성 (하위 호환)
+     * 섹션 분석에서 content_summary 생성 (참조 형식)
+     * 
+     * 형식:
+     * 한글 제목 (영문 원제)
+     * - 부제목/핵심 요약
+     * 
+     * 서론 요약 문장들
+     * 
+     * 1. 소제목 (영문 소제목)
+     * 
+     * - 요점1
+     * - 요점2
      */
     private function buildContentSummaryFromSections(array $data): string
     {
-        $parts = [];
+        $lines = [];
         
-        if (!empty($data['introduction_summary'])) {
-            $parts[] = $data['introduction_summary'];
-        }
-        
-        if (!empty($data['section_analysis']) && is_array($data['section_analysis'])) {
-            foreach ($data['section_analysis'] as $section) {
-                $title = $section['section_title_ko'] ?? $section['section_title'] ?? '';
-                $summary = $section['summary'] ?? '';
-                if ($title && $summary) {
-                    $parts[] = "【{$title}】\n{$summary}";
-                }
+        // 제목 (한글 + 영문 원제)
+        $newsTitle = $data['news_title'] ?? '';
+        $originalTitle = $data['original_title'] ?? '';
+        if ($newsTitle) {
+            if ($originalTitle && $originalTitle !== $newsTitle) {
+                $lines[] = "{$newsTitle} ({$originalTitle})";
+            } else {
+                $lines[] = $newsTitle;
             }
         }
         
-        if (!empty($data['geopolitical_implication'])) {
-            $parts[] = "【왜 중요한가】\n" . $data['geopolitical_implication'];
+        // 서론 요약 (부제목처럼)
+        if (!empty($data['introduction_summary'])) {
+            $lines[] = "- " . $data['introduction_summary'];
+            $lines[] = ""; // 빈 줄
         }
         
-        return implode("\n\n", $parts);
+        // 섹션별 분석
+        if (!empty($data['section_analysis']) && is_array($data['section_analysis'])) {
+            $sectionNum = 1;
+            foreach ($data['section_analysis'] as $section) {
+                $titleKo = $section['section_title_ko'] ?? '';
+                $titleEn = $section['section_title'] ?? '';
+                $summary = $section['summary'] ?? '';
+                $keyInsight = $section['key_insight'] ?? '';
+                
+                // 소제목 (번호. 한글 (영문))
+                if ($titleKo || $titleEn) {
+                    if ($titleKo && $titleEn && $titleKo !== $titleEn) {
+                        $lines[] = "{$sectionNum}. {$titleKo} ({$titleEn})";
+                    } elseif ($titleKo) {
+                        $lines[] = "{$sectionNum}. {$titleKo}";
+                    } else {
+                        $lines[] = "{$sectionNum}. {$titleEn}";
+                    }
+                    $lines[] = ""; // 빈 줄
+                }
+                
+                // 요약을 글머리 기호로 분리
+                if ($summary) {
+                    // 문장 단위로 분리하여 글머리 기호 추가
+                    $sentences = $this->splitIntoSentences($summary);
+                    foreach ($sentences as $sentence) {
+                        $sentence = trim($sentence);
+                        if ($sentence) {
+                            $lines[] = "- " . $sentence;
+                        }
+                    }
+                }
+                
+                // key_insight가 있으면 추가
+                if ($keyInsight && $keyInsight !== $summary) {
+                    $lines[] = "- " . trim($keyInsight);
+                }
+                
+                $lines[] = ""; // 섹션 간 빈 줄
+                $sectionNum++;
+            }
+        }
+        
+        // 지정학적 함의 (왜 중요한가)
+        if (!empty($data['geopolitical_implication'])) {
+            // 마지막 빈 줄 제거 후 추가
+            while (!empty($lines) && $lines[count($lines) - 1] === "") {
+                array_pop($lines);
+            }
+            $lines[] = "";
+            $lines[] = "왜 중요한가";
+            $lines[] = "";
+            $lines[] = "- " . $data['geopolitical_implication'];
+        }
+        
+        // 마지막 불필요한 빈 줄 제거
+        while (!empty($lines) && $lines[count($lines) - 1] === "") {
+            array_pop($lines);
+        }
+        
+        return implode("\n", $lines);
+    }
+    
+    /**
+     * 요약 텍스트를 문장 단위로 분리
+     */
+    private function splitIntoSentences(string $text): array
+    {
+        // 한국어 문장 종결 패턴으로 분리
+        $pattern = '/(?<=[.!?다요])\s+/u';
+        $sentences = preg_split($pattern, $text, -1, PREG_SPLIT_NO_EMPTY);
+        return $sentences ?: [$text];
     }
 
     /**
