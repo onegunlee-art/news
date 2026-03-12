@@ -30,6 +30,7 @@ export interface DraftArticle {
   status?: string
 }
 
+// eslint-disable-next-line no-misleading-character-class
 const sanitizeText = (text: string): string =>
   text
     .replace(/[\u201C\u201D\u201E\u201F\u2033\u2036]/g, '"')

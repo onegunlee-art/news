@@ -153,6 +153,7 @@ interface AIAnalysisResult {
 }
 
 // 텍스트 정제 함수 - 복사/붙여넣기 시 문제 될 수 있는 문자 변환
+// eslint-disable-next-line no-misleading-character-class
 const sanitizeText = (text: string): string => {
   return text
     // 스마트 따옴표 → 일반 따옴표

@@ -82,6 +82,7 @@ export function sanitizeHtml(html: string): string {
     })
   }
   s = s.replace(/<[^>]*>/g, '')
+  // eslint-disable-next-line no-control-regex
   s = s.replace(/\x00(\d+)\x00/g, (_, i) => stored[Number(i)] ?? '')
   return s
 }
@@ -115,6 +116,7 @@ function normalizeBlockTags(s: string): string {
   s = s.replace(/<\/(?:div|p|section|article|header|footer|aside|main|nav|figure|figcaption|blockquote|h[1-6])>/gi, '<br/>')
   s = s.replace(/<(?:div|p|section|article|header|footer|aside|main|nav|figure|figcaption|blockquote|h[1-6])(?:\s[^>]*)?>/gi, '')
   s = s.replace(/(<br\s*\/?>){3,}/gi, '<br/><br/>')
+  // eslint-disable-next-line no-control-regex
   s = s.replace(/\x01A(\d+)\x01/g, (_, i) => alignBlocks[Number(i)] ?? '')
   return s
 }
