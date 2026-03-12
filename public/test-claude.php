@@ -13,27 +13,67 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-require_once dirname(__DIR__) . '/src/agents/autoload.php';
-
-// .env 로드
-$envPath = dirname(__DIR__) . '/.env';
-$envTxtPath = dirname(__DIR__) . '/env.txt';
-
-// env.txt 우선 (서버 배포용)
-if (file_exists($envTxtPath)) {
-    $envPath = $envTxtPath;
-}
-if (file_exists($envPath)) {
-    $envContent = file_get_contents($envPath);
-    $lines = explode("\n", $envContent);
-    foreach ($lines as $line) {
-        $line = trim($line);
-        if (!empty($line) && strpos($line, '#') !== 0 && strpos($line, '=') !== false) {
-            putenv($line);
-            [$key, $value] = explode('=', $line, 2);
-            $_ENV[trim($key)] = trim($value);
+// 프로젝트 루트 자동 탐지 (로컬/서버 모두 지원)
+function findProjectRoot(): string {
+    $candidates = [
+        __DIR__ . '/../',           // 로컬 (public/)
+        __DIR__ . '/../../',        // 서버 (html/)
+        dirname(__DIR__),
+        dirname(__DIR__, 2),
+    ];
+    foreach ($candidates as $raw) {
+        $path = realpath($raw);
+        if ($path === false) {
+            $path = rtrim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $raw), DIRECTORY_SEPARATOR);
+        }
+        if ($path && file_exists($path . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'agents' . DIRECTORY_SEPARATOR . 'autoload.php')) {
+            return rtrim($path, '/\\') . '/';
         }
     }
+    return dirname(__DIR__) . '/';
+}
+
+$projectRoot = findProjectRoot();
+
+// Agent autoload
+$autoloadPath = $projectRoot . 'src/agents/autoload.php';
+if (!file_exists($autoloadPath)) {
+    echo json_encode([
+        'success' => false,
+        'error' => 'autoload.php not found',
+        'tried' => $autoloadPath,
+        'project_root' => $projectRoot,
+        '__DIR__' => __DIR__,
+    ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+    exit;
+}
+require_once $autoloadPath;
+
+// .env 로드
+function loadEnvFile(string $path): bool {
+    if (!is_file($path) || !is_readable($path)) return false;
+    foreach (file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [] as $line) {
+        $line = trim($line);
+        if ($line === '' || $line[0] === '#') continue;
+        if (strpos($line, '=') !== false) {
+            [$name, $value] = explode('=', $line, 2);
+            $name = trim($name);
+            $value = trim($value, " \t\"'");
+            if ($name !== '') {
+                putenv("$name=$value");
+                $_ENV[$name] = $value;
+            }
+        }
+    }
+    return true;
+}
+
+$envFiles = [
+    $projectRoot . 'env.txt',
+    $projectRoot . '.env',
+];
+foreach ($envFiles as $f) {
+    if (loadEnvFile($f)) break;
 }
 
 use Agents\Services\ClaudeService;
