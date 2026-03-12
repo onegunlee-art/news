@@ -30,13 +30,19 @@ class ClaudeService
         $defaultConfig = file_exists($configPath) ? require $configPath : [];
         $this->config = array_merge($defaultConfig, $config);
         
-        $this->apiKey = $this->config['api_key'] 
-            ?? $_ENV['ANTHROPIC_API_KEY'] 
-            ?? getenv('ANTHROPIC_API_KEY') 
-            ?? '';
-        $this->model = $this->config['model'] ?? 'claude-sonnet-4-6';
+        $envKey = $_ENV['ANTHROPIC_API_KEY'] ?? null;
+        $getenvKey = getenv('ANTHROPIC_API_KEY');
         
-        $this->mockMode = empty($this->apiKey) || ($this->config['mock_mode'] ?? false);
+        $this->apiKey = $this->config['api_key'] ?? '';
+        if ($this->apiKey === '' && is_string($envKey) && $envKey !== '') {
+            $this->apiKey = $envKey;
+        }
+        if ($this->apiKey === '' && is_string($getenvKey) && $getenvKey !== '') {
+            $this->apiKey = $getenvKey;
+        }
+        
+        $this->model = $this->config['model'] ?? 'claude-sonnet-4-6';
+        $this->mockMode = ($this->apiKey === '') || ($this->config['mock_mode'] ?? false);
     }
 
     public function isConfigured(): bool
