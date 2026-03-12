@@ -153,14 +153,23 @@ class AnalysisAgent extends BaseAgent
             );
             $analysisResponse = $this->callGPT($analysisPrompt, $options);
             $data = $this->parseJsonResponse($analysisResponse);
+            
+            // 디버깅: 1차 분석 GPT 응답 로깅
+            $this->logGptResponse('analysis', $analysisResponse, $data);
 
             $narrationPrompt = $this->buildNarrationFromAnalysisPrompt($article, $data);
             $narrationResponse = $this->callGPT($narrationPrompt, $options);
             $narrationData = $this->parseJsonResponse($narrationResponse);
+            
+            // 디버깅: GPT 응답 원문 로깅
+            $this->logGptResponse('narration', $narrationResponse, $narrationData);
+            
             if (!empty($narrationData['narration_paragraphs']) && is_array($narrationData['narration_paragraphs'])) {
                 $data['narration'] = implode("\n\n", array_filter(array_map('trim', $narrationData['narration_paragraphs'])));
+                $this->log("narration: used narration_paragraphs array (" . count($narrationData['narration_paragraphs']) . " items)", 'debug');
             } elseif (!empty($narrationData['narration'])) {
                 $data['narration'] = $narrationData['narration'];
+                $this->log("narration: fallback to narration string", 'debug');
             }
         } else {
             $prompt = $this->buildFullAnalysisPrompt($article);
@@ -176,12 +185,20 @@ class AnalysisAgent extends BaseAgent
             : ($data['original_title'] ?? null);
 
         // paragraphs 배열 → 문자열 변환 (JSON 줄바꿈 손실 방지)
+        $this->log("content_summary_paragraphs exists: " . (isset($data['content_summary_paragraphs']) ? 'yes' : 'no'), 'debug');
+        $this->log("content_summary_paragraphs is_array: " . (is_array($data['content_summary_paragraphs'] ?? null) ? 'yes' : 'no'), 'debug');
+        
         if (!empty($data['content_summary_paragraphs']) && is_array($data['content_summary_paragraphs'])) {
             $data['content_summary'] = implode("\n\n", array_filter(array_map('trim', $data['content_summary_paragraphs'])));
+            $this->log("content_summary: used paragraphs array (" . count($data['content_summary_paragraphs']) . " items)", 'debug');
+        } else {
+            $this->log("content_summary: using original string field", 'debug');
         }
+        
         $criticalAnalysis = $data['critical_analysis'] ?? [];
         if (is_array($criticalAnalysis) && !empty($criticalAnalysis['why_important_paragraphs']) && is_array($criticalAnalysis['why_important_paragraphs'])) {
             $criticalAnalysis['why_important'] = implode("\n\n", array_filter(array_map('trim', $criticalAnalysis['why_important_paragraphs'])));
+            $this->log("why_important: used paragraphs array", 'debug');
         }
 
         // narration 정규화: 인사말 제거, 메타 문구 제거
@@ -1052,5 +1069,36 @@ JSON 형식으로 응답:
 PROMPT;
         $response = $this->callGPT($prompt);
         return $this->parseJsonResponse($response);
+    }
+
+    /**
+     * GPT 응답 원문을 파일에 로깅 (디버깅용)
+     */
+    private function logGptResponse(string $stage, string $rawResponse, array $parsedData): void
+    {
+        $logDir = dirname(__DIR__, 3) . '/storage/logs';
+        if (!is_dir($logDir)) {
+            @mkdir($logDir, 0755, true);
+        }
+        
+        $timestamp = date('Y-m-d_H-i-s');
+        $logFile = $logDir . "/gpt_response_{$stage}_{$timestamp}.json";
+        
+        $logData = [
+            'timestamp' => date('c'),
+            'stage' => $stage,
+            'raw_response_length' => strlen($rawResponse),
+            'raw_response_preview' => mb_substr($rawResponse, 0, 2000),
+            'parsed_keys' => array_keys($parsedData),
+            'has_narration_paragraphs' => isset($parsedData['narration_paragraphs']),
+            'narration_paragraphs_type' => isset($parsedData['narration_paragraphs']) ? gettype($parsedData['narration_paragraphs']) : 'not_set',
+            'narration_paragraphs_count' => is_array($parsedData['narration_paragraphs'] ?? null) ? count($parsedData['narration_paragraphs']) : 0,
+            'has_content_summary_paragraphs' => isset($parsedData['content_summary_paragraphs']),
+            'content_summary_paragraphs_type' => isset($parsedData['content_summary_paragraphs']) ? gettype($parsedData['content_summary_paragraphs']) : 'not_set',
+            'full_parsed_data' => $parsedData,
+        ];
+        
+        @file_put_contents($logFile, json_encode($logData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+        $this->log("GPT response logged to: {$logFile}", 'debug');
     }
 }
