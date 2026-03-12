@@ -350,7 +350,8 @@ function analyzeUrl(string $url, array $options = []): array {
                 'sections' => $finalAnalysis['sections'] ?? [],
                 'narration' => $narration,
                 'critical_analysis' => $finalAnalysis['critical_analysis'] ?? [],
-                'audio_url' => $finalAnalysis['audio_url'] ?? null
+                'audio_url' => $finalAnalysis['audio_url'] ?? null,
+                '_debug_narration' => $finalAnalysis['metadata']['_debug_narration'] ?? null,
             ],
             'duration_ms' => $durationMs,
             'agents_executed' => $agentsExecuted,

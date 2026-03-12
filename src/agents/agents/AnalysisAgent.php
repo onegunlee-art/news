@@ -164,13 +164,28 @@ class AnalysisAgent extends BaseAgent
             // 디버깅: GPT 응답 원문 로깅
             $this->logGptResponse('narration', $narrationResponse, $narrationData);
             
+            // 디버그 정보 수집
+            $debugInfo = [
+                'narration_paragraphs_exists' => isset($narrationData['narration_paragraphs']),
+                'narration_paragraphs_is_array' => is_array($narrationData['narration_paragraphs'] ?? null),
+                'narration_paragraphs_count' => is_array($narrationData['narration_paragraphs'] ?? null) ? count($narrationData['narration_paragraphs']) : 0,
+                'narration_string_exists' => isset($narrationData['narration']),
+                'used_paragraphs_array' => false,
+                'raw_response_preview' => mb_substr($narrationResponse, 0, 500),
+            ];
+            
             if (!empty($narrationData['narration_paragraphs']) && is_array($narrationData['narration_paragraphs'])) {
                 $data['narration'] = implode("\n\n", array_filter(array_map('trim', $narrationData['narration_paragraphs'])));
+                $debugInfo['used_paragraphs_array'] = true;
+                $debugInfo['joined_narration_preview'] = mb_substr($data['narration'], 0, 300);
                 $this->log("narration: used narration_paragraphs array (" . count($narrationData['narration_paragraphs']) . " items)", 'debug');
             } elseif (!empty($narrationData['narration'])) {
                 $data['narration'] = $narrationData['narration'];
                 $this->log("narration: fallback to narration string", 'debug');
             }
+            
+            // 디버그 정보를 data에 임시 저장 (API 응답에 포함)
+            $data['_debug_narration'] = $debugInfo;
         } else {
             $prompt = $this->buildFullAnalysisPrompt($article);
             $options = $this->buildAnalysisOptions($article, true);
@@ -221,7 +236,7 @@ class AnalysisAgent extends BaseAgent
             $translationSummary = mb_substr($narration, 0, 200);
         }
 
-        return new AnalysisResult(
+        $result = new AnalysisResult(
             translationSummary: $translationSummary,
             keyPoints: $data['key_points'] ?? [],
             criticalAnalysis: $criticalAnalysis,
@@ -232,6 +247,13 @@ class AnalysisAgent extends BaseAgent
             author: $data['author'] ?? null,
             sections: $data['sections'] ?? []
         );
+        
+        // 디버그 정보를 메타데이터에 포함
+        if (isset($data['_debug_narration'])) {
+            $result = $result->withMetadata(['_debug_narration' => $data['_debug_narration']]);
+        }
+        
+        return $result;
     }
 
     private function isAdminPurePromptMode(): bool
