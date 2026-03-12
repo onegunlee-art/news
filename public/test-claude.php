@@ -14,10 +14,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 // 프로젝트 루트 자동 탐지 (로컬/서버 모두 지원)
+// 서버 배포 구조: /html/ 아래에 src/agents 포함
 function findProjectRoot(): string {
     $candidates = [
         __DIR__ . '/../',           // 로컬 (public/)
-        __DIR__ . '/../../',        // 서버 (html/)
+        __DIR__ . '/',              // 서버 (html/ = 루트)
+        __DIR__ . '/../../',        
         dirname(__DIR__),
         dirname(__DIR__, 2),
     ];
@@ -29,6 +31,10 @@ function findProjectRoot(): string {
         if ($path && file_exists($path . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'agents' . DIRECTORY_SEPARATOR . 'autoload.php')) {
             return rtrim($path, '/\\') . '/';
         }
+    }
+    // 서버 배포 구조: __DIR__ 자체가 루트 (html/)
+    if (file_exists(__DIR__ . '/src/agents/autoload.php')) {
+        return __DIR__ . '/';
     }
     return dirname(__DIR__) . '/';
 }
@@ -44,6 +50,7 @@ if (!file_exists($autoloadPath)) {
         'tried' => $autoloadPath,
         'project_root' => $projectRoot,
         '__DIR__' => __DIR__,
+        'check_html_src' => file_exists(__DIR__ . '/src/agents/autoload.php') ? 'EXISTS' : 'NOT_FOUND',
     ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
     exit;
 }
