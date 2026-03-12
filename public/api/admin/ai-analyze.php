@@ -136,6 +136,7 @@ require_once $projectRoot . 'src/agents/autoload.php';
 use Agents\Pipeline\AgentPipeline;
 use Agents\Agents\LearningAgent;
 use Agents\Services\OpenAIService;
+use Agents\Services\ClaudeService;
 use Agents\Services\GoogleTTSService;
 use Agents\Services\SupabaseService;
 use Agents\Services\RAGService;
@@ -230,12 +231,16 @@ function analyzeUrl(string $url, array $options = []): array {
     // 디버그 정보 수집 ($_ENV 우선 - putenv 미반영 서버 대응)
     $openaiKey = $_ENV['OPENAI_API_KEY'] ?? getenv('OPENAI_API_KEY');
     $openaiKey = is_string($openaiKey) ? $openaiKey : '';
+    $anthropicKey = $_ENV['ANTHROPIC_API_KEY'] ?? getenv('ANTHROPIC_API_KEY');
+    $anthropicKey = is_string($anthropicKey) ? $anthropicKey : '';
     $debug = [
         'project_root' => $projectRoot,
         'env_loaded' => $envLoaded,
         'env_tried' => $envTried ?? [],
         'openai_key_set' => $openaiKey !== '',
         'openai_key_prefix' => $openaiKey !== '' ? substr($openaiKey, 0, 10) . '...' : '(empty)',
+        'anthropic_key_set' => $anthropicKey !== '',
+        'anthropic_key_prefix' => $anthropicKey !== '' ? substr($anthropicKey, 0, 12) . '...' : '(empty)',
         'google_tts_key_set' => !empty($_ENV['GOOGLE_TTS_API_KEY'] ?? getenv('GOOGLE_TTS_API_KEY')),
     ];
 

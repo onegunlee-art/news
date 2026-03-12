@@ -2,8 +2,8 @@
 /**
  * Analysis Agent
  * 
- * 기사 분석 Agent (GPT-5.2)
- * - GPT가 뉴스 제목 생성
+ * 기사 분석 Agent (Claude Sonnet)
+ * - Claude가 뉴스 제목 생성
  * - 본문 전체를 4개 이상 불렛 포인트로 요약
  * - 뉴스 앵커 스타일 내레이션 스크립트 생성
  * - 왜 중요한가(why_important)
@@ -11,7 +11,7 @@
  * 
  * @package Agents\Agents
  * @author The Gist AI System
- * @version 2.0.0
+ * @version 3.0.0 - Claude migration
  */
 
 declare(strict_types=1);
@@ -24,6 +24,7 @@ use Agents\Models\AgentResult;
 use Agents\Models\ArticleData;
 use Agents\Models\AnalysisResult;
 use Agents\Services\OpenAIService;
+use Agents\Services\ClaudeService;
 use Agents\Services\GoogleTTSService;
 use Agents\Services\RAGService;
 use Agents\Services\PersonaService;
@@ -35,8 +36,9 @@ class AnalysisAgent extends BaseAgent
     private ?GoogleTTSService $googleTts = null;
     private ?RAGService $ragService = null;
     private ?PersonaService $personaService = null;
+    private ?ClaudeService $claude = null;
 
-    public function __construct(OpenAIService $openai, array $config = [], ?GoogleTTSService $googleTts = null, ?RAGService $ragService = null, ?PersonaService $personaService = null)
+    public function __construct(OpenAIService $openai, array $config = [], ?GoogleTTSService $googleTts = null, ?RAGService $ragService = null, ?PersonaService $personaService = null, ?ClaudeService $claude = null)
     {
         parent::__construct($openai, $config);
         $this->keyPointsCount = max(4, (int) ($config['key_points_count'] ?? 4));
@@ -44,6 +46,8 @@ class AnalysisAgent extends BaseAgent
         $this->googleTts = $googleTts;
         $this->ragService = $ragService ?? $config['rag_service'] ?? null;
         $this->personaService = $personaService ?? $config['persona_service'] ?? null;
+        
+        $this->claude = $claude ?? new ClaudeService();
     }
 
     public function getName(): string
@@ -141,28 +145,24 @@ class AnalysisAgent extends BaseAgent
     }
 
     /**
-     * 종합 분석 수행 (GPT-5.2 명시)
+     * 종합 분석 수행 (Claude Sonnet)
      */
     private function performFullAnalysis(ArticleData $article): AnalysisResult
     {
         if ($this->isAdminPurePromptMode()) {
-            $options = $this->buildAnalysisOptions($article, false);
-            $analysisPrompt = $this->withReferenceImages(
-                $this->buildStructuredAnalysisPrompt($article),
-                $options
-            );
-            $analysisResponse = $this->callGPT($analysisPrompt, $options);
+            $systemPrompt = $this->prompts['system'] ?? '당신은 "The Gist"의 수석 에디터입니다.';
+            
+            $analysisPrompt = $this->buildStructuredAnalysisPrompt($article);
+            $analysisResponse = $this->callClaude($systemPrompt, $analysisPrompt);
             $data = $this->parseJsonResponse($analysisResponse);
             
-            // 디버깅: 1차 분석 GPT 응답 로깅
-            $this->logGptResponse('analysis', $analysisResponse, $data);
+            $this->logClaudeResponse('analysis', $analysisResponse, $data);
 
             $narrationPrompt = $this->buildNarrationFromAnalysisPrompt($article, $data);
-            $narrationResponse = $this->callGPT($narrationPrompt, $options);
+            $narrationResponse = $this->callClaude($systemPrompt, $narrationPrompt);
             $narrationData = $this->parseJsonResponse($narrationResponse);
             
-            // 디버깅: GPT 응답 원문 로깅
-            $this->logGptResponse('narration', $narrationResponse, $narrationData);
+            $this->logClaudeResponse('narration', $narrationResponse, $narrationData);
             
             // 디버그 정보 수집
             $debugInfo = [
@@ -187,10 +187,11 @@ class AnalysisAgent extends BaseAgent
             // 디버그 정보를 data에 임시 저장 (API 응답에 포함)
             $data['_debug_narration'] = $debugInfo;
         } else {
+            $systemPrompt = $this->personaService 
+                ? $this->personaService->getSystemPrompt() 
+                : ($this->prompts['system'] ?? '당신은 "The Gist"의 수석 에디터입니다.');
             $prompt = $this->buildFullAnalysisPrompt($article);
-            $options = $this->buildAnalysisOptions($article, true);
-            $prompt = $this->withReferenceImages($prompt, $options);
-            $response = $this->callGPT($prompt, $options);
+            $response = $this->callClaude($systemPrompt, $prompt);
             $data = $this->parseJsonResponse($response);
         }
 
@@ -1028,24 +1029,14 @@ JSON 외에 다른 텍스트는 절대 포함하지 마세요.
 }
 PROMPT;
 
-        $options = ['model' => 'gpt-5.2', 'timeout' => 180, 'max_tokens' => 8000];
+        $systemPrompt = $this->personaService 
+            ? $this->personaService->getSystemPrompt() 
+            : ($this->prompts['system'] ?? '당신은 "The Gist"의 수석 에디터입니다.');
 
-        $basePrompt = $this->personaService ? $this->personaService->getSystemPrompt() : ($this->prompts['system'] ?? '당신은 "The Gist"의 수석 에디터입니다.');
-        if ($this->ragService && $this->ragService->isConfigured()) {
-            $query = ($originalAnalysis['news_title'] ?? '') . ' ' . mb_substr($adminFeedback, 0, 300);
-            $ragContext = $this->ragService->retrieveRelevantContext($query, 3);
-            $options['system_prompt'] = $this->ragService->buildSystemPromptWithRAG($basePrompt, $ragContext);
-        } else {
-            $options['system_prompt'] = $basePrompt;
-        }
-
-        $imageUrls = $this->loadAllReferenceImages();
-        if (!empty($imageUrls)) {
-            $options['image_urls'] = $imageUrls;
-            $prompt = "[참조 이미지 - 반드시 확인] 첨부된 참조 이미지 5번(가독성 형식)을 확인하세요. content_summary는 줄글이 아닌 구조화된 형식으로 작성: 섹션별 제목(한글 (영문)), 영문 1줄→한글 1줄 교차, 짧은 문단, 여백·문단 구분.\n\n" . $prompt;
-        }
-
-        $response = $this->callGPT($prompt, $options);
+        $response = $this->callClaude($systemPrompt, $prompt, [
+            'max_tokens' => 8192,
+            'timeout' => 180,
+        ]);
         $data = $this->parseJsonResponse($response);
         if (isset($data['narration']) && $data['narration'] !== null) {
             $data['narration'] = $this->normalizeNarration($data['narration']);
@@ -1095,9 +1086,26 @@ PROMPT;
     }
 
     /**
-     * GPT 응답 원문을 파일에 로깅 (디버깅용)
+     * Claude API 호출
      */
-    private function logGptResponse(string $stage, string $rawResponse, array $parsedData): void
+    private function callClaude(string $systemPrompt, string $userPrompt, array $options = []): string
+    {
+        if (!$this->claude->isConfigured()) {
+            $this->log("Claude not configured, falling back to GPT", 'warning');
+            return $this->callGPT($userPrompt, array_merge($options, ['system_prompt' => $systemPrompt]));
+        }
+        
+        return $this->claude->chat($systemPrompt, $userPrompt, array_merge([
+            'max_tokens' => (int)($this->config['max_tokens'] ?? 8192),
+            'temperature' => (float)($this->config['temperature'] ?? 0.3),
+            'timeout' => (int)($this->config['timeout'] ?? 180),
+        ], $options));
+    }
+
+    /**
+     * Claude 응답 원문을 파일에 로깅 (디버깅용)
+     */
+    private function logClaudeResponse(string $stage, string $rawResponse, array $parsedData): void
     {
         $logDir = dirname(__DIR__, 3) . '/storage/logs';
         if (!is_dir($logDir)) {
@@ -1105,11 +1113,12 @@ PROMPT;
         }
         
         $timestamp = date('Y-m-d_H-i-s');
-        $logFile = $logDir . "/gpt_response_{$stage}_{$timestamp}.json";
+        $logFile = $logDir . "/claude_response_{$stage}_{$timestamp}.json";
         
         $logData = [
             'timestamp' => date('c'),
             'stage' => $stage,
+            'model' => 'claude-sonnet-4-6',
             'raw_response_length' => strlen($rawResponse),
             'raw_response_preview' => mb_substr($rawResponse, 0, 2000),
             'parsed_keys' => array_keys($parsedData),
@@ -1122,6 +1131,6 @@ PROMPT;
         ];
         
         @file_put_contents($logFile, json_encode($logData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
-        $this->log("GPT response logged to: {$logFile}", 'debug');
+        $this->log("Claude response logged to: {$logFile}", 'debug');
     }
 }
