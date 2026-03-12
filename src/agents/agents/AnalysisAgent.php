@@ -161,13 +161,37 @@ class AnalysisAgent extends BaseAgent
 
         $domainHint = '';
         if (str_contains($host, 'foreignaffairs.com')) {
-            $domainHint = "[Foreign Affairs 기사]\n- 소제목이 명확하게 있음. 각 소제목을 section_analysis에 반영하세요.\n- 대문자 헤딩(예: 'ANTICIPATION AND ADAPTATION')을 소제목으로 인식하세요.\n";
+            $domainHint = <<<HINT
+[Foreign Affairs 기사]
+- 본문 중간에 볼드 처리된 대문자 텍스트(예: "REAPING AND SOWING", "ANTICIPATION AND ADAPTATION")가 소제목입니다.
+- section_title에 원문 소제목을 그대로 입력하세요. 번역하거나 재해석하지 마세요.
+- section_title_ko에는 한글 번역을 넣으세요.
+- 소제목이 없는 서론 부분은 "Introduction" 또는 "서론"으로 처리하세요.
+
+HINT;
         } elseif (str_contains($host, 'ft.com')) {
-            $domainHint = "[FT.com 기사]\n- 소제목이 없거나 약할 수 있음. 논리적 흐름(도입/주장/데이터/결론)으로 가상 섹션을 만드세요.\n- 차트, 수치가 많으면 key_points에 반드시 포함하세요.\n";
+            $domainHint = <<<HINT
+[FT.com 기사]
+- 소제목이 없거나 약할 수 있음. 논리적 흐름(도입/주장/데이터/결론)으로 가상 섹션을 만드세요.
+- 차트, 수치가 많으면 key_points에 반드시 포함하세요.
+
+HINT;
         } elseif (str_contains($host, 'economist.com')) {
-            $domainHint = "[The Economist 기사]\n- 문단 역할(도입/문제제기/핵심주장/근거/반론/결론)을 파악하여 가상 섹션으로 나누세요.\n- 구독 유도 문구, 날짜, UI 요소는 무시하세요.\n";
+            $domainHint = <<<HINT
+[The Economist 기사]
+- 소제목이 없으므로 단락(paragraph) 구분을 기준으로 가상 섹션을 만드세요.
+- 2~3개 단락을 하나의 논리 단위로 묶어서 섹션화하세요.
+- 각 섹션명은 해당 단락들의 핵심 주제를 반영하세요 (예: "문제 제기", "핵심 주장", "근거와 데이터", "결론").
+- 구독 유도 문구, 날짜, UI 요소는 무시하세요.
+
+HINT;
         } else {
-            $domainHint = "[일반 기사]\n- 소제목이 있으면 그대로 사용, 없으면 논리적 흐름으로 가상 섹션을 만드세요.\n";
+            $domainHint = <<<HINT
+[일반 기사]
+- 소제목이 있으면 그대로 사용하세요 (번역/재해석 금지).
+- 소제목이 없으면 논리적 흐름으로 가상 섹션을 만드세요.
+
+HINT;
         }
 
         return <<<PROMPT
