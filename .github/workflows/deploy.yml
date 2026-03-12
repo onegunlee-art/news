@@ -168,6 +168,7 @@ jobs:
           # env.txt = dotfile이 아닌 일반 파일 (FTP에서 누락될 수 있는 .env 대비)
           echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" > deploy/env.txt
           echo "GOOGLE_TTS_API_KEY=${{ secrets.GOOGLE_TTS_API_KEY }}" >> deploy/env.txt
+          if [ -n "${{ secrets.ANTHROPIC_API_KEY }}" ]; then echo "ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}" >> deploy/env.txt; fi
           # Supabase (선택): 피드백/이론 라이브러리 사용 시 추가
           if [ -n "${{ secrets.SUPABASE_URL }}" ]; then echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> deploy/env.txt; fi
           if [ -n "${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" ]; then echo "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" >> deploy/env.txt; fi
@@ -187,6 +188,11 @@ jobs:
             echo "  GOOGLE_TTS_API_KEY: SET"
           else
             echo "  ⚠️ GOOGLE_TTS_API_KEY: NOT SET"
+          fi
+          if [ -n "${{ secrets.ANTHROPIC_API_KEY }}" ]; then
+            echo "  ANTHROPIC_API_KEY: SET"
+          else
+            echo "  ⚠️ ANTHROPIC_API_KEY: NOT SET"
           fi
           ls -la deploy/env.txt deploy/.env 2>/dev/null || true
 
