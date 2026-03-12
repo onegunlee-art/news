@@ -157,7 +157,9 @@ class AnalysisAgent extends BaseAgent
             $narrationPrompt = $this->buildNarrationFromAnalysisPrompt($article, $data);
             $narrationResponse = $this->callGPT($narrationPrompt, $options);
             $narrationData = $this->parseJsonResponse($narrationResponse);
-            if (!empty($narrationData['narration'])) {
+            if (!empty($narrationData['narration_paragraphs']) && is_array($narrationData['narration_paragraphs'])) {
+                $data['narration'] = implode("\n\n", array_filter(array_map('trim', $narrationData['narration_paragraphs'])));
+            } elseif (!empty($narrationData['narration'])) {
                 $data['narration'] = $narrationData['narration'];
             }
         } else {
@@ -173,6 +175,15 @@ class AnalysisAgent extends BaseAgent
             ? $article->getTitle()
             : ($data['original_title'] ?? null);
 
+        // paragraphs 배열 → 문자열 변환 (JSON 줄바꿈 손실 방지)
+        if (!empty($data['content_summary_paragraphs']) && is_array($data['content_summary_paragraphs'])) {
+            $data['content_summary'] = implode("\n\n", array_filter(array_map('trim', $data['content_summary_paragraphs'])));
+        }
+        $criticalAnalysis = $data['critical_analysis'] ?? [];
+        if (is_array($criticalAnalysis) && !empty($criticalAnalysis['why_important_paragraphs']) && is_array($criticalAnalysis['why_important_paragraphs'])) {
+            $criticalAnalysis['why_important'] = implode("\n\n", array_filter(array_map('trim', $criticalAnalysis['why_important_paragraphs'])));
+        }
+
         // narration 정규화: 인사말 제거, 메타 문구 제거
         $narration = $this->normalizeNarration($data['narration'] ?? null);
         $narration = $this->stripMetaPhrasesFromText($narration);
@@ -181,7 +192,6 @@ class AnalysisAgent extends BaseAgent
         $contentSummary = $this->stripMetaPhrasesFromText($data['content_summary'] ?? null);
         $contentSummary = $this->normalizeParagraphBreaks($contentSummary);
 
-        $criticalAnalysis = $data['critical_analysis'] ?? [];
         if (is_array($criticalAnalysis) && isset($criticalAnalysis['why_important'])) {
             $criticalAnalysis['why_important'] = $this->normalizeParagraphBreaks(
                 $this->stripMetaPhrasesFromText($criticalAnalysis['why_important'])
@@ -293,15 +303,15 @@ class AnalysisAgent extends BaseAgent
 - Premium content, Recommended, Related, Save, Share, Listen, Print, Sign up, 캡션, 크레딧, 날짜 단독 라인은 모두 제거하세요.
 
 [문단 규칙]
-- content_summary와 critical_analysis.why_important는 반드시 짧은 문단으로 쓰세요.
+- content_summary_paragraphs와 why_important_paragraphs는 반드시 배열의 각 원소가 하나의 문단입니다.
 - 각 문단은 1~3문장.
-- 문단이 바뀔 때마다 반드시 빈 줄 하나(\n\n)를 넣으세요.
 - 한 문단에는 하나의 논점만 담으세요.
+- 문단을 합치지 말고 반드시 개별 배열 원소로 나누세요.
 
 [출력 목표]
-- content_summary: 한국 독자가 기사 전체 논리를 빠르게 이해하게 하는 구조화 요약
+- content_summary_paragraphs: 한국 독자가 기사 전체 논리를 빠르게 이해하게 하는 구조화 요약 (합산 최소 700자)
 - key_points: 사실, 수치, 핵심 주장 중심
-- critical_analysis.why_important: 왜 중요한지 한 단계 위에서 설명
+- why_important_paragraphs: 왜 중요한지 한 단계 위에서 설명
 
 아래 JSON 형식으로만 응답하세요.
 
@@ -310,7 +320,11 @@ class AnalysisAgent extends BaseAgent
   "author": "저자 이름 (없으면 빈 문자열)",
   "original_title": "위 기사 제목을 그대로 유지",
   "sections": [],
-  "content_summary": "짧은 문단들로 구성된 구조화 요약. 최소 700자 이상",
+  "content_summary_paragraphs": [
+    "구조화 요약 문단 1",
+    "구조화 요약 문단 2",
+    "구조화 요약 문단 3"
+  ],
   "key_points": [
     "핵심 포인트 1",
     "핵심 포인트 2",
@@ -318,7 +332,10 @@ class AnalysisAgent extends BaseAgent
     "핵심 포인트 4"
   ],
   "critical_analysis": {
-    "why_important": "짧은 문단들로 구성된 중요성 설명"
+    "why_important_paragraphs": [
+      "중요성 설명 문단 1",
+      "중요성 설명 문단 2"
+    ]
   }
 }
 PROMPT;
@@ -358,15 +375,15 @@ PROMPT;
 - Leaders |, Briefing |, Finance & economics | 같은 앞쪽 네비게이션 라벨
 
 [문단 규칙]
-- content_summary와 critical_analysis.why_important는 반드시 짧은 문단으로 쓰세요.
+- content_summary_paragraphs와 why_important_paragraphs는 반드시 배열의 각 원소가 하나의 문단입니다.
 - 각 문단은 1~3문장.
-- 문단이 바뀔 때마다 반드시 빈 줄 하나(\n\n)를 넣으세요.
 - 한 문단에는 하나의 논점만 담으세요.
+- 문단을 합치지 말고 반드시 개별 배열 원소로 나누세요.
 
 [출력 목표]
-- content_summary: 문단 흐름이 살아 있는 구조화 요약
+- content_summary_paragraphs: 문단 흐름이 살아 있는 구조화 요약 (합산 최소 700자)
 - key_points: 각 문단의 핵심 주장/사실/수치가 빠지지 않게 정리
-- critical_analysis.why_important: 이 논지가 외교, 경제, 안보, 정책에 왜 중요한지 설명
+- why_important_paragraphs: 이 논지가 외교, 경제, 안보, 정책에 왜 중요한지 설명
 
 아래 JSON 형식으로만 응답하세요.
 
@@ -375,7 +392,11 @@ PROMPT;
   "author": "저자 이름 (없으면 빈 문자열)",
   "original_title": "위 기사 제목을 그대로 유지",
   "sections": [],
-  "content_summary": "문단 흐름을 따라 재구성한 구조화 요약. 최소 700자 이상",
+  "content_summary_paragraphs": [
+    "구조화 요약 문단 1",
+    "구조화 요약 문단 2",
+    "구조화 요약 문단 3"
+  ],
   "key_points": [
     "핵심 포인트 1",
     "핵심 포인트 2",
@@ -383,7 +404,10 @@ PROMPT;
     "핵심 포인트 4"
   ],
   "critical_analysis": {
-    "why_important": "짧은 문단들로 구성된 중요성 설명"
+    "why_important_paragraphs": [
+      "중요성 설명 문단 1",
+      "중요성 설명 문단 2"
+    ]
   }
 }
 PROMPT;
@@ -410,15 +434,15 @@ PROMPT;
 - 한국 독자가 기사 핵심 논리와 맥락을 빠르게 이해할 수 있도록 설명형으로 정리하세요.
 
 [문단 규칙]
-- content_summary와 critical_analysis.why_important는 반드시 짧은 문단으로 쓰세요.
+- content_summary_paragraphs와 why_important_paragraphs는 반드시 배열의 각 원소가 하나의 문단입니다.
 - 각 문단은 1~3문장.
-- 문단이 바뀔 때마다 반드시 빈 줄 하나(\n\n)를 넣으세요.
 - 한 문단에는 하나의 논점만 담으세요.
+- 문단을 합치지 말고 반드시 개별 배열 원소로 나누세요.
 
 [출력 목표]
-- content_summary: 기사 논지를 재구성한 구조화 요약
+- content_summary_paragraphs: 기사 논지를 재구성한 구조화 요약 (합산 최소 700자)
 - key_points: 핵심 사실, 주장, 수치, 배경 중심
-- critical_analysis.why_important: 왜 중요한지 The Gist 에디터 톤으로 설명
+- why_important_paragraphs: 왜 중요한지 The Gist 에디터 톤으로 설명
 
 아래 JSON 형식으로만 응답하세요.
 
@@ -427,7 +451,11 @@ PROMPT;
   "author": "저자 이름 (없으면 빈 문자열)",
   "original_title": "위 기사 제목을 그대로 유지",
   "sections": [],
-  "content_summary": "짧은 문단들로 구성된 구조화 요약. 최소 700자 이상",
+  "content_summary_paragraphs": [
+    "구조화 요약 문단 1",
+    "구조화 요약 문단 2",
+    "구조화 요약 문단 3"
+  ],
   "key_points": [
     "핵심 포인트 1",
     "핵심 포인트 2",
@@ -435,7 +463,10 @@ PROMPT;
     "핵심 포인트 4"
   ],
   "critical_analysis": {
-    "why_important": "짧은 문단들로 구성된 중요성 설명"
+    "why_important_paragraphs": [
+      "중요성 설명 문단 1",
+      "중요성 설명 문단 2"
+    ]
   }
 }
 PROMPT;
@@ -475,18 +506,22 @@ PROMPT;
 
 [문단 규칙]
 - 각 문단은 1~3문장.
-- 문단이 바뀔 때마다 반드시 빈 줄 하나(\n\n)를 넣으세요.
 - 한 문단에는 하나의 논점만 담으세요.
-- paragraph별 한 줄 띄기 규칙을 반드시 지키세요.
+- 문단을 합치지 말고 반드시 개별 배열 원소로 나누세요.
 
 [분량]
-- 최소 1000자 이상.
+- 전체 합산 최소 1000자 이상.
 - 가능하면 1100~1500자 밀도로 작성하세요.
 
-아래 JSON 형식으로만 응답하세요.
+아래 JSON 형식으로만 응답하세요. narration_paragraphs 배열의 각 원소가 하나의 문단입니다.
 
 {
-  "narration": "짧은 문단들로 구성된 The Gist 스타일 narration"
+  "narration_paragraphs": [
+    "첫 번째 문단 (핵심 논지로 시작)",
+    "두 번째 문단",
+    "세 번째 문단",
+    "..."
+  ]
 }
 PROMPT;
     }
