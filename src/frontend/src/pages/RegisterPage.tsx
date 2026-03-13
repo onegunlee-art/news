@@ -100,7 +100,7 @@ const RegisterPage: React.FC = () => {
 
   useEffect(() => {
     if (isAuthenticated && !showSuccess) {
-      navigate(returnTo || '/profile', { replace: true })
+      navigate(returnTo || '/', { replace: true })
     }
   }, [isAuthenticated, showSuccess, navigate, returnTo])
 

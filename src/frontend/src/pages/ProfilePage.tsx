@@ -95,9 +95,9 @@ export default function ProfilePage() {
                       )}
                       <div className="min-w-0">
                         <p className="text-page font-medium text-sm md:text-base truncate">{user.nickname}</p>
-                        <p className="text-page-secondary text-xs md:text-sm mt-0.5">
-                          {user.role === 'admin' ? '관리자' : 'Premium Member'}
-                        </p>
+                        {user.role === 'admin' && (
+                          <p className="text-page-secondary text-xs md:text-sm mt-0.5">관리자</p>
+                        )}
                         {isSubscribed && (
                           <div className="mt-1.5 space-y-1">
                             <span className="inline-block px-2.5 py-0.5 text-[10px] font-medium tracking-wide uppercase text-primary-700 bg-primary-100 rounded-md">
@@ -208,7 +208,7 @@ export default function ProfilePage() {
 
         {/* My Subscription: Current Plan + MANAGE */}
         <section className="mt-6 bg-page rounded-xl overflow-hidden shadow-sm border border-page">
-          <h2 className="px-5 py-4 text-sm font-bold text-primary-500 uppercase tracking-wider">My Subscription</h2>
+          <h2 className="px-5 py-4 text-sm font-medium text-page">My Subscription</h2>
           <ul className="divide-y divide-[var(--border-color)]">
             <li className="flex items-center justify-between px-5 py-4">
               <span className="flex items-center gap-2 text-page text-sm font-medium">
@@ -227,7 +227,7 @@ export default function ProfilePage() {
 
         {/* Settings: 다크 모드, 문의하기, 회원 탈퇴 */}
         <section className="mt-6 bg-page rounded-xl overflow-hidden shadow-sm border border-page">
-          <h2 className="px-5 py-4 text-sm font-bold text-primary-500 uppercase tracking-wider">Settings</h2>
+          <h2 className="px-5 py-4 text-sm font-medium text-page">Settings</h2>
           <ul className="divide-y divide-[var(--border-color)]">
             <li className="flex items-center justify-between gap-3 px-5 py-4">
               <span className="flex items-center gap-3 text-page text-sm font-medium">
