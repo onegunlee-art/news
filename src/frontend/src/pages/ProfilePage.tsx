@@ -208,7 +208,7 @@ export default function ProfilePage() {
 
         {/* My Subscription: Current Plan + MANAGE */}
         <section className="mt-6 bg-page rounded-xl overflow-hidden shadow-sm border border-page">
-          <h2 className="px-5 py-4 text-sm font-medium text-page">My Subscription</h2>
+          <h2 className="px-5 py-4 text-sm font-bold text-primary-500 uppercase tracking-wider">My Subscription</h2>
           <ul className="divide-y divide-[var(--border-color)]">
             <li className="flex items-center justify-between px-5 py-4">
               <span className="flex items-center gap-2 text-page text-sm font-medium">
@@ -239,7 +239,7 @@ export default function ProfilePage() {
                 role="switch"
                 aria-checked={theme === 'dark'}
                 onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus:outline-none ${
+                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-0 ring-0 border-0 ${
                   theme === 'dark' ? 'bg-primary-500' : 'bg-page-secondary'
                 }`}
               >

@@ -48,9 +48,9 @@ export default function Header() {
       {/* 메인 헤더 - PC에서 넓은 max-width */}
       <div className="relative z-10 max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 md:px-6">
         <div className="flex items-center justify-between min-h-14 md:min-h-[5rem] py-2 md:py-3">
-          {/* 왼쪽 - 모바일: 세로 3선(햄버거) → My Page/구독 이동, PC: 텍스트 링크 */}
+          {/* 왼쪽 - 모바일: 세로 3선(햄버거) → My Library/구독 이동, PC: 텍스트 링크 */}
           <div className="w-16 md:w-auto flex items-center">
-            {/* 모바일: 햄버거 아이콘 - My Page에 있으면 홈으로, 그 외에는 My Page/로그인으로 */}
+            {/* 모바일: 햄버거 아이콘 - My Library에 있으면 홈으로, 그 외에는 My Library/로그인으로 */}
             <button
               type="button"
               onClick={() => {
@@ -61,7 +61,7 @@ export default function Header() {
                 }
               }}
               className="md:hidden p-2 -ml-2 text-page-secondary hover:text-page transition-colors"
-              aria-label={location.pathname === '/profile' ? '홈으로' : isAuthenticated ? 'My Page' : '로그인/회원가입'}
+              aria-label={location.pathname === '/profile' ? '홈으로' : isAuthenticated ? 'My Library' : '로그인/회원가입'}
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -70,8 +70,8 @@ export default function Header() {
             {/* PC: 텍스트 링크 */}
             {isAuthenticated ? (
               <div className="hidden md:flex items-center gap-3">
-                <Link to="/profile" className="text-xs text-page-secondary hover:text-page transition-colors">
-                  My Page
+                <Link to="/profile" className="text-sm font-bold text-primary-500 uppercase tracking-wider hover:text-primary-600 transition-colors">
+                  My Library
                 </Link>
                 <Link to="/subscribe" className="text-xs text-page-secondary hover:text-page transition-colors">
                   구독
