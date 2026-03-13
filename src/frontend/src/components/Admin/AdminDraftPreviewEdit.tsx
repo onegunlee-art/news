@@ -5,6 +5,7 @@ import { formatContentHtml, normalizeEditorHtml, ensureBrForEditor } from '../..
 import { getPlaceholderImageUrl } from '../../utils/imagePolicy'
 import { formatSourceDisplayName, buildEditorialLine, parseEditorialLine } from '../../utils/formatSource'
 import { extractTitleFromUrl } from '../../utils/extractTitleFromUrl'
+import { adminFetch } from '../../services/api'
 
 /** Admin draft article (from admin/news.php?id=X) */
 export interface DraftArticle {
@@ -93,6 +94,9 @@ export default function AdminDraftPreviewEdit({
     const sub = initialNews.category || ''
     return SUB_CATEGORY_OPTIONS.some((o) => o.value === sub) ? '' : sub
   })
+  const [dallePrompt, setDallePrompt] = useState('')
+  const [isRegeneratingDalle, setIsRegeneratingDalle] = useState(false)
+  const [thumbnailMessage, setThumbnailMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const editorialInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -169,6 +173,7 @@ export default function AdminDraftPreviewEdit({
         why_important: news.why_important ? normalizeEditorHtml(news.why_important) : null,
         narration: news.narration ? normalizeEditorHtml(news.narration) : null,
         content: news.content ? normalizeEditorHtml(news.content) : null,
+        image_url: news.image_url ?? null,
       })
       setNews((prev) => ({ ...prev, category_parent: categoryParent, category: subVal || null }))
       setEditingSection(null)
@@ -190,6 +195,7 @@ export default function AdminDraftPreviewEdit({
         why_important: news.why_important ? normalizeEditorHtml(news.why_important) : null,
         narration: news.narration ? normalizeEditorHtml(news.narration) : null,
         content: news.content ? normalizeEditorHtml(news.content) : null,
+        image_url: news.image_url ?? null,
       }
       await onPublish(current)
     } finally {
@@ -306,6 +312,63 @@ export default function AdminDraftPreviewEdit({
               )
             }}
           />
+        </div>
+
+        {/* DALL-E로 썸네일 수정 */}
+        <div className="px-4 py-4 border-t border-gray-200 bg-gray-50">
+          <label className="block text-gray-600 text-sm font-medium mb-1">DALL-E로 썸네일 수정</label>
+          <p className="text-gray-500 text-xs mb-2">기사 제목을 넣으면 메타포 카툰 스타일로 썸네일을 생성합니다 (비워두면 뉴스 제목 사용)</p>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={dallePrompt}
+              onChange={(e) => {
+                setDallePrompt(e.target.value)
+                setThumbnailMessage(null)
+              }}
+              placeholder="기사 제목 또는 시각화할 개념 (비워두면 뉴스 제목 사용)"
+              className="flex-1 bg-white border border-gray-300 rounded-lg px-3 py-2 text-gray-900 text-sm placeholder-gray-400 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 outline-none transition"
+            />
+            <button
+              type="button"
+              disabled={isRegeneratingDalle || (!dallePrompt.trim() && !(news.title || '').trim())}
+              onClick={async () => {
+                setThumbnailMessage(null)
+                setIsRegeneratingDalle(true)
+                try {
+                  const res = await adminFetch('/api/admin/ai-analyze.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      action: 'regenerate_thumbnail_dalle',
+                      news_id: news.id,
+                      prompt: dallePrompt.trim() || undefined,
+                      news_title: news.title || undefined,
+                    }),
+                  })
+                  const data = await res.json()
+                  if (data.success && data.image_url) {
+                    setNews((prev) => ({ ...prev, image_url: data.image_url }))
+                    setThumbnailMessage({ type: 'success', text: 'DALL-E로 썸네일이 새로 생성되었습니다. 아래 "임시 저장 업데이트"를 누르면 저장됩니다.' })
+                  } else {
+                    setThumbnailMessage({ type: 'error', text: data.error || data.message || 'DALL-E 썸네일 생성 실패' })
+                  }
+                } catch (e) {
+                  setThumbnailMessage({ type: 'error', text: 'DALL-E 요청 실패: ' + (e as Error).message })
+                } finally {
+                  setIsRegeneratingDalle(false)
+                }
+              }}
+              className="px-3 py-2 bg-purple-600 hover:bg-purple-500 text-white text-xs rounded-lg transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isRegeneratingDalle ? '생성 중...' : 'DALL-E로 수정'}
+            </button>
+          </div>
+          {thumbnailMessage && (
+            <p className={`mt-2 text-sm ${thumbnailMessage.type === 'success' ? 'text-green-600' : 'text-red-600'}`}>
+              {thumbnailMessage.text}
+            </p>
+          )}
         </div>
 
         <div className="px-4 pt-5 pb-8">
