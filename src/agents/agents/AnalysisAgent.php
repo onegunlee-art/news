@@ -157,6 +157,8 @@ class AnalysisAgent extends BaseAgent
         $url = $article->getUrl();
         $host = parse_url($url, PHP_URL_HOST) ?? '';
         $title = $article->getTitle();
+        $subtitle = $article->getDescription() ?? '';
+        $subheadings = $article->getSubheadings();
         $content = $this->truncateContent($article->getContent(), 40000);
 
         $domainHint = '';
@@ -300,18 +302,62 @@ HINT;
 
 ---
 
-기사 URL: {$url}
-기사 제목: {$title}
+##############################################################
+# 스크래핑된 기사 정보 (정확히 사용하세요)
+##############################################################
 
-기사 본문:
+[기사 URL]
+{$url}
+
+[원문 제목 - Title]
+{$title}
+
+[원문 부제목 - Subtitle]
+{$subtitle}
+
+[원문 소제목 목록 - Subheadings]
+{$this->formatSubheadingsForPrompt($subheadings, $host)}
+
+[기사 본문]
 {$content}
 
----
+##############################################################
+# 출력 규칙
+##############################################################
 
-위 기사를 분석하여 예시와 같은 형식의 JSON으로 응답하세요.
-예시의 '주제'가 아닌 '형식'만 따르세요.
-JSON 외 텍스트 금지.
+1. news_title: 원문 제목을 한글로 번역
+2. original_title: 원문 제목 그대로 (위 [원문 제목] 사용)
+3. introduction_summary: 원문 부제목을 한글로 번역 + 서론 요약 (위 [원문 부제목] 참조)
+4. section_analysis:
+   - Foreign Affairs: 위 [원문 소제목 목록]의 각 소제목을 section_title에 그대로 사용
+   - Economist/FT/일반: 단락별 주제를 영문 대문자로 생성하여 section_title에 사용
+   - section_title_ko: section_title의 한글 번역
+
+위 규칙에 따라 JSON으로 응답하세요. JSON 외 텍스트 금지.
 PROMPT;
+    }
+
+    /**
+     * 소제목 목록을 프롬프트용 문자열로 포맷
+     */
+    private function formatSubheadingsForPrompt(array $subheadings, string $host): string
+    {
+        if (empty($subheadings)) {
+            if (str_contains(strtolower($host), 'economist.com')) {
+                return "(소제목 없음 - 단락별 주제를 영문 대문자로 생성하세요)";
+            }
+            if (str_contains(strtolower($host), 'ft.com')) {
+                return "(소제목 없음 - 논리적 흐름으로 가상 섹션을 만드세요)";
+            }
+            return "(소제목 없음)";
+        }
+
+        $lines = [];
+        foreach ($subheadings as $i => $heading) {
+            $num = $i + 1;
+            $lines[] = "{$num}. {$heading}";
+        }
+        return implode("\n", $lines);
     }
 
     /**

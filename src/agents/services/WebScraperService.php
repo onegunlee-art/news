@@ -380,6 +380,9 @@ class WebScraperService
         // 본문 추출 (Readability 스타일)
         $content = $this->extractContent($xpath, $doc);
 
+        // 소제목 별도 추출 (Foreign Affairs 볼드 등)
+        $subheadings = $this->extractSubheadings($xpath, $doc, $url);
+
         $metadata = [
             'scraped_at' => date('c'),
             'content_length' => strlen($content),
@@ -396,7 +399,8 @@ class WebScraperService
             imageUrl: $imageUrl,
             language: $language,
             source: $source,
-            metadata: $metadata
+            metadata: $metadata,
+            subheadings: $subheadings
         );
     }
 
@@ -608,6 +612,45 @@ class WebScraperService
             }
         }
         return null;
+    }
+
+    /**
+     * 소제목(Subheading) 별도 추출
+     * - Foreign Affairs: 볼드(<strong>/<b>) 안의 ALL CAPS 텍스트
+     * - 일반: <h2>, <h3> 등 헤딩 태그
+     * @return string[]
+     */
+    private function extractSubheadings(\DOMXPath $xpath, \DOMDocument $doc, string $url): array
+    {
+        $host = strtolower(parse_url($url, PHP_URL_HOST) ?? '');
+        $subheadings = [];
+
+        // Foreign Affairs: 본문 내 볼드 ALL CAPS 추출
+        if (str_contains($host, 'foreignaffairs.com')) {
+            $boldNodes = $xpath->query('//article//strong | //article//b | //*[contains(@class, "article")]//strong | //*[contains(@class, "article")]//b');
+            foreach ($boldNodes as $node) {
+                $text = trim($node->textContent);
+                if ($this->isLikelySubheading($text)) {
+                    if (!in_array($text, $subheadings, true)) {
+                        $subheadings[] = $text;
+                    }
+                }
+            }
+            return $subheadings;
+        }
+
+        // 일반 기사: h2, h3 태그에서 추출
+        $headingNodes = $xpath->query('//article//h2 | //article//h3 | //*[contains(@class, "article")]//h2 | //*[contains(@class, "article")]//h3');
+        foreach ($headingNodes as $node) {
+            $text = trim($node->textContent);
+            if ($text !== '' && mb_strlen($text) >= 3 && mb_strlen($text) <= 100) {
+                if (!in_array($text, $subheadings, true)) {
+                    $subheadings[] = $text;
+                }
+            }
+        }
+
+        return $subheadings;
     }
 
     /**

@@ -25,7 +25,8 @@ final class ArticleData
         private readonly ?string $imageUrl = null,
         private readonly ?string $language = null,
         private readonly ?string $source = null,
-        private readonly array $metadata = []
+        private readonly array $metadata = [],
+        private readonly array $subheadings = []
     ) {}
 
     public function getUrl(): string
@@ -83,7 +84,8 @@ final class ArticleData
             imageUrl: $imageUrl,
             language: $this->language,
             source: $this->source,
-            metadata: $this->metadata
+            metadata: $this->metadata,
+            subheadings: $this->subheadings
         );
     }
 
@@ -95,6 +97,15 @@ final class ArticleData
     public function getMetadata(): array
     {
         return $this->metadata;
+    }
+
+    /**
+     * 소제목 배열 반환 (Foreign Affairs 볼드 텍스트 등)
+     * @return string[]
+     */
+    public function getSubheadings(): array
+    {
+        return $this->subheadings;
     }
 
     /**
@@ -129,6 +140,7 @@ final class ArticleData
             'image_url' => $this->imageUrl,
             'language' => $this->language,
             'metadata' => $this->metadata,
+            'subheadings' => $this->subheadings,
             'content_length' => $this->getContentLength(),
             'word_count' => $this->getWordCount()
         ];
@@ -149,7 +161,8 @@ final class ArticleData
             imageUrl: $data['image_url'] ?? null,
             language: $data['language'] ?? null,
             source: $data['source'] ?? null,
-            metadata: $data['metadata'] ?? []
+            metadata: $data['metadata'] ?? [],
+            subheadings: $data['subheadings'] ?? []
         );
     }
 }
