@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useInfiniteQuery } from '@tanstack/react-query'
 import { newsApi } from '../services/api'
 import { queryKeys } from '../lib/queryClient'
 
@@ -14,6 +14,32 @@ interface NewsDetailParams {
   _t?: number
 }
 
+interface NewsItem {
+  id?: number
+  title: string
+  description: string
+  narration?: string | null
+  url: string
+  source: string | null
+  published_at: string | null
+  time_ago?: string
+  category?: string
+  image_url?: string | null
+}
+
+interface NewsListResponse {
+  success: boolean
+  data: {
+    items: NewsItem[]
+    pagination: {
+      page: number
+      limit: number
+      total: number
+      total_pages: number
+    }
+  }
+}
+
 export function useNewsList(params: NewsListParams = {}) {
   const { page = 1, limit = 20, category } = params
   return useQuery({
@@ -22,6 +48,23 @@ export function useNewsList(params: NewsListParams = {}) {
       const response = await newsApi.getList(page, limit, category)
       return response.data
     },
+  })
+}
+
+export function useInfiniteNewsList(category?: string, limit = 20) {
+  return useInfiniteQuery({
+    queryKey: ['news', 'infinite', category ?? 'all'],
+    queryFn: async ({ pageParam = 1 }) => {
+      const response = await newsApi.getList(pageParam, limit, category)
+      return response.data as NewsListResponse
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      const pagination = lastPage.data?.pagination
+      if (!pagination) return undefined
+      return pagination.page < pagination.total_pages ? pagination.page + 1 : undefined
+    },
+    staleTime: 1000 * 60 * 2, // 2분 캐시
   })
 }
 
@@ -43,6 +86,7 @@ export function usePopularNews() {
       const response = await newsApi.getPopular()
       return response.data
     },
+    staleTime: 1000 * 60 * 2, // 2분 캐시
   })
 }
 

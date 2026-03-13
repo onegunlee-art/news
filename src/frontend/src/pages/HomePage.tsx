@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import MaterialIcon from '../components/Common/MaterialIcon'
 import { newsApi } from '../services/api'
@@ -12,6 +12,7 @@ import { getPlaceholderImageUrl } from '../utils/imagePolicy'
 import { formatSourceDisplayName, buildEditorialLine } from '../utils/formatSource'
 import { extractTitleFromUrl } from '../utils/extractTitleFromUrl'
 import { stripHtml } from '../utils/sanitizeHtml'
+import { useInfiniteNewsList, usePopularNews } from '../hooks/useNews'
 
 interface NewsItem {
   id?: number
@@ -85,11 +86,6 @@ const SPECIAL_FEATURE_BADGE = 'MSC'
 export default function HomePage() {
   const location = useLocation()
   const navigate = useNavigate()
-  const [news, setNews] = useState<NewsItem[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [isLoadingMore, setIsLoadingMore] = useState(false)
-  const [page, setPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
   const { isSubscribed: globalIsSubscribed } = useAuthStore()
   const [showSubscriptionPopup, setShowSubscriptionPopup] = useState(() => {
     if (globalIsSubscribed) return false
@@ -103,10 +99,33 @@ export default function HomePage() {
     return tab && TABS.includes(tab) ? tab : '최신'
   })
 
-  useEffect(() => {
-    setPage(1)
-    fetchNews(1, false)
-  }, [activeTab])
+  // React Query: 탭별 데이터 페칭
+  const category = tabToCategory[activeTab] || undefined
+  const isPopularTab = activeTab === '인기'
+
+  const {
+    data: infiniteData,
+    isLoading: isLoadingInfinite,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useInfiniteNewsList(category, PER_PAGE)
+
+  const { data: popularData, isLoading: isLoadingPopular } = usePopularNews()
+
+  // 뉴스 데이터 통합
+  const news = useMemo(() => {
+    if (isPopularTab) {
+      const items = popularData?.data?.items || []
+      return filterPlaceholder(items)
+    }
+    const pages = infiniteData?.pages || []
+    const allItems = pages.flatMap((page) => page.data?.items || [])
+    return filterPlaceholder(allItems)
+  }, [isPopularTab, popularData, infiniteData])
+
+  const isLoading = isPopularTab ? isLoadingPopular : isLoadingInfinite
+  const isLoadingMore = isFetchingNextPage
 
   // 탭별 스크롤 위치 저장 (상세에서 카테고리 버튼으로 돌아왔을 때 복원용)
   useEffect(() => {
@@ -152,45 +171,10 @@ export default function HomePage() {
     return () => cancelAnimationFrame(id)
   }, [isLoading, location.state, navigate])
 
-  const fetchNews = async (pageNum: number, append: boolean) => {
-    if (append) {
-      setIsLoadingMore(true)
-    } else {
-      setIsLoading(true)
-    }
-    try {
-      if (activeTab === '인기') {
-        const response = await newsApi.getPopular()
-        if (response.data.success) {
-          const items = response.data.data.items || []
-          const filtered = filterPlaceholder(items)
-          setTotalPages(1)
-          setNews(filtered)
-        }
-      } else {
-        const category = tabToCategory[activeTab]
-        const response = await newsApi.getList(pageNum, PER_PAGE, category || undefined)
-        if (response.data.success) {
-          const items = response.data.data.items || []
-          const filtered = filterPlaceholder(items)
-          const pagination = response.data.data.pagination || {}
-          const total = pagination.total_pages ?? 1
-          setTotalPages(total)
-          setNews((prev) => (append ? [...prev, ...filtered] : filtered))
-        }
-      }
-    } catch (error) {
-      console.error('Failed to fetch news:', error)
-    } finally {
-      setIsLoading(false)
-      setIsLoadingMore(false)
-    }
-  }
-
   const loadMore = () => {
-    const nextPage = page + 1
-    setPage(nextPage)
-    fetchNews(nextPage, true)
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage()
+    }
   }
 
   const handleCloseSubscriptionPopup = () => {
@@ -276,7 +260,7 @@ export default function HomePage() {
                 ))}
               </div>
             </div>
-            {page < totalPages && activeTab !== '인기' && (
+            {hasNextPage && !isPopularTab && (
               <div className="flex justify-center pt-8 pb-4">
                 <button
                   type="button"

@@ -54,12 +54,15 @@ export function getArticleImageSeed(article: ArticleForImage): number {
 
 /**
  * Picsum placeholder URL 반환. 기사마다 고유 시드 사용으로 중복 이미지 방지.
+ * WebP 포맷 기본 사용 (25-35% 용량 감소)
  */
 export function getPlaceholderImageUrl(
   article: ArticleForImage,
   width: number = 400,
-  height: number = 250
+  height: number = 250,
+  format: 'webp' | 'jpg' = 'webp'
 ): string {
   const seed = getArticleImageSeed(article)
-  return `https://picsum.photos/seed/${seed}/${width}/${height}`
+  const base = `https://picsum.photos/seed/${seed}/${width}/${height}`
+  return format === 'webp' ? `${base}.webp` : base
 }
