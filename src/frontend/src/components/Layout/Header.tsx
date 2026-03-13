@@ -38,7 +38,7 @@ export default function Header() {
   }
 
   return (
-    <header className="relative sticky top-0 z-40 border-b border-page overflow-hidden bg-page">
+    <header className="relative sticky top-0 z-40 border-b border-page overflow-hidden bg-page min-h-14 md:min-h-[5rem]">
       {/* 스크롤 비율에 따라 왼쪽→오른쪽으로 연한 회색이 진행 */}
       <div
         className="absolute inset-y-0 left-0 bg-page-secondary transition-[width] duration-200 ease-out"
@@ -47,7 +47,7 @@ export default function Header() {
       />
       {/* 메인 헤더 - PC에서 넓은 max-width */}
       <div className="relative z-10 max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 md:px-6">
-        <div className="flex items-center justify-between h-14">
+        <div className="flex items-center justify-between min-h-14 md:min-h-[5rem] py-2 md:py-3">
           {/* 왼쪽 - 모바일: 세로 3선(햄버거) → My Page/구독 이동, PC: 텍스트 링크 */}
           <div className="w-16 md:w-auto flex items-center">
             {/* 모바일: 햄버거 아이콘 - My Page에 있으면 홈으로, 그 외에는 My Page/로그인으로 */}
@@ -84,9 +84,9 @@ export default function Header() {
             )}
           </div>
 
-          {/* 중앙 - 로고 (Lobster 폰트, 블랙, 1.5배) */}
-          <Link to="/" className="flex-1 text-center">
-            <h1 className="text-3xl md:text-6xl font-normal text-page tracking-tight" style={{ fontFamily: "'Lobster', cursive" }}>
+          {/* 중앙 - 로고 (Lobster 폰트, 블랙, 1.5배), PC에서 영역 확보 */}
+          <Link to="/" className="flex-1 flex items-center justify-center min-w-0 min-h-[2.5rem] md:min-h-[3.75rem] overflow-visible">
+            <h1 className="text-3xl md:text-6xl font-normal text-page tracking-tight whitespace-nowrap" style={{ fontFamily: "'Lobster', cursive" }}>
               The gist.
             </h1>
           </Link>
