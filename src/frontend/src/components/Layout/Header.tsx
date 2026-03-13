@@ -84,10 +84,10 @@ export default function Header() {
             )}
           </div>
 
-          {/* 중앙 - 로고 (Lobster 폰트, 크게) */}
+          {/* 중앙 - 로고 (Lobster 폰트, 블랙, 1.5배) */}
           <Link to="/" className="flex-1 text-center">
-            <h1 className="text-2xl md:text-4xl font-normal text-primary-500 tracking-tight" style={{ fontFamily: "'Lobster', cursive" }}>
-              The Gist
+            <h1 className="text-3xl md:text-6xl font-normal text-page tracking-tight" style={{ fontFamily: "'Lobster', cursive" }}>
+              The gist.
             </h1>
           </Link>
 

@@ -13,6 +13,7 @@ import { formatSourceDisplayName, buildEditorialLine } from '../utils/formatSour
 import { extractTitleFromUrl } from '../utils/extractTitleFromUrl'
 import { formatContentHtml, stripHtml, stripAnalysisMetaPhrases } from '../utils/sanitizeHtml'
 import PaywallOverlay from '../components/Paywall/PaywallOverlay'
+import { useMenuConfig } from '../hooks/useMenuConfig'
 
 interface NewsDetail {
   id: number
@@ -42,43 +43,12 @@ interface NewsDetail {
   restriction_type?: string
 }
 
-/** 상위 카테고리 (기사 소속) → 표시 라벨 - back 버튼 fallback용 */
-const parentCategoryToLabel: Record<string, string> = {
-  diplomacy: '외교',
-  economy: '경제',
-  special: '특집',
-}
-
-/** 하위 카테고리 → 표시 라벨 (리스트와 본문 통일) */
-const subCategoryToLabel: Record<string, string> = {
-  politics_diplomacy: 'Politics/Diplomacy',
-  economy_industry: 'Economy/Industry',
-  society: 'Society',
-  security_conflict: 'Security/Conflict',
-  environment: 'Environment',
-  science_technology: 'Science/Technology',
-  culture: 'Culture',
-  health_development: 'Health/Development',
-}
-
-/** 홈 탭 타입 (진입 탭 전달 시 back이 이 탭으로 복귀) */
-const HOME_TABS = ['최신', '외교', '경제', '특집', '인기'] as const
-type HomeTabType = (typeof HOME_TABS)[number]
-
-/** 진입 탭 → API from_tab (다음 기사가 해당 탭 리스트 기준이 되도록) */
-const fromTabToApi: Record<HomeTabType, string> = {
-  '최신': 'latest',
-  '외교': 'diplomacy',
-  '경제': 'economy',
-  '특집': 'special',
-  '인기': 'popular',
-}
-
 export default function NewsDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const location = useLocation()
-  const fromTab = (location.state as { fromTab?: HomeTabType } | null)?.fromTab
+  const { subCategoryToLabel, parentKeyToLabel, fromTabToApi, tabLabels } = useMenuConfig()
+  const fromTab = (location.state as { fromTab?: string } | null)?.fromTab
   const { isAuthenticated, login } = useAuthStore()
   const addAudioItem = useAudioListStore((s) => s.addItem)
   const openAndPlay = useAudioPlayerStore((s) => s.openAndPlay)
@@ -109,8 +79,8 @@ export default function NewsDetailPage() {
       : (data.updated_at || data.created_at)
         ? `${new Date(data.updated_at || data.created_at!).getFullYear()}년 ${new Date(data.updated_at || data.created_at!).getMonth() + 1}월 ${new Date(data.updated_at || data.created_at!).getDate()}일`
         : ''
-    const rawSource = (data.original_source && data.original_source.trim()) || (data.source === 'Admin' ? 'The Gist' : data.source || 'The Gist')
-    const sourceDisplay = formatSourceDisplayName(rawSource) || 'The Gist'
+    const rawSource = (data.original_source && data.original_source.trim()) || (data.source === 'Admin' ? 'The gist.' : data.source || 'The gist.')
+    const sourceDisplay = formatSourceDisplayName(rawSource) || 'The gist.'
     const originalTitle = (data.original_title && String(data.original_title).trim()) || extractTitleFromUrl(data.url) || '원문'
     const editorialLine = buildEditorialLine({ dateStr, sourceDisplay, originalTitle })
     const critiqueText = data.why_important ? stripHtml(data.why_important) : ''
@@ -206,21 +176,21 @@ export default function NewsDetailPage() {
   const getSourceName = () => {
     let raw: string
     if (news?.original_source && news.original_source.trim()) raw = news.original_source
-    else if (news?.source === 'Admin') return 'The Gist'
-    else raw = news?.source || 'The Gist'
-    return formatSourceDisplayName(raw) || 'The Gist'
+    else if (news?.source === 'Admin') return 'The gist.'
+    else raw = news?.source || 'The gist.'
+    return formatSourceDisplayName(raw) || 'The gist.'
   }
 
   // 카테고리 라벨: 리스트와 동일하게 하위 카테고리 표시 (제목 위 오렌지색)
   const getCategoryLabel = () => {
     if (news?.category) return subCategoryToLabel[news.category] ?? news.category
-    return 'The Gist'
+    return 'The gist.'
   }
 
   // 글 목록 라벨: 하위 카테고리만 표시 (없으면 최신)
   const getListLabel = () => {
     const parent = news?.category_parent ?? (news?.category === 'economy' ? 'economy' : news?.category === 'entertainment' || news?.category === 'technology' ? 'special' : 'diplomacy')
-    return parentCategoryToLabel[parent] ?? '최신'
+    return parentKeyToLabel[parent] ?? parentKeyToLabel.latest ?? '최신'
   }
 
   // 이미지 URL (기사별 고유 시드, 중복 없음)
@@ -270,7 +240,7 @@ export default function NewsDetailPage() {
           <div className="flex items-center justify-between h-12">
             {/* 상단 Back 버튼 - 상위 카테고리 라벨만 표시 */}
             {(() => {
-              const backTab: HomeTabType = fromTab && HOME_TABS.includes(fromTab) ? fromTab : (getListLabel() as HomeTabType)
+              const backTab: string = fromTab && tabLabels.includes(fromTab) ? fromTab : getListLabel()
               return (
                 <button
                   type="button"
@@ -504,7 +474,7 @@ export default function NewsDetailPage() {
 
           {/* 하단 네비: 3줄 (이전 · 목록 · 다음) */}
           {(() => {
-            const backTab: HomeTabType = fromTab && HOME_TABS.includes(fromTab) ? fromTab : (getListLabel() as HomeTabType)
+            const backTab: string = fromTab && tabLabels.includes(fromTab) ? fromTab : getListLabel()
             return (
               <nav className="mt-12 mb-4" aria-label="기사 네비게이션">
                 <div className="border-t border-b border-page">

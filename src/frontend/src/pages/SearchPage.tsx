@@ -13,18 +13,7 @@ import { formatSourceDisplayName, buildEditorialLine } from '../utils/formatSour
 import { extractTitleFromUrl } from '../utils/extractTitleFromUrl'
 import { stripHtml } from '../utils/sanitizeHtml'
 import { queryKeys } from '../lib/queryClient'
-
-/** 기사 카드/본문에 표시할 하위 카테고리 라벨 (홈과 동일) */
-const subCategoryToLabel: Record<string, string> = {
-  politics_diplomacy: 'Politics/Diplomacy',
-  economy_industry: 'Economy/Industry',
-  society: 'Society',
-  security_conflict: 'Security/Conflict',
-  environment: 'Environment',
-  science_technology: 'Science/Technology',
-  culture: 'Culture',
-  health_development: 'Health/Development',
-}
+import { useMenuConfig } from '../hooks/useMenuConfig'
 
 interface NewsItem {
   id?: number
@@ -58,6 +47,7 @@ export default function SearchPage() {
     staleTime: 1000 * 60 * 2, // 2분 캐시
   })
 
+  const { subCategoryToLabel } = useMenuConfig()
   const news = data ?? []
   const searched = isFetched && q.length >= 1
 
@@ -92,7 +82,7 @@ export default function SearchPage() {
         ) : (
           <div className="space-y-0 lg:grid lg:grid-cols-2 lg:gap-x-12 lg:gap-y-0 lg:border-t lg:border-page">
             {news.map((item, index) => (
-              <SearchArticleCard key={item.id ?? index} article={item} />
+              <SearchArticleCard key={item.id ?? index} article={item} subCategoryToLabel={subCategoryToLabel} />
             ))}
           </div>
         )}
@@ -101,7 +91,7 @@ export default function SearchPage() {
   )
 }
 
-function SearchArticleCard({ article }: { article: NewsItem }) {
+function SearchArticleCard({ article, subCategoryToLabel }: { article: NewsItem; subCategoryToLabel: Record<string, string> }) {
   const navigate = useNavigate()
   const { isAuthenticated } = useAuthStore()
   const addAudioItem = useAudioListStore((s) => s.addItem)
@@ -136,16 +126,16 @@ function SearchArticleCard({ article }: { article: NewsItem }) {
   const getSourceName = () => {
     let raw: string
     if (article.original_source && String(article.original_source).trim()) raw = article.original_source
-    else if (article.source === 'Admin') return 'The Gist'
-    else raw = article.source || 'The Gist'
-    return formatSourceDisplayName(raw) || 'The Gist'
+    else if (article.source === 'Admin') return 'The gist.'
+    else raw = article.source || 'The gist.'
+    return formatSourceDisplayName(raw) || 'The gist.'
   }
 
   // 카테고리 라벨: 하위만 표시 (홈과 동일)
   const getCategoryLabel = () => {
     if (article.category) return subCategoryToLabel[article.category] ?? article.category
-    if (article.source === 'Admin') return 'The Gist'
-    return formatSourceDisplayName(article.source) || 'The Gist'
+    if (article.source === 'Admin') return 'The gist.'
+    return formatSourceDisplayName(article.source) || 'The gist.'
   }
 
   // 오디오 재생: 기사 상세를 먼저 가져와서 내레이션 + The Gist's Critique 전부 읽기
@@ -173,8 +163,8 @@ function SearchArticleCard({ article }: { article: NewsItem }) {
         const dateStr = displayDate
           ? `${new Date(displayDate).getFullYear()}년 ${new Date(displayDate).getMonth() + 1}월 ${new Date(displayDate).getDate()}일`
           : ''
-        const rawSource = (detail.original_source && String(detail.original_source).trim()) || (detail.source === 'Admin' ? 'The Gist' : detail.source || 'The Gist')
-        const sourceDisplay = formatSourceDisplayName(rawSource) || 'The Gist'
+        const rawSource = (detail.original_source && String(detail.original_source).trim()) || (detail.source === 'Admin' ? 'The gist.' : detail.source || 'The gist.')
+        const sourceDisplay = formatSourceDisplayName(rawSource) || 'The gist.'
         const editorialLine = buildEditorialLine({ dateStr, sourceDisplay, originalTitle })
         const mainContent = stripHtml(detail.narration || detail.content || detail.description || article.description || '')
         const critiquePart = detail.why_important ? stripHtml(detail.why_important) : ''

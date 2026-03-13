@@ -123,7 +123,7 @@ export default function SubscriptionPage() {
           className="text-center mb-10"
         >
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white leading-snug">
-            <span style={{ fontFamily: "'Lobster', cursive" }}>The Gist</span>의 모든 컨텐츠를 만나세요
+            <span style={{ fontFamily: "'Lobster', cursive" }}>The gist.</span>의 모든 컨텐츠를 만나세요
           </h1>
           <p className="mt-4 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
             외교·정치·안보·분쟁에서
@@ -273,8 +273,8 @@ export default function SubscriptionPage() {
           <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-5">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <h4 className="text-gray-900 dark:text-white font-semibold text-sm">The Gist 컨텐츠 1건</h4>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">구독자가 직접 선택하는 The Gist 컨텐츠 1건</p>
+                <h4 className="text-gray-900 dark:text-white font-semibold text-sm">The gist. 컨텐츠 1건</h4>
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">구독자가 직접 선택하는 The gist. 컨텐츠 1건</p>
               </div>
               <span className="text-gray-900 dark:text-white font-bold whitespace-nowrap">500원</span>
             </div>

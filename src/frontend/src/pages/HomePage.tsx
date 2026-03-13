@@ -13,6 +13,7 @@ import { formatSourceDisplayName, buildEditorialLine } from '../utils/formatSour
 import { extractTitleFromUrl } from '../utils/extractTitleFromUrl'
 import { stripHtml } from '../utils/sanitizeHtml'
 import { useInfiniteNewsList, usePopularNews } from '../hooks/useNews'
+import { useMenuConfig } from '../hooks/useMenuConfig'
 
 interface NewsItem {
   id?: number
@@ -25,28 +26,6 @@ interface NewsItem {
   time_ago?: string
   category?: string
   image_url?: string | null
-}
-
-type TabType = '최신' | '외교' | '경제' | '특집' | '인기'
-
-const tabToCategory: Record<TabType, string | null> = {
-  '최신': null,
-  '외교': 'diplomacy',
-  '경제': 'economy',
-  '특집': 'special',
-  '인기': null,
-}
-
-/** 기사 카드/본문에 표시할 하위 카테고리 라벨 (8개 + 직접입력은 그대로) */
-const subCategoryToLabel: Record<string, string> = {
-  politics_diplomacy: 'Politics/Diplomacy',
-  economy_industry: 'Economy/Industry',
-  society: 'Society',
-  security_conflict: 'Security/Conflict',
-  environment: 'Environment',
-  science_technology: 'Science/Technology',
-  culture: 'Culture',
-  health_development: 'Health/Development',
 }
 
 const PER_PAGE = 20
@@ -79,13 +58,13 @@ function chunkBy2<T>(arr: T[]): T[][] {
   return out
 }
 
-const TABS: TabType[] = ['최신', '외교', '경제', '특집', '인기']
-/** 특집 탭 위에 표시할 신규 콘텐츠 배지 문구 (변경 시 이 상수만 수정) */
+/** 특집 탭 위에 표시할 신규 콘텐츠 배지 문구 */
 const SPECIAL_FEATURE_BADGE = 'MSC'
 
 export default function HomePage() {
   const location = useLocation()
   const navigate = useNavigate()
+  const { tabs, tabLabels, tabToCategory, subCategoryToLabel } = useMenuConfig()
   const { isSubscribed: globalIsSubscribed } = useAuthStore()
   const [showSubscriptionPopup, setShowSubscriptionPopup] = useState(() => {
     if (globalIsSubscribed) return false
@@ -93,15 +72,17 @@ export default function HomePage() {
     const today = getTodayYYYYMMDD()
     return dismissed !== today
   })
-  const [activeTab, setActiveTab] = useState<TabType>(() => {
-    const s = (location.state as { restoreTab?: TabType } | null) ?? null
+  const popularLabel = tabs.find((t) => t.key === 'popular')?.label ?? '인기'
+  const specialLabel = tabs.find((t) => t.key === 'special')?.label ?? '특집'
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    const s = (location.state as { restoreTab?: string } | null) ?? null
     const tab = s?.restoreTab
-    return tab && TABS.includes(tab) ? tab : '최신'
+    return tab && tabLabels.includes(tab) ? tab : tabLabels[0] ?? '최신'
   })
 
   // React Query: 탭별 데이터 페칭
-  const category = tabToCategory[activeTab] || undefined
-  const isPopularTab = activeTab === '인기'
+  const category = tabToCategory[activeTab] ?? undefined
+  const isPopularTab = activeTab === popularLabel
 
   const {
     data: infiniteData,
@@ -151,7 +132,7 @@ export default function HomePage() {
   // 상세 페이지에서 카테고리 버튼으로 돌아온 경우: 로딩 완료 후 스크롤 복원 후 state 제거
   const didRestoreRef = useRef(false)
   useEffect(() => {
-    const restoreTab = (location.state as { restoreTab?: TabType } | null)?.restoreTab
+    const restoreTab = (location.state as { restoreTab?: string } | null)?.restoreTab
     if (!restoreTab) {
       didRestoreRef.current = false
       return
@@ -191,7 +172,7 @@ export default function HomePage() {
       <div className="sticky top-14 bg-page-secondary z-30 border-b border-page">
         <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 md:px-8 lg:px-12 xl:px-16">
           <div className="flex">
-            {TABS.map((tab) => (
+            {tabLabels.map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -201,7 +182,7 @@ export default function HomePage() {
                     : 'text-page-secondary hover:text-page'
                 }`}
               >
-                {tab === '특집' ? (
+                {tab === specialLabel ? (
                   <span className="relative inline-block">
                     <span className="absolute -top-2 right-0 translate-x-1 rounded-full bg-primary-500 px-1 py-0.5 text-[8px] font-medium leading-none text-white whitespace-nowrap">
                       {SPECIAL_FEATURE_BADGE}
@@ -237,7 +218,7 @@ export default function HomePage() {
               <div className="lg:hidden">
                 {news.map((item, i) => (
                   <div key={item.id ?? i}>
-                    <ArticleCard article={item} activeTab={activeTab} />
+                    <ArticleCard article={item} activeTab={activeTab} subCategoryToLabel={subCategoryToLabel} />
                     {i < news.length - 1 && (
                       <div className="h-2 bg-page-secondary" aria-hidden />
                     )}
@@ -250,7 +231,7 @@ export default function HomePage() {
                   <div key={rowIndex}>
                     <div className="grid grid-cols-2 gap-x-12">
                       {row.map((item, idx) => (
-                        <ArticleCard key={item.id ?? rowIndex * 2 + idx} article={item} activeTab={activeTab} />
+                        <ArticleCard key={item.id ?? rowIndex * 2 + idx} article={item} activeTab={activeTab} subCategoryToLabel={subCategoryToLabel} />
                       ))}
                     </div>
                     {rowIndex < chunkBy2(news).length - 1 && (
@@ -282,7 +263,7 @@ export default function HomePage() {
 }
 
 // 기사 카드 - 왼쪽 텍스트 + 오른쪽 이미지. 기사는 흰 배경, 기사 사이 간격에 회색 배경이 비침.
-function ArticleCard({ article, activeTab }: { article: NewsItem; activeTab: TabType }) {
+function ArticleCard({ article, activeTab, subCategoryToLabel }: { article: NewsItem; activeTab: string; subCategoryToLabel: Record<string, string> }) {
   const navigate = useNavigate()
   const { isAuthenticated } = useAuthStore()
   const addAudioItem = useAudioListStore((s) => s.addItem)
@@ -310,8 +291,8 @@ function ArticleCard({ article, activeTab }: { article: NewsItem; activeTab: Tab
   // 카테고리 라벨: 하위만 표시 (subCategoryToLabel 또는 직접입력값 그대로)
   const getCategoryLabel = () => {
     if (article.category) return subCategoryToLabel[article.category] ?? article.category
-    if (article.source === 'Admin') return 'The Gist'
-    return formatSourceDisplayName(article.source) || 'The Gist'
+    if (article.source === 'Admin') return 'The gist.'
+    return formatSourceDisplayName(article.source) || 'The gist.'
   }
 
   // 오디오 재생: 기사 상세를 먼저 가져와서 내레이션 + The Gist's Critique 전부 읽기
@@ -355,7 +336,7 @@ function ArticleCard({ article, activeTab }: { article: NewsItem; activeTab: Tab
     if (text) {
       const url = (article as { url?: string; source_url?: string }).url || (article as { source_url?: string }).source_url
       const originalTitle = extractTitleFromUrl(url) || '원문'
-      const sourceDisplay = formatSourceDisplayName(article.source) || 'The Gist'
+      const sourceDisplay = formatSourceDisplayName(article.source) || 'The gist.'
       const displayDate = (article as { display_date?: string }).display_date ?? article.published_at
       const dateStr = displayDate
         ? `${new Date(displayDate).getFullYear()}년 ${new Date(displayDate).getMonth() + 1}월 ${new Date(displayDate).getDate()}일`

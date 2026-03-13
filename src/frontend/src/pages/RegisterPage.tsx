@@ -28,7 +28,7 @@ const RegisterPage: React.FC = () => {
   const [showPrivacyModal, setShowPrivacyModal] = useState(false)
   const [showTermsModal, setShowTermsModal] = useState(false)
   const [showSuccess, setShowSuccess] = useState(false)
-  const [welcomeMessage, setWelcomeMessage] = useState('The Gist 가입을 감사드립니다.')
+  const [welcomeMessage, setWelcomeMessage] = useState('The gist. 가입을 감사드립니다.')
   const [welcomePopupData, setWelcomePopupData] = useState<{ userName: string } | null>(null)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -138,8 +138,8 @@ const RegisterPage: React.FC = () => {
         {/* 로고 */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-block">
-            <h1 className="text-4xl text-primary-500" style={{ fontFamily: "'Lobster', cursive" }}>
-              The Gist
+            <h1 className="text-5xl text-page" style={{ fontFamily: "'Lobster', cursive" }}>
+              The gist.
             </h1>
           </Link>
           <p className="text-gray-500 mt-2">Gisters, Becoming Leaders</p>

@@ -63,18 +63,22 @@ $router->get('/settings/welcome', function (Request $request): Response {
     }
 });
 
-// 사이트 공개 설정 (My Page/푸터용: 문의 이메일, 저작권, The Gist 비전)
+// 사이트 공개 설정 (My Page/푸터용: 문의 이메일, 저작권, 비전, 메뉴 설정)
 $router->get('/settings/site', function (Request $request): Response {
+    $year = date('Y');
+    $defaultMenuTabs = '[{"key":"latest","label":"최신"},{"key":"diplomacy","label":"외교"},{"key":"economy","label":"경제"},{"key":"special","label":"특집"},{"key":"popular","label":"인기"}]';
+    $defaultMenuSubcategories = '{"politics_diplomacy":"Politics/Diplomacy","economy_industry":"Economy/Industry","society":"Society","security_conflict":"Security/Conflict","environment":"Environment","science_technology":"Science/Technology","culture":"Culture","health_development":"Health/Development"}';
+    $data = [
+        'contact_email' => 'onegunlee@gmail.com',
+        'copyright_text' => "© {$year} The gist.",
+        'the_gist_vision' => 'Gisters, Becoming Leaders',
+        'menu_tabs' => $defaultMenuTabs,
+        'menu_subcategories' => $defaultMenuSubcategories,
+    ];
     try {
         $db = \App\Core\Database::getInstance()->getConnection();
-        $stmt = $db->query("SELECT `key`, `value` FROM settings WHERE `key` IN ('contact_email', 'copyright_text', 'the_gist_vision')");
+        $stmt = $db->query("SELECT `key`, `value` FROM settings WHERE `key` IN ('contact_email', 'copyright_text', 'the_gist_vision', 'menu_tabs', 'menu_subcategories')");
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-        $year = date('Y');
-        $data = [
-            'contact_email' => 'onegunlee@gmail.com',
-            'copyright_text' => "© {$year} The Gist",
-            'the_gist_vision' => 'Gisters, Becoming Leaders',
-        ];
         foreach ($rows as $r) {
             if (isset($data[$r['key']])) {
                 $data[$r['key']] = $r['value'] ?? $data[$r['key']];
@@ -82,12 +86,7 @@ $router->get('/settings/site', function (Request $request): Response {
         }
         return Response::success($data, 'OK');
     } catch (Throwable $e) {
-        $year = date('Y');
-        return Response::success([
-            'contact_email' => 'onegunlee@gmail.com',
-            'copyright_text' => "© {$year} The Gist",
-            'the_gist_vision' => 'Gisters, Becoming Leaders',
-        ], 'OK');
+        return Response::success($data, 'OK');
     }
 });
 

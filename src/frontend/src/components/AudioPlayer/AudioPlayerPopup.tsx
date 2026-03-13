@@ -24,7 +24,7 @@ function updateMediaSession(title: string, imageUrl: string) {
     : []
   navigator.mediaSession.metadata = new MediaMetadata({
     title: title || '뉴스 오디오',
-    artist: 'The Gist',
+    artist: 'The gist.',
     album: 'News Audio',
     artwork,
   })

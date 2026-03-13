@@ -3,29 +3,19 @@ import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuthStore } from '../store/authStore'
 import { useAudioListStore, type AudioListItem } from '../store/audioListStore'
-import { useViewSettingsStore, type Theme } from '../store/viewSettingsStore'
+import { useViewSettingsStore } from '../store/viewSettingsStore'
 import { newsApi, siteSettingsApi, contactApi } from '../services/api'
 import LoadingSpinner from '../components/Common/LoadingSpinner'
 import { formatSourceDisplayName } from '../utils/formatSource'
 import MaterialIcon from '../components/Common/MaterialIcon'
 import PrivacyPolicyModal from '../components/Common/PrivacyPolicyModal'
 import TermsModal from '../components/Common/TermsModal'
+import { useMenuConfig } from '../hooks/useMenuConfig'
 
 const CONTAINER_CLASS = 'max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4'
 
-/** 기사 리스트와 동일: 하위 카테고리 라벨 (8개 + 직접입력은 그대로) */
-const subCategoryToLabel: Record<string, string> = {
-  politics_diplomacy: 'Politics/Diplomacy',
-  economy_industry: 'Economy/Industry',
-  society: 'Society',
-  security_conflict: 'Security/Conflict',
-  environment: 'Environment',
-  science_technology: 'Science/Technology',
-  culture: 'Culture',
-  health_development: 'Health/Development',
-}
-
 export default function ProfilePage() {
+  const { subCategoryToLabel } = useMenuConfig()
   const { user, isAuthenticated, isSubscribed, logout } = useAuthStore()
   const { theme, setTheme } = useViewSettingsStore()
   const hasAuth = isAuthenticated
@@ -57,7 +47,7 @@ export default function ProfilePage() {
       if (res.data?.data) {
         setSiteSettings({
           the_gist_vision: res.data.data.the_gist_vision ?? 'Gisters, Becoming Leaders',
-          copyright_text: res.data.data.copyright_text || `© ${new Date().getFullYear()} The Gist`,
+          copyright_text: res.data.data.copyright_text || `© ${new Date().getFullYear()} The gist.`,
         })
       }
     }).catch(() => {})
@@ -183,7 +173,7 @@ export default function ProfilePage() {
                   ) : isLoading ? (
                     <div className="flex justify-center py-12"><LoadingSpinner size="large" /></div>
                   ) : (
-                    <BookmarkList bookmarks={bookmarks} />
+                    <BookmarkList bookmarks={bookmarks} subCategoryToLabel={subCategoryToLabel} />
                   )}
                 </div>
               )}
@@ -208,7 +198,7 @@ export default function ProfilePage() {
                       <Link to="/login" className="inline-block px-5 py-2 bg-primary-500 text-white text-sm rounded-lg hover:bg-primary-600">로그인</Link>
                     </div>
                   ) : (
-                    <AudioList items={Array.isArray(audioItems) ? audioItems : []} />
+                    <AudioList items={Array.isArray(audioItems) ? audioItems : []} subCategoryToLabel={subCategoryToLabel} />
                   )}
                 </div>
               )}
@@ -244,20 +234,21 @@ export default function ProfilePage() {
                 <MaterialIcon name="eyeglasses_2" className="w-5 h-5 text-page-secondary flex-shrink-0" size={20} />
                 다크 모드
               </span>
-              <div className="flex gap-2">
-                {(['light', 'dark'] as Theme[]).map((t) => (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => setTheme(t)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                      theme === t ? 'bg-primary-500 text-white' : 'bg-page-secondary text-page-secondary hover:opacity-90'
-                    }`}
-                  >
-                    {t === 'light' ? '라이트' : '다크'}
-                  </button>
-                ))}
-              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={theme === 'dark'}
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
+                  theme === 'dark' ? 'bg-primary-500' : 'bg-page-secondary'
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 shrink-0 transform rounded-full bg-white shadow ring-0 transition duration-200 ${
+                    theme === 'dark' ? 'translate-x-5' : 'translate-x-0.5'
+                  }`}
+                />
+              </button>
             </li>
             <li>
               <button
@@ -473,7 +464,7 @@ function ContactForm() {
   )
 }
 
-function AudioList({ items }: { items: AudioListItem[] }) {
+function AudioList({ items, subCategoryToLabel }: { items: AudioListItem[]; subCategoryToLabel: Record<string, string> }) {
   const safeItems = Array.isArray(items) ? items.filter((i) => i != null && Number.isFinite(i.id)) : []
   if (safeItems.length === 0) {
     return (
@@ -498,7 +489,7 @@ function AudioList({ items }: { items: AudioListItem[] }) {
             </h3>
             <div className="flex items-center gap-2 text-xs text-page-secondary">
               <span className="font-medium text-primary-500">
-                {item.category ? (subCategoryToLabel[item.category] ?? item.category) : (formatSourceDisplayName(item.source) || 'The Gist')}
+                {item.category ? (subCategoryToLabel[item.category] ?? item.category) : (formatSourceDisplayName(item.source) || 'The gist.')}
               </span>
               {(item.published_at || item.listenedAt) && (
                 <>
@@ -520,7 +511,7 @@ function AudioList({ items }: { items: AudioListItem[] }) {
   )
 }
 
-function BookmarkList({ bookmarks }: { bookmarks: any[] }) {
+function BookmarkList({ bookmarks, subCategoryToLabel }: { bookmarks: any[]; subCategoryToLabel: Record<string, string> }) {
   if (bookmarks.length === 0) {
     return (
       <div className="text-center py-8">
@@ -540,7 +531,7 @@ function BookmarkList({ bookmarks }: { bookmarks: any[] }) {
   return (
     <div className="space-y-0 divide-y divide-[var(--border-color)]">
       {bookmarks.map((item, index) => {
-        const categoryLabel = item.category ? (subCategoryToLabel[item.category] ?? item.category) : (formatSourceDisplayName(item.source) || 'The Gist')
+        const categoryLabel = item.category ? (subCategoryToLabel[item.category] ?? item.category) : (formatSourceDisplayName(item.source) || 'The gist.')
         const dateStr = item.published_at
           ? `${new Date(item.published_at).getFullYear()}년 ${new Date(item.published_at).getMonth() + 1}월 ${new Date(item.published_at).getDate()}일`
           : ''

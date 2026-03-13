@@ -120,8 +120,8 @@ export default function AdminDraftPreviewEdit({
   }
 
   const getSourceName = () => {
-    const raw = news.original_source?.trim() || news.source || 'The Gist'
-    return formatSourceDisplayName(raw) || 'The Gist'
+    const raw = news.original_source?.trim() || news.source || 'The gist.'
+    return formatSourceDisplayName(raw) || 'The gist.'
   }
 
   const getImageUrl = () => {
@@ -149,7 +149,7 @@ export default function AdminDraftPreviewEdit({
 
   const getEditorialLine = () =>
     buildEditorialLine({
-      sourceDisplay: formatSourceDisplayName(news.original_source?.trim() || news.source || 'The Gist') || 'The Gist',
+      sourceDisplay: formatSourceDisplayName(news.original_source?.trim() || news.source || 'The gist.') || 'The gist.',
       originalTitle: news.original_title?.trim() || extractTitleFromUrl(news.url) || '원문',
     })
 
@@ -491,7 +491,7 @@ export default function AdminDraftPreviewEdit({
                 className="text-xl font-semibold tracking-wide"
                 style={{ fontFamily: "'Lobster', cursive", color: '#FF6F00' }}
               >
-                The Gist
+                The gist.
               </h2>
               <button
                 onClick={() =>

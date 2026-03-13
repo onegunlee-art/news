@@ -36,9 +36,9 @@ function buildTtsParamsForListen(params: {
   const dateStr = ref
     ? `${new Date(ref).getFullYear()}년 ${new Date(ref).getMonth() + 1}월 ${new Date(ref).getDate()}일`
     : ''
-  const rawSourceVal = (params.originalSource != null ? String(params.originalSource).trim() : '') || (params.source === 'Admin' ? 'The Gist' : (params.source != null ? String(params.source) : 'The Gist'))
-  const rawSource: string = typeof rawSourceVal === 'string' ? rawSourceVal : 'The Gist'
-  const sourceDisplay = formatSourceDisplayName(rawSource) || 'The Gist'
+  const rawSourceVal = (params.originalSource != null ? String(params.originalSource).trim() : '') || (params.source === 'Admin' ? 'The gist.' : (params.source != null ? String(params.source) : 'The gist.'))
+  const rawSource: string = typeof rawSourceVal === 'string' ? rawSourceVal : 'The gist.'
+  const sourceDisplay = formatSourceDisplayName(rawSource) || 'The gist.'
   const meta = buildEditorialLine({ dateStr, sourceDisplay, originalTitle })
   const narration = (params.narration || '').trim()
   const critiquePart = params.whyImportant ? params.whyImportant.trim() : ''
@@ -819,6 +819,25 @@ const AdminPage: React.FC = () => {
   const [theGistVision, setTheGistVision] = useState('Gisters, Becoming Leaders');
   const [siteSettingsSaving, setSiteSettingsSaving] = useState(false);
   const [siteSettingsMsg, setSiteSettingsMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [menuTabs, setMenuTabs] = useState<{ key: string; label: string }[]>([
+    { key: 'latest', label: '최신' },
+    { key: 'diplomacy', label: '외교' },
+    { key: 'economy', label: '경제' },
+    { key: 'special', label: '특집' },
+    { key: 'popular', label: '인기' },
+  ]);
+  const [menuSubcategories, setMenuSubcategories] = useState<Record<string, string>>({
+    politics_diplomacy: 'Politics/Diplomacy',
+    economy_industry: 'Economy/Industry',
+    society: 'Society',
+    security_conflict: 'Security/Conflict',
+    environment: 'Environment',
+    science_technology: 'Science/Technology',
+    culture: 'Culture',
+    health_development: 'Health/Development',
+  });
+  const [menuSettingsSaving, setMenuSettingsSaving] = useState(false);
+  const [menuSettingsMsg, setMenuSettingsMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
     // 권한 체크 (실제 환경에서는 API 호출)
@@ -1057,11 +1076,23 @@ const AdminPage: React.FC = () => {
       if (s) {
         setPrivacyContent((s.privacy_policy && s.privacy_policy.trim()) ? s.privacy_policy : PRIVACY_POLICY_CONTENT);
         setTermsContent(s.terms_of_service ?? '');
-        setWelcomeMessage(s.welcome_popup_message ?? 'The Gist 가입을 감사드립니다.');
+        setWelcomeMessage(s.welcome_popup_message ?? 'The gist. 가입을 감사드립니다.');
         setWelcomeTitleTemplate(s.welcome_popup_title ?? '{name}님');
         setContactEmail(s.contact_email ?? 'onegunlee@gmail.com');
         setCopyrightText(s.copyright_text ?? '');
         setTheGistVision(s.the_gist_vision ?? 'Gisters, Becoming Leaders');
+        if (s.menu_tabs && typeof s.menu_tabs === 'string') {
+          try {
+            const parsed = JSON.parse(s.menu_tabs);
+            if (Array.isArray(parsed) && parsed.length >= 5) setMenuTabs(parsed);
+          } catch { /* ignore */ }
+        }
+        if (s.menu_subcategories && typeof s.menu_subcategories === 'string') {
+          try {
+            const parsed = JSON.parse(s.menu_subcategories);
+            if (parsed && typeof parsed === 'object') setMenuSubcategories((prev) => ({ ...prev, ...parsed }));
+          } catch { /* ignore */ }
+        }
       }
     } catch (e) {
       console.error('대시보드 로드 실패:', e);
@@ -1116,7 +1147,7 @@ const AdminPage: React.FC = () => {
             <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-emerald-400 bg-clip-text text-transparent">
               Admin Panel
             </h1>
-            <p className="text-slate-500 text-sm mt-1">The Gist</p>
+            <p className="text-slate-500 text-sm mt-1">The gist.</p>
           </div>
 
           <nav className="space-y-2">
@@ -1259,7 +1290,7 @@ const AdminPage: React.FC = () => {
                           type="text"
                           value={welcomeMessage}
                           onChange={(e) => setWelcomeMessage(e.target.value)}
-                          placeholder="The Gist 가입을 감사드립니다."
+                          placeholder="The gist. 가입을 감사드립니다."
                           className="w-full px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-slate-200"
                         />
                       </div>
@@ -1376,7 +1407,7 @@ const AdminPage: React.FC = () => {
                           type="text"
                           value={copyrightText}
                           onChange={(e) => setCopyrightText(e.target.value)}
-                          placeholder="비어 있으면 © 2026 The Gist 사용"
+                          placeholder="비어 있으면 © 2026 The gist. 사용"
                           className="w-full px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-slate-200"
                         />
                       </div>
@@ -1411,13 +1442,84 @@ const AdminPage: React.FC = () => {
                     </div>
                   </div>
 
+                  {/* 메뉴 설정: 탭·하위 카테고리 라벨 */}
+                  <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 space-y-4">
+                    <h3 className="text-lg font-semibold text-white mb-4">메뉴 설정</h3>
+                    <p className="text-slate-400 text-sm mb-4">홈 탭(최신/외교/경제/특집/인기)과 하위 카테고리 표시 라벨만 수정합니다. 키·순서는 고정입니다.</p>
+                    <div className="space-y-6">
+                      <div>
+                        <h4 className="text-slate-300 font-medium mb-3">탭 라벨 (5개)</h4>
+                        <div className="space-y-2">
+                          {menuTabs.map((tab, i) => (
+                            <div key={tab.key} className="flex items-center gap-3">
+                              <span className="text-slate-500 w-24 shrink-0">{tab.key}</span>
+                              <input
+                                type="text"
+                                value={tab.label}
+                                onChange={(e) => {
+                                  const next = [...menuTabs];
+                                  next[i] = { ...next[i], label: e.target.value };
+                                  setMenuTabs(next);
+                                }}
+                                className="flex-1 px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-slate-200"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <h4 className="text-slate-300 font-medium mb-3">하위 카테고리 라벨 (8개)</h4>
+                        <div className="space-y-2">
+                          {(Object.keys(menuSubcategories) as string[]).sort().map((key) => (
+                            <div key={key} className="flex items-center gap-3">
+                              <span className="text-slate-500 w-40 shrink-0 truncate">{key}</span>
+                              <input
+                                type="text"
+                                value={menuSubcategories[key] ?? ''}
+                                onChange={(e) => setMenuSubcategories((prev) => ({ ...prev, [key]: e.target.value }))}
+                                className="flex-1 px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-slate-200"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 mt-4">
+                      <button
+                        type="button"
+                        disabled={menuSettingsSaving}
+                        onClick={async () => {
+                          setMenuSettingsSaving(true);
+                          setMenuSettingsMsg(null);
+                          try {
+                            await adminSettingsApi.updateSettings({
+                              menu_tabs: JSON.stringify(menuTabs),
+                              menu_subcategories: JSON.stringify(menuSubcategories),
+                            });
+                            setMenuSettingsMsg({ type: 'success', text: '저장되었습니다.' });
+                          } catch (e) {
+                            setMenuSettingsMsg({ type: 'error', text: '저장에 실패했습니다.' });
+                          } finally {
+                            setMenuSettingsSaving(false);
+                          }
+                        }}
+                        className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white rounded-lg text-sm"
+                      >
+                        {menuSettingsSaving ? '저장 중...' : '메뉴 설정 저장'}
+                      </button>
+                      {menuSettingsMsg && (
+                        <span className={menuSettingsMsg.type === 'success' ? 'text-emerald-400' : 'text-red-400'}>{menuSettingsMsg.text}</span>
+                      )}
+                    </div>
+                  </div>
+
                   {/* 환영 팝업 미리보기 */}
                   {showWelcomePreview && (
                     <WelcomePopup
                       isOpen={true}
                       onClose={() => setShowWelcomePreview(false)}
                       userName="홍길동"
-                      welcomeMessage={welcomeMessage || 'The Gist 가입을 감사드립니다.'}
+                      welcomeMessage={welcomeMessage || 'The gist. 가입을 감사드립니다.'}
                     />
                   )}
                 </>
