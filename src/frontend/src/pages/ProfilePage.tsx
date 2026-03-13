@@ -33,7 +33,6 @@ export default function ProfilePage() {
   const [expandedActivity, setExpandedActivity] = useState<'none' | 'contact'>('none')
   const [showWithdrawConfirm, setShowWithdrawConfirm] = useState(false)
   const [withdrawing, setWithdrawing] = useState(false)
-  const [aiFeedExpanded, setAiFeedExpanded] = useState(false)
   const activeTabRef = useRef(activeTab)
   activeTabRef.current = activeTab
 
@@ -227,7 +226,7 @@ export default function ProfilePage() {
 
         {/* Settings: 다크 모드, 문의하기, 회원 탈퇴 */}
         <section className="mt-6 bg-page rounded-xl overflow-hidden shadow-sm border border-page">
-          <h2 className="px-5 py-4 text-sm font-medium text-page">Settings</h2>
+          <h2 className="px-5 py-4 text-xs font-bold text-primary-500 uppercase tracking-wider">Settings</h2>
           <ul className="divide-y divide-[var(--border-color)]">
             <li className="flex items-center justify-between gap-3 px-5 py-4">
               <span className="flex items-center gap-3 text-page text-sm font-medium">
@@ -283,40 +282,6 @@ export default function ProfilePage() {
               </li>
             )}
           </ul>
-        </section>
-
-        {/* AI Intelligence Feed: placeholder + Edit + expand/collapse */}
-        <section className="mt-6 bg-page rounded-xl overflow-hidden shadow-sm border border-page">
-          <div className="flex items-center justify-between px-5 py-4">
-            <h2 className="text-sm font-medium text-page-secondary uppercase tracking-wider">AI Intelligence Feed</h2>
-            <div className="flex items-center gap-2">
-              <button type="button" className="text-xs font-medium text-page-secondary hover:text-page">Edit</button>
-              <button
-                type="button"
-                onClick={() => setAiFeedExpanded((v) => !v)}
-                className="p-1 text-page-muted hover:text-page-secondary"
-                aria-label={aiFeedExpanded ? '접기' : '펼치기'}
-              >
-                <MaterialIcon name={aiFeedExpanded ? 'expand_less' : 'expand_more'} className="w-5 h-5" size={20} />
-              </button>
-            </div>
-          </div>
-          <AnimatePresence>
-            {aiFeedExpanded && (
-              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                <div className="px-5 pb-5 pt-1 border-t border-page">
-                  <div className="space-y-3">
-                    {['80%', '60%', '100%', '40%'].map((w, i) => (
-                      <div key={i} className="flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-primary-400 flex-shrink-0" />
-                        <div className="h-3 bg-page-secondary rounded" style={{ width: w }} />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </section>
 
         {/* Footer: The Gist, 저작권, 이용약관 — 정가운데 정렬 */}
