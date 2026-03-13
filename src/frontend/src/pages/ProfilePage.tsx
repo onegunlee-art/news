@@ -149,7 +149,7 @@ export default function ProfilePage() {
 
         {/* My Library: icon + label + chevron rows */}
         <section className="bg-page rounded-xl overflow-hidden shadow-sm border border-page">
-          <h2 className="px-5 py-4 text-sm font-bold text-primary-500 uppercase tracking-wider">My Library</h2>
+          <h2 className="px-5 py-4 text-xs font-bold text-primary-500 uppercase tracking-wider">My Library</h2>
           <ul className="divide-y divide-[var(--border-color)]">
             <li>
               <button
@@ -208,7 +208,7 @@ export default function ProfilePage() {
 
         {/* My Subscription: Current Plan + MANAGE */}
         <section className="mt-6 bg-page rounded-xl overflow-hidden shadow-sm border border-page">
-          <h2 className="px-5 py-4 text-sm font-bold text-primary-500 uppercase tracking-wider">My Subscription</h2>
+          <h2 className="px-5 py-4 text-xs font-bold text-primary-500 uppercase tracking-wider">My Subscription</h2>
           <ul className="divide-y divide-[var(--border-color)]">
             <li className="flex items-center justify-between px-5 py-4">
               <span className="flex items-center gap-2 text-page text-sm font-medium">
@@ -275,10 +275,10 @@ export default function ProfilePage() {
                 <button
                   type="button"
                   onClick={() => setShowWithdrawConfirm(true)}
-                  className="w-full flex items-center gap-3 px-5 py-4 text-left transition-colors hover:bg-page-secondary/50 text-page-secondary"
+                  className="w-full flex items-center gap-3 px-5 py-4 text-left transition-colors hover:bg-page-secondary/50"
                 >
                   <MaterialIcon name="delete" className="w-5 h-5 text-page-muted flex-shrink-0" size={20} />
-                  <span className="flex-1 text-sm font-medium">회원 탈퇴</span>
+                  <span className="flex-1 text-page text-sm font-medium">회원 탈퇴</span>
                 </button>
               </li>
             )}
