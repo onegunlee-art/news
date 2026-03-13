@@ -63,7 +63,7 @@ const LoginPage: React.FC = () => {
         <div className="text-center mb-8">
           <Link to="/" className="inline-block">
             <h1 className="text-5xl text-page" style={{ fontFamily: "'Lobster', cursive" }}>
-              The gist.
+              the gist.
             </h1>
           </Link>
           <p className="text-gray-500 mt-2">Gisters, Becoming Leaders</p>

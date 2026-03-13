@@ -14,7 +14,7 @@ const WelcomePopup: React.FC<WelcomePopupProps> = ({
   isOpen,
   onClose,
   userName,
-  welcomeMessage = 'The gist. 가입을 감사드립니다.',
+  welcomeMessage = 'the gist. 가입을 감사드립니다.',
 }) => {
   useEffect(() => {
     if (isOpen) {

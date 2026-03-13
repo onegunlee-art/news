@@ -48,7 +48,7 @@ export default function PaywallOverlay({
         )}
 
         <h2 className="text-2xl font-bold text-page leading-snug mb-6">
-          구독하고 <span style={{ fontFamily: "'Lobster', cursive" }}>The gist.</span>의
+          구독하고 <span style={{ fontFamily: "'Lobster', cursive" }}>the gist.</span>의
           <br />
           모든 컨텐츠를 만나세요
         </h2>

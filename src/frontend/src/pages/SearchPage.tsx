@@ -126,16 +126,16 @@ function SearchArticleCard({ article, subCategoryToLabel }: { article: NewsItem;
   const getSourceName = () => {
     let raw: string
     if (article.original_source && String(article.original_source).trim()) raw = article.original_source
-    else if (article.source === 'Admin') return 'The gist.'
-    else raw = article.source || 'The gist.'
-    return formatSourceDisplayName(raw) || 'The gist.'
+    else if (article.source === 'Admin') return 'the gist.'
+    else raw = article.source || 'the gist.'
+    return formatSourceDisplayName(raw) || 'the gist.'
   }
 
   // 카테고리 라벨: 하위만 표시 (홈과 동일)
   const getCategoryLabel = () => {
     if (article.category) return subCategoryToLabel[article.category] ?? article.category
-    if (article.source === 'Admin') return 'The gist.'
-    return formatSourceDisplayName(article.source) || 'The gist.'
+    if (article.source === 'Admin') return 'the gist.'
+    return formatSourceDisplayName(article.source) || 'the gist.'
   }
 
   // 오디오 재생: 기사 상세를 먼저 가져와서 내레이션 + The Gist's Critique 전부 읽기
@@ -163,8 +163,8 @@ function SearchArticleCard({ article, subCategoryToLabel }: { article: NewsItem;
         const dateStr = displayDate
           ? `${new Date(displayDate).getFullYear()}년 ${new Date(displayDate).getMonth() + 1}월 ${new Date(displayDate).getDate()}일`
           : ''
-        const rawSource = (detail.original_source && String(detail.original_source).trim()) || (detail.source === 'Admin' ? 'The gist.' : detail.source || 'The gist.')
-        const sourceDisplay = formatSourceDisplayName(rawSource) || 'The gist.'
+        const rawSource = (detail.original_source && String(detail.original_source).trim()) || (detail.source === 'Admin' ? 'the gist.' : detail.source || 'the gist.')
+        const sourceDisplay = formatSourceDisplayName(rawSource) || 'the gist.'
         const editorialLine = buildEditorialLine({ dateStr, sourceDisplay, originalTitle })
         const mainContent = stripHtml(detail.narration || detail.content || detail.description || article.description || '')
         const critiquePart = detail.why_important ? stripHtml(detail.why_important) : ''

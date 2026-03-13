@@ -79,8 +79,8 @@ export default function NewsDetailPage() {
       : (data.updated_at || data.created_at)
         ? `${new Date(data.updated_at || data.created_at!).getFullYear()}년 ${new Date(data.updated_at || data.created_at!).getMonth() + 1}월 ${new Date(data.updated_at || data.created_at!).getDate()}일`
         : ''
-    const rawSource = (data.original_source && data.original_source.trim()) || (data.source === 'Admin' ? 'The gist.' : data.source || 'The gist.')
-    const sourceDisplay = formatSourceDisplayName(rawSource) || 'The gist.'
+    const rawSource = (data.original_source && data.original_source.trim()) || (data.source === 'Admin' ? 'the gist.' : data.source || 'the gist.')
+    const sourceDisplay = formatSourceDisplayName(rawSource) || 'the gist.'
     const originalTitle = (data.original_title && String(data.original_title).trim()) || extractTitleFromUrl(data.url) || '원문'
     const editorialLine = buildEditorialLine({ dateStr, sourceDisplay, originalTitle })
     const critiqueText = data.why_important ? stripHtml(data.why_important) : ''
@@ -176,15 +176,15 @@ export default function NewsDetailPage() {
   const getSourceName = () => {
     let raw: string
     if (news?.original_source && news.original_source.trim()) raw = news.original_source
-    else if (news?.source === 'Admin') return 'The gist.'
-    else raw = news?.source || 'The gist.'
-    return formatSourceDisplayName(raw) || 'The gist.'
+    else if (news?.source === 'Admin') return 'the gist.'
+    else raw = news?.source || 'the gist.'
+    return formatSourceDisplayName(raw) || 'the gist.'
   }
 
   // 카테고리 라벨: 리스트와 동일하게 하위 카테고리 표시 (제목 위 오렌지색)
   const getCategoryLabel = () => {
     if (news?.category) return subCategoryToLabel[news.category] ?? news.category
-    return 'The gist.'
+    return 'the gist.'
   }
 
   // 글 목록 라벨: 하위 카테고리만 표시 (없으면 최신)

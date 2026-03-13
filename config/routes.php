@@ -70,7 +70,7 @@ $router->get('/settings/site', function (Request $request): Response {
     $defaultMenuSubcategories = '{"politics_diplomacy":"Politics/Diplomacy","economy_industry":"Economy/Industry","society":"Society","security_conflict":"Security/Conflict","environment":"Environment","science_technology":"Science/Technology","culture":"Culture","health_development":"Health/Development"}';
     $data = [
         'contact_email' => 'onegunlee@gmail.com',
-        'copyright_text' => "© {$year} The gist.",
+        'copyright_text' => "© {$year} the gist.",
         'the_gist_vision' => 'Gisters, Becoming Leaders',
         'menu_tabs' => $defaultMenuTabs,
         'menu_subcategories' => $defaultMenuSubcategories,

@@ -5,7 +5,7 @@ import TermsModal from '../Common/TermsModal'
 import { siteSettingsApi } from '../../services/api'
 
 const defaultVision = 'Gisters, Becoming Leaders'
-const defaultCopyright = () => `© ${new Date().getFullYear()} The gist.`
+const defaultCopyright = () => `© ${new Date().getFullYear()} the gist.`
 
 export default function Footer() {
   const [showPrivacyModal, setShowPrivacyModal] = useState(false)
@@ -32,7 +32,7 @@ export default function Footer() {
               className="text-3xl text-page group-hover:opacity-90 transition-opacity duration-200"
               style={{ fontFamily: "'Lobster', cursive", fontWeight: 400 }}
             >
-              The gist.
+              the gist.
             </h2>
           </Link>
           <p className="text-page-secondary text-sm mt-2">{vision}</p>

@@ -47,7 +47,7 @@ export default function ProfilePage() {
       if (res.data?.data) {
         setSiteSettings({
           the_gist_vision: res.data.data.the_gist_vision ?? 'Gisters, Becoming Leaders',
-          copyright_text: res.data.data.copyright_text || `© ${new Date().getFullYear()} The gist.`,
+          copyright_text: res.data.data.copyright_text || `© ${new Date().getFullYear()} the gist.`,
         })
       }
     }).catch(() => {})
@@ -489,7 +489,7 @@ function AudioList({ items, subCategoryToLabel }: { items: AudioListItem[]; subC
             </h3>
             <div className="flex items-center gap-2 text-xs text-page-secondary">
               <span className="font-medium text-primary-500">
-                {item.category ? (subCategoryToLabel[item.category] ?? item.category) : (formatSourceDisplayName(item.source) || 'The gist.')}
+                {item.category ? (subCategoryToLabel[item.category] ?? item.category) : (formatSourceDisplayName(item.source) || 'the gist.')}
               </span>
               {(item.published_at || item.listenedAt) && (
                 <>
@@ -531,7 +531,7 @@ function BookmarkList({ bookmarks, subCategoryToLabel }: { bookmarks: any[]; sub
   return (
     <div className="space-y-0 divide-y divide-[var(--border-color)]">
       {bookmarks.map((item, index) => {
-        const categoryLabel = item.category ? (subCategoryToLabel[item.category] ?? item.category) : (formatSourceDisplayName(item.source) || 'The gist.')
+        const categoryLabel = item.category ? (subCategoryToLabel[item.category] ?? item.category) : (formatSourceDisplayName(item.source) || 'the gist.')
         const dateStr = item.published_at
           ? `${new Date(item.published_at).getFullYear()}년 ${new Date(item.published_at).getMonth() + 1}월 ${new Date(item.published_at).getDate()}일`
           : ''

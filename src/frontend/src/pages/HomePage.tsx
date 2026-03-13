@@ -296,8 +296,8 @@ function ArticleCard({ article, activeTab, subCategoryToLabel }: { article: News
   // 카테고리 라벨: 하위만 표시 (subCategoryToLabel 또는 직접입력값 그대로)
   const getCategoryLabel = () => {
     if (article.category) return subCategoryToLabel[article.category] ?? article.category
-    if (article.source === 'Admin') return 'The gist.'
-    return formatSourceDisplayName(article.source) || 'The gist.'
+    if (article.source === 'Admin') return 'the gist.'
+    return formatSourceDisplayName(article.source) || 'the gist.'
   }
 
   // 오디오 재생: 기사 상세를 먼저 가져와서 내레이션 + The Gist's Critique 전부 읽기
@@ -341,7 +341,7 @@ function ArticleCard({ article, activeTab, subCategoryToLabel }: { article: News
     if (text) {
       const url = (article as { url?: string; source_url?: string }).url || (article as { source_url?: string }).source_url
       const originalTitle = extractTitleFromUrl(url) || '원문'
-      const sourceDisplay = formatSourceDisplayName(article.source) || 'The gist.'
+      const sourceDisplay = formatSourceDisplayName(article.source) || 'the gist.'
       const displayDate = (article as { display_date?: string }).display_date ?? article.published_at
       const dateStr = displayDate
         ? `${new Date(displayDate).getFullYear()}년 ${new Date(displayDate).getMonth() + 1}월 ${new Date(displayDate).getDate()}일`

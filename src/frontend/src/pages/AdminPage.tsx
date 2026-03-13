@@ -36,9 +36,9 @@ function buildTtsParamsForListen(params: {
   const dateStr = ref
     ? `${new Date(ref).getFullYear()}년 ${new Date(ref).getMonth() + 1}월 ${new Date(ref).getDate()}일`
     : ''
-  const rawSourceVal = (params.originalSource != null ? String(params.originalSource).trim() : '') || (params.source === 'Admin' ? 'The gist.' : (params.source != null ? String(params.source) : 'The gist.'))
-  const rawSource: string = typeof rawSourceVal === 'string' ? rawSourceVal : 'The gist.'
-  const sourceDisplay = formatSourceDisplayName(rawSource) || 'The gist.'
+  const rawSourceVal = (params.originalSource != null ? String(params.originalSource).trim() : '') || (params.source === 'Admin' ? 'the gist.' : (params.source != null ? String(params.source) : 'the gist.'))
+  const rawSource: string = typeof rawSourceVal === 'string' ? rawSourceVal : 'the gist.'
+  const sourceDisplay = formatSourceDisplayName(rawSource) || 'the gist.'
   const meta = buildEditorialLine({ dateStr, sourceDisplay, originalTitle })
   const narration = (params.narration || '').trim()
   const critiquePart = params.whyImportant ? params.whyImportant.trim() : ''
@@ -1165,7 +1165,7 @@ const AdminPage: React.FC = () => {
       if (s) {
         setPrivacyContent((s.privacy_policy && s.privacy_policy.trim()) ? s.privacy_policy : PRIVACY_POLICY_CONTENT);
         setTermsContent(s.terms_of_service ?? '');
-        setWelcomeMessage(s.welcome_popup_message ?? 'The gist. 가입을 감사드립니다.');
+        setWelcomeMessage(s.welcome_popup_message ?? 'the gist. 가입을 감사드립니다.');
         setWelcomeTitleTemplate(s.welcome_popup_title ?? '{name}님');
         setContactEmail(s.contact_email ?? 'onegunlee@gmail.com');
         setCopyrightText(s.copyright_text ?? '');
@@ -1236,7 +1236,7 @@ const AdminPage: React.FC = () => {
             <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-emerald-400 bg-clip-text text-transparent">
               Admin Panel
             </h1>
-            <p className="text-slate-500 text-sm mt-1">The gist.</p>
+            <p className="text-slate-500 text-sm mt-1">the gist.</p>
           </div>
 
           <nav className="space-y-2">
@@ -1382,7 +1382,7 @@ const AdminPage: React.FC = () => {
                           type="text"
                           value={welcomeMessage}
                           onChange={(e) => setWelcomeMessage(e.target.value)}
-                          placeholder="The gist. 가입을 감사드립니다."
+                          placeholder="the gist. 가입을 감사드립니다."
                           className="w-full px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-slate-200"
                         />
                       </div>
@@ -1499,7 +1499,7 @@ const AdminPage: React.FC = () => {
                           type="text"
                           value={copyrightText}
                           onChange={(e) => setCopyrightText(e.target.value)}
-                          placeholder="비어 있으면 © 2026 The gist. 사용"
+                          placeholder="비어 있으면 © 2026 the gist. 사용"
                           className="w-full px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-slate-200"
                         />
                       </div>
@@ -1611,7 +1611,7 @@ const AdminPage: React.FC = () => {
                       isOpen={true}
                       onClose={() => setShowWelcomePreview(false)}
                       userName="홍길동"
-                      welcomeMessage={welcomeMessage || 'The gist. 가입을 감사드립니다.'}
+                      welcomeMessage={welcomeMessage || 'the gist. 가입을 감사드립니다.'}
                     />
                   )}
                 </>

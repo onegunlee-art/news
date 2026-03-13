@@ -87,7 +87,7 @@ export default function Header() {
           {/* 중앙 - 로고 (Lobster 폰트, 블랙, 1.5배), PC에서 영역 확보 */}
           <Link to="/" className="flex-1 flex items-center justify-center min-w-0 min-h-[2.5rem] md:min-h-[3.75rem] overflow-visible">
             <h1 className="text-3xl md:text-6xl font-normal text-page tracking-tight whitespace-nowrap" style={{ fontFamily: "'Lobster', cursive" }}>
-              The gist.
+              the gist.
             </h1>
           </Link>
 
