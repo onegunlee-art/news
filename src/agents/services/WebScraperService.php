@@ -35,7 +35,7 @@ class WebScraperService
     private const GOOGLEBOT_UA = 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)';
 
     /** 페이월 우회를 시도할 도메인 목록 */
-    private const PAYWALL_DOMAINS = ['economist.com', 'ft.com'];
+    private const PAYWALL_DOMAINS = ['economist.com', 'ft.com', 'foreignaffairs.com'];
 
     /**
      * URL에서 기사 데이터 추출.
@@ -195,7 +195,8 @@ class WebScraperService
             imageUrl: $original->getImageUrl(),
             language: $original->getLanguage(),
             source: $original->getSource(),
-            metadata: $metadata
+            metadata: $metadata,
+            subheadings: $original->getSubheadings()
         );
     }
 
@@ -326,7 +327,8 @@ class WebScraperService
             imageUrl: $imageUrl,
             language: $data['language'] ?? null,
             source: $this->extractSourceFromUrl($url),
-            metadata: $metadata
+            metadata: $metadata,
+            subheadings: []
         );
     }
 
