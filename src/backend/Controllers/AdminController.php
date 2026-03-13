@@ -130,33 +130,68 @@ final class AdminController
         $page = max(1, (int) $request->query('page', 1));
         $perPage = min((int) $request->query('per_page', 20), 100);
         $offset = ($page - 1) * $perPage;
-        
+        $filter = $request->query('filter', 'all');
+        if (!in_array($filter, ['all', 'subscribed', 'unsubscribed', 'expiring'], true)) {
+            $filter = 'all';
+        }
+
         try {
-            // 전체 수
-            $stmt = $this->db->query("SELECT COUNT(*) FROM users");
+            $where = '1=1';
+            $params = [];
+            if ($filter === 'subscribed') {
+                $where = 'is_subscribed = 1';
+            } elseif ($filter === 'unsubscribed') {
+                $where = 'is_subscribed = 0';
+            } elseif ($filter === 'expiring') {
+                $where = 'is_subscribed = 1 AND subscription_expires_at IS NOT NULL AND subscription_expires_at <= DATE_ADD(NOW(), INTERVAL 7 DAY)';
+            }
+
+            // 전체 수 (필터 적용)
+            $stmt = $this->db->prepare("SELECT COUNT(*) FROM users WHERE $where");
+            $stmt->execute($params);
             $total = (int) $stmt->fetchColumn();
-            
+
+            // 통계 (필터 없음)
+            $stmt = $this->db->query("
+                SELECT
+                    COUNT(*) AS total,
+                    SUM(is_subscribed = 1) AS subscribed,
+                    SUM(is_subscribed = 0) AS unsubscribed,
+                    SUM(created_at >= DATE_FORMAT(NOW(), '%Y-%m-01')) AS new_this_month
+                FROM users
+            ");
+            $statsRow = $stmt->fetch(PDO::FETCH_ASSOC);
+            $stats = [
+                'total' => (int) ($statsRow['total'] ?? 0),
+                'subscribed' => (int) ($statsRow['subscribed'] ?? 0),
+                'unsubscribed' => (int) ($statsRow['unsubscribed'] ?? 0),
+                'new_this_month' => (int) ($statsRow['new_this_month'] ?? 0),
+            ];
+
             // 사용자 목록
             $stmt = $this->db->prepare("
-                SELECT id, email, nickname, profile_image, role, status, 
+                SELECT id, email, nickname, profile_image, role, status,
+                       kakao_id, is_subscribed, subscription_expires_at,
                        last_login_at, created_at
-                FROM users 
-                ORDER BY created_at DESC 
+                FROM users
+                WHERE $where
+                ORDER BY created_at DESC
                 LIMIT ? OFFSET ?
             ");
-            $stmt->execute([$perPage, $offset]);
+            $stmt->execute(array_merge($params, [$perPage, $offset]));
             $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            
+
             return Response::success([
                 'items' => $users,
+                'stats' => $stats,
                 'pagination' => [
                     'page' => $page,
                     'per_page' => $perPage,
                     'total' => $total,
-                    'total_pages' => ceil($total / $perPage),
+                    'total_pages' => $total > 0 ? (int) ceil($total / $perPage) : 0,
                 ],
             ], '사용자 목록 조회 성공');
-            
+
         } catch (RuntimeException $e) {
             return Response::error('사용자 조회 실패: ' . $e->getMessage(), 500);
         }
@@ -181,6 +216,8 @@ final class AdminController
         try {
             $stmt = $this->db->prepare("
                 SELECT id, email, nickname, profile_image, role, status,
+                       kakao_id, is_subscribed, subscription_expires_at,
+                       steppay_customer_id, steppay_subscription_id,
                        last_login_at, created_at, updated_at
                 FROM users WHERE id = ?
             ");

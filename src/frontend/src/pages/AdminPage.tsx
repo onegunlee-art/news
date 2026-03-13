@@ -178,21 +178,43 @@ const sanitizeText = (text: string): string => {
     .replace(/\n{3,}/g, '\n\n');
 };
 
-type UserRow = { id: number; nickname: string; email: string | null; status: string; last_login_at: string | null; created_at: string };
-type UserDetail = UserRow & { usage?: { analyses_count: number; bookmarks_count: number; search_count: number } };
+type UserRow = {
+  id: number;
+  nickname: string;
+  email: string | null;
+  status: string;
+  last_login_at: string | null;
+  created_at: string;
+  kakao_id: number | null;
+  is_subscribed: number;
+  subscription_expires_at: string | null;
+};
+type UserStats = { total: number; subscribed: number; unsubscribed: number; new_this_month: number };
+type UserDetail = UserRow & {
+  steppay_customer_id?: number | null;
+  steppay_subscription_id?: string | null;
+  usage?: { analyses_count: number; bookmarks_count: number; search_count: number };
+};
 
 const UsersManagementSection: React.FC<{
   onUserDetail: (u: UserDetail | null) => void;
 }> = ({ onUserDetail }) => {
   const [users, setUsers] = useState<UserRow[]>([]);
+  const [stats, setStats] = useState<UserStats>({ total: 0, subscribed: 0, unsubscribed: 0, new_this_month: 0 });
   const [pagination, setPagination] = useState({ page: 1, per_page: 20, total: 0, total_pages: 0 });
+  const [filter, setFilter] = useState<'all' | 'subscribed' | 'unsubscribed' | 'expiring'>('all');
   const [loading, setLoading] = useState(true);
-  const loadUsers = useCallback(async (page = 1) => {
+
+  const loadUsers = useCallback(async (page = 1, filterParam: typeof filter = filter) => {
     setLoading(true);
     try {
-      const res = await api.get<{ success: boolean; data: { items: UserRow[]; pagination: typeof pagination } }>(`/admin/users?page=${page}&per_page=20`);
+      const res = await api.get<{
+        success: boolean;
+        data: { items: UserRow[]; stats: UserStats; pagination: typeof pagination };
+      }>(`/admin/users?page=${page}&per_page=20&filter=${filterParam}`);
       if (res.data.success && res.data.data) {
         setUsers(res.data.data.items);
+        setStats(res.data.data.stats ?? { total: 0, subscribed: 0, unsubscribed: 0, new_this_month: 0 });
         setPagination(res.data.data.pagination);
       }
     } catch (e) {
@@ -200,82 +222,149 @@ const UsersManagementSection: React.FC<{
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [filter]);
+
   useEffect(() => {
-    loadUsers(1);
-  }, [loadUsers]);
+    loadUsers(1, filter);
+  }, [filter]);
+
+  const handleFilter = (f: typeof filter) => {
+    setFilter(f);
+  };
+
+  const isExpiring = (exp: string | null) => {
+    if (!exp) return false;
+    const d = new Date(exp);
+    const in7 = new Date();
+    in7.setDate(in7.getDate() + 7);
+    return d <= in7 && d >= new Date();
+  };
+
   return (
-    <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50">
-      {loading ? (
-        <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-10 w-10 border-2 border-cyan-500 border-t-transparent" /></div>
-      ) : (
-        <>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="border-b border-slate-600">
-                  <th className="py-3 px-4 text-slate-400 font-medium">ID</th>
-                  <th className="py-3 px-4 text-slate-400 font-medium">닉네임</th>
-                  <th className="py-3 px-4 text-slate-400 font-medium">이메일</th>
-                  <th className="py-3 px-4 text-slate-400 font-medium">상태</th>
-                  <th className="py-3 px-4 text-slate-400 font-medium">최근 로그인</th>
-                  <th className="py-3 px-4 text-slate-400 font-medium">가입일</th>
-                  <th className="py-3 px-4 text-slate-400 font-medium"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((u) => (
-                  <tr key={u.id} className="border-b border-slate-700/50">
-                    <td className="py-3 px-4 text-white">{u.id}</td>
-                    <td className="py-3 px-4 text-white">{u.nickname}</td>
-                    <td className="py-3 px-4 text-slate-300">{u.email || '-'}</td>
-                    <td className="py-3 px-4"><span className={`px-2 py-1 rounded text-xs ${u.status === 'active' ? 'bg-emerald-500/20 text-emerald-400' : u.status === 'banned' ? 'bg-red-500/20 text-red-400' : 'bg-slate-500/20 text-slate-400'}`}>{u.status}</span></td>
-                    <td className="py-3 px-4 text-slate-400 text-sm">{u.last_login_at ? new Date(u.last_login_at).toLocaleString('ko-KR') : '-'}</td>
-                    <td className="py-3 px-4 text-slate-400 text-sm">{u.created_at ? new Date(u.created_at).toLocaleString('ko-KR') : '-'}</td>
-                    <td className="py-3 px-4">
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          try {
-                            const res = await api.get<{ success: boolean; data: UserDetail }>(`/admin/users/${u.id}`);
-                            if (res.data.success && res.data.data) onUserDetail(res.data.data);
-                          } catch (e) {
-                            console.error(e);
-                          }
-                        }}
-                        className="text-cyan-400 hover:text-cyan-300 text-sm"
-                      >
-                        상세
-                      </button>
-                    </td>
+    <div className="space-y-6">
+      {/* 통계 카드 4개 */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-4 border border-slate-700/50">
+          <p className="text-slate-400 text-sm">전체 회원</p>
+          <p className="text-2xl font-bold text-white mt-1">{stats.total}</p>
+        </div>
+        <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-4 border border-slate-700/50">
+          <p className="text-slate-400 text-sm">구독 중</p>
+          <p className="text-2xl font-bold text-emerald-400 mt-1">{stats.subscribed}</p>
+        </div>
+        <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-4 border border-slate-700/50">
+          <p className="text-slate-400 text-sm">미구독</p>
+          <p className="text-2xl font-bold text-slate-300 mt-1">{stats.unsubscribed}</p>
+        </div>
+        <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-4 border border-slate-700/50">
+          <p className="text-slate-400 text-sm">이번 달 신규</p>
+          <p className="text-2xl font-bold text-cyan-400 mt-1">{stats.new_this_month}</p>
+        </div>
+      </div>
+
+      {/* 필터 탭 */}
+      <div className="flex gap-2 flex-wrap">
+        {(['all', 'subscribed', 'unsubscribed', 'expiring'] as const).map((f) => (
+          <button
+            key={f}
+            type="button"
+            onClick={() => handleFilter(f)}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              filter === f
+                ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
+                : 'bg-slate-800/50 text-slate-400 hover:text-white border border-slate-700/50'
+            }`}
+          >
+            {f === 'all' ? '전체' : f === 'subscribed' ? '구독 중' : f === 'unsubscribed' ? '미구독' : '만료 임박(7일)'}
+          </button>
+        ))}
+      </div>
+
+      {/* 회원 테이블 */}
+      <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50">
+        {loading ? (
+          <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-10 w-10 border-2 border-cyan-500 border-t-transparent" /></div>
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="border-b border-slate-600">
+                    <th className="py-3 px-4 text-slate-400 font-medium">ID</th>
+                    <th className="py-3 px-4 text-slate-400 font-medium">닉네임</th>
+                    <th className="py-3 px-4 text-slate-400 font-medium">가입방식</th>
+                    <th className="py-3 px-4 text-slate-400 font-medium">구독상태</th>
+                    <th className="py-3 px-4 text-slate-400 font-medium">만료일</th>
+                    <th className="py-3 px-4 text-slate-400 font-medium">최근 로그인</th>
+                    <th className="py-3 px-4 text-slate-400 font-medium">가입일</th>
+                    <th className="py-3 px-4 text-slate-400 font-medium"></th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          {pagination.total_pages > 1 && (
-            <div className="flex justify-center gap-2 mt-4">
-              <button
-                type="button"
-                disabled={pagination.page <= 1}
-                onClick={() => loadUsers(pagination.page - 1)}
-                className="px-3 py-1 rounded bg-slate-700 disabled:opacity-50 text-slate-300"
-              >
-                이전
-              </button>
-              <span className="py-1 text-slate-400">{pagination.page} / {pagination.total_pages}</span>
-              <button
-                type="button"
-                disabled={pagination.page >= pagination.total_pages}
-                onClick={() => loadUsers(pagination.page + 1)}
-                className="px-3 py-1 rounded bg-slate-700 disabled:opacity-50 text-slate-300"
-              >
-                다음
-              </button>
+                </thead>
+                <tbody>
+                  {users.map((u) => (
+                    <tr key={u.id} className="border-b border-slate-700/50">
+                      <td className="py-3 px-4 text-white">{u.id}</td>
+                      <td className="py-3 px-4 text-white">{u.nickname}</td>
+                      <td className="py-3 px-4">
+                        <span className={`px-2 py-1 rounded text-xs ${u.kakao_id != null ? 'bg-yellow-500/20 text-yellow-400' : 'bg-slate-500/20 text-slate-400'}`}>
+                          {u.kakao_id != null ? '카카오' : '이메일'}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className={`px-2 py-1 rounded text-xs ${u.is_subscribed === 1 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-500/20 text-slate-400'}`}>
+                          {u.is_subscribed === 1 ? '구독 중' : '미구독'}
+                        </span>
+                      </td>
+                      <td className={`py-3 px-4 text-sm ${u.subscription_expires_at && isExpiring(u.subscription_expires_at) ? 'text-amber-400' : 'text-slate-400'}`}>
+                        {u.subscription_expires_at ? new Date(u.subscription_expires_at).toLocaleDateString('ko-KR') : '-'}
+                      </td>
+                      <td className="py-3 px-4 text-slate-400 text-sm">{u.last_login_at ? new Date(u.last_login_at).toLocaleString('ko-KR') : '-'}</td>
+                      <td className="py-3 px-4 text-slate-400 text-sm">{u.created_at ? new Date(u.created_at).toLocaleString('ko-KR') : '-'}</td>
+                      <td className="py-3 px-4">
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            try {
+                              const res = await api.get<{ success: boolean; data: UserDetail }>(`/admin/users/${u.id}`);
+                              if (res.data.success && res.data.data) onUserDetail(res.data.data);
+                            } catch (e) {
+                              console.error(e);
+                            }
+                          }}
+                          className="text-cyan-400 hover:text-cyan-300 text-sm"
+                        >
+                          상세
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          )}
-        </>
-      )}
+            {pagination.total_pages > 1 && (
+              <div className="flex justify-center gap-2 mt-4">
+                <button
+                  type="button"
+                  disabled={pagination.page <= 1}
+                  onClick={() => loadUsers(pagination.page - 1, filter)}
+                  className="px-3 py-1 rounded bg-slate-700 disabled:opacity-50 text-slate-300"
+                >
+                  이전
+                </button>
+                <span className="py-1 text-slate-400">{pagination.page} / {pagination.total_pages}</span>
+                <button
+                  type="button"
+                  disabled={pagination.page >= pagination.total_pages}
+                  onClick={() => loadUsers(pagination.page + 1, filter)}
+                  className="px-3 py-1 rounded bg-slate-700 disabled:opacity-50 text-slate-300"
+                >
+                  다음
+                </button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 };
@@ -801,8 +890,8 @@ const AdminPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   // 대시보드: 회원 목록, 개인정보처리방침
-  const [dashboardUsers, setDashboardUsers] = useState<{ id: number; nickname: string; email: string | null; status: string; last_login_at: string | null; created_at: string }[]>([]);
-  const [selectedUserDetail, setSelectedUserDetail] = useState<{ id: number; nickname: string; email: string | null; status: string; last_login_at: string | null; created_at: string; usage?: { analyses_count: number; bookmarks_count: number; search_count: number } } | null>(null);
+  const [dashboardUsers, setDashboardUsers] = useState<UserRow[]>([]);
+  const [selectedUserDetail, setSelectedUserDetail] = useState<UserDetail | null>(null);
   const [privacyContent, setPrivacyContent] = useState('');
   const [termsContent, setTermsContent] = useState('');
   const [privacySaving, setPrivacySaving] = useState(false);
@@ -1067,7 +1156,7 @@ const AdminPage: React.FC = () => {
     setLoading(true);
     try {
       const [usersRes, settingsRes] = await Promise.all([
-        api.get<{ success: boolean; data: { items: { id: number; nickname: string; email: string | null; status: string; last_login_at: string | null; created_at: string }[] } }>('/admin/users?per_page=5&page=1'),
+        api.get<{ success: boolean; data: { items: UserRow[] } }>('/admin/users?per_page=5&page=1'),
         adminSettingsApi.getSettings(),
       ]);
       if (usersRes.data.success && usersRes.data.data?.items)
@@ -1220,9 +1309,12 @@ const AdminPage: React.FC = () => {
                             key={u.id}
                             className="flex items-center justify-between py-2 px-3 bg-slate-900/50 rounded-lg hover:bg-slate-700/30"
                           >
-                            <div>
+                            <div className="flex items-center gap-2 flex-wrap">
                               <span className="text-white font-medium">{u.nickname}</span>
-                              {u.email && <span className="text-slate-500 text-sm ml-2">({u.email})</span>}
+                              {u.email && <span className="text-slate-500 text-sm">({u.email})</span>}
+                              <span className={`px-1.5 py-0.5 rounded text-xs ${u.is_subscribed === 1 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-500/20 text-slate-400'}`}>
+                                {u.is_subscribed === 1 ? '구독' : '미구독'}
+                              </span>
                             </div>
                             <button
                               type="button"
@@ -4711,7 +4803,10 @@ const AdminPage: React.FC = () => {
           <div className="space-y-3 text-sm">
             <p><span className="text-slate-500">닉네임:</span> <span className="text-white">{selectedUserDetail.nickname}</span></p>
             <p><span className="text-slate-500">이메일:</span> <span className="text-white">{selectedUserDetail.email || '-'}</span></p>
+            <p><span className="text-slate-500">가입 방식:</span> <span className={selectedUserDetail.kakao_id != null ? 'text-yellow-400' : 'text-slate-300'}>{selectedUserDetail.kakao_id != null ? '카카오' : '이메일'}</span></p>
             <p><span className="text-slate-500">상태:</span> <span className={`px-2 py-0.5 rounded text-xs ${selectedUserDetail.status === 'active' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-500/20 text-slate-400'}`}>{selectedUserDetail.status}</span></p>
+            <p><span className="text-slate-500">구독:</span> <span className={selectedUserDetail.is_subscribed === 1 ? 'text-emerald-400' : 'text-slate-400'}>{selectedUserDetail.is_subscribed === 1 ? '구독 중' : '미구독'}</span>{selectedUserDetail.is_subscribed === 1 && selectedUserDetail.subscription_expires_at && <span className="text-slate-400 ml-1">(만료: {new Date(selectedUserDetail.subscription_expires_at).toLocaleDateString('ko-KR')})</span>}</p>
+            {selectedUserDetail.steppay_customer_id != null && <p><span className="text-slate-500">StepPay 고객 ID:</span> <span className="text-slate-300">{selectedUserDetail.steppay_customer_id}</span></p>}
             <p><span className="text-slate-500">가입일:</span> <span className="text-slate-300">{selectedUserDetail.created_at ? new Date(selectedUserDetail.created_at).toLocaleString('ko-KR') : '-'}</span></p>
             <p><span className="text-slate-500">최근 로그인:</span> <span className="text-slate-300">{selectedUserDetail.last_login_at ? new Date(selectedUserDetail.last_login_at).toLocaleString('ko-KR') : '-'}</span></p>
             {selectedUserDetail.usage && (
