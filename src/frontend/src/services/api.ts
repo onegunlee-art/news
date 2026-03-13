@@ -215,7 +215,7 @@ export const siteSettingsApi = {
 
 /** 문의하기 (이메일 발송) */
 export const contactApi = {
-  send: (body: { subject?: string; message: string }) => api.post<{ success: boolean; message?: string }>('/contact', body),
+  send: (body: { subject?: string; contact?: string; message: string }) => api.post<{ success: boolean; message?: string }>('/contact', body),
 }
 
 /** Admin 설정 (Router: GET/PUT /api/admin/settings) */

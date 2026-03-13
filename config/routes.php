@@ -104,12 +104,18 @@ $router->post('/contact', function (Request $request): Response {
         $subjectRaw = $request->json('subject');
         $subjectRaw = is_string($subjectRaw) && trim($subjectRaw) !== '' ? trim($subjectRaw) : '[The Gist] 문의하기';
         $subjectEncoded = '=?UTF-8?B?' . base64_encode($subjectRaw) . '?=';
+        $contactRaw = $request->json('contact');
+        $contactStr = is_string($contactRaw) && trim($contactRaw) !== '' ? trim($contactRaw) : null;
+        $body = trim($message);
+        if ($contactStr !== null) {
+            $body = "연락처: " . $contactStr . "\n\n" . $body;
+        }
         $headers = [
             'MIME-Version: 1.0',
             'Content-type: text/plain; charset=UTF-8',
             'From: noreply@thegist.co.kr',
         ];
-        $ok = @mail($to, $subjectEncoded, trim($message), implode("\r\n", $headers));
+        $ok = @mail($to, $subjectEncoded, $body, implode("\r\n", $headers));
         if (!$ok) {
             return Response::error('이메일 발송에 실패했습니다. 서버 메일 설정을 확인해주세요.', 500);
         }
