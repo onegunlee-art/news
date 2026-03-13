@@ -175,7 +175,12 @@ export default function HomePage() {
             {tabLabels.map((tab) => (
               <button
                 key={tab}
-                onClick={() => setActiveTab(tab)}
+                onClick={() => {
+                  if (tab !== activeTab) {
+                    window.scrollTo(0, 0)
+                    setActiveTab(tab)
+                  }
+                }}
                 className={`flex-1 py-3 text-sm font-medium transition-colors relative flex flex-col items-center justify-center gap-0 ${
                   activeTab === tab
                     ? 'text-page'
