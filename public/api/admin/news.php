@@ -30,16 +30,13 @@ register_shutdown_function(function() {
     }
 });
 
+require_once __DIR__ . '/../lib/cors.php';
+
 header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Authorization, X-Requested-With');
+setCorsHeaders();
 
 // OPTIONS 요청 처리
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
+handleOptionsRequest();
 
 // 에러 로깅 함수 (Router include 시 중복 정의 방지)
 if (!function_exists('logError')) {
@@ -78,21 +75,23 @@ function getJsonInput() {
 }
 }
 
-// 데이터베이스 설정
-$dbConfig = [
-    'host' => 'localhost',
-    'dbname' => 'ailand',
-    'username' => 'ailand',
-    'password' => 'romi4120!',
-    'charset' => 'utf8mb4'
+// 데이터베이스 설정 (config/database.php 사용)
+$dbConfigPath = __DIR__ . '/../../../config/database.php';
+$dbConfig = file_exists($dbConfigPath) ? require $dbConfigPath : [
+    'host' => getenv('DB_HOST') ?: 'localhost',
+    'database' => getenv('DB_DATABASE') ?: 'ailand',
+    'username' => getenv('DB_USERNAME') ?: 'ailand',
+    'password' => getenv('DB_PASSWORD') ?: '',
+    'charset' => 'utf8mb4',
 ];
+$dbConfig['dbname'] = $dbConfig['database'] ?? $dbConfig['dbname'] ?? 'ailand';
 
 // 이미지 매핑 통합 파일 + API 검색 로직 로드
 require_once __DIR__ . '/../lib/imageSearch.php';
 
 try {
     $dsn = "mysql:host={$dbConfig['host']};dbname={$dbConfig['dbname']};charset={$dbConfig['charset']}";
-    $db = new PDO($dsn, $dbConfig['username'], $dbConfig['password'], [
+    $db = new PDO($dsn, $dbConfig['username'], $dbConfig['password'], $dbConfig['options'] ?? [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         PDO::ATTR_TIMEOUT => 10,

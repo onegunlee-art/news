@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import MaterialIcon from '../components/Common/MaterialIcon'
 import { newsApi } from '../services/api'
 import ShareMenu from '../components/Common/ShareMenu'
@@ -11,6 +12,7 @@ import { getPlaceholderImageUrl } from '../utils/imagePolicy'
 import { formatSourceDisplayName, buildEditorialLine } from '../utils/formatSource'
 import { extractTitleFromUrl } from '../utils/extractTitleFromUrl'
 import { stripHtml } from '../utils/sanitizeHtml'
+import { queryKeys } from '../lib/queryClient'
 
 /** 기사 카드/본문에 표시할 하위 카테고리 라벨 (홈과 동일) */
 const subCategoryToLabel: Record<string, string> = {
@@ -42,30 +44,22 @@ interface NewsItem {
 export default function SearchPage() {
   const [searchParams] = useSearchParams()
   const q = searchParams.get('q')?.trim() ?? ''
-  const [news, setNews] = useState<NewsItem[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [searched, setSearched] = useState(false)
 
-  useEffect(() => {
-    if (!q) {
-      setNews([])
-      setSearched(false)
-      return
-    }
-    setSearched(true)
-    setIsLoading(true)
-    newsApi
-      .search(q, 1, 30)
-      .then((res) => {
-        if (res.data.success && res.data.data?.items) {
-          setNews(res.data.data.items)
-        } else {
-          setNews([])
-        }
-      })
-      .catch(() => setNews([]))
-      .finally(() => setIsLoading(false))
-  }, [q])
+  const { data, isLoading, isFetched } = useQuery({
+    queryKey: queryKeys.news.search(q),
+    queryFn: async () => {
+      const res = await newsApi.search(q, 1, 30)
+      if (res.data.success && res.data.data?.items) {
+        return res.data.data.items as NewsItem[]
+      }
+      return []
+    },
+    enabled: q.length >= 1,
+    staleTime: 1000 * 60 * 2, // 2분 캐시
+  })
+
+  const news = data ?? []
+  const searched = isFetched && q.length >= 1
 
   return (
     <div className="min-h-screen bg-page pb-8">
@@ -257,6 +251,7 @@ function SearchArticleCard({ article }: { article: NewsItem }) {
             src={imageUrl}
             alt={article.title}
             className="w-full h-full object-cover"
+            loading="lazy"
             onError={(e) => {
               (e.target as HTMLImageElement).src = getPlaceholderImageUrl(
                 {

@@ -57,12 +57,14 @@ return [
     */
     
     'cors' => [
-        'allowed_origins' => ['*'],
+        'allowed_origins' => getenv('CORS_ORIGINS') 
+            ? explode(',', getenv('CORS_ORIGINS')) 
+            : ['https://thegist.co.kr', 'https://www.thegist.co.kr', 'http://localhost:5173', 'http://localhost:3000'],
         'allowed_methods' => ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-        'allowed_headers' => ['Content-Type', 'Authorization', 'X-Requested-With'],
+        'allowed_headers' => ['Content-Type', 'Authorization', 'X-Authorization', 'X-Requested-With'],
         'exposed_headers' => [],
         'max_age' => 86400,
-        'supports_credentials' => false,
+        'supports_credentials' => true,
     ],
     
     /*

@@ -42,7 +42,8 @@ function App() {
     if (!raw) return
     try {
       const data = JSON.parse(raw)
-      if (data.userName && data.ts && Date.now() - data.ts < 60000) {
+      const FIVE_MINUTES = 5 * 60 * 1000
+      if (data.userName && data.ts && Date.now() - data.ts < FIVE_MINUTES) {
         welcomeSettingsApi.getWelcome().then((r) => {
           const msg = r.data?.success && r.data?.data?.message ? r.data.data.message : 'The Gist 가입을 감사드립니다.'
           setWelcomeData({
@@ -55,6 +56,7 @@ function App() {
             welcomeMessage: 'The Gist 가입을 감사드립니다.',
           })
         })
+        return
       }
       localStorage.removeItem('welcome_popup')
     } catch { localStorage.removeItem('welcome_popup') }

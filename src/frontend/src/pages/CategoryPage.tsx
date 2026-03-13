@@ -163,6 +163,7 @@ function ArticleCard({ article, index }: { article: NewsItem; index: number }) {
             src={imageUrl}
             alt={article.title}
             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+            loading="lazy"
             onError={(e) => {
               (e.target as HTMLImageElement).src = getPlaceholderImageUrl(articleForImage, 400, 250);
             }}

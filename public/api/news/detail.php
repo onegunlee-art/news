@@ -7,17 +7,14 @@
  * 새 선택 컬럼 추가 시 반드시: 1) SHOW COLUMNS 존재 여부 확인 추가 2) $columns 조합에 조건부 추가 3) 응답 data에 조건부 추가
  */
 
+require_once __DIR__ . '/../lib/cors.php';
+
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store, no-cache, must-revalidate');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
+setCorsHeaders();
 
 // OPTIONS 요청 처리
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
+handleOptionsRequest();
 
 // GET 요청만 허용
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
@@ -49,14 +46,16 @@ if (!$id) {
 require __DIR__ . '/../lib/auth.php';
 require __DIR__ . '/../lib/log.php';
 
-// 데이터베이스 설정
-$dbConfig = [
-    'host' => 'localhost',
-    'dbname' => 'ailand',
-    'username' => 'ailand',
-    'password' => 'romi4120!',
-    'charset' => 'utf8mb4'
+// 데이터베이스 설정 (config/database.php 사용)
+$dbConfigPath = __DIR__ . '/../../../config/database.php';
+$dbConfig = file_exists($dbConfigPath) ? require $dbConfigPath : [
+    'host' => getenv('DB_HOST') ?: 'localhost',
+    'database' => getenv('DB_DATABASE') ?: 'ailand',
+    'username' => getenv('DB_USERNAME') ?: 'ailand',
+    'password' => getenv('DB_PASSWORD') ?: '',
+    'charset' => 'utf8mb4',
 ];
+$dbConfig['dbname'] = $dbConfig['database'] ?? $dbConfig['dbname'] ?? 'ailand';
 
 try {
     $db = new PDO(
@@ -69,82 +68,41 @@ try {
         ]
     );
     
-    // why_important 컬럼 존재 여부 확인
-    $hasWhyImportant = false;
-    try {
-        $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'why_important'");
-        $hasWhyImportant = $checkCol->rowCount() > 0;
-    } catch (Exception $e) {}
+    // 스키마 캐싱: 단일 SHOW COLUMNS 쿼리로 모든 컬럼 확인 (10+회 → 1회)
+    $schemaCacheFile = __DIR__ . '/../../../storage/cache/news_schema.json';
+    $schemaCacheTtl = 3600; // 1시간 캐시
+    $newsColumns = [];
     
-    // narration 컬럼 존재 여부 확인
-    $hasNarration = false;
-    try {
-        $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'narration'");
-        $hasNarration = $checkCol->rowCount() > 0;
-    } catch (Exception $e) {}
+    if (file_exists($schemaCacheFile) && (time() - filemtime($schemaCacheFile)) < $schemaCacheTtl) {
+        $newsColumns = json_decode(file_get_contents($schemaCacheFile), true) ?: [];
+    }
     
-    // future_prediction 컬럼 존재 여부 확인 (지스트 크리티크 미래 전망)
-    $hasFuturePrediction = false;
-    try {
-        $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'future_prediction'");
-        $hasFuturePrediction = $checkCol->rowCount() > 0;
-    } catch (Exception $e) {}
+    if (empty($newsColumns)) {
+        try {
+            $colsStmt = $db->query("SHOW COLUMNS FROM news");
+            while ($col = $colsStmt->fetch()) {
+                $newsColumns[] = $col['Field'];
+            }
+            if (!is_dir(dirname($schemaCacheFile))) {
+                @mkdir(dirname($schemaCacheFile), 0755, true);
+            }
+            @file_put_contents($schemaCacheFile, json_encode($newsColumns));
+        } catch (Exception $e) {
+            $newsColumns = [];
+        }
+    }
     
-    // source_url 컬럼 존재 여부 확인
-    $hasSourceUrl = false;
-    try {
-        $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'source_url'");
-        $hasSourceUrl = $checkCol->rowCount() > 0;
-    } catch (Exception $e) {}
-    
-    // published_at 컬럼 존재 여부 확인 (기사 등록일 = URL에서 추출한 날짜)
-    $hasPublishedAt = false;
-    try {
-        $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'published_at'");
-        $hasPublishedAt = $checkCol->rowCount() > 0;
-    } catch (Exception $e) {}
-    
-    // original_source 컬럼 존재 여부 확인 (원본 출처, 예: Foreign Affairs)
-    $hasOriginalSource = false;
-    try {
-        $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'original_source'");
-        $hasOriginalSource = $checkCol->rowCount() > 0;
-    } catch (Exception $e) {}
-    
-    // original_title 컬럼 존재 여부 확인 (원문 영어 제목, 매체글 TTS용)
-    $hasOriginalTitle = false;
-    try {
-        $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'original_title'");
-        $hasOriginalTitle = $checkCol->rowCount() > 0;
-    } catch (Exception $e) {}
-    
-    // updated_at 컬럼 존재 여부 확인 (admin에서 업데이트한 날짜; 없을 수 있음)
-    $hasUpdatedAt = false;
-    try {
-        $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'updated_at'");
-        $hasUpdatedAt = $checkCol->rowCount() > 0;
-    } catch (Exception $e) {}
-    
-    // status 컬럼 존재 여부 (draft는 유저에게 비노출)
-    $hasStatus = false;
-    try {
-        $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'status'");
-        $hasStatus = $checkCol->rowCount() > 0;
-    } catch (Exception $e) {}
-    
-    // category_parent 컬럼 존재 여부 (상위: 외교/경제/특집)
-    $hasCategoryParent = false;
-    try {
-        $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'category_parent'");
-        $hasCategoryParent = $checkCol->rowCount() > 0;
-    } catch (Exception $e) {}
-    
-    // view_count 컬럼 존재 여부 (인기 탭 정렬용)
-    $hasViewCount = false;
-    try {
-        $checkCol = $db->query("SHOW COLUMNS FROM news LIKE 'view_count'");
-        $hasViewCount = $checkCol->rowCount() > 0;
-    } catch (Exception $e) {}
+    $hasWhyImportant = in_array('why_important', $newsColumns, true);
+    $hasNarration = in_array('narration', $newsColumns, true);
+    $hasFuturePrediction = in_array('future_prediction', $newsColumns, true);
+    $hasSourceUrl = in_array('source_url', $newsColumns, true);
+    $hasPublishedAt = in_array('published_at', $newsColumns, true);
+    $hasOriginalSource = in_array('original_source', $newsColumns, true);
+    $hasOriginalTitle = in_array('original_title', $newsColumns, true);
+    $hasUpdatedAt = in_array('updated_at', $newsColumns, true);
+    $hasStatus = in_array('status', $newsColumns, true);
+    $hasCategoryParent = in_array('category_parent', $newsColumns, true);
+    $hasViewCount = in_array('view_count', $newsColumns, true);
     
     // 기본 컬럼 (url: extractTitleFromUrl용, source_url 없을 때 fallback)
     $columns = 'id, category, title, description, content, source, url, image_url, created_at';

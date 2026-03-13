@@ -348,6 +348,7 @@ export default function NewsDetailPage() {
             src={getImageUrl()}
             alt={news.title}
             className="w-full h-full object-cover"
+            loading="lazy"
             onError={(e) => {
               (e.target as HTMLImageElement).src = getPlaceholderImageUrl(
                 { id: news.id, title: news.title, description: news.description, published_at: news.published_at, url: news.url, source: news.source },

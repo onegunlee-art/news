@@ -442,6 +442,7 @@ function ArticleCard({ article, activeTab }: { article: NewsItem; activeTab: Tab
             src={imageUrl}
             alt={article.title}
             className="w-full h-full object-cover"
+            loading="lazy"
             onError={(e) => {
               (e.target as HTMLImageElement).src = getPlaceholderImageUrl(
                 { id: article.id, title: article.title, description: article.description, published_at: article.published_at, category: article.category, url: article.url, source: article.source },

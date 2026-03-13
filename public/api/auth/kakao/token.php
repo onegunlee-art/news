@@ -136,17 +136,19 @@ $email = $kakaoAccount['email'] ?? null;
 $dbUserId = null;
 $isNewUser = false;
 try {
-    $dbCfg = [
-        'host' => 'localhost',
-        'dbname' => 'ailand',
-        'username' => 'ailand',
-        'password' => 'romi4120!',
+    $dbConfigPath = __DIR__ . '/../../../../config/database.php';
+    $dbCfg = file_exists($dbConfigPath) ? require $dbConfigPath : [
+        'host' => getenv('DB_HOST') ?: 'localhost',
+        'database' => getenv('DB_DATABASE') ?: 'ailand',
+        'username' => getenv('DB_USERNAME') ?: 'ailand',
+        'password' => getenv('DB_PASSWORD') ?: '',
         'charset' => 'utf8mb4',
     ];
+    $dbName = $dbCfg['database'] ?? $dbCfg['dbname'] ?? 'ailand';
     $pdo = new PDO(
-        "mysql:host={$dbCfg['host']};dbname={$dbCfg['dbname']};charset={$dbCfg['charset']}",
+        "mysql:host={$dbCfg['host']};dbname={$dbName};charset={$dbCfg['charset']}",
         $dbCfg['username'], $dbCfg['password'],
-        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]
+        $dbCfg['options'] ?? [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]
     );
 
     $stmt = $pdo->prepare("SELECT id, role FROM users WHERE kakao_id = ? LIMIT 1");

@@ -78,15 +78,40 @@ function getAuthUserId(PDO $pdo): ?int {
 function getDb(): PDO {
     static $pdo = null;
     if ($pdo !== null) return $pdo;
-    $cfg = [
-        'host' => 'localhost',
-        'dbname' => 'ailand',
-        'username' => 'ailand',
-        'password' => 'romi4120!',
-        'charset' => 'utf8mb4',
+    
+    $tryPaths = [
+        $_SERVER['DOCUMENT_ROOT'] . '/config/database.php',
+        $_SERVER['DOCUMENT_ROOT'] . '/../config/database.php',
+        __DIR__ . '/../../../config/database.php',
+        __DIR__ . '/../../../../config/database.php',
     ];
-    $dsn = "mysql:host={$cfg['host']};dbname={$cfg['dbname']};charset={$cfg['charset']}";
-    $pdo = new PDO($dsn, $cfg['username'], $cfg['password'], [
+    
+    $cfg = null;
+    foreach ($tryPaths as $p) {
+        if (file_exists($p)) {
+            $cfg = require $p;
+            break;
+        }
+    }
+    
+    if (!$cfg) {
+        $cfg = [
+            'host' => getenv('DB_HOST') ?: 'localhost',
+            'database' => getenv('DB_DATABASE') ?: 'ailand',
+            'username' => getenv('DB_USERNAME') ?: 'ailand',
+            'password' => getenv('DB_PASSWORD') ?: '',
+            'charset' => 'utf8mb4',
+        ];
+    }
+    
+    $dsn = sprintf(
+        "mysql:host=%s;dbname=%s;charset=%s",
+        $cfg['host'] ?? 'localhost',
+        $cfg['database'] ?? $cfg['dbname'] ?? 'ailand',
+        $cfg['charset'] ?? 'utf8mb4'
+    );
+    
+    $pdo = new PDO($dsn, $cfg['username'], $cfg['password'], $cfg['options'] ?? [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
     ]);

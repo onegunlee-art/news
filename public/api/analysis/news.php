@@ -25,20 +25,22 @@ if (!$newsId) {
     exit;
 }
 
-// DB 연결
-$dbConfig = [
-    'host' => 'localhost',
-    'dbname' => 'ailand',
-    'username' => 'ailand',
-    'password' => 'romi4120!'
+// DB 연결 (config/database.php 사용)
+$dbConfigPath = __DIR__ . '/../../../config/database.php';
+$dbConfig = file_exists($dbConfigPath) ? require $dbConfigPath : [
+    'host' => getenv('DB_HOST') ?: 'localhost',
+    'database' => getenv('DB_DATABASE') ?: 'ailand',
+    'username' => getenv('DB_USERNAME') ?: 'ailand',
+    'password' => getenv('DB_PASSWORD') ?: '',
 ];
+$dbName = $dbConfig['database'] ?? $dbConfig['dbname'] ?? 'ailand';
 
 try {
     $pdo = new PDO(
-        "mysql:host={$dbConfig['host']};dbname={$dbConfig['dbname']};charset=utf8mb4",
+        "mysql:host={$dbConfig['host']};dbname={$dbName};charset=utf8mb4",
         $dbConfig['username'],
         $dbConfig['password'],
-        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+        $dbConfig['options'] ?? [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
     );
 } catch (PDOException $e) {
     http_response_code(500);
