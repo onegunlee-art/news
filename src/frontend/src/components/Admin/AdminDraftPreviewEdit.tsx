@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import MaterialIcon from '../Common/MaterialIcon'
 import RichTextEditor from '../Common/RichTextEditor'
 import { formatContentHtml, normalizeEditorHtml, ensureBrForEditor } from '../../utils/sanitizeHtml'
@@ -6,6 +6,7 @@ import { getPlaceholderImageUrl } from '../../utils/imagePolicy'
 import { formatSourceDisplayName, buildEditorialLine, parseEditorialLine } from '../../utils/formatSource'
 import { extractTitleFromUrl } from '../../utils/extractTitleFromUrl'
 import { adminFetch } from '../../services/api'
+import { useMenuConfig } from '../../hooks/useMenuConfig'
 
 /** Admin draft article (from admin/news.php?id=X) */
 export interface DraftArticle {
@@ -55,17 +56,6 @@ const CATEGORIES = [
   { id: 'special', name: '특집', color: 'from-orange-500 to-red-500' },
 ] as const
 
-const SUB_CATEGORY_OPTIONS: { value: string; label: string }[] = [
-  { value: 'politics_diplomacy', label: 'Politics/Diplomacy' },
-  { value: 'economy_industry', label: 'Economy/Industry' },
-  { value: 'society', label: 'Society' },
-  { value: 'security_conflict', label: 'Security/Conflict' },
-  { value: 'environment', label: 'Environment' },
-  { value: 'science_technology', label: 'Science/Technology' },
-  { value: 'culture', label: 'Culture' },
-  { value: 'health_development', label: 'Health/Development' },
-]
-
 interface AdminDraftPreviewEditProps {
   news: DraftArticle
   onUpdate: (updates: Partial<DraftArticle>) => Promise<void>
@@ -79,6 +69,12 @@ export default function AdminDraftPreviewEdit({
   onPublish,
   onBack,
 }: AdminDraftPreviewEditProps) {
+  const { subCategoryToLabel } = useMenuConfig()
+  const subCategoryOptions = useMemo(
+    () => Object.entries(subCategoryToLabel).map(([value, label]) => ({ value, label })),
+    [subCategoryToLabel]
+  )
+
   const [news, setNews] = useState<DraftArticle>(initialNews)
   const [editingSection, setEditingSection] = useState<EditSection>(null)
   const [isSaving, setIsSaving] = useState(false)
@@ -88,11 +84,11 @@ export default function AdminDraftPreviewEdit({
   )
   const [categorySub, setCategorySub] = useState<string>(() => {
     const sub = initialNews.category || ''
-    return SUB_CATEGORY_OPTIONS.some((o) => o.value === sub) ? sub : sub ? '__custom__' : ''
+    return subCategoryOptions.some((o) => o.value === sub) ? sub : sub ? '__custom__' : ''
   })
   const [categorySubCustom, setCategorySubCustom] = useState<string>(() => {
     const sub = initialNews.category || ''
-    return SUB_CATEGORY_OPTIONS.some((o) => o.value === sub) ? '' : sub
+    return subCategoryOptions.some((o) => o.value === sub) ? '' : sub
   })
   const [dallePrompt, setDallePrompt] = useState('')
   const [isRegeneratingDalle, setIsRegeneratingDalle] = useState(false)
@@ -105,14 +101,14 @@ export default function AdminDraftPreviewEdit({
       initialNews.category_parent ?? (initialNews.category === 'entertainment' ? 'special' : initialNews.category ?? 'diplomacy')
     setCategoryParent(parent)
     const sub = initialNews.category || ''
-    if (SUB_CATEGORY_OPTIONS.some((o) => o.value === sub)) {
+    if (subCategoryOptions.some((o) => o.value === sub)) {
       setCategorySub(sub)
       setCategorySubCustom('')
     } else {
       setCategorySub(sub ? '__custom__' : '')
       setCategorySubCustom(sub)
     }
-  }, [initialNews.id])
+  }, [initialNews.id, subCategoryOptions])
 
   const formatHeaderDate = () => {
     const s = news.updated_at || news.created_at
@@ -270,7 +266,7 @@ export default function AdminDraftPreviewEdit({
             className="bg-slate-800/50 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm min-w-[180px]"
           >
             <option value="">선택 (선택사항)</option>
-            {SUB_CATEGORY_OPTIONS.map((o) => (
+            {subCategoryOptions.map((o) => (
               <option key={o.value} value={o.value}>
                 {o.label}
               </option>

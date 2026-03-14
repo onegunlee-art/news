@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { formatSourceDisplayName, buildEditorialLine } from '../utils/formatSource'
@@ -14,6 +14,7 @@ import { api, adminFetch, adminSettingsApi, adminTtsApi, ttsApi } from '../servi
 import { PRIVACY_POLICY_CONTENT } from '../components/Common/PrivacyPolicyContent';
 import WelcomePopup from '../components/Common/WelcomePopup';
 import AdminDraftPreviewEdit, { type DraftArticle } from '../components/Admin/AdminDraftPreviewEdit';
+import { useMenuConfig } from '../hooks/useMenuConfig';
 
 /** Listen과 동일한 구조로 TTS params 구성 (캐시 공유) */
 function buildTtsParamsForListen(params: {
@@ -88,17 +89,6 @@ const categories = [
   { id: 'diplomacy', name: '외교', color: 'from-blue-500 to-cyan-500' },
   { id: 'economy', name: '경제', color: 'from-emerald-500 to-green-500' },
   { id: 'special', name: '특집', color: 'from-orange-500 to-red-500' },
-];
-
-const SUB_CATEGORY_OPTIONS: { value: string; label: string }[] = [
-  { value: 'politics_diplomacy', label: 'Politics/Diplomacy' },
-  { value: 'economy_industry', label: 'Economy/Industry' },
-  { value: 'society', label: 'Society' },
-  { value: 'security_conflict', label: 'Security/Conflict' },
-  { value: 'environment', label: 'Environment' },
-  { value: 'science_technology', label: 'Science/Technology' },
-  { value: 'culture', label: 'Culture' },
-  { value: 'health_development', label: 'Health/Development' },
 ];
 
 // Feedback / Revision 인터페이스
@@ -454,6 +444,12 @@ const AdminPage: React.FC = () => {
     }
   }, [user, isAuthenticated, isLoading, isInitialized, navigate]);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'news' | 'drafts' | 'ai' | 'workspace' | 'persona' | 'knowledge' | 'usage' | 'settings'>('dashboard');
+
+  const { subCategoryToLabel } = useMenuConfig();
+  const subCategoryOptions = useMemo(
+    () => Object.entries(subCategoryToLabel).map(([value, label]) => ({ value, label })),
+    [subCategoryToLabel]
+  );
 
   // feedback useEffect deps에서 참조되므로 컴포넌트 최상단에 선언
   const [articleUrl, setArticleUrl] = useState('');
@@ -1136,7 +1132,7 @@ const AdminPage: React.FC = () => {
     const parent = news.category_parent ?? (news.category === 'entertainment' ? 'special' : news.category);
     setSelectedCategory(parent);
     const sub = news.category || '';
-    if (SUB_CATEGORY_OPTIONS.some((o) => o.value === sub)) {
+    if (subCategoryOptions.some((o) => o.value === sub)) {
       setCategorySub(sub);
       setCategorySubCustom('');
     } else {
@@ -1806,7 +1802,7 @@ const AdminPage: React.FC = () => {
                   className="bg-slate-800/50 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm min-w-[180px]"
                 >
                   <option value="">선택 (선택사항)</option>
-                  {SUB_CATEGORY_OPTIONS.map((o) => (
+                  {subCategoryOptions.map((o) => (
                     <option key={o.value} value={o.value}>{o.label}</option>
                   ))}
                   <option value="__custom__">직접 입력</option>
