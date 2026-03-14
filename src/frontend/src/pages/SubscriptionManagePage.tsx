@@ -8,12 +8,12 @@ import LoadingSpinner from '../components/Common/LoadingSpinner'
 const CONTAINER_CLASS = 'max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4'
 
 const STATUS_MAP: Record<string, { label: string; badgeClass: string }> = {
-  ACTIVE: { label: '활성화', badgeClass: 'bg-green-100 text-green-800' },
-  PAUSED: { label: '일시정지', badgeClass: 'bg-amber-100 text-amber-800' },
-  CANCELED: { label: '취소됨', badgeClass: 'bg-red-100 text-red-800' },
-  PAYMENT_FAILED: { label: '결제 실패', badgeClass: 'bg-red-100 text-red-800' },
-  PENDING_CANCEL: { label: '취소 예정', badgeClass: 'bg-gray-100 text-gray-800' },
-  PENDING_PAUSE: { label: '일시정지 예정', badgeClass: 'bg-amber-100 text-amber-800' },
+  ACTIVE: { label: '활성화', badgeClass: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300' },
+  PAUSED: { label: '일시정지', badgeClass: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' },
+  CANCELED: { label: '취소됨', badgeClass: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' },
+  PAYMENT_FAILED: { label: '결제 실패', badgeClass: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' },
+  PENDING_CANCEL: { label: '취소 예정', badgeClass: 'bg-gray-100 text-gray-800 dark:bg-gray-700/30 dark:text-gray-300' },
+  PENDING_PAUSE: { label: '일시정지 예정', badgeClass: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' },
 }
 
 export default function SubscriptionManagePage() {
@@ -23,9 +23,9 @@ export default function SubscriptionManagePage() {
   const [notice, setNotice] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [togglingAutoRenew, setTogglingAutoRenew] = useState(false)
   const [canceling, setCanceling] = useState(false)
   const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+  const [cancelSuccess, setCancelSuccess] = useState(false)
 
   useEffect(() => {
     if (!isSubscribed) {
@@ -50,24 +50,6 @@ export default function SubscriptionManagePage() {
       .finally(() => setLoading(false))
   }, [isSubscribed, navigate])
 
-  const handleAutoRenewToggle = async () => {
-    if (!detail?.subscription_id || togglingAutoRenew) return
-    const next = !detail.auto_renew
-    setTogglingAutoRenew(true)
-    try {
-      const res = await subscriptionApi.setAutoRenew(next)
-      if (res.data?.success) {
-        setDetail((d) => (d ? { ...d, auto_renew: next } : null))
-      } else {
-        setError(res.data?.message ?? '자동 갱신 설정에 실패했습니다.')
-      }
-    } catch {
-      setError('자동 갱신 설정에 실패했습니다.')
-    } finally {
-      setTogglingAutoRenew(false)
-    }
-  }
-
   const handleCancel = async () => {
     if (!detail?.subscription_id || canceling) return
     setCanceling(true)
@@ -75,7 +57,8 @@ export default function SubscriptionManagePage() {
       const res = await subscriptionApi.cancel()
       if (res.data?.success) {
         setShowCancelConfirm(false)
-        setDetail((d) => (d ? { ...d, status: 'CANCELED', status_label: '취소됨', auto_renew: false } : null))
+        setCancelSuccess(true)
+        setDetail((d) => (d ? { ...d, status: 'PENDING_CANCEL', status_label: '취소 예정', auto_renew: false } : null))
       } else {
         setError(res.data?.message ?? '구독 취소에 실패했습니다.')
       }
@@ -87,9 +70,9 @@ export default function SubscriptionManagePage() {
   }
 
   const statusInfo = detail?.status ? STATUS_MAP[detail.status] ?? { label: detail.status_label || detail.status, badgeClass: 'bg-gray-100 text-gray-800' } : null
-  const canToggleAutoRenew = detail && ['ACTIVE', 'PAUSED', 'PENDING_PAUSE', 'PENDING_CANCEL'].includes(detail.status)
   const canCancel = detail && ['ACTIVE', 'PAUSED', 'PAYMENT_FAILED'].includes(detail.status)
   const isCanceled = detail?.status === 'CANCELED'
+  const isPendingCancel = detail?.status === 'PENDING_CANCEL'
 
   return (
     <div className="min-h-screen bg-page pb-24">
@@ -124,9 +107,11 @@ export default function SubscriptionManagePage() {
         ) : (
           <div className="space-y-6">
             {notice && (
-              <section className="bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800 p-4">
-                <h2 className="text-xs font-bold text-amber-800 dark:text-amber-200 uppercase tracking-wider mb-2">공지사항</h2>
-                <div className="text-sm text-page whitespace-pre-wrap">{notice}</div>
+              <section className="bg-page rounded-xl overflow-hidden shadow-sm border border-page">
+                <h2 className="px-5 py-4 text-xs font-bold text-primary-500 uppercase tracking-wider">공지사항</h2>
+                <div className="px-5 pb-5">
+                  <p className="text-page-secondary text-sm whitespace-pre-wrap">{notice}</p>
+                </div>
               </section>
             )}
 
@@ -155,7 +140,7 @@ export default function SubscriptionManagePage() {
                     )}
                     {detail.next_payment_date && (
                       <div className="flex items-center justify-between">
-                        <span className="text-page-secondary text-sm">다음 결제일</span>
+                        <span className="text-page-secondary text-sm">{isPendingCancel ? '서비스 이용 종료일' : '다음 결제일'}</span>
                         <span className="text-page text-sm">{new Date(detail.next_payment_date).toLocaleDateString('ko-KR')}</span>
                       </div>
                     )}
@@ -166,47 +151,62 @@ export default function SubscriptionManagePage() {
                   </div>
                 </section>
 
-                {canToggleAutoRenew && (
+                {canCancel && (
                   <section className="bg-page rounded-xl overflow-hidden shadow-sm border border-page">
-                    <h2 className="px-5 py-4 text-xs font-bold text-primary-500 uppercase tracking-wider">구독 설정</h2>
-                    <div className="px-5 pb-5">
-                      <div className="flex items-center justify-between gap-4">
-                        <div>
-                          <p className="text-page font-medium text-sm">자동 갱신</p>
-                          <p className="text-page-secondary text-xs mt-0.5">토글 OFF 시 다음 결제일에 자동 취소됩니다.</p>
-                        </div>
-                        <button
-                          type="button"
-                          role="switch"
-                          aria-checked={detail.auto_renew}
-                          disabled={togglingAutoRenew}
-                          onClick={handleAutoRenewToggle}
-                          className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-0 ring-0 border-0 disabled:opacity-50 ${
-                            detail.auto_renew ? 'bg-primary-500' : 'bg-page-secondary'
-                          }`}
-                        >
-                          <span
-                            className={`pointer-events-none inline-block h-5 w-5 shrink-0 transform rounded-full bg-white shadow ring-0 transition duration-200 ${
-                              detail.auto_renew ? 'translate-x-5' : 'translate-x-0.5'
-                            }`}
-                          />
-                        </button>
+                    <h2 className="px-5 py-4 text-xs font-bold text-primary-500 uppercase tracking-wider">구독 해지</h2>
+                    <div className="px-5 pb-5 space-y-3">
+                      <div className="text-page-secondary text-sm space-y-1.5">
+                        <p>구독을 해지하면 다음과 같이 처리됩니다.</p>
+                        <ul className="list-disc list-inside space-y-1 pl-1">
+                          <li>다음 결제일에 자동 결제가 이루어지지 않습니다.</li>
+                          <li>현재 결제 기간 종료일까지 서비스를 정상 이용할 수 있습니다.</li>
+                          <li>해지 후에도 언제든 다시 구독할 수 있습니다.</li>
+                        </ul>
                       </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowCancelConfirm(true)}
+                        className="px-4 py-2.5 border border-page text-page-secondary rounded-lg text-sm font-medium hover:bg-page-secondary/50 transition-colors"
+                      >
+                        구독 해지 신청
+                      </button>
                     </div>
                   </section>
                 )}
 
-                {canCancel && (
+                {isPendingCancel && (
                   <section className="bg-page rounded-xl overflow-hidden shadow-sm border border-page">
-                    <h2 className="px-5 py-4 text-xs font-bold text-primary-500 uppercase tracking-wider">구독 취소</h2>
-                    <div className="px-5 pb-5">
-                      <p className="text-page-secondary text-sm mb-3">취소 시 남은 기간까지 서비스 이용이 가능합니다.</p>
+                    <h2 className="px-5 py-4 text-xs font-bold text-primary-500 uppercase tracking-wider">해지 예정</h2>
+                    <div className="px-5 pb-5 space-y-3">
+                      <p className="text-page-secondary text-sm">
+                        구독 해지가 예약되었습니다.{' '}
+                        {detail.next_payment_date && (
+                          <>
+                            <span className="text-page font-medium">{new Date(detail.next_payment_date).toLocaleDateString('ko-KR')}</span>까지 서비스를 이용하실 수 있습니다.
+                          </>
+                        )}
+                      </p>
+                      <p className="text-page-secondary text-sm">
+                        해지를 취소하고 구독을 계속하시려면 아래 버튼을 눌러주세요.
+                      </p>
                       <button
                         type="button"
-                        onClick={() => setShowCancelConfirm(true)}
-                        className="px-4 py-2.5 border border-red-500 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                        onClick={async () => {
+                          try {
+                            const res = await subscriptionApi.setAutoRenew(true)
+                            if (res.data?.success) {
+                              setDetail((d) => (d ? { ...d, status: 'ACTIVE', status_label: '활성화', auto_renew: true } : null))
+                              setCancelSuccess(false)
+                            } else {
+                              setError(res.data?.message ?? '구독 재개에 실패했습니다.')
+                            }
+                          } catch {
+                            setError('구독 재개에 실패했습니다.')
+                          }
+                        }}
+                        className="px-4 py-2.5 bg-primary-500 text-white rounded-lg text-sm font-medium hover:bg-primary-600 transition-colors"
                       >
-                        구독 취소하기
+                        해지 취소 (구독 유지)
                       </button>
                     </div>
                   </section>
@@ -214,7 +214,7 @@ export default function SubscriptionManagePage() {
 
                 {isCanceled && (
                   <section className="bg-page rounded-xl border border-page p-5 text-center">
-                    <p className="text-page-secondary text-sm mb-3">취소된 구독입니다. 다시 이용하시려면 재구독해 주세요.</p>
+                    <p className="text-page-secondary text-sm mb-3">구독이 종료되었습니다. 다시 이용하시려면 재구독해 주세요.</p>
                     <button
                       type="button"
                       onClick={() => navigate('/subscribe')}
@@ -230,7 +230,7 @@ export default function SubscriptionManagePage() {
         )}
 
         {error && detail && (
-          <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300 text-sm">
+          <div className="mt-4 p-3 bg-page rounded-lg border border-page text-page-secondary text-sm">
             {error}
           </div>
         )}
@@ -239,8 +239,20 @@ export default function SubscriptionManagePage() {
       {showCancelConfirm && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="cancel-title">
           <div className="bg-page border border-page rounded-xl shadow-xl max-w-sm w-full p-6">
-            <h3 id="cancel-title" className="text-lg font-semibold text-page mb-2">구독 취소</h3>
-            <p className="text-sm text-page-secondary mb-6">정말 구독을 취소하시겠습니까? 남은 기간까지는 이용 가능합니다.</p>
+            <h3 id="cancel-title" className="text-lg font-semibold text-page mb-3">구독 해지 확인</h3>
+            <div className="text-sm text-page-secondary space-y-2 mb-6">
+              <p>구독을 해지하시면:</p>
+              <ul className="list-disc list-inside space-y-1 pl-1">
+                <li>다음 결제일부터 자동 결제가 중단됩니다.</li>
+                {detail?.next_payment_date && (
+                  <li>
+                    <span className="text-page font-medium">{new Date(detail.next_payment_date).toLocaleDateString('ko-KR')}</span>
+                    까지 서비스를 이용할 수 있습니다.
+                  </li>
+                )}
+                <li>해지 후에도 언제든 다시 구독하실 수 있습니다.</li>
+              </ul>
+            </div>
             <div className="flex gap-3">
               <button
                 type="button"
@@ -248,17 +260,37 @@ export default function SubscriptionManagePage() {
                 disabled={canceling}
                 className="flex-1 py-2.5 rounded-lg border border-page text-page text-sm font-medium hover:bg-page-secondary transition-colors disabled:opacity-50"
               >
-                닫기
+                유지하기
               </button>
               <button
                 type="button"
                 onClick={handleCancel}
                 disabled={canceling}
-                className="flex-1 py-2.5 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 transition-colors disabled:opacity-50"
+                className="flex-1 py-2.5 rounded-lg border border-page text-page-secondary text-sm font-medium hover:bg-page-secondary transition-colors disabled:opacity-50"
               >
-                {canceling ? '처리 중...' : '취소하기'}
+                {canceling ? '처리 중...' : '해지하기'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {cancelSuccess && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" role="dialog" aria-modal="true">
+          <div className="bg-page border border-page rounded-xl shadow-xl max-w-sm w-full p-6 text-center">
+            <p className="text-page font-medium mb-2">구독 해지가 예약되었습니다.</p>
+            {detail?.next_payment_date && (
+              <p className="text-page-secondary text-sm mb-4">
+                {new Date(detail.next_payment_date).toLocaleDateString('ko-KR')}까지 서비스를 정상 이용하실 수 있습니다.
+              </p>
+            )}
+            <button
+              type="button"
+              onClick={() => setCancelSuccess(false)}
+              className="px-6 py-2.5 bg-primary-500 text-white rounded-lg text-sm font-medium hover:bg-primary-600 transition-colors"
+            >
+              확인
+            </button>
           </div>
         </div>
       )}

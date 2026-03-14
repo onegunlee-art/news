@@ -196,16 +196,8 @@ type UserDetail = UserRow & {
   usage?: { analyses_count: number; bookmarks_count: number; search_count: number };
 };
 
-const SUBSCRIPTION_PLAN_KEYS = [
-  { key: 'plan_1m_description', label: '1개월', placeholder: '매월 자동 결제' },
-  { key: 'plan_3m_description', label: '3개월', placeholder: '3개월 단위 결제, 10% 할인' },
-  { key: 'plan_6m_description', label: '6개월', placeholder: '6개월 단위 결제, 15% 할인' },
-  { key: 'plan_12m_description', label: '12개월', placeholder: '12개월 단위 결제, 25% 할인' },
-];
-
 const SubscriptionSettingsSection: React.FC = () => {
   const [notice, setNotice] = useState('');
-  const [planDescriptions, setPlanDescriptions] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -215,12 +207,6 @@ const SubscriptionSettingsSection: React.FC = () => {
       if (res.data?.success && res.data?.data) {
         const d = res.data.data as Record<string, string>;
         setNotice(d.subscription_manage_notice ?? '');
-        setPlanDescriptions({
-          plan_1m_description: d.plan_1m_description ?? '',
-          plan_3m_description: d.plan_3m_description ?? '',
-          plan_6m_description: d.plan_6m_description ?? '',
-          plan_12m_description: d.plan_12m_description ?? '',
-        });
       }
     }).catch(() => {}).finally(() => setLoading(false));
   }, []);
@@ -231,7 +217,6 @@ const SubscriptionSettingsSection: React.FC = () => {
     try {
       await adminSettingsApi.updateSettings({
         subscription_manage_notice: notice,
-        ...planDescriptions,
       });
       setMessage({ type: 'success', text: '저장되었습니다.' });
     } catch {
@@ -262,24 +247,6 @@ const SubscriptionSettingsSection: React.FC = () => {
           rows={3}
           className="w-full px-4 py-2 rounded-lg bg-slate-900/50 border border-slate-600 text-white placeholder-slate-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50"
         />
-      </div>
-
-      <div>
-        <label className="block text-slate-400 text-sm font-medium mb-2">구독 플랜 설명 (선택)</label>
-        <div className="space-y-2">
-          {SUBSCRIPTION_PLAN_KEYS.map(({ key, label, placeholder }) => (
-            <div key={key} className="flex items-center gap-3">
-              <span className="text-slate-400 text-sm w-16 shrink-0">{label}</span>
-              <input
-                type="text"
-                value={planDescriptions[key] ?? ''}
-                onChange={(e) => setPlanDescriptions((prev) => ({ ...prev, [key]: e.target.value }))}
-                placeholder={placeholder}
-                className="flex-1 px-4 py-2 rounded-lg bg-slate-900/50 border border-slate-600 text-white placeholder-slate-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 text-sm"
-              />
-            </div>
-          ))}
-        </div>
       </div>
 
       <div className="flex items-center gap-3">

@@ -1,7 +1,7 @@
 <?php
 /**
  * POST /api/subscription/cancel
- * StepPay 구독 즉시 취소 (whenToCancel = NOW)
+ * StepPay 구독 취소 (whenToCancel = END_OF_PERIOD: 현재 기간 만료 후 취소)
  */
 
 header('Content-Type: application/json; charset=utf-8');
@@ -38,7 +38,7 @@ if (empty($subscriptionId)) {
 }
 
 $subscriptionId = (int) $subscriptionId;
-$result = steppayCancelSubscription($subscriptionId, 'NOW');
+$result = steppayCancelSubscription($subscriptionId, 'END_OF_PERIOD');
 
 if (!$result['success']) {
     $message = $result['data']['errorMessage'] ?? $result['data']['message'] ?? $result['error'] ?? '구독 취소에 실패했습니다.';
@@ -47,4 +47,4 @@ if (!$result['success']) {
     exit;
 }
 
-echo json_encode(['success' => true, 'message' => '구독이 취소되었습니다.'], JSON_UNESCAPED_UNICODE);
+echo json_encode(['success' => true, 'message' => '다음 결제일부터 구독이 해지됩니다. 현재 기간까지는 정상 이용 가능합니다.'], JSON_UNESCAPED_UNICODE);
