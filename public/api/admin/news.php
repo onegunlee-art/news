@@ -186,15 +186,14 @@ if ($method === 'POST') {
             logError('Failed to parse published_at: ' . $publishedAtRaw);
         }
     }
-    // 우리 정책: published_at 비어있으면 현재 날짜(우리 게시일)로 자동 설정
-    if ($publishedAt === null) {
-        $publishedAt = date('Y-m-d H:i:s');
-    }
-    
     // status: draft(임시저장) | published(공개). hasStatus 없으면 published로 저장
     $status = $hasStatus ? ($input['status'] ?? 'published') : 'published';
     if ($hasStatus && !in_array($status, ['draft', 'published'])) {
         $status = 'published';
+    }
+    // 게시 정책: published 상태일 때만 현재 시각으로 published_at 설정 (draft는 null 유지)
+    if ($status === 'published') {
+        $publishedAt = date('Y-m-d H:i:s');
     }
     
     // 디버그 로깅
@@ -645,8 +644,9 @@ if ($method === 'PUT') {
     if ($hasStatus && isset($input['status'])) {
         $status = in_array($input['status'], ['draft', 'published']) ? $input['status'] : null;
     }
-    // 게시일 정책: draft→published 전환 시 published_at이 비어있으면 게시 시점으로 설정
-    if ($publishedAt === null && $status === 'published') {
+    // 게시 정책: published 상태이면 항상 현재 시각으로 published_at 갱신
+    // (임시저장→게시, 수정 후 재게시 모두 게시/수정 시점이 기준)
+    if ($status === 'published') {
         $publishedAt = date('Y-m-d H:i:s');
     }
     
