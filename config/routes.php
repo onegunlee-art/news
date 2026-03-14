@@ -222,6 +222,10 @@ $router->group(['prefix' => '/auth'], function (Router $router) {
     // 이메일/비밀번호 로그인
     $router->post('/login', [AuthController::class, 'login']);
     
+    // 이메일 인증 (회원가입용)
+    $router->post('/send-verification', [AuthController::class, 'sendVerification']);
+    $router->post('/verify-code', [AuthController::class, 'verifyCode']);
+    
     // 이메일/비밀번호 회원가입
     $router->post('/register', [AuthController::class, 'register']);
     
@@ -230,6 +234,11 @@ $router->group(['prefix' => '/auth'], function (Router $router) {
     
     // 카카오 콜백 처리
     $router->get('/kakao/callback', [AuthController::class, 'kakaoCallback']);
+    
+    // Google 로그인 URL 리다이렉트
+    $router->get('/google', [AuthController::class, 'googleLogin']);
+    // Google 콜백 처리
+    $router->get('/google/callback', [AuthController::class, 'googleCallback']);
     
     // 토큰 갱신
     $router->post('/refresh', [AuthController::class, 'refreshToken']);

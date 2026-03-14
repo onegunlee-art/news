@@ -240,7 +240,15 @@ export const authApi = {
   login: (email: string, password: string) =>
     api.post('/auth/login', { email, password }),
   
-  /** 이메일/비밀번호 회원가입 */
+  /** 이메일 인증 코드 발송 */
+  sendVerification: (email: string) =>
+    api.post('/auth/send-verification', { email }),
+  
+  /** 이메일 인증 코드 검증 */
+  verifyCode: (email: string, code: string) =>
+    api.post('/auth/verify-code', { email, code }),
+  
+  /** 이메일/비밀번호 회원가입 (이메일 인증 완료 후) */
   register: (email: string, password: string, nickname: string) =>
     api.post('/auth/register', { email, password, nickname }),
   

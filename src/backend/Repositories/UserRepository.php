@@ -30,6 +30,14 @@ final class UserRepository extends BaseRepository
     }
 
     /**
+     * Google ID로 사용자 조회
+     */
+    public function findByGoogleId(string $googleId): ?array
+    {
+        return $this->findOneBy(['google_id' => $googleId]);
+    }
+
+    /**
      * 이메일로 사용자 조회
      */
     public function findByEmail(string $email): ?array
@@ -71,6 +79,29 @@ final class UserRepository extends BaseRepository
             return [(int) $existingUser['id'], false];
         }
         
+        $userData = $user->toArray();
+        $userData['last_login_at'] = date('Y-m-d H:i:s');
+        $userId = $this->create($userData);
+        return [$userId, true];
+    }
+
+    /**
+     * Google 로그인으로 사용자 생성 또는 업데이트
+     * @return array{0: int, 1: bool} [userId, isNewUser]
+     */
+    public function createOrUpdateFromGoogle(array $googleData): array
+    {
+        $user = User::fromGoogleData($googleData);
+        $existingUser = $this->findByGoogleId($user->getGoogleId());
+        if ($existingUser) {
+            $this->update($existingUser['id'], [
+                'nickname' => $user->getNickname(),
+                'profile_image' => $user->getProfileImage(),
+                'email' => $user->getEmail(),
+                'last_login_at' => date('Y-m-d H:i:s'),
+            ]);
+            return [(int) $existingUser['id'], false];
+        }
         $userData = $user->toArray();
         $userData['last_login_at'] = date('Y-m-d H:i:s');
         $userId = $this->create($userData);

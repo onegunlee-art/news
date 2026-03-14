@@ -28,6 +28,7 @@ final class AuthService
     private UserRepository $userRepository;
     private JWT $jwt;
     private KakaoAuthService $kakaoAuth;
+    private GoogleAuthService $googleAuth;
 
     /**
      * 생성자
@@ -37,6 +38,7 @@ final class AuthService
         $this->userRepository = new UserRepository();
         $this->jwt = new JWT();
         $this->kakaoAuth = new KakaoAuthService();
+        $this->googleAuth = new GoogleAuthService();
     }
 
     /**
@@ -103,6 +105,45 @@ final class AuthService
         $refreshExpiry = new \DateTimeImmutable('+7 days');
         $this->userRepository->saveRefreshToken($userId, $refreshToken, $refreshExpiry);
         
+        return [
+            'user' => User::fromArray($userData)->toJson(),
+            'access_token' => $accessToken,
+            'refresh_token' => $refreshToken,
+            'token_type' => 'Bearer',
+            'expires_in' => 86400,
+            'is_new_user' => $isNewUser,
+        ];
+    }
+
+    /**
+     * Google 콜백 처리 (인가 코드로 로그인)
+     */
+    public function handleGoogleCallback(string $code, ?string $state = null): array
+    {
+        if ($state !== null) {
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+            $savedState = $_SESSION['oauth_state'] ?? null;
+            unset($_SESSION['oauth_state']);
+            if ($savedState !== $state) {
+                throw new RuntimeException('Invalid state parameter');
+            }
+        }
+        $tokenData = $this->googleAuth->getAccessToken($code);
+        $googleUser = $this->googleAuth->getUserInfo($tokenData['access_token']);
+        [$userId, $isNewUser] = $this->userRepository->createOrUpdateFromGoogle($googleUser);
+        $userData = $this->userRepository->findById($userId);
+        if (!$userData) {
+            throw new RuntimeException('Failed to retrieve user data');
+        }
+        $accessToken = $this->jwt->createAccessToken($userId, [
+            'nickname' => $userData['nickname'],
+            'role' => $userData['role'],
+        ]);
+        $refreshToken = $this->jwt->createRefreshToken($userId);
+        $refreshExpiry = new \DateTimeImmutable('+7 days');
+        $this->userRepository->saveRefreshToken($userId, $refreshToken, $refreshExpiry);
         return [
             'user' => User::fromArray($userData)->toJson(),
             'access_token' => $accessToken,
@@ -298,10 +339,19 @@ final class AuthService
     }
 
     /**
-     * 이메일/비밀번호 회원가입
+     * 이메일/비밀번호 회원가입 (이메일 인증 완료된 경우만 허용)
      */
     public function registerWithEmail(string $email, string $password, string $nickname): array
     {
+        $db = Database::getInstance();
+        $verified = $db->fetchOne(
+            'SELECT id FROM email_verifications WHERE email = :email AND verified_at IS NOT NULL AND used_at IS NULL AND verified_at >= DATE_SUB(NOW(), INTERVAL 15 MINUTE) LIMIT 1',
+            ['email' => $email]
+        );
+        if (!$verified) {
+            throw new RuntimeException('이메일 인증을 먼저 완료해주세요.');
+        }
+
         if ($this->userRepository->findByEmail($email)) {
             throw new RuntimeException('이미 사용 중인 이메일입니다.');
         }
@@ -312,6 +362,8 @@ final class AuthService
         }
         
         $userId = $this->userRepository->createWithPassword($email, $passwordHash, $nickname);
+        $db->executeQuery('UPDATE email_verifications SET used_at = NOW() WHERE id = :id', ['id' => $verified['id']]);
+
         $userData = $this->userRepository->findById($userId);
         
         if (!$userData) {
@@ -337,4 +389,53 @@ final class AuthService
         ];
     }
 
+    /**
+     * 이메일 인증 코드 발송
+     */
+    public function sendVerificationCode(string $email): void
+    {
+        $email = trim(strtolower($email));
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new RuntimeException('유효한 이메일 주소를 입력해주세요.');
+        }
+        $db = Database::getInstance();
+        $existing = $db->fetchOne('SELECT id, created_at FROM email_verifications WHERE email = :email ORDER BY id DESC LIMIT 1', ['email' => $email]);
+        if ($existing && (time() - strtotime($existing['created_at'])) < 60) {
+            throw new RuntimeException('인증 메일은 1분에 한 번만 요청할 수 있습니다.');
+        }
+        $code = (string) random_int(100000, 999999);
+        $expiresAt = (new \DateTimeImmutable('+10 minutes'))->format('Y-m-d H:i:s');
+        $db->insert('email_verifications', [
+            'email' => $email,
+            'code' => $code,
+            'expires_at' => $expiresAt,
+        ]);
+        $mailer = new MailService();
+        $subject = '[The Gist] 이메일 인증 코드';
+        $body = "인증 코드: {$code}\n\n10분 내에 입력해주세요.";
+        $html = '<p>인증 코드: <strong>' . htmlspecialchars($code) . '</strong></p><p>10분 내에 입력해주세요.</p>';
+        $mailer->send($email, $subject, $body, $html);
+    }
+
+    /**
+     * 이메일 인증 코드 검증
+     */
+    public function verifyEmailCode(string $email, string $code): bool
+    {
+        $email = trim(strtolower($email));
+        $code = trim($code);
+        if (strlen($code) !== 6 || !ctype_digit($code)) {
+            throw new RuntimeException('인증 코드는 6자리 숫자입니다.');
+        }
+        $db = Database::getInstance();
+        $row = $db->fetchOne(
+            'SELECT id FROM email_verifications WHERE email = :email AND code = :code AND expires_at > NOW() AND verified_at IS NULL LIMIT 1',
+            ['email' => $email, 'code' => $code]
+        );
+        if (!$row) {
+            throw new RuntimeException('인증 코드가 올바르지 않거나 만료되었습니다.');
+        }
+        $db->executeQuery('UPDATE email_verifications SET verified_at = NOW() WHERE id = :id', ['id' => $row['id']]);
+        return true;
+    }
 }

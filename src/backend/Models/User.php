@@ -21,6 +21,7 @@ final class User
 {
     private ?int $id = null;
     private ?int $kakaoId = null;
+    private ?string $googleId = null;
     private ?string $email = null;
     private string $nickname;
     private ?string $profileImage = null;
@@ -49,6 +50,7 @@ final class User
         
         $user->id = isset($data['id']) ? (int) $data['id'] : null;
         $user->kakaoId = isset($data['kakao_id']) ? (int) $data['kakao_id'] : null;
+        $user->googleId = isset($data['google_id']) ? (string) $data['google_id'] : null;
         $user->email = $data['email'] ?? null;
         $user->profileImage = $data['profile_image'] ?? null;
         $user->role = $data['role'] ?? 'user';
@@ -97,6 +99,11 @@ final class User
     public function getKakaoId(): ?int
     {
         return $this->kakaoId;
+    }
+
+    public function getGoogleId(): ?string
+    {
+        return $this->googleId;
     }
 
     public function getEmail(): ?string
@@ -222,6 +229,7 @@ final class User
     {
         return [
             'kakao_id' => $this->kakaoId,
+            'google_id' => $this->googleId,
             'email' => $this->email,
             'nickname' => $this->nickname,
             'profile_image' => $this->profileImage,

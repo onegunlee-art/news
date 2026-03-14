@@ -82,6 +82,44 @@ final class AuthController
     }
 
     /**
+     * Google 로그인 URL로 리다이렉트
+     * GET /api/auth/google
+     */
+    public function googleLogin(Request $request): Response
+    {
+        try {
+            $loginUrl = $this->authService->getGoogleLoginUrl();
+            return Response::redirect($loginUrl);
+        } catch (RuntimeException $e) {
+            return Response::error('Google 로그인 URL 생성 실패: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Google 콜백 처리
+     * GET /api/auth/google/callback
+     */
+    public function googleCallback(Request $request): Response
+    {
+        $error = $request->query('error');
+        if ($error) {
+            $errorDescription = $request->query('error_description', '로그인이 취소되었습니다.');
+            return $this->redirectToFrontendWithError($errorDescription);
+        }
+        $code = $request->query('code');
+        if (!$code) {
+            return $this->redirectToFrontendWithError('인가 코드가 없습니다.');
+        }
+        $state = $request->query('state');
+        try {
+            $result = $this->authService->handleGoogleCallback($code, $state);
+            return $this->redirectToFrontendWithToken($result);
+        } catch (RuntimeException $e) {
+            return $this->redirectToFrontendWithError($e->getMessage());
+        }
+    }
+
+    /**
      * 토큰 갱신
      * 
      * POST /api/auth/refresh
@@ -146,6 +184,45 @@ final class AuthController
             return Response::success($result, '로그인되었습니다.');
         } catch (RuntimeException $e) {
             return Response::unauthorized($e->getMessage());
+        }
+    }
+
+    /**
+     * 이메일 인증 코드 발송
+     * 
+     * POST /api/auth/send-verification
+     */
+    public function sendVerification(Request $request): Response
+    {
+        $email = $request->json('email');
+        if (!is_string($email) || trim($email) === '') {
+            return Response::error('이메일을 입력해주세요.', 400);
+        }
+        try {
+            $this->authService->sendVerificationCode(trim($email));
+            return Response::success(null, '인증 코드가 발송되었습니다.');
+        } catch (RuntimeException $e) {
+            return Response::error($e->getMessage(), 400);
+        }
+    }
+
+    /**
+     * 이메일 인증 코드 검증
+     * 
+     * POST /api/auth/verify-code
+     */
+    public function verifyCode(Request $request): Response
+    {
+        $email = $request->json('email');
+        $code = $request->json('code');
+        if (!is_string($email) || trim($email) === '' || !is_string($code)) {
+            return Response::error('이메일과 인증 코드를 입력해주세요.', 400);
+        }
+        try {
+            $this->authService->verifyEmailCode(trim($email), trim($code));
+            return Response::success(['verified' => true], '인증이 완료되었습니다.');
+        } catch (RuntimeException $e) {
+            return Response::error($e->getMessage(), 400);
         }
     }
 
