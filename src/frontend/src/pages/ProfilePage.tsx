@@ -33,6 +33,7 @@ export default function ProfilePage() {
   const [expandedActivity, setExpandedActivity] = useState<'none' | 'contact'>('none')
   const [showWithdrawConfirm, setShowWithdrawConfirm] = useState(false)
   const [withdrawing, setWithdrawing] = useState(false)
+  const [showNoSubscriptionPopup, setShowNoSubscriptionPopup] = useState(false)
   const activeTabRef = useRef(activeTab)
   activeTabRef.current = activeTab
 
@@ -216,6 +217,13 @@ export default function ProfilePage() {
               </span>
               <button
                 type="button"
+                onClick={() => {
+                  if (!isSubscribed) {
+                    setShowNoSubscriptionPopup(true)
+                  } else {
+                    navigate('/subscription/manage')
+                  }
+                }}
                 className="px-3 py-1.5 text-xs font-medium tracking-wide uppercase text-white bg-primary-500 hover:bg-primary-600 rounded transition-colors"
               >
                 MANAGE
@@ -351,6 +359,22 @@ export default function ProfilePage() {
                 className="flex-1 py-2.5 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 transition-colors disabled:opacity-50"
               >
                 {withdrawing ? '처리 중...' : '탈퇴하기'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showNoSubscriptionPopup && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="no-subscription-title">
+          <div className="bg-page border border-page rounded-xl shadow-xl max-w-sm w-full p-6">
+            <p id="no-subscription-title" className="text-page font-medium text-center">현재 구독 중인 상품이 없습니다.</p>
+            <div className="mt-4 flex justify-center">
+              <button
+                type="button"
+                onClick={() => setShowNoSubscriptionPopup(false)}
+                className="px-6 py-2.5 bg-primary-500 text-white rounded-lg text-sm font-medium hover:bg-primary-600 transition-colors"
+              >
+                확인
               </button>
             </div>
           </div>

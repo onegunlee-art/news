@@ -253,3 +253,30 @@ export const authApi = {
   logout: (refreshToken?: string) =>
     api.post('/auth/logout', { refresh_token: refreshToken }),
 }
+
+/** 구독 관리 (상세 조회, 자동 갱신 토글, 취소) */
+export type SubscriptionDetail = {
+  plan_name: string
+  status: string
+  status_label: string
+  start_date: string | null
+  next_payment_date: string | null
+  amount_formatted: string
+  auto_renew: boolean
+  subscription_id: number | null
+}
+
+export const subscriptionApi = {
+  getDetail: () =>
+    api.get<{ success: boolean; data: SubscriptionDetail }>('/subscription/detail'),
+  setAutoRenew: (enabled: boolean) =>
+    api.post<{ success: boolean; message?: string }>('/subscription/auto-renew', { enabled }),
+  cancel: () =>
+    api.post<{ success: boolean; message?: string }>('/subscription/cancel'),
+}
+
+/** 구독 관리 페이지 공지사항 (공개 조회) */
+export const subscriptionSettingsPublicApi = {
+  getNotice: () =>
+    api.get<{ success: boolean; data: { notice: string } }>('/subscription/settings'),
+}

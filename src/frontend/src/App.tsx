@@ -23,6 +23,7 @@ import SearchPage from './pages/SearchPage'
 import SubscriptionPage from './pages/SubscriptionPage'
 import SubscribeSuccessPage from './pages/SubscribeSuccessPage'
 import SubscribeErrorPage from './pages/SubscribeErrorPage'
+import SubscriptionManagePage from './pages/SubscriptionManagePage'
 
 function App() {
   const { initializeAuth } = useAuthStore()
@@ -121,6 +122,7 @@ function App() {
           <Route path="subscribe" element={<SubscriptionPage />} />
           <Route path="subscribe/success" element={<SubscribeSuccessPage />} />
           <Route path="subscribe/error" element={<SubscribeErrorPage />} />
+          <Route path="subscription/manage" element={<SubscriptionManagePage />} />
         </Route>
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/admin" element={<AdminPage />} />

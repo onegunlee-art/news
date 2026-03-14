@@ -27,6 +27,10 @@ ErrorDocument 404 /index.php
     RewriteRule ^api/subscription/order$ api/subscription/order.php [QSA,L]
     RewriteRule ^api/subscription/verify$ api/subscription/verify.php [QSA,L]
     RewriteRule ^api/subscription/status$ api/subscription/status.php [QSA,L]
+    RewriteRule ^api/subscription/detail$ api/subscription/detail.php [QSA,L]
+    RewriteRule ^api/subscription/auto-renew$ api/subscription/auto-renew.php [QSA,L]
+    RewriteRule ^api/subscription/cancel$ api/subscription/cancel.php [QSA,L]
+    RewriteRule ^api/subscription/settings$ api/subscription/settings.php [QSA,L]
     # StepPay 웹훅
     RewriteRule ^api/webhook/steppay$ api/webhook/steppay.php [QSA,L]
     RewriteRule ^api/subscription/test-steppay$ api/subscription/test-steppay.php [QSA,L]

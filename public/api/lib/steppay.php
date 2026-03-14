@@ -125,3 +125,31 @@ function steppayGetPaymentUrl(string $orderCode): string {
 function steppayGetSubscription(int $subscriptionId): array {
     return steppayRequest('GET', '/subscriptions/' . $subscriptionId);
 }
+
+/**
+ * StepPay 구독 취소
+ * @param int $subscriptionId 구독 ID
+ * @param string $whenToCancel NOW=즉시취소, END_OF_PERIOD=기간만료시취소
+ */
+function steppayCancelSubscription(int $subscriptionId, string $whenToCancel = 'END_OF_PERIOD'): array {
+    return steppayRequest('POST', '/subscriptions/' . $subscriptionId . '/cancel', [
+        'whenToCancel' => $whenToCancel,
+    ]);
+}
+
+/**
+ * StepPay 구독 일시정지
+ */
+function steppayPauseSubscription(int $subscriptionId): array {
+    return steppayRequest('POST', '/subscriptions/' . $subscriptionId . '/pause', [
+        'whenToPause' => 'IMMEDIATE',
+        'whenToResume' => 'NOTHING',
+    ]);
+}
+
+/**
+ * StepPay 구독 활성화 (일시정지/취소대기 해제)
+ */
+function steppayResumeSubscription(int $subscriptionId): array {
+    return steppayRequest('POST', '/subscriptions/' . $subscriptionId . '/active');
+}
