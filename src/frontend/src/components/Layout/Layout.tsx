@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Outlet } from 'react-router-dom'
 import Header from './Header'
 import Footer from './Footer'
+import InstallPrompt from '../PWA/InstallPrompt'
 import { useViewSettingsStore } from '../../store/viewSettingsStore'
 
 export default function Layout() {
@@ -23,6 +24,7 @@ export default function Layout() {
         <Outlet />
       </main>
       <Footer />
+      <InstallPrompt />
     </div>
   )
 }
