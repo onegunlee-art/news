@@ -391,8 +391,8 @@ const RegisterPage: React.FC = () => {
             type="button"
             onClick={() => {
               saveAuthReturnState(returnTo, intent);
-              const base = import.meta.env.VITE_API_URL || '';
-              window.location.href = `${base || ''}/api/auth/google`;
+              const base = import.meta.env.VITE_API_URL || '/api';
+              window.location.href = `${base}/auth/google`;
             }}
             className="w-full flex items-center justify-center gap-3 py-3 mt-3 bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 font-semibold rounded-lg transition-all"
           >
