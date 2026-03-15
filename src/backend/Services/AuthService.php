@@ -42,6 +42,15 @@ final class AuthService
     }
 
     /**
+     * Google 로그인 URL 반환
+     */
+    public function getGoogleLoginUrl(): string
+    {
+        $state = bin2hex(random_bytes(16));
+        return $this->googleAuth->getAuthorizationUrl($state);
+    }
+
+    /**
      * 카카오 로그인 URL 반환
      */
     public function getKakaoLoginUrl(): string
@@ -113,19 +122,6 @@ final class AuthService
             'expires_in' => 86400,
             'is_new_user' => $isNewUser,
         ];
-    }
-
-    /**
-     * Google 로그인 URL 반환
-     */
-    public function getGoogleLoginUrl(): string
-    {
-        $state = bin2hex(random_bytes(16));
-        if (session_status() === PHP_SESSION_NONE) {
-            @session_start();
-        }
-        $_SESSION['google_oauth_state'] = $state;
-        return $this->googleAuth->getAuthorizationUrl($state);
     }
 
     /**
