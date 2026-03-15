@@ -21,6 +21,9 @@ ErrorDocument 404 /index.php
     RewriteRule ^api/auth/kakao$ api/auth/kakao.php [L]
     RewriteRule ^api/auth/kakao/callback$ api/auth/kakao/callback.php [QSA,L]
     RewriteRule ^api/auth/kakao/token$ api/auth/kakao/token.php [QSA,L]
+    # Google 로그인 (api.php 라우터 경유 — google/ 디렉토리 체크 우회)
+    RewriteRule ^api/auth/google$ api.php?__path=/api/auth/google [QSA,L]
+    RewriteRule ^api/auth/google/callback$ api.php?__path=/api/auth/google/callback [QSA,L]
     # 회원 탈퇴 (가입 동의 거부 시)
     RewriteRule ^api/auth/withdraw$ api/auth/withdraw.php [QSA,L]
     # 구독 결제 API
