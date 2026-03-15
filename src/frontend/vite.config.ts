@@ -10,6 +10,9 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'favicon-192.png', 'favicon-512.png', 'apple-touch-icon.png'],
+      workbox: {
+        navigateFallbackDenylist: [/^\/api\//],
+      },
       manifest: {
         name: 'The Gist - Gisters, Becoming Leaders',
         short_name: 'The Gist',
