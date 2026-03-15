@@ -49,17 +49,18 @@ DirectorySlash Off
     # Admin API는 항상 Router 경유 (인증 + JSON 에러 래핑)
     RewriteRule ^api/admin/(.+\.php)$ api.php?__path=/api/admin/$1 [QSA,L]
 
+    # API 요청: api.php로 라우팅 (파일이 없는 경우)
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^api/(.*)$ api.php?__path=/api/$1 [QSA,L]
+
     # 정적 파일은 직접 제공 (PHP 파일 포함)
     RewriteCond %{REQUEST_FILENAME} -f
     RewriteRule ^ - [L]
 
-    # 디렉토리는 직접 제공
+    # 디렉토리는 직접 제공 (API 경로 제외)
     RewriteCond %{REQUEST_FILENAME} -d
+    RewriteCond %{REQUEST_URI} !^/api/
     RewriteRule ^ - [L]
-
-    # API 요청: api.php로 라우팅 (HTML 대신 항상 JSON 반환)
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteRule ^api/(.*)$ api.php?__path=/api/$1 [QSA,L]
 
     # React SPA 라우팅 지원
     RewriteCond %{REQUEST_FILENAME} !-f

@@ -6,16 +6,24 @@
  * 경로: /api/auth/kakao.php -> /api/auth/kakao
  */
 
-// 설정 파일 로드
-$configPath = dirname(__DIR__, 3) . '/config/kakao.php';
+// 설정 파일 로드 (여러 경로 시도)
+$candidates = [
+    $_SERVER['DOCUMENT_ROOT'] . '/config/kakao.php',
+    dirname(__DIR__, 2) . '/config/kakao.php',
+    dirname(__DIR__, 3) . '/config/kakao.php',
+];
+$configPath = null;
+foreach ($candidates as $path) {
+    if (file_exists($path)) { $configPath = $path; break; }
+}
 
-if (!file_exists($configPath)) {
+if (!$configPath) {
     header('Content-Type: application/json; charset=utf-8');
     http_response_code(500);
     echo json_encode([
         'success' => false,
         'message' => '카카오 설정 파일을 찾을 수 없습니다.',
-        'config_path' => $configPath,
+        'tried' => $candidates,
     ], JSON_UNESCAPED_UNICODE);
     exit;
 }
