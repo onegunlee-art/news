@@ -4,6 +4,10 @@
 # SPA: /news/123 등 존재하지 않는 경로 접속 시에도 index.php로 HTML 제공
 ErrorDocument 404 /index.php
 
+# 디렉토리 trailing slash 자동 리다이렉트 방지
+# (api/auth/kakao 등 PHP 파일과 동명의 디렉토리가 있으면 mod_dir이 301로 /를 붙여버림)
+DirectorySlash Off
+
 # Rewrite 엔진 활성화
 <IfModule mod_rewrite.c>
     RewriteEngine On
@@ -17,15 +21,15 @@ ErrorDocument 404 /index.php
     # RewriteCond %{HTTPS} off
     # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
-    # 카카오 로그인 경로 직접 처리
-    RewriteRule ^api/auth/kakao$ api/auth/kakao.php [L]
-    RewriteRule ^api/auth/kakao/callback$ api/auth/kakao/callback.php [QSA,L]
-    RewriteRule ^api/auth/kakao/token$ api/auth/kakao/token.php [QSA,L]
-    # Google 로그인 (api.php 라우터 경유 — google/ 디렉토리 체크 우회)
-    RewriteRule ^api/auth/google$ api.php?__path=/api/auth/google [QSA,L]
-    RewriteRule ^api/auth/google/callback$ api.php?__path=/api/auth/google/callback [QSA,L]
+    # 카카오 로그인 경로 직접 처리 (trailing slash 호환)
+    RewriteRule ^api/auth/kakao/?$ api/auth/kakao.php [L]
+    RewriteRule ^api/auth/kakao/callback/?$ api/auth/kakao/callback.php [QSA,L]
+    RewriteRule ^api/auth/kakao/token/?$ api/auth/kakao/token.php [QSA,L]
+    # Google 로그인 (api.php 라우터 경유)
+    RewriteRule ^api/auth/google/?$ api.php?__path=/api/auth/google [QSA,L]
+    RewriteRule ^api/auth/google/callback/?$ api.php?__path=/api/auth/google/callback [QSA,L]
     # 회원 탈퇴 (가입 동의 거부 시)
-    RewriteRule ^api/auth/withdraw$ api/auth/withdraw.php [QSA,L]
+    RewriteRule ^api/auth/withdraw/?$ api/auth/withdraw.php [QSA,L]
     # 구독 결제 API
     RewriteRule ^api/subscription/order$ api/subscription/order.php [QSA,L]
     RewriteRule ^api/subscription/verify$ api/subscription/verify.php [QSA,L]
