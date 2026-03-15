@@ -160,8 +160,12 @@ jobs:
           
           # 불필요한 파일 제거
           find deploy -name "*.md" -delete 2>/dev/null || true
-          find deploy -name "*.txt" -delete 2>/dev/null || true
-          find deploy -name ".git*" -delete 2>/dev/null || true
+          find deploy -name ".git*" ! -name ".htaccess" -delete 2>/dev/null || true
+          
+          # .htaccess 배포 보장 (재복사)
+          cp public/.htaccess deploy/.htaccess 2>/dev/null || true
+          echo "=== .htaccess 배포 확인 ==="
+          test -f deploy/.htaccess && echo "OK: .htaccess 포함됨 ($(wc -l < deploy/.htaccess) lines)" || echo "CRITICAL: .htaccess 누락!"
 
       - name: Create .env and env.txt from GitHub Secrets
         run: |

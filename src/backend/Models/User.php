@@ -89,6 +89,19 @@ final class User
         return $user;
     }
 
+    /**
+     * Google 사용자 데이터로부터 User 객체 생성
+     */
+    public static function fromGoogleData(array $googleData): self
+    {
+        $user = new self($googleData['name'] ?? $googleData['email'] ?? 'Google User');
+        $user->googleId = (string) $googleData['id'];
+        $user->email = $googleData['email'] ?? null;
+        $user->profileImage = $googleData['picture'] ?? null;
+
+        return $user;
+    }
+
     // ==================== Getters ====================
 
     public function getId(): ?int
