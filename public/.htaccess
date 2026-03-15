@@ -96,13 +96,6 @@ DirectorySlash Off
     AddOutputFilterByType DEFLATE text/javascript application/javascript application/json
 </IfModule>
 
-# PWA 아이콘: 짧은 캐시 (1시간) — 아이콘 변경 시 빠르게 반영
-<IfModule mod_headers.c>
-    <FilesMatch "^(icon-|apple-icon|favicon)\.(png|ico)$">
-        Header set Cache-Control "public, max-age=3600, must-revalidate"
-    </FilesMatch>
-</IfModule>
-
 # 캐시 설정
 <IfModule mod_expires.c>
     ExpiresActive On
@@ -121,6 +114,14 @@ DirectorySlash Off
     # 폰트
     ExpiresByType font/woff2 "access plus 1 month"
     ExpiresByType font/woff "access plus 1 month"
+</IfModule>
+
+# PWA 아이콘: 짧은 캐시 (1시간) — mod_expires의 30일 캐시를 덮어씀
+<IfModule mod_headers.c>
+    <FilesMatch "^(icon-|apple-icon|favicon).*\.(png|ico)$">
+        Header set Cache-Control "public, max-age=3600, must-revalidate"
+        Header unset Expires
+    </FilesMatch>
 </IfModule>
 
 # 디렉토리 목록 비활성화
