@@ -96,6 +96,13 @@ DirectorySlash Off
     AddOutputFilterByType DEFLATE text/javascript application/javascript application/json
 </IfModule>
 
+# PWA 아이콘: 짧은 캐시 (1시간) — 아이콘 변경 시 빠르게 반영
+<IfModule mod_headers.c>
+    <FilesMatch "^(icon-|apple-icon|favicon)\.(png|ico)$">
+        Header set Cache-Control "public, max-age=3600, must-revalidate"
+    </FilesMatch>
+</IfModule>
+
 # 캐시 설정
 <IfModule mod_expires.c>
     ExpiresActive On

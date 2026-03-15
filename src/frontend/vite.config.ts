@@ -9,9 +9,10 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'favicon-192.png', 'favicon-512.png', 'apple-touch-icon.png'],
+      includeAssets: ['favicon.ico', 'icon-192.png', 'icon-512.png', 'apple-icon.png'],
       workbox: {
         navigateFallbackDenylist: [/^\/api\//],
+        globPatterns: ['**/*.{js,css,html}', 'icon-192.png', 'icon-512.png', 'apple-icon.png', 'favicon.ico'],
       },
       manifest: {
         name: 'The Gist - Gisters, Becoming Leaders',
@@ -22,9 +23,9 @@ export default defineConfig({
         display: 'standalone',
         start_url: '/',
         icons: [
-          { src: '/favicon-192.png', sizes: '192x192', type: 'image/png' },
-          { src: '/favicon-512.png', sizes: '512x512', type: 'image/png' },
-          { src: '/favicon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }
+          { src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+          { src: '/icon-512.png', sizes: '512x512', type: 'image/png' },
+          { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' }
         ]
       }
     })
