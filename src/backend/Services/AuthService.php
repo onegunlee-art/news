@@ -116,20 +116,23 @@ final class AuthService
     }
 
     /**
+     * Google 로그인 URL 반환
+     */
+    public function getGoogleLoginUrl(): string
+    {
+        $state = bin2hex(random_bytes(16));
+        if (session_status() === PHP_SESSION_NONE) {
+            @session_start();
+        }
+        $_SESSION['google_oauth_state'] = $state;
+        return $this->googleAuth->getAuthorizationUrl($state);
+    }
+
+    /**
      * Google 콜백 처리 (인가 코드로 로그인)
      */
     public function handleGoogleCallback(string $code, ?string $state = null): array
     {
-        if ($state !== null) {
-            if (session_status() === PHP_SESSION_NONE) {
-                session_start();
-            }
-            $savedState = $_SESSION['oauth_state'] ?? null;
-            unset($_SESSION['oauth_state']);
-            if ($savedState !== $state) {
-                throw new RuntimeException('Invalid state parameter');
-            }
-        }
         $tokenData = $this->googleAuth->getAccessToken($code);
         $googleUser = $this->googleAuth->getUserInfo($tokenData['access_token']);
         [$userId, $isNewUser] = $this->userRepository->createOrUpdateFromGoogle($googleUser);

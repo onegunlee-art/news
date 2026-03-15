@@ -2,7 +2,7 @@ const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
 
-const SOURCE = 'C:\\Users\\IBK\\.cursor\\projects\\c-Users-My-project-News\\assets\\favicon-g-master.png';
+const SOURCE = path.resolve(__dirname, '..', 'public', 'favicon-G.svg');
 const OUT = path.resolve(__dirname, '..', 'public');
 
 async function main() {
@@ -51,10 +51,6 @@ async function main() {
   }
   fs.writeFileSync(path.join(OUT, 'favicon.ico'), ico);
   console.log('Created: favicon.ico');
-
-  const masterDest = path.join(OUT, '파비콘.png');
-  fs.copyFileSync(SOURCE, masterDest);
-  console.log('Created: 파비콘.png (master)');
 }
 
 main().catch(e => { console.error(e); process.exit(1); });

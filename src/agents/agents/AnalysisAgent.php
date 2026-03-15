@@ -118,7 +118,7 @@ class AnalysisAgent extends BaseAgent
         
         $response = $this->callClaude($systemPrompt, $analysisPrompt);
         $data = $this->parseJsonResponse($response);
-        
+
         $this->logClaudeResponse('analysis', $response, $data);
 
         $originalTitle = $article->getTitle() !== '' && $article->getTitle() !== null

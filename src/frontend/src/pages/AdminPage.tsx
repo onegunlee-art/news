@@ -451,6 +451,13 @@ const AdminPage: React.FC = () => {
     [subCategoryToLabel]
   );
 
+  // #region agent log
+  useEffect(() => {
+    if (activeTab !== 'news') return;
+    fetch('http://127.0.0.1:7937/ingest/ee60dc6c-aba4-477c-b403-cb644fd3e27b', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'ad4619' }, body: JSON.stringify({ sessionId: 'ad4619', runId: 'view', hypothesisId: 'A', location: 'AdminPage.tsx:newsTab', message: 'news tab subCategoryOptions', data: { optionCount: subCategoryOptions.length, firstLabel: subCategoryOptions[0]?.label }, timestamp: Date.now() }) }).catch(() => {});
+  }, [activeTab, subCategoryOptions]);
+  // #endregion
+
   // feedback useEffect deps에서 참조되므로 컴포넌트 최상단에 선언
   const [articleUrl, setArticleUrl] = useState('');
   const [editingNewsId, setEditingNewsId] = useState<number | null>(null);
@@ -1245,12 +1252,20 @@ const AdminPage: React.FC = () => {
         if (s.menu_subcategories && typeof s.menu_subcategories === 'string') {
           try {
             const parsed = JSON.parse(s.menu_subcategories);
-            if (parsed && typeof parsed === 'object') setMenuSubcategories((prev) => ({ ...prev, ...parsed }));
+            if (parsed && typeof parsed === 'object') {
+              setMenuSubcategories((prev) => ({ ...prev, ...parsed }));
+              // #region agent log
+              fetch('http://127.0.0.1:7937/ingest/ee60dc6c-aba4-477c-b403-cb644fd3e27b', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'ad4619' }, body: JSON.stringify({ sessionId: 'ad4619', runId: 'load', hypothesisId: 'B', location: 'AdminPage.tsx:loadDashboardData', message: 'dashboard menu_subcategories loaded', data: { keysCount: Object.keys(parsed).length }, timestamp: Date.now() }) }).catch(() => {});
+              // #endregion
+            }
           } catch { /* ignore */ }
         }
       }
     } catch (e) {
       console.error('대시보드 로드 실패:', e);
+      // #region agent log
+      fetch('http://127.0.0.1:7937/ingest/ee60dc6c-aba4-477c-b403-cb644fd3e27b', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'ad4619' }, body: JSON.stringify({ sessionId: 'ad4619', runId: 'load', hypothesisId: 'D', location: 'AdminPage.tsx:loadDashboardData', message: 'dashboard load failed', data: { error: String((e as Error).message) }, timestamp: Date.now() }) }).catch(() => {});
+      // #endregion
     } finally {
       setLoading(false);
     }
@@ -1655,6 +1670,9 @@ const AdminPage: React.FC = () => {
                               menu_subcategories: JSON.stringify(menuSubcategories),
                             });
                             setMenuSettingsMsg({ type: 'success', text: '저장되었습니다.' });
+                            // #region agent log
+                            fetch('http://127.0.0.1:7937/ingest/ee60dc6c-aba4-477c-b403-cb644fd3e27b', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'ad4619' }, body: JSON.stringify({ sessionId: 'ad4619', runId: 'save', hypothesisId: 'E', location: 'AdminPage.tsx:menuSaveDone', message: 'menu settings saved (no cache invalidate)', data: { menuSubcategoriesKeysCount: Object.keys(menuSubcategories).length }, timestamp: Date.now() }) }).catch(() => {});
+                            // #endregion
                           } catch (e) {
                             setMenuSettingsMsg({ type: 'error', text: '저장에 실패했습니다.' });
                           } finally {

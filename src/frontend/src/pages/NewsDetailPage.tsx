@@ -49,6 +49,12 @@ export default function NewsDetailPage() {
   const location = useLocation()
   const { subCategoryToLabel, parentKeyToLabel, fromTabToApi, tabLabels } = useMenuConfig()
   const fromTab = (location.state as { fromTab?: string } | null)?.fromTab
+  // #region agent log
+  useEffect(() => {
+    const backTab = fromTab && tabLabels.includes(fromTab) ? fromTab : (tabLabels[0] ?? '최신')
+    fetch('http://127.0.0.1:7937/ingest/ee60dc6c-aba4-477c-b403-cb644fd3e27b', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'ad4619' }, body: JSON.stringify({ sessionId: 'ad4619', runId: 'user', hypothesisId: 'D', location: 'NewsDetailPage.tsx:backTab', message: 'detail back tab resolved', data: { fromTab, tabLabelsLength: tabLabels.length, fromTabInLabels: fromTab ? tabLabels.includes(fromTab) : false, backTab }, timestamp: Date.now() }) }).catch(() => {})
+  }, [fromTab, tabLabels])
+  // #endregion
   const { isAuthenticated, login } = useAuthStore()
   const addAudioItem = useAudioListStore((s) => s.addItem)
   const openAndPlay = useAudioPlayerStore((s) => s.openAndPlay)

@@ -84,6 +84,12 @@ export default function HomePage() {
   const category = tabToCategory[activeTab] ?? undefined
   const isPopularTab = activeTab === popularLabel
 
+  // #region agent log
+  useEffect(() => {
+    fetch('http://127.0.0.1:7937/ingest/ee60dc6c-aba4-477c-b403-cb644fd3e27b', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'ad4619' }, body: JSON.stringify({ sessionId: 'ad4619', runId: 'user', hypothesisId: 'A', location: 'HomePage.tsx:tabCategory', message: 'tab and category state', data: { tabLabelsLength: tabLabels.length, activeTab, category, tabInLabels: tabLabels.includes(activeTab) }, timestamp: Date.now() }) }).catch(() => {})
+  }, [tabLabels, activeTab, category])
+  // #endregion
+
   const {
     data: infiniteData,
     isLoading: isLoadingInfinite,
@@ -107,6 +113,13 @@ export default function HomePage() {
 
   const isLoading = isPopularTab ? isLoadingPopular : isLoadingInfinite
   const isLoadingMore = isFetchingNextPage
+
+  // #region agent log
+  useEffect(() => {
+    if (isLoading) return
+    fetch('http://127.0.0.1:7937/ingest/ee60dc6c-aba4-477c-b403-cb644fd3e27b', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'ad4619' }, body: JSON.stringify({ sessionId: 'ad4619', runId: 'user', hypothesisId: 'B', location: 'HomePage.tsx:newsLoaded', message: 'news list after load', data: { newsLength: news.length, category, isEmpty: news.length === 0 }, timestamp: Date.now() }) }).catch(() => {})
+  }, [isLoading, news.length, category])
+  // #endregion
 
   // 탭별 스크롤 위치 저장 (상세에서 카테고리 버튼으로 돌아왔을 때 복원용)
   useEffect(() => {
