@@ -328,6 +328,7 @@ $router->group(['prefix' => '/admin'], function (Router $router) {
     $router->get('/users/{id}', [AdminController::class, 'userDetail']);
     $router->put('/users/{id}/status', [AdminController::class, 'updateUserStatus']);
     $router->put('/users/{id}/role', [AdminController::class, 'updateUserRole']);
+    $router->put('/users/{id}/subscription', [AdminController::class, 'updateUserSubscription']);
     
     // 뉴스 관리
     $router->get('/news', [AdminController::class, 'getNews']);

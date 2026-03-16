@@ -246,6 +246,18 @@ final class AuthService
                 return null;
             }
             
+            $isSubscribed = (bool) ($userData['is_subscribed'] ?? false);
+            $expiresAt = $userData['subscription_expires_at'] ?? null;
+
+            if ($isSubscribed && $expiresAt && strtotime($expiresAt) < time()) {
+                $db = Database::getInstance();
+                $db->executeQuery(
+                    'UPDATE users SET is_subscribed = 0 WHERE id = :id',
+                    ['id' => $userId]
+                );
+                $userData['is_subscribed'] = 0;
+            }
+
             return User::fromArray($userData)->toJson();
         } catch (RuntimeException) {
             return null;

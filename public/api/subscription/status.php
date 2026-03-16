@@ -1,7 +1,7 @@
 <?php
 /**
  * GET /api/subscription/status
- * 현재 사용자의 구독 상태 조회
+ * 현재 사용자의 구독 상태 조회 — StepPay 실제 상태와 DB를 능동적으로 동기화
  */
 
 header('Content-Type: application/json; charset=utf-8');
@@ -12,6 +12,7 @@ header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Authorizati
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(200); exit; }
 
 require_once __DIR__ . '/../lib/auth.php';
+require_once __DIR__ . '/../lib/steppay.php';
 
 $pdo = getDb();
 $userId = getAuthUserId($pdo);
@@ -27,8 +28,25 @@ $user = $stmt->fetch();
 
 $isSubscribed = (bool)($user['is_subscribed'] ?? false);
 $expiresAt = $user['subscription_expires_at'] ?? null;
+$subscriptionId = $user['steppay_subscription_id'] ?? null;
 
-if ($isSubscribed && $expiresAt && strtotime($expiresAt) < time()) {
+// StepPay 실제 상태와 DB 동기화
+if ($subscriptionId) {
+    $spResult = steppayGetSubscription((int) $subscriptionId);
+    if ($spResult['success'] && !empty($spResult['data'])) {
+        $spData = $spResult['data'];
+        $spStatus = $spData['status'] ?? '';
+        $spActive = in_array($spStatus, ['ACTIVE', 'PENDING_PAUSE', 'PENDING_CANCEL'], true);
+        $spExpiresAt = $spData['currentPeriodEnd'] ?? $spData['endDate'] ?? $expiresAt;
+
+        if ($spActive !== $isSubscribed || $spExpiresAt !== $expiresAt) {
+            $pdo->prepare("UPDATE users SET is_subscribed = ?, subscription_expires_at = ? WHERE id = ?")
+                ->execute([$spActive ? 1 : 0, $spExpiresAt, $userId]);
+            $isSubscribed = $spActive;
+            $expiresAt = $spExpiresAt;
+        }
+    }
+} elseif ($isSubscribed && $expiresAt && strtotime($expiresAt) < time()) {
     $isSubscribed = false;
     $pdo->prepare("UPDATE users SET is_subscribed = 0 WHERE id = ?")->execute([$userId]);
 }
@@ -38,6 +56,6 @@ echo json_encode([
     'data' => [
         'is_subscribed' => $isSubscribed,
         'subscription_expires_at' => $expiresAt,
-        'subscription_id' => $user['steppay_subscription_id'] ?? null,
+        'subscription_id' => $subscriptionId,
     ],
 ], JSON_UNESCAPED_UNICODE);

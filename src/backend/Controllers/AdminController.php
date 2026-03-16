@@ -319,6 +319,41 @@ final class AdminController
     }
 
     /**
+     * 사용자 구독 상태 수동 수정
+     *
+     * PUT /api/admin/users/{id}/subscription
+     */
+    public function updateUserSubscription(Request $request): Response
+    {
+        $adminId = $this->checkAdminAuth($request);
+        if (!$adminId) {
+            return Response::unauthorized('관리자 권한이 필요합니다.');
+        }
+        $userId = (int) $request->param('id');
+        $isSubscribed = $request->json('is_subscribed');
+        $expiresAt = $request->json('subscription_expires_at');
+
+        if ($isSubscribed === null) {
+            return Response::error('is_subscribed 값이 필요합니다.', 400);
+        }
+
+        try {
+            $stmt = $this->db->prepare(
+                "UPDATE users SET is_subscribed = ?, subscription_expires_at = ? WHERE id = ?"
+            );
+            $stmt->execute([(int) $isSubscribed, $expiresAt ?: null, $userId]);
+
+            if ($stmt->rowCount() === 0) {
+                return Response::notFound('사용자를 찾을 수 없습니다.');
+            }
+
+            return Response::success(null, '구독 상태가 변경되었습니다.');
+        } catch (RuntimeException $e) {
+            return Response::error('구독 상태 변경 실패: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
      * 최근 활동 조회
      * 
      * GET /api/admin/activities

@@ -965,6 +965,11 @@ const AdminPage: React.FC = () => {
   // 대시보드: 회원 목록, 개인정보처리방침
   const [dashboardUsers, setDashboardUsers] = useState<UserRow[]>([]);
   const [selectedUserDetail, setSelectedUserDetail] = useState<UserDetail | null>(null);
+  const [subEditMode, setSubEditMode] = useState(false);
+  const [subEditSubscribed, setSubEditSubscribed] = useState(false);
+  const [subEditExpires, setSubEditExpires] = useState('');
+  const [subEditSaving, setSubEditSaving] = useState(false);
+  const [subEditMsg, setSubEditMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [privacyContent, setPrivacyContent] = useState('');
   const [termsContent, setTermsContent] = useState('');
   const [privacySaving, setPrivacySaving] = useState(false);
@@ -1222,6 +1227,29 @@ const AdminPage: React.FC = () => {
       setTimeout(() => setSaveMessage(null), 3000);
     } finally {
       setDeleteDraftConfirmId(null);
+    }
+  };
+
+  const handleSubEdit = async () => {
+    if (!selectedUserDetail) return;
+    setSubEditSaving(true);
+    setSubEditMsg(null);
+    try {
+      const res = await api.put(`/admin/users/${selectedUserDetail.id}/subscription`, {
+        is_subscribed: subEditSubscribed ? 1 : 0,
+        subscription_expires_at: subEditExpires || null,
+      });
+      if (res.data?.success) {
+        setSubEditMsg({ type: 'success', text: '구독 상태가 변경되었습니다.' });
+        setSelectedUserDetail((d) => d ? { ...d, is_subscribed: subEditSubscribed ? 1 : 0, subscription_expires_at: subEditExpires || null } : null);
+        setSubEditMode(false);
+      } else {
+        setSubEditMsg({ type: 'error', text: res.data?.message ?? '변경 실패' });
+      }
+    } catch {
+      setSubEditMsg({ type: 'error', text: '변경에 실패했습니다.' });
+    } finally {
+      setSubEditSaving(false);
     }
   };
 
@@ -4890,7 +4918,29 @@ const AdminPage: React.FC = () => {
             <p><span className="text-slate-500">이메일:</span> <span className="text-white">{selectedUserDetail.email || '-'}</span></p>
             <p><span className="text-slate-500">가입 방식:</span> <span className={selectedUserDetail.kakao_id != null ? 'text-yellow-400' : 'text-slate-300'}>{selectedUserDetail.kakao_id != null ? '카카오' : '이메일'}</span></p>
             <p><span className="text-slate-500">상태:</span> <span className={`px-2 py-0.5 rounded text-xs ${selectedUserDetail.status === 'active' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-500/20 text-slate-400'}`}>{selectedUserDetail.status}</span></p>
-            <p><span className="text-slate-500">구독:</span> <span className={selectedUserDetail.is_subscribed === 1 ? 'text-emerald-400' : 'text-slate-400'}>{selectedUserDetail.is_subscribed === 1 ? '구독 중' : '미구독'}</span>{selectedUserDetail.is_subscribed === 1 && selectedUserDetail.subscription_expires_at && <span className="text-slate-400 ml-1">(만료: {new Date(selectedUserDetail.subscription_expires_at).toLocaleDateString('ko-KR')})</span>}</p>
+            <div className="flex items-center gap-2">
+              <span className="text-slate-500">구독:</span>
+              <span className={selectedUserDetail.is_subscribed === 1 ? 'text-emerald-400' : 'text-slate-400'}>{selectedUserDetail.is_subscribed === 1 ? '구독 중' : '미구독'}</span>
+              {selectedUserDetail.is_subscribed === 1 && selectedUserDetail.subscription_expires_at && <span className="text-slate-400">(만료: {new Date(selectedUserDetail.subscription_expires_at).toLocaleDateString('ko-KR')})</span>}
+              <button type="button" onClick={() => { setSubEditMode(true); setSubEditSubscribed(selectedUserDetail.is_subscribed === 1); setSubEditExpires(selectedUserDetail.subscription_expires_at ? selectedUserDetail.subscription_expires_at.slice(0, 10) : ''); setSubEditMsg(null); }} className="ml-auto px-2 py-0.5 text-xs bg-slate-700 hover:bg-slate-600 text-slate-300 rounded transition-colors">수정</button>
+            </div>
+            {subEditMode && (
+              <div className="bg-slate-700/50 rounded-lg p-3 space-y-2">
+                <label className="flex items-center gap-2 text-xs text-slate-300">
+                  <input type="checkbox" checked={subEditSubscribed} onChange={(e) => setSubEditSubscribed(e.target.checked)} className="rounded" />
+                  구독 활성화
+                </label>
+                <label className="block text-xs text-slate-400">
+                  만료일
+                  <input type="date" value={subEditExpires} onChange={(e) => setSubEditExpires(e.target.value)} className="mt-1 w-full bg-slate-800 border border-slate-600 rounded px-2 py-1 text-sm text-white" />
+                </label>
+                <div className="flex gap-2">
+                  <button type="button" onClick={handleSubEdit} disabled={subEditSaving} className="px-3 py-1 text-xs bg-emerald-600 hover:bg-emerald-500 text-white rounded disabled:opacity-50">{subEditSaving ? '저장 중...' : '저장'}</button>
+                  <button type="button" onClick={() => setSubEditMode(false)} className="px-3 py-1 text-xs bg-slate-600 hover:bg-slate-500 text-white rounded">취소</button>
+                </div>
+                {subEditMsg && <p className={`text-xs ${subEditMsg.type === 'success' ? 'text-emerald-400' : 'text-red-400'}`}>{subEditMsg.text}</p>}
+              </div>
+            )}
             {selectedUserDetail.steppay_customer_id != null && <p><span className="text-slate-500">StepPay 고객 ID:</span> <span className="text-slate-300">{selectedUserDetail.steppay_customer_id}</span></p>}
             <p><span className="text-slate-500">가입일:</span> <span className="text-slate-300">{selectedUserDetail.created_at ? new Date(selectedUserDetail.created_at).toLocaleString('ko-KR') : '-'}</span></p>
             <p><span className="text-slate-500">최근 로그인:</span> <span className="text-slate-300">{selectedUserDetail.last_login_at ? new Date(selectedUserDetail.last_login_at).toLocaleString('ko-KR') : '-'}</span></p>

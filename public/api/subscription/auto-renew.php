@@ -62,4 +62,16 @@ if (!$result['success']) {
     exit;
 }
 
+// StepPay 구독 상태를 조회하여 DB에 즉시 반영 (웹훅에만 의존하지 않음)
+$subResult = steppayGetSubscription($subscriptionId);
+if ($subResult['success'] && !empty($subResult['data'])) {
+    $spData = $subResult['data'];
+    $spStatus = $spData['status'] ?? '';
+    $spActive = in_array($spStatus, ['ACTIVE', 'PENDING_PAUSE', 'PENDING_CANCEL'], true);
+    $spExpiresAt = $spData['currentPeriodEnd'] ?? $spData['endDate'] ?? null;
+
+    $pdo->prepare("UPDATE users SET is_subscribed = ?, subscription_expires_at = ? WHERE id = ?")
+        ->execute([$spActive ? 1 : 0, $spExpiresAt, $userId]);
+}
+
 echo json_encode(['success' => true, 'message' => $enabled ? '자동 갱신이 켜졌습니다.' : '다음 결제일 이후 취소 예정입니다.'], JSON_UNESCAPED_UNICODE);
