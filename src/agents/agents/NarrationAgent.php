@@ -258,7 +258,7 @@ PROMPT;
         return $this->claude->chat($systemPrompt, $userPrompt, array_merge([
             'max_tokens' => (int)($this->config['max_tokens'] ?? 4096),
             'temperature' => (float)($this->config['temperature'] ?? 0.5),
-            'timeout' => (int)($this->config['timeout'] ?? 120),
+            'timeout' => (int)($this->config['timeout'] ?? 180),
         ], $options));
     }
 

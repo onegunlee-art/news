@@ -73,6 +73,13 @@ class AgentPipeline
                 $agents = require $agentsPath;
                 $base = $agents['scraper'] ?? [];
                 $scraperConfig = array_merge($base, $scraperConfig);
+                // agents.php의 narration/editing/analysis 등 병합 (timeout 180 등 누락 시 적용)
+                $agentsConfig = $agents['agents'] ?? [];
+                foreach (['validation', 'analysis', 'narration', 'editing'] as $key) {
+                    if (isset($agentsConfig[$key]) && is_array($agentsConfig[$key])) {
+                        $this->config[$key] = array_merge($agentsConfig[$key], $this->config[$key] ?? []);
+                    }
+                }
             }
         }
         $scraper = new WebScraperService($scraperConfig);
