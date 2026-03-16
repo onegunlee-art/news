@@ -75,6 +75,15 @@ function steppayCreateCustomer(string $name, ?string $email = null, ?string $cus
 }
 
 /**
+ * StepPay 고객 정보 갱신
+ */
+function steppayUpdateCustomer(int $customerId, string $name, ?string $email = null): array {
+    $body = ['name' => $name];
+    if ($email) $body['email'] = $email;
+    return steppayRequest('PUT', '/customers/' . $customerId, $body);
+}
+
+/**
  * StepPay 고객 코드로 검색
  */
 function steppaySearchCustomerByCode(string $code): array {
@@ -111,8 +120,10 @@ function steppayGetOrder(string $orderCode): array {
  */
 function steppayGetPaymentUrl(string $orderCode): string {
     $cfg = getSteppayConfig();
-    $successUrl = urlencode($cfg['success_url'] ?? 'https://www.thegist.co.kr/subscribe/success');
-    $errorUrl = urlencode($cfg['error_url'] ?? 'https://www.thegist.co.kr/subscribe/error');
+    $baseSuccessUrl = $cfg['success_url'] ?? 'https://www.thegist.co.kr/subscribe/success';
+    $baseErrorUrl = $cfg['error_url'] ?? 'https://www.thegist.co.kr/subscribe/error';
+    $successUrl = urlencode($baseSuccessUrl . '?order_code=' . $orderCode);
+    $errorUrl = urlencode($baseErrorUrl . '?order_code=' . $orderCode);
     return ($cfg['public_api_url'] ?? 'https://api.steppay.kr/api/public')
         . '/orders/' . $orderCode . '/pay'
         . '?successUrl=' . $successUrl

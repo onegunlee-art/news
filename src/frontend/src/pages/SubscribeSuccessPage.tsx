@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuthStore } from '../store/authStore'
@@ -9,8 +9,48 @@ export default function SubscribeSuccessPage() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const { accessToken, setSubscribed, fetchUser } = useAuthStore()
-  const [status, setStatus] = useState<'verifying' | 'success' | 'error'>('verifying')
+  const [status, setStatus] = useState<'verifying' | 'success' | 'pending' | 'error'>('verifying')
   const [message, setMessage] = useState('결제를 확인 중입니다...')
+  const attemptRef = useRef(0)
+  const maxAttempts = 3
+  const retryDelay = 4000
+
+  const verifyOrder = useCallback(async (orderCode: string) => {
+    try {
+      const res = await api.post('/subscription/verify', { order_code: orderCode }, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      })
+      if (res.data?.success) {
+        setSubscribed(true)
+        fetchUser()
+        setStatus('success')
+        setMessage('구독이 완료되었습니다!')
+        return
+      }
+      if (res.data?.status === 'pending' && attemptRef.current < maxAttempts) {
+        attemptRef.current++
+        setMessage(`결제 확인 중입니다... (${attemptRef.current}/${maxAttempts})`)
+        setTimeout(() => verifyOrder(orderCode), retryDelay)
+        return
+      }
+      if (attemptRef.current >= maxAttempts) {
+        setStatus('pending')
+        setMessage('결제는 정상 처리되었으며, 잠시 후 자동으로 반영됩니다.')
+        return
+      }
+      setStatus('error')
+      setMessage(res.data?.message || '결제 확인에 실패했습니다.')
+    } catch {
+      if (attemptRef.current < maxAttempts) {
+        attemptRef.current++
+        setMessage(`결제 확인 중입니다... (${attemptRef.current}/${maxAttempts})`)
+        setTimeout(() => verifyOrder(orderCode), retryDelay)
+        return
+      }
+      setStatus('pending')
+      setMessage('결제는 정상 처리되었으며, 잠시 후 자동으로 반영됩니다.')
+    }
+  }, [accessToken, setSubscribed, fetchUser])
 
   useEffect(() => {
     const orderCode = searchParams.get('order_code') || searchParams.get('orderCode')
@@ -19,24 +59,8 @@ export default function SubscribeSuccessPage() {
       setMessage('결제 정보를 확인할 수 없습니다.')
       return
     }
-
-    api.post('/subscription/verify', { order_code: orderCode }, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    }).then((res) => {
-      if (res.data?.success) {
-        setSubscribed(true)
-        fetchUser()
-        setStatus('success')
-        setMessage('구독이 완료되었습니다!')
-      } else {
-        setStatus('error')
-        setMessage(res.data?.message || '결제 확인에 실패했습니다.')
-      }
-    }).catch(() => {
-      setStatus('error')
-      setMessage('결제 확인 중 오류가 발생했습니다.')
-    })
-  }, [searchParams, accessToken, setSubscribed, fetchUser])
+    verifyOrder(orderCode)
+  }, [searchParams, accessToken, verifyOrder])
 
   return (
     <div className="min-h-screen bg-page flex items-center justify-center px-4">
@@ -59,6 +83,22 @@ export default function SubscribeSuccessPage() {
               <MaterialIcon name="check_circle" className="w-8 h-8 text-green-600" size={32} filled />
             </div>
             <h1 className="text-xl font-bold text-gray-900 mb-2">구독 완료!</h1>
+            <p className="text-gray-500 text-sm mb-8">{message}</p>
+            <button
+              onClick={() => navigate('/')}
+              className="w-full py-3 rounded-lg bg-primary-500 hover:bg-primary-600 text-white font-semibold transition-colors"
+            >
+              홈으로 이동
+            </button>
+          </>
+        )}
+
+        {status === 'pending' && (
+          <>
+            <div className="w-16 h-16 mx-auto mb-6 bg-blue-100 rounded-full flex items-center justify-center">
+              <MaterialIcon name="check_circle" className="w-8 h-8 text-blue-600" size={32} filled />
+            </div>
+            <h1 className="text-xl font-bold text-gray-900 mb-2">결제 완료</h1>
             <p className="text-gray-500 text-sm mb-8">{message}</p>
             <button
               onClick={() => navigate('/')}

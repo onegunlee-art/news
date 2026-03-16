@@ -78,6 +78,15 @@ orderLog('주문 시작', ['userId' => $userId, 'planId' => $planId, 'steppay_cu
 
 $steppayCustomerId = $user['steppay_customer_id'];
 
+if ($steppayCustomerId) {
+    $updateResult = steppayUpdateCustomer(
+        (int) $steppayCustomerId,
+        $user['nickname'] ?: '회원',
+        $user['email']
+    );
+    orderLog('기존 고객 정보 갱신', ['id' => $steppayCustomerId, 'success' => $updateResult['success']]);
+}
+
 if (!$steppayCustomerId) {
     $customerCode = 'thegist_user_' . $userId;
 

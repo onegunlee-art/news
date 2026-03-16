@@ -37,18 +37,30 @@ if (empty($orderCode)) {
     exit;
 }
 
-$orderResult = steppayGetOrder($orderCode);
-if (!$orderResult['success']) {
-    http_response_code(502);
-    echo json_encode(['success' => false, 'message' => '주문 조회에 실패했습니다.'], JSON_UNESCAPED_UNICODE);
-    exit;
+$maxRetries = 3;
+$retryDelay = 2;
+$order = null;
+$paymentDate = null;
+
+for ($attempt = 0; $attempt <= $maxRetries; $attempt++) {
+    $orderResult = steppayGetOrder($orderCode);
+    if (!$orderResult['success']) {
+        http_response_code(502);
+        echo json_encode(['success' => false, 'message' => '주문 조회에 실패했습니다.'], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+    $order = $orderResult['data'];
+    $paymentDate = $order['paymentDate'] ?? null;
+    if (!empty($paymentDate)) break;
+    if ($attempt < $maxRetries) sleep($retryDelay);
 }
 
-$order = $orderResult['data'];
-$paymentDate = $order['paymentDate'] ?? null;
-
 if (empty($paymentDate)) {
-    echo json_encode(['success' => false, 'message' => '결제가 아직 완료되지 않았습니다.'], JSON_UNESCAPED_UNICODE);
+    echo json_encode([
+        'success' => false,
+        'status' => 'pending',
+        'message' => '결제 확인 중입니다. 잠시 후 자동으로 반영됩니다.',
+    ], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
