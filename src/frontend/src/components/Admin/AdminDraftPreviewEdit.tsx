@@ -79,6 +79,7 @@ export default function AdminDraftPreviewEdit({
   const [editingSection, setEditingSection] = useState<EditSection>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false)
+  const [saveMsg, setSaveMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [categoryParent, setCategoryParent] = useState<string>(() =>
     initialNews.category_parent ?? (initialNews.category === 'entertainment' ? 'special' : initialNews.category ?? 'diplomacy')
   )
@@ -158,6 +159,7 @@ export default function AdminDraftPreviewEdit({
 
   const handleSaveDraft = async () => {
     setIsSaving(true)
+    setSaveMsg(null)
     try {
       const subVal = getSubCategoryValue()
       await onUpdate({
@@ -173,6 +175,10 @@ export default function AdminDraftPreviewEdit({
       })
       setNews((prev) => ({ ...prev, category_parent: categoryParent, category: subVal || null }))
       setEditingSection(null)
+      setSaveMsg({ type: 'success', text: '임시저장이 업데이트되었습니다.' })
+      setTimeout(() => setSaveMsg(null), 4000)
+    } catch (e) {
+      setSaveMsg({ type: 'error', text: (e as Error).message || '임시저장 업데이트 실패' })
     } finally {
       setIsSaving(false)
     }
@@ -231,6 +237,16 @@ export default function AdminDraftPreviewEdit({
         </button>
         <span className="text-amber-400/80 text-sm">(유저 페이지와 동일한 형상)</span>
       </div>
+
+      {saveMsg && (
+        <div className={`mb-4 px-4 py-3 rounded-lg text-sm font-medium ${
+          saveMsg.type === 'success'
+            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
+            : 'bg-red-500/20 text-red-300 border border-red-500/30'
+        }`}>
+          {saveMsg.text}
+        </div>
+      )}
 
       {/* 카테고리 선택 (뉴스 작성과 동일: 상위 → 하위) */}
       <div className="mb-6 space-y-3">

@@ -622,7 +622,8 @@ if ($method === 'PUT') {
     $sourceUrl = $input['source_url'] ?? null;
     
     // 추가 메타데이터 필드
-    $originalSource = $input['source'] ?? null;
+    $sourceField = $input['source'] ?? null;
+    $originalSourceField = $input['original_source'] ?? null;
     $originalTitle = $input['original_title'] ?? null;
     $author = $input['author'] ?? null;
     $customImageUrl = $input['image_url'] ?? null;
@@ -656,7 +657,8 @@ if ($method === 'PUT') {
         'category' => $category,
         'title_length' => strlen($title),
         'content_length' => strlen($content),
-        'original_source' => $originalSource,
+        'original_source' => $originalSourceField,
+        'source' => $sourceField,
         'author' => $author
     ]);
     
@@ -667,9 +669,14 @@ if ($method === 'PUT') {
         exit;
     }
     
-    if (empty($title) || empty($content)) {
+    if (empty($title)) {
         http_response_code(400);
-        echo json_encode(['success' => false, 'message' => '제목과 내용을 입력해주세요.']);
+        echo json_encode(['success' => false, 'message' => '제목을 입력해주세요.']);
+        exit;
+    }
+    if ($status !== 'draft' && empty($content)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => '게시하려면 내용을 입력해주세요.']);
         exit;
     }
     
@@ -723,8 +730,8 @@ if ($method === 'PUT') {
         // 이미지 URL: 사용자 지정 URL이 있으면 그것을 사용, 없으면 자동 생성
         $imageUrl = !empty($customImageUrl) ? $customImageUrl : smartImageUrl($title, $category, $db);
         
-        // source 값: 원본 출처가 있으면 그것을 사용
-        $sourceValue = !empty($originalSource) ? $originalSource : null;
+        // source 값: source 필드가 있으면 사용
+        $sourceValue = !empty($sourceField) ? $sourceField : null;
         
         // ★ 컬럼 존재 여부는 상단 DESCRIBE에서 이미 조회됨 (SHOW COLUMNS 제거)
         
@@ -768,7 +775,7 @@ if ($method === 'PUT') {
         
         if ($hasOriginalSource) {
             $setClauses[] = 'original_source = ?';
-            $values[] = $originalSource;
+            $values[] = $originalSourceField;
         }
         
         if ($hasOriginalTitle) {
