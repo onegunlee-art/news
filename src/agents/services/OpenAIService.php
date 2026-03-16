@@ -204,6 +204,10 @@ class OpenAIService
             'max_output_tokens' => $options['max_tokens'] ?? $this->config['max_tokens']
         ];
 
+        if (!empty($options['json_mode'])) {
+            $payload['text'] = ['format' => ['type' => 'json_object']];
+        }
+
         $timeout = (int)($options['timeout'] ?? $this->config['timeout'] ?? 60);
         $endpoint = $this->config['endpoints']['chat'] ?? 'https://api.openai.com/v1/responses';
         $maxRetries = (int)($options['max_retries'] ?? 3);

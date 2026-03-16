@@ -2,7 +2,7 @@
 /**
  * Analysis Agent
  * 
- * 기사 분석 Agent (Claude Sonnet 4.6)
+ * 기사 분석 Agent (GPT-5.4 + JSON mode)
  * - 서론 요약 (introduction_summary)
  * - 섹션별 분석 (section_analysis[])
  * - 핵심 포인트 (key_points[])
@@ -12,7 +12,7 @@
  * 
  * @package Agents\Agents
  * @author The Gist AI System
- * @version 4.0.0 - 구조화된 분석 + Narration 분리
+ * @version 5.0.0 - GPT-5.4 전환, JSON mode로 출력 안정성 확보
  */
 
 declare(strict_types=1);
@@ -25,16 +25,12 @@ use Agents\Models\AgentResult;
 use Agents\Models\ArticleData;
 use Agents\Models\AnalysisResult;
 use Agents\Services\OpenAIService;
-use Agents\Services\ClaudeService;
 
 class AnalysisAgent extends BaseAgent
 {
-    private ?ClaudeService $claude = null;
-
-    public function __construct(OpenAIService $openai, array $config = [], ?ClaudeService $claude = null)
+    public function __construct(OpenAIService $openai, array $config = [])
     {
         parent::__construct($openai, $config);
-        $this->claude = $claude ?? new ClaudeService();
     }
 
     public function getName(): string
@@ -109,17 +105,23 @@ class AnalysisAgent extends BaseAgent
     }
 
     /**
-     * 구조화된 분석 수행 (Claude Sonnet 4.6)
+     * 구조화된 분석 수행 (GPT-5.4 + JSON mode)
      */
     private function performStructuredAnalysis(ArticleData $article): AnalysisResult
     {
-        $systemPrompt = $this->prompts['system'] ?? '당신은 "The Gist"의 수석 에디터입니다.';
         $analysisPrompt = $this->buildAnalysisPrompt($article);
         
-        $response = $this->callClaude($systemPrompt, $analysisPrompt);
+        $response = $this->callGPT($analysisPrompt, [
+            'system_prompt' => $this->prompts['system'] ?? '당신은 "The Gist"의 수석 에디터입니다.',
+            'model' => $this->config['model'] ?? 'gpt-5.4',
+            'max_tokens' => (int)($this->config['max_tokens'] ?? 8000),
+            'temperature' => (float)($this->config['temperature'] ?? 0.45),
+            'timeout' => (int)($this->config['timeout'] ?? 180),
+            'json_mode' => true,
+        ]);
         $data = $this->parseJsonResponse($response);
 
-        $this->logClaudeResponse('analysis', $response, $data);
+        $this->logResponse('analysis', $response, $data);
 
         $originalTitle = $article->getTitle() !== '' && $article->getTitle() !== null
             ? $article->getTitle()
@@ -516,23 +518,6 @@ PROMPT;
     }
 
     /**
-     * Claude API 호출
-     */
-    private function callClaude(string $systemPrompt, string $userPrompt, array $options = []): string
-    {
-        if (!$this->claude->isConfigured()) {
-            $this->log("Claude not configured, falling back to GPT", 'warning');
-            return $this->callGPT($userPrompt, array_merge($options, ['system_prompt' => $systemPrompt]));
-        }
-        
-        return $this->claude->chat($systemPrompt, $userPrompt, array_merge([
-            'max_tokens' => (int)($this->config['max_tokens'] ?? 8192),
-            'temperature' => (float)($this->config['temperature'] ?? 0.2),
-            'timeout' => (int)($this->config['timeout'] ?? 180),
-        ], $options));
-    }
-
-    /**
      * 콘텐츠 길이 제한
      */
     private function truncateContent(string $content, int $maxLength = 40000): string
@@ -576,9 +561,9 @@ PROMPT;
     }
 
     /**
-     * Claude 응답 로깅 (디버깅용)
+     * GPT 응답 로깅 (디버깅용)
      */
-    private function logClaudeResponse(string $stage, string $rawResponse, array $parsedData): void
+    private function logResponse(string $stage, string $rawResponse, array $parsedData): void
     {
         $logDir = dirname(__DIR__, 3) . '/storage/logs';
         if (!is_dir($logDir)) {
@@ -586,20 +571,20 @@ PROMPT;
         }
         
         $timestamp = date('Y-m-d_H-i-s');
-        $logFile = $logDir . "/claude_analysis_{$timestamp}.json";
+        $logFile = $logDir . "/gpt_analysis_{$timestamp}.json";
         
         $logData = [
             'timestamp' => date('c'),
             'stage' => $stage,
-            'model' => 'claude-sonnet-4-6',
+            'model' => $this->config['model'] ?? 'gpt-5.4',
             'raw_response_length' => strlen($rawResponse),
-            'raw_response_preview' => mb_substr($rawResponse, 0, 2000),
+            'raw_response_preview' => mb_substr($rawResponse, 0, 3000),
             'parsed_keys' => array_keys($parsedData),
             'section_analysis_count' => count($parsedData['section_analysis'] ?? []),
             'key_points_count' => count($parsedData['key_points'] ?? []),
         ];
         
         @file_put_contents($logFile, json_encode($logData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
-        $this->log("Claude response logged to: {$logFile}", 'debug');
+        $this->log("GPT response logged to: {$logFile}", 'debug');
     }
 }

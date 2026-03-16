@@ -2,14 +2,14 @@
 /**
  * Editing Agent
  * 
- * Narration 문체/톤 교정 + 스타일 가이드 적용 (Claude Sonnet 4.6)
+ * Narration 문체/톤 교정 + 스타일 가이드 적용 (GPT-5.4 + JSON mode)
  * - The Gist 톤앤매너 통일
  * - 문장 다듬기
  * - 불필요한 표현 제거
  * 
  * @package Agents\Agents
  * @author The Gist AI System
- * @version 1.0.0
+ * @version 2.0.0 - GPT-5.4 전환
  */
 
 declare(strict_types=1);
@@ -21,16 +21,12 @@ use Agents\Models\AgentContext;
 use Agents\Models\AgentResult;
 use Agents\Models\AnalysisResult;
 use Agents\Services\OpenAIService;
-use Agents\Services\ClaudeService;
 
 class EditingAgent extends BaseAgent
 {
-    private ?ClaudeService $claude = null;
-
-    public function __construct(OpenAIService $openai, array $config = [], ?ClaudeService $claude = null)
+    public function __construct(OpenAIService $openai, array $config = [])
     {
         parent::__construct($openai, $config);
-        $this->claude = $claude ?? new ClaudeService();
     }
 
     public function getName(): string
@@ -107,13 +103,19 @@ class EditingAgent extends BaseAgent
      */
     private function editNarration(string $narration, AnalysisResult $analysis): string
     {
-        $systemPrompt = $this->prompts['system'] ?? '당신은 "The Gist"의 수석 에디터입니다.';
         $userPrompt = $this->buildEditingPrompt($narration, $analysis);
         
-        $response = $this->callClaude($systemPrompt, $userPrompt);
+        $response = $this->callGPT($userPrompt, [
+            'system_prompt' => $this->prompts['system'] ?? '당신은 "The Gist"의 수석 에디터입니다.',
+            'model' => $this->config['model'] ?? 'gpt-5.4',
+            'max_tokens' => (int)($this->config['max_tokens'] ?? 4096),
+            'temperature' => (float)($this->config['temperature'] ?? 0.3),
+            'timeout' => (int)($this->config['timeout'] ?? 120),
+            'json_mode' => true,
+        ]);
         $data = $this->parseJsonResponse($response);
         
-        $this->logClaudeResponse('editing', $response, $data);
+        $this->logResponse('editing', $response, $data);
 
         if (!empty($data['edited_paragraphs']) && is_array($data['edited_paragraphs'])) {
             $edited = implode("\n\n", array_filter(array_map('trim', $data['edited_paragraphs'])));
@@ -215,23 +217,6 @@ PROMPT;
     }
 
     /**
-     * Claude API 호출
-     */
-    private function callClaude(string $systemPrompt, string $userPrompt, array $options = []): string
-    {
-        if (!$this->claude->isConfigured()) {
-            $this->log("Claude not configured, falling back to GPT", 'warning');
-            return $this->callGPT($userPrompt, array_merge($options, ['system_prompt' => $systemPrompt]));
-        }
-        
-        return $this->claude->chat($systemPrompt, $userPrompt, array_merge([
-            'max_tokens' => (int)($this->config['max_tokens'] ?? 4096),
-            'temperature' => (float)($this->config['temperature'] ?? 0.3),
-            'timeout' => (int)($this->config['timeout'] ?? 90),
-        ], $options));
-    }
-
-    /**
      * JSON 응답 파싱
      */
     private function parseJsonResponse(string $response): array
@@ -255,9 +240,9 @@ PROMPT;
     }
 
     /**
-     * Claude 응답 로깅
+     * GPT 응답 로깅
      */
-    private function logClaudeResponse(string $stage, string $rawResponse, array $parsedData): void
+    private function logResponse(string $stage, string $rawResponse, array $parsedData): void
     {
         $logDir = dirname(__DIR__, 3) . '/storage/logs';
         if (!is_dir($logDir)) {
@@ -265,12 +250,12 @@ PROMPT;
         }
         
         $timestamp = date('Y-m-d_H-i-s');
-        $logFile = $logDir . "/claude_editing_{$timestamp}.json";
+        $logFile = $logDir . "/gpt_editing_{$timestamp}.json";
         
         $logData = [
             'timestamp' => date('c'),
             'stage' => $stage,
-            'model' => 'claude-sonnet-4-6',
+            'model' => $this->config['model'] ?? 'gpt-5.4',
             'raw_response_length' => strlen($rawResponse),
             'has_edited_paragraphs' => isset($parsedData['edited_paragraphs']),
             'edited_paragraphs_count' => count($parsedData['edited_paragraphs'] ?? []),
@@ -278,6 +263,6 @@ PROMPT;
         ];
         
         @file_put_contents($logFile, json_encode($logData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
-        $this->log("Claude editing logged to: {$logFile}", 'debug');
+        $this->log("GPT editing logged to: {$logFile}", 'debug');
     }
 }

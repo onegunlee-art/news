@@ -2219,7 +2219,7 @@ const AdminPage: React.FC = () => {
 
                             const a = data.analysis as Record<string, unknown>;
                             const article = data.article as Record<string, unknown> | undefined;
-                            setNewsTitle((a.news_title as string) || '');
+                            setNewsTitle((a.news_title as string) || (article?.title as string) || '');
                             if (article) {
                               setArticleImageUrl((article.image_url as string) || '');
                               setArticleSummary((article.description as string) || '');
@@ -2861,9 +2861,9 @@ const AdminPage: React.FC = () => {
                           setTimeout(() => setSaveMessage(null), 5000);
                         }
                       }}
-                      disabled={isSaving || !newsTitle.trim() || !newsContent.trim()}
+                      disabled={isSaving || !newsTitle.trim() || (!newsContent.trim() && !newsNarration.trim())}
                       className={`px-6 py-3 rounded-xl font-medium transition-all flex items-center gap-2 ${
-                        isSaving || !newsTitle.trim() || !newsContent.trim()
+                        isSaving || !newsTitle.trim() || (!newsContent.trim() && !newsNarration.trim())
                           ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
                           : 'bg-slate-600 hover:bg-slate-500 text-slate-200'
                       }`}
@@ -2993,9 +2993,9 @@ const AdminPage: React.FC = () => {
                           setTimeout(() => setSaveMessage(null), 5000);
                         }
                       }}
-                      disabled={isSaving || !newsTitle.trim() || !newsContent.trim()}
+                      disabled={isSaving || !newsTitle.trim() || (!newsContent.trim() && !newsNarration.trim())}
                       className={`px-6 py-3 rounded-xl font-medium transition-all flex items-center gap-2 ${
-                        isSaving || !newsTitle.trim() || !newsContent.trim()
+                        isSaving || !newsTitle.trim() || (!newsContent.trim() && !newsNarration.trim())
                           ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
                           : editingNewsId
                             ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:opacity-90'

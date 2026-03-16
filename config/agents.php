@@ -29,17 +29,18 @@ return [
         
         'analysis' => [
             'enabled' => true,
-            'model' => 'gpt-5.2',
+            'model' => 'gpt-5.4',
             'temperature' => 0.45,
-            'max_tokens' => 4000,
-            'summary_length' => 3, // 문장 수
+            'max_tokens' => 8000,
+            'timeout' => 180,
+            'summary_length' => 3,
             'key_points_count' => 3,
             'enable_tts' => true,
         ],
         
         'interpret' => [
             'enabled' => true,
-            'model' => 'gpt-5.2',
+            'model' => 'gpt-5.4',
             'temperature' => 0.5,
             'similarity_threshold' => 0.7,
             'max_context_items' => 5,
@@ -47,7 +48,7 @@ return [
         
         'learning' => [
             'enabled' => true,
-            'model' => 'gpt-5.2',
+            'model' => 'gpt-5.4',
             'temperature' => 0.8,
             'pattern_storage_path' => __DIR__ . '/../src/data/patterns',
             'ask_clarification' => true,
@@ -55,6 +56,7 @@ return [
 
         'narration' => [
             'enabled' => true,
+            'model' => 'gpt-5.4',
             'timeout' => 180,
             'max_tokens' => 4096,
             'temperature' => 0.5,
@@ -62,6 +64,7 @@ return [
 
         'editing' => [
             'enabled' => true,
+            'model' => 'gpt-5.4',
             'timeout' => 120,
             'max_tokens' => 4096,
             'temperature' => 0.3,

@@ -32,7 +32,6 @@ use Agents\Agents\NarrationAgent;
 use Agents\Agents\EditingAgent;
 use Agents\Agents\ThumbnailAgent;
 use Agents\Services\OpenAIService;
-use Agents\Services\ClaudeService;
 use Agents\Services\GoogleTTSService;
 use Agents\Services\WebScraperService;
 
@@ -43,7 +42,6 @@ class AgentPipeline
     private bool $stopOnFailure = true;
     private array $config;
     private OpenAIService $openai;
-    private ?ClaudeService $claude = null;
     private ?GoogleTTSService $googleTts = null;
     private ?string $lastError = null;
 
@@ -53,7 +51,6 @@ class AgentPipeline
         $this->stopOnFailure = $config['stop_on_failure'] ?? true;
         
         $this->openai = new OpenAIService($config['openai'] ?? []);
-        $this->claude = new ClaudeService($config['claude'] ?? []);
         
         if (isset($this->config['google_tts']) && is_array($this->config['google_tts'])) {
             $this->googleTts = new GoogleTTSService($this->config['google_tts']);
@@ -85,14 +82,14 @@ class AgentPipeline
         $scraper = new WebScraperService($scraperConfig);
         $this->addAgent(new ValidationAgent($this->openai, $scraper, $this->config['validation'] ?? []));
 
-        // 2. AnalysisAgent - 구조화된 분석 (Claude)
-        $this->addAgent(new AnalysisAgent($this->openai, $this->config['analysis'] ?? [], $this->claude));
+        // 2. AnalysisAgent - 구조화된 분석 (GPT-5.4)
+        $this->addAgent(new AnalysisAgent($this->openai, $this->config['analysis'] ?? []));
 
-        // 3. NarrationAgent - Narration 생성 (Claude)
-        $this->addAgent(new NarrationAgent($this->openai, $this->config['narration'] ?? [], $this->claude));
+        // 3. NarrationAgent - Narration 생성 (GPT-5.4)
+        $this->addAgent(new NarrationAgent($this->openai, $this->config['narration'] ?? []));
 
-        // 4. EditingAgent - 문체/톤 교정 (Claude)
-        $this->addAgent(new EditingAgent($this->openai, $this->config['editing'] ?? [], $this->claude));
+        // 4. EditingAgent - 문체/톤 교정 (GPT-5.4)
+        $this->addAgent(new EditingAgent($this->openai, $this->config['editing'] ?? []));
 
         // 5. ThumbnailAgent - 썸네일 생성 (OpenAI DALL·E, 맨 마지막)
         $this->addAgent(new ThumbnailAgent($this->openai, $this->config));

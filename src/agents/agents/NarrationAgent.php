@@ -2,13 +2,13 @@
 /**
  * Narration Agent
  * 
- * 분석 결과 + 원문을 기반으로 Narration 생성 (Claude Sonnet 4.6)
+ * 분석 결과 + 원문을 기반으로 Narration 생성 (GPT-5.4 + JSON mode)
  * - 구조화된 분석 결과를 자연스러운 설명문으로 변환
  * - 문단 구분이 명확한 narration_paragraphs[] 배열 출력
  * 
  * @package Agents\Agents
  * @author The Gist AI System
- * @version 1.0.0
+ * @version 2.0.0 - GPT-5.4 전환
  */
 
 declare(strict_types=1);
@@ -21,16 +21,12 @@ use Agents\Models\AgentResult;
 use Agents\Models\ArticleData;
 use Agents\Models\AnalysisResult;
 use Agents\Services\OpenAIService;
-use Agents\Services\ClaudeService;
 
 class NarrationAgent extends BaseAgent
 {
-    private ?ClaudeService $claude = null;
-
-    public function __construct(OpenAIService $openai, array $config = [], ?ClaudeService $claude = null)
+    public function __construct(OpenAIService $openai, array $config = [])
     {
         parent::__construct($openai, $config);
-        $this->claude = $claude ?? new ClaudeService();
     }
 
     public function getName(): string
@@ -98,13 +94,19 @@ class NarrationAgent extends BaseAgent
      */
     private function generateNarration(AnalysisResult $analysis, ?ArticleData $article): string
     {
-        $systemPrompt = $this->prompts['system'] ?? '당신은 "The Gist"의 내레이션 작가입니다.';
         $userPrompt = $this->buildNarrationPrompt($analysis, $article);
         
-        $response = $this->callClaude($systemPrompt, $userPrompt);
+        $response = $this->callGPT($userPrompt, [
+            'system_prompt' => $this->prompts['system'] ?? '당신은 "The Gist"의 내레이션 작가입니다.',
+            'model' => $this->config['model'] ?? 'gpt-5.4',
+            'max_tokens' => (int)($this->config['max_tokens'] ?? 4096),
+            'temperature' => (float)($this->config['temperature'] ?? 0.5),
+            'timeout' => (int)($this->config['timeout'] ?? 180),
+            'json_mode' => true,
+        ]);
         $data = $this->parseJsonResponse($response);
         
-        $this->logClaudeResponse('narration', $response, $data);
+        $this->logResponse('narration', $response, $data);
 
         if (!empty($data['narration_paragraphs']) && is_array($data['narration_paragraphs'])) {
             $narration = implode("\n\n", array_filter(array_map('trim', $data['narration_paragraphs'])));
@@ -246,23 +248,6 @@ PROMPT;
     }
 
     /**
-     * Claude API 호출
-     */
-    private function callClaude(string $systemPrompt, string $userPrompt, array $options = []): string
-    {
-        if (!$this->claude->isConfigured()) {
-            $this->log("Claude not configured, falling back to GPT", 'warning');
-            return $this->callGPT($userPrompt, array_merge($options, ['system_prompt' => $systemPrompt]));
-        }
-        
-        return $this->claude->chat($systemPrompt, $userPrompt, array_merge([
-            'max_tokens' => (int)($this->config['max_tokens'] ?? 4096),
-            'temperature' => (float)($this->config['temperature'] ?? 0.5),
-            'timeout' => (int)($this->config['timeout'] ?? 180),
-        ], $options));
-    }
-
-    /**
      * 콘텐츠 길이 제한
      */
     private function truncateContent(string $content, int $maxLength = 25000): string
@@ -297,9 +282,9 @@ PROMPT;
     }
 
     /**
-     * Claude 응답 로깅
+     * GPT 응답 로깅
      */
-    private function logClaudeResponse(string $stage, string $rawResponse, array $parsedData): void
+    private function logResponse(string $stage, string $rawResponse, array $parsedData): void
     {
         $logDir = dirname(__DIR__, 3) . '/storage/logs';
         if (!is_dir($logDir)) {
@@ -307,12 +292,12 @@ PROMPT;
         }
         
         $timestamp = date('Y-m-d_H-i-s');
-        $logFile = $logDir . "/claude_narration_{$timestamp}.json";
+        $logFile = $logDir . "/gpt_narration_{$timestamp}.json";
         
         $logData = [
             'timestamp' => date('c'),
             'stage' => $stage,
-            'model' => 'claude-sonnet-4-6',
+            'model' => $this->config['model'] ?? 'gpt-5.4',
             'raw_response_length' => strlen($rawResponse),
             'raw_response_preview' => mb_substr($rawResponse, 0, 1500),
             'has_narration_paragraphs' => isset($parsedData['narration_paragraphs']),
@@ -320,6 +305,6 @@ PROMPT;
         ];
         
         @file_put_contents($logFile, json_encode($logData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
-        $this->log("Claude narration logged to: {$logFile}", 'debug');
+        $this->log("GPT narration logged to: {$logFile}", 'debug');
     }
 }
