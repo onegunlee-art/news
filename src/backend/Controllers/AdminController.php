@@ -227,18 +227,27 @@ final class AdminController
                 return Response::notFound('사용자를 찾을 수 없습니다.');
             }
 
-            // 사용 통계
-            $stmt = $this->db->prepare("SELECT COUNT(*) FROM analyses WHERE user_id = ?");
-            $stmt->execute([$userId]);
-            $analysesCount = (int) $stmt->fetchColumn();
+            $analysesCount = 0;
+            $bookmarksCount = 0;
+            $searchCount = 0;
 
-            $stmt = $this->db->prepare("SELECT COUNT(*) FROM bookmarks WHERE user_id = ?");
-            $stmt->execute([$userId]);
-            $bookmarksCount = (int) $stmt->fetchColumn();
+            try {
+                $stmt = $this->db->prepare("SELECT COUNT(*) FROM analyses WHERE user_id = ?");
+                $stmt->execute([$userId]);
+                $analysesCount = (int) $stmt->fetchColumn();
+            } catch (\Throwable $e) { /* table may not exist */ }
 
-            $stmt = $this->db->prepare("SELECT COUNT(*) FROM search_history WHERE user_id = ?");
-            $stmt->execute([$userId]);
-            $searchCount = (int) $stmt->fetchColumn();
+            try {
+                $stmt = $this->db->prepare("SELECT COUNT(*) FROM bookmarks WHERE user_id = ?");
+                $stmt->execute([$userId]);
+                $bookmarksCount = (int) $stmt->fetchColumn();
+            } catch (\Throwable $e) { /* table may not exist */ }
+
+            try {
+                $stmt = $this->db->prepare("SELECT COUNT(*) FROM search_history WHERE user_id = ?");
+                $stmt->execute([$userId]);
+                $searchCount = (int) $stmt->fetchColumn();
+            } catch (\Throwable $e) { /* table may not exist */ }
 
             $user['usage'] = [
                 'analyses_count' => $analysesCount,

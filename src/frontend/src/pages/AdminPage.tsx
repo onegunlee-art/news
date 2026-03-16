@@ -172,15 +172,18 @@ type UserRow = {
   id: number;
   nickname: string;
   email: string | null;
+  role: string;
   status: string;
   last_login_at: string | null;
   created_at: string;
   kakao_id: number | null;
+  google_id: string | null;
   is_subscribed: number;
   subscription_expires_at: string | null;
 };
 type UserStats = { total: number; subscribed: number; unsubscribed: number; new_this_month: number };
 type UserDetail = UserRow & {
+  profile_image?: string | null;
   steppay_customer_id?: number | null;
   steppay_subscription_id?: string | null;
   usage?: { analyses_count: number; bookmarks_count: number; search_count: number };
@@ -386,9 +389,14 @@ const UsersManagementSection: React.FC<{
                           onClick={async () => {
                             try {
                               const res = await api.get<{ success: boolean; data: UserDetail }>(`/admin/users/${u.id}`);
-                              if (res.data.success && res.data.data) onUserDetail(res.data.data);
+                              if (res.data.success && res.data.data) {
+                                onUserDetail(res.data.data);
+                              } else {
+                                alert('사용자 정보를 불러올 수 없습니다.');
+                              }
                             } catch (e) {
                               console.error(e);
+                              alert('사용자 상세 조회 실패: 서버 오류가 발생했습니다.');
                             }
                           }}
                           className="text-cyan-400 hover:text-cyan-300 text-sm"
@@ -1430,9 +1438,14 @@ const AdminPage: React.FC = () => {
                               onClick={async () => {
                                 try {
                                   const res = await api.get<{ success: boolean; data: typeof selectedUserDetail }>(`/admin/users/${u.id}`);
-                                  if (res.data.success && res.data.data) setSelectedUserDetail(res.data.data);
+                                  if (res.data.success && res.data.data) {
+                                    setSelectedUserDetail(res.data.data);
+                                  } else {
+                                    alert('사용자 정보를 불러올 수 없습니다.');
+                                  }
                                 } catch (e) {
                                   console.error(e);
+                                  alert('사용자 상세 조회 실패: 서버 오류가 발생했습니다.');
                                 }
                               }}
                               className="text-cyan-400 hover:text-cyan-300 text-sm"
@@ -4916,8 +4929,55 @@ const AdminPage: React.FC = () => {
           <div className="space-y-3 text-sm">
             <p><span className="text-slate-500">닉네임:</span> <span className="text-white">{selectedUserDetail.nickname}</span></p>
             <p><span className="text-slate-500">이메일:</span> <span className="text-white">{selectedUserDetail.email || '-'}</span></p>
-            <p><span className="text-slate-500">가입 방식:</span> <span className={selectedUserDetail.kakao_id != null ? 'text-yellow-400' : 'text-slate-300'}>{selectedUserDetail.kakao_id != null ? '카카오' : '이메일'}</span></p>
-            <p><span className="text-slate-500">상태:</span> <span className={`px-2 py-0.5 rounded text-xs ${selectedUserDetail.status === 'active' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-500/20 text-slate-400'}`}>{selectedUserDetail.status}</span></p>
+            <p><span className="text-slate-500">가입 방식:</span> <span className={selectedUserDetail.kakao_id != null ? 'text-yellow-400' : selectedUserDetail.google_id != null ? 'text-blue-400' : 'text-slate-300'}>{selectedUserDetail.kakao_id != null ? '카카오' : selectedUserDetail.google_id != null ? '구글' : '이메일'}</span></p>
+            <div className="flex items-center gap-2">
+              <span className="text-slate-500">상태:</span>
+              <select
+                value={selectedUserDetail.status}
+                onChange={async (e) => {
+                  const newStatus = e.target.value;
+                  try {
+                    const res = await api.put<{ success: boolean; message?: string }>(`/admin/users/${selectedUserDetail.id}/status`, { status: newStatus });
+                    if (res.data.success) {
+                      setSelectedUserDetail((d) => d ? { ...d, status: newStatus } : null);
+                    } else {
+                      alert(res.data.message ?? '상태 변경 실패');
+                    }
+                  } catch {
+                    alert('상태 변경에 실패했습니다.');
+                  }
+                }}
+                className="bg-slate-700 border border-slate-600 text-white text-xs rounded px-2 py-1 cursor-pointer"
+              >
+                <option value="active">active</option>
+                <option value="inactive">inactive</option>
+                <option value="banned">banned</option>
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-slate-500">역할:</span>
+              <select
+                value={selectedUserDetail.role || 'user'}
+                onChange={async (e) => {
+                  const newRole = e.target.value;
+                  if (newRole === 'admin' && !confirm('이 사용자를 관리자로 변경하시겠습니까?')) return;
+                  try {
+                    const res = await api.put<{ success: boolean; message?: string }>(`/admin/users/${selectedUserDetail.id}/role`, { role: newRole });
+                    if (res.data.success) {
+                      setSelectedUserDetail((d) => d ? { ...d, role: newRole } : null);
+                    } else {
+                      alert(res.data.message ?? '역할 변경 실패');
+                    }
+                  } catch {
+                    alert('역할 변경에 실패했습니다.');
+                  }
+                }}
+                className="bg-slate-700 border border-slate-600 text-white text-xs rounded px-2 py-1 cursor-pointer"
+              >
+                <option value="user">user</option>
+                <option value="admin">admin</option>
+              </select>
+            </div>
             <div className="flex items-center gap-2">
               <span className="text-slate-500">구독:</span>
               <span className={selectedUserDetail.is_subscribed === 1 ? 'text-emerald-400' : 'text-slate-400'}>{selectedUserDetail.is_subscribed === 1 ? '구독 중' : '미구독'}</span>
