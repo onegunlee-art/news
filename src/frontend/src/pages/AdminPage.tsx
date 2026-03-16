@@ -13,7 +13,7 @@ import RAGTester from '../components/RAGTester/RAGTester';
 import { api, adminFetch, adminSettingsApi, adminTtsApi, ttsApi } from '../services/api';
 import { PRIVACY_POLICY_CONTENT } from '../components/Common/PrivacyPolicyContent';
 import WelcomePopup from '../components/Common/WelcomePopup';
-import AdminDraftPreviewEdit, { type DraftArticle } from '../components/Admin/AdminDraftPreviewEdit';
+import AdminDraftPreviewEdit from '../components/Admin/AdminDraftPreviewEdit';
 import { useMenuConfig } from '../hooks/useMenuConfig';
 
 /** Listen과 동일한 구조로 TTS params 구성 (캐시 공유) */
@@ -83,29 +83,6 @@ interface NewsArticle {
   created_at?: string;
   updated_at?: string;
   original_title?: string;
-}
-
-type DraftDetailSource = Partial<DraftArticle> & {
-  id?: number
-  title?: string
-  description?: string | null
-  content?: string | null
-  why_important?: string | null
-  narration?: string | null
-  future_prediction?: string | null
-  source?: string | null
-  source_url?: string | null
-  url?: string | null
-  original_source?: string | null
-  original_title?: string | null
-  published_at?: string | null
-  created_at?: string | null
-  updated_at?: string | null
-  image_url?: string | null
-  author?: string | null
-  category?: string | null
-  category_parent?: string | null
-  status?: string | null
 }
 
 const categories = [
@@ -600,7 +577,6 @@ const AdminPage: React.FC = () => {
   const [draftPage, setDraftPage] = useState(1);
   const [draftPagination, setDraftPagination] = useState({ page: 1, per_page: 20, total: 0, total_pages: 1 });
   const [editingDraftId, setEditingDraftId] = useState<number | null>(null);
-  const [draftDetail, setDraftDetail] = useState<DraftArticle | null>(null);
   const [isLoadingDrafts, setIsLoadingDrafts] = useState(false);
   const [deleteDraftConfirmId, setDeleteDraftConfirmId] = useState<number | null>(null);
 
@@ -1099,64 +1075,6 @@ const AdminPage: React.FC = () => {
     }
   }, [draftPage]);
 
-  const buildDraftDetail = useCallback(
-    (article: DraftDetailSource, fallback?: DraftDetailSource | null): DraftArticle => {
-      const merged = { ...(fallback || {}), ...article };
-      const urlVal =
-        (merged.source_url && merged.source_url.trim()) ||
-        (merged.url && merged.url.trim()) ||
-        (fallback?.source_url && fallback.source_url.trim()) ||
-        (fallback?.url && fallback.url.trim()) ||
-        '#';
-      const parent =
-        merged.category_parent ??
-        (merged.category === 'entertainment' ? 'special' : merged.category ?? fallback?.category_parent ?? 'diplomacy');
-
-      return {
-        id: Number(merged.id ?? fallback?.id ?? 0),
-        title: merged.title ?? fallback?.title ?? '',
-        description: merged.description ?? fallback?.description ?? null,
-        content: merged.content ?? fallback?.content ?? '',
-        why_important: merged.why_important ?? fallback?.why_important ?? null,
-        narration: merged.narration ?? fallback?.narration ?? null,
-        future_prediction: merged.future_prediction ?? fallback?.future_prediction ?? null,
-        source: merged.source ?? fallback?.source ?? null,
-        source_url: merged.source_url ?? merged.url ?? fallback?.source_url ?? fallback?.url ?? null,
-        original_source: merged.original_source ?? fallback?.original_source ?? null,
-        original_title: merged.original_title ?? fallback?.original_title ?? null,
-        url: urlVal,
-        published_at: merged.published_at ?? fallback?.published_at ?? null,
-        created_at: merged.created_at ?? fallback?.created_at ?? null,
-        updated_at: merged.updated_at ?? fallback?.updated_at ?? null,
-        image_url: merged.image_url ?? fallback?.image_url ?? null,
-        author: merged.author ?? fallback?.author ?? null,
-        category: merged.category ?? fallback?.category ?? null,
-        category_parent: parent,
-        status: merged.status ?? fallback?.status ?? 'draft',
-      };
-    },
-    []
-  );
-
-  const loadDraftDetail = useCallback(
-    async (draftId: number, fallback?: DraftDetailSource | null) => {
-      const response = await adminFetch(`/api/admin/news.php?id=${draftId}`);
-      const text = await response.text();
-      if (!text || text.trim().startsWith('<')) {
-        throw new Error('임시저장 상세 응답이 올바르지 않습니다.');
-      }
-      const data = JSON.parse(text);
-      if (!data.success || !data.data?.article) {
-        throw new Error(data.message || '임시저장 상세 조회 실패');
-      }
-      const detail = buildDraftDetail(data.data.article, fallback);
-      setEditingDraftId(draftId);
-      setDraftDetail(detail);
-      return detail;
-    },
-    [buildDraftDetail]
-  );
-
   // 카테고리·검색 변경 시 첫 페이지로 초기화
   useEffect(() => {
     setNewsPage(1);
@@ -1190,19 +1108,11 @@ const AdminPage: React.FC = () => {
       loadDraftsList();
     } else {
       setEditingDraftId(null);
-      setDraftDetail(null);
     }
   }, [activeTab, loadDraftsList]);
 
-  // 임시저장 편집 시작: 목록 데이터 대신 단건 조회 결과를 source of truth로 사용
-  const handleEditDraft = async (draft: NewsArticle) => {
-    if (!draft.id) return;
-    try {
-      await loadDraftDetail(draft.id, draft);
-    } catch (error) {
-      setSaveMessage({ type: 'error', text: '임시저장 상세 불러오기 실패: ' + (error as Error).message });
-      setTimeout(() => setSaveMessage(null), 3000);
-    }
+  const handleEditDraft = (draft: NewsArticle) => {
+    if (draft.id) setEditingDraftId(draft.id);
   };
 
   // 뉴스 수정 시작
@@ -1288,7 +1198,6 @@ const AdminPage: React.FC = () => {
         setDraftList((prev) => prev.filter((n) => n.id !== id));
         if (editingDraftId === id) {
           setEditingDraftId(null);
-          setDraftDetail(null);
         }
       } else {
         throw new Error(data.message);
@@ -1427,7 +1336,6 @@ const AdminPage: React.FC = () => {
                   if (tab.id !== activeTab) {
                     setEditingNewsId(null);
                     setEditingDraftId(null);
-                    setDraftDetail(null);
                   }
                   setActiveTab(tab.id);
                 }}
@@ -3278,112 +3186,17 @@ const AdminPage: React.FC = () => {
                 <p className="text-slate-400">저장된 임시저장 글을 편집하거나 삭제할 수 있습니다</p>
               </div>
 
-              {editingDraftId && draftDetail ? (
+              {editingDraftId ? (
                 <AdminDraftPreviewEdit
-                  news={draftDetail}
-                  onUpdate={async (updates) => {
-                    const pick = <T,>(upd: T | undefined, fallback: T): T =>
-                      upd !== undefined ? upd : fallback;
-                    const response = await adminFetch('/api/admin/news.php', {
-                      method: 'PUT',
-                      headers: { 'Content-Type': 'application/json; charset=utf-8' },
-                      body: JSON.stringify({
-                        id: draftDetail.id,
-                        category_parent: pick(updates.category_parent, draftDetail.category_parent ?? 'diplomacy'),
-                        category: pick(updates.category, draftDetail.category ?? null),
-                        title: pick(updates.title, draftDetail.title),
-                        content: pick(updates.content, draftDetail.content ?? '') ?? '',
-                        why_important: pick(updates.why_important, draftDetail.why_important ?? null),
-                        narration: pick(updates.narration, draftDetail.narration ?? null),
-                        future_prediction: pick(updates.future_prediction, draftDetail.future_prediction ?? null),
-                        source_url: pick(updates.source_url, draftDetail.source_url ?? null),
-                        source: pick(updates.source, draftDetail.source ?? null),
-                        original_source: pick(updates.original_source, draftDetail.original_source ?? null),
-                        original_title: pick(updates.original_title, draftDetail.original_title ?? null),
-                        author: pick(updates.author, draftDetail.author ?? null),
-                        published_at: pick(updates.published_at, draftDetail.published_at ?? null),
-                        image_url: pick(updates.image_url, draftDetail.image_url ?? null),
-                        status: 'draft',
-                      }),
-                    });
-                    if (response.status === 401) {
-                      setSaveMessage({ type: 'error', text: '로그인이 필요합니다. 페이지를 새로고침 후 다시 로그인해주세요.' });
-                      throw new Error('Unauthorized');
-                    }
-                    const text = await response.text();
-                    let data: { success?: boolean; message?: string; data?: { article?: DraftDetailSource } };
-                    try {
-                      data = JSON.parse(text);
-                    } catch {
-                      setSaveMessage({ type: 'error', text: `서버 응답 오류 (HTTP ${response.status}). 잠시 후 다시 시도해주세요.` });
-                      throw new Error('Invalid JSON');
-                    }
-                    if (!data.success) {
-                      setSaveMessage({ type: 'error', text: data.message || '임시저장 업데이트 실패' });
-                      throw new Error(data.message || '저장 실패');
-                    }
-                    if (data.data?.article) {
-                      setDraftDetail(buildDraftDetail(data.data.article, draftDetail));
-                    } else {
-                      try {
-                        await loadDraftDetail(draftDetail.id, draftDetail);
-                      } catch {
-                        setDraftDetail((prev) => (prev ? buildDraftDetail(updates, prev) : null));
-                      }
-                    }
-                    loadDraftsList();
-                  }}
-                  onPublish={async (currentState) => {
-                    const response = await adminFetch('/api/admin/news.php', {
-                      method: 'PUT',
-                      headers: { 'Content-Type': 'application/json; charset=utf-8' },
-                      body: JSON.stringify({
-                        id: currentState.id,
-                        category_parent: currentState.category_parent ?? 'diplomacy',
-                        category: currentState.category ?? null,
-                        title: currentState.title,
-                        description: currentState.description ?? null,
-                        content: currentState.content ?? '',
-                        why_important: currentState.why_important ?? null,
-                        narration: currentState.narration ?? null,
-                        future_prediction: currentState.future_prediction ?? null,
-                        source_url: currentState.source_url ?? null,
-                        source: currentState.source ?? null,
-                        original_source: currentState.original_source ?? null,
-                        original_title: currentState.original_title ?? null,
-                        author: currentState.author ?? null,
-                        published_at: currentState.published_at ?? null,
-                        image_url: currentState.image_url ?? null,
-                        status: 'published',
-                      }),
-                    });
-                    if (response.status === 401) {
-                      setSaveMessage({ type: 'error', text: '로그인이 필요합니다. 페이지를 새로고침 후 다시 로그인해주세요.' });
-                      throw new Error('Unauthorized');
-                    }
-                    const text = await response.text();
-                    let data: { success?: boolean; message?: string };
-                    try {
-                      data = JSON.parse(text);
-                    } catch {
-                      setSaveMessage({ type: 'error', text: `서버 응답 오류 (HTTP ${response.status}). 잠시 후 다시 시도해주세요.` });
-                      throw new Error('Invalid JSON');
-                    }
-                    if (!data.success) {
-                      setSaveMessage({ type: 'error', text: data.message || '게시 실패' });
-                      throw new Error(data.message || '게시 실패');
-                    }
-                    setSaveMessage({ type: 'success', text: '기사가 게시되었습니다.' });
-                    setTimeout(() => setSaveMessage(null), 5000);
-                    setEditingDraftId(null);
-                    setDraftDetail(null);
-                    await loadDraftsList();
-                    await loadNewsList();
-                  }}
+                  draftId={editingDraftId}
                   onBack={() => {
                     setEditingDraftId(null);
-                    setDraftDetail(null);
                     loadDraftsList();
+                  }}
+                  onPublished={() => {
+                    setEditingDraftId(null);
+                    loadDraftsList();
+                    loadNewsList();
                   }}
                 />
               ) : (

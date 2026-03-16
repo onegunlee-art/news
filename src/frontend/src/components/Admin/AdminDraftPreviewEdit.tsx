@@ -57,17 +57,20 @@ const CATEGORIES = [
 ] as const
 
 interface AdminDraftPreviewEditProps {
-  news: DraftArticle
-  onUpdate: (updates: Partial<DraftArticle>) => Promise<void>
-  onPublish: (currentState: DraftArticle) => Promise<void>
+  draftId: number
   onBack: () => void
+  onPublished?: () => void
+}
+
+const EMPTY_DRAFT: DraftArticle = {
+  id: 0, title: '', content: null, why_important: null, narration: null,
+  source: null, url: '#', published_at: null,
 }
 
 export default function AdminDraftPreviewEdit({
-  news: initialNews,
-  onUpdate,
-  onPublish,
+  draftId,
   onBack,
+  onPublished,
 }: AdminDraftPreviewEditProps) {
   const { subCategoryToLabel } = useMenuConfig()
   const subCategoryOptions = useMemo(
@@ -75,22 +78,16 @@ export default function AdminDraftPreviewEdit({
     [subCategoryToLabel]
   )
 
-  const [news, setNews] = useState<DraftArticle>(initialNews)
+  const [news, setNews] = useState<DraftArticle>(EMPTY_DRAFT)
+  const [isLoading, setIsLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [editingSection, setEditingSection] = useState<EditSection>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false)
   const [saveMsg, setSaveMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
-  const [categoryParent, setCategoryParent] = useState<string>(() =>
-    initialNews.category_parent ?? (initialNews.category === 'entertainment' ? 'special' : initialNews.category ?? 'diplomacy')
-  )
-  const [categorySub, setCategorySub] = useState<string>(() => {
-    const sub = initialNews.category || ''
-    return subCategoryOptions.some((o) => o.value === sub) ? sub : sub ? '__custom__' : ''
-  })
-  const [categorySubCustom, setCategorySubCustom] = useState<string>(() => {
-    const sub = initialNews.category || ''
-    return subCategoryOptions.some((o) => o.value === sub) ? '' : sub
-  })
+  const [categoryParent, setCategoryParent] = useState('diplomacy')
+  const [categorySub, setCategorySub] = useState('')
+  const [categorySubCustom, setCategorySubCustom] = useState('')
   const [dallePrompt, setDallePrompt] = useState('')
   const [isRegeneratingDalle, setIsRegeneratingDalle] = useState(false)
   const [thumbnailMessage, setThumbnailMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
@@ -100,22 +97,60 @@ export default function AdminDraftPreviewEdit({
   const whyImportantEditorRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    setNews(initialNews)
-  }, [initialNews])
-
-  useEffect(() => {
-    const parent =
-      initialNews.category_parent ?? (initialNews.category === 'entertainment' ? 'special' : initialNews.category ?? 'diplomacy')
-    setCategoryParent(parent)
-    const sub = initialNews.category || ''
-    if (subCategoryOptions.some((o) => o.value === sub)) {
-      setCategorySub(sub)
-      setCategorySubCustom('')
-    } else {
-      setCategorySub(sub ? '__custom__' : '')
-      setCategorySubCustom(sub)
-    }
-  }, [initialNews.category_parent, initialNews.category, subCategoryOptions])
+    let cancelled = false
+    setIsLoading(true)
+    setLoadError(null)
+    adminFetch(`/api/admin/news.php?id=${draftId}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (cancelled) return
+        if (data.success && data.data?.article) {
+          const a = data.data.article
+          const draft: DraftArticle = {
+            id: Number(a.id),
+            title: a.title ?? '',
+            description: a.description ?? null,
+            content: a.content ?? null,
+            why_important: a.why_important ?? null,
+            narration: a.narration ?? null,
+            future_prediction: a.future_prediction ?? null,
+            source: a.source ?? null,
+            source_url: a.source_url ?? a.url ?? null,
+            original_source: a.original_source ?? null,
+            original_title: a.original_title ?? null,
+            url: a.source_url || a.url || '#',
+            published_at: a.published_at ?? null,
+            created_at: a.created_at ?? null,
+            updated_at: a.updated_at ?? null,
+            image_url: a.image_url ?? null,
+            author: a.author ?? null,
+            category: a.category ?? null,
+            category_parent: a.category_parent ?? null,
+            status: a.status ?? 'draft',
+          }
+          setNews(draft)
+          const parent = draft.category_parent ?? (draft.category === 'entertainment' ? 'special' : draft.category ?? 'diplomacy')
+          setCategoryParent(parent)
+          const sub = draft.category || ''
+          if (subCategoryOptions.some((o) => o.value === sub)) {
+            setCategorySub(sub)
+            setCategorySubCustom('')
+          } else {
+            setCategorySub(sub ? '__custom__' : '')
+            setCategorySubCustom(sub)
+          }
+        } else {
+          setLoadError(data.message || '임시저장 불러오기 실패')
+        }
+      })
+      .catch((e) => {
+        if (!cancelled) setLoadError('네트워크 오류: ' + (e as Error).message)
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false)
+      })
+    return () => { cancelled = true }
+  }, [draftId, subCategoryOptions])
 
   const formatHeaderDate = () => {
     const s = news.updated_at || news.created_at
@@ -175,25 +210,54 @@ export default function AdminDraftPreviewEdit({
       const normalizedNarration = finalNarration ? normalizeEditorHtml(finalNarration) : null
       const normalizedWhyImportant = finalWhyImportant ? normalizeEditorHtml(finalWhyImportant) : null
 
-      await onUpdate({
-        category_parent: categoryParent,
-        category: subVal || null,
-        title: news.title,
-        original_source: news.original_source ?? null,
-        original_title: news.original_title ?? null,
-        why_important: normalizedWhyImportant,
-        narration: normalizedNarration,
-        content: normalizedContent,
-        image_url: news.image_url ?? null,
+      const response = await adminFetch('/api/admin/news.php', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json; charset=utf-8' },
+        body: JSON.stringify({
+          id: news.id,
+          category_parent: categoryParent,
+          category: subVal || categoryParent,
+          title: news.title,
+          content: normalizedContent ?? '',
+          why_important: normalizedWhyImportant,
+          narration: normalizedNarration,
+          future_prediction: news.future_prediction ?? null,
+          source_url: news.source_url ?? null,
+          source: news.source ?? null,
+          original_source: news.original_source ?? null,
+          original_title: news.original_title ?? null,
+          author: news.author ?? null,
+          published_at: news.published_at ?? null,
+          image_url: news.image_url ?? null,
+          status: 'draft',
+        }),
       })
-      setNews((prev) => ({
-        ...prev,
-        category_parent: categoryParent,
-        category: subVal || null,
-        why_important: normalizedWhyImportant,
-        narration: normalizedNarration,
-        content: normalizedContent,
-      }))
+      const text = await response.text()
+      let data: { success?: boolean; message?: string; data?: { article?: Record<string, unknown> } }
+      try {
+        data = JSON.parse(text)
+      } catch {
+        throw new Error(`서버 응답 오류 (HTTP ${response.status})`)
+      }
+      if (!data.success) throw new Error(data.message || '저장 실패')
+
+      if (data.data?.article) {
+        const a = data.data.article
+        setNews((prev) => ({
+          ...prev,
+          ...Object.fromEntries(Object.entries(a).filter(([, v]) => v !== undefined)),
+          url: (a.source_url as string) || (a.url as string) || prev.url || '#',
+        }))
+      } else {
+        setNews((prev) => ({
+          ...prev,
+          category_parent: categoryParent,
+          category: subVal || null,
+          content: normalizedContent,
+          narration: normalizedNarration,
+          why_important: normalizedWhyImportant,
+        }))
+      }
       setEditingSection(null)
       setSaveMsg({ type: 'success', text: '임시저장이 업데이트되었습니다.' })
       setTimeout(() => setSaveMsg(null), 4000)
@@ -206,28 +270,75 @@ export default function AdminDraftPreviewEdit({
 
   const handlePublish = async () => {
     setIsPublishing(true)
+    setSaveMsg(null)
     try {
       const subVal = getSubCategoryValue()
-      const current: DraftArticle = {
-        ...news,
-        category_parent: categoryParent,
-        category: subVal || null,
-        original_source: news.original_source ?? null,
-        original_title: news.original_title ?? null,
-        why_important: news.why_important ? normalizeEditorHtml(news.why_important) : null,
-        narration: news.narration ? normalizeEditorHtml(news.narration) : null,
-        content: news.content ? normalizeEditorHtml(news.content) : null,
-        image_url: news.image_url ?? null,
+      const response = await adminFetch('/api/admin/news.php', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json; charset=utf-8' },
+        body: JSON.stringify({
+          id: news.id,
+          category_parent: categoryParent,
+          category: subVal || null,
+          title: news.title,
+          description: news.description ?? null,
+          content: news.content ? normalizeEditorHtml(news.content) : '',
+          why_important: news.why_important ? normalizeEditorHtml(news.why_important) : null,
+          narration: news.narration ? normalizeEditorHtml(news.narration) : null,
+          future_prediction: news.future_prediction ?? null,
+          source_url: news.source_url ?? null,
+          source: news.source ?? null,
+          original_source: news.original_source ?? null,
+          original_title: news.original_title ?? null,
+          author: news.author ?? null,
+          published_at: news.published_at ?? null,
+          image_url: news.image_url ?? null,
+          status: 'published',
+        }),
+      })
+      const text = await response.text()
+      let data: { success?: boolean; message?: string }
+      try {
+        data = JSON.parse(text)
+      } catch {
+        throw new Error(`서버 응답 오류 (HTTP ${response.status})`)
       }
-      await onPublish(current)
+      if (!data.success) throw new Error(data.message || '게시 실패')
+
+      setSaveMsg({ type: 'success', text: '기사가 게시되었습니다.' })
+      setTimeout(() => {
+        setSaveMsg(null)
+        onPublished?.()
+      }, 1500)
+    } catch (e) {
+      setSaveMsg({ type: 'error', text: (e as Error).message || '게시 실패' })
     } finally {
       setIsPublishing(false)
     }
   }
 
-  // 유저 페이지(NewsDetailPage)와 동일한 스타일 - 문맥별로 나뉜 형태 유지
   const proseClasses =
     'leading-relaxed whitespace-pre-wrap [&_mark]:rounded-sm [&_mark]:px-0.5 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-0.5 [&_table]:border-collapse [&_table]:w-full [&_table]:my-2 [&_td]:border [&_td]:border-gray-300 [&_td]:px-2 [&_td]:py-1.5 [&_th]:border [&_th]:border-gray-300 [&_th]:px-2 [&_th]:py-1.5 [&_th]:font-semibold [&_th]:bg-gray-100'
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="animate-spin rounded-full h-8 w-8 border-4 border-cyan-500 border-t-transparent" />
+        <span className="ml-3 text-slate-400">불러오는 중...</span>
+      </div>
+    )
+  }
+
+  if (loadError) {
+    return (
+      <div className="text-center py-20 space-y-4">
+        <p className="text-red-400">{loadError}</p>
+        <button onClick={onBack} className="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition">
+          목록으로 돌아가기
+        </button>
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 py-6">
@@ -492,7 +603,7 @@ export default function AdminDraftPreviewEdit({
             </div>
           )}
 
-          {/* 1. AI 분석 (원문 요약) — 작업 순서: AI 분석 → 내레이션 → The Gist */}
+          {/* 1. AI 분석 (원문 요약) */}
           <div className="mb-8 border-t border-gray-100 pt-6 mt-2">
             <div className="flex items-center justify-between mb-3">
               <h3 className="flex items-center gap-2 text-sm font-semibold text-gray-500 uppercase tracking-wider">
