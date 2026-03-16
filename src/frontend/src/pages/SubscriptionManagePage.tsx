@@ -65,17 +65,20 @@ export default function SubscriptionManagePage() {
   const handleCancelAutoRenew = async () => {
     if (!detail?.subscription_id || toggling) return
     setToggling(true)
+    setError(null)
     try {
-      const res = await subscriptionApi.cancel()
+      const res = await subscriptionApi.setAutoRenew(false)
       if (res.data?.success) {
         setShowOffConfirm(false)
         setCancelSuccess(true)
         setDetail((d) => (d ? { ...d, status: 'PENDING_CANCEL', status_label: '해지 예정', auto_renew: false } : null))
       } else {
-        setError(res.data?.message ?? '처리에 실패했습니다.')
+        setShowOffConfirm(false)
+        setError(res.data?.message ?? '구독 연장 종료 처리에 실패했습니다.')
       }
     } catch {
-      setError('처리에 실패했습니다.')
+      setShowOffConfirm(false)
+      setError('구독 연장 종료 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.')
     } finally {
       setToggling(false)
     }
@@ -84,16 +87,17 @@ export default function SubscriptionManagePage() {
   const handleResumeAutoRenew = async () => {
     if (!detail?.subscription_id || toggling) return
     setToggling(true)
+    setError(null)
     try {
       const res = await subscriptionApi.setAutoRenew(true)
       if (res.data?.success) {
         setDetail((d) => (d ? { ...d, status: 'ACTIVE', status_label: '활성화', auto_renew: true } : null))
         setCancelSuccess(false)
       } else {
-        setError(res.data?.message ?? '처리에 실패했습니다.')
+        setError(res.data?.message ?? '구독 연장 재개에 실패했습니다.')
       }
     } catch {
-      setError('처리에 실패했습니다.')
+      setError('구독 연장 재개에 실패했습니다. 잠시 후 다시 시도해 주세요.')
     } finally {
       setToggling(false)
     }
@@ -213,6 +217,9 @@ export default function SubscriptionManagePage() {
                           ? '다음 결제일에 자동으로 구독이 연장됩니다.'
                           : '다음 결제일부터 자동 결제가 중단되며, 현재 기간까지 서비스를 이용할 수 있습니다.'}
                       </p>
+                      {error && (
+                        <p className="mt-2 text-red-600 dark:text-red-400 text-xs font-medium">{error}</p>
+                      )}
                     </div>
                   </section>
                 )}
@@ -234,11 +241,7 @@ export default function SubscriptionManagePage() {
           </div>
         )}
 
-        {error && detail && (
-          <div className="mt-4 p-3 bg-page rounded-lg border border-page text-page-secondary text-sm">
-            {error}
-          </div>
-        )}
+      
       </div>
 
       {showOffConfirm && (
