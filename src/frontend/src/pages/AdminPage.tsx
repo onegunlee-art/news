@@ -3269,6 +3269,22 @@ const AdminPage: React.FC = () => {
                         .slice(0, 200);
                       return { ...merged, description: descFromContent || prev.description };
                     });
+                    setDraftList((prev) =>
+                      prev.map((d) => {
+                        if (d.id !== draftDetail.id) return d;
+                        const desc = (updates.content || '')
+                          .replace(/<[^>]+>/g, '').replace(/&[a-zA-Z]+;/g, ' ').trim().slice(0, 200) || d.description;
+                        return {
+                          ...d,
+                          title: updates.title ?? d.title,
+                          content: updates.content ?? d.content,
+                          narration: updates.narration ?? d.narration,
+                          why_important: updates.why_important ?? d.why_important,
+                          description: desc,
+                        };
+                      })
+                    );
+                    loadDraftsList();
                   }}
                   onPublish={async (currentState) => {
                     const response = await adminFetch('/api/admin/news.php', {
