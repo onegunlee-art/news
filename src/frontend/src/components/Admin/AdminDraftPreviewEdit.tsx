@@ -112,7 +112,7 @@ export default function AdminDraftPreviewEdit({
       setCategorySub(sub ? '__custom__' : '')
       setCategorySubCustom(sub)
     }
-  }, [initialNews.id, initialNews.content, initialNews.narration, initialNews.why_important, subCategoryOptions])
+  }, [initialNews.id, subCategoryOptions])
 
   const formatHeaderDate = () => {
     const s = news.updated_at || news.created_at
@@ -165,20 +165,9 @@ export default function AdminDraftPreviewEdit({
     setSaveMsg(null)
     try {
       const subVal = getSubCategoryValue()
-
-      let currentContent = news.content
-      let currentNarration = news.narration
-      let currentWhyImportant = news.why_important
-
-      if (editingSection === 'content' && contentEditorRef.current) {
-        currentContent = contentEditorRef.current.innerHTML
-      }
-      if (editingSection === 'narration' && narrationEditorRef.current) {
-        currentNarration = narrationEditorRef.current.innerHTML
-      }
-      if (editingSection === 'why_important' && whyImportantEditorRef.current) {
-        currentWhyImportant = whyImportantEditorRef.current.innerHTML
-      }
+      const finalContent = contentEditorRef.current?.innerHTML ?? news.content
+      const finalNarration = narrationEditorRef.current?.innerHTML ?? news.narration
+      const finalWhyImportant = whyImportantEditorRef.current?.innerHTML ?? news.why_important
 
       await onUpdate({
         category_parent: categoryParent,
@@ -186,15 +175,11 @@ export default function AdminDraftPreviewEdit({
         title: news.title,
         original_source: news.original_source ?? null,
         original_title: news.original_title ?? null,
-        why_important: currentWhyImportant ? normalizeEditorHtml(currentWhyImportant) : null,
-        narration: currentNarration ? normalizeEditorHtml(currentNarration) : null,
-        content: currentContent ? normalizeEditorHtml(currentContent) : null,
+        why_important: finalWhyImportant ? normalizeEditorHtml(finalWhyImportant) : null,
+        narration: finalNarration ? normalizeEditorHtml(finalNarration) : null,
+        content: finalContent ? normalizeEditorHtml(finalContent) : null,
         image_url: news.image_url ?? null,
       })
-      if (currentContent !== news.content) setNews((prev) => ({ ...prev, content: currentContent }))
-      if (currentNarration !== news.narration) setNews((prev) => ({ ...prev, narration: currentNarration }))
-      if (currentWhyImportant !== news.why_important) setNews((prev) => ({ ...prev, why_important: currentWhyImportant }))
-      setNews((prev) => ({ ...prev, category_parent: categoryParent, category: subVal || null }))
       setEditingSection(null)
       setSaveMsg({ type: 'success', text: '임시저장이 업데이트되었습니다.' })
       setTimeout(() => setSaveMsg(null), 4000)

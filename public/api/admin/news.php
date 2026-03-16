@@ -206,9 +206,14 @@ if ($method === 'POST') {
     ]);
     
     // 유효성 검사
-    if (empty($title) || empty($content)) {
+    if (empty($title)) {
         http_response_code(400);
-        echo json_encode(['success' => false, 'message' => '제목과 내용을 입력해주세요.']);
+        echo json_encode(['success' => false, 'message' => '제목을 입력해주세요.']);
+        exit;
+    }
+    if ($status !== 'draft' && empty($content)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => '게시하려면 내용을 입력해주세요.']);
         exit;
     }
     

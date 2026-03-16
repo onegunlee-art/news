@@ -3219,26 +3219,27 @@ const AdminPage: React.FC = () => {
                 <AdminDraftPreviewEdit
                   news={draftDetail}
                   onUpdate={async (updates) => {
+                    const pick = <T,>(upd: T | undefined, fallback: T): T =>
+                      upd !== undefined ? upd : fallback;
                     const response = await adminFetch('/api/admin/news.php', {
                       method: 'PUT',
                       headers: { 'Content-Type': 'application/json; charset=utf-8' },
                       body: JSON.stringify({
                         id: draftDetail.id,
-                        category_parent: updates.category_parent ?? draftDetail.category_parent ?? 'diplomacy',
-                        category: updates.category ?? draftDetail.category ?? null,
-                        title: updates.title ?? draftDetail.title,
-                        description: updates.description ?? draftDetail.description ?? null,
-                        content: updates.content ?? draftDetail.content ?? '',
-                        why_important: updates.why_important ?? draftDetail.why_important ?? null,
-                        narration: updates.narration ?? draftDetail.narration ?? null,
-                        future_prediction: updates.future_prediction ?? draftDetail.future_prediction ?? null,
-                        source_url: updates.source_url ?? draftDetail.source_url ?? null,
-                        source: updates.source ?? draftDetail.source ?? null,
-                        original_source: updates.original_source ?? draftDetail.original_source ?? null,
-                        original_title: updates.original_title ?? draftDetail.original_title ?? null,
-                        author: updates.author ?? draftDetail.author ?? null,
-                        published_at: updates.published_at ?? draftDetail.published_at ?? null,
-                        image_url: updates.image_url ?? draftDetail.image_url ?? null,
+                        category_parent: pick(updates.category_parent, draftDetail.category_parent ?? 'diplomacy'),
+                        category: pick(updates.category, draftDetail.category ?? null),
+                        title: pick(updates.title, draftDetail.title),
+                        content: pick(updates.content, draftDetail.content ?? '') ?? '',
+                        why_important: pick(updates.why_important, draftDetail.why_important ?? null),
+                        narration: pick(updates.narration, draftDetail.narration ?? null),
+                        future_prediction: pick(updates.future_prediction, draftDetail.future_prediction ?? null),
+                        source_url: pick(updates.source_url, draftDetail.source_url ?? null),
+                        source: pick(updates.source, draftDetail.source ?? null),
+                        original_source: pick(updates.original_source, draftDetail.original_source ?? null),
+                        original_title: pick(updates.original_title, draftDetail.original_title ?? null),
+                        author: pick(updates.author, draftDetail.author ?? null),
+                        published_at: pick(updates.published_at, draftDetail.published_at ?? null),
+                        image_url: pick(updates.image_url, draftDetail.image_url ?? null),
                         status: 'draft',
                       }),
                     });
@@ -3258,32 +3259,20 @@ const AdminPage: React.FC = () => {
                       setSaveMessage({ type: 'error', text: data.message || '임시저장 업데이트 실패' });
                       throw new Error(data.message || '저장 실패');
                     }
-                    setDraftDetail((prev) => {
-                      if (!prev) return null;
-                      const merged = { ...prev, ...updates };
-                      const rawContent = merged.content || '';
-                      const descFromContent = rawContent
-                        .replace(/<[^>]+>/g, '')
-                        .replace(/&[a-zA-Z]+;/g, ' ')
-                        .trim()
-                        .slice(0, 200);
-                      return { ...merged, description: descFromContent || prev.description };
-                    });
-                    setDraftList((prev) =>
-                      prev.map((d) => {
-                        if (d.id !== draftDetail.id) return d;
-                        const desc = (updates.content || '')
-                          .replace(/<[^>]+>/g, '').replace(/&[a-zA-Z]+;/g, ' ').trim().slice(0, 200) || d.description;
-                        return {
-                          ...d,
-                          title: updates.title ?? d.title,
-                          content: updates.content ?? d.content,
-                          narration: updates.narration ?? d.narration,
-                          why_important: updates.why_important ?? d.why_important,
-                          description: desc,
-                        };
-                      })
-                    );
+                    try {
+                      const freshRes = await adminFetch(`/api/admin/news.php?id=${draftDetail.id}`);
+                      const freshData = await freshRes.json();
+                      if (freshData.success && freshData.data?.article) {
+                        const article = freshData.data.article;
+                        setDraftDetail({
+                          ...draftDetail,
+                          ...article,
+                          url: article.source_url || article.url || draftDetail.url || '#',
+                        });
+                      }
+                    } catch {
+                      setDraftDetail((prev) => (prev ? { ...prev, ...updates } : null));
+                    }
                     loadDraftsList();
                   }}
                   onPublish={async (currentState) => {
