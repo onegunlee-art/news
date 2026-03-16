@@ -5,13 +5,22 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || '/api'
 /** Admin API용 fetch 래퍼 - Authorization 헤더 자동 첨부 (향후 인증 적용 시 대비) */
 export function adminFetch(url: string, init?: RequestInit): Promise<Response> {
   const token = typeof localStorage !== 'undefined' ? localStorage.getItem('access_token') : null
+  const method = (init?.method || 'GET').toUpperCase()
   const headers = new Headers(init?.headers)
   headers.set('Content-Type', 'application/json')
+  if (method === 'GET') {
+    headers.set('Cache-Control', 'no-cache')
+    headers.set('Pragma', 'no-cache')
+  }
   if (token) {
     headers.set('Authorization', `Bearer ${token}`)
     headers.set('X-Authorization', `Bearer ${token}`)
   }
-  return fetch(url, { ...init, headers })
+  return fetch(url, {
+    ...init,
+    headers,
+    ...(method === 'GET' ? { cache: 'no-store' } : {}),
+  })
 }
 
 export const api = axios.create({

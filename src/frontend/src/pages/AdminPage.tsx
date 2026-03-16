@@ -85,6 +85,29 @@ interface NewsArticle {
   original_title?: string;
 }
 
+type DraftDetailSource = Partial<DraftArticle> & {
+  id?: number
+  title?: string
+  description?: string | null
+  content?: string | null
+  why_important?: string | null
+  narration?: string | null
+  future_prediction?: string | null
+  source?: string | null
+  source_url?: string | null
+  url?: string | null
+  original_source?: string | null
+  original_title?: string | null
+  published_at?: string | null
+  created_at?: string | null
+  updated_at?: string | null
+  image_url?: string | null
+  author?: string | null
+  category?: string | null
+  category_parent?: string | null
+  status?: string | null
+}
+
 const categories = [
   { id: 'diplomacy', name: '외교', color: 'from-blue-500 to-cyan-500' },
   { id: 'economy', name: '경제', color: 'from-emerald-500 to-green-500' },
@@ -1076,6 +1099,64 @@ const AdminPage: React.FC = () => {
     }
   }, [draftPage]);
 
+  const buildDraftDetail = useCallback(
+    (article: DraftDetailSource, fallback?: DraftDetailSource | null): DraftArticle => {
+      const merged = { ...(fallback || {}), ...article };
+      const urlVal =
+        (merged.source_url && merged.source_url.trim()) ||
+        (merged.url && merged.url.trim()) ||
+        (fallback?.source_url && fallback.source_url.trim()) ||
+        (fallback?.url && fallback.url.trim()) ||
+        '#';
+      const parent =
+        merged.category_parent ??
+        (merged.category === 'entertainment' ? 'special' : merged.category ?? fallback?.category_parent ?? 'diplomacy');
+
+      return {
+        id: Number(merged.id ?? fallback?.id ?? 0),
+        title: merged.title ?? fallback?.title ?? '',
+        description: merged.description ?? fallback?.description ?? null,
+        content: merged.content ?? fallback?.content ?? '',
+        why_important: merged.why_important ?? fallback?.why_important ?? null,
+        narration: merged.narration ?? fallback?.narration ?? null,
+        future_prediction: merged.future_prediction ?? fallback?.future_prediction ?? null,
+        source: merged.source ?? fallback?.source ?? null,
+        source_url: merged.source_url ?? merged.url ?? fallback?.source_url ?? fallback?.url ?? null,
+        original_source: merged.original_source ?? fallback?.original_source ?? null,
+        original_title: merged.original_title ?? fallback?.original_title ?? null,
+        url: urlVal,
+        published_at: merged.published_at ?? fallback?.published_at ?? null,
+        created_at: merged.created_at ?? fallback?.created_at ?? null,
+        updated_at: merged.updated_at ?? fallback?.updated_at ?? null,
+        image_url: merged.image_url ?? fallback?.image_url ?? null,
+        author: merged.author ?? fallback?.author ?? null,
+        category: merged.category ?? fallback?.category ?? null,
+        category_parent: parent,
+        status: merged.status ?? fallback?.status ?? 'draft',
+      };
+    },
+    []
+  );
+
+  const loadDraftDetail = useCallback(
+    async (draftId: number, fallback?: DraftDetailSource | null) => {
+      const response = await adminFetch(`/api/admin/news.php?id=${draftId}`);
+      const text = await response.text();
+      if (!text || text.trim().startsWith('<')) {
+        throw new Error('임시저장 상세 응답이 올바르지 않습니다.');
+      }
+      const data = JSON.parse(text);
+      if (!data.success || !data.data?.article) {
+        throw new Error(data.message || '임시저장 상세 조회 실패');
+      }
+      const detail = buildDraftDetail(data.data.article, fallback);
+      setEditingDraftId(draftId);
+      setDraftDetail(detail);
+      return detail;
+    },
+    [buildDraftDetail]
+  );
+
   // 카테고리·검색 변경 시 첫 페이지로 초기화
   useEffect(() => {
     setNewsPage(1);
@@ -1113,33 +1194,15 @@ const AdminPage: React.FC = () => {
     }
   }, [activeTab, loadDraftsList]);
 
-  // 임시저장 편집 시작 (뉴스와 동일: 목록 데이터 직접 사용, API 단건 조회 없음)
-  const handleEditDraft = (draft: NewsArticle) => {
-    const urlVal = (draft.source_url && draft.source_url.trim()) || (draft.url && draft.url.trim()) || '#';
-    const parent = draft.category_parent ?? (draft.category === 'entertainment' ? 'special' : draft.category ?? 'diplomacy');
-    setEditingDraftId(draft.id ?? null);
-    setDraftDetail({
-      id: draft.id!,
-      title: draft.title,
-      description: draft.description ?? null,
-      content: draft.content ?? '',
-      why_important: draft.why_important ?? null,
-      narration: draft.narration ?? null,
-      future_prediction: draft.future_prediction ?? null,
-      source: draft.source ?? null,
-      source_url: draft.source_url ?? draft.url ?? null,
-      original_source: draft.original_source ?? null,
-      original_title: draft.original_title ?? null,
-      url: urlVal,
-      published_at: draft.published_at ?? null,
-      created_at: draft.created_at ?? null,
-      updated_at: draft.updated_at ?? null,
-      image_url: draft.image_url ?? null,
-      author: draft.author ?? null,
-      category: draft.category ?? null,
-      category_parent: parent,
-      status: draft.status ?? 'draft',
-    });
+  // 임시저장 편집 시작: 목록 데이터 대신 단건 조회 결과를 source of truth로 사용
+  const handleEditDraft = async (draft: NewsArticle) => {
+    if (!draft.id) return;
+    try {
+      await loadDraftDetail(draft.id, draft);
+    } catch (error) {
+      setSaveMessage({ type: 'error', text: '임시저장 상세 불러오기 실패: ' + (error as Error).message });
+      setTimeout(() => setSaveMessage(null), 3000);
+    }
   };
 
   // 뉴스 수정 시작
@@ -3248,7 +3311,7 @@ const AdminPage: React.FC = () => {
                       throw new Error('Unauthorized');
                     }
                     const text = await response.text();
-                    let data: { success?: boolean; message?: string };
+                    let data: { success?: boolean; message?: string; data?: { article?: DraftDetailSource } };
                     try {
                       data = JSON.parse(text);
                     } catch {
@@ -3259,19 +3322,14 @@ const AdminPage: React.FC = () => {
                       setSaveMessage({ type: 'error', text: data.message || '임시저장 업데이트 실패' });
                       throw new Error(data.message || '저장 실패');
                     }
-                    try {
-                      const freshRes = await adminFetch(`/api/admin/news.php?id=${draftDetail.id}`);
-                      const freshData = await freshRes.json();
-                      if (freshData.success && freshData.data?.article) {
-                        const article = freshData.data.article;
-                        setDraftDetail({
-                          ...draftDetail,
-                          ...article,
-                          url: article.source_url || article.url || draftDetail.url || '#',
-                        });
+                    if (data.data?.article) {
+                      setDraftDetail(buildDraftDetail(data.data.article, draftDetail));
+                    } else {
+                      try {
+                        await loadDraftDetail(draftDetail.id, draftDetail);
+                      } catch {
+                        setDraftDetail((prev) => (prev ? buildDraftDetail(updates, prev) : null));
                       }
-                    } catch {
-                      setDraftDetail((prev) => (prev ? { ...prev, ...updates } : null));
                     }
                     loadDraftsList();
                   }}

@@ -101,6 +101,9 @@ export default function AdminDraftPreviewEdit({
 
   useEffect(() => {
     setNews(initialNews)
+  }, [initialNews])
+
+  useEffect(() => {
     const parent =
       initialNews.category_parent ?? (initialNews.category === 'entertainment' ? 'special' : initialNews.category ?? 'diplomacy')
     setCategoryParent(parent)
@@ -112,7 +115,7 @@ export default function AdminDraftPreviewEdit({
       setCategorySub(sub ? '__custom__' : '')
       setCategorySubCustom(sub)
     }
-  }, [initialNews.id, subCategoryOptions])
+  }, [initialNews.category_parent, initialNews.category, subCategoryOptions])
 
   const formatHeaderDate = () => {
     const s = news.updated_at || news.created_at
@@ -168,6 +171,9 @@ export default function AdminDraftPreviewEdit({
       const finalContent = contentEditorRef.current?.innerHTML ?? news.content
       const finalNarration = narrationEditorRef.current?.innerHTML ?? news.narration
       const finalWhyImportant = whyImportantEditorRef.current?.innerHTML ?? news.why_important
+      const normalizedContent = finalContent ? normalizeEditorHtml(finalContent) : null
+      const normalizedNarration = finalNarration ? normalizeEditorHtml(finalNarration) : null
+      const normalizedWhyImportant = finalWhyImportant ? normalizeEditorHtml(finalWhyImportant) : null
 
       await onUpdate({
         category_parent: categoryParent,
@@ -175,11 +181,19 @@ export default function AdminDraftPreviewEdit({
         title: news.title,
         original_source: news.original_source ?? null,
         original_title: news.original_title ?? null,
-        why_important: finalWhyImportant ? normalizeEditorHtml(finalWhyImportant) : null,
-        narration: finalNarration ? normalizeEditorHtml(finalNarration) : null,
-        content: finalContent ? normalizeEditorHtml(finalContent) : null,
+        why_important: normalizedWhyImportant,
+        narration: normalizedNarration,
+        content: normalizedContent,
         image_url: news.image_url ?? null,
       })
+      setNews((prev) => ({
+        ...prev,
+        category_parent: categoryParent,
+        category: subVal || null,
+        why_important: normalizedWhyImportant,
+        narration: normalizedNarration,
+        content: normalizedContent,
+      }))
       setEditingSection(null)
       setSaveMsg({ type: 'success', text: '임시저장이 업데이트되었습니다.' })
       setTimeout(() => setSaveMsg(null), 4000)

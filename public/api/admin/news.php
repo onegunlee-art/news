@@ -33,6 +33,9 @@ register_shutdown_function(function() {
 require_once __DIR__ . '/../lib/cors.php';
 
 header('Content-Type: application/json; charset=utf-8');
+header('Cache-Control: no-store, no-cache, must-revalidate');
+header('Pragma: no-cache');
+header('Expires: 0');
 setCorsHeaders();
 
 // OPTIONS 요청 처리
@@ -819,15 +822,43 @@ if ($method === 'PUT') {
             storePublishedNewsEmbedding($db, (int) $id);
         }
 
+        $selCols = $hasCategoryParent
+            ? 'id, category_parent, category, title, description, content, source, url, image_url, created_at, updated_at'
+            : 'id, category, title, description, content, source, url, image_url, created_at, updated_at';
+        if ($hasWhyImportant) $selCols .= ', why_important';
+        if ($hasNarration) $selCols .= ', narration';
+        if ($hasFuturePrediction) $selCols .= ', future_prediction';
+        if ($hasSourceUrl) $selCols .= ', source_url';
+        if ($hasOriginalSource) $selCols .= ', original_source';
+        if ($hasOriginalTitle) $selCols .= ', original_title';
+        if ($hasAuthor) $selCols .= ', author';
+        if ($hasPublishedAt) $selCols .= ', published_at';
+        if ($hasStatus) $selCols .= ', status';
+
+        $freshStmt = $db->prepare("SELECT $selCols FROM news WHERE id = ?");
+        $freshStmt->execute([$id]);
+        $freshRow = $freshStmt->fetch(PDO::FETCH_ASSOC);
+
         echo json_encode([
             'success' => true,
             'message' => '뉴스가 수정되었습니다.',
             'data' => [
-                'id' => (int)$id,
-                'category' => $category,
-                'title' => $title,
-                'why_important' => $whyImportant,
-                'source_url' => $sourceUrl
+                'article' => $freshRow ?: [
+                    'id' => (int)$id,
+                    'category' => $category,
+                    'title' => $title,
+                    'description' => $description,
+                    'content' => $content,
+                    'why_important' => $whyImportant,
+                    'narration' => $narration,
+                    'source_url' => $sourceUrl,
+                    'original_source' => $originalSourceField,
+                    'original_title' => $originalTitle,
+                    'author' => $author,
+                    'image_url' => $imageUrl,
+                    'published_at' => $publishedAt,
+                    'status' => $status,
+                ]
             ]
         ]);
     } catch (PDOException $e) {
