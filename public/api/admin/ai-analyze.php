@@ -291,6 +291,16 @@ function analyzeUrl(string $url, array $options = []): array {
             'max_tokens' => 8000,
             'admin_pure_prompt_mode' => true,
         ],
+        'narration' => [
+            'timeout' => 180,
+            'max_tokens' => 4096,
+            'temperature' => 0.5,
+        ],
+        'editing' => [
+            'timeout' => 120,
+            'max_tokens' => 4096,
+            'temperature' => 0.3,
+        ],
         'stop_on_failure' => true
     ];
 
@@ -548,6 +558,16 @@ function analyzeContent(string $content, string $url, string $title, array $opti
             'timeout' => 180,
             'max_tokens' => 8000,
             'admin_pure_prompt_mode' => true,
+        ],
+        'narration' => [
+            'timeout' => 180,
+            'max_tokens' => 4096,
+            'temperature' => 0.5,
+        ],
+        'editing' => [
+            'timeout' => 120,
+            'max_tokens' => 4096,
+            'temperature' => 0.3,
         ],
         'stop_on_failure' => true
     ];

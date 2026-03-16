@@ -52,6 +52,20 @@ return [
             'pattern_storage_path' => __DIR__ . '/../src/data/patterns',
             'ask_clarification' => true,
         ],
+
+        'narration' => [
+            'enabled' => true,
+            'timeout' => 180,
+            'max_tokens' => 4096,
+            'temperature' => 0.5,
+        ],
+
+        'editing' => [
+            'enabled' => true,
+            'timeout' => 120,
+            'max_tokens' => 4096,
+            'temperature' => 0.3,
+        ],
     ],
 
     // WebScraperService (URL 접근 검사·스크래핑). HEAD를 막는 사이트는 skip_head_domains에 추가
