@@ -30,7 +30,7 @@ return [
         'analysis' => [
             'enabled' => true,
             'model' => 'gpt-5.4',
-            'temperature' => 0.45,
+            'temperature' => 0.35,
             'max_tokens' => 8000,
             'timeout' => 180,
             'summary_length' => 3,

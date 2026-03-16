@@ -115,7 +115,7 @@ class AnalysisAgent extends BaseAgent
             'system_prompt' => $this->prompts['system'] ?? '당신은 "The Gist"의 수석 에디터입니다.',
             'model' => $this->config['model'] ?? 'gpt-5.4',
             'max_tokens' => (int)($this->config['max_tokens'] ?? 8000),
-            'temperature' => (float)($this->config['temperature'] ?? 0.45),
+            'temperature' => (float)($this->config['temperature'] ?? 0.35),
             'timeout' => (int)($this->config['timeout'] ?? 180),
             'json_mode' => true,
         ]);
@@ -166,11 +166,18 @@ class AnalysisAgent extends BaseAgent
         $domainHint = '';
         if (str_contains($host, 'foreignaffairs.com')) {
             $domainHint = <<<HINT
-[Foreign Affairs 기사]
-- 본문 중간에 볼드 처리된 대문자 텍스트(예: "REAPING AND SOWING", "ANTICIPATION AND ADAPTATION")가 소제목입니다.
+[Foreign Affairs 기사 - 필수 규칙]
+- Foreign Affairs 기사에는 반드시 ALL CAPS 소제목이 있습니다.
+  예: "ANTICIPATION AND ADAPTATION", "REAPING AND SOWING", "NO TURNING BACK"
+- 소제목은 본문 중간에 독립 라인으로 등장하며, 모든 글자가 대문자(ALL CAPS)입니다.
+- [원문 소제목 목록]이 비어 있더라도, 본문 텍스트에서 ALL CAPS 라인을 직접 찾아 section_title로 사용하세요.
 - section_title에 원문 소제목을 그대로 입력하세요. 번역하거나 재해석하지 마세요.
 - section_title_ko에는 한글 번역을 넣으세요.
-- 소제목이 없는 서론 부분은 "Introduction" 또는 "서론"으로 처리하세요.
+- 소제목 앞의 서론은 introduction_summary에 요약하세요.
+- 서론만 분석하고 끝내는 것은 절대 금지입니다. 모든 소제목 섹션을 빠짐없이 분석하세요.
+
+[Foreign Affairs 기사 구조]
+제목 (큰 볼드체) → 부제목 (이탤릭) → 저자 (ALL CAPS) → 날짜 → 서론 → ALL CAPS 소제목 → 본문 → ALL CAPS 소제목 → 본문 ...
 
 HINT;
         } elseif (str_contains($host, 'ft.com')) {
@@ -260,6 +267,8 @@ HINT;
 1. 전체 분석 결과는 반드시 900자 이상 작성하세요.
 2. 소제목(section_analysis)은 반드시 원문에 등장하는 순서대로 분석하세요. 순서를 바꾸거나 재배열하지 마세요.
 3. section_title에는 원문 소제목을 그대로 사용하세요. 번역하거나 재해석하지 마세요.
+4. section_analysis 배열은 최소 3개 섹션을 포함해야 합니다. 서론만 분석하는 것은 금지입니다.
+5. summary는 해당 섹션의 핵심 내용을 2~3문장으로 간결하게 작성하세요. 장황한 서술 금지.
 
 {$domainHint}
 
@@ -410,6 +419,9 @@ PROMPT;
     private function formatSubheadingsForPrompt(array $subheadings, string $host): string
     {
         if (empty($subheadings)) {
+            if (str_contains(strtolower($host), 'foreignaffairs.com')) {
+                return "(소제목이 본문에 포함되어 있습니다. 본문에서 ALL CAPS 독립 라인을 찾아 section_title로 사용하세요. Foreign Affairs는 반드시 소제목이 있습니다.)";
+            }
             if (str_contains(strtolower($host), 'economist.com')) {
                 return "(소제목 없음 - 단락별 주제를 영문 대문자로 생성하세요)";
             }
