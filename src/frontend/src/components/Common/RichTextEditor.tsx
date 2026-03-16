@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback } from 'react'
+import { useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react'
 import RichTextToolbar from './RichTextToolbar'
 import { sanitizePastedHtml } from '../../utils/sanitizeHtml'
 
@@ -17,8 +17,9 @@ interface RichTextEditorProps {
 /**
  * WYSIWYG 리치 텍스트 에디터 (볼드, 하이라이트가 실제 스타일로 표시됨)
  * contenteditable div 사용 - Enter 시 <br> 삽입 (div 생성 방지)
+ * forwardRef로 부모가 contenteditable div에 직접 접근 가능
  */
-export default function RichTextEditor({
+const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(function RichTextEditor({
   value,
   onChange,
   sanitizePaste,
@@ -27,8 +28,9 @@ export default function RichTextEditor({
   className = '',
   disabled = false,
   noMaxHeight = false,
-}: RichTextEditorProps) {
+}, ref) {
   const divRef = useRef<HTMLDivElement>(null)
+  useImperativeHandle(ref, () => divRef.current as HTMLDivElement)
 
   useEffect(() => {
     const el = divRef.current
@@ -124,4 +126,6 @@ export default function RichTextEditor({
       />
     </div>
   )
-}
+})
+
+export default RichTextEditor

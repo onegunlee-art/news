@@ -95,6 +95,9 @@ export default function AdminDraftPreviewEdit({
   const [isRegeneratingDalle, setIsRegeneratingDalle] = useState(false)
   const [thumbnailMessage, setThumbnailMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const editorialInputRef = useRef<HTMLInputElement>(null)
+  const contentEditorRef = useRef<HTMLDivElement>(null)
+  const narrationEditorRef = useRef<HTMLDivElement>(null)
+  const whyImportantEditorRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     setNews(initialNews)
@@ -109,7 +112,7 @@ export default function AdminDraftPreviewEdit({
       setCategorySub(sub ? '__custom__' : '')
       setCategorySubCustom(sub)
     }
-  }, [initialNews.id, subCategoryOptions])
+  }, [initialNews.id, initialNews.content, initialNews.narration, initialNews.why_important, subCategoryOptions])
 
   const formatHeaderDate = () => {
     const s = news.updated_at || news.created_at
@@ -162,17 +165,35 @@ export default function AdminDraftPreviewEdit({
     setSaveMsg(null)
     try {
       const subVal = getSubCategoryValue()
+
+      let currentContent = news.content
+      let currentNarration = news.narration
+      let currentWhyImportant = news.why_important
+
+      if (editingSection === 'content' && contentEditorRef.current) {
+        currentContent = contentEditorRef.current.innerHTML
+      }
+      if (editingSection === 'narration' && narrationEditorRef.current) {
+        currentNarration = narrationEditorRef.current.innerHTML
+      }
+      if (editingSection === 'why_important' && whyImportantEditorRef.current) {
+        currentWhyImportant = whyImportantEditorRef.current.innerHTML
+      }
+
       await onUpdate({
         category_parent: categoryParent,
         category: subVal || null,
         title: news.title,
         original_source: news.original_source ?? null,
         original_title: news.original_title ?? null,
-        why_important: news.why_important ? normalizeEditorHtml(news.why_important) : null,
-        narration: news.narration ? normalizeEditorHtml(news.narration) : null,
-        content: news.content ? normalizeEditorHtml(news.content) : null,
+        why_important: currentWhyImportant ? normalizeEditorHtml(currentWhyImportant) : null,
+        narration: currentNarration ? normalizeEditorHtml(currentNarration) : null,
+        content: currentContent ? normalizeEditorHtml(currentContent) : null,
         image_url: news.image_url ?? null,
       })
+      if (currentContent !== news.content) setNews((prev) => ({ ...prev, content: currentContent }))
+      if (currentNarration !== news.narration) setNews((prev) => ({ ...prev, narration: currentNarration }))
+      if (currentWhyImportant !== news.why_important) setNews((prev) => ({ ...prev, why_important: currentWhyImportant }))
       setNews((prev) => ({ ...prev, category_parent: categoryParent, category: subVal || null }))
       setEditingSection(null)
       setSaveMsg({ type: 'success', text: '임시저장이 업데이트되었습니다.' })
@@ -503,6 +524,7 @@ export default function AdminDraftPreviewEdit({
             {editingSection === 'content' ? (
               <div className="p-4 bg-gray-50 border border-gray-100 min-w-0 overflow-x-hidden">
                 <RichTextEditor
+                  ref={contentEditorRef}
                   value={ensureBrForEditor(news.content)}
                   onChange={(v) => handleSectionChange('content', v)}
                   sanitizePaste={(t) =>
@@ -539,6 +561,7 @@ export default function AdminDraftPreviewEdit({
             {editingSection === 'narration' ? (
               <div className="p-4 bg-gray-50 border border-gray-100 min-w-0 overflow-x-hidden">
                 <RichTextEditor
+                    ref={narrationEditorRef}
                     value={ensureBrForEditor(news.narration)}
                     onChange={(v) => handleSectionChange('narration', v)}
                     sanitizePaste={(t) =>
@@ -580,6 +603,7 @@ export default function AdminDraftPreviewEdit({
             {editingSection === 'why_important' ? (
               <div className="border-l-4 border-orange-500 bg-gradient-to-r from-orange-50/50 via-amber-50/50 to-white p-4 min-w-0 overflow-x-hidden">
                 <RichTextEditor
+                  ref={whyImportantEditorRef}
                   value={ensureBrForEditor(news.why_important)}
                   onChange={(v) => handleSectionChange('why_important', v)}
                   sanitizePaste={(t) =>

@@ -3258,7 +3258,17 @@ const AdminPage: React.FC = () => {
                       setSaveMessage({ type: 'error', text: data.message || '임시저장 업데이트 실패' });
                       throw new Error(data.message || '저장 실패');
                     }
-                    setDraftDetail((prev) => (prev ? { ...prev, ...updates } : null));
+                    setDraftDetail((prev) => {
+                      if (!prev) return null;
+                      const merged = { ...prev, ...updates };
+                      const rawContent = merged.content || '';
+                      const descFromContent = rawContent
+                        .replace(/<[^>]+>/g, '')
+                        .replace(/&[a-zA-Z]+;/g, ' ')
+                        .trim()
+                        .slice(0, 200);
+                      return { ...merged, description: descFromContent || prev.description };
+                    });
                   }}
                   onPublish={async (currentState) => {
                     const response = await adminFetch('/api/admin/news.php', {
