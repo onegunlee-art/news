@@ -24,7 +24,7 @@ export default function SubscribeSuccessPage() {
         setSubscribed(true)
         fetchUser()
         setStatus('success')
-        setMessage('구독이 완료되었습니다!')
+        setMessage('the gist. 의 모든 컨텐츠를 만나세요')
         return
       }
       if (res.data?.status === 'pending' && attemptRef.current < maxAttempts) {
@@ -82,7 +82,7 @@ export default function SubscribeSuccessPage() {
             <div className="w-16 h-16 mx-auto mb-6 bg-green-100 rounded-full flex items-center justify-center">
               <MaterialIcon name="check_circle" className="w-8 h-8 text-green-600" size={32} filled />
             </div>
-            <h1 className="text-xl font-bold text-gray-900 mb-2">구독 완료!</h1>
+            <h1 className="text-xl font-bold text-gray-900 mb-2">결제 완료!</h1>
             <p className="text-gray-500 text-sm mb-8">{message}</p>
             <button
               onClick={() => navigate('/')}
