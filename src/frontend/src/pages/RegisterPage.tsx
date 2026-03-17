@@ -7,6 +7,7 @@ import { saveAuthReturnState } from '../utils/authReturnState'
 import PrivacyPolicyModal from '../components/Common/PrivacyPolicyModal'
 import TermsModal from '../components/Common/TermsModal'
 import WelcomePopup from '../components/Common/WelcomePopup'
+import GistLogo from '../components/Common/GistLogo'
 
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate()
@@ -193,11 +194,7 @@ const RegisterPage: React.FC = () => {
       >
         {/* 로고 */}
         <div className="text-center mb-8">
-          <Link to="/" className="inline-block">
-            <h1 className="text-5xl text-page" style={{ fontFamily: "'Lobster', cursive" }}>
-              the gist.
-            </h1>
-          </Link>
+          <GistLogo as="h1" size="default" link />
           <p className="text-gray-500 mt-2">Gisters, Becoming Leaders</p>
         </div>
 

@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuthStore } from '../../store/authStore'
 import MaterialIcon from '../Common/MaterialIcon'
+import GistLogo from '../Common/GistLogo'
 
 export default function Header() {
   const { isAuthenticated, login } = useAuthStore()
@@ -84,12 +85,10 @@ export default function Header() {
             )}
           </div>
 
-          {/* 중앙 - 로고 (Lobster 폰트, 블랙, 1.5배), PC에서 영역 확보 */}
-          <Link to="/" className="flex-1 flex items-center justify-center min-w-0 min-h-[2.5rem] md:min-h-[3.75rem] overflow-visible">
-            <h1 className="text-3xl md:text-6xl font-normal text-page tracking-tight whitespace-nowrap" style={{ fontFamily: "'Lobster', cursive" }}>
-              the gist.
-            </h1>
-          </Link>
+          {/* 중앙 - 로고 (GistLogo, 헤더용 20% 축소) */}
+          <div className="flex-1 flex items-center justify-center min-w-0 min-h-[2.5rem] md:min-h-[3.75rem] overflow-visible">
+            <GistLogo as="h1" size="header" link />
+          </div>
 
           {/* 오른쪽 - 검색 아이콘만 */}
           <div className="w-16 md:w-auto flex justify-end items-center">

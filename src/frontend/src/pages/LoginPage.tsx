@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuthStore } from '../store/authStore';
 import { authApi } from '../services/api';
+import GistLogo from '../components/Common/GistLogo';
 import { saveAuthReturnState, getAuthRedirectTarget } from '../utils/authReturnState';
 
 const LoginPage: React.FC = () => {
@@ -61,11 +62,7 @@ const LoginPage: React.FC = () => {
       >
         {/* 로고 */}
         <div className="text-center mb-8">
-          <Link to="/" className="inline-block">
-            <h1 className="text-5xl text-page" style={{ fontFamily: "'Lobster', cursive" }}>
-              the gist.
-            </h1>
-          </Link>
+          <GistLogo as="h1" size="default" link />
           <p className="text-gray-500 mt-2">Gisters, Becoming Leaders</p>
         </div>
 

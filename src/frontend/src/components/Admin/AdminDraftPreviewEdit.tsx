@@ -7,6 +7,7 @@ import { formatSourceDisplayName, buildEditorialLine, parseEditorialLine } from 
 import { extractTitleFromUrl } from '../../utils/extractTitleFromUrl'
 import { adminFetch } from '../../services/api'
 import { useMenuConfig } from '../../hooks/useMenuConfig'
+import GistLogo from '../Common/GistLogo'
 
 /** Admin draft article (from admin/news.php?id=X) */
 export interface DraftArticle {
@@ -699,11 +700,8 @@ export default function AdminDraftPreviewEdit({
           {/* 3. The Gist */}
           <div className="mb-8">
             <div className="flex items-center justify-between mb-2">
-              <h2
-                className="text-xl font-semibold tracking-wide"
-                style={{ fontFamily: "'Lobster', cursive", color: '#FF6F00' }}
-              >
-                the gist.
+              <h2 className="text-xl font-semibold tracking-wide">
+                <GistLogo as="span" size="inline" link={false} />
               </h2>
               <button
                 onClick={() =>

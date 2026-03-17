@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
 import PrivacyPolicyModal from '../Common/PrivacyPolicyModal'
 import TermsModal from '../Common/TermsModal'
+import GistLogo from '../Common/GistLogo'
 import { siteSettingsApi } from '../../services/api'
 
 const defaultVision = 'Gisters, Becoming Leaders'
@@ -27,14 +27,7 @@ export default function Footer() {
     <footer className="bg-page-secondary border-t border-page pb-6 md:pb-0">
       <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 pt-12 pb-2">
         <div className="flex flex-col items-center text-center">
-          <Link to="/" className="inline-block group">
-            <h2
-              className="text-3xl text-page group-hover:opacity-90 transition-opacity duration-200"
-              style={{ fontFamily: "'Lobster', cursive", fontWeight: 400 }}
-            >
-              the gist.
-            </h2>
-          </Link>
+          <GistLogo as="h2" size="default" link />
           <p className="text-page-secondary text-sm mt-2">{vision}</p>
           <p className="text-xs text-page-muted mt-6 whitespace-nowrap">
             <button

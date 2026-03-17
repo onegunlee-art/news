@@ -14,6 +14,7 @@ import { api, adminFetch, adminSettingsApi, adminTtsApi, ttsApi } from '../servi
 import { PRIVACY_POLICY_CONTENT } from '../components/Common/PrivacyPolicyContent';
 import WelcomePopup from '../components/Common/WelcomePopup';
 import AdminDraftPreviewEdit from '../components/Admin/AdminDraftPreviewEdit';
+import GistLogo from '../components/Common/GistLogo';
 import { useMenuConfig } from '../hooks/useMenuConfig';
 
 /** Listen과 동일한 구조로 TTS params 구성 (캐시 공유) */
@@ -1325,7 +1326,7 @@ const AdminPage: React.FC = () => {
             <h1 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-emerald-400 bg-clip-text text-transparent">
               Admin Panel
             </h1>
-            <p className="text-slate-500 text-sm mt-1">the gist.</p>
+            <p className="text-slate-500 text-sm mt-1"><GistLogo as="span" size="inline" link={false} className="text-slate-500" /></p>
           </div>
 
           <nav className="space-y-2">

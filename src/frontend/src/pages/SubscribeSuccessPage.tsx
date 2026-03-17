@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import { useAuthStore } from '../store/authStore'
 import { api } from '../services/api'
 import MaterialIcon from '../components/Common/MaterialIcon'
+import GistLogo from '../components/Common/GistLogo'
 
 export default function SubscribeSuccessPage() {
   const [searchParams] = useSearchParams()
@@ -83,7 +84,7 @@ export default function SubscribeSuccessPage() {
               <MaterialIcon name="check_circle" className="w-8 h-8 text-green-600" size={32} filled />
             </div>
             <h1 className="text-xl font-bold text-gray-900 mb-2">결제 완료!</h1>
-            <p className="text-gray-500 text-sm mb-8">{message}</p>
+            <p className="text-gray-500 text-sm mb-8"><GistLogo as="span" size="inline" link={false} /> 의 모든 컨텐츠를 만나세요</p>
             <button
               onClick={() => navigate('/')}
               className="w-full py-3 rounded-lg bg-primary-500 hover:bg-primary-600 text-white font-semibold transition-colors"

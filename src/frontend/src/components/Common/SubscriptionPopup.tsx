@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import MaterialIcon from './MaterialIcon'
+import GistLogo from './GistLogo'
 
 const PLANS = [
   { id: '1m', title: '1개월', priceLabel: '7,700원', periodLabel: '1개월' },
@@ -47,7 +48,7 @@ export default function SubscriptionPopup({ isOpen, onClose }: SubscriptionPopup
             >
               <MaterialIcon name="close" className="w-5 h-5" size={20} />
             </button>
-            <h2 className="text-lg font-bold text-white pr-8">the gist. 구독</h2>
+            <h2 className="text-lg font-bold text-white pr-8"><GistLogo as="span" size="inline" link={false} className="text-white" /> 구독</h2>
             <p className="text-primary-100 text-sm mt-0.5">기간을 선택하고 무제한으로 이용하세요.</p>
           </div>
 

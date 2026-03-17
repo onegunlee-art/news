@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import MaterialIcon from '../Common/MaterialIcon'
+import GistLogo from '../Common/GistLogo'
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>
@@ -71,7 +72,7 @@ export default function InstallPrompt() {
           <MaterialIcon name="home" className="text-white" size={24} />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-page text-sm font-medium">The Gist 앱 설치</p>
+          <p className="text-page text-sm font-medium"><GistLogo as="span" size="inline" link={false} /> 앱 설치</p>
           {showIOSGuide ? (
             <p className="text-page-secondary text-xs mt-0.5">
               <MaterialIcon name="ios_share" size={14} className="inline-block align-text-bottom mr-0.5" />
