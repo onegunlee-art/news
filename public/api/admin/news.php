@@ -405,8 +405,9 @@ if ($method === 'GET') {
     if ($id > 0) {
         try {
             $selCols = $hasCategoryParent
-                ? 'id, category_parent, category, title, description, content, source, url, image_url, created_at, updated_at'
-                : 'id, category, title, description, content, source, url, image_url, created_at, updated_at';
+                ? 'id, category_parent, category, title, description, content, source, url, image_url, created_at'
+                : 'id, category, title, description, content, source, url, image_url, created_at';
+            if ($hasUpdatedAt) $selCols .= ', updated_at';
             if ($hasWhyImportant) $selCols .= ', why_important';
             if ($hasNarration) $selCols .= ', narration';
             if ($hasFuturePrediction) $selCols .= ', future_prediction';
@@ -823,8 +824,9 @@ if ($method === 'PUT') {
         }
 
         $selCols = $hasCategoryParent
-            ? 'id, category_parent, category, title, description, content, source, url, image_url, created_at, updated_at'
-            : 'id, category, title, description, content, source, url, image_url, created_at, updated_at';
+            ? 'id, category_parent, category, title, description, content, source, url, image_url, created_at'
+            : 'id, category, title, description, content, source, url, image_url, created_at';
+        if ($hasUpdatedAt) $selCols .= ', updated_at';
         if ($hasWhyImportant) $selCols .= ', why_important';
         if ($hasNarration) $selCols .= ', narration';
         if ($hasFuturePrediction) $selCols .= ', future_prediction';
