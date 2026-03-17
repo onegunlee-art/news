@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuthStore } from '../store/authStore';
-import { authApi } from '../services/api';
+import { authApi, siteSettingsApi } from '../services/api';
 import GistLogo from '../components/Common/GistLogo';
+import { DEFAULT_VISION } from '../constants/site';
 import { saveAuthReturnState, getAuthRedirectTarget } from '../utils/authReturnState';
 
 const LoginPage: React.FC = () => {
@@ -17,6 +18,14 @@ const LoginPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [vision, setVision] = useState(DEFAULT_VISION);
+
+  useEffect(() => {
+    siteSettingsApi.getSite().then((res) => {
+      if (res.data?.data?.the_gist_vision?.trim()) setVision(res.data.data.the_gist_vision.trim());
+      else setVision(DEFAULT_VISION);
+    }).catch(() => setVision(DEFAULT_VISION));
+  }, []);
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,7 +72,7 @@ const LoginPage: React.FC = () => {
         {/* 로고 */}
         <div className="text-center mb-8">
           <GistLogo as="h1" size="default" link />
-          <p className="text-gray-500 mt-2">Gisters, Becoming Leaders</p>
+          <p className="text-gray-500 mt-2">{vision}</p>
         </div>
 
         {/* 로그인 카드 */}

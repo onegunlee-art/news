@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuthStore } from '../store/authStore'
-import { authApi, welcomeSettingsApi } from '../services/api'
+import { authApi, welcomeSettingsApi, siteSettingsApi } from '../services/api'
 import { saveAuthReturnState } from '../utils/authReturnState'
 import PrivacyPolicyModal from '../components/Common/PrivacyPolicyModal'
 import TermsModal from '../components/Common/TermsModal'
 import WelcomePopup from '../components/Common/WelcomePopup'
 import GistLogo from '../components/Common/GistLogo'
+import { DEFAULT_VISION } from '../constants/site'
 
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate()
@@ -35,6 +36,14 @@ const RegisterPage: React.FC = () => {
   const [showSuccess, setShowSuccess] = useState(false)
   const [welcomeMessage, setWelcomeMessage] = useState('the gist. 가입을 감사드립니다.')
   const [welcomePopupData, setWelcomePopupData] = useState<{ userName: string } | null>(null)
+  const [vision, setVision] = useState(DEFAULT_VISION)
+
+  useEffect(() => {
+    siteSettingsApi.getSite().then((res) => {
+      if (res.data?.data?.the_gist_vision?.trim()) setVision(res.data.data.the_gist_vision.trim())
+      else setVision(DEFAULT_VISION)
+    }).catch(() => setVision(DEFAULT_VISION))
+  }, [])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -195,7 +204,7 @@ const RegisterPage: React.FC = () => {
         {/* 로고 */}
         <div className="text-center mb-8">
           <GistLogo as="h1" size="default" link />
-          <p className="text-gray-500 mt-2">Gisters, Becoming Leaders</p>
+          <p className="text-gray-500 mt-2">{vision}</p>
         </div>
 
         <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-8">

@@ -15,6 +15,7 @@ import { PRIVACY_POLICY_CONTENT } from '../components/Common/PrivacyPolicyConten
 import WelcomePopup from '../components/Common/WelcomePopup';
 import AdminDraftPreviewEdit from '../components/Admin/AdminDraftPreviewEdit';
 import GistLogo from '../components/Common/GistLogo';
+import { DEFAULT_VISION } from '../constants/site';
 import { useMenuConfig } from '../hooks/useMenuConfig';
 
 /** Listen과 동일한 구조로 TTS params 구성 (캐시 공유) */
@@ -991,7 +992,7 @@ const AdminPage: React.FC = () => {
   const [showWelcomePreview, setShowWelcomePreview] = useState(false);
   const [contactEmail, setContactEmail] = useState('onegunlee@gmail.com');
   const [copyrightText, setCopyrightText] = useState('');
-  const [theGistVision, setTheGistVision] = useState('Gisters, Becoming Leaders');
+  const [theGistVision, setTheGistVision] = useState(DEFAULT_VISION);
   const [siteSettingsSaving, setSiteSettingsSaving] = useState(false);
   const [siteSettingsMsg, setSiteSettingsMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [menuTabs, setMenuTabs] = useState<{ key: string; label: string }[]>([
@@ -1251,7 +1252,7 @@ const AdminPage: React.FC = () => {
         setWelcomeTitleTemplate(s.welcome_popup_title ?? '{name}님');
         setContactEmail(s.contact_email ?? 'onegunlee@gmail.com');
         setCopyrightText(s.copyright_text ?? '');
-        setTheGistVision(s.the_gist_vision ?? 'Gisters, Becoming Leaders');
+        setTheGistVision(s.the_gist_vision ?? DEFAULT_VISION);
         if (s.menu_tabs && typeof s.menu_tabs === 'string') {
           try {
             const parsed = JSON.parse(s.menu_tabs);
@@ -1582,7 +1583,7 @@ const AdminPage: React.FC = () => {
                         <textarea
                           value={theGistVision}
                           onChange={(e) => setTheGistVision(e.target.value)}
-                          placeholder="Gisters, Becoming Leaders"
+                          placeholder={DEFAULT_VISION}
                           rows={2}
                           className="w-full px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-slate-200 placeholder-slate-500 resize-none"
                         />
