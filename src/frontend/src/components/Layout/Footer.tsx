@@ -57,9 +57,12 @@ export default function Footer() {
       </div>
 
       <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 pt-0 pb-4 text-center">
-        <p className="text-xs text-page-muted break-words whitespace-normal min-w-0">사업자등록번호: 178-86-03814 | 대표: 이원근</p>
-        <p className="text-xs text-page-muted mt-1 break-words whitespace-normal min-w-0">통신판매업 신고번호: 2026-서울영등포-0613 | 전화: 1551-6210</p>
+        <p className="text-xs text-page-muted break-words whitespace-normal min-w-0">대표자명: 이원근</p>
+        <p className="text-xs text-page-muted mt-1 break-words whitespace-normal min-w-0">상호: 주식회사 더지스트</p>
+        <p className="text-xs text-page-muted mt-1 break-words whitespace-normal min-w-0">사업자등록번호: 178-86-03814</p>
         <p className="text-xs text-page-muted mt-1 break-words whitespace-normal min-w-0">주소: (07332) 서울특별시 영등포구 국제금융로8길 27-8, 4116호</p>
+        <p className="text-xs text-page-muted mt-1 break-words whitespace-normal min-w-0">전화: 1551-6210</p>
+        <p className="text-xs text-page-muted mt-1 break-words whitespace-normal min-w-0">통신판매업신고번호: 2026-서울영등포-0613</p>
         <p className="text-xs text-page-muted mt-1 break-words whitespace-normal min-w-0">{copyright}</p>
       </div>
 
