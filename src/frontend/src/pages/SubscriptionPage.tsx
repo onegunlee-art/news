@@ -294,9 +294,6 @@ export default function SubscriptionPage() {
           </p>
         </motion.div>
 
-        <p className="text-center text-[10px] text-gray-500 dark:text-gray-400 mt-8">
-          이용 시 약관 및 결제 정책이 적용됩니다.
-        </p>
       </div>
     </div>
   )

@@ -4,12 +4,10 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useAuthStore } from '../store/authStore'
 import { useAudioListStore, type AudioListItem } from '../store/audioListStore'
 import { useViewSettingsStore } from '../store/viewSettingsStore'
-import { newsApi, siteSettingsApi, contactApi } from '../services/api'
+import { newsApi, contactApi, subscriptionApi, type SubscriptionDetail } from '../services/api'
 import LoadingSpinner from '../components/Common/LoadingSpinner'
 import { formatSourceDisplayName } from '../utils/formatSource'
 import MaterialIcon from '../components/Common/MaterialIcon'
-import PrivacyPolicyModal from '../components/Common/PrivacyPolicyModal'
-import TermsModal from '../components/Common/TermsModal'
 import { useMenuConfig } from '../hooks/useMenuConfig'
 
 const CONTAINER_CLASS = 'max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4'
@@ -24,16 +22,11 @@ export default function ProfilePage() {
   const audioItems = useAudioListStore((s) => s.items)
   const [bookmarks, setBookmarks] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(false)
-  const [siteSettings, setSiteSettings] = useState<{
-    the_gist_vision: string
-    copyright_text: string
-  } | null>(null)
-  const [showTerms, setShowTerms] = useState(false)
-  const [showPrivacy, setShowPrivacy] = useState(false)
   const [expandedActivity, setExpandedActivity] = useState<'none' | 'contact'>('none')
   const [showWithdrawConfirm, setShowWithdrawConfirm] = useState(false)
   const [withdrawing, setWithdrawing] = useState(false)
   const [showNoSubscriptionPopup, setShowNoSubscriptionPopup] = useState(false)
+  const [subscriptionDetail, setSubscriptionDetail] = useState<SubscriptionDetail | null>(null)
   const activeTabRef = useRef(activeTab)
   activeTabRef.current = activeTab
 
@@ -43,15 +36,11 @@ export default function ProfilePage() {
   }, [activeTab, hasAuth])
 
   useEffect(() => {
-    siteSettingsApi.getSite().then((res) => {
-      if (res.data?.data) {
-        setSiteSettings({
-          the_gist_vision: res.data.data.the_gist_vision ?? 'Gisters, Becoming Leaders',
-          copyright_text: res.data.data.copyright_text || `© ${new Date().getFullYear()} the gist.`,
-        })
-      }
+    if (!isSubscribed) return
+    subscriptionApi.getDetail().then((res) => {
+      if (res.data?.success && res.data.data) setSubscriptionDetail(res.data.data)
     }).catch(() => {})
-  }, [])
+  }, [isSubscribed])
 
   const fetchBookmarks = async () => {
     setIsLoading(true)
@@ -99,14 +88,17 @@ export default function ProfilePage() {
                           <p className="text-page-secondary text-xs md:text-sm mt-0.5">관리자</p>
                         )}
                         {isSubscribed && (
-                          <div className="mt-1.5 space-y-1">
-                            <span className="inline-block px-2.5 py-0.5 text-[10px] font-medium tracking-wide uppercase text-primary-700 bg-primary-100 rounded-md">
-                              SUBSCRIBER
-                            </span>
-                            {user?.subscription_expires_at && (
-                              <p className="text-[10px] text-gray-400">
-                                만료일: {new Date(user.subscription_expires_at).toLocaleDateString('ko-KR')}
+                          <div className="mt-1.5">
+                            {subscriptionDetail?.start_date && user?.subscription_expires_at ? (
+                              <p className="text-[11px] text-page-secondary">
+                                {subscriptionDetail.plan_name} 구독 중 ({new Date(subscriptionDetail.start_date).toLocaleDateString('ko-KR')} ~ {new Date(user.subscription_expires_at).toLocaleDateString('ko-KR')})
                               </p>
+                            ) : user?.subscription_expires_at ? (
+                              <p className="text-[11px] text-page-secondary">
+                                구독 중 (만료: {new Date(user.subscription_expires_at).toLocaleDateString('ko-KR')})
+                              </p>
+                            ) : (
+                              <p className="text-[11px] text-page-secondary">구독 중</p>
                             )}
                           </div>
                         )}
@@ -206,15 +198,11 @@ export default function ProfilePage() {
           </ul>
         </section>
 
-        {/* My Subscription: Current Plan + MANAGE */}
+        {/* My Subscription */}
         <section className="mt-6 bg-page rounded-xl overflow-hidden shadow-sm border border-page">
           <h2 className="px-5 py-4 text-xs font-bold text-primary-500 uppercase tracking-wider">My Subscription</h2>
           <ul className="divide-y divide-[var(--border-color)]">
-            <li className="flex items-center justify-between px-5 py-4">
-              <span className="flex items-center gap-2 text-page text-sm font-medium">
-                <MaterialIcon name="credit_score" className="w-5 h-5 text-page-secondary" size={20} />
-                현재 플랜
-              </span>
+            <li>
               <button
                 type="button"
                 onClick={() => {
@@ -224,9 +212,13 @@ export default function ProfilePage() {
                     navigate('/subscription/manage')
                   }
                 }}
-                className="px-3 py-1.5 text-xs font-medium tracking-wide uppercase text-white bg-primary-500 hover:bg-primary-600 rounded transition-colors"
+                className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-page-secondary/50 transition-colors"
               >
-                MANAGE
+                <span className="flex items-center gap-2 text-page text-sm font-medium">
+                  <MaterialIcon name="credit_score" className="w-5 h-5 text-page-secondary" size={20} />
+                  구독 관리
+                </span>
+                <MaterialIcon name="chevron_right" className="w-5 h-5 text-page-muted" size={20} />
               </button>
             </li>
           </ul>
@@ -292,29 +284,8 @@ export default function ProfilePage() {
           </ul>
         </section>
 
-        {/* Footer: The Gist, 저작권, 이용약관 — 정가운데 정렬 */}
-        <footer className="mt-12 pt-8 pb-16 border-t border-page text-center">
-          <div className="space-y-4 text-page-muted text-xs flex flex-col items-center justify-center">
-            {siteSettings && (
-              <>
-                <p className="font-serif text-page-secondary text-sm leading-relaxed whitespace-pre-wrap">{siteSettings.the_gist_vision}</p>
-                <p>{siteSettings.copyright_text}</p>
-              </>
-            )}
-            <div className="flex gap-4 pt-2 justify-center">
-              <button type="button" onClick={() => setShowTerms(true)} className="hover:text-page transition-colors underline underline-offset-2">
-                이용약관
-              </button>
-              <button type="button" onClick={() => setShowPrivacy(true)} className="hover:text-page transition-colors underline underline-offset-2">
-                개인정보 처리방침
-              </button>
-            </div>
-          </div>
-        </footer>
       </div>
 
-      <TermsModal isOpen={showTerms} onClose={() => setShowTerms(false)} />
-      <PrivacyPolicyModal isOpen={showPrivacy} onClose={() => setShowPrivacy(false)} />
       {showWithdrawConfirm && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="withdraw-title">
           <div className="bg-page border border-page rounded-xl shadow-xl max-w-sm w-full p-6">
