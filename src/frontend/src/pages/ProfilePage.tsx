@@ -91,14 +91,14 @@ export default function ProfilePage() {
                           <div className="mt-1.5">
                             {subscriptionDetail?.start_date && user?.subscription_expires_at ? (
                               <p className="text-[11px] text-page-secondary">
-                                {subscriptionDetail.plan_name} 구독 중 ({new Date(subscriptionDetail.start_date).toLocaleDateString('ko-KR')} ~ {new Date(user.subscription_expires_at).toLocaleDateString('ko-KR')})
+                                the gist. {subscriptionDetail.plan_name} 구독중 ({new Date(subscriptionDetail.start_date).toLocaleDateString('ko-KR')} ~ {new Date(user.subscription_expires_at).toLocaleDateString('ko-KR')})
                               </p>
                             ) : user?.subscription_expires_at ? (
                               <p className="text-[11px] text-page-secondary">
-                                구독 중 (만료: {new Date(user.subscription_expires_at).toLocaleDateString('ko-KR')})
+                                the gist. 구독중 (만료: {new Date(user.subscription_expires_at).toLocaleDateString('ko-KR')})
                               </p>
                             ) : (
-                              <p className="text-[11px] text-page-secondary">구독 중</p>
+                              <p className="text-[11px] text-page-secondary">the gist. 구독중</p>
                             )}
                           </div>
                         )}
