@@ -77,6 +77,8 @@ export default function AdminDraftPreviewEdit({
     () => Object.entries(subCategoryToLabel).map(([value, label]) => ({ value, label })),
     [subCategoryToLabel]
   )
+  const subCategoryOptionsRef = useRef(subCategoryOptions)
+  subCategoryOptionsRef.current = subCategoryOptions
 
   const [news, setNews] = useState<DraftArticle>(EMPTY_DRAFT)
   const [isLoading, setIsLoading] = useState(true)
@@ -132,7 +134,8 @@ export default function AdminDraftPreviewEdit({
           const parent = draft.category_parent ?? (draft.category === 'entertainment' ? 'special' : draft.category ?? 'diplomacy')
           setCategoryParent(parent)
           const sub = draft.category || ''
-          if (subCategoryOptions.some((o) => o.value === sub)) {
+          const opts = subCategoryOptionsRef.current
+          if (opts.some((o) => o.value === sub)) {
             setCategorySub(sub)
             setCategorySubCustom('')
           } else {
@@ -150,7 +153,8 @@ export default function AdminDraftPreviewEdit({
         if (!cancelled) setIsLoading(false)
       })
     return () => { cancelled = true }
-  }, [draftId, subCategoryOptions])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftId])
 
   const formatHeaderDate = () => {
     const s = news.updated_at || news.created_at
