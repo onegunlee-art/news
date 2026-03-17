@@ -16,24 +16,25 @@ interface Plan {
 }
 
 const PLANS: Plan[] = [
-  {
-    id: '12m',
-    label: '연간 구독',
-    monthlyPrice: '4,620',
-    discount: '월간 구독 대비 40% 할인',
-    billing: '최초 55,440원 결제, 이후 매년 자동 연장',
-    renewal: '',
-    bestValue: true,
-  },
-  {
-    id: '6m',
-    label: '6개월 구독',
-    monthlyPrice: '5,390',
-    discount: '월간 구독 대비 30% 할인',
-    billing: '최초 32,340원 결제, 기간 종료후 6개월씩 자동 연장',
-    renewal: '',
-    bestValue: false,
-  },
+  // 6개월·12개월은 PG사 심사 완료 후 아래 주석 해제
+  // {
+  //   id: '12m',
+  //   label: '연간 구독',
+  //   monthlyPrice: '4,620',
+  //   discount: '월간 구독 대비 40% 할인',
+  //   billing: '최초 55,440원 결제, 이후 매년 자동 연장',
+  //   renewal: '',
+  //   bestValue: true,
+  // },
+  // {
+  //   id: '6m',
+  //   label: '6개월 구독',
+  //   monthlyPrice: '5,390',
+  //   discount: '월간 구독 대비 30% 할인',
+  //   billing: '최초 32,340원 결제, 기간 종료후 6개월씩 자동 연장',
+  //   renewal: '',
+  //   bestValue: false,
+  // },
   {
     id: '3m',
     label: '3개월 구독',
@@ -41,7 +42,7 @@ const PLANS: Plan[] = [
     discount: '월간 구독 대비 20% 할인',
     billing: '최초 18,480원 결제, 기간 종료후 3개월씩 자동 연장',
     renewal: '',
-    bestValue: false,
+    bestValue: true,
   },
   {
     id: '1m',
@@ -55,7 +56,7 @@ const PLANS: Plan[] = [
 ]
 
 export default function SubscriptionPage() {
-  const [selectedPlan, setSelectedPlan] = useState('12m')
+  const [selectedPlan, setSelectedPlan] = useState('3m')
   const [loading, setLoading] = useState(false)
   const [loadingOnetime, setLoadingOnetime] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -236,38 +237,12 @@ export default function SubscriptionPage() {
           })}
         </motion.div>
 
-        {/* 결제 버튼 */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.4, delay: 0.2 }}
-          className="mt-8"
-        >
-          <button
-            type="button"
-            disabled={loading || isSubscribed}
-            onClick={handleCheckout}
-            className={`w-full py-4 rounded-xl text-base font-bold transition-all duration-200 ${
-              isSubscribed
-                ? 'bg-gray-600 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
-                : loading
-                  ? 'bg-primary-400 text-white cursor-wait'
-                  : 'bg-primary-500 hover:bg-primary-600 text-white shadow-lg shadow-primary-500/20'
-            }`}
-          >
-            {loading ? '처리 중...' : isSubscribed ? '구독 중' : '결제하기'}
-          </button>
-          <p className="text-center text-xs font-bold text-gray-600 dark:text-gray-500 mt-3">
-            언제든지 자동 연장을 취소할 수 있습니다
-          </p>
-        </motion.div>
-
         {/* 단건 상품 */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.3 }}
-          className="mt-14 pt-8 border-t border-gray-200 dark:border-gray-700"
+          transition={{ duration: 0.4, delay: 0.2 }}
+          className="mt-4"
         >
           <h3 className="text-center text-sm font-semibold text-gray-600 dark:text-gray-400 mb-4">단건 상품</h3>
           <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-5">
@@ -291,6 +266,32 @@ export default function SubscriptionPage() {
               {loadingOnetime === 'newsletter_feb' ? '처리 중...' : '구매하기'}
             </button>
           </div>
+        </motion.div>
+
+        {/* 결제 버튼 */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.4, delay: 0.3 }}
+          className="mt-8"
+        >
+          <button
+            type="button"
+            disabled={loading || isSubscribed}
+            onClick={handleCheckout}
+            className={`w-full py-4 rounded-xl text-base font-bold transition-all duration-200 ${
+              isSubscribed
+                ? 'bg-gray-600 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                : loading
+                  ? 'bg-primary-400 text-white cursor-wait'
+                  : 'bg-primary-500 hover:bg-primary-600 text-white shadow-lg shadow-primary-500/20'
+            }`}
+          >
+            {loading ? '처리 중...' : isSubscribed ? '구독 중' : '결제하기'}
+          </button>
+          <p className="text-center text-xs font-bold text-gray-600 dark:text-gray-500 mt-3">
+            언제든지 자동 연장을 취소할 수 있습니다
+          </p>
         </motion.div>
 
         <p className="text-center text-[10px] text-gray-500 dark:text-gray-400 mt-8">

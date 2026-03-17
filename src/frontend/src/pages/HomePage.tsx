@@ -3,7 +3,6 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import MaterialIcon from '../components/Common/MaterialIcon'
 import { newsApi } from '../services/api'
 import ShareMenu from '../components/Common/ShareMenu'
-import SubscriptionPopup from '../components/Common/SubscriptionPopup'
 import { useAuthStore } from '../store/authStore'
 import { useAudioListStore } from '../store/audioListStore'
 import { useAudioPlayerStore } from '../store/audioPlayerStore'
@@ -30,11 +29,6 @@ interface NewsItem {
 
 const PER_PAGE = 20
 const SCROLL_SAVE_KEY = 'home_scroll_'
-const SUBSCRIPTION_POPUP_DISMISSED_KEY = 'subscription_popup_dismissed'
-
-function getTodayYYYYMMDD(): string {
-  return new Date().toISOString().slice(0, 10)
-}
 
 function filterPlaceholder(items: NewsItem[]): NewsItem[] {
   const placeholderPhrases = ['무엇이 처음부터 왔었']
@@ -65,13 +59,6 @@ export default function HomePage() {
   const location = useLocation()
   const navigate = useNavigate()
   const { tabs, tabLabels, tabToCategory, subCategoryToLabel } = useMenuConfig()
-  const { isSubscribed: globalIsSubscribed } = useAuthStore()
-  const [showSubscriptionPopup, setShowSubscriptionPopup] = useState(() => {
-    if (globalIsSubscribed) return false
-    const dismissed = localStorage.getItem(SUBSCRIPTION_POPUP_DISMISSED_KEY)
-    const today = getTodayYYYYMMDD()
-    return dismissed !== today
-  })
   const popularLabel = tabs.find((t) => t.key === 'popular')?.label ?? '인기'
   const specialLabel = tabs.find((t) => t.key === 'special')?.label ?? '특집'
   const [activeTab, setActiveTab] = useState<string>(() => {
@@ -171,16 +158,8 @@ export default function HomePage() {
     }
   }
 
-  const handleCloseSubscriptionPopup = () => {
-    try {
-      localStorage.setItem(SUBSCRIPTION_POPUP_DISMISSED_KEY, getTodayYYYYMMDD())
-    } catch { /* ignore */ }
-    setShowSubscriptionPopup(false)
-  }
-
   return (
     <div className="min-h-screen bg-page pb-8">
-      <SubscriptionPopup isOpen={showSubscriptionPopup} onClose={handleCloseSubscriptionPopup} />
       {/* 탭 네비게이션 - 이미지처럼 연한 배경으로 본문과 구분 */}
       <div className="sticky top-14 bg-page-secondary z-30 border-b border-page">
         <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 md:px-8 lg:px-12 xl:px-16">
