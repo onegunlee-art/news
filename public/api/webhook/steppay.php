@@ -14,6 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 require_once __DIR__ . '/../lib/auth.php';
 require_once __DIR__ . '/../lib/steppay.php';
+require_once __DIR__ . '/../lib/log.php';
 
 $rawBody = file_get_contents('php://input');
 $payload = json_decode($rawBody, true);
@@ -24,10 +25,7 @@ if (!$payload) {
     exit;
 }
 
-$logDir = $_SERVER['DOCUMENT_ROOT'] . '/../storage/logs';
-if (!is_dir($logDir)) @mkdir($logDir, 0755, true);
-$logFile = $logDir . '/steppay_webhook.log';
-file_put_contents($logFile, date('[Y-m-d H:i:s] ') . $rawBody . "\n", FILE_APPEND);
+payment_log('webhook 수신', ['eventType' => $payload['eventType'] ?? 'unknown', 'raw_length' => strlen($rawBody)]);
 
 $eventType = $payload['eventType'] ?? '';
 $data = $payload['data'] ?? [];
@@ -46,7 +44,7 @@ if ($eventType === 'payment.completed') {
             if ($vAttempt < 2) sleep(2);
         }
         if (!$verified) {
-            file_put_contents($logFile, date('[Y-m-d H:i:s] ') . "REJECT: 역검증 실패 (3회 시도) orderCode={$orderCode}\n", FILE_APPEND);
+            payment_log("REJECT: 역검증 실패 (3회 시도)", ['orderCode' => $orderCode]);
             echo json_encode(['success' => false, 'message' => 'Verification failed']);
             exit;
         }
@@ -59,30 +57,30 @@ try {
     switch ($eventType) {
         case 'subscription.created':
         case 'subscription.updated':
-            handleSubscriptionUpdate($pdo, $data, $logFile);
+            handleSubscriptionUpdate($pdo, $data);
             break;
 
         case 'payment.completed':
-            handlePaymentCompleted($pdo, $data, $logFile);
+            handlePaymentCompleted($pdo, $data);
             break;
 
         case 'payment.failed':
         case 'payment.canceled':
-            handlePaymentFailed($pdo, $data, $logFile);
+            handlePaymentFailed($pdo, $data);
             break;
 
         default:
             break;
     }
 } catch (Throwable $e) {
-    file_put_contents($logFile, date('[Y-m-d H:i:s] ERROR: ') . $e->getMessage() . "\n", FILE_APPEND);
+    payment_log('webhook 처리 에러', ['error' => $e->getMessage(), 'eventType' => $eventType]);
 }
 
 echo json_encode(['success' => true]);
 
 // ─── 핸들러 함수 ───
 
-function handleSubscriptionUpdate(PDO $pdo, array $data, string $logFile): void {
+function handleSubscriptionUpdate(PDO $pdo, array $data): void {
     $subscriptionId = $data['id'] ?? null;
     $status = $data['status'] ?? '';
     if (!$subscriptionId) return;
@@ -99,7 +97,7 @@ function handleSubscriptionUpdate(PDO $pdo, array $data, string $logFile): void 
         ->execute([$isActive ? 1 : 0, $expiresAt, $user['id']]);
 }
 
-function handlePaymentCompleted(PDO $pdo, array $data, string $logFile): void {
+function handlePaymentCompleted(PDO $pdo, array $data): void {
     $orderCode = $data['orderCode'] ?? null;
     if (!$orderCode) return;
 
@@ -115,21 +113,21 @@ function handlePaymentCompleted(PDO $pdo, array $data, string $logFile): void {
             $stmt->execute([$customerId]);
             $user = $stmt->fetch();
             if ($user) {
-                file_put_contents($logFile, date('[Y-m-d H:i:s] ') . "FALLBACK: customer_id={$customerId}로 매칭 성공\n", FILE_APPEND);
+                payment_log("FALLBACK: customer_id 매칭 성공", ['customerId' => $customerId, 'userId' => $user['id']]);
                 $pdo->prepare("UPDATE users SET steppay_order_code = ? WHERE id = ?")->execute([$orderCode, $user['id']]);
             }
         }
     }
 
     if (!$user) {
-        file_put_contents($logFile, date('[Y-m-d H:i:s] ') . "WARN: 매칭 실패 orderCode={$orderCode}\n", FILE_APPEND);
+        payment_log("WARN: 매칭 실패", ['orderCode' => $orderCode]);
         return;
     }
 
     $pdo->prepare("UPDATE users SET is_subscribed = 1 WHERE id = ?")->execute([$user['id']]);
 }
 
-function handlePaymentFailed(PDO $pdo, array $data, string $logFile): void {
+function handlePaymentFailed(PDO $pdo, array $data): void {
     $orderCode = $data['orderCode'] ?? null;
     if (!$orderCode) return;
 

@@ -20,15 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 require_once __DIR__ . '/../lib/auth.php';
 require_once __DIR__ . '/../lib/steppay.php';
-
-$logDir = $_SERVER['DOCUMENT_ROOT'] . '/../storage/logs';
-if (!is_dir($logDir)) @mkdir($logDir, 0755, true);
-function orderLog(string $msg, $data = null): void {
-    global $logDir;
-    $line = date('[Y-m-d H:i:s] ') . $msg;
-    if ($data !== null) $line .= ' ' . json_encode($data, JSON_UNESCAPED_UNICODE);
-    file_put_contents($logDir . '/subscription_order.log', $line . "\n", FILE_APPEND);
-}
+require_once __DIR__ . '/../lib/log.php';
 
 $pdo = getDb();
 $userId = getAuthUserId($pdo);
@@ -74,7 +66,7 @@ if (!$user) {
     exit;
 }
 
-orderLog('주문 시작', ['userId' => $userId, 'planId' => $planId, 'steppay_customer_id' => $user['steppay_customer_id']]);
+payment_log('주문 시작', ['userId' => $userId, 'planId' => $planId ?: $onetimeId, 'steppay_customer_id' => $user['steppay_customer_id']], $userId);
 
 $steppayCustomerId = $user['steppay_customer_id'];
 
@@ -84,7 +76,7 @@ if ($steppayCustomerId) {
         $user['nickname'] ?: '회원',
         $user['email']
     );
-    orderLog('기존 고객 정보 갱신', ['id' => $steppayCustomerId, 'success' => $updateResult['success']]);
+    payment_log('기존 고객 정보 갱신', ['id' => $steppayCustomerId, 'success' => $updateResult['success']], $userId);
 }
 
 if (!$steppayCustomerId) {
@@ -95,12 +87,12 @@ if (!$steppayCustomerId) {
         $user['email'],
         $customerCode
     );
-    orderLog('고객 생성 응답', $custResult);
+    payment_log('고객 생성 응답', $custResult, $userId);
 
     if (!$custResult['success'] || empty($custResult['data']['id'])) {
-        orderLog('고객 생성 실패, 기존 고객 검색 시도', ['code' => $customerCode]);
+        payment_log('고객 생성 실패, 기존 고객 검색 시도', ['code' => $customerCode], $userId);
         $searchResult = steppaySearchCustomerByCode($customerCode);
-        orderLog('고객 검색 응답', $searchResult);
+        payment_log('고객 검색 응답', $searchResult, $userId);
 
         $existingId = null;
         if ($searchResult['success'] && !empty($searchResult['data'])) {
@@ -115,13 +107,13 @@ if (!$steppayCustomerId) {
 
         if ($existingId) {
             $steppayCustomerId = (int) $existingId;
-            orderLog('기존 고객 발견', ['id' => $steppayCustomerId]);
+            payment_log('기존 고객 발견', ['id' => $steppayCustomerId], $userId);
         } else {
             $custRetry = steppayCreateCustomer(
                 $user['nickname'] ?: '회원',
                 $user['email']
             );
-            orderLog('코드 없이 고객 재생성 응답', $custRetry);
+            payment_log('코드 없이 고객 재생성 응답', $custRetry, $userId);
 
             if (!$custRetry['success'] || empty($custRetry['data']['id'])) {
                 http_response_code(502);
@@ -135,11 +127,11 @@ if (!$steppayCustomerId) {
     }
 
     $pdo->prepare("UPDATE users SET steppay_customer_id = ? WHERE id = ?")->execute([$steppayCustomerId, $userId]);
-    orderLog('DB 고객 ID 저장', ['steppay_customer_id' => $steppayCustomerId]);
+    payment_log('DB 고객 ID 저장', ['steppay_customer_id' => $steppayCustomerId], $userId);
 }
 
 $orderResult = steppayCreateOrder($steppayCustomerId, $priceCode, $productCode);
-orderLog('주문 생성 응답', $orderResult);
+payment_log('주문 생성 응답', $orderResult, $userId);
 
 if (!$orderResult['success'] || empty($orderResult['data']['orderCode'])) {
     http_response_code(502);
@@ -154,7 +146,7 @@ $pdo->prepare("UPDATE users SET steppay_order_code = ? WHERE id = ?")->execute([
 
 $paymentUrl = steppayGetPaymentUrl($orderCode);
 
-orderLog('주문 완료', ['orderCode' => $orderCode, 'paymentUrl' => $paymentUrl]);
+payment_log('주문 완료', ['orderCode' => $orderCode, 'paymentUrl' => $paymentUrl], $userId);
 
 echo json_encode([
     'success' => true,

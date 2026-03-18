@@ -368,7 +368,7 @@ try {
         $responseData['restriction_type'] = $restrictionType;
     }
 
-    api_log('news/detail', 'GET', 200);
+    api_log('news/detail', 'GET', 200, null, $authUserId);
     echo json_encode([
         'success' => true,
         'message' => '뉴스 조회 성공',
@@ -381,7 +381,7 @@ try {
         $debugPayload('detail.php:catch', 'PDOException', ['message' => $e->getMessage(), 'columns' => isset($columns) ? $columns : '(not built)'], 'H3');
     }
     // #endregion
-    api_log('news/detail', 'GET', 500, $e->getMessage());
+    api_log('news/detail', 'GET', 500, $e->getMessage(), $authUserId ?? null);
     http_response_code(500);
     // 클라이언트에는 상세 메시지 노출하지 않음 (스키마/테이블 정보 유출 방지)
     echo json_encode(['success' => false, 'message' => '일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.']);

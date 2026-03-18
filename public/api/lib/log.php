@@ -1,6 +1,7 @@
 <?php
 /**
  * 통합 로거 — 모든 로그를 storage/logs/ 에 통일
+ * request_id: 요청 단위 고유 ID로 프론트-백엔드 로그를 관통 추적
  */
 
 function _getLogDir(): string {
@@ -10,38 +11,52 @@ function _getLogDir(): string {
     return $dir;
 }
 
-/**
- * API 요청 로그 (NDJSON)
- */
-function api_log(string $path, string $method, ?int $status = null, ?string $detail = null): void {
-    $dir = _getLogDir();
-    $file = $dir . DIRECTORY_SEPARATOR . 'api.log';
-    $line = json_encode([
-        'ts' => date('Y-m-d\TH:i:sP'),
-        'path' => $path,
-        'method' => $method,
-        'status' => $status,
-        'detail' => $detail,
-    ], JSON_UNESCAPED_UNICODE) . "\n";
-    @file_put_contents($file, $line, FILE_APPEND | LOCK_EX);
+/** 요청 단위 고유 ID (같은 요청 내에서는 동일 값 반환) */
+function get_request_id(): string {
+    static $id = null;
+    if ($id === null) {
+        $id = $_SERVER['HTTP_X_REQUEST_ID'] ?? substr(bin2hex(random_bytes(8)), 0, 16);
+    }
+    return $id;
 }
 
 /**
- * 에러 로그 — 채널별 분리 (payment, auth, news, general)
+ * API 요청 로그 (NDJSON)
  */
-function app_error(string $channel, string $message, $data = null): void {
+function api_log(string $path, string $method, ?int $status = null, ?string $detail = null, ?int $userId = null): void {
+    $dir = _getLogDir();
+    $file = $dir . DIRECTORY_SEPARATOR . 'api.log';
+    $entry = [
+        'ts' => date('Y-m-d\TH:i:sP'),
+        'rid' => get_request_id(),
+        'path' => $path,
+        'method' => $method,
+        'status' => $status,
+    ];
+    if ($userId !== null) $entry['uid'] = $userId;
+    if ($detail !== null) $entry['detail'] = $detail;
+    @file_put_contents($file, json_encode($entry, JSON_UNESCAPED_UNICODE) . "\n", FILE_APPEND | LOCK_EX);
+}
+
+/**
+ * 에러 로그 — 채널별 분리 (payment, auth, news, general), NDJSON
+ */
+function app_error(string $channel, string $message, $data = null, ?int $userId = null): void {
     $dir = _getLogDir();
     $file = $dir . DIRECTORY_SEPARATOR . "error_{$channel}.log";
-    $line = date('[Y-m-d H:i:s] ') . $message;
-    if ($data !== null) {
-        $line .= ' | ' . json_encode($data, JSON_UNESCAPED_UNICODE);
-    }
-    @file_put_contents($file, $line . "\n", FILE_APPEND | LOCK_EX);
+    $entry = [
+        'ts' => date('Y-m-d\TH:i:sP'),
+        'rid' => get_request_id(),
+        'msg' => $message,
+    ];
+    if ($userId !== null) $entry['uid'] = $userId;
+    if ($data !== null) $entry['data'] = $data;
+    @file_put_contents($file, json_encode($entry, JSON_UNESCAPED_UNICODE) . "\n", FILE_APPEND | LOCK_EX);
 }
 
 /**
  * 결제 관련 로그
  */
-function payment_log(string $message, $data = null): void {
-    app_error('payment', $message, $data);
+function payment_log(string $message, $data = null, ?int $userId = null): void {
+    app_error('payment', $message, $data, $userId);
 }
