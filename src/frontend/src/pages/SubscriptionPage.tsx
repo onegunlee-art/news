@@ -338,6 +338,64 @@ export default function SubscriptionPage() {
               {loadingOnetime === 'newsletter_feb' ? '처리 중...' : '구매하기'}
             </button>
           </div>
+
+          {/* 단건 상품 상세보기 */}
+          {(() => {
+            const otDetail = planDetails['onetime']
+            const hasOtDetail = otDetail && Object.values(otDetail).some((v) => v.trim())
+            const isOtExpanded = expandedDetail === 'onetime'
+            if (!hasOtDetail) return null
+            return (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setExpandedDetail(isOtExpanded ? null : 'onetime')}
+                  className="w-full flex items-center justify-center gap-1 py-2 text-xs text-gray-500 dark:text-gray-400 hover:text-primary-500 dark:hover:text-primary-400 transition-colors"
+                >
+                  <span>{isOtExpanded ? '접기' : '상세보기'}</span>
+                  <MaterialIcon name={isOtExpanded ? 'expand_less' : 'expand_more'} className="w-4 h-4" size={16} />
+                </button>
+                <AnimatePresence>
+                  {isOtExpanded && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.25 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="px-5 pb-4 space-y-3">
+                        {otDetail.product_title.trim() && (
+                          <div>
+                            <p className="text-[11px] font-semibold text-primary-500 mb-0.5">상품 제목</p>
+                            <p className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{otDetail.product_title}</p>
+                          </div>
+                        )}
+                        {otDetail.service_content.trim() && (
+                          <div>
+                            <p className="text-[11px] font-semibold text-primary-500 mb-0.5">서비스 내용</p>
+                            <p className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{otDetail.service_content}</p>
+                          </div>
+                        )}
+                        {otDetail.service_period.trim() && (
+                          <div>
+                            <p className="text-[11px] font-semibold text-primary-500 mb-0.5">서비스 제공기간</p>
+                            <p className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{otDetail.service_period}</p>
+                          </div>
+                        )}
+                        {otDetail.delivery_method.trim() && (
+                          <div>
+                            <p className="text-[11px] font-semibold text-primary-500 mb-0.5">제공 방법</p>
+                            <p className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{otDetail.delivery_method}</p>
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </>
+            )
+          })()}
         </motion.div>
 
         {/* 결제 버튼 */}

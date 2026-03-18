@@ -548,8 +548,8 @@ const AdminPage: React.FC = () => {
   const [planDetails, setPlanDetails] = useState<Record<string, PlanDetailFields>>({});
   const [planDetailsSaving, setPlanDetailsSaving] = useState(false);
   const [planDetailsMsg, setPlanDetailsMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const PLAN_IDS = ['1m', '3m', '6m', '12m'] as const;
-  const PLAN_LABELS: Record<string, string> = { '1m': '1개월 구독', '3m': '3개월 구독', '6m': '6개월 구독', '12m': '12개월 구독' };
+  const PLAN_IDS = ['1m', '3m', '6m', '12m', 'onetime'] as const;
+  const PLAN_LABELS: Record<string, string> = { '1m': '1개월 구독', '3m': '3개월 구독', '6m': '6개월 구독', '12m': '12개월 구독', 'onetime': '단건 상품' };
   const FIELD_LABELS: { key: keyof PlanDetailFields; label: string }[] = [
     { key: 'product_title', label: '상품 제목' },
     { key: 'service_content', label: '서비스 내용' },
