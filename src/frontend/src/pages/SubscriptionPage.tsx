@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuthStore } from '../store/authStore'
+import { apiErrorMessage } from '../utils/apiErrorMessage'
 import { api } from '../services/api'
 import MaterialIcon from '../components/Common/MaterialIcon'
 import GistLogo from '../components/Common/GistLogo'
@@ -83,8 +84,8 @@ export default function SubscriptionPage() {
       } else {
         setError(res.data?.message || '주문 생성에 실패했습니다.')
       }
-    } catch (err: any) {
-      setError(err.response?.data?.message || '결제 요청 중 오류가 발생했습니다.')
+    } catch (err: unknown) {
+      setError(apiErrorMessage(err, '결제 요청 중 오류가 발생했습니다.'))
     } finally {
       setLoading(false)
     }
@@ -107,8 +108,8 @@ export default function SubscriptionPage() {
       } else {
         setError(res.data?.message || '주문 생성에 실패했습니다.')
       }
-    } catch (err: any) {
-      setError(err.response?.data?.message || '결제 요청 중 오류가 발생했습니다.')
+    } catch (err: unknown) {
+      setError(apiErrorMessage(err, '결제 요청 중 오류가 발생했습니다.'))
     } finally {
       setLoadingOnetime(null)
     }

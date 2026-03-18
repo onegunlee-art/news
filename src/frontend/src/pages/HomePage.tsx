@@ -13,9 +13,11 @@ import { extractTitleFromUrl } from '../utils/extractTitleFromUrl'
 import { stripHtml } from '../utils/sanitizeHtml'
 import { useInfiniteNewsList, usePopularNews } from '../hooks/useNews'
 import { useMenuConfig } from '../hooks/useMenuConfig'
+import { apiErrorMessage } from '../utils/apiErrorMessage'
 
 interface NewsItem {
   id?: number
+  news_id?: number
   title: string
   description: string
   narration?: string | null
@@ -285,7 +287,7 @@ function ArticleCard({ article, activeTab, subCategoryToLabel }: { article: News
   const handlePlayAudio = async (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    const newsId = article.id ?? (article as any).news_id
+    const newsId = article.id ?? article.news_id
     if (!newsId) return
 
     addAudioItem({
@@ -332,14 +334,14 @@ function ArticleCard({ article, activeTab, subCategoryToLabel }: { article: News
     }
   }
 
-  const shareWebUrl = `${window.location.origin}/news/${article.id ?? (article as any).news_id}`
+  const shareWebUrl = `${window.location.origin}/news/${article.id ?? article.news_id}`
 
   // 즐겨찾기 핸들러
   const handleBookmark = async (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
     
-    const newsId = article.id ?? (article as any).news_id
+    const newsId = article.id ?? article.news_id
     if (!newsId) {
       alert('이 기사는 즐겨찾기에 추가할 수 없습니다.')
       return
@@ -361,15 +363,14 @@ function ArticleCard({ article, activeTab, subCategoryToLabel }: { article: News
         await newsApi.bookmark(Number(newsId))
         setIsBookmarked(true)
       }
-    } catch (err: any) {
-      const msg = err.response?.data?.message ?? err.message ?? '즐겨찾기 처리에 실패했습니다.'
-      alert(msg)
+    } catch (err: unknown) {
+      alert(apiErrorMessage(err, '즐겨찾기 처리에 실패했습니다.'))
     } finally {
       setIsBookmarking(false)
     }
   }
 
-  const newsId = article.id ?? (article as any).news_id
+  const newsId = article.id ?? article.news_id
   const detailUrl = `/news/${newsId || ''}`
 
   return (

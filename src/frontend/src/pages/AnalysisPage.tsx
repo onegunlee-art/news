@@ -2,22 +2,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { analysisApi } from '../services/api'
 import LoadingSpinner from '../components/Common/LoadingSpinner'
-import AnalysisResult from '../components/Analysis/AnalysisResult'
-
-interface AnalysisData {
-  id: number
-  keywords: Array<{ keyword: string; score: number; count: number }>
-  sentiment: {
-    type: string
-    label: string
-    score: number
-    color: string
-    details: any
-  }
-  summary: string
-  status: string
-  processing_time_ms: number
-}
+import AnalysisResult, { type AnalysisData } from '../components/Analysis/AnalysisResult'
 
 export default function AnalysisPage() {
   const [text, setText] = useState('')
@@ -37,8 +22,12 @@ export default function AnalysisPage() {
       if (response.data.success) {
         setAnalysis(response.data.data)
       }
-    } catch (error: any) {
-      setError(error.response?.data?.message || '분석에 실패했습니다.')
+    } catch (err: unknown) {
+      const msg =
+        err && typeof err === 'object' && 'response' in err
+          ? (err as { response?: { data?: { message?: string } } }).response?.data?.message
+          : undefined
+      setError(msg || '분석에 실패했습니다.')
     } finally {
       setIsAnalyzing(false)
     }

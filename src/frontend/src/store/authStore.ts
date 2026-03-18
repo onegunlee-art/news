@@ -169,7 +169,7 @@ export const useAuthStore = create<AuthState>()(
             localStorage.setItem('user', JSON.stringify(user))
             localStorage.setItem('is_subscribed', String(isSubscribed))
           }
-        } catch (error: any) {
+        } catch {
           set({ isLoading: false, error: 'Failed to fetch user' })
         }
       },

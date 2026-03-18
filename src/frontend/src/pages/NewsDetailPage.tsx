@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import MaterialIcon from '../components/Common/MaterialIcon'
@@ -14,6 +14,7 @@ import { extractTitleFromUrl } from '../utils/extractTitleFromUrl'
 import { formatContentHtml, stripHtml, stripAnalysisMetaPhrases } from '../utils/sanitizeHtml'
 import PaywallOverlay from '../components/Paywall/PaywallOverlay'
 import { useMenuConfig } from '../hooks/useMenuConfig'
+import { apiErrorMessage } from '../utils/apiErrorMessage'
 
 interface NewsDetail {
   id: number
@@ -106,11 +107,28 @@ export default function NewsDetailPage() {
     openAndPlay(data.title, editorialLine, narrationText, critiqueText, 1.0, imageUrl, data.id)
   }
 
-  useEffect(() => {
-    if (id) {
-      fetchNewsDetail(parseInt(id))
+  const fetchNewsDetail = useCallback(async (newsId: number) => {
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const params = fromTab && fromTabToApi[fromTab] ? { from_tab: fromTabToApi[fromTab] } : undefined
+      const response = await newsApi.getDetail(newsId, params)
+      if (response.data.success) {
+        const d = response.data.data
+        setNews(d)
+        setIsBookmarked(d.is_bookmarked || false)
+      }
+    } catch (error: unknown) {
+      setError(apiErrorMessage(error, '뉴스를 불러올 수 없습니다.'))
+    } finally {
+      setIsLoading(false)
     }
-  }, [id])
+  }, [fromTab, fromTabToApi])
+
+  useEffect(() => {
+    if (id) void fetchNewsDetail(parseInt(id, 10))
+  }, [id, fetchNewsDetail])
 
   // 기사가 바뀌면 AI 분석 보기는 항상 접힌 상태로 리셋
   useEffect(() => {
@@ -127,25 +145,6 @@ export default function NewsDetailPage() {
     }
   }, [isLoading])
 
-  const fetchNewsDetail = async (newsId: number) => {
-    setIsLoading(true)
-    setError(null)
-
-    try {
-      const params = fromTab && fromTabToApi[fromTab] ? { from_tab: fromTabToApi[fromTab] } : undefined
-      const response = await newsApi.getDetail(newsId, params)
-      if (response.data.success) {
-        const d = response.data.data
-        setNews(d)
-        setIsBookmarked(d.is_bookmarked || false)
-      }
-    } catch (error: any) {
-      setError(error.response?.data?.message || '뉴스를 불러올 수 없습니다.')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   const handleBookmark = async () => {
     if (!isAuthenticated || !id) return
 
@@ -157,9 +156,8 @@ export default function NewsDetailPage() {
         await newsApi.bookmark(parseInt(id))
         setIsBookmarked(true)
       }
-    } catch (error: any) {
-      const msg = error.response?.data?.message ?? error.message ?? '즐겨찾기 처리에 실패했습니다.'
-      alert(msg)
+    } catch (error: unknown) {
+      alert(apiErrorMessage(error, '즐겨찾기 처리에 실패했습니다.'))
     }
   }
 

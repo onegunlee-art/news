@@ -33,14 +33,16 @@ export interface DraftArticle {
   status?: string
 }
 
-// eslint-disable-next-line no-misleading-character-class
 const sanitizeText = (text: string): string =>
   text
     .replace(/[\u201C\u201D\u201E\u201F\u2033\u2036]/g, '"')
     .replace(/[\u2018\u2019\u201A\u201B\u2032\u2035]/g, "'")
     .replace(/[\u2013\u2014\u2015\u2212]/g, '-')
     .replace(/[\u00A0\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u202F\u205F\u3000]/g, ' ')
-    .replace(/[\u200B\u200C\u200D\uFEFF]/g, '')
+    .replace(/\u200B/g, '')
+    .replace(/\u200C/g, '')
+    .replace(/\u200D/g, '')
+    .replace(/\uFEFF/g, '')
     .replace(/\r\n/g, '\n')
     .replace(/\r/g, '\n')
     .replace(/[^\S\n]+/g, ' ')
@@ -154,7 +156,6 @@ export default function AdminDraftPreviewEdit({
         if (!cancelled) setIsLoading(false)
       })
     return () => { cancelled = true }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draftId])
 
   const formatHeaderDate = () => {

@@ -9,6 +9,15 @@ import LoadingSpinner from '../components/Common/LoadingSpinner'
 import { formatSourceDisplayName } from '../utils/formatSource'
 import MaterialIcon from '../components/Common/MaterialIcon'
 import { useMenuConfig } from '../hooks/useMenuConfig'
+import { apiErrorMessage } from '../utils/apiErrorMessage'
+
+type BookmarkRow = {
+  id: number
+  title: string
+  category?: string | null
+  source?: string | null
+  published_at?: string | null
+}
 
 const CONTAINER_CLASS = 'max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4'
 
@@ -20,7 +29,7 @@ export default function ProfilePage() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<'bookmarks' | 'audio' | null>(null)
   const audioItems = useAudioListStore((s) => s.items)
-  const [bookmarks, setBookmarks] = useState<any[]>([])
+  const [bookmarks, setBookmarks] = useState<BookmarkRow[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [expandedActivity, setExpandedActivity] = useState<'none' | 'contact'>('none')
   const [showWithdrawConfirm, setShowWithdrawConfirm] = useState(false)
@@ -568,10 +577,10 @@ function ContactForm() {
         message: message.trim(),
       })
       setShowSuccessPopup(true)
-    } catch (err: any) {
+    } catch (err: unknown) {
       setResult({
         type: 'error',
-        text: err.response?.data?.message ?? '전송에 실패했습니다. 잠시 후 다시 시도해주세요.',
+        text: apiErrorMessage(err, '전송에 실패했습니다. 잠시 후 다시 시도해주세요.'),
       })
     } finally {
       setSending(false)
@@ -695,7 +704,7 @@ function AudioList({ items, subCategoryToLabel }: { items: AudioListItem[]; subC
   )
 }
 
-function BookmarkList({ bookmarks, subCategoryToLabel }: { bookmarks: any[]; subCategoryToLabel: Record<string, string> }) {
+function BookmarkList({ bookmarks, subCategoryToLabel }: { bookmarks: BookmarkRow[]; subCategoryToLabel: Record<string, string> }) {
   if (bookmarks.length === 0) {
     return (
       <div className="text-center py-8">

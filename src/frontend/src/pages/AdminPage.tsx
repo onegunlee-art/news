@@ -145,7 +145,6 @@ interface AIAnalysisResult {
 }
 
 // 텍스트 정제 함수 - 복사/붙여넣기 시 문제 될 수 있는 문자 변환
-// eslint-disable-next-line no-misleading-character-class
 const sanitizeText = (text: string): string => {
   return text
     // 스마트 따옴표 → 일반 따옴표
@@ -155,8 +154,11 @@ const sanitizeText = (text: string): string => {
     .replace(/[\u2013\u2014\u2015\u2212]/g, '-')              // em-dash, en-dash
     // 특수 공백 → 일반 공백
     .replace(/[\u00A0\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200A\u202F\u205F\u3000]/g, ' ')
-    // Zero-width 문자 제거
-    .replace(/[\u200B\u200C\u200D\uFEFF]/g, '')
+    // Zero-width 문자 제거 (한 클래스에 ZWJ/ZWNJ 넣으면 regexp/no-misleading-unicode-character 경고)
+    .replace(/\u200B/g, '')
+    .replace(/\u200C/g, '')
+    .replace(/\u200D/g, '')
+    .replace(/\uFEFF/g, '')
     // 특수 줄바꿈 문자 정규화
     .replace(/\r\n/g, '\n')
     .replace(/\r/g, '\n')
@@ -292,8 +294,8 @@ const UsersManagementSection: React.FC<{
   }, [filter]);
 
   useEffect(() => {
-    loadUsers(1, filter);
-  }, [filter]);
+    void loadUsers(1, filter);
+  }, [filter, loadUsers]);
 
   const handleFilter = (f: typeof filter) => {
     setFilter(f);
@@ -480,7 +482,7 @@ const AdminPage: React.FC = () => {
   // aiMockMode 제거됨 - The Gist AI 시스템으로 통합
   const [learningTexts, setLearningTexts] = useState('');
   const [isLearning, setIsLearning] = useState(false);
-  const [learnedPatterns, setLearnedPatterns] = useState<any>(null);
+  const [learnedPatterns, setLearnedPatterns] = useState<Record<string, unknown> | null>(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [speechRate, setSpeechRate] = useState(1.2); // 기본: 약간 빠름
 

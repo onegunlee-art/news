@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { newsApi } from '../services/api'
@@ -22,11 +22,7 @@ export default function AllNewsPage() {
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
 
-  useEffect(() => {
-    fetchNews()
-  }, [page])
-
-  const fetchNews = async () => {
+  const fetchNews = useCallback(async () => {
     setIsLoading(true)
     try {
       const response = await newsApi.getList(page, 12)
@@ -39,7 +35,11 @@ export default function AllNewsPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [page])
+
+  useEffect(() => {
+    void fetchNews()
+  }, [fetchNews])
 
   return (
     <div className="min-h-screen py-12">

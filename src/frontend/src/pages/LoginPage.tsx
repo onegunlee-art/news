@@ -6,6 +6,7 @@ import { authApi, siteSettingsApi } from '../services/api';
 import GistLogo from '../components/Common/GistLogo';
 import { DEFAULT_VISION } from '../constants/site';
 import { saveAuthReturnState, getAuthRedirectTarget } from '../utils/authReturnState';
+import { apiErrorMessage } from '../utils/apiErrorMessage';
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -48,9 +49,8 @@ const LoginPage: React.FC = () => {
       } else {
         throw new Error(res.data.message || '로그인에 실패했습니다.');
       }
-    } catch (err: any) {
-      const msg = err.response?.data?.message ?? err.message ?? '로그인에 실패했습니다.';
-      setError(msg);
+    } catch (err: unknown) {
+      setError(apiErrorMessage(err, '로그인에 실패했습니다.'));
     } finally {
       setIsLoading(false);
     }

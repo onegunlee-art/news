@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 
-interface AnalysisData {
+export interface AnalysisData {
   id: number
   keywords: Array<{ keyword: string; score: number; count: number }>
   sentiment: {

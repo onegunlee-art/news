@@ -106,12 +106,13 @@ export default function AdminDashboard() {
       .finally(() => setLoading(false))
   }, [activeTab, usersPage])
 
-  // 회원 상세 (선택 시)
+  // 회원 상세 (선택 시) — id 변경 시에만 재조회
   useEffect(() => {
     if (!selectedUser) return
     api.get<{ success: boolean; data: User }>(`/admin/users/${selectedUser.id}`)
       .then((r) => r.data?.success && r.data?.data && setSelectedUser(r.data.data))
       .catch(() => {})
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- selectedUser 전체를 넣으면 상세 로드 후 무한 재요청
   }, [selectedUser?.id])
 
   // 뉴스 목록

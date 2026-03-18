@@ -23,9 +23,9 @@ declare global {
       API: {
         request: (settings: {
           url: string;
-          success?: (response: any) => void;
-          fail?: (error: any) => void;
-        }) => Promise<any>;
+          success?: (response: unknown) => void;
+          fail?: (error: unknown) => void;
+        }) => Promise<unknown>;
       };
       Share: {
         sendDefault: (settings: {
@@ -191,14 +191,15 @@ export const kakaoLogout = (): Promise<void> => {
 /**
  * 카카오 사용자 정보 조회
  */
-export const getKakaoUserInfo = async (): Promise<any> => {
+export const getKakaoUserInfo = async (): Promise<Record<string, unknown>> => {
   if (!window.Kakao?.isInitialized()) {
     throw new Error('Kakao SDK not initialized');
   }
 
-  return window.Kakao.API.request({
+  const data = await window.Kakao.API.request({
     url: '/v2/user/me',
   });
+  return data as Record<string, unknown>;
 };
 
 /**
@@ -207,7 +208,7 @@ export const getKakaoUserInfo = async (): Promise<any> => {
 export const exchangeCodeForToken = async (code: string): Promise<{
   accessToken: string;
   refreshToken: string;
-  user: any;
+  user: Record<string, unknown>;
 }> => {
   // 백엔드 API로 인가 코드 전송하여 토큰 교환
   const response = await fetch('/api/auth/kakao/token', {

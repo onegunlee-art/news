@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import LoadingSpinner from '../components/Common/LoadingSpinner'
@@ -21,11 +21,7 @@ export default function AuthCallback() {
   const { setTokens, setUser, initializeAuth } = useAuthStore()
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    handleCallback()
-  }, [])
-
-  const handleCallback = async () => {
+  const handleCallback = useCallback(async () => {
     // URL에서 에러 확인
     const authError = getAuthErrorFromUrl()
     const errorParam = searchParams.get('error')
@@ -142,14 +138,15 @@ export default function AuthCallback() {
           console.error('Token exchange failed:', data)
           throw new Error(data.message || '토큰 교환 실패')
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
+        const errMsg = err instanceof Error ? err.message : '로그인 처리 중 오류가 발생했습니다.'
         console.error('Token exchange error:', {
           error: err,
-          message: err.message,
-          stack: err.stack,
+          message: errMsg,
+          stack: err instanceof Error ? err.stack : undefined,
           code: code ? code.substring(0, 20) + '...' : 'no code',
         })
-        setError(err.message || '로그인 처리 중 오류가 발생했습니다.')
+        setError(errMsg)
         setTimeout(() => navigate('/'), 3000)
         return
       }
@@ -165,7 +162,11 @@ export default function AuthCallback() {
       setError('로그인에 실패했습니다.')
       setTimeout(() => navigate('/'), 3000)
     }
-  }
+  }, [searchParams, navigate, setTokens, setUser, initializeAuth])
+
+  useEffect(() => {
+    void handleCallback()
+  }, [handleCallback])
 
   if (error) {
     return (

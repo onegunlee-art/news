@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { adminFetch } from '../../services/api';
 
 interface Critique {
@@ -48,7 +48,7 @@ const CritiqueEditor: React.FC<CritiqueEditorProps> = ({ newsId, articleUrl, art
   const [versions, setVersions] = useState<Critique[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  const fetchCritiques = async () => {
+  const fetchCritiques = useCallback(async () => {
     setLoading(true);
     try {
       const params = newsId ? `news_id=${newsId}` : articleUrl ? `article_url=${encodeURIComponent(articleUrl)}` : '';
@@ -61,11 +61,11 @@ const CritiqueEditor: React.FC<CritiqueEditorProps> = ({ newsId, articleUrl, art
     } finally {
       setLoading(false);
     }
-  };
+  }, [newsId, articleUrl]);
 
   useEffect(() => {
-    if (newsId || articleUrl) fetchCritiques();
-  }, [newsId, articleUrl]);
+    if (newsId || articleUrl) void fetchCritiques();
+  }, [newsId, articleUrl, fetchCritiques]);
 
   const handleSave = async () => {
     if (!critiqueText.trim()) return;

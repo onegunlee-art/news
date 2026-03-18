@@ -14,6 +14,7 @@ import { extractTitleFromUrl } from '../utils/extractTitleFromUrl'
 import { stripHtml } from '../utils/sanitizeHtml'
 import { queryKeys } from '../lib/queryClient'
 import { useMenuConfig } from '../hooks/useMenuConfig'
+import { apiErrorMessage } from '../utils/apiErrorMessage'
 
 interface NewsItem {
   id?: number
@@ -212,8 +213,8 @@ function SearchArticleCard({ article, subCategoryToLabel }: { article: NewsItem;
         await newsApi.bookmark(Number(newsId))
         setIsBookmarked(true)
       }
-    } catch (err: any) {
-      alert(err.response?.data?.message ?? err.message ?? '즐겨찾기 처리에 실패했습니다.')
+    } catch (err: unknown) {
+      alert(apiErrorMessage(err, '즐겨찾기 처리에 실패했습니다.'))
     } finally {
       setIsBookmarking(false)
     }
