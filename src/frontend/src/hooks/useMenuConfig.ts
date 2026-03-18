@@ -94,6 +94,7 @@ export interface MenuConfig {
   subCategoryToLabel: Record<string, string>
   parentKeyToLabel: Record<string, string>
   fromTabToApi: Record<string, string>
+  specialBadgeText: string
 }
 
 export function useMenuConfig(): MenuConfig {
@@ -108,6 +109,7 @@ export function useMenuConfig(): MenuConfig {
 
   const menuTabs = data?.menu_tabs
   const menuSubcategories = data?.menu_subcategories
+  const badgeText = data?.special_badge_text
 
   return useMemo(() => {
     const tabs = parseMenuTabs(menuTabs)
@@ -116,6 +118,7 @@ export function useMenuConfig(): MenuConfig {
     const tabToCategory = tabLabelToCategory(tabs)
     const parentKeyToLabel = tabsToParentKeyToLabel(tabs)
     const fromTabToApi = tabsToFromTabToApi(tabs)
+    const specialBadgeText = badgeText || 'MSC'
 
     return {
       tabs,
@@ -124,6 +127,7 @@ export function useMenuConfig(): MenuConfig {
       subCategoryToLabel,
       parentKeyToLabel,
       fromTabToApi,
+      specialBadgeText,
     }
-  }, [menuTabs, menuSubcategories])
+  }, [menuTabs, menuSubcategories, badgeText])
 }

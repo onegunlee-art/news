@@ -85,6 +85,7 @@ interface NewsArticle {
   created_at?: string;
   updated_at?: string;
   original_title?: string;
+  also_special?: number;
 }
 
 const categories = [
@@ -1010,6 +1011,7 @@ const AdminPage: React.FC = () => {
   const [contactEmail, setContactEmail] = useState('onegunlee@gmail.com');
   const [copyrightText, setCopyrightText] = useState('');
   const [theGistVision, setTheGistVision] = useState(DEFAULT_VISION);
+  const [specialBadgeText, setSpecialBadgeText] = useState('MSC');
   const [siteSettingsSaving, setSiteSettingsSaving] = useState(false);
   const [siteSettingsMsg, setSiteSettingsMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [menuTabs, setMenuTabs] = useState<{ key: string; label: string }[]>([
@@ -1270,6 +1272,7 @@ const AdminPage: React.FC = () => {
         setContactEmail(s.contact_email ?? 'onegunlee@gmail.com');
         setCopyrightText(s.copyright_text ?? '');
         setTheGistVision(s.the_gist_vision ?? DEFAULT_VISION);
+        setSpecialBadgeText(s.special_badge_text ?? 'MSC');
         if (s.menu_tabs && typeof s.menu_tabs === 'string') {
           try {
             const parsed = JSON.parse(s.menu_tabs);
@@ -1609,6 +1612,25 @@ const AdminPage: React.FC = () => {
                           className="w-full px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-slate-200"
                         />
                       </div>
+                      <div>
+                        <label className="block text-slate-400 text-sm mb-1">특집 탭 말풍선 배지 (최대 5글자)</label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={specialBadgeText}
+                            onChange={(e) => {
+                              if (e.target.value.length <= 5) setSpecialBadgeText(e.target.value);
+                            }}
+                            maxLength={5}
+                            placeholder="MSC"
+                            className="w-32 px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-slate-200"
+                          />
+                          <span className="text-xs text-slate-500">{specialBadgeText.length}/5</span>
+                          <span className="rounded-full bg-primary-500 px-1.5 py-0.5 text-[8px] font-medium leading-none text-white whitespace-nowrap">
+                            {specialBadgeText || 'MSC'}
+                          </span>
+                        </div>
+                      </div>
                     </div>
                     <div className="flex items-center gap-3 mt-4">
                       <button
@@ -1622,6 +1644,7 @@ const AdminPage: React.FC = () => {
                               contact_email: contactEmail,
                               the_gist_vision: theGistVision,
                               copyright_text: copyrightText,
+                              special_badge_text: specialBadgeText,
                             });
                             setSiteSettingsMsg({ type: 'success', text: '저장되었습니다.' });
                           } catch (e) {
@@ -3081,6 +3104,38 @@ const AdminPage: React.FC = () => {
                               {news.source && news.source !== 'Admin' && (
                                 <span className="text-xs px-2 py-0.5 bg-blue-500/20 text-blue-400 rounded">
                                   {formatSourceDisplayName(news.source)}
+                                </span>
+                              )}
+                              {news.category_parent !== 'special' && (
+                                <label
+                                  className="flex items-center gap-1 cursor-pointer select-none"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={!!news.also_special}
+                                    onChange={async () => {
+                                      const next = news.also_special ? 0 : 1;
+                                      try {
+                                        await adminFetch('/api/admin/news.php', {
+                                          method: 'PATCH',
+                                          body: JSON.stringify({ id: news.id, also_special: next }),
+                                        });
+                                        setNewsList((prev) =>
+                                          prev.map((n) => n.id === news.id ? { ...n, also_special: next } : n)
+                                        );
+                                      } catch {
+                                        alert('특집 동시 노출 변경에 실패했습니다.');
+                                      }
+                                    }}
+                                    className="w-3.5 h-3.5 accent-orange-500"
+                                  />
+                                  <span className="text-[10px] text-orange-400 font-medium">특집</span>
+                                </label>
+                              )}
+                              {!!news.also_special && news.category_parent !== 'special' && (
+                                <span className="text-[10px] px-1.5 py-0.5 bg-orange-500/20 text-orange-400 rounded">
+                                  특집 동시
                                 </span>
                               )}
                             </div>

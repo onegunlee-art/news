@@ -121,9 +121,42 @@ $hasPublishedAt    = isset($newsColumns['published_at']);
 $hasStatus         = isset($newsColumns['status']);
 $hasUpdatedAt      = isset($newsColumns['updated_at']);
 $hasCategoryParent = isset($newsColumns['category_parent']);
+$hasAlsoSpecial    = isset($newsColumns['also_special']);
 $hasViewCount      = isset($newsColumns['view_count']);
 
 $method = $_SERVER['REQUEST_METHOD'];
+
+// PATCH: also_special 토글 (뉴스 목록에서 체크박스 클릭)
+if ($method === 'PATCH') {
+    ob_clean();
+    $input = getJsonInput();
+    if (isset($input['error'])) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'JSON 파싱 실패: ' . $input['error']]);
+        exit;
+    }
+    $id = (int) ($input['id'] ?? 0);
+    if (!$id) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => '뉴스 ID가 필요합니다.']);
+        exit;
+    }
+    if (!$hasAlsoSpecial) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'also_special 컬럼이 존재하지 않습니다. 마이그레이션을 실행해주세요.']);
+        exit;
+    }
+    $alsoSpecial = !empty($input['also_special']) ? 1 : 0;
+    try {
+        $stmt = $db->prepare("UPDATE news SET also_special = ? WHERE id = ?");
+        $stmt->execute([$alsoSpecial, $id]);
+        echo json_encode(['success' => true, 'message' => '특집 동시 노출 설정이 변경되었습니다.', 'data' => ['id' => $id, 'also_special' => $alsoSpecial]]);
+    } catch (PDOException $e) {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => '업데이트 실패: ' . $e->getMessage()]);
+    }
+    exit;
+}
 
 // POST: 뉴스 저장
 if ($method === 'POST') {
@@ -436,6 +469,7 @@ if ($method === 'GET') {
             if ($hasAuthor) $selCols .= ', author';
             if ($hasPublishedAt) $selCols .= ', published_at';
             if ($hasStatus) $selCols .= ', status';
+            if ($hasAlsoSpecial) $selCols .= ', also_special';
             $stmt = $db->prepare("SELECT $selCols FROM news WHERE id = ?");
             $stmt->execute([$id]);
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -488,10 +522,14 @@ if ($method === 'GET') {
         // 카테고리 필터 (상위: 외교/경제/특집) — popular일 때는 적용 안 함
         if ($category && !$popular) {
             if ($hasCategoryParent) {
-                $conditions[] = 'category_parent = ?';
-                $params[] = $category;
+                if ($category === 'special' && $hasAlsoSpecial) {
+                    $conditions[] = '(category_parent = ? OR also_special = 1)';
+                    $params[] = 'special';
+                } else {
+                    $conditions[] = 'category_parent = ?';
+                    $params[] = $category;
+                }
             } else {
-                // 특집: 새 저장은 category='special', 구 데이터는 'entertainment' → 둘 다 포함
                 if ($category === 'special') {
                     $conditions[] = '(category = ? OR category = ?)';
                     $params[] = 'special';
@@ -576,6 +614,9 @@ if ($method === 'GET') {
         }
         if ($hasViewCount) {
             $selectColumns .= ', view_count';
+        }
+        if ($hasAlsoSpecial) {
+            $selectColumns .= ', also_special';
         }
         
         $orderBy = 'ORDER BY COALESCE(published_at, created_at) DESC';
@@ -825,6 +866,11 @@ if ($method === 'PUT') {
             $setClauses[] = 'status = ?';
             $values[] = $status;
         }
+
+        if ($hasAlsoSpecial && array_key_exists('also_special', $input)) {
+            $setClauses[] = 'also_special = ?';
+            $values[] = !empty($input['also_special']) ? 1 : 0;
+        }
         
         $values[] = $id;  // WHERE 절용
         $setStr = implode(', ', $setClauses);
@@ -873,6 +919,7 @@ if ($method === 'PUT') {
         if ($hasAuthor) $selCols .= ', author';
         if ($hasPublishedAt) $selCols .= ', published_at';
         if ($hasStatus) $selCols .= ', status';
+        if ($hasAlsoSpecial) $selCols .= ', also_special';
 
         $freshStmt = $db->prepare("SELECT $selCols FROM news WHERE id = ?");
         $freshStmt->execute([$id]);

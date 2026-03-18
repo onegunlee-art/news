@@ -255,6 +255,7 @@ export const siteSettingsApi = {
         menu_subcategories?: string
         subscription_plan_details?: string
         subscription_page_intro?: string
+        special_badge_text?: string
       }
     }>('/settings/site'),
 }

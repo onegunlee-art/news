@@ -54,13 +54,10 @@ function chunkBy2<T>(arr: T[]): T[][] {
   return out
 }
 
-/** 특집 탭 위에 표시할 신규 콘텐츠 배지 문구 */
-const SPECIAL_FEATURE_BADGE = 'MSC'
-
 export default function HomePage() {
   const location = useLocation()
   const navigate = useNavigate()
-  const { tabs, tabLabels, tabToCategory, subCategoryToLabel } = useMenuConfig()
+  const { tabs, tabLabels, tabToCategory, subCategoryToLabel, specialBadgeText } = useMenuConfig()
   const popularLabel = tabs.find((t) => t.key === 'popular')?.label ?? '인기'
   const specialLabel = tabs.find((t) => t.key === 'special')?.label ?? '특집'
   const [activeTab, setActiveTab] = useState<string>(() => {
@@ -173,7 +170,7 @@ export default function HomePage() {
                 {tab === specialLabel ? (
                   <span className="relative inline-block">
                     <span className="absolute -top-2 right-0 translate-x-1 rounded-full bg-primary-500 px-1 py-0.5 text-[8px] font-medium leading-none text-white whitespace-nowrap">
-                      {SPECIAL_FEATURE_BADGE}
+                      {specialBadgeText}
                     </span>
                     {tab}
                   </span>

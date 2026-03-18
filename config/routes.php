@@ -76,10 +76,11 @@ $router->get('/settings/site', function (Request $request): Response {
         'menu_subcategories' => $defaultMenuSubcategories,
         'subscription_plan_details' => '{}',
         'subscription_page_intro' => '',
+        'special_badge_text' => 'MSC',
     ];
     try {
         $db = \App\Core\Database::getInstance()->getConnection();
-        $stmt = $db->query("SELECT `key`, `value` FROM settings WHERE `key` IN ('contact_email', 'copyright_text', 'the_gist_vision', 'menu_tabs', 'menu_subcategories', 'subscription_plan_details', 'subscription_page_intro')");
+        $stmt = $db->query("SELECT `key`, `value` FROM settings WHERE `key` IN ('contact_email', 'copyright_text', 'the_gist_vision', 'menu_tabs', 'menu_subcategories', 'subscription_plan_details', 'subscription_page_intro', 'special_badge_text')");
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         foreach ($rows as $r) {
             if (isset($data[$r['key']])) {
