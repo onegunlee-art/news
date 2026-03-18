@@ -40,6 +40,7 @@ interface NewsDetail {
   category_parent?: string | null
   prev_article?: { id: number; title: string } | null
   next_article?: { id: number; title: string } | null
+  audio_url?: string | null
   access_restricted?: boolean
   restriction_type?: string
 }
@@ -104,7 +105,7 @@ export default function NewsDetailPage() {
       800,
       400
     )
-    openAndPlay(data.title, editorialLine, narrationText, critiqueText, 1.0, imageUrl, data.id)
+    openAndPlay(data.title, editorialLine, narrationText, critiqueText, 1.0, imageUrl, data.id, data.audio_url)
   }
 
   const fetchNewsDetail = useCallback(async (newsId: number) => {
@@ -144,6 +145,19 @@ export default function NewsDetailPage() {
       window.scrollTo(0, 0)
     }
   }, [isLoading])
+
+  // 선생성된 audio_url이 있으면 브라우저에 미리 받아두기 (듣기 버튼 클릭 시 즉시 재생)
+  useEffect(() => {
+    if (news?.audio_url && !news.access_restricted) {
+      const link = document.createElement('link')
+      link.rel = 'preload'
+      link.as = 'fetch'
+      link.href = news.audio_url
+      link.crossOrigin = 'anonymous'
+      document.head.appendChild(link)
+      return () => { document.head.removeChild(link) }
+    }
+  }, [news?.audio_url, news?.access_restricted])
 
   const handleBookmark = async () => {
     if (!isAuthenticated || !id) return

@@ -303,6 +303,13 @@ try {
         else $categoryParent = $cat ?: 'diplomacy'; // diplomacy 또는 기타
     }
 
+    // 캐시된 TTS audio_url 조회 (선생성된 파일이 있으면 즉시재생용으로 포함)
+    $audioUrl = null;
+    try {
+        require_once __DIR__ . '/../lib/generateTtsForNews.php';
+        $audioUrl = getTtsCachedUrl($news);
+    } catch (\Throwable $e) { /* 조회 실패 시 null — 프론트에서 fallback */ }
+
     // 응답 데이터 구성 (display_date = created_at 기준, docs/DATE_POLICY.md)
     $responseData = [
         'id' => (int)$news['id'],
@@ -325,6 +332,7 @@ try {
         'updated_at' => $news['updated_at'] ?? null,
         'time_ago' => $timeAgo,
         'is_bookmarked' => $isBookmarked,
+        'audio_url' => $audioUrl,
         'prev_article' => $prevArticle ? ['id' => (int)$prevArticle['id'], 'title' => $prevArticle['title']] : null,
         'next_article' => $nextArticle ? ['id' => (int)$nextArticle['id'], 'title' => $nextArticle['title']] : null,
     ];

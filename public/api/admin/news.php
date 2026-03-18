@@ -336,6 +336,24 @@ if ($method === 'POST') {
             require_once __DIR__ . '/../lib/storePublishedNewsEmbedding.php';
             storePublishedNewsEmbedding($db, (int) $newsId);
         }
+
+        // published 기사 TTS 선생성 (실패해도 게시 성공 유지)
+        if ($status === 'published') {
+            require_once __DIR__ . '/../lib/generateTtsForNews.php';
+            generateTtsForNews([
+                'id' => $newsId,
+                'title' => $title,
+                'narration' => $narration,
+                'why_important' => $whyImportant,
+                'content' => $content,
+                'description' => $description,
+                'original_title' => $originalTitle,
+                'original_source' => $originalSourceField ?? $originalSource ?? null,
+                'source_url' => $sourceUrl,
+                'source' => $source,
+                'published_at' => $publishedAt,
+            ]);
+        }
         
         http_response_code(201);
         echo json_encode([
@@ -368,6 +386,13 @@ if ($method === 'POST') {
                 if ($status === 'published') {
                     require_once __DIR__ . '/../lib/storePublishedNewsEmbedding.php';
                     storePublishedNewsEmbedding($db, (int) $newsId);
+                    require_once __DIR__ . '/../lib/generateTtsForNews.php';
+                    generateTtsForNews([
+                        'id' => $newsId, 'title' => $title, 'narration' => $narration,
+                        'why_important' => $whyImportant, 'content' => $content, 'description' => $description,
+                        'original_title' => $originalTitle, 'original_source' => $originalSourceField ?? $originalSource ?? null,
+                        'source_url' => $sourceUrl, 'source' => $source, 'published_at' => $publishedAt,
+                    ]);
                 }
                 http_response_code(201);
                 echo json_encode([
@@ -807,7 +832,7 @@ if ($method === 'PUT') {
         $stmt = $db->prepare("UPDATE news SET $setStr WHERE id = ?");
         $stmt->execute($values);
 
-        // TTS 캐시 무효화 (기사 수정 시 Supabase media_cache 삭제)
+        // TTS 캐시 무효화 (기사 수정 시 Supabase media_cache 삭제 + 로컬 wav 삭제)
         require_once __DIR__ . '/../lib/invalidateTtsCache.php';
         invalidateTtsCacheForNews((int) $id);
 
@@ -815,6 +840,24 @@ if ($method === 'PUT') {
         if ($status === 'published') {
             require_once __DIR__ . '/../lib/storePublishedNewsEmbedding.php';
             storePublishedNewsEmbedding($db, (int) $id);
+        }
+
+        // published 기사 TTS 선생성 (무효화 후 최신 내용으로 재생성, 실패해도 수정 성공 유지)
+        if ($status === 'published') {
+            require_once __DIR__ . '/../lib/generateTtsForNews.php';
+            generateTtsForNews([
+                'id' => $id,
+                'title' => $title,
+                'narration' => $narration,
+                'why_important' => $whyImportant,
+                'content' => $content,
+                'description' => $description,
+                'original_title' => $originalTitle,
+                'original_source' => $originalSourceField ?? $originalSource ?? null,
+                'source_url' => $sourceUrl,
+                'source' => $source,
+                'published_at' => $publishedAt,
+            ]);
         }
 
         $selCols = $hasCategoryParent

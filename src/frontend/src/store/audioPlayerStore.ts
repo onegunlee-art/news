@@ -19,7 +19,7 @@ interface AudioPlayerState {
 
 interface AudioPlayerActions {
   /** title, meta(매체설명), narration(본문), critiquePart(The Gist's Critique...) - 구조화 TTS (pause 적용) */
-  openAndPlay: (title: string, meta: string, narration: string, critiquePart: string, rate?: number, imageUrl?: string, newsId?: number) => void
+  openAndPlay: (title: string, meta: string, narration: string, critiquePart: string, rate?: number, imageUrl?: string, newsId?: number, preloadedUrl?: string | null) => void
   togglePlay: () => void
   pause: () => void
   seek: (progress: number) => void
@@ -46,16 +46,33 @@ export const useAudioPlayerStore = create<AudioPlayerState & AudioPlayerActions>
 
   setProgress: (progress) => set({ progress }),
 
-  openAndPlay: (title, meta, narration, critiquePart, rate = 1.0, imageUrl = '', newsId?: number) => {
+  openAndPlay: (title, meta, narration, critiquePart, rate = 1.0, imageUrl = '', newsId?: number, preloadedUrl?: string | null) => {
     const t = (title || '').trim()
     const m = (meta || '').trim()
     const n = (narration || '').trim()
     const c = (critiquePart || '').trim()
-    // 페이지 표시 순서와 동일: 제목 → 매체설명 → The Gist → 내레이션
     const fullText = [t, m, c, n].filter(Boolean).join(' ')
     if (!fullText) return
-    // 브라우저 TTS 완전 정지
     if ('speechSynthesis' in window) window.speechSynthesis.cancel()
+
+    // 선생성된 audio_url이 있으면 API 호출 없이 즉시 재생
+    if (preloadedUrl) {
+      set({
+        isOpen: true,
+        isPlaying: false,
+        title: t || 'Listen',
+        fullText,
+        rate,
+        imageUrl,
+        progress: 0,
+        audioUrl: preloadedUrl,
+        isTtsLoading: false,
+        ttsError: null,
+      })
+      return
+    }
+
+    // fallback: 선생성 없으면 기존 방식으로 서버에서 생성
     set({
       isOpen: true,
       isPlaying: false,
@@ -68,7 +85,6 @@ export const useAudioPlayerStore = create<AudioPlayerState & AudioPlayerActions>
       isTtsLoading: true,
       ttsError: null,
     })
-    // 서버 Google TTS (구조화: 제목 pause 매체설명 pause The Gist pause 내레이션. 캐시 있으면 즉시 반환)
     ttsApi
       .generateStructured(t, m, n, c, newsId)
       .then((res) => {
