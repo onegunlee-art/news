@@ -379,50 +379,75 @@ export default function ProfilePage() {
 
       {showWithdrawConfirm && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="withdraw-title">
-          <div className="bg-page border border-page rounded-xl shadow-xl max-w-sm w-full p-6">
+          <div className={`bg-page border border-page rounded-xl shadow-xl w-full p-6 ${isSubscribed ? 'max-w-md' : 'max-w-sm'}`}>
             <h3 id="withdraw-title" className="text-lg font-semibold text-page mb-2">회원 탈퇴</h3>
-            <p className="text-sm text-page-secondary mb-6">탈퇴하면 계정과 데이터가 삭제되며 복구할 수 없습니다. 정말 탈퇴하시겠습니까?</p>
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => setShowWithdrawConfirm(false)}
-                disabled={withdrawing}
-                className="flex-1 py-2.5 rounded-lg border border-page text-page text-sm font-medium hover:bg-page-secondary transition-colors disabled:opacity-50"
-              >
-                취소
-              </button>
-              <button
-                type="button"
-                onClick={async () => {
-                  setWithdrawing(true)
-                  try {
-                    const token = localStorage.getItem('access_token')
-                    if (token) {
-                      await fetch('/api/auth/withdraw', {
-                        method: 'POST',
-                        headers: {
-                          'Content-Type': 'application/json',
-                          'Authorization': `Bearer ${token}`,
-                          'X-Authorization': `Bearer ${token}`,
-                        },
-                      })
-                    }
-                  } catch { /* ignore */ }
-                  localStorage.removeItem('consent_required')
-                  localStorage.removeItem('welcome_popup')
-                  localStorage.removeItem('access_token')
-                  localStorage.removeItem('refresh_token')
-                  localStorage.removeItem('user')
-                  localStorage.removeItem('auth-storage')
-                  localStorage.removeItem('is_subscribed')
-                  window.location.href = '/login'
-                }}
-                disabled={withdrawing}
-                className="flex-1 py-2.5 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 transition-colors disabled:opacity-50"
-              >
-                {withdrawing ? '처리 중...' : '탈퇴하기'}
-              </button>
-            </div>
+            {isSubscribed ? (
+              <>
+                <p className="text-sm text-page-secondary mb-3 leading-relaxed">
+                  <span className="font-medium text-page">{user?.nickname || '회원'}</span> 님은 현재 구독중이셔서 회원 탈퇴가 어렵습니다.
+                  <br />
+                  <br />
+                  먼저 구독을 취소하시고, 탈퇴를 진행해 주시기 바랍니다.
+                </p>
+                <p className="text-xs text-page-muted mb-6 leading-relaxed">
+                  (절차: 구독관리 → 구독 취소 및 환불 → 취소 및 환불 후 → 탈퇴 진행)
+                </p>
+                <div className="flex justify-center">
+                  <button
+                    type="button"
+                    onClick={() => setShowWithdrawConfirm(false)}
+                    className="px-8 py-2.5 rounded-lg bg-primary-500 text-white text-sm font-medium hover:bg-primary-600 transition-colors"
+                  >
+                    확인
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-sm text-page-secondary mb-6">탈퇴하면 계정과 데이터가 삭제되며 복구할 수 없습니다. 정말 탈퇴하시겠습니까?</p>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowWithdrawConfirm(false)}
+                    disabled={withdrawing}
+                    className="flex-1 py-2.5 rounded-lg border border-page text-page text-sm font-medium hover:bg-page-secondary transition-colors disabled:opacity-50"
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setWithdrawing(true)
+                      try {
+                        const token = localStorage.getItem('access_token')
+                        if (token) {
+                          await fetch('/api/auth/withdraw', {
+                            method: 'POST',
+                            headers: {
+                              'Content-Type': 'application/json',
+                              'Authorization': `Bearer ${token}`,
+                              'X-Authorization': `Bearer ${token}`,
+                            },
+                          })
+                        }
+                      } catch { /* ignore */ }
+                      localStorage.removeItem('consent_required')
+                      localStorage.removeItem('welcome_popup')
+                      localStorage.removeItem('access_token')
+                      localStorage.removeItem('refresh_token')
+                      localStorage.removeItem('user')
+                      localStorage.removeItem('auth-storage')
+                      localStorage.removeItem('is_subscribed')
+                      window.location.href = '/login'
+                    }}
+                    disabled={withdrawing}
+                    className="flex-1 py-2.5 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 transition-colors disabled:opacity-50"
+                  >
+                    {withdrawing ? '처리 중...' : '탈퇴하기'}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
