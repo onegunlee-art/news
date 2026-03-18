@@ -254,6 +254,7 @@ export const siteSettingsApi = {
         menu_tabs?: string
         menu_subcategories?: string
         subscription_plan_details?: string
+        subscription_page_intro?: string
       }
     }>('/settings/site'),
 }
@@ -328,8 +329,3 @@ export const subscriptionApi = {
     api.post<{ success: boolean; message?: string }>('/subscription/cancel'),
 }
 
-/** 구독 관리 페이지 공지사항 (공개 조회) */
-export const subscriptionSettingsPublicApi = {
-  getNotice: () =>
-    api.get<{ success: boolean; data: { notice: string } }>('/subscription/settings'),
-}

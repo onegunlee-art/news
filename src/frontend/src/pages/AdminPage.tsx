@@ -205,7 +205,7 @@ const SubscriptionSettingsSection: React.FC = () => {
     adminSettingsApi.getSettings().then((res) => {
       if (res.data?.success && res.data?.data) {
         const d = res.data.data as Record<string, string>;
-        setNotice(d.subscription_manage_notice ?? '');
+        setNotice(d.subscription_page_intro ?? '');
       }
     }).catch(() => {}).finally(() => setLoading(false));
   }, []);
@@ -215,7 +215,7 @@ const SubscriptionSettingsSection: React.FC = () => {
     setMessage(null);
     try {
       await adminSettingsApi.updateSettings({
-        subscription_manage_notice: notice,
+        subscription_page_intro: notice,
       });
       setMessage({ type: 'success', text: '저장되었습니다.' });
     } catch {
@@ -235,15 +235,15 @@ const SubscriptionSettingsSection: React.FC = () => {
 
   return (
     <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 space-y-6">
-      <h3 className="text-lg font-semibold text-white">구독 관리 설정</h3>
+      <h3 className="text-lg font-semibold text-white">구독 페이지 문구</h3>
 
       <div>
-        <label className="block text-slate-400 text-sm font-medium mb-2">공지사항 (사용자 구독 관리 페이지 상단)</label>
+        <label className="block text-slate-400 text-sm font-medium mb-2">/subscribe 상단, &apos;…의 모든 컨텐츠를 만나세요&apos; 아래 부가 문구</label>
         <textarea
           value={notice}
           onChange={(e) => setNotice(e.target.value)}
-          placeholder="예: 3월 결제일 안내: 카드사 점검으로..."
-          rows={3}
+          placeholder="예: 외교·정치·안보·분쟁에서&#10;비즈니스·에너지·첨단기술·사회문화에 이르기까지&#10;글로벌 이슈를 관통하는&#10;품격 있는 가치와 생각으로 하루를 시작하세요"
+          rows={4}
           className="w-full px-4 py-2 rounded-lg bg-slate-900/50 border border-slate-600 text-white placeholder-slate-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50"
         />
       </div>

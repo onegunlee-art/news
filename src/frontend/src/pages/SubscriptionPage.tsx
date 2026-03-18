@@ -69,6 +69,7 @@ export default function SubscriptionPage() {
 
   const [planDetails, setPlanDetails] = useState<Record<string, PlanDetailFields>>({})
   const [expandedDetail, setExpandedDetail] = useState<string | null>(null)
+  const [pageIntro, setPageIntro] = useState('')
 
   useEffect(() => {
     siteSettingsApi.getSite().then((res) => {
@@ -76,6 +77,8 @@ export default function SubscriptionPage() {
         const raw = res.data?.data?.subscription_plan_details
         if (raw && typeof raw === 'string') setPlanDetails(JSON.parse(raw))
       } catch { /* ignore */ }
+      const intro = res.data?.data?.subscription_page_intro
+      if (intro && typeof intro === 'string' && intro.trim()) setPageIntro(intro)
     }).catch(() => {})
   }, [])
 
@@ -142,14 +145,8 @@ export default function SubscriptionPage() {
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white leading-snug">
             <GistLogo as="span" size="inline" link={false} />의 모든 컨텐츠를 만나세요
           </h1>
-          <p className="mt-4 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-            외교·정치·안보·분쟁에서
-            <br />
-            비즈니스·에너지·첨단기술·사회문화에 이르기까지
-            <br />
-            글로벌 이슈를 관통하는
-            <br />
-            품격 있는 가치와 생각으로 하루를 시작하세요
+          <p className="mt-4 text-sm text-gray-600 dark:text-gray-400 leading-relaxed whitespace-pre-line">
+            {pageIntro || '외교·정치·안보·분쟁에서\n비즈니스·에너지·첨단기술·사회문화에 이르기까지\n글로벌 이슈를 관통하는\n품격 있는 가치와 생각으로 하루를 시작하세요'}
           </p>
         </motion.div>
 

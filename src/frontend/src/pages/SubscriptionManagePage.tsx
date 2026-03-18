@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { subscriptionApi, subscriptionSettingsPublicApi, type SubscriptionDetail } from '../services/api'
+import { subscriptionApi, type SubscriptionDetail } from '../services/api'
 import { useAuthStore } from '../store/authStore'
 import MaterialIcon from '../components/Common/MaterialIcon'
 import LoadingSpinner from '../components/Common/LoadingSpinner'
@@ -20,7 +20,6 @@ export default function SubscriptionManagePage() {
   const navigate = useNavigate()
   const { isSubscribed } = useAuthStore()
   const [detail, setDetail] = useState<SubscriptionDetail | null>(null)
-  const [notice, setNotice] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [toggling, setToggling] = useState(false)
@@ -32,18 +31,12 @@ export default function SubscriptionManagePage() {
       navigate('/profile', { replace: true })
       return
     }
-    Promise.all([
-      subscriptionApi.getDetail().then((r) => r.data),
-      subscriptionSettingsPublicApi.getNotice().then((r) => r.data).catch(() => ({ success: false, data: { notice: '' } })),
-    ])
-      .then(([detailRes, noticeRes]) => {
-        if (detailRes?.success && detailRes.data) {
-          setDetail(detailRes.data)
+    subscriptionApi.getDetail()
+      .then((r) => {
+        if (r.data?.success && r.data.data) {
+          setDetail(r.data.data)
         } else {
           setError('구독 정보를 불러올 수 없습니다.')
-        }
-        if (noticeRes?.success && noticeRes.data?.notice) {
-          setNotice(noticeRes.data.notice)
         }
       })
       .catch(() => setError('구독 정보를 불러올 수 없습니다.'))
@@ -139,15 +132,6 @@ export default function SubscriptionManagePage() {
           </div>
         ) : (
           <div className="space-y-6">
-            {notice && (
-              <section className="bg-page rounded-xl overflow-hidden shadow-sm border border-page">
-                <h2 className="px-5 py-4 text-xs font-bold text-primary-500 uppercase tracking-wider">공지사항</h2>
-                <div className="px-5 pb-5">
-                  <p className="text-page-secondary text-sm whitespace-pre-wrap">{notice}</p>
-                </div>
-              </section>
-            )}
-
             {detail && (
               <>
                 <section className="bg-page rounded-xl overflow-hidden shadow-sm border border-page">
