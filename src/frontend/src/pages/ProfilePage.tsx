@@ -107,14 +107,14 @@ export default function ProfilePage() {
                           <div className="mt-1.5">
                             {subscriptionDetail?.start_date && user?.subscription_expires_at ? (
                               <p className="text-[11px] text-page-secondary">
-                                the gist. {subscriptionDetail.plan_name?.endsWith('권') ? subscriptionDetail.plan_name : `${subscriptionDetail.plan_name || '구독'}권`} ({new Date(subscriptionDetail.start_date).toLocaleDateString('ko-KR')} ~ {new Date(user.subscription_expires_at).toLocaleDateString('ko-KR')})
+                                {subscriptionDetail.plan_name?.endsWith('권') ? subscriptionDetail.plan_name : `${subscriptionDetail.plan_name || '구독'}권`} ({new Date(subscriptionDetail.start_date).toLocaleDateString('ko-KR')} ~ {new Date(user.subscription_expires_at).toLocaleDateString('ko-KR')})
                               </p>
                             ) : user?.subscription_expires_at ? (
                               <p className="text-[11px] text-page-secondary">
-                                the gist. 구독권 (만료: {new Date(user.subscription_expires_at).toLocaleDateString('ko-KR')})
+                                구독권 (만료: {new Date(user.subscription_expires_at).toLocaleDateString('ko-KR')})
                               </p>
                             ) : (
-                              <p className="text-[11px] text-page-secondary">the gist. 구독권</p>
+                              <p className="text-[11px] text-page-secondary">구독권</p>
                             )}
                           </div>
                         )}
