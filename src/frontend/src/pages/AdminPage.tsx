@@ -182,6 +182,8 @@ type UserRow = {
   google_id: string | null;
   is_subscribed: number;
   subscription_expires_at: string | null;
+  subscription_plan: string | null;
+  subscription_start_date: string | null;
 };
 type UserStats = { total: number; subscribed: number; unsubscribed: number; new_this_month: number };
 type UserDetail = UserRow & {
@@ -4869,7 +4871,14 @@ const AdminPage: React.FC = () => {
             <div className="flex items-center gap-2">
               <span className="text-slate-500">구독:</span>
               <span className={selectedUserDetail.is_subscribed === 1 ? 'text-emerald-400' : 'text-slate-400'}>{selectedUserDetail.is_subscribed === 1 ? '구독 중' : '미구독'}</span>
+              {selectedUserDetail.is_subscribed === 1 && selectedUserDetail.subscription_plan && <span className="text-slate-300 text-sm">({({
+                '1m': '1개월',
+                '3m': '3개월',
+                '6m': '6개월',
+                '12m': '12개월',
+              } as Record<string, string>)[selectedUserDetail.subscription_plan] || selectedUserDetail.subscription_plan})</span>}
               {selectedUserDetail.is_subscribed === 1 && selectedUserDetail.subscription_expires_at && <span className="text-slate-400">(만료: {new Date(selectedUserDetail.subscription_expires_at).toLocaleDateString('ko-KR')})</span>}
+              {selectedUserDetail.is_subscribed === 1 && selectedUserDetail.subscription_start_date && <span className="text-slate-500 text-xs">[시작: {new Date(selectedUserDetail.subscription_start_date).toLocaleDateString('ko-KR')}]</span>}
               <button type="button" onClick={() => { setSubEditMode(true); setSubEditSubscribed(selectedUserDetail.is_subscribed === 1); setSubEditExpires(selectedUserDetail.subscription_expires_at ? selectedUserDetail.subscription_expires_at.slice(0, 10) : ''); setSubEditMsg(null); }} className="ml-auto px-2 py-0.5 text-xs bg-slate-700 hover:bg-slate-600 text-slate-300 rounded transition-colors">수정</button>
             </div>
             {subEditMode && (

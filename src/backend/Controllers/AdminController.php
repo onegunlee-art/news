@@ -217,6 +217,7 @@ final class AdminController
             $stmt = $this->db->prepare("
                 SELECT id, email, nickname, profile_image, role, status,
                        kakao_id, is_subscribed, subscription_expires_at,
+                       subscription_plan, subscription_start_date,
                        steppay_customer_id, steppay_subscription_id,
                        last_login_at, created_at, updated_at
                 FROM users WHERE id = ?

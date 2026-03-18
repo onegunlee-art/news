@@ -74,21 +74,27 @@ if (!empty($subscriptions)) {
     $expiresAt = $sub['endDate'] ?? $sub['currentPeriodEnd'] ?? null;
 }
 
-if (!$expiresAt) {
-    $cfg = getSteppayConfig();
-    $plans = $cfg['plans'] ?? [];
-    $months = 1;
-    foreach ($plans as $plan) {
-        if ($plan['price_code'] === ($order['items'][0]['price']['code'] ?? '')) {
-            $months = $plan['months'];
-            break;
-        }
+$cfg = getSteppayConfig();
+$plans = $cfg['plans'] ?? [];
+$matchedPlanId = null;
+$months = 1;
+$itemPriceCode = $order['items'][0]['price']['code'] ?? '';
+foreach ($plans as $pid => $pl) {
+    if ($pl['price_code'] === $itemPriceCode) {
+        $matchedPlanId = $pid;
+        $months = $pl['months'];
+        break;
     }
+}
+
+if (!$expiresAt) {
     $expiresAt = date('Y-m-d H:i:s', strtotime("+{$months} months"));
 }
 
-$pdo->prepare("UPDATE users SET is_subscribed = 1, subscription_expires_at = ?, steppay_subscription_id = ?, steppay_order_code = ? WHERE id = ?")
-    ->execute([$expiresAt, $subscriptionId, $orderCode, $userId]);
+$startDate = date('Y-m-d H:i:s');
+
+$pdo->prepare("UPDATE users SET is_subscribed = 1, subscription_expires_at = ?, steppay_subscription_id = ?, steppay_order_code = ?, subscription_plan = ?, subscription_start_date = ? WHERE id = ?")
+    ->execute([$expiresAt, $subscriptionId, $orderCode, $matchedPlanId, $startDate, $userId]);
 
 echo json_encode([
     'success' => true,

@@ -27,36 +27,51 @@ if (!$userId) {
     exit;
 }
 
-$stmt = $pdo->prepare("SELECT is_subscribed, steppay_subscription_id FROM users WHERE id = ?");
+$stmt = $pdo->prepare("SELECT is_subscribed, steppay_subscription_id, subscription_plan, subscription_start_date, subscription_expires_at FROM users WHERE id = ?");
 $stmt->execute([$userId]);
 $user = $stmt->fetch();
 
 $subscriptionId = $user['steppay_subscription_id'] ?? null;
-if (empty($subscriptionId) || !$user['is_subscribed']) {
+if (!$user['is_subscribed']) {
     http_response_code(404);
     echo json_encode(['success' => false, 'message' => '구독 정보가 없습니다.'], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
-$subscriptionId = (int) $subscriptionId;
-$result = steppayGetSubscription($subscriptionId);
-if (!$result['success']) {
-    http_response_code(502);
-    echo json_encode(['success' => false, 'message' => '구독 조회에 실패했습니다.'], JSON_UNESCAPED_UNICODE);
-    exit;
+$dbPlan = $user['subscription_plan'] ?? null;
+$dbStartDate = $user['subscription_start_date'] ?? null;
+$dbExpiresAt = $user['subscription_expires_at'] ?? null;
+
+$planLabels = ['1m' => '1개월', '3m' => '3개월', '6m' => '6개월', '12m' => '12개월'];
+
+$planName = null;
+$status = 'ACTIVE';
+$startDate = $dbStartDate;
+$nextPaymentDate = $dbExpiresAt;
+$amountFormatted = '';
+$autoRenew = true;
+
+if (!empty($subscriptionId)) {
+    $subscriptionId = (int) $subscriptionId;
+    $result = steppayGetSubscription($subscriptionId);
+    if ($result['success']) {
+        $data = $result['data'];
+        $status = $data['status'] ?? 'UNKNOWN';
+        $currentPeriod = $data['currentPeriod'] ?? $data['current_period'] ?? [];
+        $items = $data['items'] ?? [];
+        $firstItem = $items[0] ?? [];
+        if (!$planName) $planName = $firstItem['productName'] ?? $firstItem['product_name'] ?? null;
+        $price = $firstItem['price'] ?? 0;
+        $amountFormatted = '₩' . number_format((float) $price);
+        if (!$startDate) $startDate = $currentPeriod['startDateTime'] ?? $currentPeriod['start_date_time'] ?? $data['createdAt'] ?? $data['created_at'] ?? null;
+        if (!$nextPaymentDate) $nextPaymentDate = $data['nextPaymentDate'] ?? $data['next_payment_date'] ?? $currentPeriod['endDateTime'] ?? $currentPeriod['end_date_time'] ?? $data['endDate'] ?? $data['end_date'] ?? null;
+        $autoRenew = !in_array($status, ['CANCELED', 'EXPIRED', 'PENDING_CANCEL'], true);
+    }
 }
 
-$data = $result['data'];
-$status = $data['status'] ?? 'UNKNOWN';
-$currentPeriod = $data['currentPeriod'] ?? $data['current_period'] ?? [];
-$items = $data['items'] ?? [];
-$firstItem = $items[0] ?? [];
-$planName = $firstItem['productName'] ?? $firstItem['product_name'] ?? 'The Gist 구독';
-$price = $firstItem['price'] ?? 0;
-$amountFormatted = '₩' . number_format((float) $price);
-$startDate = $currentPeriod['startDateTime'] ?? $currentPeriod['start_date_time'] ?? $data['createdAt'] ?? $data['created_at'] ?? null;
-$nextPaymentDate = $data['nextPaymentDate'] ?? $data['next_payment_date'] ?? $currentPeriod['endDateTime'] ?? $currentPeriod['end_date_time'] ?? $data['endDate'] ?? $data['end_date'] ?? null;
-$autoRenew = !in_array($status, ['CANCELED', 'EXPIRED', 'PENDING_CANCEL'], true);
+if (!$planName) {
+    $planName = $dbPlan ? ($planLabels[$dbPlan] ?? $dbPlan) : 'the gist. 구독';
+}
 
 $statusLabels = [
     'ACTIVE' => '활성화',
