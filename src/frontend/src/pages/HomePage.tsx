@@ -392,6 +392,8 @@ function ArticleCard({ article, activeTab, subCategoryToLabel }: { article: News
           <img
             src={imageUrl}
             alt={article.title}
+            width={112}
+            height={112}
             className="w-full h-full object-cover"
             loading="lazy"
             onError={(e) => {

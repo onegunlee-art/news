@@ -62,7 +62,6 @@ jobs:
       - name: TypeScript check
         working-directory: src/frontend
         run: npx tsc --noEmit
-        continue-on-error: true
 
   # ========================================
   # ESLint
@@ -89,7 +88,6 @@ jobs:
       - name: Run ESLint
         working-directory: src/frontend
         run: npm run lint
-        continue-on-error: true
 
   # ========================================
   # Build Test

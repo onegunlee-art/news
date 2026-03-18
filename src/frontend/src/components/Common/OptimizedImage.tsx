@@ -55,6 +55,8 @@ export default function OptimizedImage({
       <img
         src={imageSrc}
         alt={alt}
+        width={width}
+        height={height}
         className={className}
         loading={loading}
         onError={handleError}
@@ -69,6 +71,8 @@ export default function OptimizedImage({
       <img
         src={imageSrc}
         alt={alt}
+        width={width}
+        height={height}
         className={className}
         loading={loading}
         onError={handleError}

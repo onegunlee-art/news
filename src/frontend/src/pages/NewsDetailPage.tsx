@@ -318,6 +318,8 @@ export default function NewsDetailPage() {
           <img
             src={getImageUrl()}
             alt={news.title}
+            width={800}
+            height={800}
             className="w-full h-full object-cover"
             loading="lazy"
             onError={(e) => {

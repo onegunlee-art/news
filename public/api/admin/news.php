@@ -41,17 +41,11 @@ setCorsHeaders();
 // OPTIONS 요청 처리
 handleOptionsRequest();
 
-// 에러 로깅 함수 (Router include 시 중복 정의 방지)
+require_once __DIR__ . '/../lib/log.php';
+
 if (!function_exists('logError')) {
 function logError($message, $data = null) {
-    $logFile = __DIR__ . '/news_error.log';
-    $timestamp = date('Y-m-d H:i:s');
-    $logMessage = "[$timestamp] $message";
-    if ($data) {
-        $logMessage .= " | Data: " . json_encode($data, JSON_UNESCAPED_UNICODE);
-    }
-    $logMessage .= "\n";
-    file_put_contents($logFile, $logMessage, FILE_APPEND | LOCK_EX);
+    app_error('news', $message, $data);
 }
 }
 

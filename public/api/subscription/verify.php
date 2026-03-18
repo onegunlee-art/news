@@ -20,6 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 require_once __DIR__ . '/../lib/auth.php';
 require_once __DIR__ . '/../lib/steppay.php';
+require_once __DIR__ . '/../lib/log.php';
 
 $pdo = getDb();
 $userId = getAuthUserId($pdo);
@@ -47,10 +48,12 @@ for ($attempt = 0; $attempt <= $maxRetries; $attempt++) {
     $orderResult = steppayGetOrder($orderCode);
     if (!$orderResult['success']) {
         $lastApiError = $orderResult['error'] ?? 'API 호출 실패 (HTTP ' . ($orderResult['http_code'] ?? '?') . ')';
+        payment_log("verify API 실패 attempt={$attempt} orderCode={$orderCode}", $orderResult);
         if ($attempt < $maxRetries) {
             sleep($retryDelay);
             continue;
         }
+        payment_log("verify 최종 실패 orderCode={$orderCode} userId={$userId}");
         http_response_code(502);
         echo json_encode(['success' => false, 'message' => '주문 조회에 실패했습니다. 잠시 후 자동 반영됩니다.'], JSON_UNESCAPED_UNICODE);
         exit;
@@ -102,6 +105,8 @@ $startDate = date('Y-m-d H:i:s');
 
 $pdo->prepare("UPDATE users SET is_subscribed = 1, subscription_expires_at = ?, steppay_subscription_id = ?, steppay_order_code = ?, subscription_plan = ?, subscription_start_date = ? WHERE id = ?")
     ->execute([$expiresAt, $subscriptionId, $orderCode, $matchedPlanId, $startDate, $userId]);
+
+payment_log("verify 성공 userId={$userId} plan={$matchedPlanId} expires={$expiresAt}");
 
 echo json_encode([
     'success' => true,
