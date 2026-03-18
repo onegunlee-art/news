@@ -9,7 +9,8 @@
  */
 function generateTtsForNews(array $row): ?string
 {
-    $projectRoot = dirname(__DIR__, 3);
+    $candidate = dirname(__DIR__, 2);
+    $projectRoot = is_dir($candidate . '/config') ? $candidate : dirname(__DIR__, 3);
 
     try {
         $parts = _buildListenParts($row);
@@ -74,7 +75,8 @@ function generateTtsForNews(array $row): ?string
  */
 function getTtsCachedUrl(array $row): ?string
 {
-    $projectRoot = dirname(__DIR__, 3);
+    $candidate = dirname(__DIR__, 2);
+    $projectRoot = is_dir($candidate . '/config') ? $candidate : dirname(__DIR__, 3);
 
     try {
         $parts = _buildListenParts($row);
