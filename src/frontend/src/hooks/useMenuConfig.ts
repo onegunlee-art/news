@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { siteSettingsApi } from '../services/api'
 
@@ -105,19 +106,24 @@ export function useMenuConfig(): MenuConfig {
     staleTime: 1000 * 60 * 5,
   })
 
-  const tabs = parseMenuTabs(data?.menu_tabs)
-  const subCategoryToLabel = parseSubcategories(data?.menu_subcategories)
-  const tabLabels = tabs.map((t) => t.label)
-  const tabToCategory = tabLabelToCategory(tabs)
-  const parentKeyToLabel = tabsToParentKeyToLabel(tabs)
-  const fromTabToApi = tabsToFromTabToApi(tabs)
+  const menuTabs = data?.menu_tabs
+  const menuSubcategories = data?.menu_subcategories
 
-  return {
-    tabs,
-    tabLabels,
-    tabToCategory,
-    subCategoryToLabel,
-    parentKeyToLabel,
-    fromTabToApi,
-  }
+  return useMemo(() => {
+    const tabs = parseMenuTabs(menuTabs)
+    const subCategoryToLabel = parseSubcategories(menuSubcategories)
+    const tabLabels = tabs.map((t) => t.label)
+    const tabToCategory = tabLabelToCategory(tabs)
+    const parentKeyToLabel = tabsToParentKeyToLabel(tabs)
+    const fromTabToApi = tabsToFromTabToApi(tabs)
+
+    return {
+      tabs,
+      tabLabels,
+      tabToCategory,
+      subCategoryToLabel,
+      parentKeyToLabel,
+      fromTabToApi,
+    }
+  }, [menuTabs, menuSubcategories])
 }
