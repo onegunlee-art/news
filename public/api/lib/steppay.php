@@ -33,7 +33,8 @@ function steppayRequest(string $method, string $path, ?array $body = null): arra
     $ch = curl_init($url);
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT => 30,
+        CURLOPT_CONNECTTIMEOUT => 5,
+        CURLOPT_TIMEOUT => 15,
         CURLOPT_HTTPHEADER => [
             'Secret-Token: ' . ($cfg['secret_token'] ?? ''),
             'Content-Type: application/json',

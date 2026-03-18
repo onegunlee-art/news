@@ -37,18 +37,25 @@ if (empty($orderCode)) {
     exit;
 }
 
-$maxRetries = 3;
-$retryDelay = 2;
+$maxRetries = 5;
+$retryDelay = 3;
 $order = null;
 $paymentDate = null;
+$lastApiError = null;
 
 for ($attempt = 0; $attempt <= $maxRetries; $attempt++) {
     $orderResult = steppayGetOrder($orderCode);
     if (!$orderResult['success']) {
+        $lastApiError = $orderResult['error'] ?? 'API 호출 실패 (HTTP ' . ($orderResult['http_code'] ?? '?') . ')';
+        if ($attempt < $maxRetries) {
+            sleep($retryDelay);
+            continue;
+        }
         http_response_code(502);
-        echo json_encode(['success' => false, 'message' => '주문 조회에 실패했습니다.'], JSON_UNESCAPED_UNICODE);
+        echo json_encode(['success' => false, 'message' => '주문 조회에 실패했습니다. 잠시 후 자동 반영됩니다.'], JSON_UNESCAPED_UNICODE);
         exit;
     }
+    $lastApiError = null;
     $order = $orderResult['data'];
     $paymentDate = $order['paymentDate'] ?? null;
     if (!empty($paymentDate)) break;

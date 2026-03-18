@@ -32,13 +32,21 @@ file_put_contents($logFile, date('[Y-m-d H:i:s] ') . $rawBody . "\n", FILE_APPEN
 $eventType = $payload['eventType'] ?? '';
 $data = $payload['data'] ?? [];
 
-// 역검증: payment.completed 이벤트는 StepPay API로 주문 조회하여 실제 결제 여부 확인
+// 역검증: payment.completed 이벤트는 StepPay API로 주문 조회하여 실제 결제 여부 확인 (재시도 포함)
 if ($eventType === 'payment.completed') {
     $orderCode = $data['orderCode'] ?? null;
     if ($orderCode) {
-        $verifyResult = steppayGetOrder($orderCode);
-        if (!$verifyResult['success'] || empty($verifyResult['data']['paymentDate'])) {
-            file_put_contents($logFile, date('[Y-m-d H:i:s] ') . "REJECT: 역검증 실패 orderCode={$orderCode}\n", FILE_APPEND);
+        $verified = false;
+        for ($vAttempt = 0; $vAttempt < 3; $vAttempt++) {
+            $verifyResult = steppayGetOrder($orderCode);
+            if ($verifyResult['success'] && !empty($verifyResult['data']['paymentDate'])) {
+                $verified = true;
+                break;
+            }
+            if ($vAttempt < 2) sleep(2);
+        }
+        if (!$verified) {
+            file_put_contents($logFile, date('[Y-m-d H:i:s] ') . "REJECT: 역검증 실패 (3회 시도) orderCode={$orderCode}\n", FILE_APPEND);
             echo json_encode(['success' => false, 'message' => 'Verification failed']);
             exit;
         }

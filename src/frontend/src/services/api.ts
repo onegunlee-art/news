@@ -2,25 +2,60 @@ import axios from 'axios'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api'
 
-/** Admin API용 fetch 래퍼 - Authorization 헤더 자동 첨부 (향후 인증 적용 시 대비) */
-export function adminFetch(url: string, init?: RequestInit): Promise<Response> {
-  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('access_token') : null
+/** Admin API용 fetch 래퍼 - Authorization 헤더 자동 첨부 + 401 시 토큰 갱신 재시도 */
+export async function adminFetch(url: string, init?: RequestInit): Promise<Response> {
   const method = (init?.method || 'GET').toUpperCase()
-  const headers = new Headers(init?.headers)
-  headers.set('Content-Type', 'application/json')
-  if (method === 'GET') {
-    headers.set('Cache-Control', 'no-cache')
-    headers.set('Pragma', 'no-cache')
+
+  const buildHeaders = (token: string | null) => {
+    const headers = new Headers(init?.headers)
+    headers.set('Content-Type', 'application/json')
+    if (method === 'GET') {
+      headers.set('Cache-Control', 'no-cache')
+      headers.set('Pragma', 'no-cache')
+    }
+    if (token) {
+      headers.set('Authorization', `Bearer ${token}`)
+      headers.set('X-Authorization', `Bearer ${token}`)
+    }
+    return headers
   }
-  if (token) {
-    headers.set('Authorization', `Bearer ${token}`)
-    headers.set('X-Authorization', `Bearer ${token}`)
-  }
-  return fetch(url, {
+
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('access_token') : null
+  const response = await fetch(url, {
     ...init,
-    headers,
-    ...(method === 'GET' ? { cache: 'no-store' } : {}),
+    headers: buildHeaders(token),
+    ...(method === 'GET' ? { cache: 'no-store' as RequestCache } : {}),
   })
+
+  if (response.status === 401) {
+    const refreshToken = typeof localStorage !== 'undefined' ? localStorage.getItem('refresh_token') : null
+    if (refreshToken) {
+      try {
+        const refreshRes = await fetch(`${API_BASE_URL}/auth/refresh`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh_token: refreshToken }),
+        })
+        const refreshData = await refreshRes.json()
+        if (refreshData.success && refreshData.data) {
+          const { access_token, refresh_token: newRefresh } = refreshData.data
+          localStorage.setItem('access_token', access_token)
+          localStorage.setItem('refresh_token', newRefresh)
+          try {
+            const { useAuthStore } = await import('../store/authStore')
+            useAuthStore.getState().setTokens(access_token, newRefresh)
+          } catch { /* store not ready */ }
+          return fetch(url, {
+            ...init,
+            headers: buildHeaders(access_token),
+            ...(method === 'GET' ? { cache: 'no-store' as RequestCache } : {}),
+          })
+        }
+      } catch { /* refresh failed */ }
+    }
+  }
+
+  return response
 }
 
 export const api = axios.create({
