@@ -27,6 +27,13 @@ export default function ProfilePage() {
   const [withdrawing, setWithdrawing] = useState(false)
   const [showNoSubscriptionPopup, setShowNoSubscriptionPopup] = useState(false)
   const [subscriptionDetail, setSubscriptionDetail] = useState<SubscriptionDetail | null>(null)
+  const [showSubManage, setShowSubManage] = useState(false)
+  const [showCancelPopup, setShowCancelPopup] = useState(false)
+  const [autoRenewToggling, setAutoRenewToggling] = useState(false)
+  const [cancelContact, setCancelContact] = useState('')
+  const [cancelMessage, setCancelMessage] = useState('')
+  const [cancelSending, setCancelSending] = useState(false)
+  const [showCancelSuccess, setShowCancelSuccess] = useState(false)
   const activeTabRef = useRef(activeTab)
   activeTabRef.current = activeTab
 
@@ -209,17 +216,92 @@ export default function ProfilePage() {
                   if (!isSubscribed) {
                     setShowNoSubscriptionPopup(true)
                   } else {
-                    navigate('/subscription/manage')
+                    setShowSubManage((v) => !v)
                   }
                 }}
-                className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-page-secondary/50 transition-colors"
+                className={`w-full flex items-center justify-between px-5 py-4 text-left transition-colors ${showSubManage ? 'bg-page-secondary' : 'hover:bg-page-secondary/50'}`}
               >
                 <span className="flex items-center gap-2 text-page text-sm font-medium">
                   <MaterialIcon name="credit_score" className="w-5 h-5 text-page-secondary" size={20} />
                   구독 관리
                 </span>
-                <MaterialIcon name="chevron_right" className="w-5 h-5 text-page-muted" size={20} />
+                <MaterialIcon name="chevron_right" className={`w-5 h-5 text-page-muted transition-transform ${showSubManage ? 'rotate-90' : ''}`} size={20} />
               </button>
+              <AnimatePresence>
+                {showSubManage && isSubscribed && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="px-5 pb-5 pt-3 border-t border-page space-y-5">
+                      {/* 사용중인 구독 플랜 */}
+                      <div className="bg-page-secondary rounded-lg p-4 border border-page">
+                        <p className="text-xs font-semibold text-primary-500 uppercase tracking-wider mb-2">사용중인 플랜</p>
+                        <p className="text-page font-medium text-sm">
+                          {subscriptionDetail?.plan_name || 'the gist. 구독권'} 사용중
+                        </p>
+                        {subscriptionDetail?.start_date && user?.subscription_expires_at && (
+                          <p className="text-page-secondary text-xs mt-1">
+                            {new Date(subscriptionDetail.start_date).toLocaleDateString('ko-KR')} ~ {new Date(user.subscription_expires_at).toLocaleDateString('ko-KR')}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* 자동연장 토글 */}
+                      <div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-page text-sm font-medium">자동 연장</span>
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={subscriptionDetail?.auto_renew ?? true}
+                            disabled={autoRenewToggling}
+                            onClick={async () => {
+                              if (autoRenewToggling) return
+                              const newVal = !(subscriptionDetail?.auto_renew ?? true)
+                              setAutoRenewToggling(true)
+                              try {
+                                const res = await subscriptionApi.setAutoRenew(newVal)
+                                if (res.data?.success) {
+                                  setSubscriptionDetail((d) => d ? { ...d, auto_renew: newVal, status: newVal ? 'ACTIVE' : 'PENDING_CANCEL', status_label: newVal ? '활성화' : '해지 예정' } : null)
+                                }
+                              } catch { /* ignore */ } finally {
+                                setAutoRenewToggling(false)
+                              }
+                            }}
+                            className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-0 ring-0 border-0 disabled:opacity-50 ${
+                              (subscriptionDetail?.auto_renew ?? true) ? 'bg-primary-500' : 'bg-page-secondary'
+                            }`}
+                          >
+                            <span
+                              className={`pointer-events-none inline-block h-5 w-5 shrink-0 transform rounded-full bg-white shadow ring-0 transition duration-200 ${
+                                (subscriptionDetail?.auto_renew ?? true) ? 'translate-x-5' : 'translate-x-0.5'
+                              }`}
+                            />
+                          </button>
+                        </div>
+                        <p className="text-page-secondary text-xs mt-2">
+                          {(subscriptionDetail?.auto_renew ?? true)
+                            ? `${user?.subscription_expires_at ? new Date(user.subscription_expires_at).toLocaleDateString('ko-KR') : '만료일'}이 되면 현재 고객님의 구독 플랜으로 자동 연장됩니다.`
+                            : `${user?.subscription_expires_at ? new Date(user.subscription_expires_at).toLocaleDateString('ko-KR') : '만료일'}이 되면 현재 고객님의 구독이 종료됩니다.`
+                          }
+                        </p>
+                      </div>
+
+                      {/* 구독 취소 및 환불 */}
+                      <button
+                        type="button"
+                        onClick={() => setShowCancelPopup(true)}
+                        className="w-full py-2.5 rounded-lg border border-red-300 dark:border-red-500/30 text-red-500 text-sm font-medium hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                      >
+                        구독 취소 및 환불
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </li>
           </ul>
         </section>
@@ -343,6 +425,107 @@ export default function ProfilePage() {
               <button
                 type="button"
                 onClick={() => setShowNoSubscriptionPopup(false)}
+                className="px-6 py-2.5 bg-primary-500 text-white rounded-lg text-sm font-medium hover:bg-primary-600 transition-colors"
+              >
+                확인
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showCancelPopup && (
+        <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="cancel-title">
+          <div className="bg-page border border-page rounded-xl shadow-xl max-w-md w-full p-6 my-8">
+            <h3 id="cancel-title" className="text-lg font-semibold text-page mb-1">정말 취소 하시겠습니까?</h3>
+            <p className="text-sm text-page-secondary mb-5">근무일 5일 이내 환불 관련 연락 받으실 연락처를 남겨 주세요.</p>
+
+            <div className="space-y-3 mb-5">
+              <div>
+                <label htmlFor="cancel-contact" className="block text-sm text-page-secondary mb-1">연락처 (이메일 또는 휴대폰)</label>
+                <input
+                  id="cancel-contact"
+                  type="text"
+                  value={cancelContact}
+                  onChange={(e) => setCancelContact(e.target.value)}
+                  placeholder="답변 받을 이메일 또는 휴대폰 번호"
+                  className="w-full px-4 py-2 border border-page rounded-lg text-page placeholder-[var(--text-muted)] focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-page text-sm"
+                />
+              </div>
+              <div>
+                <label htmlFor="cancel-message" className="block text-sm text-page-secondary mb-1">취소 사유</label>
+                <textarea
+                  id="cancel-message"
+                  value={cancelMessage}
+                  onChange={(e) => setCancelMessage(e.target.value)}
+                  placeholder="취소 사유를 입력해 주세요."
+                  rows={3}
+                  className="w-full px-4 py-2 border border-page rounded-lg text-page placeholder-[var(--text-muted)] focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none bg-page text-sm"
+                />
+              </div>
+            </div>
+
+            <div className="bg-page-secondary rounded-lg p-4 border border-page mb-5 max-h-52 overflow-y-auto">
+              <p className="text-xs font-semibold text-page mb-2">제6조 (환불 및 취소 정책)</p>
+              <ol className="list-decimal list-inside text-xs text-page-secondary space-y-1.5 leading-relaxed">
+                <li>고객은 구독 결제일로부터 7일 이내에 서비스 이용 이력이 없는 경우 전액 환불을 요청할 수 있습니다.</li>
+                <li>구독 기간 중 해지하는 경우, 이미 이용한 기간에 해당하는 금액을 일할(255원/일) 공제한 후 잔여 기간에 대해 환불할 수 있습니다.</li>
+                <li>할인 구독권(3개월, 6개월, 12개월)의 경우 환불 시 정상 월 구독료 기준으로 이용 기간을 산정하여 일할(255원/일) 차감 후 환불합니다.</li>
+                <li>환불은 결제 수단과 동일한 방식으로 처리함을 원칙으로 합니다.</li>
+                <li>당사의 귀책사유로 서비스가 장기간 제공되지 않는 경우, 이용자는 전액 또는 일부 환불을 요구할 수 있습니다.</li>
+              </ol>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                disabled={cancelSending}
+                onClick={async () => {
+                  setCancelSending(true)
+                  try {
+                    await contactApi.send({
+                      subject: '구독 취소 및 환불 요청',
+                      contact: cancelContact.trim() || undefined,
+                      message: cancelMessage.trim() || '구독 취소 및 환불을 요청합니다.',
+                    })
+                    setShowCancelPopup(false)
+                    setCancelContact('')
+                    setCancelMessage('')
+                    setShowCancelSuccess(true)
+                  } catch { /* ignore */ } finally {
+                    setCancelSending(false)
+                  }
+                }}
+                className="flex-1 py-2.5 rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 transition-colors disabled:opacity-50"
+              >
+                {cancelSending ? '처리 중...' : '구독 취소하기'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowCancelPopup(false)
+                  setCancelContact('')
+                  setCancelMessage('')
+                }}
+                disabled={cancelSending}
+                className="flex-1 py-2.5 rounded-lg border border-page text-page text-sm font-medium hover:bg-page-secondary transition-colors disabled:opacity-50"
+              >
+                유지하기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showCancelSuccess && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" role="dialog" aria-modal="true">
+          <div className="bg-page border border-page rounded-xl shadow-xl max-w-sm w-full p-6">
+            <p className="text-page font-medium text-center">구독 취소 요청이 접수되었습니다.</p>
+            <p className="text-page-secondary text-xs text-center mt-2">근무일 5일 이내 연락 드리겠습니다.</p>
+            <div className="mt-4 flex justify-center">
+              <button
+                type="button"
+                onClick={() => setShowCancelSuccess(false)}
                 className="px-6 py-2.5 bg-primary-500 text-white rounded-lg text-sm font-medium hover:bg-primary-600 transition-colors"
               >
                 확인
