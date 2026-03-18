@@ -1,11 +1,13 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useAuthStore } from '../store/authStore'
 import { apiErrorMessage } from '../utils/apiErrorMessage'
-import { api } from '../services/api'
+import { api, siteSettingsApi } from '../services/api'
 import MaterialIcon from '../components/Common/MaterialIcon'
 import GistLogo from '../components/Common/GistLogo'
+
+type PlanDetailFields = { product_title: string; service_content: string; service_period: string; delivery_method: string }
 
 interface Plan {
   id: string
@@ -64,6 +66,18 @@ export default function SubscriptionPage() {
   const [error, setError] = useState<string | null>(null)
   const { isAuthenticated, isSubscribed, accessToken, isInitialized } = useAuthStore()
   const navigate = useNavigate()
+
+  const [planDetails, setPlanDetails] = useState<Record<string, PlanDetailFields>>({})
+  const [expandedDetail, setExpandedDetail] = useState<string | null>(null)
+
+  useEffect(() => {
+    siteSettingsApi.getSite().then((res) => {
+      try {
+        const raw = res.data?.data?.subscription_plan_details
+        if (raw && typeof raw === 'string') setPlanDetails(JSON.parse(raw))
+      } catch { /* ignore */ }
+    }).catch(() => {})
+  }, [])
 
   const handleCheckout = async () => {
     if (!isInitialized) return
@@ -177,64 +191,120 @@ export default function SubscriptionPage() {
         >
           {PLANS.map((plan) => {
             const isSelected = selectedPlan === plan.id
+            const detail = planDetails[plan.id]
+            const hasDetail = detail && Object.values(detail).some((v) => v.trim())
+            const isExpanded = expandedDetail === plan.id
             return (
-              <button
-                key={plan.id}
-                type="button"
-                onClick={() => setSelectedPlan(plan.id)}
-                className={`w-full text-left rounded-xl border-2 transition-all duration-200 ${
-                  isSelected
-                    ? 'border-primary-500 bg-gray-100 dark:bg-gray-800'
-                    : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/60 hover:border-gray-300 dark:hover:border-gray-600'
-                } ${plan.bestValue && isSelected ? 'ring-1 ring-primary-500/30' : ''}`}
-              >
-                {/* Best Value 배지 */}
-                {plan.bestValue && (
-                  <div className="px-5 pt-3">
-                    <span className="inline-block px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-primary-500 border border-primary-500 rounded">
-                      Best Value
-                    </span>
-                  </div>
-                )}
-
-                <div className={`px-5 ${plan.bestValue ? 'pt-2 pb-4' : 'py-4'}`}>
-                  {/* 라디오 + 플랜명 + 가격 */}
-                  <div className="flex items-center gap-3">
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
-                      isSelected ? 'border-primary-500' : 'border-gray-400 dark:border-gray-500'
-                    }`}>
-                      {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-primary-500" />}
-                    </div>
-                    <div className="flex-1 flex items-baseline justify-between gap-2">
-                      <span className="text-gray-900 dark:text-white font-semibold">{plan.label}</span>
-                      <span className="text-gray-900 dark:text-white font-bold whitespace-nowrap">
-                        {plan.monthlyPrice}원<span className="text-gray-900 dark:text-white font-bold">/월</span>
+              <div key={plan.id}>
+                <button
+                  type="button"
+                  onClick={() => setSelectedPlan(plan.id)}
+                  className={`w-full text-left rounded-xl border-2 transition-all duration-200 ${
+                    isSelected
+                      ? 'border-primary-500 bg-gray-100 dark:bg-gray-800'
+                      : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/60 hover:border-gray-300 dark:hover:border-gray-600'
+                  } ${plan.bestValue && isSelected ? 'ring-1 ring-primary-500/30' : ''}`}
+                >
+                  {plan.bestValue && (
+                    <div className="px-5 pt-3">
+                      <span className="inline-block px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-primary-500 border border-primary-500 rounded">
+                        Best Value
                       </span>
                     </div>
-                  </div>
+                  )}
 
-                  {/* 할인/설명 */}
-                  <div className="ml-8 mt-1.5 space-y-0.5">
-                    {plan.discount && (
-                      <p className="text-xs text-primary-600 dark:text-primary-400 font-medium">{plan.discount}</p>
-                    )}
-                    <p className="text-xs text-gray-600 dark:text-gray-400">
-                      {plan.billing.startsWith('최초 ') ? (
-                        <>
-                          <span className="font-bold text-gray-900 dark:text-white">
-                            {plan.billing.match(/^최초 [0-9,]+원 결제/)?.[0] ?? plan.billing}
-                          </span>
-                          {plan.billing.replace(/^최초 [0-9,]+원 결제\s*/, '') ? (
-                            <span>{plan.billing.replace(/^최초 [0-9,]+원 결제\s*/, '')}</span>
-                          ) : null}
-                        </>
-                      ) : (
-                        plan.billing
+                  <div className={`px-5 ${plan.bestValue ? 'pt-2 pb-4' : 'py-4'}`}>
+                    <div className="flex items-center gap-3">
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
+                        isSelected ? 'border-primary-500' : 'border-gray-400 dark:border-gray-500'
+                      }`}>
+                        {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-primary-500" />}
+                      </div>
+                      <div className="flex-1 flex items-baseline justify-between gap-2">
+                        <span className="text-gray-900 dark:text-white font-semibold">{plan.label}</span>
+                        <span className="text-gray-900 dark:text-white font-bold whitespace-nowrap">
+                          {plan.monthlyPrice}원<span className="text-gray-900 dark:text-white font-bold">/월</span>
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="ml-8 mt-1.5 space-y-0.5">
+                      {plan.discount && (
+                        <p className="text-xs text-primary-600 dark:text-primary-400 font-medium">{plan.discount}</p>
                       )}
-                    </p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">
+                        {plan.billing.startsWith('최초 ') ? (
+                          <>
+                            <span className="font-bold text-gray-900 dark:text-white">
+                              {plan.billing.match(/^최초 [0-9,]+원 결제/)?.[0] ?? plan.billing}
+                            </span>
+                            {plan.billing.replace(/^최초 [0-9,]+원 결제\s*/, '') ? (
+                              <span>{plan.billing.replace(/^최초 [0-9,]+원 결제\s*/, '')}</span>
+                            ) : null}
+                          </>
+                        ) : (
+                          plan.billing
+                        )}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </button>
+                </button>
+
+                {hasDetail && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setExpandedDetail(isExpanded ? null : plan.id)}
+                      className="w-full flex items-center justify-center gap-1 py-2 text-xs text-gray-500 dark:text-gray-400 hover:text-primary-500 dark:hover:text-primary-400 transition-colors"
+                    >
+                      <span>{isExpanded ? '접기' : '상세보기'}</span>
+                      <MaterialIcon
+                        name={isExpanded ? 'expand_less' : 'expand_more'}
+                        className="w-4 h-4"
+                        size={16}
+                      />
+                    </button>
+                    <AnimatePresence>
+                      {isExpanded && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.25 }}
+                          className="overflow-hidden"
+                        >
+                          <div className="px-5 pb-4 space-y-3">
+                            {detail.product_title.trim() && (
+                              <div>
+                                <p className="text-[11px] font-semibold text-primary-500 mb-0.5">상품 제목</p>
+                                <p className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{detail.product_title}</p>
+                              </div>
+                            )}
+                            {detail.service_content.trim() && (
+                              <div>
+                                <p className="text-[11px] font-semibold text-primary-500 mb-0.5">서비스 내용</p>
+                                <p className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{detail.service_content}</p>
+                              </div>
+                            )}
+                            {detail.service_period.trim() && (
+                              <div>
+                                <p className="text-[11px] font-semibold text-primary-500 mb-0.5">서비스 제공기간</p>
+                                <p className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{detail.service_period}</p>
+                              </div>
+                            )}
+                            {detail.delivery_method.trim() && (
+                              <div>
+                                <p className="text-[11px] font-semibold text-primary-500 mb-0.5">제공 방법</p>
+                                <p className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{detail.delivery_method}</p>
+                              </div>
+                            )}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </>
+                )}
+              </div>
             )
           })}
         </motion.div>

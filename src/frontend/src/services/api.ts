@@ -253,6 +253,7 @@ export const siteSettingsApi = {
         the_gist_vision: string
         menu_tabs?: string
         menu_subcategories?: string
+        subscription_plan_details?: string
       }
     }>('/settings/site'),
 }

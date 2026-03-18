@@ -542,6 +542,21 @@ const AdminPage: React.FC = () => {
   const [settingsError, setSettingsError] = useState<string | null>(null);
   const [settingsSuccess, setSettingsSuccess] = useState<string | null>(null);
 
+  // 구독 상품 설명
+  type PlanDetailFields = { product_title: string; service_content: string; service_period: string; delivery_method: string }
+  const emptyPlanDetail: PlanDetailFields = { product_title: '', service_content: '', service_period: '', delivery_method: '' };
+  const [planDetails, setPlanDetails] = useState<Record<string, PlanDetailFields>>({});
+  const [planDetailsSaving, setPlanDetailsSaving] = useState(false);
+  const [planDetailsMsg, setPlanDetailsMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const PLAN_IDS = ['1m', '3m', '6m', '12m'] as const;
+  const PLAN_LABELS: Record<string, string> = { '1m': '1개월 구독', '3m': '3개월 구독', '6m': '6개월 구독', '12m': '12개월 구독' };
+  const FIELD_LABELS: { key: keyof PlanDetailFields; label: string }[] = [
+    { key: 'product_title', label: '상품 제목' },
+    { key: 'service_content', label: '서비스 내용' },
+    { key: 'service_period', label: '서비스 제공기간' },
+    { key: 'delivery_method', label: '제공 방법' },
+  ];
+
   // 뉴스 관리 상태
   const [selectedCategory, setSelectedCategory] = useState<string>('diplomacy');
   const [categorySub, setCategorySub] = useState<string>('');
@@ -604,6 +619,10 @@ const AdminPage: React.FC = () => {
         if (res.data?.success && res.data?.data) {
           const v = res.data.data.tts_voice;
           if (v && GOOGLE_TTS_VOICES.some((o) => o.value === v)) setTtsVoice(v);
+          try {
+            const raw = res.data.data.subscription_plan_details;
+            if (raw && typeof raw === 'string') setPlanDetails(JSON.parse(raw));
+          } catch { /* ignore */ }
         }
       })
       .catch((err) => setSettingsError(err.response?.data?.message || '설정을 불러올 수 없습니다.'))
@@ -4764,6 +4783,60 @@ const AdminPage: React.FC = () => {
                     DALL-E 3 테스트
                   </button>
                 </div>
+              </div>
+
+              {/* 구독 상품 설명 관리 */}
+              <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 space-y-5">
+                <div>
+                  <h3 className="text-lg font-semibold text-white">구독 상품 설명</h3>
+                  <p className="text-slate-400 text-sm mt-1">구독 페이지에서 「상세보기」로 표시될 내용을 플랜별로 입력합니다.</p>
+                </div>
+
+                {PLAN_IDS.map((pid) => {
+                  const detail = planDetails[pid] ?? emptyPlanDetail;
+                  const update = (field: keyof PlanDetailFields, val: string) =>
+                    setPlanDetails((prev) => ({ ...prev, [pid]: { ...(prev[pid] ?? emptyPlanDetail), [field]: val } }));
+                  return (
+                    <div key={pid} className="border border-slate-700/60 rounded-xl p-4 space-y-3">
+                      <h4 className="text-sm font-bold text-cyan-400">{PLAN_LABELS[pid]}</h4>
+                      {FIELD_LABELS.map((f) => (
+                        <div key={f.key}>
+                          <label className="block text-slate-300 text-xs mb-1">{f.label}</label>
+                          <textarea
+                            value={detail[f.key]}
+                            onChange={(e) => update(f.key, e.target.value)}
+                            rows={2}
+                            className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:ring-2 focus:ring-cyan-500 resize-y"
+                            placeholder={`${f.label}을 입력하세요`}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })}
+
+                {planDetailsMsg && (
+                  <p className={`text-sm ${planDetailsMsg.type === 'success' ? 'text-emerald-400' : 'text-red-400'}`}>{planDetailsMsg.text}</p>
+                )}
+                <button
+                  type="button"
+                  disabled={planDetailsSaving}
+                  onClick={async () => {
+                    setPlanDetailsSaving(true);
+                    setPlanDetailsMsg(null);
+                    try {
+                      await adminSettingsApi.updateSettings({ subscription_plan_details: JSON.stringify(planDetails) });
+                      setPlanDetailsMsg({ type: 'success', text: '구독 상품 설명이 저장되었습니다.' });
+                    } catch {
+                      setPlanDetailsMsg({ type: 'error', text: '저장에 실패했습니다.' });
+                    } finally {
+                      setPlanDetailsSaving(false);
+                    }
+                  }}
+                  className="bg-gradient-to-r from-cyan-500 to-emerald-500 text-white px-6 py-2 rounded-lg hover:opacity-90 transition disabled:opacity-50"
+                >
+                  {planDetailsSaving ? '저장 중...' : '구독 상품 설명 저장'}
+                </button>
               </div>
 
               <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 space-y-4">
