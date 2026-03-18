@@ -714,11 +714,7 @@ if ($method === 'PUT') {
     if ($hasStatus && isset($input['status'])) {
         $status = in_array($input['status'], ['draft', 'published']) ? $input['status'] : null;
     }
-    // 게시 정책: published 상태이면 항상 현재 시각으로 published_at 갱신
-    // (임시저장→게시, 수정 후 재게시 모두 게시/수정 시점이 기준)
-    if ($status === 'published') {
-        $publishedAt = date('Y-m-d H:i:s');
-    }
+    // published_at 결정은 기존 행 조회 후 아래에서 수행 (첫 게시일 고정 정책)
     
     // 디버그 로깅
     logError('PUT request received', [
@@ -757,13 +753,22 @@ if ($method === 'PUT') {
     }
     $category = mb_substr(trim($category), 0, 100) ?: $categoryParent;
     try {
-        // 뉴스 존재 여부 확인
-        $stmt = $db->prepare("SELECT id FROM news WHERE id = ?");
+        // 뉴스 존재 + 기존 published_at 조회 (첫 게시일 고정 정책)
+        $existCols = 'id';
+        if ($hasPublishedAt) $existCols .= ', published_at';
+        $stmt = $db->prepare("SELECT $existCols FROM news WHERE id = ?");
         $stmt->execute([$id]);
-        if (!$stmt->fetch()) {
+        $existingRow = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$existingRow) {
             http_response_code(404);
             echo json_encode(['success' => false, 'message' => '뉴스를 찾을 수 없습니다.']);
             exit;
+        }
+
+        // 첫 게시일 고정 정책: published_at은 최초 게시 시 한 번만 설정
+        $existingPublishedAt = $existingRow['published_at'] ?? null;
+        if ($status === 'published') {
+            $publishedAt = !empty($existingPublishedAt) ? $existingPublishedAt : date('Y-m-d H:i:s');
         }
         
         // UTF-8 안전한 description: 사용자 지정 요약이 있으면 사용, 없으면 content에서 생성 (300자)
@@ -857,7 +862,7 @@ if ($method === 'PUT') {
             $values[] = $author;
         }
         
-        if ($hasPublishedAt) {
+        if ($hasPublishedAt && $status !== 'draft') {
             $setClauses[] = 'published_at = ?';
             $values[] = $publishedAt;
         }
