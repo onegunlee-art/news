@@ -96,7 +96,7 @@ export default function Header() {
               onClick={() => setIsSearchOpen(true)}
               className="p-2 text-page-secondary hover:text-page transition-colors"
             >
-              <MaterialIcon name="search" className="w-5 h-5" size={20} />
+              <MaterialIcon name="search" className="w-7 h-7" size={28} />
             </button>
           </div>
         </div>

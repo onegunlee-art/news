@@ -107,14 +107,14 @@ export default function ProfilePage() {
                           <div className="mt-1.5">
                             {subscriptionDetail?.start_date && user?.subscription_expires_at ? (
                               <p className="text-[11px] text-page-secondary">
-                                the gist. {subscriptionDetail.plan_name} 구독중 ({new Date(subscriptionDetail.start_date).toLocaleDateString('ko-KR')} ~ {new Date(user.subscription_expires_at).toLocaleDateString('ko-KR')})
+                                the gist. {subscriptionDetail.plan_name?.endsWith('권') ? subscriptionDetail.plan_name : `${subscriptionDetail.plan_name || '구독'}권`} ({new Date(subscriptionDetail.start_date).toLocaleDateString('ko-KR')} ~ {new Date(user.subscription_expires_at).toLocaleDateString('ko-KR')})
                               </p>
                             ) : user?.subscription_expires_at ? (
                               <p className="text-[11px] text-page-secondary">
-                                the gist. 구독중 (만료: {new Date(user.subscription_expires_at).toLocaleDateString('ko-KR')})
+                                the gist. 구독권 (만료: {new Date(user.subscription_expires_at).toLocaleDateString('ko-KR')})
                               </p>
                             ) : (
-                              <p className="text-[11px] text-page-secondary">the gist. 구독중</p>
+                              <p className="text-[11px] text-page-secondary">the gist. 구독권</p>
                             )}
                           </div>
                         )}
@@ -367,7 +367,7 @@ export default function ProfilePage() {
                   onClick={() => setShowWithdrawConfirm(true)}
                   className="w-full flex items-center gap-3 px-5 py-4 text-left transition-colors hover:bg-page-secondary/50"
                 >
-                  <MaterialIcon name="person_cancel" className="w-5 h-5 text-page-muted flex-shrink-0" size={20} />
+                  <MaterialIcon name="person_cancel" className="w-5 h-5 text-page-secondary flex-shrink-0" size={20} />
                   <span className="flex-1 text-page text-sm font-medium">회원 탈퇴</span>
                 </button>
               </li>

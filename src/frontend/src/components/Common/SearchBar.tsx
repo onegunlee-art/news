@@ -30,7 +30,7 @@ export default function SearchBar({
           className="w-full px-6 py-4 pl-14 bg-dark-600 border border-white/10 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:border-primary-500/50 focus:ring-2 focus:ring-primary-500/20 transition-all"
         />
         <div className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-500">
-          <MaterialIcon name="search" className="w-5 h-5" size={20} />
+          <MaterialIcon name="search" className="w-7 h-7" size={28} />
         </div>
         {query && (
           <button
