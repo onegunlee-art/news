@@ -28,7 +28,7 @@ export default function Footer() {
         <div className="flex flex-col items-center text-center">
           <GistLogo as="h2" size="default" link />
           <p className="text-page-secondary text-sm mt-2">{vision}</p>
-          <p className="text-xs text-page-muted mt-24 whitespace-nowrap">
+          <p className="text-xs text-page-muted mt-12 whitespace-nowrap">
             <button
               type="button"
               onClick={() => setShowTermsModal(true)}
