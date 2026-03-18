@@ -15,8 +15,8 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html}', 'icon-192.png', 'icon-512.png', 'apple-icon.png', 'favicon.ico'],
       },
       manifest: {
-        name: 'The Gist - Gisters, Becoming Leaders',
-        short_name: 'The Gist',
+        name: 'the gist.',
+        short_name: 'the gist.',
         description: '글로벌 뉴스 분석 서비스',
         theme_color: '#0a0a0f',
         background_color: '#0a0a0f',
