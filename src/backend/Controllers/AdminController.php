@@ -703,7 +703,25 @@ final class AdminController
 
         $supabase = $this->getSupabaseService($projectRoot);
 
-        $columns = 'id, title, content, description, source';
+        if ($force && $offset === 0) {
+            $audioDir = $projectRoot . '/storage/audio';
+            if (is_dir($audioDir)) {
+                foreach (glob($audioDir . '/tts_*.wav') ?: [] as $f) {
+                    if (is_file($f)) {
+                        @unlink($f);
+                    }
+                }
+            }
+            if ($supabase !== null && $supabase->isConfigured()) {
+                try {
+                    $supabase->delete('media_cache', 'media_type=eq.tts');
+                } catch (\Throwable $e) {
+                    error_log('[regenerateAllTts] Supabase media_cache 삭제 실패: ' . $e->getMessage());
+                }
+            }
+        }
+
+        $columns = 'id, title, content, description, source, url';
         $optCols = ['why_important', 'narration', 'published_at', 'updated_at', 'created_at', 'original_source', 'original_title', 'source_url'];
         foreach ($optCols as $col) {
             try {
@@ -846,40 +864,93 @@ final class AdminController
         return implode(' ', $result) ?: null;
     }
 
-    /** playArticle과 동일한 구조 (title, meta, narration, critiquePart) - Listen 호환 */
+    /**
+     * playArticle / _buildListenParts(generateTtsForNews.php) 와 동일 구조
+     * (title, meta, narration, critiquePart) — Listen 캐시 해시 호환 필수
+     */
     private function buildListenStructured(array $row): ?array
     {
-        $titleRaw = trim($row['title'] ?? '');
-        $originalTitle = trim($row['original_title'] ?? '');
-        $sourceUrl = trim($row['source_url'] ?? '');
-        // 매체글 제목: GPT original_title(원문 영어) 우선 → URL 슬러그 → 한국어 제목
-        $title = ($originalTitle !== '')
-            ? $originalTitle
-            : (($sourceUrl !== '' && ($extracted = $this->extractTitleFromUrl($sourceUrl))) ? $extracted : $titleRaw);
-        if ($title === '') {
-            $title = $titleRaw ?: '제목 없음';
+        $speakTitle = trim($row['title'] ?? '');
+        if ($speakTitle === '') {
+            $speakTitle = '제목 없음';
         }
-        $dateStr = '';
-        $ref = $row['published_at'] ?? $row['updated_at'] ?? $row['created_at'] ?? null;
-        if ($ref) {
-            $t = strtotime($ref);
-            if ($t) {
-                $dateStr = date('Y', $t) . '년 ' . (int) date('n', $t) . '월 ' . (int) date('j', $t) . '일';
+
+        $sourceUrl = trim($row['source_url'] ?? $row['url'] ?? '');
+        $originalTitleMeta = trim($row['original_title'] ?? '');
+        if ($originalTitleMeta === '' && $sourceUrl !== '') {
+            $originalTitleMeta = $this->extractTitleFromUrl($sourceUrl) ?? '';
+        }
+        if ($originalTitleMeta === '') {
+            $originalTitleMeta = '원문';
+        }
+
+        $rawSource = trim($row['original_source'] ?? '');
+        if ($rawSource === '') {
+            $rawSource = (($row['source'] ?? '') === 'Admin')
+                ? 'the gist.'
+                : trim((string) ($row['source'] ?? ''));
+            if ($rawSource === '') {
+                $rawSource = 'the gist.';
             }
         }
-        $rawSource = trim($row['original_source'] ?? '') ?: ($row['source'] === 'Admin' ? 'The Gist' : ($row['source'] ?? 'The Gist'));
-        $sourceDisplay = $rawSource ?: 'The Gist';
-        $meta = $dateStr
-            ? "{$dateStr}자 {$sourceDisplay} 저널의 \"{$title}\"을 AI 번역, 요약하고 The Gist에서 일부 편집한 글입니다."
-            : "{$sourceDisplay} 저널의 \"{$title}\"을 AI 번역, 요약하고 The Gist에서 일부 편집한 글입니다.";
-        $narration = trim($row['narration'] ?? '') ?: trim($row['content'] ?? '') ?: trim($row['description'] ?? '');
-        $whyImportant = trim($row['why_important'] ?? '');
-        $critiquePart = $whyImportant !== '' ? "The Gist's Critique. " . $whyImportant : '';
+        $sourceDisplay = $this->formatSourceDisplayName($rawSource);
+        if ($sourceDisplay === '') {
+            $sourceDisplay = 'the gist.';
+        }
+
+        $meta = sprintf(
+            '이 글은 %s에 게재된 %s 글의 시각을 참고하였습니다.',
+            $sourceDisplay,
+            $originalTitleMeta
+        );
+
+        $narrationRaw = trim($row['narration'] ?? '') ?: trim($row['content'] ?? '') ?: trim($row['description'] ?? '');
+        $narration = $this->stripHtmlForTts($narrationRaw);
+        $critiquePart = $this->stripHtmlForTts(trim($row['why_important'] ?? ''));
 
         if ($narration === '' && $critiquePart === '') {
             return null;
         }
-        return [$title, $meta, $narration, $critiquePart];
+        return [$speakTitle, $meta, $narration, $critiquePart];
+    }
+
+    /** formatSourceDisplayName 과 동일 (맨 뒤 " Magazine" 제거) */
+    private function formatSourceDisplayName(string $source): string
+    {
+        $trimmed = trim($source);
+        if ($trimmed === '') {
+            return '';
+        }
+        $len = mb_strlen($trimmed, 'UTF-8');
+        $suffix = ' magazine';
+        $suffixLen = mb_strlen($suffix, 'UTF-8');
+        if ($len >= $suffixLen) {
+            $tail = mb_strtolower(mb_substr($trimmed, $len - $suffixLen, null, 'UTF-8'), 'UTF-8');
+            if ($tail === $suffix) {
+                return trim(mb_substr($trimmed, 0, $len - $suffixLen, 'UTF-8'));
+            }
+        }
+        return $trimmed;
+    }
+
+    /** HTML 태그·엔티티 제거 → TTS용 평문 (_stripHtmlForTts 과 동일) */
+    private function stripHtmlForTts(?string $text): string
+    {
+        if ($text === null || $text === '') {
+            return '';
+        }
+        $s = (string) $text;
+        $s = html_entity_decode($s, ENT_HTML5 | ENT_QUOTES, 'UTF-8');
+        $smartDouble = ["\u{201C}", "\u{201D}", "\u{201E}", "\u{201F}", "\u{2033}", "\u{2036}", "\u{00AB}", "\u{00BB}"];
+        $smartSingle = ["\u{2018}", "\u{2019}", "\u{201A}", "\u{201B}", "\u{2032}", "\u{2035}"];
+        $s = str_replace($smartDouble, '"', $s);
+        $s = str_replace($smartSingle, "'", $s);
+        $s = preg_replace('/<br\s*\/?>/iu', ' ', $s);
+        $s = preg_replace('/<\/(p|div|li|h[1-6])>/iu', ' ', $s);
+        $s = strip_tags($s);
+        $s = str_ireplace('&nbsp;', ' ', $s);
+        $s = preg_replace('/\s{2,}/u', ' ', $s);
+        return trim($s);
     }
 
     /**

@@ -128,41 +128,97 @@ function _getTtsVoice(string $projectRoot): string
     return $voice;
 }
 
-function _buildListenParts(array $row): ?array
+/**
+ * 프론트 formatSourceDisplayName 과 동일 (맨 뒤 " Magazine" 제거, 대소문자 무시)
+ */
+function _formatSourceDisplayNameForTts(string $source): string
 {
-    $titleRaw = trim($row['title'] ?? '');
-    $originalTitle = trim($row['original_title'] ?? '');
-    $sourceUrl = trim($row['source_url'] ?? '');
-
-    $title = ($originalTitle !== '') ? $originalTitle : $titleRaw;
-    if ($title === '' && $sourceUrl !== '') {
-        $title = _extractTitleFromUrlSimple($sourceUrl) ?? $titleRaw;
+    $trimmed = trim($source);
+    if ($trimmed === '') {
+        return '';
     }
-    if ($title === '') $title = $titleRaw ?: '제목 없음';
-
-    $dateStr = '';
-    $ref = $row['published_at'] ?? $row['updated_at'] ?? $row['created_at'] ?? null;
-    if ($ref) {
-        $t = strtotime($ref);
-        if ($t) {
-            $dateStr = date('Y', $t) . '년 ' . (int) date('n', $t) . '월 ' . (int) date('j', $t) . '일';
+    $len = mb_strlen($trimmed, 'UTF-8');
+    $suffix = ' magazine';
+    $suffixLen = mb_strlen($suffix, 'UTF-8');
+    if ($len >= $suffixLen) {
+        $tail = mb_strtolower(mb_substr($trimmed, $len - $suffixLen, null, 'UTF-8'), 'UTF-8');
+        if ($tail === $suffix) {
+            return trim(mb_substr($trimmed, 0, $len - $suffixLen, 'UTF-8'));
         }
     }
+    return $trimmed;
+}
 
-    $rawSource = trim($row['original_source'] ?? '') ?: (($row['source'] ?? '') === 'Admin' ? 'The Gist' : ($row['source'] ?? 'The Gist'));
-    $sourceDisplay = $rawSource ?: 'The Gist';
+/**
+ * 프론트 stripHtml 과 유사: 태그 제거·엔티티 디코드·공백 정리 (TTS용 평문)
+ */
+function _stripHtmlForTts(?string $text): string
+{
+    if ($text === null || $text === '') {
+        return '';
+    }
+    $s = (string) $text;
+    $s = html_entity_decode($s, ENT_HTML5 | ENT_QUOTES, 'UTF-8');
+    // 스마트 따옴표 → 직선 따옴표 (sanitizeHtml.ts normalizeQuotes)
+    $smartDouble = ["\u{201C}", "\u{201D}", "\u{201E}", "\u{201F}", "\u{2033}", "\u{2036}", "\u{00AB}", "\u{00BB}"];
+    $smartSingle = ["\u{2018}", "\u{2019}", "\u{201A}", "\u{201B}", "\u{2032}", "\u{2035}"];
+    $s = str_replace($smartDouble, '"', $s);
+    $s = str_replace($smartSingle, "'", $s);
+    $s = preg_replace('/<br\s*\/?>/iu', ' ', $s);
+    $s = preg_replace('/<\/(p|div|li|h[1-6])>/iu', ' ', $s);
+    $s = strip_tags($s);
+    $s = str_ireplace('&nbsp;', ' ', $s);
+    $s = preg_replace('/\s{2,}/u', ' ', $s);
+    return trim($s);
+}
 
-    $meta = $dateStr
-        ? "{$dateStr}자 {$sourceDisplay} 저널의 \"{$title}\"을 AI 번역, 요약하고 The Gist에서 일부 편집한 글입니다."
-        : "{$sourceDisplay} 저널의 \"{$title}\"을 AI 번역, 요약하고 The Gist에서 일부 편집한 글입니다.";
+function _buildListenParts(array $row): ?array
+{
+    // SSML 첫 구간: 사이트에 표시되는 기사 제목 (NewsDetailPage openAndPlay 의 data.title)
+    $speakTitle = trim($row['title'] ?? '');
+    if ($speakTitle === '') {
+        $speakTitle = '제목 없음';
+    }
 
-    $narration = trim($row['narration'] ?? '') ?: trim($row['content'] ?? '') ?: trim($row['description'] ?? '');
-    $whyImportant = trim($row['why_important'] ?? '');
-    $critiquePart = $whyImportant !== '' ? "The Gist's Critique. " . $whyImportant : '';
+    $sourceUrl = trim($row['source_url'] ?? $row['url'] ?? '');
+    $originalTitleMeta = trim($row['original_title'] ?? '');
+    if ($originalTitleMeta === '' && $sourceUrl !== '') {
+        $originalTitleMeta = _extractTitleFromUrlSimple($sourceUrl) ?? '';
+    }
+    if ($originalTitleMeta === '') {
+        $originalTitleMeta = '원문';
+    }
 
-    if ($narration === '' && $critiquePart === '') return null;
+    // NewsDetailPage: rawSource → formatSourceDisplayName → buildEditorialLine
+    $rawSource = trim($row['original_source'] ?? '');
+    if ($rawSource === '') {
+        $rawSource = (($row['source'] ?? '') === 'Admin')
+            ? 'the gist.'
+            : trim((string) ($row['source'] ?? ''));
+        if ($rawSource === '') {
+            $rawSource = 'the gist.';
+        }
+    }
+    $sourceDisplay = _formatSourceDisplayNameForTts($rawSource);
+    if ($sourceDisplay === '') {
+        $sourceDisplay = 'the gist.';
+    }
 
-    return [$title, $meta, $narration, $critiquePart];
+    $meta = sprintf(
+        '이 글은 %s에 게재된 %s 글의 시각을 참고하였습니다.',
+        $sourceDisplay,
+        $originalTitleMeta
+    );
+
+    $narrationRaw = trim($row['narration'] ?? '') ?: trim($row['content'] ?? '') ?: trim($row['description'] ?? '');
+    $narration = _stripHtmlForTts($narrationRaw);
+    $critiquePart = _stripHtmlForTts(trim($row['why_important'] ?? ''));
+
+    if ($narration === '' && $critiquePart === '') {
+        return null;
+    }
+
+    return [$speakTitle, $meta, $narration, $critiquePart];
 }
 
 function _extractTitleFromUrlSimple(string $url): ?string
