@@ -94,7 +94,7 @@ export default function Header() {
           <div className="w-16 md:w-auto flex justify-end items-center">
             <button
               onClick={() => setIsSearchOpen(true)}
-              className="p-2 text-page-secondary hover:text-page transition-colors"
+              className="p-2 translate-y-1 text-page-secondary hover:text-page transition-colors"
             >
               <MaterialIcon name="search" className="w-[25px] h-[25px]" size={25} />
             </button>
