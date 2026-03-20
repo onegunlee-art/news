@@ -21,6 +21,12 @@ type BookmarkRow = {
 
 const CONTAINER_CLASS = 'max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4'
 
+const formatDateKorean = (date: Date | string | null | undefined): string => {
+  if (!date) return ''
+  const d = new Date(date)
+  return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`
+}
+
 export default function ProfilePage() {
   const { subCategoryToLabel } = useMenuConfig()
   const { user, isAuthenticated, isSubscribed, logout } = useAuthStore()
@@ -108,11 +114,11 @@ export default function ProfilePage() {
                           <div className="mt-1.5">
                             {subscriptionDetail?.start_date && user?.subscription_expires_at ? (
                               <p className="text-[11px] text-page-secondary">
-                                {subscriptionDetail.plan_name?.endsWith('권') ? subscriptionDetail.plan_name : `${subscriptionDetail.plan_name || '구독'}권`} ({new Date(subscriptionDetail.start_date).toLocaleDateString('ko-KR')} ~ {new Date(user.subscription_expires_at).toLocaleDateString('ko-KR')})
+                                {subscriptionDetail.plan_name?.endsWith('권') ? subscriptionDetail.plan_name : `${subscriptionDetail.plan_name || '구독'}권`} ({formatDateKorean(subscriptionDetail.start_date)} ~ {formatDateKorean(user.subscription_expires_at)})
                               </p>
                             ) : user?.subscription_expires_at ? (
                               <p className="text-[11px] text-page-secondary">
-                                구독권 (만료: {new Date(user.subscription_expires_at).toLocaleDateString('ko-KR')})
+                                구독권 (만료: {formatDateKorean(user.subscription_expires_at)})
                               </p>
                             ) : (
                               <p className="text-[11px] text-page-secondary">구독권</p>
@@ -254,7 +260,7 @@ export default function ProfilePage() {
                         </p>
                         {subscriptionDetail?.start_date && user?.subscription_expires_at && (
                           <p className="text-page-secondary text-xs mt-1">
-                            {new Date(subscriptionDetail.start_date).toLocaleDateString('ko-KR')} ~ {new Date(user.subscription_expires_at).toLocaleDateString('ko-KR')}
+                            {formatDateKorean(subscriptionDetail.start_date)} ~ {formatDateKorean(user.subscription_expires_at)}
                           </p>
                         )}
                       </div>
@@ -293,10 +299,12 @@ export default function ProfilePage() {
                           </button>
                         </div>
                         <p className="text-page-secondary text-xs mt-2">
-                          {(subscriptionDetail?.auto_renew ?? true)
-                            ? `${user?.subscription_expires_at ? new Date(user.subscription_expires_at).toLocaleDateString('ko-KR') : '만료일'}이 되면 현재 고객님의 구독 플랜으로 자동 연장됩니다.`
-                            : `${user?.subscription_expires_at ? new Date(user.subscription_expires_at).toLocaleDateString('ko-KR') : '만료일'}이 되면 현재 고객님의 구독이 종료됩니다.`
-                          }
+                          구독 기간이 만료 되면 고객님의{' '}
+                          <span className="font-bold text-page">
+                            {(subscriptionDetail?.auto_renew ?? true)
+                              ? '현재 플랜으로 자동 연장됩니다.'
+                              : '구독이 종료 됩니다.'}
+                          </span>
                         </p>
                       </div>
 
