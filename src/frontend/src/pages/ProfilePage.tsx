@@ -609,6 +609,7 @@ function ContactForm() {
   const [sending, setSending] = useState(false)
   const [result, setResult] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [showSuccessPopup, setShowSuccessPopup] = useState(false)
+  const [showContactError, setShowContactError] = useState(false)
 
   const resetForm = () => {
     setSubject('')
@@ -619,6 +620,10 @@ function ContactForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!contact.trim()) {
+      setShowContactError(true)
+      return
+    }
     if (!message.trim()) {
       setResult({ type: 'error', text: '내용을 입력해주세요.' })
       return
@@ -657,7 +662,7 @@ function ContactForm() {
         />
       </div>
       <div>
-        <label htmlFor="contact-contact" className="block text-sm text-page-secondary mb-1">연락처 (이메일 또는 휴대폰)</label>
+        <label htmlFor="contact-contact" className="block text-sm text-page-secondary mb-1">연락처 (이메일 또는 휴대폰) <span className="text-red-500">*필수</span></label>
         <input
           id="contact-contact"
           type="text"
@@ -700,6 +705,22 @@ function ContactForm() {
                 setShowSuccessPopup(false)
                 resetForm()
               }}
+              className="px-6 py-2.5 bg-primary-500 text-white rounded-lg text-sm font-medium hover:bg-primary-600 transition-colors"
+            >
+              확인
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    {showContactError && (
+      <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true">
+        <div className="bg-page border border-page rounded-xl shadow-xl max-w-sm w-full p-6">
+          <p className="text-page font-medium text-center">연락처를 기입해 주세요</p>
+          <div className="mt-4 flex justify-center">
+            <button
+              type="button"
+              onClick={() => setShowContactError(false)}
               className="px-6 py-2.5 bg-primary-500 text-white rounded-lg text-sm font-medium hover:bg-primary-600 transition-colors"
             >
               확인
