@@ -13,6 +13,7 @@ interface Plan {
   id: string
   label: string
   monthlyPrice: string
+  totalPrice?: string
   discount: string | null
   billing: string
   renewal: string
@@ -25,8 +26,9 @@ const PLANS: Plan[] = [
   //   id: '12m',
   //   label: '연간 구독',
   //   monthlyPrice: '4,620',
+  //   totalPrice: '55,440',
   //   discount: '월간 구독 대비 40% 할인',
-  //   billing: '최초 55,440원 결제, 이후 매년 자동 연장',
+  //   billing: '이후 매년 자동 연장',
   //   renewal: '',
   //   bestValue: true,
   // },
@@ -34,8 +36,9 @@ const PLANS: Plan[] = [
   //   id: '6m',
   //   label: '6개월 구독',
   //   monthlyPrice: '5,390',
+  //   totalPrice: '32,340',
   //   discount: '월간 구독 대비 30% 할인',
-  //   billing: '최초 32,340원 결제, 기간 종료후 6개월씩 자동 연장',
+  //   billing: '기간 종료후 6개월씩 자동 연장',
   //   renewal: '',
   //   bestValue: false,
   // },
@@ -43,8 +46,9 @@ const PLANS: Plan[] = [
     id: '3m',
     label: '3개월 구독',
     monthlyPrice: '6,160',
+    totalPrice: '18,480',
     discount: '월간 구독 대비 20% 할인',
-    billing: '최초 18,480원 결제, 기간 종료후 3개월씩 자동 연장',
+    billing: '기간 종료후 3개월씩 자동 연장',
     renewal: '',
     bestValue: true,
   },
@@ -217,11 +221,18 @@ export default function SubscriptionPage() {
                       }`}>
                         {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-primary-500" />}
                       </div>
-                      <div className="flex-1 flex items-baseline justify-between gap-2">
+                      <div className="flex-1 flex items-center justify-between gap-2">
                         <span className="text-gray-900 dark:text-white font-semibold">{plan.label}</span>
-                        <span className="text-gray-900 dark:text-white font-bold whitespace-nowrap">
-                          {plan.monthlyPrice}원<span className="text-gray-900 dark:text-white font-bold">/월</span>
-                        </span>
+                        {plan.totalPrice ? (
+                          <span className="flex flex-col items-end whitespace-nowrap">
+                            <span className="text-gray-900 dark:text-white font-bold">{plan.totalPrice}원</span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400 font-normal">{plan.monthlyPrice}원/월</span>
+                          </span>
+                        ) : (
+                          <span className="text-gray-900 dark:text-white font-bold whitespace-nowrap">
+                            {plan.monthlyPrice}원/월
+                          </span>
+                        )}
                       </div>
                     </div>
 
@@ -229,20 +240,7 @@ export default function SubscriptionPage() {
                       {plan.discount && (
                         <p className="text-xs text-primary-600 dark:text-primary-400 font-medium">{plan.discount}</p>
                       )}
-                      <p className="text-xs text-gray-600 dark:text-gray-400">
-                        {plan.billing.startsWith('최초 ') ? (
-                          <>
-                            <span className="font-bold text-gray-900 dark:text-white">
-                              {plan.billing.match(/^최초 [0-9,]+원 결제/)?.[0] ?? plan.billing}
-                            </span>
-                            {plan.billing.replace(/^최초 [0-9,]+원 결제\s*/, '') ? (
-                              <span>{plan.billing.replace(/^최초 [0-9,]+원 결제\s*/, '')}</span>
-                            ) : null}
-                          </>
-                        ) : (
-                          plan.billing
-                        )}
-                      </p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">{plan.billing}</p>
                     </div>
                   </div>
                 </button>
