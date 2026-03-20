@@ -5,7 +5,7 @@ const LOBSTER_STYLE: React.CSSProperties = { fontFamily: "'Lobster', cursive", f
 export type GistLogoSize = 'default' | 'header' | 'inline'
 
 type GistLogoProps = {
-  /** default: 푸터 스타일(text-3xl), header: 헤더용(약 20% 축소), inline: 문장 내 삽입 */
+  /** default: 푸터 스타일(text-3xl), header: 상단 헤더용, inline: 문장 내 삽입 */
   size?: GistLogoSize
   /** true면 Link to="/" 로 감쌈. 기본 true */
   link?: boolean
@@ -16,7 +16,9 @@ type GistLogoProps = {
 
 const sizeClasses: Record<GistLogoSize, string> = {
   default: 'text-3xl text-page',
-  header: 'text-2xl md:text-5xl font-normal text-page tracking-tight whitespace-nowrap',
+  // 기존 text-2xl(1.5rem) / md:text-5xl(3rem) 대비 약 10% 확대
+  header:
+    'text-[1.65rem] md:text-[3.3rem] leading-none font-normal text-page tracking-tight whitespace-nowrap',
   inline: 'text-page',
 }
 

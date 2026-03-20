@@ -43,6 +43,7 @@ export default function ProfilePage() {
   const [cancelMessage, setCancelMessage] = useState('')
   const [cancelSending, setCancelSending] = useState(false)
   const [showCancelSuccess, setShowCancelSuccess] = useState(false)
+  const [showCancelContactError, setShowCancelContactError] = useState(false)
   const activeTabRef = useRef(activeTab)
   activeTabRef.current = activeTab
 
@@ -380,17 +381,17 @@ export default function ProfilePage() {
       {showWithdrawConfirm && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="withdraw-title">
           <div className={`bg-page border border-page rounded-xl shadow-xl w-full p-6 ${isSubscribed ? 'max-w-md' : 'max-w-sm'}`}>
-            <h3 id="withdraw-title" className="text-lg font-semibold text-page mb-2">회원 탈퇴</h3>
+            <h3 id="withdraw-title" className="text-lg font-semibold text-page mb-2">회원탈퇴</h3>
             {isSubscribed ? (
               <>
                 <p className="text-sm text-page-secondary mb-3 leading-relaxed">
-                  <span className="font-medium text-page">{user?.nickname || '회원'}</span> 님은 현재 구독중이셔서 회원 탈퇴가 어렵습니다.
+                  탈퇴에 앞서 구독 취소 및 환불을 진행하세요.
                   <br />
                   <br />
                   먼저 구독을 취소하시고, 탈퇴를 진행해 주시기 바랍니다.
                 </p>
                 <p className="text-xs text-page-muted mb-6 leading-relaxed">
-                  (절차: 구독관리 → 구독 취소 및 환불 → 취소 및 환불 후 → 탈퇴 진행)
+                  (구독 관리 → 구독 취소 및 환불 → 담당자 연락 후 취소 및 환불 조치)
                 </p>
                 <div className="flex justify-center">
                   <button
@@ -472,11 +473,11 @@ export default function ProfilePage() {
         <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="cancel-title">
           <div className="bg-page border border-page rounded-xl shadow-xl max-w-md w-full p-6 my-8">
             <h3 id="cancel-title" className="text-lg font-semibold text-page mb-1">정말 취소 하시겠습니까?</h3>
-            <p className="text-sm text-page-secondary mb-5">근무일 5일 이내 환불 관련 연락 받으실 연락처를 남겨 주세요.</p>
+            <p className="text-sm text-page-secondary mb-5">환불 관련 연락 드릴 연락처를 남겨주세요. (영업일 5일 이내 연락 드리겠습니다.)</p>
 
             <div className="space-y-3 mb-5">
               <div>
-                <label htmlFor="cancel-contact" className="block text-sm text-page-secondary mb-1">연락처 (이메일 또는 휴대폰)</label>
+                <label htmlFor="cancel-contact" className="block text-sm text-page-secondary mb-1">연락처 (이메일 또는 휴대폰) <span className="text-red-500">*필수</span></label>
                 <input
                   id="cancel-contact"
                   type="text"
@@ -487,7 +488,7 @@ export default function ProfilePage() {
                 />
               </div>
               <div>
-                <label htmlFor="cancel-message" className="block text-sm text-page-secondary mb-1">취소 사유</label>
+                <label htmlFor="cancel-message" className="block text-sm text-page-secondary mb-1">취소 사유 (선택)</label>
                 <textarea
                   id="cancel-message"
                   value={cancelMessage}
@@ -515,11 +516,15 @@ export default function ProfilePage() {
                 type="button"
                 disabled={cancelSending}
                 onClick={async () => {
+                  if (!cancelContact.trim()) {
+                    setShowCancelContactError(true)
+                    return
+                  }
                   setCancelSending(true)
                   try {
                     await contactApi.send({
                       subject: '구독 취소 및 환불 요청',
-                      contact: cancelContact.trim() || undefined,
+                      contact: cancelContact.trim(),
                       message: cancelMessage.trim() || '구독 취소 및 환불을 요청합니다.',
                     })
                     setShowCancelPopup(false)
@@ -555,11 +560,28 @@ export default function ProfilePage() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" role="dialog" aria-modal="true">
           <div className="bg-page border border-page rounded-xl shadow-xl max-w-sm w-full p-6">
             <p className="text-page font-medium text-center">구독 취소 요청이 접수되었습니다.</p>
-            <p className="text-page-secondary text-xs text-center mt-2">근무일 5일 이내 연락 드리겠습니다.</p>
+            <p className="text-page-secondary text-xs text-center mt-2">영업일 5일 이내 연락 드리겠습니다.</p>
             <div className="mt-4 flex justify-center">
               <button
                 type="button"
                 onClick={() => setShowCancelSuccess(false)}
+                className="px-6 py-2.5 bg-primary-500 text-white rounded-lg text-sm font-medium hover:bg-primary-600 transition-colors"
+              >
+                확인
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showCancelContactError && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" role="dialog" aria-modal="true">
+          <div className="bg-page border border-page rounded-xl shadow-xl max-w-sm w-full p-6">
+            <p className="text-page font-medium text-center">연락처를 기입해 주세요</p>
+            <div className="mt-4 flex justify-center">
+              <button
+                type="button"
+                onClick={() => setShowCancelContactError(false)}
                 className="px-6 py-2.5 bg-primary-500 text-white rounded-lg text-sm font-medium hover:bg-primary-600 transition-colors"
               >
                 확인

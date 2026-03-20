@@ -85,7 +85,7 @@ export default function Header() {
             )}
           </div>
 
-          {/* 중앙 - 로고 (GistLogo, 헤더용 20% 축소) */}
+          {/* 중앙 - 로고 (GistLogo size=header) */}
           <div className="flex-1 flex items-center justify-center min-w-0 min-h-[2.5rem] md:min-h-[3.75rem] overflow-visible">
             <GistLogo as="h1" size="header" link />
           </div>
