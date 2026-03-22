@@ -1,7 +1,7 @@
 # ===========================================
 # News - 배포 스크립트 (빌드 + main 푸시)
 # ===========================================
-# GitHub Actions가 main 푸시 시 자동 FTP 배포
+# GitHub Actions가 main 푸시 시 자동 SSH 배포 (AWS EC2)
 # 실행: .\scripts\deploy.ps1
 # ===========================================
 
@@ -60,7 +60,7 @@ Write-Host "========================================" -ForegroundColor Green
 Write-Host " Deployment triggered!" -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Green
 Write-Host ""
-Write-Host "GitHub Actions will build and deploy to FTP." -ForegroundColor White
+Write-Host "GitHub Actions will build and deploy to AWS EC2 via SSH." -ForegroundColor White
 Write-Host "Check: https://github.com/YOUR_REPO/actions" -ForegroundColor Gray
 Write-Host ""
 Write-Host "Site: https://www.thegist.co.kr" -ForegroundColor Cyan

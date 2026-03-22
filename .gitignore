@@ -63,3 +63,12 @@ public/*.map
 
 # Keep directories
 !.gitkeep
+
+# AWS / EC2 (키·비밀번호·로컬 전용 스크립트 — 커밋 금지)
+aws/thegist-key.pem
+aws/env-ec2
+aws/setup_mysql.sql
+aws/backup-mysql.sh
+aws/test_db.php
+aws/test_detail.php
+aws/check_*.py
