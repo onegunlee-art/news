@@ -8,11 +8,13 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       includeAssets: ['favicon.ico', 'icon-192.png', 'icon-512.png', 'apple-icon.png'],
       workbox: {
         navigateFallbackDenylist: [/^\/api\//],
         globPatterns: ['**/*.{js,css,html}', 'icon-192.png', 'icon-512.png', 'apple-icon.png', 'favicon.ico'],
+        skipWaiting: false,
+        clientsClaim: false,
       },
       manifest: {
         name: 'the gist.',

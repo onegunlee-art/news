@@ -6,6 +6,7 @@ import AudioPlayerPopup from './components/AudioPlayer/AudioPlayerPopup'
 import WelcomePopup from './components/Common/WelcomePopup'
 import ConsentModal from './components/Common/ConsentModal'
 import ErrorBoundary from './components/Common/ErrorBoundary'
+import ReloadPrompt from './components/Common/ReloadPrompt'
 import { welcomeSettingsApi } from './services/api'
 import HomePage from './pages/HomePage'
 import AllNewsPage from './pages/AllNewsPage'
@@ -93,6 +94,7 @@ function App() {
   return (
     <ErrorBoundary>
     <div className="min-h-screen bg-page">
+      <ReloadPrompt />
       <AudioPlayerPopup />
       <ConsentModal
         isOpen={showConsent}
