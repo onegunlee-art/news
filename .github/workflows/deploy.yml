@@ -188,23 +188,36 @@ jobs:
             -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
             database/ "$REMOTE:$DEST/database/"
 
-      - name: Deploy Nginx config
+      # Nginx config는 서버에서 직접 관리 (certbot SSL 블록 포함).
+      # CI/CD에서 덮어쓰면 SSL 설정이 날아가므로 절대 scp하지 않음.
+      # sw.js/registerSW.js no-cache 블록만 없으면 추가한다.
+      - name: Ensure sw.js no-cache in Nginx config
         run: |
           REMOTE="${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}"
           KEY="$HOME/.ssh/ec2_key"
-          scp -i "$KEY" -o StrictHostKeyChecking=no \
-            aws/thegist-nginx.conf "$REMOTE:/tmp/thegist-nginx.conf"
-          ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" "
-            set -e
-            sudo cp /tmp/thegist-nginx.conf /etc/nginx/sites-available/thegist
-            # sites-enabled에 gist 설정이 없을 때만 링크 (default와 중복 listen 방지는 수동 점검)
-            if [ ! -e /etc/nginx/sites-enabled/thegist ]; then
-              sudo ln -sf /etc/nginx/sites-available/thegist /etc/nginx/sites-enabled/thegist
+          ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" bash -c '
+            CONF="/etc/nginx/sites-available/thegist"
+            if ! grep -q "registerSW" "$CONF" 2>/dev/null; then
+              echo "Adding sw.js no-cache block to Nginx config..."
+              sudo sed -i "/location ~\* \\\.\(css|js\)/i \\
+    # SW/PWA: no-cache (auto-added by CI)\\
+    location ~* ^/(sw|registerSW)\\\\.js\$ {\\
+        expires -1;\\
+        add_header Cache-Control \"no-cache, no-store, must-revalidate\";\\
+        add_header Pragma \"no-cache\";\\
+        try_files \$uri =404;\\
+    }\\
+    location = /manifest.webmanifest {\\
+        expires -1;\\
+        add_header Cache-Control \"no-cache, no-store, must-revalidate\";\\
+        try_files \$uri =404;\\
+    }" "$CONF"
+              sudo nginx -t && sudo systemctl reload nginx
+              echo "sw.js no-cache block added and nginx reloaded"
+            else
+              echo "sw.js no-cache block already present — skipping"
             fi
-            sudo nginx -t
-            sudo systemctl reload nginx
-            echo 'Nginx config updated and reloaded'
-          "
+          '
 
       - name: Post-deploy tasks
         run: |

@@ -114,6 +114,8 @@ async function forceLogoutOnce() {
   } catch { /* store not available */ }
 
   localStorage.removeItem('auth-storage')
+
+  setTimeout(() => { isForceLoggingOut = false }, 2000)
 }
 
 api.interceptors.response.use(
