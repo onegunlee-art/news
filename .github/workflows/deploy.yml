@@ -237,24 +237,44 @@ jobs:
 
     steps:
       - name: Wait for deployment
-        run: sleep 30
+        run: sleep 20
 
-      - name: Health check
+      # curl -w "%{http_code}"는 연결 실패 시에도 000을 stdout에 씀.
+      # 여기에 || echo "000"을 붙이면 000000처럼 이어붙어 실패 메시지가 왜곡됨.
+      - name: Health check (retries)
         run: |
-          response=$(curl -s -o /dev/null -w "%{http_code}" "${{ env.SITE_URL }}/api/health" || echo "000")
-          if [ "$response" = "200" ]; then
-            echo "✅ Health check passed"
-          else
-            echo "❌ Health check returned: $response (expected 200)"
-            exit 1
-          fi
+          BASE="${{ env.SITE_URL }}"
+          URL="$BASE/api/health"
+          last=""
+          for i in $(seq 1 12); do
+            last=$(curl -sS -o /dev/null -w "%{http_code}" --connect-timeout 20 --max-time 45 "$URL" 2>/dev/null) || true
+            last=$(echo "$last" | tr -d '[:space:]')
+            if [ "$last" = "200" ]; then
+              echo "✅ Health check passed (attempt $i): $URL"
+              exit 0
+            fi
+            echo "Attempt $i/12: HTTP ${last:-<empty>} — retry in 15s..."
+            sleep 15
+          done
+          echo "❌ Health check failed after 12 attempts. Last HTTP code: ${last:-none}"
+          echo "--- curl -I (debug) ---"
+          curl -sSI --connect-timeout 15 --max-time 30 "$URL" || true
+          exit 1
 
-      - name: Check homepage
+      - name: Check homepage (retries)
         run: |
-          response=$(curl -s -o /dev/null -w "%{http_code}" "${{ env.SITE_URL }}/" || echo "000")
-          if [ "$response" = "200" ]; then
-            echo "✅ Homepage accessible"
-          else
-            echo "❌ Homepage returned: $response (expected 200)"
-            exit 1
-          fi
+          URL="${{ env.SITE_URL }}/"
+          last=""
+          for i in $(seq 1 8); do
+            last=$(curl -sS -o /dev/null -w "%{http_code}" --connect-timeout 20 --max-time 45 "$URL" 2>/dev/null) || true
+            last=$(echo "$last" | tr -d '[:space:]')
+            if [ "$last" = "200" ]; then
+              echo "✅ Homepage OK (attempt $i)"
+              exit 0
+            fi
+            echo "Attempt $i/8: HTTP ${last:-<empty>} — retry in 10s..."
+            sleep 10
+          done
+          echo "❌ Homepage failed. Last HTTP: ${last:-none}"
+          curl -sSI --connect-timeout 15 --max-time 30 "$URL" || true
+          exit 1
