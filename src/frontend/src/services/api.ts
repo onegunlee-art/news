@@ -84,6 +84,7 @@ api.interceptors.request.use(
 
 // 응답 인터셉터: 401 시 토큰 갱신 (단일 책임 — store와 localStorage 모두 갱신)
 let isRefreshing = false
+let isForceLoggingOut = false
 let failedQueue: { resolve: (v: unknown) => void; reject: (e: unknown) => void }[] = []
 
 function processQueue(error: unknown, token: string | null) {
@@ -91,11 +92,39 @@ function processQueue(error: unknown, token: string | null) {
   failedQueue = []
 }
 
+async function forceLogoutOnce() {
+  if (isForceLoggingOut) return
+  isForceLoggingOut = true
+
+  localStorage.removeItem('access_token')
+  localStorage.removeItem('refresh_token')
+  localStorage.removeItem('user')
+  localStorage.removeItem('is_subscribed')
+
+  try {
+    const { useAuthStore } = await import('../store/authStore')
+    useAuthStore.setState({
+      accessToken: null,
+      refreshToken: null,
+      isAuthenticated: false,
+      user: null,
+      isSubscribed: false,
+      isInitialized: true,
+    })
+  } catch { /* store not available */ }
+
+  localStorage.removeItem('auth-storage')
+}
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config
     if (error.response?.status !== 401 || originalRequest._retry) {
+      return Promise.reject(error)
+    }
+
+    if (isForceLoggingOut) {
       return Promise.reject(error)
     }
 
@@ -141,13 +170,12 @@ api.interceptors.response.use(
         originalRequest.headers['X-Authorization'] = bearer
         return api(originalRequest)
       }
+
+      processQueue(error, null)
+      forceLogoutOnce()
     } catch (refreshError) {
       processQueue(refreshError, null)
-      localStorage.removeItem('access_token')
-      localStorage.removeItem('refresh_token')
-      localStorage.removeItem('user')
-      localStorage.removeItem('auth-storage')
-      window.location.href = '/'
+      forceLogoutOnce()
     } finally {
       isRefreshing = false
     }

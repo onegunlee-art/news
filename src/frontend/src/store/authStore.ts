@@ -201,12 +201,21 @@ export const useAuthStore = create<AuthState>()(
       }),
       onRehydrateStorage: () => (state) => {
         if (state && state.accessToken) {
-          state.isAuthenticated = true
-          localStorage.setItem('access_token', state.accessToken)
-          localStorage.setItem('refresh_token', state.refreshToken || '')
-          const userStr = localStorage.getItem('user')
-          if (userStr) {
-            try { state.user = JSON.parse(userStr) } catch { /* ignore */ }
+          const existingToken = localStorage.getItem('access_token')
+          if (existingToken === null && localStorage.getItem('auth-storage') === null) {
+            state.accessToken = null
+            state.refreshToken = null
+            state.isAuthenticated = false
+            state.user = null
+            state.isSubscribed = false
+          } else {
+            state.isAuthenticated = true
+            localStorage.setItem('access_token', state.accessToken)
+            localStorage.setItem('refresh_token', state.refreshToken || '')
+            const userStr = localStorage.getItem('user')
+            if (userStr) {
+              try { state.user = JSON.parse(userStr) } catch { /* ignore */ }
+            }
           }
         }
         if (state) {

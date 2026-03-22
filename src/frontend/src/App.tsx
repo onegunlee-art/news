@@ -27,15 +27,12 @@ import SubscribeErrorPage from './pages/SubscribeErrorPage'
 import SubscriptionManagePage from './pages/SubscriptionManagePage'
 
 function App() {
-  const { initializeAuth } = useAuthStore()
   const [welcomeData, setWelcomeData] = useState<{ userName: string; welcomeMessage: string } | null>(null)
   const [showConsent, setShowConsent] = useState(() => localStorage.getItem('consent_required') === '1')
 
   useEffect(() => {
-    initializeAuth()
-    const timer = setTimeout(() => initializeAuth(), 150)
-    return () => clearTimeout(timer)
-  }, [initializeAuth])
+    useAuthStore.getState().initializeAuth()
+  }, [])
 
   // 동의 팝업이 닫힌 후에만 환영 팝업 처리
   useEffect(() => {
