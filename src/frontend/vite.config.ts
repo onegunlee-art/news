@@ -1,11 +1,26 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
+import fs from 'fs'
+
+function versionJsonPlugin() {
+  return {
+    name: 'version-json',
+    closeBundle() {
+      const version = { v: Date.now() }
+      fs.writeFileSync(
+        path.resolve(__dirname, '../../public/version.json'),
+        JSON.stringify(version),
+      )
+    },
+  }
+}
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
     react(),
+    versionJsonPlugin(),
   ],
   resolve: {
     alias: {

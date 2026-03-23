@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { useAuthStore } from './store/authStore'
+import { useVersionCheck } from './hooks/useVersionCheck'
 import Layout from './components/Layout/Layout'
 import AudioPlayerPopup from './components/AudioPlayer/AudioPlayerPopup'
 import WelcomePopup from './components/Common/WelcomePopup'
@@ -29,6 +30,8 @@ import SubscriptionManagePage from './pages/SubscriptionManagePage'
 function App() {
   const [welcomeData, setWelcomeData] = useState<{ userName: string; welcomeMessage: string } | null>(null)
   const [showConsent, setShowConsent] = useState(() => localStorage.getItem('consent_required') === '1')
+
+  useVersionCheck()
 
   useEffect(() => {
     useAuthStore.getState().initializeAuth()
