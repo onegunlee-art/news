@@ -103,7 +103,7 @@ if (!$expiresAt) {
 
 $startDate = date('Y-m-d H:i:s');
 
-$pdo->prepare("UPDATE users SET is_subscribed = 1, subscription_expires_at = ?, steppay_subscription_id = ?, steppay_order_code = ?, subscription_plan = ?, subscription_start_date = ? WHERE id = ?")
+$pdo->prepare("UPDATE users SET is_subscribed = 1, subscription_expires_at = ?, steppay_subscription_id = ?, steppay_order_code = ?, subscription_plan = ?, subscription_start_date = ?, last_payment_error = NULL, last_payment_error_at = NULL WHERE id = ?")
     ->execute([$expiresAt, $subscriptionId, $orderCode, $matchedPlanId, $startDate, $userId]);
 
 payment_log("verify 성공 userId={$userId} plan={$matchedPlanId} expires={$expiresAt}");

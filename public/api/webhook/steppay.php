@@ -124,7 +124,7 @@ function handlePaymentCompleted(PDO $pdo, array $data): void {
         return;
     }
 
-    $pdo->prepare("UPDATE users SET is_subscribed = 1 WHERE id = ?")->execute([$user['id']]);
+    $pdo->prepare("UPDATE users SET is_subscribed = 1, last_payment_error = NULL, last_payment_error_at = NULL WHERE id = ?")->execute([$user['id']]);
 }
 
 function handlePaymentFailed(PDO $pdo, array $data): void {
@@ -146,5 +146,9 @@ function handlePaymentFailed(PDO $pdo, array $data): void {
 
     if (!$user) return;
 
-    $pdo->prepare("UPDATE users SET is_subscribed = 0 WHERE id = ?")->execute([$user['id']]);
+    $errorMessage = $data['errorMessage'] ?? null;
+    payment_log('payment.failed errorMessage', ['userId' => $user['id'], 'errorMessage' => $errorMessage, 'orderCode' => $orderCode]);
+
+    $pdo->prepare("UPDATE users SET is_subscribed = 0, last_payment_error = ?, last_payment_error_at = NOW() WHERE id = ?")
+        ->execute([$errorMessage, $user['id']]);
 }

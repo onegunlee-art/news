@@ -67,7 +67,7 @@ export default function SubscriptionPage() {
   const [selectedPlan, setSelectedPlan] = useState('3m')
   const [loading, setLoading] = useState(false)
   const [loadingOnetime, setLoadingOnetime] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<{ source: string; message: string } | null>(null)
   const { isAuthenticated, isSubscribed, accessToken, isInitialized } = useAuthStore()
   const navigate = useNavigate()
 
@@ -92,7 +92,7 @@ export default function SubscriptionPage() {
       navigate('/login', { state: { returnTo: '/subscribe', intent: 'subscribe' } })
       return
     }
-    if (isSubscribed) { setError('이미 구독 중입니다.'); return }
+    if (isSubscribed) { setError({ source: '', message: '이미 구독 중입니다.' }); return }
 
     setLoading(true)
     setError(null)
@@ -103,10 +103,13 @@ export default function SubscriptionPage() {
       if (res.data?.success && res.data?.data?.paymentUrl) {
         window.location.href = res.data.data.paymentUrl
       } else {
-        setError(res.data?.message || '주문 생성에 실패했습니다.')
+        setError({
+          source: res.data?.source || '',
+          message: res.data?.message || '주문 생성에 실패했습니다.',
+        })
       }
     } catch (err: unknown) {
-      setError(apiErrorMessage(err, '결제 요청 중 오류가 발생했습니다.'))
+      setError({ source: '일시적 오류', message: apiErrorMessage(err, '일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.') })
     } finally {
       setLoading(false)
     }
@@ -127,10 +130,13 @@ export default function SubscriptionPage() {
       if (res.data?.success && res.data?.data?.paymentUrl) {
         window.location.href = res.data.data.paymentUrl
       } else {
-        setError(res.data?.message || '주문 생성에 실패했습니다.')
+        setError({
+          source: res.data?.source || '',
+          message: res.data?.message || '주문 생성에 실패했습니다.',
+        })
       }
     } catch (err: unknown) {
-      setError(apiErrorMessage(err, '결제 요청 중 오류가 발생했습니다.'))
+      setError({ source: '일시적 오류', message: apiErrorMessage(err, '일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.') })
     } finally {
       setLoadingOnetime(null)
     }
@@ -179,7 +185,10 @@ export default function SubscriptionPage() {
         {/* 에러 */}
         {error && (
           <div className="mb-6 px-4 py-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-lg text-center">
-            <span className="text-red-700 dark:text-red-300 text-sm">{error}</span>
+            {error.source && (
+              <span className="block text-red-400 dark:text-red-400 text-xs mb-0.5">{error.source}</span>
+            )}
+            <span className="text-red-700 dark:text-red-300 text-sm">{error.message}</span>
           </div>
         )}
 

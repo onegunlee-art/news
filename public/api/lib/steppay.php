@@ -33,8 +33,8 @@ function steppayRequest(string $method, string $path, ?array $body = null): arra
     $ch = curl_init($url);
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_CONNECTTIMEOUT => 5,
-        CURLOPT_TIMEOUT => 15,
+        CURLOPT_CONNECTTIMEOUT => 10,
+        CURLOPT_TIMEOUT => 30,
         CURLOPT_HTTPHEADER => [
             'Secret-Token: ' . ($cfg['secret_token'] ?? ''),
             'Content-Type: application/json',
@@ -164,4 +164,42 @@ function steppayPauseSubscription(int $subscriptionId): array {
  */
 function steppayResumeSubscription(int $subscriptionId): array {
     return steppayRequest('POST', '/subscriptions/' . $subscriptionId . '/active');
+}
+
+/**
+ * 결제 실패 메시지를 사용자 친화적으로 정규화.
+ * @return array{source: string, message: string}
+ *   source: '결제사 안내' (PG/카드 문제) | '일시적 오류' (내부/네트워크)
+ */
+function normalizePaymentError(?string $errorMessage): array {
+    if (!$errorMessage) {
+        return ['source' => '일시적 오류', 'message' => '잠시 후 다시 시도해 주세요.'];
+    }
+
+    $pgPatterns = [
+        '/한도.*(초과|부족)/u'       => '카드 한도가 초과되었습니다. 다른 카드로 시도해 주세요.',
+        '/잔액.*(부족|없)/u'         => '잔액이 부족합니다. 다른 결제 수단을 이용해 주세요.',
+        '/카드.*거[절부]/u'          => '카드 승인이 거절되었습니다. 카드사에 문의하시거나 다른 카드를 이용해 주세요.',
+        '/유효.*기[간한]/u'          => '카드 유효기간이 만료되었습니다. 다른 카드를 이용해 주세요.',
+        '/분실|도난/u'              => '분실/도난 신고된 카드입니다. 다른 카드를 이용해 주세요.',
+        '/취소|cancel/iu'           => '결제가 취소되었습니다.',
+        '/USER.?CANCEL/i'           => '결제가 취소되었습니다.',
+        '/CARD.?DECLINED/i'         => '카드 승인이 거절되었습니다.',
+        '/INSUFFICIENT/i'           => '잔액이 부족합니다.',
+        '/EXPIRED/i'                => '카드 유효기간이 만료되었습니다.',
+        '/비밀번호/u'               => '비밀번호 오류입니다. 다시 확인해 주세요.',
+        '/통신.*오류|네트워크/u'     => '결제 통신 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.',
+    ];
+
+    foreach ($pgPatterns as $pattern => $msg) {
+        if (preg_match($pattern, $errorMessage)) {
+            return ['source' => '결제사 안내', 'message' => $msg];
+        }
+    }
+
+    if (preg_match('/[가-힣]/u', $errorMessage) && mb_strlen($errorMessage) < 80) {
+        return ['source' => '결제사 안내', 'message' => $errorMessage];
+    }
+
+    return ['source' => '일시적 오류', 'message' => '잠시 후 다시 시도해 주세요.'];
 }

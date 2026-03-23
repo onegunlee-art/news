@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuthStore } from '../store/authStore'
@@ -10,8 +10,7 @@ import GistLogo from '../components/Common/GistLogo'
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api'
 
 /**
- * 결제 복귀 전용 토큰 갱신 — 실패해도 로그아웃 하지 않음.
- * authStore.refreshAccessToken은 실패 시 logout()을 호출하므로 여기서 직접 처리.
+ * 결제 복귀 전용 토큰 갱신 -- 실패해도 로그아웃 하지 않음.
  */
 async function silentRefresh(): Promise<boolean> {
   const refreshToken = localStorage.getItem('refresh_token')
@@ -27,7 +26,7 @@ async function silentRefresh(): Promise<boolean> {
       } catch { /* store not ready */ }
       return true
     }
-  } catch { /* refresh failed — keep existing tokens */ }
+  } catch { /* refresh failed */ }
   return false
 }
 
@@ -37,55 +36,19 @@ export default function SubscribeSuccessPage() {
   const { accessToken, setSubscribed, fetchUser } = useAuthStore()
   const [status, setStatus] = useState<'verifying' | 'success' | 'pending' | 'error'>('verifying')
   const [message, setMessage] = useState('결제를 확인 중입니다...')
-  const attemptRef = useRef(0)
-  const maxAttempts = 3
-  const retryDelay = 4000
-
-  const verifyOrder = useCallback(async (orderCode: string) => {
-    const token = localStorage.getItem('access_token') || accessToken
-    try {
-      const res = await api.post('/subscription/verify', { order_code: orderCode }, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (res.data?.success) {
-        setSubscribed(true)
-        fetchUser()
-        setStatus('success')
-        setMessage('the gist. 의 모든 컨텐츠를 만나세요')
-        return
-      }
-      if (res.data?.status === 'pending' && attemptRef.current < maxAttempts) {
-        attemptRef.current++
-        setMessage(`결제 확인 중입니다... (${attemptRef.current}/${maxAttempts})`)
-        setTimeout(() => verifyOrder(orderCode), retryDelay)
-        return
-      }
-      if (attemptRef.current >= maxAttempts) {
-        setStatus('pending')
-        setMessage('결제는 정상 처리되었으며, 잠시 후 자동으로 반영됩니다.')
-        return
-      }
-      setStatus('error')
-      setMessage(res.data?.message || '결제 확인에 실패했습니다.')
-    } catch {
-      if (attemptRef.current < maxAttempts) {
-        attemptRef.current++
-        setMessage(`결제 확인 중입니다... (${attemptRef.current}/${maxAttempts})`)
-        setTimeout(() => verifyOrder(orderCode), retryDelay)
-        return
-      }
-      setStatus('pending')
-      setMessage('결제는 정상 처리되었으며, 잠시 후 자동으로 반영됩니다.')
-    }
-  }, [accessToken, setSubscribed, fetchUser])
+  const calledRef = useRef(false)
 
   useEffect(() => {
+    if (calledRef.current) return
+    calledRef.current = true
+
     const orderCode = searchParams.get('order_code') || searchParams.get('orderCode')
     if (!orderCode) {
       setStatus('error')
       setMessage('결제 정보를 확인할 수 없습니다.')
       return
     }
+
     const run = async () => {
       await silentRefresh()
       const token = localStorage.getItem('access_token') || accessToken
@@ -94,10 +57,32 @@ export default function SubscribeSuccessPage() {
         setMessage('결제 정보를 확인할 수 없습니다.')
         return
       }
-      verifyOrder(orderCode)
+
+      try {
+        const res = await api.post('/subscription/verify', { order_code: orderCode }, {
+          headers: { Authorization: `Bearer ${token}` },
+          timeout: 60000,
+        })
+        if (res.data?.success) {
+          setSubscribed(true)
+          fetchUser()
+          setStatus('success')
+          setMessage('the gist. 의 모든 컨텐츠를 만나세요')
+        } else if (res.data?.status === 'pending') {
+          setStatus('pending')
+          setMessage('결제는 정상 처리되었으며, 잠시 후 자동으로 반영됩니다.')
+        } else {
+          setStatus('error')
+          setMessage(res.data?.message || '결제 확인에 실패했습니다.')
+        }
+      } catch {
+        setStatus('pending')
+        setMessage('결제는 정상 처리되었으며, 잠시 후 자동으로 반영됩니다.')
+      }
     }
+
     run()
-  }, [searchParams, accessToken, verifyOrder])
+  }, [searchParams, accessToken, setSubscribed, fetchUser])
 
   return (
     <div className="min-h-screen bg-page flex items-center justify-center px-4">

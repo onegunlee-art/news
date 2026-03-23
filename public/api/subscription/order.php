@@ -117,7 +117,11 @@ if (!$steppayCustomerId) {
 
             if (!$custRetry['success'] || empty($custRetry['data']['id'])) {
                 http_response_code(502);
-                echo json_encode(['success' => false, 'message' => '결제 고객 등록에 실패했습니다.', 'detail' => $custRetry], JSON_UNESCAPED_UNICODE);
+                echo json_encode([
+                    'success' => false,
+                    'source' => '일시적 오류',
+                    'message' => '일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.',
+                ], JSON_UNESCAPED_UNICODE);
                 exit;
             }
             $steppayCustomerId = (int) $custRetry['data']['id'];
@@ -135,7 +139,13 @@ payment_log('주문 생성 응답', $orderResult, $userId);
 
 if (!$orderResult['success'] || empty($orderResult['data']['orderCode'])) {
     http_response_code(502);
-    echo json_encode(['success' => false, 'message' => '주문 생성에 실패했습니다.', 'detail' => $orderResult], JSON_UNESCAPED_UNICODE);
+    $apiMsg = $orderResult['data']['message'] ?? $orderResult['error'] ?? null;
+    $normalized = normalizePaymentError($apiMsg);
+    echo json_encode([
+        'success' => false,
+        'source' => $normalized['source'],
+        'message' => $normalized['message'],
+    ], JSON_UNESCAPED_UNICODE);
     exit;
 }
 
