@@ -113,12 +113,40 @@ $router->post('/contact', function (Request $request): Response {
         if ($contactStr !== null) {
             $body = "연락처: " . $contactStr . "\n\n" . $body;
         }
-        $headers = [
-            'MIME-Version: 1.0',
-            'Content-type: text/plain; charset=UTF-8',
-            'From: noreply@thegist.co.kr',
-        ];
-        $ok = @mail($to, $subjectEncoded, $body, implode("\r\n", $headers));
+        $mailConfig = require __DIR__ . '/mail.php';
+        $apiKey = $mailConfig['resend']['api_key'] ?? '';
+        $fromAddr = $mailConfig['from']['address'] ?? 'noreply@thegist.co.kr';
+        $fromName = $mailConfig['from']['name'] ?? 'The Gist';
+
+        if ($apiKey) {
+            $ch = curl_init('https://api.resend.com/emails');
+            curl_setopt_array($ch, [
+                CURLOPT_POST => true,
+                CURLOPT_HTTPHEADER => [
+                    'Authorization: Bearer ' . $apiKey,
+                    'Content-Type: application/json',
+                ],
+                CURLOPT_POSTFIELDS => json_encode([
+                    'from' => $fromName . ' <' . $fromAddr . '>',
+                    'to' => [$to],
+                    'subject' => $subjectRaw,
+                    'text' => $body,
+                ], JSON_UNESCAPED_UNICODE),
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_TIMEOUT => 15,
+            ]);
+            $res = curl_exec($ch);
+            $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+            $ok = $httpCode >= 200 && $httpCode < 300;
+        } else {
+            $headers = [
+                'MIME-Version: 1.0',
+                'Content-type: text/plain; charset=UTF-8',
+                'From: ' . $fromAddr,
+            ];
+            $ok = @mail($to, $subjectEncoded, $body, implode("\r\n", $headers));
+        }
         if (!$ok) {
             return Response::error('이메일 발송에 실패했습니다. 서버 메일 설정을 확인해주세요.', 500);
         }

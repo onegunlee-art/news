@@ -539,7 +539,9 @@ export default function ProfilePage() {
                     setCancelContact('')
                     setCancelMessage('')
                     setShowCancelSuccess(true)
-                  } catch { /* ignore */ } finally {
+                  } catch {
+                    alert('요청에 실패했습니다. 잠시 후 다시 시도해주세요.')
+                  } finally {
                     setCancelSending(false)
                   }
                 }}
