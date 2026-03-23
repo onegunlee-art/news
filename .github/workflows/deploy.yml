@@ -246,6 +246,24 @@ jobs:
           ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" \
             'CONF=/etc/nginx/sites-available/thegist && sudo awk "/# 정적 파일 캐시/{while((getline line < \"/tmp/index-html-snippet.conf\") > 0) print line; close(\"/tmp/index-html-snippet.conf\")} {print}" "$CONF" | sudo tee /tmp/thegist-index-patched > /dev/null && sudo cp /tmp/thegist-index-patched "$CONF" && sudo nginx -t && sudo systemctl reload nginx && echo "index.html no-cache block added and nginx reloaded"'
 
+      - name: Ensure SPA fallback no-cache in Nginx
+        run: |
+          REMOTE="${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}"
+          KEY="$HOME/.ssh/ec2_key"
+          HAS=$(ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" \
+            'grep -c "no-cache.*must-revalidate" /etc/nginx/sites-available/thegist 2>/dev/null | tail -1 || echo 0')
+          HAS=$(echo "$HAS" | tr -d '[:space:]')
+          LOCATION_SLASH_OK=$(ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" \
+            'awk "/location \/ \{/{found=1} found && /must-revalidate/{print \"yes\"; exit}" /etc/nginx/sites-available/thegist || echo no')
+          LOCATION_SLASH_OK=$(echo "$LOCATION_SLASH_OK" | tr -d '[:space:]')
+          if [ "$LOCATION_SLASH_OK" = "yes" ]; then
+            echo "location / already has no-cache headers — skipping"
+            exit 0
+          fi
+          echo "Patching location / with no-cache headers..."
+          ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" \
+            'CONF=/etc/nginx/sites-available/thegist && sudo sed -i "/location \/ {/,/}/{s|try_files \$uri \$uri/ /index.html;|try_files \$uri \$uri/ /index.html;\n        add_header Cache-Control \"no-cache, no-store, must-revalidate\" always;\n        add_header Pragma \"no-cache\" always;|}" "$CONF" && sudo nginx -t && sudo systemctl reload nginx && echo "location / no-cache patched and nginx reloaded"'
+
       - name: Post-deploy tasks
         run: |
           REMOTE="${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}"
