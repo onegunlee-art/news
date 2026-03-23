@@ -102,6 +102,7 @@ try {
     $hasUpdatedAt = in_array('updated_at', $newsColumns, true);
     $hasStatus = in_array('status', $newsColumns, true);
     $hasCategoryParent = in_array('category_parent', $newsColumns, true);
+    $hasAlsoSpecial = in_array('also_special', $newsColumns, true);
     $hasViewCount = in_array('view_count', $newsColumns, true);
     
     // 기본 컬럼 (url: extractTitleFromUrl용, source_url 없을 때 fallback)
@@ -258,6 +259,16 @@ try {
             $prevSql = "SELECT id, title FROM news WHERE 1=1 $statusCond AND id != ? AND (view_count > ? OR (view_count = ? AND id > ?)) ORDER BY view_count ASC, id ASC LIMIT 1";
             $prevStmt = $db->prepare($prevSql);
             $prevStmt->execute([$news['id'], $currentVc, $currentVc, $news['id']]);
+            $prevArticle = $prevStmt->fetch(PDO::FETCH_ASSOC);
+        } elseif ($fromTab === 'special' && $hasCategoryParent && $hasAlsoSpecial) {
+            $specialCond = "(category_parent = 'special' OR also_special = 1)";
+            $nextSql = "SELECT id, title FROM news WHERE $specialCond $statusCond AND ($pubCol < ? OR ($pubCol = ? AND id < ?)) ORDER BY $pubCol DESC, id DESC LIMIT 1";
+            $nextStmt = $db->prepare($nextSql);
+            $nextStmt->execute([$currentPub, $currentPub, $news['id']]);
+            $nextArticle = $nextStmt->fetch(PDO::FETCH_ASSOC);
+            $prevSql = "SELECT id, title FROM news WHERE $specialCond $statusCond AND ($pubCol > ? OR ($pubCol = ? AND id > ?)) ORDER BY $pubCol ASC, id ASC LIMIT 1";
+            $prevStmt = $db->prepare($prevSql);
+            $prevStmt->execute([$currentPub, $currentPub, $news['id']]);
             $prevArticle = $prevStmt->fetch(PDO::FETCH_ASSOC);
         } elseif (in_array($fromTab, ['diplomacy', 'economy', 'special'], true) && $hasCategoryParent) {
             $nextSql = "SELECT id, title FROM news WHERE category_parent = ? $statusCond AND ($pubCol < ? OR ($pubCol = ? AND id < ?)) ORDER BY $pubCol DESC, id DESC LIMIT 1";
