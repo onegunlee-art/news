@@ -79,6 +79,20 @@ export default function ProfilePage() {
     }
   }
 
+  const [bookmarkDeletingId, setBookmarkDeletingId] = useState<number | null>(null)
+
+  const handleRemoveBookmark = async (newsId: number) => {
+    setBookmarkDeletingId(newsId)
+    try {
+      await newsApi.removeBookmark(newsId)
+      setBookmarks((prev) => prev.filter((b) => b.id !== newsId))
+    } catch (error) {
+      alert(apiErrorMessage(error, '즐겨찾기 삭제에 실패했습니다.'))
+    } finally {
+      setBookmarkDeletingId(null)
+    }
+  }
+
   const handleLogout = async () => {
     await logout()
     navigate('/')
@@ -188,7 +202,12 @@ export default function ProfilePage() {
                   ) : isLoading ? (
                     <div className="flex justify-center py-12"><LoadingSpinner size="large" /></div>
                   ) : (
-                    <BookmarkList bookmarks={bookmarks} subCategoryToLabel={subCategoryToLabel} />
+                    <BookmarkList
+                      bookmarks={bookmarks}
+                      subCategoryToLabel={subCategoryToLabel}
+                      onDelete={handleRemoveBookmark}
+                      deletingId={bookmarkDeletingId}
+                    />
                   )}
                 </div>
               )}
@@ -740,6 +759,7 @@ function ContactForm() {
 }
 
 function AudioList({ items, subCategoryToLabel }: { items: AudioListItem[]; subCategoryToLabel: Record<string, string> }) {
+  const removeAudioItem = useAudioListStore((s) => s.removeItem)
   const safeItems = Array.isArray(items) ? items.filter((i) => i != null && Number.isFinite(i.id)) : []
   if (safeItems.length === 0) {
     return (
@@ -757,8 +777,9 @@ function AudioList({ items, subCategoryToLabel }: { items: AudioListItem[]; subC
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: index * 0.05 }}
+          className="flex items-stretch gap-2 -mx-5 px-5 py-4 hover:bg-page-secondary/50 transition-colors rounded-lg group"
         >
-          <Link to={`/news/${item.id}`} className="block py-4 hover:bg-page-secondary/50 transition-colors -mx-5 px-5 rounded-lg">
+          <Link to={`/news/${item.id}`} className="flex-1 min-w-0 block">
             <h3 className="font-medium text-page mb-1 line-clamp-2 hover:text-page-secondary transition-colors text-sm">
               {item.title}
             </h3>
@@ -780,13 +801,32 @@ function AudioList({ items, subCategoryToLabel }: { items: AudioListItem[]; subC
               )}
             </div>
           </Link>
+          <button
+            type="button"
+            onClick={() => removeAudioItem(item.id)}
+            className="shrink-0 self-center p-2 rounded-lg text-page-muted hover:text-red-500 hover:bg-page-secondary border border-transparent hover:border-[var(--border-color)] transition-colors"
+            aria-label="들었던 목록에서 삭제"
+            title="삭제"
+          >
+            <MaterialIcon name="delete" className="w-5 h-5" size={20} />
+          </button>
         </motion.div>
       ))}
     </div>
   )
 }
 
-function BookmarkList({ bookmarks, subCategoryToLabel }: { bookmarks: BookmarkRow[]; subCategoryToLabel: Record<string, string> }) {
+function BookmarkList({
+  bookmarks,
+  subCategoryToLabel,
+  onDelete,
+  deletingId,
+}: {
+  bookmarks: BookmarkRow[]
+  subCategoryToLabel: Record<string, string>
+  onDelete: (newsId: number) => void
+  deletingId: number | null
+}) {
   if (bookmarks.length === 0) {
     return (
       <div className="text-center py-8">
@@ -816,8 +856,9 @@ function BookmarkList({ bookmarks, subCategoryToLabel }: { bookmarks: BookmarkRo
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.05 }}
+            className="flex items-stretch gap-2 -mx-5 px-5 py-4 hover:bg-page-secondary/50 transition-colors rounded-lg group"
           >
-            <Link to={`/news/${item.id}`} className="block py-4 hover:bg-page-secondary/50 transition-colors -mx-5 px-5 rounded-lg">
+            <Link to={`/news/${item.id}`} className="flex-1 min-w-0 block">
               <h3 className="font-medium text-page mb-1 line-clamp-2 hover:text-page-secondary transition-colors text-sm">
                 {item.title}
               </h3>
@@ -831,6 +872,16 @@ function BookmarkList({ bookmarks, subCategoryToLabel }: { bookmarks: BookmarkRo
                 )}
               </div>
             </Link>
+            <button
+              type="button"
+              disabled={deletingId === item.id}
+              onClick={() => onDelete(item.id)}
+              className="shrink-0 self-center p-2 rounded-lg text-page-muted hover:text-red-500 hover:bg-page-secondary border border-transparent hover:border-[var(--border-color)] transition-colors disabled:opacity-40"
+              aria-label="즐겨찾기에서 삭제"
+              title="삭제"
+            >
+              <MaterialIcon name="delete" className="w-5 h-5" size={20} />
+            </button>
           </motion.div>
         )
       })}
