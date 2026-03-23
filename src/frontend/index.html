@@ -21,10 +21,8 @@
   <body>
     <div id="root"></div>
     <script>
-      // 기존 SW 캐시 충돌로 인한 무한 새로고침 해결: 구 SW를 한 번 정리
+      // SW 완전 비활성화: 매 방문 시 구 SW를 해제하고 캐시를 정리
       (function(){
-        var key='sw_cleanup_v2';
-        if(localStorage.getItem(key))return;
         if('serviceWorker' in navigator){
           navigator.serviceWorker.getRegistrations().then(function(regs){
             regs.forEach(function(r){r.unregister()});
@@ -33,7 +31,6 @@
             names.forEach(function(n){caches.delete(n)});
           });
         }
-        localStorage.setItem(key,'1');
       })();
     </script>
     <script type="module" src="/src/main.tsx"></script>
