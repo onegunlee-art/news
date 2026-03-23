@@ -42,9 +42,14 @@ $dbPlan = $user['subscription_plan'] ?? null;
 $dbStartDate = $user['subscription_start_date'] ?? null;
 $dbExpiresAt = $user['subscription_expires_at'] ?? null;
 
-$planLabels = ['1m' => '1개월', '3m' => '3개월', '6m' => '6개월', '12m' => '12개월'];
+$planLabels = [
+    '1m'  => 'the gist 1개월 구독권',
+    '3m'  => 'the gist 3개월 구독권',
+    '6m'  => 'the gist 6개월 구독권',
+    '12m' => 'the gist 12개월 구독권',
+];
 
-$planName = null;
+$planName = $dbPlan ? ($planLabels[$dbPlan] ?? null) : null;
 $status = 'ACTIVE';
 $startDate = $dbStartDate;
 $nextPaymentDate = $dbExpiresAt;
@@ -70,7 +75,7 @@ if (!empty($subscriptionId)) {
 }
 
 if (!$planName) {
-    $planName = $dbPlan ? ($planLabels[$dbPlan] ?? $dbPlan) : 'the gist. 구독';
+    $planName = 'the gist 구독권';
 }
 
 $statusLabels = [

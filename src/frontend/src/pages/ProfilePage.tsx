@@ -114,14 +114,14 @@ export default function ProfilePage() {
                           <div className="mt-1.5">
                             {subscriptionDetail?.start_date && user?.subscription_expires_at ? (
                               <p className="text-[11px] font-bold text-orange-500 dark:text-orange-400">
-                                {subscriptionDetail.plan_name?.endsWith('권') ? subscriptionDetail.plan_name : `${subscriptionDetail.plan_name || '구독'}권`} ({formatDateKorean(subscriptionDetail.start_date)} ~ {formatDateKorean(user.subscription_expires_at)})
+                                {subscriptionDetail.plan_name || 'the gist 구독권'} ({formatDateKorean(subscriptionDetail.start_date)} ~ {formatDateKorean(user.subscription_expires_at)})
                               </p>
                             ) : user?.subscription_expires_at ? (
                               <p className="text-[11px] font-bold text-orange-500 dark:text-orange-400">
-                                구독권 (만료: {formatDateKorean(user.subscription_expires_at)})
+                                the gist 구독권 (만료: {formatDateKorean(user.subscription_expires_at)})
                               </p>
                             ) : (
-                              <p className="text-[11px] font-bold text-orange-500 dark:text-orange-400">구독권</p>
+                              <p className="text-[11px] font-bold text-orange-500 dark:text-orange-400">the gist 구독권</p>
                             )}
                           </div>
                         )}
@@ -256,7 +256,7 @@ export default function ProfilePage() {
                       <div className="bg-page-secondary rounded-lg p-4 border border-page">
                         <p className="text-xs font-semibold text-primary-500 uppercase tracking-wider mb-2">사용중인 플랜</p>
                         <p className="text-page font-medium text-sm">
-                          {subscriptionDetail?.plan_name || 'the gist. 구독권'} 사용중
+                          {subscriptionDetail?.plan_name || 'the gist 구독권'} 사용중
                         </p>
                         {subscriptionDetail?.start_date && user?.subscription_expires_at && (
                           <p className="text-page-secondary text-xs mt-1">
