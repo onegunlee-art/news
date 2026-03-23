@@ -219,6 +219,7 @@ jobs:
           ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" \
             'CONF=/etc/nginx/sites-available/thegist && sudo awk "/location ~\* \\\\\./{while((getline line < \"/tmp/sw-snippet.conf\") > 0) print line; close(\"/tmp/sw-snippet.conf\")} {print}" "$CONF" | sudo tee /tmp/thegist-patched > /dev/null && sudo cp /tmp/thegist-patched "$CONF" && sudo nginx -t && sudo systemctl reload nginx && echo "sw.js no-cache block added and nginx reloaded"'
 
+      # index.html no-cache: sed 멀티라인은 YAML run:| 들여쓰기와 충돌하므로 sw 스텝과 동일하게 snippet+awk 사용
       - name: Ensure index.html no-cache in Nginx
         run: |
           REMOTE="${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}"
@@ -228,20 +229,22 @@ jobs:
           HAS=$(echo "$HAS" | tr -d '[:space:]')
           if [ "$HAS" != "0" ]; then
             echo "index.html no-cache block already present — skipping"
-          else
-            echo "Adding index.html no-cache block..."
-            ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" '
-              CONF=/etc/nginx/sites-available/thegist
-              sudo sed -i "/# .*정적 파일 캐시/i\\
-    # SPA 엔트리 HTML: 항상 재검증 (구버전 번들 참조 방지)\\n\
-    location = /index.html {\\n\
-        expires -1;\\n\
-        add_header Cache-Control \"no-cache, no-store, must-revalidate\" always;\\n\
-        add_header Pragma \"no-cache\" always;\\n\
-    }\\n" "$CONF"
-              sudo nginx -t && sudo systemctl reload nginx && echo "index.html no-cache added and nginx reloaded"
-            '
+            exit 0
           fi
+          echo "Adding index.html no-cache block to Nginx config..."
+          printf '%s\n' \
+            '    # ──────────────────────────────────────' \
+            '    # SPA 엔트리 HTML: 항상 재검증 (구버전 번들 참조 방지) (auto-added by CI)' \
+            '    # ──────────────────────────────────────' \
+            '    location = /index.html {' \
+            '        expires -1;' \
+            '        add_header Cache-Control "no-cache, no-store, must-revalidate" always;' \
+            '        add_header Pragma "no-cache" always;' \
+            '    }' \
+            '' > /tmp/index-html-snippet.conf
+          scp -i "$KEY" -o StrictHostKeyChecking=no /tmp/index-html-snippet.conf "$REMOTE:/tmp/"
+          ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" \
+            'CONF=/etc/nginx/sites-available/thegist && sudo awk "/# 정적 파일 캐시/{while((getline line < \"/tmp/index-html-snippet.conf\") > 0) print line; close(\"/tmp/index-html-snippet.conf\")} {print}" "$CONF" | sudo tee /tmp/thegist-index-patched > /dev/null && sudo cp /tmp/thegist-index-patched "$CONF" && sudo nginx -t && sudo systemctl reload nginx && echo "index.html no-cache block added and nginx reloaded"'
 
       - name: Post-deploy tasks
         run: |
