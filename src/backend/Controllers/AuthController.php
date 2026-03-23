@@ -391,7 +391,7 @@ HTML;
     /**
      * JSON 인코딩 헬퍼
      */
-    private function jsonEncode(array $data): string
+    private function jsonEncode(mixed $data): string
     {
         return json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
