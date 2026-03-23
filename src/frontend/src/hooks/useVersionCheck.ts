@@ -4,6 +4,7 @@ const INTERVAL_MS = 5 * 60 * 1000 // 5분
 
 export function useVersionCheck() {
   const baseVersion = useRef<number | null>(null)
+  const isReloading = useRef(false)
 
   const fetchVersion = useCallback(async (): Promise<number | null> => {
     try {
@@ -19,9 +20,11 @@ export function useVersionCheck() {
   }, [])
 
   const checkAndReload = useCallback(async () => {
+    if (isReloading.current) return
     const latest = await fetchVersion()
     if (latest === null || baseVersion.current === null) return
     if (latest !== baseVersion.current) {
+      isReloading.current = true
       window.location.reload()
     }
   }, [fetchVersion])
