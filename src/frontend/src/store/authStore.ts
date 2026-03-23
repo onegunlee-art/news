@@ -12,6 +12,7 @@ interface User {
   created_at: string
   is_subscribed?: boolean
   subscription_expires_at?: string | null
+  login_provider?: 'kakao' | 'google' | 'email'
 }
 
 interface AuthState {
@@ -118,10 +119,13 @@ export const useAuthStore = create<AuthState>()(
             localStorage.setItem('refresh_token', refresh_token)
             return true
           }
-        } catch (error) {
+        } catch (error: unknown) {
           console.error('Token refresh failed:', error)
-          // 리프레시 실패 시 로그아웃
-          get().logout()
+          const axios = await import('axios')
+          const hasServerResponse = axios.default.isAxiosError(error) && error.response != null
+          if (hasServerResponse) {
+            get().logout()
+          }
         }
 
         return false

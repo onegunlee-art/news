@@ -256,6 +256,13 @@ final class User
      */
     public function toJson(): array
     {
+        $provider = 'email';
+        if ($this->kakaoId !== null) {
+            $provider = 'kakao';
+        } elseif ($this->googleId !== null) {
+            $provider = 'google';
+        }
+
         return [
             'id' => $this->id,
             'nickname' => $this->nickname,
@@ -265,6 +272,7 @@ final class User
             'created_at' => $this->createdAt?->format('c'),
             'is_subscribed' => $this->isSubscribed,
             'subscription_expires_at' => $this->subscriptionExpiresAt,
+            'login_provider' => $provider,
         ];
     }
 }

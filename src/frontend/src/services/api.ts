@@ -175,9 +175,12 @@ api.interceptors.response.use(
 
       processQueue(error, null)
       forceLogoutOnce()
-    } catch (refreshError) {
+    } catch (refreshError: unknown) {
       processQueue(refreshError, null)
-      forceLogoutOnce()
+      const hasServerResponse = axios.isAxiosError(refreshError) && refreshError.response != null
+      if (hasServerResponse) {
+        forceLogoutOnce()
+      }
     } finally {
       isRefreshing = false
     }

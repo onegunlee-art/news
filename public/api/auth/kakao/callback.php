@@ -1,7 +1,13 @@
 <?php
 /**
- * 카카오 콜백 - 직접 처리
+ * 카카오 콜백 - 직접 PHP 처리 (프로덕션 운영 파일)
  * 경로: /api/auth/kakao/callback
+ *
+ * [운영 라우팅 안내]
+ * - AWS EC2 Nginx(aws/thegist-nginx.conf)가 이 URL을 본 파일로 직접 rewrite 합니다.
+ * - config/routes.php의 AuthController::kakaoCallback은 이 URL에서는 실행되지 않습니다.
+ * - 구글 로그인은 api.php 라우터 → AuthController::googleCallback 경유 (별도 경로).
+ * - 두 경로 모두 localStorage + auth-storage + /auth/callback# 패턴을 따릅니다.
  */
 
 error_reporting(0);

@@ -49,9 +49,12 @@ final class AuthController
     }
 
     /**
-     * 카카오 콜백 처리
+     * 카카오 콜백 처리 (라우터 경유)
      * 
      * GET /api/auth/kakao/callback
+     *
+     * 주의: 프로덕션 Nginx는 이 URL을 public/api/auth/kakao/callback.php로 직접 rewrite하므로,
+     * 이 메서드는 AWS EC2에서는 호출되지 않습니다. 로컬/다른 환경 폴백용으로 유지합니다.
      */
     public function kakaoCallback(Request $request): Response
     {
@@ -315,9 +318,22 @@ final class AuthController
 
     /**
      * HTML을 통한 리다이렉트 (토큰을 안전하게 전달)
+     * 카카오 callback.php와 동일한 패턴: localStorage + auth-storage + /auth/callback#
      */
     private function htmlRedirect(string $url, array $tokenData): Response
     {
+        $accessToken = $tokenData['access_token'] ?? '';
+        $refreshToken = $tokenData['refresh_token'] ?? '';
+        $isSubscribed = !empty($tokenData['user']['is_subscribed']) ? 'true' : 'false';
+        $isNewUser = !empty($tokenData['is_new_user']);
+
+        $consentJs = '';
+        if ($isNewUser) {
+            $nickname = $tokenData['user']['nickname'] ?? $tokenData['user']['email'] ?? '회원';
+            $consentJs = "localStorage.setItem('consent_required', '1');\n";
+            $consentJs .= "localStorage.setItem('welcome_popup', JSON.stringify({userName:" . json_encode($nickname, JSON_UNESCAPED_UNICODE) . ",ts:Date.now()}));";
+        }
+
         $html = <<<HTML
 <!DOCTYPE html>
 <html>
@@ -335,56 +351,32 @@ final class AuthController
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             color: #fff;
         }
-        .loading {
-            text-align: center;
-        }
+        .loading { text-align: center; }
         .spinner {
-            width: 40px;
-            height: 40px;
+            width: 40px; height: 40px;
             border: 3px solid rgba(255,255,255,0.3);
             border-top-color: #00d9ff;
             border-radius: 50%;
             animation: spin 1s linear infinite;
             margin: 0 auto 1rem;
         }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
-    <div class="loading">
-        <div class="spinner"></div>
-        <p>로그인 처리 중...</p>
-    </div>
-    <script>
-        (function() {
-            const tokenData = {$this->jsonEncode($tokenData)};
-            
-            // localStorage에 토큰 저장
-            if (tokenData.access_token) {
-                localStorage.setItem('access_token', tokenData.access_token);
-                localStorage.setItem('refresh_token', tokenData.refresh_token);
-                localStorage.setItem('token_expires_at', Date.now() + (tokenData.expires_in * 1000));
-                
-                if (tokenData.user) {
-                    localStorage.setItem('user', JSON.stringify(tokenData.user));
-                }
-            }
-            
-            // 신규 가입 시 환영 팝업용 데이터 저장 (프로모션 코드 없음)
-            if (tokenData.is_new_user) {
-                const userName = tokenData.user?.nickname || tokenData.user?.email?.split('@')[0] || '회원';
-                localStorage.setItem('welcome_popup', JSON.stringify({
-                    userName,
-                    ts: Date.now()
-                }));
-            }
-            
-            // 메인 페이지로 이동
-            window.location.href = '/';
-        })();
-    </script>
+<div class="loading"><div class="spinner"></div><p>로그인 처리 중...</p></div>
+<script>
+try {
+    localStorage.setItem('access_token', {$this->jsonEncode($accessToken)});
+    localStorage.setItem('refresh_token', {$this->jsonEncode($refreshToken)});
+    var userData = {$this->jsonEncode($tokenData['user'] ?? null)};
+    if (userData) localStorage.setItem('user', JSON.stringify(userData));
+    var authStorage = { state: { accessToken: {$this->jsonEncode($accessToken)}, refreshToken: {$this->jsonEncode($refreshToken)}, isSubscribed: {$isSubscribed} }, version: 0 };
+    localStorage.setItem('auth-storage', JSON.stringify(authStorage));
+    {$consentJs}
+} catch(e) { console.error('localStorage error:', e); }
+window.location.href = {$this->jsonEncode($url)};
+</script>
 </body>
 </html>
 HTML;
