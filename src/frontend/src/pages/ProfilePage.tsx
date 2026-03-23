@@ -106,22 +106,22 @@ export default function ProfilePage() {
                         </div>
                       )}
                       <div className="min-w-0">
-                        <p className="text-page font-medium text-sm md:text-base truncate">{user.nickname}</p>
+                        <p className="text-page font-medium truncate text-[1.4875rem] md:text-[1.7rem] leading-tight">{user.nickname}</p>
                         {user.role === 'admin' && (
                           <p className="text-page-secondary text-xs md:text-sm mt-0.5">관리자</p>
                         )}
                         {isSubscribed && (
                           <div className="mt-1.5">
                             {subscriptionDetail?.start_date && user?.subscription_expires_at ? (
-                              <p className="text-[11px] text-page-secondary">
+                              <p className="text-[11px] font-bold text-orange-500 dark:text-orange-400">
                                 {subscriptionDetail.plan_name?.endsWith('권') ? subscriptionDetail.plan_name : `${subscriptionDetail.plan_name || '구독'}권`} ({formatDateKorean(subscriptionDetail.start_date)} ~ {formatDateKorean(user.subscription_expires_at)})
                               </p>
                             ) : user?.subscription_expires_at ? (
-                              <p className="text-[11px] text-page-secondary">
+                              <p className="text-[11px] font-bold text-orange-500 dark:text-orange-400">
                                 구독권 (만료: {formatDateKorean(user.subscription_expires_at)})
                               </p>
                             ) : (
-                              <p className="text-[11px] text-page-secondary">구독권</p>
+                              <p className="text-[11px] font-bold text-orange-500 dark:text-orange-400">구독권</p>
                             )}
                           </div>
                         )}
@@ -624,6 +624,10 @@ function ContactForm() {
       setShowContactError(true)
       return
     }
+    if (!subject.trim()) {
+      setResult({ type: 'error', text: '제목을 입력해주세요.' })
+      return
+    }
     if (!message.trim()) {
       setResult({ type: 'error', text: '내용을 입력해주세요.' })
       return
@@ -632,7 +636,7 @@ function ContactForm() {
     setResult(null)
     try {
       await contactApi.send({
-        subject: subject.trim() || undefined,
+        subject: subject.trim(),
         contact: contact.trim() || undefined,
         message: message.trim(),
       })
@@ -651,7 +655,7 @@ function ContactForm() {
     <>
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label htmlFor="contact-subject" className="block text-sm text-page-secondary mb-1">제목 (선택)</label>
+        <label htmlFor="contact-subject" className="block text-sm text-page-secondary mb-1">제목 <span className="text-red-500">*필수</span></label>
         <input
           id="contact-subject"
           type="text"
@@ -673,7 +677,7 @@ function ContactForm() {
         />
       </div>
       <div>
-        <label htmlFor="contact-message" className="block text-sm text-page-secondary mb-1">내용 *</label>
+        <label htmlFor="contact-message" className="block text-sm text-page-secondary mb-1">내용</label>
         <textarea
           id="contact-message"
           value={message}
