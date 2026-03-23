@@ -219,6 +219,30 @@ jobs:
           ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" \
             'CONF=/etc/nginx/sites-available/thegist && sudo awk "/location ~\* \\\\\./{while((getline line < \"/tmp/sw-snippet.conf\") > 0) print line; close(\"/tmp/sw-snippet.conf\")} {print}" "$CONF" | sudo tee /tmp/thegist-patched > /dev/null && sudo cp /tmp/thegist-patched "$CONF" && sudo nginx -t && sudo systemctl reload nginx && echo "sw.js no-cache block added and nginx reloaded"'
 
+      - name: Ensure index.html no-cache in Nginx
+        run: |
+          REMOTE="${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}"
+          KEY="$HOME/.ssh/ec2_key"
+          HAS=$(ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" \
+            'grep -c "location = /index.html" /etc/nginx/sites-available/thegist 2>/dev/null || echo 0')
+          HAS=$(echo "$HAS" | tr -d '[:space:]')
+          if [ "$HAS" != "0" ]; then
+            echo "index.html no-cache block already present — skipping"
+          else
+            echo "Adding index.html no-cache block..."
+            ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" '
+              CONF=/etc/nginx/sites-available/thegist
+              sudo sed -i "/# .*정적 파일 캐시/i\\
+    # SPA 엔트리 HTML: 항상 재검증 (구버전 번들 참조 방지)\\n\
+    location = /index.html {\\n\
+        expires -1;\\n\
+        add_header Cache-Control \"no-cache, no-store, must-revalidate\" always;\\n\
+        add_header Pragma \"no-cache\" always;\\n\
+    }\\n" "$CONF"
+              sudo nginx -t && sudo systemctl reload nginx && echo "index.html no-cache added and nginx reloaded"
+            '
+          fi
+
       - name: Post-deploy tasks
         run: |
           REMOTE="${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}"
@@ -291,3 +315,15 @@ jobs:
           echo "❌ Homepage failed. Last HTTP: ${last:-none}"
           curl -sSI --connect-timeout 15 --max-time 30 "$URL" || true
           exit 1
+
+      - name: Verify index.html Cache-Control
+        run: |
+          URL="${{ env.SITE_URL }}/"
+          echo "--- Response headers for index.html ---"
+          HEADERS=$(curl -sSI --connect-timeout 15 --max-time 30 "$URL" 2>/dev/null || true)
+          echo "$HEADERS"
+          if echo "$HEADERS" | grep -qi "no-cache"; then
+            echo "✅ index.html has no-cache header"
+          else
+            echo "⚠️ index.html may be missing no-cache header — check Nginx config"
+          fi

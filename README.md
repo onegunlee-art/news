@@ -31,9 +31,9 @@ Gisters, Becoming Leaders - 키워드 추출, 감정 분석, 맥락 요약
 - REST API
 
 ### 인프라
-- dothome 호스팅
-- GitHub Actions CI/CD
-- FTP 자동 배포
+- AWS EC2 (Nginx + PHP-FPM)
+- GitHub Actions CI/CD → rsync 배포
+- `index.html`은 Nginx에서 `no-cache` 처리 — 배포 직후 구버전 번들 참조 방지
 
 ## 📁 프로젝트 구조
 
