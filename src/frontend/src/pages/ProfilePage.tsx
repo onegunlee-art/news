@@ -411,14 +411,8 @@ export default function ProfilePage() {
             <h3 id="withdraw-title" className="text-lg font-semibold text-page mb-2">회원탈퇴</h3>
             {isSubscribed ? (
               <>
-                <p className="text-sm text-page-secondary mb-3 leading-relaxed">
-                  탈퇴에 앞서 구독 취소 및 환불을 진행하세요.
-                  <br />
-                  <br />
-                  먼저 구독을 취소하시고, 탈퇴를 진행해 주시기 바랍니다.
-                </p>
-                <p className="text-xs text-page-muted mb-6 leading-relaxed">
-                  (구독 관리 → 구독 취소 및 환불 → 담당자 연락 후 취소 및 환불 조치)
+                <p className="text-sm font-bold text-orange-500 dark:text-orange-400 mb-6 leading-relaxed text-center">
+                  (구독 관리 → 구독 취소 및 환불 → 담당자 연락 후 취소 및 환불 조치 → 회원탈퇴)
                 </p>
                 <div className="flex justify-center">
                   <button
@@ -500,7 +494,7 @@ export default function ProfilePage() {
         <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="cancel-title">
           <div className="bg-page border border-page rounded-xl shadow-xl max-w-md w-full p-6 my-8">
             <h3 id="cancel-title" className="text-lg font-semibold text-page mb-1">정말 취소 하시겠습니까?</h3>
-            <p className="text-sm text-page-secondary mb-5">환불 관련 연락 드릴 연락처를 남겨주세요. (영업일 5일 이내 연락 드리겠습니다.)</p>
+            <p className="text-sm text-page-secondary mb-5">환불 관련 소통할 연락처를 남겨주세요.</p>
 
             <div className="space-y-3 mb-5">
               <div>
@@ -589,7 +583,7 @@ export default function ProfilePage() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" role="dialog" aria-modal="true">
           <div className="bg-page border border-page rounded-xl shadow-xl max-w-sm w-full p-6">
             <p className="text-page font-medium text-center">구독 취소 요청이 접수되었습니다.</p>
-            <p className="text-page-secondary text-xs text-center mt-2">영업일 5일 이내 연락 드리겠습니다.</p>
+            <p className="text-page-secondary text-xs text-center mt-2">담당자가 곧 연락 드릴 예정입니다.</p>
             <div className="mt-4 flex justify-center">
               <button
                 type="button"
