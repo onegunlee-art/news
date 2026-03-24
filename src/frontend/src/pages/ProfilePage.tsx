@@ -52,6 +52,7 @@ export default function ProfilePage() {
   const [showCancelContactError, setShowCancelContactError] = useState(false)
   const [profileTaglineTitle, setProfileTaglineTitle] = useState('')
   const [profileTagline, setProfileTagline] = useState('')
+  const [expandedTagline, setExpandedTagline] = useState(false)
   const activeTabRef = useRef(activeTab)
   activeTabRef.current = activeTab
 
@@ -191,12 +192,29 @@ export default function ProfilePage() {
 
         {hasAuth && profileTaglineTitle.trim() !== '' && profileTagline.trim() !== '' && (
           <section className="bg-page rounded-xl overflow-hidden shadow-sm border border-page mb-4">
-            <h2 className="px-5 py-4 text-xs font-bold text-primary-500 uppercase tracking-wider">
-              {profileTaglineTitle}
-            </h2>
-            <div className="px-5 pb-5 pt-1">
-              <p className="text-page text-sm font-medium leading-relaxed whitespace-pre-line">{profileTagline}</p>
-            </div>
+            <ul className="divide-y divide-[var(--border-color)]">
+              <li>
+                <button
+                  type="button"
+                  onClick={() => setExpandedTagline((v) => !v)}
+                  className={`w-full flex items-center gap-3 px-5 py-4 text-left transition-colors ${
+                    expandedTagline ? 'bg-page-secondary' : 'hover:bg-page-secondary/50'
+                  }`}
+                >
+                  <span className="flex-1 text-page text-sm font-medium line-clamp-2">{profileTaglineTitle}</span>
+                  <MaterialIcon
+                    name="chevron_right"
+                    className={`w-5 h-5 text-page-muted transition-transform flex-shrink-0 ${expandedTagline ? 'rotate-90' : ''}`}
+                    size={20}
+                  />
+                </button>
+                {expandedTagline && (
+                  <div className="px-5 pb-5 pt-1 min-h-0 border-t border-page">
+                    <p className="text-page text-sm font-medium leading-relaxed whitespace-pre-line">{profileTagline}</p>
+                  </div>
+                )}
+              </li>
+            </ul>
           </section>
         )}
 
