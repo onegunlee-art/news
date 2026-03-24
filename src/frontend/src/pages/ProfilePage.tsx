@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useAuthStore } from '../store/authStore'
 import { useAudioListStore, type AudioListItem } from '../store/audioListStore'
 import { useViewSettingsStore } from '../store/viewSettingsStore'
-import { newsApi, contactApi, subscriptionApi, type SubscriptionDetail } from '../services/api'
+import { newsApi, contactApi, subscriptionApi, siteSettingsApi, type SubscriptionDetail } from '../services/api'
 import LoadingSpinner from '../components/Common/LoadingSpinner'
 import { formatSourceDisplayName } from '../utils/formatSource'
 import MaterialIcon from '../components/Common/MaterialIcon'
@@ -50,6 +50,7 @@ export default function ProfilePage() {
   const [cancelSending, setCancelSending] = useState(false)
   const [showCancelSuccess, setShowCancelSuccess] = useState(false)
   const [showCancelContactError, setShowCancelContactError] = useState(false)
+  const [profileTagline, setProfileTagline] = useState('')
   const activeTabRef = useRef(activeTab)
   activeTabRef.current = activeTab
 
@@ -64,6 +65,16 @@ export default function ProfilePage() {
       if (res.data?.success && res.data.data) setSubscriptionDetail(res.data.data)
     }).catch(() => {})
   }, [isSubscribed])
+
+  useEffect(() => {
+    siteSettingsApi
+      .getSite()
+      .then((res) => {
+        const t = res.data?.data?.profile_page_tagline
+        if (typeof t === 'string' && t.trim()) setProfileTagline(t)
+      })
+      .catch(() => {})
+  }, [])
 
   const fetchBookmarks = async () => {
     setIsLoading(true)
@@ -175,6 +186,12 @@ export default function ProfilePage() {
             </div>
           </div>
         </header>
+
+        {hasAuth && profileTagline.trim() !== '' && (
+          <div className="mb-4 px-1 md:px-0">
+            <p className="text-page text-sm font-medium leading-relaxed whitespace-pre-line">{profileTagline}</p>
+          </div>
+        )}
 
         {/* My Library: icon + label + chevron rows */}
         <section className="bg-page rounded-xl overflow-hidden shadow-sm border border-page">

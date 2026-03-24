@@ -288,6 +288,8 @@ export const siteSettingsApi = {
         menu_subcategories?: string
         subscription_plan_details?: string
         subscription_page_intro?: string
+        /** /profile 사용자명과 My Library 사이 표시 (관리자 편집) */
+        profile_page_tagline?: string
         special_badge_text?: string
       }
     }>('/settings/site'),
