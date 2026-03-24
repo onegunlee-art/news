@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 120" fill="none" role="img" aria-labelledby="t1">
+  <title id="t1">XË ı  Ñº</title>
+  <rect width="320" height="120" rx="12" fill="currentColor" opacity="0.08"/>
+  <rect x="24" y="72" width="272" height="36" rx="8" fill="currentColor" opacity="0.12"/>
+  <circle cx="160" cy="90" r="14" fill="currentColor" opacity="0.35"/>
+  <path d="M160 82v12m-6-6 6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+  <text x="160" y="38" text-anchor="middle" fill="currentColor" opacity="0.85" font-family="system-ui,sans-serif" font-size="13">Safari XËX ı (°ë) ÑºD Ö»‰</text>
+</svg>
