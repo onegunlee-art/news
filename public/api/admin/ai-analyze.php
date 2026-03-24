@@ -453,11 +453,33 @@ function fallbackTitleFromPastedContent(string $content, string $url): string {
 }
 
 /**
+ * 붙여넣기 분석용 URL 정규화.
+ * 스킴이 없으면 PHP parse_url()이 호스트를 못 잡아 매체 출처가 "pasted"로 떨어지는 문제를 방지한다.
+ */
+function normalizeUrlForPublicationLookup(string $url): string
+{
+    $url = trim($url);
+    if ($url === '') {
+        return $url;
+    }
+    if (preg_match('#^https?://#i', $url)) {
+        return $url;
+    }
+    // www.example.com/... 또는 example.com/... 형태에만 https:// 부착
+    if (preg_match('#^[a-zA-Z0-9][-a-zA-Z0-9.]*\.[a-zA-Z]{2,}(/|\?|#|$)#', $url)) {
+        return 'https://' . $url;
+    }
+
+    return $url;
+}
+
+/**
  * 붙여넣은 기사 본문으로 직접 분석 (스크래핑 건너뜀).
  * analyzeUrl과 동일한 결과 형식을 반환합니다.
  */
 function analyzeContent(string $content, string $url, string $title, array $options = []): array {
     global $projectRoot, $envLoaded, $envTried;
+    $url = normalizeUrlForPublicationLookup($url);
     $startTime = microtime(true);
 
     $openaiKey = $_ENV['OPENAI_API_KEY'] ?? getenv('OPENAI_API_KEY');
