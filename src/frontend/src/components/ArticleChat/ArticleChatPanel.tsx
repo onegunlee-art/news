@@ -71,10 +71,9 @@ async function postArticleChatStream(
 
   const decoder = new TextDecoder()
   let buf = ''
-  while (true) {
-    const { done, value } = await reader.read()
-    if (done) break
-    buf += decoder.decode(value, { stream: true })
+  let chunk = await reader.read()
+  while (!chunk.done) {
+    buf += decoder.decode(chunk.value, { stream: true })
     buf = parseSseBuffer(buf, (event, data) => {
       if (event === 'token' && data && typeof data === 'object' && 'text' in data) {
         onToken(String((data as { text: string }).text))
@@ -83,6 +82,7 @@ async function postArticleChatStream(
         onDone(data as { full_text?: string; disclaimer?: string })
       }
     })
+    chunk = await reader.read()
   }
   if (buf.trim() !== '') {
     parseSseBuffer(buf + '\n\n', () => {})
