@@ -150,6 +150,22 @@ $router->post('/contact', function (Request $request): Response {
         if (!$ok) {
             return Response::error('이메일 발송에 실패했습니다. 서버 메일 설정을 확인해주세요.', 500);
         }
+
+        if ($subjectRaw === '구독 취소 및 환불 요청') {
+            try {
+                $userId = null;
+                $token = $request->bearerToken();
+                if ($token) {
+                    $authSvc = new \App\Services\AuthService();
+                    $userId = $authSvc->getAuthenticatedUserId($token);
+                }
+                $ins = $db->prepare(
+                    "INSERT INTO cancel_requests (user_id, contact, message) VALUES (?, ?, ?)"
+                );
+                $ins->execute([$userId, $contactStr ?? '', trim($message)]);
+            } catch (Throwable $ignore) {}
+        }
+
         return Response::success(null, '문의가 접수되었습니다.');
     } catch (Throwable $e) {
         return Response::error('문의 접수 중 오류가 발생했습니다.', 500);
@@ -361,6 +377,10 @@ $router->group(['prefix' => '/admin'], function (Router $router) {
     $router->put('/users/{id}/role', [AdminController::class, 'updateUserRole']);
     $router->put('/users/{id}/subscription', [AdminController::class, 'updateUserSubscription']);
     
+    // 구독 취소 요청 관리
+    $router->get('/cancel-requests', [AdminController::class, 'cancelRequests']);
+    $router->put('/cancel-requests/{id}/done', [AdminController::class, 'cancelRequestDone']);
+
     // 뉴스 관리
     $router->get('/news', [AdminController::class, 'getNews']);
     $router->post('/news', [AdminController::class, 'createNews']);

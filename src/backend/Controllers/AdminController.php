@@ -954,6 +954,121 @@ final class AdminController
     }
 
     /**
+     * 구독 취소 요청 목록
+     *
+     * GET /api/admin/cancel-requests
+     */
+    public function cancelRequests(Request $request): Response
+    {
+        $adminId = $this->checkAdminAuth($request);
+        if (!$adminId) {
+            return Response::unauthorized('관리자 권한이 필요합니다.');
+        }
+
+        $page = max(1, (int) $request->query('page', 1));
+        $perPage = min((int) $request->query('per_page', 50), 100);
+        $offset = ($page - 1) * $perPage;
+        $filter = $request->query('status', 'all');
+
+        try {
+            $this->ensureCancelRequestsTable();
+
+            $where = '1=1';
+            if ($filter === 'pending') {
+                $where = "cr.status = 'pending'";
+            } elseif ($filter === 'done') {
+                $where = "cr.status = 'done'";
+            }
+
+            $countStmt = $this->db->prepare("SELECT COUNT(*) FROM cancel_requests cr WHERE $where");
+            $countStmt->execute();
+            $total = (int) $countStmt->fetchColumn();
+
+            $pendingStmt = $this->db->query("SELECT COUNT(*) FROM cancel_requests WHERE status = 'pending'");
+            $pendingCount = (int) $pendingStmt->fetchColumn();
+
+            $stmt = $this->db->prepare("
+                SELECT cr.id, cr.user_id, cr.contact, cr.message, cr.status, cr.created_at, cr.processed_at,
+                       u.nickname, u.email, u.is_subscribed, u.subscription_expires_at
+                FROM cancel_requests cr
+                LEFT JOIN users u ON cr.user_id = u.id
+                WHERE $where
+                ORDER BY FIELD(cr.status, 'pending', 'done'), cr.created_at DESC
+                LIMIT ? OFFSET ?
+            ");
+            $stmt->execute([$perPage, $offset]);
+            $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            return Response::success([
+                'items' => $items,
+                'pending_count' => $pendingCount,
+                'pagination' => [
+                    'page' => $page,
+                    'per_page' => $perPage,
+                    'total' => $total,
+                    'total_pages' => $total > 0 ? (int) ceil($total / $perPage) : 0,
+                ],
+            ], '취소 요청 목록 조회 성공');
+        } catch (RuntimeException $e) {
+            return Response::error('취소 요청 조회 실패: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * 구독 취소 요청 처리 완료 마킹
+     *
+     * PUT /api/admin/cancel-requests/{id}/done
+     */
+    public function cancelRequestDone(Request $request): Response
+    {
+        $adminId = $this->checkAdminAuth($request);
+        if (!$adminId) {
+            return Response::unauthorized('관리자 권한이 필요합니다.');
+        }
+
+        $reqId = (int) $request->param('id');
+        if ($reqId <= 0) {
+            return Response::error('유효하지 않은 요청 ID입니다.', 400);
+        }
+
+        try {
+            $stmt = $this->db->prepare(
+                "UPDATE cancel_requests SET status = 'done', processed_at = NOW() WHERE id = ?"
+            );
+            $stmt->execute([$reqId]);
+
+            if ($stmt->rowCount() === 0) {
+                return Response::notFound('요청을 찾을 수 없습니다.');
+            }
+
+            return Response::success(null, '처리 완료되었습니다.');
+        } catch (RuntimeException $e) {
+            return Response::error('처리 실패: ' . $e->getMessage(), 500);
+        }
+    }
+
+    private function ensureCancelRequestsTable(): void
+    {
+        try {
+            $this->db->query("SELECT 1 FROM cancel_requests LIMIT 1");
+        } catch (\Throwable $e) {
+            $this->db->exec("
+                CREATE TABLE IF NOT EXISTS `cancel_requests` (
+                    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                    `user_id` INT UNSIGNED NULL,
+                    `contact` VARCHAR(255) NOT NULL,
+                    `message` TEXT NULL,
+                    `status` ENUM('pending','done') NOT NULL DEFAULT 'pending',
+                    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    `processed_at` TIMESTAMP NULL,
+                    INDEX `idx_cancel_status` (`status`),
+                    INDEX `idx_cancel_created` (`created_at`)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            ");
+        }
+    }
+
+    /**
      * NYT API 상태 확인
      */
     private function checkNytApi(): bool

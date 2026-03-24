@@ -458,7 +458,7 @@ const AdminPage: React.FC = () => {
       navigate('/', { replace: true });
     }
   }, [user, isAuthenticated, isLoading, isInitialized, navigate]);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'news' | 'drafts' | 'ai' | 'workspace' | 'persona' | 'knowledge' | 'usage' | 'settings'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'news' | 'drafts' | 'ai' | 'workspace' | 'persona' | 'knowledge' | 'usage' | 'settings' | 'cancel'>('dashboard');
 
   const { subCategoryToLabel } = useMenuConfig();
   const subCategoryOptions = useMemo(
@@ -466,6 +466,28 @@ const AdminPage: React.FC = () => {
     [subCategoryToLabel]
   );
 
+
+  // 취소 요청 상태
+  type CancelRequest = { id: number; user_id: number | null; contact: string; message: string | null; status: string; created_at: string; processed_at: string | null; nickname: string | null; email: string | null; is_subscribed: number | null; subscription_expires_at: string | null }
+  const [cancelRequests, setCancelRequests] = useState<CancelRequest[]>([])
+  const [cancelPendingCount, setCancelPendingCount] = useState(0)
+  const [cancelLoading, setCancelLoading] = useState(false)
+
+  const fetchCancelRequests = useCallback(async () => {
+    setCancelLoading(true)
+    try {
+      const res = await api.get<{ success: boolean; data: { items: CancelRequest[]; pending_count: number } }>('/admin/cancel-requests')
+      if (res.data?.success && res.data.data) {
+        setCancelRequests(res.data.data.items ?? [])
+        setCancelPendingCount(res.data.data.pending_count ?? 0)
+      }
+    } catch { /* ignore */ }
+    finally { setCancelLoading(false) }
+  }, [])
+
+  useEffect(() => {
+    fetchCancelRequests()
+  }, [fetchCancelRequests])
 
   // feedback useEffect deps에서 참조되므로 컴포넌트 최상단에 선언
   const [articleUrl, setArticleUrl] = useState('');
@@ -1319,6 +1341,7 @@ const AdminPage: React.FC = () => {
     { id: 'knowledge', name: '이론 라이브러리', iconName: 'menu_book' },
     { id: 'usage', name: 'API 과금', iconName: 'payments' },
     { id: 'settings', name: '설정', iconName: 'settings' },
+    { id: 'cancel', name: '취소 요청', iconName: 'cancel' },
   ] as const;
 
   // 인증 초기화/검증 중 또는 권한 없음(리다이렉트 예정)에는 로딩 표시 (새로고침 시 어드민 유지)
@@ -1363,6 +1386,11 @@ const AdminPage: React.FC = () => {
               >
                 <MaterialIcon name={tab.iconName} className="w-5 h-5" size={20} />
                 {tab.name}
+                {tab.id === 'cancel' && cancelPendingCount > 0 && (
+                  <span className="ml-auto bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">
+                    {cancelPendingCount}
+                  </span>
+                )}
               </button>
             ))}
           </nav>
@@ -4915,6 +4943,144 @@ const AdminPage: React.FC = () => {
                   설정 저장
                 </button>
               </div>
+            </div>
+          )}
+
+          {activeTab === 'cancel' && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <div>
+                  <h2 className="text-2xl font-bold text-white mb-1">구독 취소 요청</h2>
+                  <p className="text-slate-400 text-sm">고객의 구독 취소/환불 요청을 확인하고 처리하세요</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => fetchCancelRequests()}
+                  className="text-cyan-400 hover:text-cyan-300 text-sm flex items-center gap-1"
+                >
+                  <MaterialIcon name="refresh" className="w-4 h-4" size={16} />
+                  새로고침
+                </button>
+              </div>
+
+              {cancelLoading ? (
+                <div className="flex justify-center py-16">
+                  <div className="animate-spin rounded-full h-10 w-10 border-4 border-cyan-500 border-t-transparent" />
+                </div>
+              ) : cancelRequests.length === 0 ? (
+                <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-12 border border-slate-700/50 text-center">
+                  <MaterialIcon name="check_circle" className="w-12 h-12 mx-auto text-emerald-400 mb-3" size={48} />
+                  <p className="text-slate-300 font-medium">처리할 취소 요청이 없습니다</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {cancelRequests.map((cr) => (
+                    <div
+                      key={cr.id}
+                      className={`bg-slate-800/50 backdrop-blur-sm rounded-2xl p-5 border transition-colors ${
+                        cr.status === 'pending'
+                          ? 'border-orange-500/40'
+                          : 'border-slate-700/50 opacity-70'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-4 flex-wrap">
+                        <div className="flex-1 min-w-0 space-y-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${
+                              cr.status === 'pending'
+                                ? 'bg-orange-500/20 text-orange-400'
+                                : 'bg-emerald-500/20 text-emerald-400'
+                            }`}>
+                              {cr.status === 'pending' ? '대기' : '완료'}
+                            </span>
+                            <span className="text-slate-500 text-xs">
+                              {new Date(cr.created_at).toLocaleString('ko-KR')}
+                            </span>
+                            {cr.processed_at && (
+                              <span className="text-emerald-500 text-xs">
+                                처리: {new Date(cr.processed_at).toLocaleString('ko-KR')}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-3 flex-wrap text-sm">
+                            <span className="text-slate-400">연락처:</span>
+                            <span className="text-white font-medium">{cr.contact || '-'}</span>
+                          </div>
+
+                          {cr.nickname && (
+                            <div className="flex items-center gap-3 flex-wrap text-sm">
+                              <span className="text-slate-400">회원:</span>
+                              <span className="text-white">{cr.nickname}</span>
+                              {cr.email && <span className="text-slate-500 text-xs">({cr.email})</span>}
+                              <span className={`text-[10px] px-1.5 py-0.5 rounded ${
+                                cr.is_subscribed === 1
+                                  ? 'bg-emerald-500/20 text-emerald-400'
+                                  : 'bg-slate-500/20 text-slate-400'
+                              }`}>
+                                {cr.is_subscribed === 1 ? '구독중' : '미구독'}
+                              </span>
+                            </div>
+                          )}
+
+                          {cr.message && (
+                            <div className="text-sm">
+                              <span className="text-slate-400">사유: </span>
+                              <span className="text-slate-300">{cr.message}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {cr.status === 'pending' && (
+                          <div className="flex gap-2 shrink-0">
+                            {cr.user_id && cr.is_subscribed === 1 && (
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  if (!confirm(`${cr.nickname || '해당 회원'}의 구독을 해제하시겠습니까?`)) return
+                                  try {
+                                    const res = await api.put<{ success: boolean; message?: string }>(`/admin/users/${cr.user_id}/subscription`, {
+                                      is_subscribed: 0,
+                                      subscription_expires_at: null,
+                                    })
+                                    if (res.data?.success) {
+                                      alert('구독이 해제되었습니다.')
+                                      fetchCancelRequests()
+                                    } else {
+                                      alert(res.data?.message ?? '구독 해제 실패')
+                                    }
+                                  } catch {
+                                    alert('구독 해제에 실패했습니다.')
+                                  }
+                                }}
+                                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-red-600/80 text-white hover:bg-red-600 transition-colors"
+                              >
+                                구독 해제
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                try {
+                                  const res = await api.put<{ success: boolean }>(`/admin/cancel-requests/${cr.id}/done`)
+                                  if (res.data?.success) {
+                                    fetchCancelRequests()
+                                  }
+                                } catch {
+                                  alert('처리 완료 마킹에 실패했습니다.')
+                                }
+                              }}
+                              className="px-3 py-1.5 text-xs font-medium rounded-lg bg-emerald-600/80 text-white hover:bg-emerald-600 transition-colors"
+                            >
+                              처리 완료
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
