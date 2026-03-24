@@ -13,6 +13,7 @@ import { formatSourceDisplayName, buildEditorialLine } from '../utils/formatSour
 import { extractTitleFromUrl } from '../utils/extractTitleFromUrl'
 import { formatContentHtml, stripHtml, stripAnalysisMetaPhrases } from '../utils/sanitizeHtml'
 import PaywallOverlay from '../components/Paywall/PaywallOverlay'
+import ArticleChatPanel from '../components/ArticleChat/ArticleChatPanel'
 import { useMenuConfig } from '../hooks/useMenuConfig'
 import { apiErrorMessage } from '../utils/apiErrorMessage'
 
@@ -52,7 +53,7 @@ export default function NewsDetailPage() {
   const { subCategoryToLabel, parentKeyToLabel, fromTabToApi, tabLabels } = useMenuConfig()
   const fromTab = (location.state as { fromTab?: string } | null)?.fromTab
 
-  const { isAuthenticated, login } = useAuthStore()
+  const { isAuthenticated, login, user } = useAuthStore()
   const addAudioItem = useAudioListStore((s) => s.addItem)
   const openAndPlay = useAudioPlayerStore((s) => s.openAndPlay)
   const [news, setNews] = useState<NewsDetail | null>(null)
@@ -485,6 +486,10 @@ export default function NewsDetailPage() {
                 </div>
               )}
             </>
+          )}
+
+          {user?.role === 'admin' && (
+            <ArticleChatPanel newsId={news.id} articleTitle={news.title} />
           )}
 
           {/* 하단 네비: 3줄 (이전 · 목록 · 다음) */}
