@@ -50,6 +50,7 @@ export default function ProfilePage() {
   const [cancelSending, setCancelSending] = useState(false)
   const [showCancelSuccess, setShowCancelSuccess] = useState(false)
   const [showCancelContactError, setShowCancelContactError] = useState(false)
+  const [profileTaglineTitle, setProfileTaglineTitle] = useState('')
   const [profileTagline, setProfileTagline] = useState('')
   const activeTabRef = useRef(activeTab)
   activeTabRef.current = activeTab
@@ -70,8 +71,9 @@ export default function ProfilePage() {
     siteSettingsApi
       .getSite()
       .then((res) => {
-        const t = res.data?.data?.profile_page_tagline
-        if (typeof t === 'string' && t.trim()) setProfileTagline(t)
+        const d = res.data?.data
+        if (typeof d?.profile_page_tagline_title === 'string') setProfileTaglineTitle(d.profile_page_tagline_title)
+        if (typeof d?.profile_page_tagline === 'string') setProfileTagline(d.profile_page_tagline)
       })
       .catch(() => {})
   }, [])
@@ -187,10 +189,15 @@ export default function ProfilePage() {
           </div>
         </header>
 
-        {hasAuth && profileTagline.trim() !== '' && (
-          <div className="mb-4 px-1 md:px-0">
-            <p className="text-page text-sm font-medium leading-relaxed whitespace-pre-line">{profileTagline}</p>
-          </div>
+        {hasAuth && profileTaglineTitle.trim() !== '' && profileTagline.trim() !== '' && (
+          <section className="bg-page rounded-xl overflow-hidden shadow-sm border border-page mb-4">
+            <h2 className="px-5 py-4 text-xs font-bold text-primary-500 uppercase tracking-wider">
+              {profileTaglineTitle}
+            </h2>
+            <div className="px-5 pb-5 pt-1">
+              <p className="text-page text-sm font-medium leading-relaxed whitespace-pre-line">{profileTagline}</p>
+            </div>
+          </section>
         )}
 
         {/* My Library: icon + label + chevron rows */}

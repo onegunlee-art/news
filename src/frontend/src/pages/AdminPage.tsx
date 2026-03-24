@@ -198,6 +198,7 @@ type UserDetail = UserRow & {
 
 const SubscriptionSettingsSection: React.FC = () => {
   const [notice, setNotice] = useState('');
+  const [profileTaglineTitle, setProfileTaglineTitle] = useState('');
   const [profileTagline, setProfileTagline] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -208,6 +209,7 @@ const SubscriptionSettingsSection: React.FC = () => {
       if (res.data?.success && res.data?.data) {
         const d = res.data.data as Record<string, string>;
         setNotice(d.subscription_page_intro ?? '');
+        setProfileTaglineTitle(d.profile_page_tagline_title ?? '');
         setProfileTagline(d.profile_page_tagline ?? '');
       }
     }).catch(() => {}).finally(() => setLoading(false));
@@ -219,6 +221,7 @@ const SubscriptionSettingsSection: React.FC = () => {
     try {
       await adminSettingsApi.updateSettings({
         subscription_page_intro: notice,
+        profile_page_tagline_title: profileTaglineTitle,
         profile_page_tagline: profileTagline,
       });
       setMessage({ type: 'success', text: '저장되었습니다.' });
@@ -253,7 +256,18 @@ const SubscriptionSettingsSection: React.FC = () => {
       </div>
 
       <div>
-        <label className="block text-slate-400 text-sm font-medium mb-2">/profile 마이페이지 — 사용자 이름·구독 카드와 &quot;My Library&quot; 사이 문구</label>
+        <label className="block text-slate-400 text-sm font-medium mb-2">/profile 마이페이지 — 카드 제목 (My Library 섹션 제목과 동일 스타일)</label>
+        <input
+          type="text"
+          value={profileTaglineTitle}
+          onChange={(e) => setProfileTaglineTitle(e.target.value)}
+          placeholder="예: THE GIST."
+          className="w-full px-4 py-2 rounded-lg bg-slate-900/50 border border-slate-600 text-white placeholder-slate-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50"
+        />
+      </div>
+
+      <div>
+        <label className="block text-slate-400 text-sm font-medium mb-2">/profile 마이페이지 — 카드 본문 (사용자 이름·구독 카드와 My Library 사이)</label>
         <textarea
           value={profileTagline}
           onChange={(e) => setProfileTagline(e.target.value)}
@@ -261,7 +275,7 @@ const SubscriptionSettingsSection: React.FC = () => {
           rows={3}
           className="w-full px-4 py-2 rounded-lg bg-slate-900/50 border border-slate-600 text-white placeholder-slate-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50"
         />
-        <p className="text-slate-500 text-xs mt-1">비우면 마이페이지에 해당 블록이 표시되지 않습니다.</p>
+        <p className="text-slate-500 text-xs mt-1">제목과 본문을 모두 입력해야 마이페이지에 카드가 표시됩니다.</p>
       </div>
 
       <div className="flex items-center gap-3">
