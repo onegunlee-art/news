@@ -58,11 +58,17 @@ uploads/*
 public/assets/*
 !public/assets/.gitkeep
 public/*.js
+!public/sw.js
 public/*.css
 public/*.map
 
 # Keep directories
 !.gitkeep
+
+# Android TWA 서명 키 (절대 커밋 금지)
+android/**/*.jks
+android/**/*.keystore
+android/**/*.pepk
 
 # AWS / EC2 (키·비밀번호·로컬 전용 스크립트 — 커밋 금지)
 aws/thegist-key.pem

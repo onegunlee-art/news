@@ -11,6 +11,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Gisters, Becoming Leaders - 키워드 추출, 감정 분석, 맥락 요약" />
     <meta name="theme-color" content="#0a0a0f" />
+    <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Lobster&family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
@@ -25,17 +26,17 @@
   <body>
     <div id="root"></div>
     <script>
-      // SW 완전 비활성화: 매 방문 시 구 SW를 해제하고 캐시를 정리
-      (function(){
-        if('serviceWorker' in navigator){
-          navigator.serviceWorker.getRegistrations().then(function(regs){
-            regs.forEach(function(r){r.unregister()});
-          });
-          caches.keys().then(function(names){
-            names.forEach(function(n){caches.delete(n)});
-          });
-        }
-      })();
+      // PWA / TWA: Service Worker 등록 (installable 조건 충족)
+      (function () {
+        if (!('serviceWorker' in navigator)) return
+        window.addEventListener('load', function () {
+          navigator.serviceWorker
+            .register('/sw.js', { scope: '/' })
+            .catch(function () {
+              /* ignore */
+            })
+        })
+      })()
     </script>
   </body>
 </html>

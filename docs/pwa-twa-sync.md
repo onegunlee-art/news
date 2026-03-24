@@ -21,6 +21,7 @@
 
 ## PWA 설치 이벤트 전제 조건 (Chrome)
 
-- Chrome의 `beforeinstallprompt`는 **설치 가능한 PWA**에 대해서만 발생한다. 일반적으로 **Web App Manifest**와 **Service Worker**(오프라인 범위 등)가 필요하다.
-- 현재 [`public/index.html`](../public/index.html) / [`src/frontend/index.html`](../src/frontend/index.html)에서는 **기존 Service Worker를 매 방문 해제**하는 스크립트가 있다. 그래서 Chrome의 **`beforeinstallprompt`가 오지 않는 경우가 많다**. 이 경우에도 약 **2.5초 후** 브라우저별 **수동 설치 안내(폴백)** 카드가 표시되도록 프론트에서 처리한다. **설치 가능 배너(자동 프롬프트)를 쓰려면** SW·매니페스트 정책을 재검토해야 한다(별도 작업).
-- SW를 켜지 않는 한, **영구 숨김·쿼리 ack·iOS 안내** 등 본 문서의 UX 플래그는 그대로 동작한다.
+- Chrome의 `beforeinstallprompt`는 **설치 가능한 PWA**에 대해서만 발생한다. 일반적으로 **Web App Manifest**와 **Service Worker**(fetch 이벤트 등)가 필요하다.
+- 저장소 기준: [`public/manifest.webmanifest`](../public/manifest.webmanifest), [`public/sw.js`](../public/sw.js), [`src/frontend/index.html`](../src/frontend/index.html)에서 SW 등록.
+- 이전에 있던 “매 방문 SW 완전 해제” 스크립트는 제거되어, installable 조건을 맞출 수 있다. 여전히 브라우저·정책에 따라 프롬프트가 안 뜰 수 있어, 프론트에는 **수동 설치 안내(폴백)** 도 유지한다.
+- **Digital Asset Links**: [`public/.well-known/assetlinks.json`](../public/.well-known/assetlinks.json) — TWA용 SHA-256은 서명 키 확정 후 치환. 운영 절차는 [TWA_SIGNING_AND_PLAY.md](./TWA_SIGNING_AND_PLAY.md) 참고.

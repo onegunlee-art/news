@@ -347,3 +347,16 @@ jobs:
           else
             echo "⚠️ index.html may be missing no-cache header — check Nginx config"
           fi
+
+      - name: Verify PWA manifest and Digital Asset Links
+        run: |
+          BASE="${{ env.SITE_URL }}"
+          for path in /manifest.webmanifest /.well-known/assetlinks.json /sw.js; do
+            code=$(curl -sS -o /dev/null -w "%{http_code}" --connect-timeout 15 --max-time 30 "$BASE$path" 2>/dev/null || echo "000")
+            code=$(echo "$code" | tr -d '[:space:]')
+            if [ "$code" != "200" ]; then
+              echo "❌ Expected 200 for $path, got HTTP $code"
+              exit 1
+            fi
+            echo "✅ $path → HTTP $code"
+          done
