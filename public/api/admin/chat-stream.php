@@ -11,15 +11,10 @@ ini_set('display_errors', '0');
 ini_set('log_errors', '1');
 set_time_limit(300);
 
-// ── CORS ────────────────────────────────────────────────
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit();
-}
+// ── CORS (config 기반) ──────────────────────────────────
+require_once __DIR__ . '/../lib/cors.php';
+handleOptionsRequest();
+setCorsHeaders();
 
 // ── Project root & env ──────────────────────────────────
 function findProjectRoot(): string {
@@ -84,10 +79,37 @@ foreach ([
 }
 
 require_once $projectRoot . 'src/agents/autoload.php';
+require_once __DIR__ . '/../lib/auth.php';
 
 use Agents\Services\OpenAIService;
 use Agents\Services\SupabaseService;
 use Agents\Services\RAGService;
+
+// ── Admin 인증 ──────────────────────────────────────────
+$token = getBearerToken();
+if (!$token) {
+    header('Content-Type: application/json; charset=utf-8');
+    http_response_code(401);
+    echo json_encode(['success' => false, 'error' => '관리자 권한이 필요합니다.'], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+$jwt = decodeJwt($token);
+if (!$jwt || empty($jwt['user_id'])) {
+    header('Content-Type: application/json; charset=utf-8');
+    http_response_code(401);
+    echo json_encode(['success' => false, 'error' => '유효하지 않은 토큰입니다.'], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+$pdo = getDb();
+$adminStmt = $pdo->prepare("SELECT role FROM users WHERE id = ? LIMIT 1");
+$adminStmt->execute([(int) $jwt['user_id']]);
+$adminRow = $adminStmt->fetch(PDO::FETCH_ASSOC);
+if (!$adminRow || ($adminRow['role'] ?? '') !== 'admin') {
+    header('Content-Type: application/json; charset=utf-8');
+    http_response_code(403);
+    echo json_encode(['success' => false, 'error' => '관리자만 접근할 수 있습니다.'], JSON_UNESCAPED_UNICODE);
+    exit;
+}
 
 // ── Helpers ─────────────────────────────────────────────
 

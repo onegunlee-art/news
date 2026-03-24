@@ -19,16 +19,10 @@ ini_set('log_errors', '1');
 // 타임존 설정
 date_default_timezone_set('Asia/Seoul');
 
-// CORS 설정
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Authorization, X-Requested-With');
-
-// Preflight 요청 처리
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(204);
-    exit;
-}
+// CORS 설정 (config/app.php 기반)
+require_once __DIR__ . '/api/lib/cors.php';
+handleOptionsRequest();
+setCorsHeaders();
 
 // Apache/CGI에서 Authorization 헤더가 제거되는 경우 대비
 if (empty($_SERVER['HTTP_AUTHORIZATION'])) {
@@ -97,6 +91,16 @@ try {
     if (file_exists($routerPath)) {
         require_once $routerPath;
         $router = new App\Core\Router();
+
+        $appConfig = require $projectRoot . '/config/app.php';
+        $rl = $appConfig['api']['rate_limit'] ?? [];
+        if (!empty($rl['enabled'])) {
+            $router->middleware(\App\Middleware\RateLimitMiddleware::create(
+                (int) ($rl['max_requests'] ?? 100),
+                (int) (($rl['per_minutes'] ?? 1) * 60)
+            ));
+        }
+
         $routesPath = $projectRoot . '/config/routes.php';
         if (file_exists($routesPath)) require $routesPath;
         $router->dispatch($requestMethod, $requestUri);
