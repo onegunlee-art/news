@@ -492,7 +492,7 @@ function analyzeContent(string $content, string $url, string $title, array $opti
     $personaService = null;
 
     $host = parse_url($url, PHP_URL_HOST) ?? '';
-    $source = $host ?: 'pasted';
+    $source = \Agents\Services\WebScraperService::publicationNameFromUrl($url) ?? ($host ?: 'pasted');
 
     $article = null;
     $isExternalUrl = filter_var($url, FILTER_VALIDATE_URL)

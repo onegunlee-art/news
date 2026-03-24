@@ -37,6 +37,22 @@ class WebScraperService
     /** 페이월 우회를 시도할 도메인 목록 */
     private const PAYWALL_DOMAINS = ['economist.com', 'ft.com', 'foreignaffairs.com'];
 
+    /** 도메인 → 매체 브랜드명 매핑 (og:site_name이 없거나 도메인으로만 남을 때 사용) */
+    private const DOMAIN_TO_PUBLICATION = [
+        'economist.com'      => 'The Economist',
+        'ft.com'             => 'Financial Times',
+        'foreignaffairs.com' => 'Foreign Affairs',
+        'nytimes.com'        => 'The New York Times',
+        'wsj.com'            => 'The Wall Street Journal',
+        'washingtonpost.com' => 'The Washington Post',
+        'theguardian.com'    => 'The Guardian',
+        'bbc.com'            => 'BBC',
+        'bbc.co.uk'          => 'BBC',
+        'reuters.com'        => 'Reuters',
+        'bloomberg.com'      => 'Bloomberg',
+        'apnews.com'         => 'Associated Press',
+    ];
+
     /**
      * URL에서 기사 데이터 추출.
      * 페이월 사이트에서 본문이 짧으면 JSON-LD → Googlebot UA 순으로 전문 재시도.
@@ -333,10 +349,32 @@ class WebScraperService
     }
 
     /**
-     * URL에서 도메인을 소스명으로 추출
+     * URL 호스트에서 알려진 매체 브랜드명을 반환 (없으면 null).
+     * ai-analyze.php 등 외부에서도 재사용할 수 있도록 public static.
+     */
+    public static function publicationNameFromUrl(string $url): ?string
+    {
+        $host = strtolower(parse_url($url, PHP_URL_HOST) ?? '');
+        if (str_starts_with($host, 'www.')) {
+            $host = substr($host, 4);
+        }
+        foreach (self::DOMAIN_TO_PUBLICATION as $domain => $name) {
+            if ($host === $domain || str_ends_with($host, '.' . $domain)) {
+                return $name;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * URL에서 도메인을 소스명으로 추출 (알려진 매체면 브랜드명 우선)
      */
     private function extractSourceFromUrl(string $url): ?string
     {
+        $pub = self::publicationNameFromUrl($url);
+        if ($pub !== null) {
+            return $pub;
+        }
         $host = parse_url($url, PHP_URL_HOST);
         if ($host === null || $host === '') {
             return null;
@@ -676,10 +714,14 @@ class WebScraperService
     }
 
     /**
-     * 출처 추출: og:site_name 우선, 없으면 URL 호스트(도메인)
+     * 출처 추출: 알려진 매체 브랜드명 우선, 다음 og:site_name, 마지막 호스트
      */
     private function extractSource(\DOMXPath $xpath, string $url): ?string
     {
+        $pub = self::publicationNameFromUrl($url);
+        if ($pub !== null) {
+            return $pub;
+        }
         $siteName = $this->extractMetaContent($xpath, 'og:site_name');
         if ($siteName !== null && $siteName !== '') {
             return $siteName;

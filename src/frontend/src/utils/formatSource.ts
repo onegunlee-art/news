@@ -1,13 +1,35 @@
+const DOMAIN_TO_PUBLICATION: Record<string, string> = {
+  'economist.com': 'The Economist',
+  'ft.com': 'Financial Times',
+  'foreignaffairs.com': 'Foreign Affairs',
+  'nytimes.com': 'The New York Times',
+  'wsj.com': 'The Wall Street Journal',
+  'washingtonpost.com': 'The Washington Post',
+  'theguardian.com': 'The Guardian',
+  'bbc.com': 'BBC',
+  'bbc.co.uk': 'BBC',
+  'reuters.com': 'Reuters',
+  'bloomberg.com': 'Bloomberg',
+  'apnews.com': 'Associated Press',
+}
+
 /**
  * 화면에 표시할 출처명 정규화
- * e.g. "Foreign Affairs Magazine" → "Foreign Affairs" (맨 뒤 " Magazine" 제거)
+ * - 도메인으로 저장된 값(예: economist.com)을 브랜드명(The Economist)으로 변환
+ * - "… Magazine" 접미사 제거
  */
 export function formatSourceDisplayName(source: string | null | undefined): string {
   if (source == null || typeof source !== 'string') return ''
   const trimmed = source.trim()
   if (!trimmed) return ''
+  const lower = trimmed.toLowerCase()
+  for (const [domain, name] of Object.entries(DOMAIN_TO_PUBLICATION)) {
+    if (lower === domain || lower === `www.${domain}` || lower.endsWith(`.${domain}`)) {
+      return name
+    }
+  }
   const suffix = ' magazine'
-  if (trimmed.toLowerCase().endsWith(suffix)) {
+  if (lower.endsWith(suffix)) {
     return trimmed.slice(0, -suffix.length).trim()
   }
   return trimmed
