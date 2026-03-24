@@ -4,6 +4,7 @@
 
 - **`pwa_install_completed`**: 설치로 간주되는 경우 `localStorage`에 `1` 저장. 이후 같은 출처(origin)에서는 설치 유도 UI를 띄우지 않음. PWA 제거 시 브라우저가 저장소를 지우면 다시 안내 가능.
 - **`gist_pwa_ack=1` 쿼리**: 페이지 로드 시 한 번 읽어 위 플래그를 설정하고 URL에서 제거한다. TWA 앱 첫 실행 시 커스텀 스킴/HTTPS 딥링크로 웹을 열 때 동기화에 사용할 수 있다.
+- **`gist_pwa_reset=1` 쿼리**: 설치 관련 `localStorage` 플래그를 모두 지운 뒤 URL에서 제거한다. 배너가 안 보일 때(이전에 「다시 보지 않기」 등) 테스트·확인용으로 사용한다.
 - **`appinstalled` / `beforeinstallprompt` 수락**: Android Chrome 등에서 PWA 설치가 완료되면 동일 키를 설정한다.
 
 ## Android TWA (Bubblewrap / Play)
@@ -21,5 +22,5 @@
 ## PWA 설치 이벤트 전제 조건 (Chrome)
 
 - Chrome의 `beforeinstallprompt`는 **설치 가능한 PWA**에 대해서만 발생한다. 일반적으로 **Web App Manifest**와 **Service Worker**(오프라인 범위 등)가 필요하다.
-- 현재 [`public/index.html`](../public/index.html) / [`src/frontend/index.html`](../src/frontend/index.html)에서는 **기존 Service Worker를 매 방문 해제**하는 스크립트가 있다. **설치 배너를 안정적으로 띄우려면** SW·매니페스트 정책을 재검토해야 한다(별도 작업).
+- 현재 [`public/index.html`](../public/index.html) / [`src/frontend/index.html`](../src/frontend/index.html)에서는 **기존 Service Worker를 매 방문 해제**하는 스크립트가 있다. 그래서 Chrome의 **`beforeinstallprompt`가 오지 않는 경우가 많다**. 이 경우에도 약 **2.5초 후** 브라우저별 **수동 설치 안내(폴백)** 카드가 표시되도록 프론트에서 처리한다. **설치 가능 배너(자동 프롬프트)를 쓰려면** SW·매니페스트 정책을 재검토해야 한다(별도 작업).
 - SW를 켜지 않는 한, **영구 숨김·쿼리 ack·iOS 안내** 등 본 문서의 UX 플래그는 그대로 동작한다.
