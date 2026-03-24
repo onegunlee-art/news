@@ -32,28 +32,27 @@ jobs:
           extensions: pdo, pdo_mysql, curl, json, mbstring
           coverage: none
 
+      # test.yml과 동일: 저장소 전체 *.php (vendor 제외). public/api 등 포함.
       - name: Validate PHP syntax
         run: |
-          echo "Validating PHP syntax..."
-          failed=0
-          for file in $(find src/backend src/agents -name "*.php" 2>/dev/null); do
+          echo "Validating PHP syntax (all repo, exclude vendor)..."
+          errors=0
+          while IFS= read -r file; do
             if ! php -l "$file" > /dev/null 2>&1; then
               echo "❌ Syntax error in: $file"
               php -l "$file"
-              failed=1
-            else
-              echo "✅ $file"
+              errors=$((errors + 1))
             fi
-          done
-          if [ $failed -eq 1 ]; then
-            echo "PHP syntax validation failed"
+          done < <(find . -name "*.php" -not -path "./vendor/*")
+          if [ "$errors" -gt 0 ]; then
+            echo "Found $errors file(s) with syntax errors"
             exit 1
           fi
-          echo "All PHP files validated successfully"
+          echo "All PHP files have valid syntax"
 
       - name: Check PHP files
         run: |
-          echo "PHP files validated successfully"
+          echo "PHP syntax check passed (aligned with .github/workflows/test.yml)"
 
   # ========================================
   # 프론트엔드 빌드

@@ -144,6 +144,18 @@ GitHub에서 **main 브랜치에 push**하면 자동으로 빌드 후 FTP로 배
 
 ---
 
+## 개발자 참고 (매체 도메인 → 브랜드명)
+
+`economist.com` → `The Economist` 등 **표시용 매체명**은 두 곳에 동일한 목록이 있습니다.  
+**한쪽만 수정하면** 관리자 분석·DB 저장과 상세 페이지 표시가 어긋날 수 있으므로, 변경 시 **둘 다** 반영하세요.
+
+- 백엔드: `src/agents/services/WebScraperService.php` — `DOMAIN_TO_PUBLICATION`, `publicationNameFromUrl()`
+- 프론트: `src/frontend/src/utils/formatSource.ts` — `DOMAIN_TO_PUBLICATION`, `formatSourceDisplayName()`
+
+상용화 전 수동 점검 체크리스트: [`docs/RELEASE_QA_CHECKLIST.md`](docs/RELEASE_QA_CHECKLIST.md)
+
+---
+
 ## 🔐 보안 체크리스트
 
 - [ ] FTP 비밀번호 강력하게 설정
