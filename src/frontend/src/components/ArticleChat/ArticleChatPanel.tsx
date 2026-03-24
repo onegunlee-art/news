@@ -103,7 +103,7 @@ export default function ArticleChatPanel({ newsId, articleTitle }: ArticleChatPa
   const [input, setInput] = useState('')
   const [streaming, setStreaming] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const bottomRef = useRef<HTMLDivElement>(null)
+  const messagesRef = useRef<HTMLDivElement>(null)
 
   const newSessionId = () =>
     typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
@@ -183,7 +183,8 @@ export default function ArticleChatPanel({ newsId, articleTitle }: ArticleChatPa
   }, [loadSession, loadChips])
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    const el = messagesRef.current
+    if (el) requestAnimationFrame(() => { el.scrollTop = el.scrollHeight })
   }, [messages, streaming])
 
   const sendMessage = async (text: string, chipId?: string) => {
@@ -280,7 +281,7 @@ export default function ArticleChatPanel({ newsId, articleTitle }: ArticleChatPa
         ))}
       </div>
 
-      <div className="rounded-xl border border-page bg-page-secondary/50 p-4 min-h-[120px] max-h-[360px] overflow-y-auto mb-3">
+      <div ref={messagesRef} className="rounded-xl border border-page bg-page-secondary/50 p-4 min-h-[120px] max-h-[360px] overflow-y-auto mb-3">
         {messages.length === 0 && (
           <p className="text-sm text-page-muted">칩을 누르거나 아래에 질문을 입력해 보세요.</p>
         )}
@@ -295,7 +296,6 @@ export default function ArticleChatPanel({ newsId, articleTitle }: ArticleChatPa
             : {m.content || (streaming && i === messages.length - 1 ? '…' : '')}
           </div>
         ))}
-        <div ref={bottomRef} />
       </div>
 
       <div className="flex flex-col sm:flex-row gap-2 mb-2">
