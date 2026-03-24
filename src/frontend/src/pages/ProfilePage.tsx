@@ -201,7 +201,7 @@ export default function ProfilePage() {
                     expandedTagline ? 'bg-page-secondary' : 'hover:bg-page-secondary/50'
                   }`}
                 >
-                  <span className="flex-1 text-page text-sm font-medium line-clamp-2">{profileTaglineTitle}</span>
+                  <span className="flex-1 text-sm font-bold text-primary-500 line-clamp-2">{profileTaglineTitle}</span>
                   <MaterialIcon
                     name="chevron_right"
                     className={`w-5 h-5 text-page-muted transition-transform flex-shrink-0 ${expandedTagline ? 'rotate-90' : ''}`}
