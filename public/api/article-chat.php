@@ -65,11 +65,14 @@ function chipIdToAnswerType(?string $chipId): ?string
         return null;
     }
     $map = [
+        'content_summary_5' => 'summary',
+        'why_important' => 'summary',
+        'impact_korea' => 'structure',
+        'scenario_forecast' => 'scenario',
         'understand_summary' => 'summary',
         'structure_benefit' => 'structure',
         'intention_hidden' => 'intent',
         'risk_worst' => 'risk',
-        'scenario_forecast' => 'scenario',
         'understand_why' => 'summary',
         'understand_oneline' => 'summary',
         'structure_loser' => 'structure',
@@ -248,13 +251,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             sendJsonErrorArticleChat('news_id가 필요합니다.', 400);
         }
         $fixed = $acConfig['chips']['fixed'] ?? [];
-        $pool = $acConfig['chips']['extra_pool'] ?? [];
-        $dynamic = array_slice($pool, 0, 2);
         sendJsonArticleChat([
             'success' => true,
             'data' => [
                 'fixed' => $fixed,
-                'dynamic' => $dynamic,
+                'dynamic' => [],
                 'intro' => $acConfig['prompts']['disclaimer_footer'] ?? '',
             ],
         ]);

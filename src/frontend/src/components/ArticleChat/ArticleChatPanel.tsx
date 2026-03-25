@@ -1,12 +1,9 @@
-import { useState, useCallback, useEffect, useRef } from 'react'
-import MaterialIcon from '../Common/MaterialIcon'
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import { adminFetch } from '../../services/api'
 import {
-  CHAT_INTRO_COPY,
   CHIP_DISPLAY,
   DISCLAIMER_FOOTER,
   FIXED_CHIPS,
-  EXTRA_CHIP_POOL,
   CHAT_LIMITS,
   type ChatChip,
 } from '../../constants/articleChat'
@@ -100,10 +97,14 @@ export default function ArticleChatPanel({ newsId, articleTitle }: ArticleChatPa
   const [chips, setChips] = useState<ChatChip[]>([])
   const [messages, setMessages] = useState<ChatMsg[]>([])
   const [remaining, setRemaining] = useState<number>(CHAT_LIMITS.maxQuestionsPerSession)
-  const [input, setInput] = useState('')
   const [streaming, setStreaming] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const messagesRef = useRef<HTMLDivElement>(null)
+
+  const assistantMessages = useMemo(
+    () => messages.filter((m) => m.role === 'assistant'),
+    [messages]
+  )
 
   const newSessionId = () =>
     typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
@@ -164,16 +165,10 @@ export default function ArticleChatPanel({ newsId, articleTitle }: ArticleChatPa
         const dyn = (j.data.dynamic as ChatChip[]) || []
         setChips([...fixed.slice(0, CHIP_DISPLAY.fixedCount), ...dyn.slice(0, CHIP_DISPLAY.dynamicCount)])
       } else {
-        setChips([
-          ...FIXED_CHIPS.slice(0, CHIP_DISPLAY.fixedCount),
-          ...EXTRA_CHIP_POOL.slice(0, CHIP_DISPLAY.dynamicCount),
-        ])
+        setChips([...FIXED_CHIPS.slice(0, CHIP_DISPLAY.fixedCount)])
       }
     } catch {
-      setChips([
-        ...FIXED_CHIPS.slice(0, CHIP_DISPLAY.fixedCount),
-        ...EXTRA_CHIP_POOL.slice(0, CHIP_DISPLAY.dynamicCount),
-      ])
+      setChips([...FIXED_CHIPS.slice(0, CHIP_DISPLAY.fixedCount)])
     }
   }, [newsId])
 
@@ -199,7 +194,6 @@ export default function ArticleChatPanel({ newsId, articleTitle }: ArticleChatPa
     setStreaming(true)
     const userMsg: ChatMsg = { role: 'user', content: trimmed }
     setMessages((prev) => [...prev, userMsg])
-    setInput('')
 
     let assistant = ''
     setMessages((prev) => [...prev, { role: 'assistant', content: '' }])
@@ -253,14 +247,8 @@ export default function ArticleChatPanel({ newsId, articleTitle }: ArticleChatPa
       className="mt-10 pt-8 border-t border-page"
       aria-label="기사 이해 도우미"
     >
-      <div className="flex items-center gap-2 mb-3">
-        <MaterialIcon name="chat" className="w-5 h-5 text-primary-500" size={20} />
-        <h2 className="text-lg font-semibold text-page">{CHAT_INTRO_COPY}</h2>
-        <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">(관리자 베타)</span>
-      </div>
-
-      <p className="text-xs text-page-muted mb-4">
-        남은 질문: {remaining}/{CHAT_LIMITS.maxQuestionsPerSession} · 입력 {CHAT_LIMITS.maxInputChars}자 이하
+      <p className="text-xs text-amber-600 dark:text-amber-400 font-medium mb-3">
+        관리자 베타
       </p>
 
       {error && (
@@ -274,7 +262,7 @@ export default function ArticleChatPanel({ newsId, articleTitle }: ArticleChatPa
             type="button"
             disabled={streaming || remaining <= 0}
             onClick={() => void sendMessage(c.label, c.id)}
-            className="px-3 py-1.5 text-sm rounded-full border border-page bg-page-secondary hover:bg-primary-500/10 hover:border-primary-500/50 text-page-secondary disabled:opacity-50 transition-colors max-w-full text-left"
+            className="px-3 py-2 text-sm rounded-lg bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-50 transition-colors max-w-full text-left font-medium"
           >
             {c.label}
           </button>
@@ -282,56 +270,37 @@ export default function ArticleChatPanel({ newsId, articleTitle }: ArticleChatPa
       </div>
 
       <div ref={messagesRef} className="rounded-xl border border-page bg-page-secondary/50 p-4 min-h-[120px] max-h-[360px] overflow-y-auto mb-3">
-        {messages.length === 0 && (
-          <p className="text-sm text-page-muted">칩을 누르거나 아래에 질문을 입력해 보세요.</p>
+        {assistantMessages.length === 0 && (
+          <p className="text-sm text-page-muted">아래 버튼을 눌러 질문해 보세요.</p>
         )}
-        {messages.map((m, i) => (
-          <div
-            key={i}
-            className={`mb-3 text-sm ${m.role === 'user' ? 'text-page' : 'text-page-secondary whitespace-pre-wrap'}`}
-          >
-            <span className="font-semibold text-primary-500">
-              {m.role === 'user' ? '나' : 'AI'}
-            </span>
-            : {m.content || (streaming && i === messages.length - 1 ? '…' : '')}
-          </div>
-        ))}
+        {assistantMessages.map((m, i) => {
+          const isLast = i === assistantMessages.length - 1
+          const showDisclaimer = !(streaming && isLast)
+          const showEllipsis = streaming && isLast && !m.content
+          return (
+            <div key={`assistant-${i}`} className="mb-6 last:mb-0">
+              <div className="text-sm text-page-secondary whitespace-pre-wrap break-words leading-relaxed">
+                {m.content || (showEllipsis ? '…' : '')}
+              </div>
+              {showDisclaimer && (
+                <p className="text-xs text-page-muted mt-3 leading-relaxed">
+                  {DISCLAIMER_FOOTER}
+                </p>
+              )}
+            </div>
+          )
+        })}
       </div>
 
       <div className="flex flex-col sm:flex-row gap-2 mb-2">
-        <input
-          type="text"
-          maxLength={CHAT_LIMITS.maxInputChars}
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault()
-              void sendMessage(input)
-            }
-          }}
-          placeholder="질문을 입력하세요"
-          disabled={streaming || remaining <= 0}
-          className="flex-1 px-3 py-2 rounded-lg border border-page bg-page text-page text-sm"
-        />
-        <button
-          type="button"
-          disabled={streaming || remaining <= 0 || !input.trim()}
-          onClick={() => void sendMessage(input)}
-          className="px-4 py-2 rounded-lg bg-primary-500 text-white text-sm font-medium disabled:opacity-50"
-        >
-          보내기
-        </button>
         <button
           type="button"
           onClick={downloadLast}
-          className="px-4 py-2 rounded-lg border border-page text-sm text-page-secondary hover:bg-page-secondary"
+          className="px-4 py-2 rounded-lg border border-page text-sm text-page-secondary hover:bg-page-secondary sm:w-auto w-full"
         >
           마지막 답변 .md 저장
         </button>
       </div>
-
-      <p className="text-xs text-page-muted">{DISCLAIMER_FOOTER}</p>
     </section>
   )
 }
