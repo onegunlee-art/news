@@ -30,7 +30,7 @@ return [
     |----------------------------------------------------------------------
     */
     'limits' => [
-        'max_questions_per_session' => 4,
+        'max_questions_per_session' => 255,
         'max_sessions_per_day'     => 10,
         'max_input_chars'          => 500,
         'max_concurrent_streams'   => 50,

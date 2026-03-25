@@ -390,6 +390,23 @@ if ($qCount >= $qLimit) {
     sendJsonErrorArticleChat('이 기사에 대한 질문 한도에 도달했습니다.', 429);
 }
 
+if ($chipId !== '') {
+    try {
+        $dupSt = $pdo->prepare(
+            'SELECT 1 FROM article_chat_messages WHERE session_id = ? AND role = \'user\' AND chip_id = ? LIMIT 1'
+        );
+        $dupSt->execute([$sessionId, $chipId]);
+        if ($dupSt->fetchColumn()) {
+            sendJsonErrorArticleChat('이미 선택한 질문입니다.', 409);
+        }
+    } catch (PDOException $e) {
+        if (strpos($e->getMessage(), 'article_chat') !== false) {
+            sendJsonErrorArticleChat('article_chat 테이블을 확인하세요.', 503);
+        }
+        throw $e;
+    }
+}
+
 $ragPack = buildRagForArticle($rag, $message, $newsId, $minRagSim);
 $ragText = $ragPack['lines'] === [] ? '(보조 맥락 없음)' : implode("\n", $ragPack['lines']);
 $refsJson = json_encode($ragPack['refs'], JSON_UNESCAPED_UNICODE);

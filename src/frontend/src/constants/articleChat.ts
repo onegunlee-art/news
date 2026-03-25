@@ -65,7 +65,7 @@ export const SCENARIO_DISCLAIMER =
  * 세션 제한 (표시용 폴백; 실제 한도는 서버 config)
  */
 export const CHAT_LIMITS = {
-  maxQuestionsPerSession: 4,
+  maxQuestionsPerSession: 255,
   maxInputChars: 500,
 } as const
 

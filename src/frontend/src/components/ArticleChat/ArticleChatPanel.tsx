@@ -4,7 +4,6 @@ import {
   CHIP_DISPLAY,
   DISCLAIMER_FOOTER,
   FIXED_CHIPS,
-  CHAT_LIMITS,
   type ChatChip,
 } from '../../constants/articleChat'
 
@@ -91,12 +90,11 @@ export interface ArticleChatPanelProps {
   articleTitle: string
 }
 
-type ChatMsg = { role: 'user' | 'assistant'; content: string }
+type ChatMsg = { role: 'user' | 'assistant'; content: string; chip_id?: string | null }
 
 export default function ArticleChatPanel({ newsId, articleTitle }: ArticleChatPanelProps) {
   const [chips, setChips] = useState<ChatChip[]>([])
   const [messages, setMessages] = useState<ChatMsg[]>([])
-  const [remaining, setRemaining] = useState<number>(CHAT_LIMITS.maxQuestionsPerSession)
   const [streaming, setStreaming] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const messagesRef = useRef<HTMLDivElement>(null)
@@ -105,6 +103,16 @@ export default function ArticleChatPanel({ newsId, articleTitle }: ArticleChatPa
     () => messages.filter((m) => m.role === 'assistant'),
     [messages]
   )
+
+  const usedChipIds = useMemo(() => {
+    const s = new Set<string>()
+    for (const m of messages) {
+      if (m.role === 'user' && m.chip_id) {
+        s.add(m.chip_id)
+      }
+    }
+    return s
+  }, [messages])
 
   const newSessionId = () =>
     typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
@@ -134,10 +142,8 @@ export default function ArticleChatPanel({ newsId, articleTitle }: ArticleChatPa
         throw new Error(j.error || '세션을 불러올 수 없습니다.')
       }
       const d = j.data as {
-        remaining: number
-        messages: Array<{ role: string; content: string }>
+        messages: Array<{ role: string; content: string; chip_id?: string | null }>
       }
-      setRemaining(typeof d.remaining === 'number' ? d.remaining : CHAT_LIMITS.maxQuestionsPerSession)
       if (Array.isArray(d.messages)) {
         setMessages(
           d.messages
@@ -145,6 +151,7 @@ export default function ArticleChatPanel({ newsId, articleTitle }: ArticleChatPa
             .map((m) => ({
               role: m.role as 'user' | 'assistant',
               content: m.content,
+              chip_id: m.role === 'user' ? (m.chip_id ?? null) : undefined,
             }))
         )
       }
@@ -185,14 +192,17 @@ export default function ArticleChatPanel({ newsId, articleTitle }: ArticleChatPa
   const sendMessage = async (text: string, chipId?: string) => {
     const trimmed = text.trim()
     if (!trimmed || streaming) return
-    if (remaining <= 0) {
-      setError('질문 한도에 도달했습니다.')
+    if (chipId && usedChipIds.has(chipId)) {
       return
     }
 
     setError(null)
     setStreaming(true)
-    const userMsg: ChatMsg = { role: 'user', content: trimmed }
+    const userMsg: ChatMsg = {
+      role: 'user',
+      content: trimmed,
+      chip_id: chipId ?? null,
+    }
     setMessages((prev) => [...prev, userMsg])
 
     let assistant = ''
@@ -260,7 +270,7 @@ export default function ArticleChatPanel({ newsId, articleTitle }: ArticleChatPa
           <button
             key={c.id}
             type="button"
-            disabled={streaming || remaining <= 0}
+            disabled={streaming || usedChipIds.has(c.id)}
             onClick={() => void sendMessage(c.label, c.id)}
             className="px-3 py-2 text-sm rounded-lg bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-50 transition-colors max-w-full text-left font-medium"
           >
