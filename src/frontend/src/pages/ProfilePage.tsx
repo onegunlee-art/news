@@ -155,24 +155,22 @@ export default function ProfilePage() {
                         )}
                       </div>
                     </div>
-                    <div className="flex flex-col justify-center gap-2.5 shrink-0 w-[7.5rem] sm:w-28">
+                    <div className="flex flex-col items-end justify-center gap-2 shrink-0 text-right">
                       {hasAuth && !isSubscribed && (
                         <Link
                           to="/subscribe"
-                          className="inline-flex w-full items-center justify-center min-h-9 px-3 text-xs font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors text-center"
+                          className="text-xs font-medium text-primary-500 hover:text-primary-600 transition-colors leading-none"
                         >
                           구독하기
                         </Link>
                       )}
-                      <div className="flex min-h-9 items-center justify-end">
-                        <button
-                          type="button"
-                          onClick={handleLogout}
-                          className="text-page-secondary hover:text-page text-xs font-medium transition-colors"
-                        >
-                          로그아웃
-                        </button>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={handleLogout}
+                        className="text-page-secondary hover:text-page text-xs font-medium transition-colors leading-none"
+                      >
+                        로그아웃
+                      </button>
                     </div>
                   </div>
                 ) : (
