@@ -506,16 +506,16 @@ export default function NewsDetailPage() {
                         state={fromTab ? { fromTab } : undefined}
                         className="flex items-center gap-3 px-4 py-5 group transition-colors hover:bg-page-secondary"
                       >
-                        <span className="text-page-muted text-lg shrink-0 group-hover:text-page transition-colors">←</span>
-                        <span className="text-[11px] text-page-muted uppercase tracking-wider shrink-0">이전</span>
-                        <p className="text-sm text-page font-medium truncate group-hover:text-primary-500 transition-colors" title={news.prev_article.title}>
+                        <span className="text-page-secondary text-base shrink-0 group-hover:text-page transition-colors">←</span>
+                        <span className="text-sm text-page-secondary shrink-0">이전</span>
+                        <p className="text-sm text-page-secondary font-medium truncate group-hover:text-primary-500 transition-colors" title={news.prev_article.title}>
                           {news.prev_article.title}
                         </p>
                       </Link>
                     ) : (
                       <div className="flex items-center gap-3 px-4 py-5">
-                        <span className="text-page-muted text-lg shrink-0 opacity-30">←</span>
-                        <p className="text-[11px] text-page-muted">이전 기사가 없습니다</p>
+                        <span className="text-page-secondary text-base shrink-0 opacity-40">←</span>
+                        <p className="text-sm text-page-secondary">이전 기사가 없습니다</p>
                       </div>
                     )}
                   </div>
@@ -525,10 +525,10 @@ export default function NewsDetailPage() {
                     <button
                       type="button"
                       onClick={() => navigate('/', { state: { restoreTab: backTab } })}
-                      className="w-full flex items-center justify-center gap-1.5 py-2 text-page-muted hover:text-page hover:bg-page-secondary transition-colors"
+                      className="w-full flex items-center justify-center gap-1.5 py-2.5 text-sm text-page-secondary hover:text-page hover:bg-page-secondary transition-colors"
                     >
-                      <MaterialIcon name="menu" className="w-3.5 h-3.5" size={14} />
-                      <span className="text-[10px] tracking-wider">목록으로 돌아가기</span>
+                      <MaterialIcon name="menu" className="w-4 h-4 shrink-0" size={18} />
+                      <span>목록으로 돌아가기</span>
                     </button>
                   </div>
 
@@ -540,16 +540,16 @@ export default function NewsDetailPage() {
                         state={fromTab ? { fromTab } : undefined}
                         className="flex items-center justify-end gap-3 px-4 py-5 group transition-colors hover:bg-page-secondary"
                       >
-                        <span className="text-sm text-page font-medium truncate group-hover:text-primary-500 transition-colors text-right" title={news.next_article.title}>
+                        <span className="text-sm text-page-secondary font-medium truncate group-hover:text-primary-500 transition-colors text-right" title={news.next_article.title}>
                           {news.next_article.title}
                         </span>
-                        <span className="text-[11px] text-page-muted uppercase tracking-wider shrink-0">다음</span>
-                        <span className="text-page-muted text-lg shrink-0 group-hover:text-page transition-colors">→</span>
+                        <span className="text-sm text-page-secondary shrink-0">다음</span>
+                        <span className="text-page-secondary text-base shrink-0 group-hover:text-page transition-colors">→</span>
                       </Link>
                     ) : (
                       <div className="flex items-center justify-end gap-3 px-4 py-5">
-                        <p className="text-[11px] text-page-muted">다음 기사가 없습니다</p>
-                        <span className="text-page-muted text-lg shrink-0 opacity-30">→</span>
+                        <p className="text-sm text-page-secondary">다음 기사가 없습니다</p>
+                        <span className="text-page-secondary text-base shrink-0 opacity-40">→</span>
                       </div>
                     )}
                   </div>

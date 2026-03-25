@@ -153,22 +153,25 @@ export default function ProfilePage() {
                             )}
                           </div>
                         )}
-                        {hasAuth && !isSubscribed && (
-                          <Link
-                            to="/subscribe"
-                            className="inline-block mt-2 px-3 py-1.5 text-xs font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors"
-                          >
-                            구독하기
-                          </Link>
-                        )}
                       </div>
                     </div>
-                    <button
-                      onClick={handleLogout}
-                      className="text-page-secondary hover:text-page text-xs font-medium transition-colors shrink-0"
-                    >
-                      로그아웃
-                    </button>
+                    <div className="flex flex-col items-end gap-2 shrink-0">
+                      {hasAuth && !isSubscribed && (
+                        <Link
+                          to="/subscribe"
+                          className="inline-block px-3 py-1.5 text-xs font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors text-center"
+                        >
+                          구독하기
+                        </Link>
+                      )}
+                      <button
+                        type="button"
+                        onClick={handleLogout}
+                        className="text-page-secondary hover:text-page text-xs font-medium transition-colors"
+                      >
+                        로그아웃
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <div className="py-6 flex justify-center">
@@ -201,7 +204,9 @@ export default function ProfilePage() {
                     expandedTagline ? 'bg-page-secondary' : 'hover:bg-page-secondary/50'
                   }`}
                 >
-                  <span className="flex-1 text-sm font-bold text-primary-500 line-clamp-2">{profileTaglineTitle}</span>
+                  <span className="flex-1 text-xs font-bold text-primary-500 uppercase tracking-wider line-clamp-2">
+                    {profileTaglineTitle}
+                  </span>
                   <MaterialIcon
                     name="chevron_right"
                     className={`w-5 h-5 text-page-muted transition-transform flex-shrink-0 ${expandedTagline ? 'rotate-90' : ''}`}
@@ -519,13 +524,20 @@ export default function ProfilePage() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="no-subscription-title">
           <div className="bg-page border border-page rounded-xl shadow-xl max-w-sm w-full p-6">
             <p id="no-subscription-title" className="text-page font-medium text-center">현재 구독 중인 상품이 없습니다.</p>
-            <div className="mt-4 flex justify-center">
+            <div className="mt-4 flex flex-col sm:flex-row gap-3">
+              <Link
+                to="/subscribe"
+                onClick={() => setShowNoSubscriptionPopup(false)}
+                className="flex-1 text-center py-2.5 bg-primary-500 text-white rounded-lg text-sm font-medium hover:bg-primary-600 transition-colors"
+              >
+                구독하기
+              </Link>
               <button
                 type="button"
                 onClick={() => setShowNoSubscriptionPopup(false)}
-                className="px-6 py-2.5 bg-primary-500 text-white rounded-lg text-sm font-medium hover:bg-primary-600 transition-colors"
+                className="flex-1 py-2.5 rounded-lg border border-page text-page text-sm font-medium hover:bg-page-secondary transition-colors"
               >
-                확인
+                돌아가기
               </button>
             </div>
           </div>
