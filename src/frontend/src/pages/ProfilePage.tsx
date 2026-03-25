@@ -120,8 +120,8 @@ export default function ProfilePage() {
             <div className="min-w-0 flex-1">
               {hasAuth ? (
                 user ? (
-                  <div className="p-4 md:p-5 bg-page-secondary rounded-xl border border-page flex flex-wrap items-center justify-between gap-3">
-                    <div className="flex items-center gap-3 md:gap-4 min-w-0">
+                  <div className="p-4 md:p-5 bg-page-secondary rounded-xl border border-page flex flex-wrap items-stretch sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 md:gap-4 min-w-0 flex-1">
                       {user.profile_image ? (
                         <img
                           src={user.profile_image}
@@ -155,22 +155,24 @@ export default function ProfilePage() {
                         )}
                       </div>
                     </div>
-                    <div className="flex flex-col items-end gap-2 shrink-0">
+                    <div className="flex flex-col justify-center gap-2.5 shrink-0 w-[7.5rem] sm:w-28">
                       {hasAuth && !isSubscribed && (
                         <Link
                           to="/subscribe"
-                          className="inline-block px-3 py-1.5 text-xs font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors text-center"
+                          className="inline-flex w-full items-center justify-center min-h-9 px-3 text-xs font-medium text-white bg-primary-500 hover:bg-primary-600 rounded-lg transition-colors text-center"
                         >
                           구독하기
                         </Link>
                       )}
-                      <button
-                        type="button"
-                        onClick={handleLogout}
-                        className="text-page-secondary hover:text-page text-xs font-medium transition-colors"
-                      >
-                        로그아웃
-                      </button>
+                      <div className="flex min-h-9 items-center justify-end">
+                        <button
+                          type="button"
+                          onClick={handleLogout}
+                          className="text-page-secondary hover:text-page text-xs font-medium transition-colors"
+                        >
+                          로그아웃
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ) : (
@@ -204,9 +206,9 @@ export default function ProfilePage() {
                     expandedTagline ? 'bg-page-secondary' : 'hover:bg-page-secondary/50'
                   }`}
                 >
-                  <span className="flex-1 text-xs font-bold text-primary-500 uppercase tracking-wider line-clamp-2">
+                  <h2 className="flex-1 m-0 text-left text-xs font-bold text-primary-500 uppercase tracking-wider line-clamp-2">
                     {profileTaglineTitle}
-                  </span>
+                  </h2>
                   <MaterialIcon
                     name="chevron_right"
                     className={`w-5 h-5 text-page-muted transition-transform flex-shrink-0 ${expandedTagline ? 'rotate-90' : ''}`}
