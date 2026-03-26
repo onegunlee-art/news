@@ -2,7 +2,7 @@
 
 웹 매니페스트: `https://www.thegist.co.kr/manifest.webmanifest`
 
-레포에는 Bubblewrap 설정 파일 **`twa-manifest.json`** 이 포함되어 있습니다. GitHub Actions에서는 `bubblewrap update`로 Gradle 프로젝트를 생성한 뒤 `bubblewrap build`로 AAB를 만듭니다. 로컬에서 처음부터 쓰려면 아래 **초기화** 절차를 따르거나, JDK 17·Android SDK 경로가 잡힌 뒤 같은 디렉터리에서 `bubblewrap update --manifest=.` 를 실행하면 됩니다.
+레포에는 Bubblewrap 설정 파일 **`twa-manifest.json`** 이 포함되어 있습니다. GitHub Actions에서는 `bubblewrap update`로 Gradle 프로젝트를 생성한 뒤 `bubblewrap build`로 AAB를 만듭니다. 로컬에서는 `android/twa` 로 이동한 뒤 **`bubblewrap update`** 만 실행하면 됩니다(`--manifest`에 `.`를 주면 디렉터리를 파일로 읽으려 해 **EISDIR** 오류가 납니다. 파일을 지정할 때만 `--manifest=./twa-manifest.json` 형태로 쓰세요).
 
 ## 사전 요건
 

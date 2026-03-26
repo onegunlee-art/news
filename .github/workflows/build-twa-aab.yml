@@ -35,9 +35,10 @@ jobs:
           printf '%s\n' "{\"jdkPath\":\"${JAVA_HOME}\",\"androidSdkPath\":\"${SDK}\"}" > "${HOME}/.bubblewrap/config.json"
           cat "${HOME}/.bubblewrap/config.json"
 
+      # --manifest=. 는 디렉터리가 아니라 twa-manifest.json *파일* 경로로 쓰여 EISDIR 발생
       - name: Generate Android project from twa-manifest.json
         working-directory: android/twa
-        run: bubblewrap update --manifest=. --skipVersionUpgrade
+        run: bubblewrap update --skipVersionUpgrade
 
       - name: Decode Play upload keystore
         env:
@@ -53,7 +54,6 @@ jobs:
           UPLOAD_KEYSTORE: ${{ runner.temp }}/upload.keystore
         run: |
           bubblewrap build \
-            --manifest=. \
             --signingKeyPath="${UPLOAD_KEYSTORE}" \
             --signingKeyAlias="${{ secrets.PLAY_KEY_ALIAS }}" \
             --skipPwaValidation
