@@ -33,6 +33,10 @@ const PER_PAGE = 20
 const SCROLL_SAVE_KEY = 'home_scroll_'
 const TAB_SWIPE_MIN_PX = 56
 const TAB_SWIPE_RATIO = 1.2
+const TAB_SLIDE_MS = 320
+const TAB_SLIDE_EASE = 'cubic-bezier(0.22, 1, 0.36, 1)'
+/** 스와이프로 탭 전환 시 너비 대비 최소 비율 (px 민것과 함께 사용) */
+const TAB_SWIPE_WIDTH_RATIO = 0.14
 
 function filterPlaceholder(items: NewsItem[]): NewsItem[] {
   const placeholderPhrases = ['무엇이 처음부터 왔었']
@@ -148,40 +152,181 @@ export default function HomePage() {
     }
   }
 
+  const slideViewportRef = useRef<HTMLDivElement>(null)
   const tabTouchStartRef = useRef<{ x: number; y: number } | null>(null)
+  const horizontalTabSwipeRef = useRef(false)
+  const tabAnimLockRef = useRef(false)
+  const tabSlideAnimRef = useRef<{
+    phase: 'idle' | 'exit' | 'enter'
+    targetTab: string | null
+    direction: 'next' | 'prev'
+  }>({ phase: 'idle', targetTab: null, direction: 'next' })
 
-  const switchTabBySwipe = useCallback(
-    (direction: 'prev' | 'next') => {
-      if (tabLabels.length < 2) return
-      const idx = tabLabels.indexOf(activeTab)
-      if (idx < 0) return
-      const nextIdx = direction === 'next' ? idx + 1 : idx - 1
-      if (nextIdx < 0 || nextIdx >= tabLabels.length) return
-      const next = tabLabels[nextIdx]
-      if (next === activeTab) return
-      window.scrollTo(0, 0)
-      setActiveTab(next)
+  const [tabSlidePx, setTabSlidePx] = useState(0)
+  const [tabSlideTransition, setTabSlideTransition] = useState(true)
+
+  const getTabSlideWidth = useCallback(() => {
+    const el = slideViewportRef.current
+    return el?.clientWidth ?? (typeof window !== 'undefined' ? window.innerWidth : 360)
+  }, [])
+
+  const runTabSlideSequence = useCallback(
+    (targetTab: string, direction: 'next' | 'prev', fromPx?: number) => {
+      if (tabAnimLockRef.current || targetTab === activeTab) return
+      const w = getTabSlideWidth()
+      if (w <= 0) {
+        window.scrollTo(0, 0)
+        setActiveTab(targetTab)
+        return
+      }
+      tabAnimLockRef.current = true
+      tabSlideAnimRef.current = { phase: 'exit', targetTab, direction }
+      setTabSlideTransition(true)
+      const startPx = fromPx !== undefined ? fromPx : 0
+      setTabSlidePx(startPx)
+      const endExit = direction === 'next' ? -w : w
+      requestAnimationFrame(() => {
+        setTabSlidePx(endExit)
+      })
     },
-    [activeTab, tabLabels]
+    [activeTab, getTabSlideWidth]
+  )
+
+  const onTabSlideTransitionEnd = useCallback(
+    (e: React.TransitionEvent<HTMLDivElement>) => {
+      if (e.target !== e.currentTarget || e.propertyName !== 'transform') return
+      const meta = tabSlideAnimRef.current
+
+      if (meta.phase === 'exit' && meta.targetTab) {
+        const w = getTabSlideWidth()
+        window.scrollTo(0, 0)
+        setActiveTab(meta.targetTab)
+        if (w <= 0) {
+          tabSlideAnimRef.current = { phase: 'idle', targetTab: null, direction: meta.direction }
+          tabAnimLockRef.current = false
+          setTabSlideTransition(true)
+          setTabSlidePx(0)
+          return
+        }
+        tabSlideAnimRef.current = { phase: 'enter', targetTab: meta.targetTab, direction: meta.direction }
+        setTabSlideTransition(false)
+        const enterFrom = meta.direction === 'next' ? w : -w
+        setTabSlidePx(enterFrom)
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            setTabSlideTransition(true)
+            setTabSlidePx(0)
+          })
+        })
+        return
+      }
+
+      if (meta.phase === 'enter') {
+        tabSlideAnimRef.current = { phase: 'idle', targetTab: null, direction: meta.direction }
+        tabAnimLockRef.current = false
+      }
+    },
+    [getTabSlideWidth]
   )
 
   const onTabAreaTouchStart = (e: React.TouchEvent) => {
-    const te = e.changedTouches[0]
+    if (tabAnimLockRef.current) return
+    const te = e.targetTouches[0]
     tabTouchStartRef.current = { x: te.clientX, y: te.clientY }
+    horizontalTabSwipeRef.current = false
+    setTabSlideTransition(false)
+  }
+
+  const onTabAreaTouchMove = (e: React.TouchEvent) => {
+    if (tabAnimLockRef.current || !tabTouchStartRef.current) return
+    const te = e.targetTouches[0]
+    const start = tabTouchStartRef.current
+    const dx = te.clientX - start.x
+    const dy = te.clientY - start.y
+
+    if (!horizontalTabSwipeRef.current) {
+      if (Math.abs(dx) >= 12 && Math.abs(dx) > Math.abs(dy) * TAB_SWIPE_RATIO) {
+        horizontalTabSwipeRef.current = true
+      } else if (Math.abs(dy) > Math.abs(dx) * TAB_SWIPE_RATIO && Math.abs(dy) > 16) {
+        tabTouchStartRef.current = null
+        horizontalTabSwipeRef.current = false
+        setTabSlideTransition(true)
+        setTabSlidePx(0)
+        return
+      }
+    }
+    if (!horizontalTabSwipeRef.current) return
+
+    const idx = tabLabels.indexOf(activeTab)
+    const w = getTabSlideWidth()
+    const lim = w * 1.08
+    let px = dx
+    if (idx <= 0) {
+      px = Math.min(0, px)
+      px = Math.max(-lim, px)
+    } else if (idx >= tabLabels.length - 1) {
+      px = Math.max(0, px)
+      px = Math.min(lim, px)
+    } else {
+      px = Math.max(-lim, Math.min(lim, px))
+    }
+
+    setTabSlidePx(px)
   }
 
   const onTabAreaTouchEnd = (e: React.TouchEvent) => {
     const start = tabTouchStartRef.current
     tabTouchStartRef.current = null
-    if (!start) return
+    if (tabAnimLockRef.current || !start) {
+      horizontalTabSwipeRef.current = false
+      return
+    }
+
+    if (!horizontalTabSwipeRef.current) {
+      horizontalTabSwipeRef.current = false
+      setTabSlideTransition(true)
+      setTabSlidePx(0)
+      return
+    }
+    horizontalTabSwipeRef.current = false
+
     const ev = e.changedTouches[0]
     const dx = ev.clientX - start.x
-    const dy = ev.clientY - start.y
-    if (Math.abs(dx) < TAB_SWIPE_MIN_PX) return
-    if (Math.abs(dx) <= Math.abs(dy) * TAB_SWIPE_RATIO) return
-    if (dx < 0) switchTabBySwipe('next')
-    else switchTabBySwipe('prev')
+    const w = getTabSlideWidth()
+    const threshold = Math.max(TAB_SWIPE_MIN_PX, w * TAB_SWIPE_WIDTH_RATIO)
+    const idx = tabLabels.indexOf(activeTab)
+
+    if (dx < -threshold && idx < tabLabels.length - 1) {
+      const next = tabLabels[idx + 1]
+      if (next) runTabSlideSequence(next, 'next', dx)
+      return
+    }
+    if (dx > threshold && idx > 0) {
+      const prev = tabLabels[idx - 1]
+      if (prev) runTabSlideSequence(prev, 'prev', dx)
+      return
+    }
+
+    setTabSlideTransition(true)
+    setTabSlidePx(0)
   }
+
+  const onTabButtonClick = useCallback(
+    (tab: string) => {
+      if (tab === activeTab || tabAnimLockRef.current) return
+      window.scrollTo(0, 0)
+      const oldIdx = tabLabels.indexOf(activeTab)
+      const newIdx = tabLabels.indexOf(tab)
+      if (oldIdx < 0 || newIdx < 0) {
+        setActiveTab(tab)
+        return
+      }
+      if (oldIdx === newIdx) return
+      const direction: 'next' | 'prev' = newIdx > oldIdx ? 'next' : 'prev'
+      runTabSlideSequence(tab, direction)
+    },
+    [activeTab, tabLabels, runTabSlideSequence]
+  )
 
   return (
     <div className="min-h-screen bg-page pb-8">
@@ -192,12 +337,7 @@ export default function HomePage() {
             {tabLabels.map((tab) => (
               <button
                 key={tab}
-                onClick={() => {
-                  if (tab !== activeTab) {
-                    window.scrollTo(0, 0)
-                    setActiveTab(tab)
-                  }
-                }}
+                onClick={() => onTabButtonClick(tab)}
                 className={`flex-1 py-3 text-sm font-medium transition-colors relative flex flex-col items-center justify-center gap-0 ${
                   activeTab === tab
                     ? 'text-page'
@@ -223,64 +363,76 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* 기사 목록 — 탭 탭 + 이 영역 좌우 스와이프로 이전/다음 탭 */}
-      <div
-        className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 md:px-8 lg:px-12 xl:px-16 pt-4 md:pt-5 bg-page"
-        onTouchStart={onTabAreaTouchStart}
-        onTouchEnd={onTabAreaTouchEnd}
-      >
-        {isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <LoadingSpinner size="large" />
-          </div>
-        ) : news.length === 0 ? (
-          <div className="text-center py-20 text-page-secondary">
-            기사가 없습니다.
-          </div>
-        ) : (
-          <>
-            <div className="bg-page">
-              {/* 모바일: 기사 1개씩, 기사와 기사 사이에만 회색 */}
-              <div className="lg:hidden">
-                {news.map((item, i) => (
-                  <div key={item.id ?? i}>
-                    <ArticleCard article={item} activeTab={activeTab} subCategoryToLabel={subCategoryToLabel} />
-                    {i < news.length - 1 && (
-                      <div className="h-2 bg-page-secondary" aria-hidden />
-                    )}
+      {/* 기사 목록 — 좌우 스와이프 시 패널이 밀리며 이전/다음 탭으로 전환 */}
+      <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto pt-4 md:pt-5 bg-page overflow-x-hidden overscroll-x-none touch-pan-y">
+        <div ref={slideViewportRef} className="overflow-x-hidden">
+          <div
+            className={`px-4 md:px-8 lg:px-12 xl:px-16 will-change-transform ${tabSlideTransition ? 'transition-transform' : ''}`}
+            style={{
+              transform: `translate3d(${tabSlidePx}px,0,0)`,
+              transitionDuration: tabSlideTransition ? `${TAB_SLIDE_MS}ms` : '0ms',
+              transitionTimingFunction: tabSlideTransition ? TAB_SLIDE_EASE : 'linear',
+            }}
+            onTouchStart={onTabAreaTouchStart}
+            onTouchMove={onTabAreaTouchMove}
+            onTouchEnd={onTabAreaTouchEnd}
+            onTouchCancel={onTabAreaTouchEnd}
+            onTransitionEnd={onTabSlideTransitionEnd}
+          >
+            {isLoading ? (
+              <div className="flex items-center justify-center py-20">
+                <LoadingSpinner size="large" />
+              </div>
+            ) : news.length === 0 ? (
+              <div className="text-center py-20 text-page-secondary">
+                기사가 없습니다.
+              </div>
+            ) : (
+              <>
+                <div className="bg-page">
+                  {/* 모바일: 기사 1개씩, 기사와 기사 사이에만 회색 */}
+                  <div className="lg:hidden">
+                    {news.map((item, i) => (
+                      <div key={item.id ?? i}>
+                        <ArticleCard article={item} activeTab={activeTab} subCategoryToLabel={subCategoryToLabel} />
+                        {i < news.length - 1 && (
+                          <div className="h-2 bg-page-secondary" aria-hidden />
+                        )}
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-              {/* PC(lg~): 기사 2개씩 한 행, 행과 행 사이에만 회색 */}
-              <div className="hidden lg:block">
-                {chunkBy2(news).map((row, rowIndex) => (
-                  <div key={rowIndex}>
-                    <div className="grid grid-cols-2 gap-x-12">
-                      {row.map((item, idx) => (
-                        <ArticleCard key={item.id ?? rowIndex * 2 + idx} article={item} activeTab={activeTab} subCategoryToLabel={subCategoryToLabel} />
-                      ))}
-                    </div>
-                    {rowIndex < chunkBy2(news).length - 1 && (
-                      <div className="h-2 bg-page-secondary" aria-hidden />
-                    )}
+                  {/* PC(lg~): 기사 2개씩 한 행, 행과 행 사이에만 회색 */}
+                  <div className="hidden lg:block">
+                    {chunkBy2(news).map((row, rowIndex) => (
+                      <div key={rowIndex}>
+                        <div className="grid grid-cols-2 gap-x-12">
+                          {row.map((item, idx) => (
+                            <ArticleCard key={item.id ?? rowIndex * 2 + idx} article={item} activeTab={activeTab} subCategoryToLabel={subCategoryToLabel} />
+                          ))}
+                        </div>
+                        {rowIndex < chunkBy2(news).length - 1 && (
+                          <div className="h-2 bg-page-secondary" aria-hidden />
+                        )}
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </div>
-            {hasNextPage && !isPopularTab && (
-              <div className="flex justify-center pt-8 pb-4">
-                <button
-                  type="button"
-                  onClick={loadMore}
-                  disabled={isLoadingMore}
-                  className="text-page-secondary hover:text-page underline-offset-2 hover:underline font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isLoadingMore ? '불러오는 중...' : '더 보기'}
-                </button>
-              </div>
+                </div>
+                {hasNextPage && !isPopularTab && (
+                  <div className="flex justify-center pt-8 pb-4">
+                    <button
+                      type="button"
+                      onClick={loadMore}
+                      disabled={isLoadingMore}
+                      className="text-page-secondary hover:text-page underline-offset-2 hover:underline font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isLoadingMore ? '불러오는 중...' : '더 보기'}
+                    </button>
+                  </div>
+                )}
+              </>
             )}
-          </>
-        )}
+          </div>
+        </div>
       </div>
 
 
