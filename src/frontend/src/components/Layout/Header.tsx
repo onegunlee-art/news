@@ -109,29 +109,36 @@ export default function Header() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-page z-50"
+            className="fixed inset-0 z-50 overflow-x-hidden bg-page"
           >
-            <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 md:px-6 pt-4">
-              <div className="flex items-center gap-3">
+            <div className="mx-auto w-full min-w-0 max-w-lg px-[max(1rem,env(safe-area-inset-left))] pt-[max(1rem,env(safe-area-inset-top))] pr-[max(1rem,env(safe-area-inset-right))] md:max-w-4xl md:px-6 lg:max-w-6xl xl:max-w-7xl">
+              <div className="flex w-full min-w-0 items-stretch gap-3 sm:items-center">
                 <button
+                  type="button"
                   onClick={() => setIsSearchOpen(false)}
-                  className="p-2 text-page-secondary"
+                  className="shrink-0 self-center p-2 text-page-secondary"
+                  aria-label="검색 닫기"
                 >
                   <MaterialIcon name="arrow_back" className="w-5 h-5" size={20} />
                 </button>
-                <form onSubmit={handleSearch} className="flex-1 flex gap-2">
+                <form
+                  onSubmit={handleSearch}
+                  className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center"
+                >
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="키워드 검색 (제목·내용·요약)"
                     autoFocus
-                    className="flex-1 px-4 py-3 bg-page-secondary rounded-lg text-page placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    autoComplete="off"
+                    enterKeyHint="search"
+                    className="min-w-0 w-full flex-1 rounded-lg bg-page-secondary px-4 py-3 text-base text-page placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-primary-500"
                   />
                   <button
                     type="submit"
                     disabled={!searchQuery.trim()}
-                    className="px-4 py-3 rounded-lg bg-[var(--text-primary)] text-[var(--bg-light)] text-sm font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
+                    className="w-full shrink-0 rounded-lg bg-[var(--text-primary)] px-4 py-3 text-sm font-medium text-[var(--bg-light)] transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 whitespace-nowrap sm:w-auto"
                   >
                     검색하기
                   </button>
