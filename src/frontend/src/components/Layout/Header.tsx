@@ -175,39 +175,60 @@ export default function Header() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[100] overflow-x-hidden bg-page"
+              className="fixed inset-0 z-[100] flex min-h-[100dvh] flex-col overflow-x-hidden bg-[#e8eef2] dark:bg-page"
             >
-              <div className="mx-auto w-full min-w-0 max-w-lg px-[max(1rem,env(safe-area-inset-left))] pt-[max(1rem,env(safe-area-inset-top))] pr-[max(1rem,env(safe-area-inset-right))] md:max-w-4xl md:px-6 lg:max-w-6xl xl:max-w-7xl">
-                <div className="flex w-full min-w-0 items-stretch gap-3 sm:items-center">
-                  <button
-                    type="button"
-                    onClick={() => setIsSearchOpen(false)}
-                    className="shrink-0 self-center p-2 text-page-secondary"
-                    aria-label="검색 닫기"
-                  >
-                    <MaterialIcon name="arrow_back" className="w-5 h-5" size={20} />
-                  </button>
-                  <form
-                    onSubmit={handleSearch}
-                    className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center"
-                  >
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="키워드 검색 (제목·내용·요약)"
-                      autoFocus
-                      autoComplete="off"
-                      enterKeyHint="search"
-                      className="min-w-0 w-full flex-1 rounded-lg bg-page-secondary px-4 py-3 text-base text-page placeholder-[var(--text-muted)] focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    />
-                    <button
-                      type="submit"
-                      disabled={!searchQuery.trim()}
-                      className="w-full shrink-0 rounded-lg bg-[var(--text-primary)] px-4 py-3 text-sm font-medium text-[var(--bg-light)] transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 whitespace-nowrap sm:w-auto"
-                    >
-                      검색하기
-                    </button>
+              <div
+                className="flex w-full shrink-0 items-center gap-1 bg-[#9fbad5] px-2 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] pl-[max(0.5rem,env(safe-area-inset-left))] pr-[max(0.5rem,env(safe-area-inset-right))] dark:bg-slate-600"
+              >
+                <button
+                  type="button"
+                  onClick={() => setIsSearchOpen(false)}
+                  className="shrink-0 rounded-lg p-2.5 text-white hover:bg-white/10 transition-colors"
+                  aria-label="검색 닫기"
+                >
+                  <MaterialIcon name="arrow_back" className="w-6 h-6" size={24} />
+                </button>
+              </div>
+
+              <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-8 pt-4 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))]">
+                <div className="mx-auto w-full max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl">
+                  <form onSubmit={handleSearch}>
+                    <div className="flex min-w-0 items-center gap-2 rounded-2xl border border-page bg-page px-3 py-2.5 shadow-sm dark:border-page dark:bg-page dark:shadow-none">
+                      <MaterialIcon
+                        name="search"
+                        className="shrink-0 text-page-muted"
+                        size={22}
+                        aria-hidden
+                      />
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="키워드 검색 (제목·내용·요약)"
+                        autoFocus
+                        autoComplete="off"
+                        enterKeyHint="search"
+                        aria-label="검색어"
+                        className="min-w-0 flex-1 bg-transparent py-2 text-base text-page placeholder:text-page-muted focus:outline-none"
+                      />
+                      {searchQuery.trim() !== '' && (
+                        <button
+                          type="button"
+                          onClick={() => setSearchQuery('')}
+                          className="shrink-0 rounded-full p-1 text-page-muted hover:bg-page-secondary hover:text-page dark:hover:bg-page-secondary"
+                          aria-label="검색어 지우기"
+                        >
+                          <MaterialIcon name="close" className="w-5 h-5" size={20} />
+                        </button>
+                      )}
+                      <button
+                        type="submit"
+                        disabled={!searchQuery.trim()}
+                        className="shrink-0 rounded-lg px-3 py-2 text-sm font-semibold text-primary-500 hover:bg-primary-500/10 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent whitespace-nowrap"
+                      >
+                        검색
+                      </button>
+                    </div>
                   </form>
                 </div>
               </div>

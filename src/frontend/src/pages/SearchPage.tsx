@@ -58,27 +58,42 @@ export default function SearchPage() {
         {/* 검색 결과 헤더 */}
         <div className="mb-6">
           <h1 className="text-xl md:text-2xl font-semibold text-page">
-            {q ? `"${q}" 검색 결과` : '키워드 검색'}
+            {q ? `「${q}」에 대한 결과` : '키워드 검색'}
           </h1>
           {q && (
-            <p className="text-sm text-page-secondary mt-1">
-              {!isLoading && searched && `${news.length}건의 기사`}
+            <p className="text-sm text-page-secondary mt-2 font-medium">
+              {!isLoading && searched && `${news.length}건`}
             </p>
           )}
         </div>
 
         {!q ? (
           <div className="text-center py-16 text-page-secondary">
-            <p className="mb-2">상단 검색 아이콘을 눌러 검색어를 입력하세요.</p>
-            <p className="text-sm">제목·내용·요약에서 키워드로 검색됩니다.</p>
+            <p className="mb-2">상단 검색 아이콘을 눌러 검색어를 입력해 주세요.</p>
+            <p className="text-sm">제목·내용·요약에서 키워드로 찾을 수 있습니다.</p>
           </div>
         ) : isLoading ? (
           <div className="flex justify-center items-center py-20">
             <LoadingSpinner size="large" />
           </div>
         ) : news.length === 0 ? (
-          <div className="text-center py-20 text-page-secondary">
-            검색 결과가 없습니다. 다른 키워드로 시도해 보세요.
+          <div className="flex flex-col items-center px-4 py-16 text-center">
+            <div className="relative mb-8 flex h-36 w-36 items-center justify-center">
+              <span
+                className="absolute inset-0 rounded-full bg-page-secondary opacity-90 dark:opacity-100"
+                aria-hidden
+              />
+              <span
+                className="absolute -bottom-1 left-1/2 h-14 w-20 -translate-x-1/2 rounded-full bg-page shadow-md border border-page dark:bg-page-secondary"
+                aria-hidden
+              />
+              <span className="relative z-[1] flex h-16 w-16 items-center justify-center rounded-full bg-page-secondary shadow-inner border border-page">
+                <MaterialIcon name="search" className="text-page-muted" size={40} />
+              </span>
+            </div>
+            <p className="max-w-sm text-base leading-relaxed text-page-secondary">
+              죄송합니다 해당 검색어로는 검색이 되지 않습니다.
+            </p>
           </div>
         ) : (
           <div className="space-y-0 lg:grid lg:grid-cols-2 lg:gap-x-12 lg:gap-y-0 lg:border-t lg:border-page">
