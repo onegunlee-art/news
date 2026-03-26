@@ -87,6 +87,9 @@ jobs:
           echo "=== public/ 내용 (배포 대상) ==="
           ls -la public/
           ls -la public/assets/ 2>/dev/null || true
+          echo "=== public/.well-known (TWA assetlinks 등) ==="
+          ls -la public/.well-known/ 2>/dev/null || echo "WARN: public/.well-known 없음"
+          test -f public/.well-known/assetlinks.json && echo "OK: assetlinks.json in artifact" || echo "WARN: assetlinks.json 없음 — 레포 public/.well-known 커밋 여부 확인"
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -120,6 +123,7 @@ jobs:
           test -f public/index.html && echo "OK: index.html" || echo "WARN: index.html 없음"
           test -f public/api.php && echo "OK: api.php" || echo "WARN: api.php 없음"
           ls public/assets/ 2>/dev/null | head -5 || true
+          test -f public/.well-known/assetlinks.json && echo "OK: .well-known/assetlinks.json" || echo "WARN: assetlinks.json 없음"
 
       - name: Setup SSH key
         run: |

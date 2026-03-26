@@ -69,6 +69,8 @@ public/*.map
 android/**/*.jks
 android/**/*.keystore
 android/**/*.pepk
+*.keystore
+my-upload-key.keystore
 
 # AWS / EC2 (키·비밀번호·로컬 전용 스크립트 — 커밋 금지)
 aws/thegist-key.pem
