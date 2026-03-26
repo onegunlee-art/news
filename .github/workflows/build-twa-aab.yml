@@ -23,6 +23,15 @@ jobs:
       - name: Install Bubblewrap CLI
         run: npm install -g @bubblewrap/cli
 
+      # 러너에 ~/.bubblewrap/config.json 이 없으면 Bubblewrap이 JDK/SDK 설치를 묻는
+      # 대화형 프롬프트에서 멈출 수 있음(취소 시 exit 130). CI에서는 비대화형으로 고정.
+      - name: Write Bubblewrap config (non-interactive)
+        run: |
+          mkdir -p "${HOME}/.bubblewrap"
+          SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME}}"
+          printf '%s\n' "{\"jdkPath\":\"${JAVA_HOME}\",\"androidSdkPath\":\"${SDK}\"}" > "${HOME}/.bubblewrap/config.json"
+          cat "${HOME}/.bubblewrap/config.json"
+
       - name: Generate Android project from twa-manifest.json
         working-directory: android/twa
         run: bubblewrap update --manifest=. --skipVersionUpgrade
