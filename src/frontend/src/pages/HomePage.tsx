@@ -162,18 +162,18 @@ export default function HomePage() {
               <button
                 key={tab}
                 onClick={() => handleTabClick(tab)}
-                className={`flex-1 py-3 text-sm font-medium transition-colors relative flex flex-col items-center justify-center gap-0 ${
+                className={`flex-1 py-3 text-sm font-medium transition-colors relative flex items-end justify-center min-h-[2.75rem] ${
                   activeTab === tab
                     ? 'text-page'
                     : 'text-page-secondary hover:text-page'
                 }`}
               >
                 {tab === specialLabel ? (
-                  <span className="flex flex-col items-center justify-center gap-0.5">
-                    <span className="rounded-full bg-primary-500 px-1.5 py-0.5 text-[8px] font-medium leading-none text-white whitespace-nowrap">
+                  <span className="relative inline-block">
+                    <span className="absolute -top-2 right-0 translate-x-1 rounded-full bg-primary-500 px-1 py-0.5 text-[8px] font-medium leading-none text-white whitespace-nowrap">
                       {specialBadgeText}
                     </span>
-                    <span>{tab}</span>
+                    {tab}
                   </span>
                 ) : (
                   tab
