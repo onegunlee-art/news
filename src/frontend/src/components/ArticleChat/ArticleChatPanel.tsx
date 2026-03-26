@@ -113,12 +113,6 @@ function deriveChipAnswers(
   return { answers, streamingChipId }
 }
 
-function previewLine(text: string, max = 80): string {
-  const one = text.replace(/\s+/g, ' ').trim()
-  if (one.length <= max) return one || '답변이 여기에 표시됩니다.'
-  return `${one.slice(0, max)}…`
-}
-
 export interface ArticleChatPanelProps {
   newsId: number
 }
@@ -274,9 +268,6 @@ export default function ArticleChatPanel({ newsId }: ArticleChatPanelProps) {
       setMessages((prev) => (prev.length >= 2 ? prev.slice(0, -2) : prev))
     } finally {
       setStreaming(false)
-      if (chipId) {
-        setExpandedByChipId((prev) => ({ ...prev, [chipId]: false }))
-      }
       void loadSession()
     }
   }
@@ -301,38 +292,61 @@ export default function ArticleChatPanel({ newsId }: ArticleChatPanelProps) {
           const text = answers[c.id] ?? ''
           const expanded = expandedByChipId[c.id] ?? false
           const showEllipsis = isLive && !text.trim()
-          const answerComplete = used && !isLive && text.trim().length > 0
+          const showBody = used && (expanded || isLive)
+          const panelOpen = expanded || isLive
 
           return (
-            <div key={c.id} className="mb-5 last:mb-0">
-              <button
-                type="button"
-                disabled={streaming || usedChipIds.has(c.id)}
-                onClick={() => void sendMessage(c.label, c.id)}
-                className="w-full px-3 py-2.5 text-sm rounded-lg bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-50 transition-colors text-left font-medium"
-              >
-                {c.label}
-              </button>
-
-              {used && (
-                <div
-                  id={`article-chat-answer-${c.id}`}
-                  className="mt-2 rounded-xl border border-page bg-page-secondary/50 overflow-hidden"
+            <div
+              key={c.id}
+              className="mb-5 last:mb-0 rounded-xl overflow-hidden border border-page bg-page shadow-sm"
+            >
+              {!used ? (
+                <button
+                  type="button"
+                  disabled={streaming || usedChipIds.has(c.id)}
+                  onClick={() => void sendMessage(c.label, c.id)}
+                  className="w-full px-4 py-3 text-sm bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-50 transition-colors text-left font-medium"
                 >
-                  {isLive || expanded ? (
-                    <div className="p-4">
-                      {answerComplete && (
-                        <button
-                          type="button"
-                          onClick={() => toggleExpanded(c.id)}
-                          className="mb-3 flex w-full items-center justify-between gap-2 text-left text-xs font-medium text-page-secondary hover:text-page"
-                          aria-expanded={true}
-                          aria-controls={`article-chat-answer-body-${c.id}`}
-                        >
-                          <span>답변 접기</span>
-                          <MaterialIcon name="expand_less" className="w-5 h-5 shrink-0" size={20} aria-hidden />
-                        </button>
-                      )}
+                  {c.label}
+                </button>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    id={`article-chat-header-${c.id}`}
+                    onClick={() => {
+                      if (isLive) return
+                      toggleExpanded(c.id)
+                    }}
+                    aria-expanded={panelOpen}
+                    aria-controls={`article-chat-answer-body-${c.id}`}
+                    className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${
+                      panelOpen ? 'bg-page-secondary' : 'hover:bg-page-secondary/50'
+                    } ${isLive ? 'cursor-default' : ''}`}
+                  >
+                    <span className="flex-1 text-page text-sm font-medium min-w-0">
+                      {c.label}
+                    </span>
+                    {isLive && (
+                      <span className="text-xs text-page-secondary shrink-0" aria-live="polite">
+                        생성 중…
+                      </span>
+                    )}
+                    <MaterialIcon
+                      name="chevron_right"
+                      className={`w-5 h-5 text-page-muted shrink-0 transition-transform ${
+                        panelOpen ? 'rotate-90' : ''
+                      }`}
+                      size={20}
+                      aria-hidden
+                    />
+                  </button>
+
+                  {showBody && (
+                    <div
+                      id={`article-chat-answer-${c.id}`}
+                      className="border-t border-page px-4 py-3 min-h-0 bg-page-secondary/30"
+                    >
                       <div
                         id={`article-chat-answer-body-${c.id}`}
                         ref={(el) => {
@@ -350,21 +364,8 @@ export default function ArticleChatPanel({ newsId }: ArticleChatPanelProps) {
                         </p>
                       )}
                     </div>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => toggleExpanded(c.id)}
-                      className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm text-page-secondary hover:bg-page-secondary/30 transition-colors"
-                      aria-expanded={false}
-                      aria-controls={`article-chat-answer-${c.id}`}
-                    >
-                      <span className="min-w-0 flex-1 line-clamp-2 break-keep-ko-mobile">
-                        {previewLine(text)}
-                      </span>
-                      <MaterialIcon name="expand_more" className="w-5 h-5 shrink-0" size={20} aria-hidden />
-                    </button>
                   )}
-                </div>
+                </>
               )}
             </div>
           )
