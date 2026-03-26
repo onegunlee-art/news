@@ -48,11 +48,21 @@ base64 -w0 my-upload-key.keystore
 
 **Windows PowerShell:**
 
+한 줄 문자열을 콘솔에만 출력하려면:
+
 ```powershell
 [Convert]::ToBase64String([IO.File]::ReadAllBytes("C:\path\to\my-upload-key.keystore"))
 ```
 
-실행이 끝나면 **Actions** 탭에서 해당 실행을 열고 **Artifacts**에서 `twa-release-aab` 를 내려받습니다. 기본 출력 경로는 `app/build/outputs/bundle/release/app-release.aab` 이며, 워크플로에 `find … *.aab` 로그 스텝이 있어 실제 파일명을 실행 로그에서 확인할 수 있습니다. CI에서는 네트워크·타임아웃 이슈를 줄이기 위해 `bubblewrap build`에 **`--skipPwaValidation`** 을 사용합니다. PWA 품질 검증은 배포 전에 로컬에서 `bubblewrap validate --url=…` 등으로 보완하세요.
+파일로 받은 뒤 시크릿에 붙여넣기 하려면 (경로는 `aws` 등 실제 위치에 맞출 것):
+
+```powershell
+[Convert]::ToBase64String([IO.File]::ReadAllBytes("./my-upload-key.keystore")) | Out-File -FilePath keystore_base64.txt -Encoding utf8
+```
+
+`Out-File`은 구버전 PowerShell에서 기본 인코딩이 UTF-16일 수 있습니다. 디코딩 오류가 나면 **`utf8`(또는 PowerShell 7+ `utf8NoBOM`)** 과 **파일 맨 앞 BOM·맨 끝 불필요한 빈 줄 제거**를 확인하세요. GitHub 시크릿 값은 **순수 Base64 한 줄**이어야 합니다.
+
+실행이 끝나면 **Actions** 탭에서 해당 실행을 열고 **Artifacts**에서 **`twa-release-aab`** 를 내려받습니다(다운로드한 ZIP을 풀면 그 안에 `app-release.aab` 등 번들 파일이 있습니다). 러너 상 기본 출력 경로는 `app/build/outputs/bundle/release/app-release.aab` 이며, 워크플로에 `find … *.aab` 로그 스텝이 있어 실제 파일명을 실행 로그에서 확인할 수 있습니다. CI에서는 네트워크·타임아웃 이슈를 줄이기 위해 `bubblewrap build`에 **`--skipPwaValidation`** 을 사용합니다. PWA 품질 검증은 배포 전에 로컬에서 `bubblewrap validate --url=…` 등으로 보완하세요.
 
 ## 빌드 (AAB)
 
