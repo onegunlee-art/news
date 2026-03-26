@@ -14,7 +14,10 @@ jobs:
           distribution: temurin
           java-version: "17"
 
+      # Bubblewrap 최신 템플릿은 compileSdk 36 — 플랫폼·빌드 도구 없으면 Gradle이 바로 실패(exit 1)
       - uses: android-actions/setup-android@v4
+        with:
+          packages: "tools platform-tools platforms;android-36 build-tools;36.0.0"
 
       - uses: actions/setup-node@v4
         with:
