@@ -36,6 +36,27 @@ keytool -list -v -keystore your.keystore -alias your_alias
 2. 테스터 계정으로 실제 설치
 3. 이슈 없으면 **프로덕션** 단계적 출시
 
+## 4a. GitHub Actions로 AAB 빌드 (수동)
+
+워크플로 파일: [`.github/workflows/build-twa-aab.yml`](../.github/workflows/build-twa-aab.yml). **Actions**에서 `Build TWA AAB (Play)` 를 선택해 **Run workflow** 로 실행합니다.
+
+**필수 저장소 시크릿 (이름을 정확히 맞출 것):**
+
+| Secret | 용도 |
+|--------|------|
+| `PLAY_UPLOAD_KEYSTORE_BASE64` | Play 업로드 keystore를 Base64로 인코딩한 한 줄 문자열 |
+| `PLAY_KEYSTORE_PASSWORD` | keystore 비밀번호 |
+| `PLAY_KEY_PASSWORD` | key 비밀번호 |
+| `PLAY_KEY_ALIAS` | keytool에서 지정한 alias (예: `my-key-alias`) |
+
+**Base64 예시:** Linux·macOS에서는 `base64 -w0 my-upload-key.keystore` (macOS는 `base64 -i my-upload-key.keystore`). Windows PowerShell에서는 `[Convert]::ToBase64String([IO.File]::ReadAllBytes("경로\my-upload-key.keystore"))`.
+
+성공 시 아티팩트 이름은 **`twa-release-aab`** 이며, Bubblewrap이 `bundleRelease`를 호출하므로 서명된 번들은 표준 Android Gradle 경로 **`app/build/outputs/bundle/release/app-release.aab`** 에 생성됩니다. 워크플로의 `find … *.aab` 스텝 로그로 실제 경로를 다시 확인할 수 있습니다.
+
+워크플로에서는 CI 안정성을 위해 `bubblewrap build`에 **`--skipPwaValidation`** 이 붙어 있습니다. 스토어 정책·PWA 품질은 Play 콘솔·수동 검증으로 보완하고, 필요 시 로컬에서 `bubblewrap validate`를 실행하세요.
+
+이 파이프라인은 Play Developer API로 자동 업로드하지 않습니다. 아티팩트 AAB를 받아 Play Console **내부 테스트** 등에 수동 업로드합니다.
+
 ## 5. 내부 테스트 시 확인할 기능 (체크리스트)
 
 - [ ] 앱 아이콘 실행 시 메인 로드

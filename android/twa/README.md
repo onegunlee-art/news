@@ -2,6 +2,8 @@
 
 웹 매니페스트: `https://www.thegist.co.kr/manifest.webmanifest`
 
+레포에는 Bubblewrap 설정 파일 **`twa-manifest.json`** 이 포함되어 있습니다. GitHub Actions에서는 `bubblewrap update`로 Gradle 프로젝트를 생성한 뒤 `bubblewrap build`로 AAB를 만듭니다. 로컬에서 처음부터 쓰려면 아래 **초기화** 절차를 따르거나, JDK 17·Android SDK 경로가 잡힌 뒤 같은 디렉터리에서 `bubblewrap update --manifest=.` 를 실행하면 됩니다.
+
 ## 사전 요건
 
 1. 프로덕션에 `manifest.webmanifest`와 `sw.js`가 배포되어 있을 것
@@ -22,6 +24,35 @@ bubblewrap init --manifest https://www.thegist.co.kr/manifest.webmanifest
 
 - **Android package name**: `kr.co.thegist.app` (assetlinks.json과 동일해야 함)
 - 아이콘·시작 URL은 매니페스트를 따름
+
+## GitHub Actions로 Play용 AAB 빌드
+
+워크플로: [`.github/workflows/build-twa-aab.yml`](../../.github/workflows/build-twa-aab.yml) (수동 실행 **workflow_dispatch**).
+
+저장소 **Settings → Secrets and variables → Actions** 에 다음 시크릿을 등록합니다. 원본 keystore 파일은 Git에 올리지 않고, **Base64 문자열만** `PLAY_UPLOAD_KEYSTORE_BASE64`에 넣습니다.
+
+| Secret | 설명 |
+|--------|------|
+| `PLAY_UPLOAD_KEYSTORE_BASE64` | 업로드 keystore 파일을 Base64로 인코딩한 전체 문자열 |
+| `PLAY_KEYSTORE_PASSWORD` | keystore 비밀번호 (워크플로에서 `BUBBLEWRAP_KEYSTORE_PASSWORD`로 전달) |
+| `PLAY_KEY_PASSWORD` | key 비밀번호 (`BUBBLEWRAP_KEY_PASSWORD`) |
+| `PLAY_KEY_ALIAS` | 예: `my-key-alias` (`--signingKeyAlias`) |
+
+**Base64 만들기 (Linux, GitHub Actions `ubuntu-latest`):**
+
+```bash
+base64 -w0 my-upload-key.keystore
+```
+
+(macOS는 `base64 -i my-upload-key.keystore | tr -d '\n'` 등으로 한 줄로 만듭니다.)
+
+**Windows PowerShell:**
+
+```powershell
+[Convert]::ToBase64String([IO.File]::ReadAllBytes("C:\path\to\my-upload-key.keystore"))
+```
+
+실행이 끝나면 **Actions** 탭에서 해당 실행을 열고 **Artifacts**에서 `twa-release-aab` 를 내려받습니다. 기본 출력 경로는 `app/build/outputs/bundle/release/app-release.aab` 이며, 워크플로에 `find … *.aab` 로그 스텝이 있어 실제 파일명을 실행 로그에서 확인할 수 있습니다. CI에서는 네트워크·타임아웃 이슈를 줄이기 위해 `bubblewrap build`에 **`--skipPwaValidation`** 을 사용합니다. PWA 품질 검증은 배포 전에 로컬에서 `bubblewrap validate --url=…` 등으로 보완하세요.
 
 ## 빌드 (AAB)
 

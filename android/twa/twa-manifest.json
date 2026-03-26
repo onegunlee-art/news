@@ -1,0 +1,43 @@
+{
+  "packageId": "kr.co.thegist.app",
+  "host": "www.thegist.co.kr",
+  "name": "The Gist",
+  "launcherName": "The Gist",
+  "display": "standalone",
+  "displayOverride": [],
+  "themeColor": "#0a0a0f",
+  "themeColorDark": "#0a0a0f",
+  "navigationColor": "#0a0a0f",
+  "navigationColorDark": "#000000",
+  "navigationDividerColor": "#00000000",
+  "navigationDividerColorDark": "#00000000",
+  "backgroundColor": "#0a0a0f",
+  "enableNotifications": true,
+  "startUrl": "/",
+  "iconUrl": "https://www.thegist.co.kr/icon-512.png",
+  "maskableIconUrl": "https://www.thegist.co.kr/icon-512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "android"
+  },
+  "appVersionCode": 1,
+  "appVersion": "1",
+  "shortcuts": [],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://www.thegist.co.kr/manifest.webmanifest",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://www.thegist.co.kr/",
+  "minSdkVersion": 21,
+  "orientation": "portrait-primary",
+  "fingerprints": [],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": []
+}

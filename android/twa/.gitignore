@@ -1,4 +1,19 @@
-# Bubblewrap init/build로 생성되는 로컬 산출물은 커밋하지 않음 (키·빌드 아티팩트 보호)
-*
-!.gitignore
-!README.md
+# Gradle / Android
+.gradle/
+**/build/
+local.properties
+
+# IDE
+*.iml
+.idea/
+.cxx/
+.externalNativeBuild/
+
+# 서명·Play (파일은 절대 커밋하지 않음)
+*.keystore
+*.jks
+*.pepk
+
+# OS
+.DS_Store
+Thumbs.db
