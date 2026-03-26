@@ -26,6 +26,15 @@ jobs:
       - name: Install Bubblewrap CLI
         run: npm install -g @bubblewrap/cli
 
+      # @bubblewrap/core은 apksigner 경로를 build-tools 34.0.0으로 고정함. JDK 21+ keytool PKCS12는
+      # 해당 apksigner에서 "Tag number over 30 is not supported" 로 실패할 수 있어 36.0.0으로 맞춤.
+      - name: Patch Bubblewrap BUILD_TOOLS_VERSION for apksigner
+        run: |
+          F="$(find "$(npm root -g)" -path '*/@bubblewrap/core/dist/lib/androidSdk/AndroidSdkTools.js' 2>/dev/null | head -n1)"
+          test -n "$F" && test -f "$F"
+          sed -i "s/exports\.BUILD_TOOLS_VERSION = '34\.0\.0'/exports.BUILD_TOOLS_VERSION = '36.0.0'/" "$F"
+          grep "BUILD_TOOLS_VERSION" "$F" | head -n1
+
       # 러너에 ~/.bubblewrap/config.json 이 없으면 Bubblewrap이 JDK/SDK 설치를 묻는
       # 대화형 프롬프트에서 멈출 수 있음(취소 시 exit 130). CI에서는 비대화형으로 고정.
       - name: Write Bubblewrap config (non-interactive)
