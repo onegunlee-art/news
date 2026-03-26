@@ -51,7 +51,7 @@ export function useNewsList(params: NewsListParams = {}) {
   })
 }
 
-export function useInfiniteNewsList(category?: string, limit = 20, enabled = true) {
+export function useInfiniteNewsList(category?: string, limit = 20) {
   return useInfiniteQuery({
     queryKey: ['news', 'infinite', category ?? 'all'],
     queryFn: async ({ pageParam = 1 }) => {
@@ -65,7 +65,6 @@ export function useInfiniteNewsList(category?: string, limit = 20, enabled = tru
       return pagination.page < pagination.total_pages ? pagination.page + 1 : undefined
     },
     staleTime: 1000 * 60 * 2, // 2분 캐시
-    enabled,
   })
 }
 
@@ -80,7 +79,7 @@ export function useNewsDetail(id: number, params: NewsDetailParams = {}) {
   })
 }
 
-export function usePopularNews(enabled = true) {
+export function usePopularNews() {
   return useQuery({
     queryKey: queryKeys.news.popular(),
     queryFn: async () => {
@@ -88,7 +87,6 @@ export function usePopularNews(enabled = true) {
       return response.data
     },
     staleTime: 1000 * 60 * 2, // 2분 캐시
-    enabled,
   })
 }
 
