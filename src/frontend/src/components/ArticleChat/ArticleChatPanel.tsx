@@ -6,6 +6,7 @@ import {
   FIXED_CHIPS,
   type ChatChip,
 } from '../../constants/articleChat'
+import MaterialIcon from '../Common/MaterialIcon'
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api'
 
@@ -85,6 +86,39 @@ async function postArticleChatStream(
   }
 }
 
+/** user(chip_id) 직후 assistant 한 개를 해당 칩 답으로 매핑. 스트리밍 중이면 마지막 턴의 칩 id 반환 */
+function deriveChipAnswers(
+  messages: ChatMsg[],
+  streaming: boolean
+): { answers: Record<string, string>; streamingChipId: string | null } {
+  const answers: Record<string, string> = {}
+  for (let i = 0; i < messages.length; i++) {
+    const m = messages[i]
+    if (m.role === 'user' && m.chip_id) {
+      const next = messages[i + 1]
+      if (next?.role === 'assistant') {
+        answers[m.chip_id] = next.content
+      }
+    }
+  }
+
+  let streamingChipId: string | null = null
+  if (streaming && messages.length >= 2) {
+    const last = messages[messages.length - 1]
+    const prev = messages[messages.length - 2]
+    if (last.role === 'assistant' && prev.role === 'user' && prev.chip_id) {
+      streamingChipId = prev.chip_id
+    }
+  }
+  return { answers, streamingChipId }
+}
+
+function previewLine(text: string, max = 80): string {
+  const one = text.replace(/\s+/g, ' ').trim()
+  if (one.length <= max) return one || '답변이 여기에 표시됩니다.'
+  return `${one.slice(0, max)}…`
+}
+
 export interface ArticleChatPanelProps {
   newsId: number
 }
@@ -96,12 +130,8 @@ export default function ArticleChatPanel({ newsId }: ArticleChatPanelProps) {
   const [messages, setMessages] = useState<ChatMsg[]>([])
   const [streaming, setStreaming] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const messagesRef = useRef<HTMLDivElement>(null)
-
-  const assistantMessages = useMemo(
-    () => messages.filter((m) => m.role === 'assistant'),
-    [messages]
-  )
+  const [expandedByChipId, setExpandedByChipId] = useState<Record<string, boolean>>({})
+  const panelScrollRefs = useRef<Record<string, HTMLDivElement | null>>({})
 
   const usedChipIds = useMemo(() => {
     const s = new Set<string>()
@@ -112,6 +142,11 @@ export default function ArticleChatPanel({ newsId }: ArticleChatPanelProps) {
     }
     return s
   }, [messages])
+
+  const { answers, streamingChipId } = useMemo(
+    () => deriveChipAnswers(messages, streaming),
+    [messages, streaming]
+  )
 
   const newSessionId = () =>
     typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
@@ -184,9 +219,10 @@ export default function ArticleChatPanel({ newsId }: ArticleChatPanelProps) {
   }, [loadSession, loadChips])
 
   useEffect(() => {
-    const el = messagesRef.current
+    if (!streaming || !streamingChipId) return
+    const el = panelScrollRefs.current[streamingChipId]
     if (el) requestAnimationFrame(() => { el.scrollTop = el.scrollHeight })
-  }, [messages, streaming])
+  }, [messages, streaming, streamingChipId])
 
   const sendMessage = async (text: string, chipId?: string) => {
     const trimmed = text.trim()
@@ -197,6 +233,9 @@ export default function ArticleChatPanel({ newsId }: ArticleChatPanelProps) {
 
     setError(null)
     setStreaming(true)
+    if (chipId) {
+      setExpandedByChipId((prev) => ({ ...prev, [chipId]: true }))
+    }
     const userMsg: ChatMsg = {
       role: 'user',
       content: trimmed,
@@ -235,8 +274,15 @@ export default function ArticleChatPanel({ newsId }: ArticleChatPanelProps) {
       setMessages((prev) => (prev.length >= 2 ? prev.slice(0, -2) : prev))
     } finally {
       setStreaming(false)
+      if (chipId) {
+        setExpandedByChipId((prev) => ({ ...prev, [chipId]: false }))
+      }
       void loadSession()
     }
+  }
+
+  const toggleExpanded = (chipId: string) => {
+    setExpandedByChipId((prev) => ({ ...prev, [chipId]: !prev[chipId] }))
   }
 
   return (
@@ -248,37 +294,77 @@ export default function ArticleChatPanel({ newsId }: ArticleChatPanelProps) {
         <div className="mb-3 text-sm text-red-600 dark:text-red-400">{error}</div>
       )}
 
-      <div className="flex flex-wrap gap-2 mb-4">
-        {chips.map((c) => (
-          <button
-            key={c.id}
-            type="button"
-            disabled={streaming || usedChipIds.has(c.id)}
-            onClick={() => void sendMessage(c.label, c.id)}
-            className="px-3 py-2 text-sm rounded-lg bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-50 transition-colors max-w-full text-left font-medium"
-          >
-            {c.label}
-          </button>
-        ))}
-      </div>
+      <div>
+        {chips.map((c) => {
+          const used = usedChipIds.has(c.id)
+          const isLive = streaming && streamingChipId === c.id
+          const text = answers[c.id] ?? ''
+          const expanded = expandedByChipId[c.id] ?? false
+          const showEllipsis = isLive && !text.trim()
+          const answerComplete = used && !isLive && text.trim().length > 0
 
-      <div ref={messagesRef} className="rounded-xl border border-page bg-page-secondary/50 p-4 min-h-[120px] max-h-[360px] overflow-y-auto mb-3">
-        {assistantMessages.length === 0 && (
-          <p className="text-sm text-page-muted">아래 버튼을 눌러 질문해 보세요.</p>
-        )}
-        {assistantMessages.map((m, i) => {
-          const isLast = i === assistantMessages.length - 1
-          const showDisclaimer = !(streaming && isLast)
-          const showEllipsis = streaming && isLast && !m.content
           return (
-            <div key={`assistant-${i}`} className="mb-6 last:mb-0">
-              <div className="text-sm text-page-secondary whitespace-pre-wrap break-words leading-relaxed">
-                {m.content || (showEllipsis ? '…' : '')}
-              </div>
-              {showDisclaimer && (
-                <p className="text-xs text-page-muted mt-3 leading-relaxed">
-                  {DISCLAIMER_FOOTER}
-                </p>
+            <div key={c.id} className="mb-5 last:mb-0">
+              <button
+                type="button"
+                disabled={streaming || usedChipIds.has(c.id)}
+                onClick={() => void sendMessage(c.label, c.id)}
+                className="w-full px-3 py-2.5 text-sm rounded-lg bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-50 transition-colors text-left font-medium"
+              >
+                {c.label}
+              </button>
+
+              {used && (
+                <div
+                  id={`article-chat-answer-${c.id}`}
+                  className="mt-2 rounded-xl border border-page bg-page-secondary/50 overflow-hidden"
+                >
+                  {isLive || expanded ? (
+                    <div className="p-4">
+                      {answerComplete && (
+                        <button
+                          type="button"
+                          onClick={() => toggleExpanded(c.id)}
+                          className="mb-3 flex w-full items-center justify-between gap-2 text-left text-xs font-medium text-page-secondary hover:text-page"
+                          aria-expanded={true}
+                          aria-controls={`article-chat-answer-body-${c.id}`}
+                        >
+                          <span>답변 접기</span>
+                          <MaterialIcon name="expand_less" className="w-5 h-5 shrink-0" size={20} aria-hidden />
+                        </button>
+                      )}
+                      <div
+                        id={`article-chat-answer-body-${c.id}`}
+                        ref={(el) => {
+                          panelScrollRefs.current[c.id] = el
+                        }}
+                        className="text-sm text-page-secondary whitespace-pre-wrap break-words leading-relaxed max-h-[360px] overflow-y-auto"
+                        role="region"
+                        aria-label={`${c.label} 답변`}
+                      >
+                        {text || (showEllipsis ? '…' : '')}
+                      </div>
+                      {!isLive && (
+                        <p className="text-xs text-page-muted mt-3 leading-relaxed">
+                          {DISCLAIMER_FOOTER}
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => toggleExpanded(c.id)}
+                      className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm text-page-secondary hover:bg-page-secondary/30 transition-colors"
+                      aria-expanded={false}
+                      aria-controls={`article-chat-answer-${c.id}`}
+                    >
+                      <span className="min-w-0 flex-1 line-clamp-2 break-keep-ko-mobile">
+                        {previewLine(text)}
+                      </span>
+                      <MaterialIcon name="expand_more" className="w-5 h-5 shrink-0" size={20} aria-hidden />
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           )
