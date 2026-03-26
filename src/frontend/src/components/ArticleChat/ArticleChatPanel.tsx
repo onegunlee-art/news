@@ -87,12 +87,11 @@ async function postArticleChatStream(
 
 export interface ArticleChatPanelProps {
   newsId: number
-  articleTitle: string
 }
 
 type ChatMsg = { role: 'user' | 'assistant'; content: string; chip_id?: string | null }
 
-export default function ArticleChatPanel({ newsId, articleTitle }: ArticleChatPanelProps) {
+export default function ArticleChatPanel({ newsId }: ArticleChatPanelProps) {
   const [chips, setChips] = useState<ChatChip[]>([])
   const [messages, setMessages] = useState<ChatMsg[]>([])
   const [streaming, setStreaming] = useState(false)
@@ -240,27 +239,11 @@ export default function ArticleChatPanel({ newsId, articleTitle }: ArticleChatPa
     }
   }
 
-  const downloadLast = () => {
-    const last = [...messages].reverse().find((m) => m.role === 'assistant' && m.content.trim())
-    if (!last) return
-    const md = `# ${articleTitle}\n\n${last.content}\n\n---\n${DISCLAIMER_FOOTER}\n`
-    const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' })
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(blob)
-    a.download = `article-chat-${newsId}.md`
-    a.click()
-    URL.revokeObjectURL(a.href)
-  }
-
   return (
     <section
       className="mt-10 pt-8 border-t border-page"
       aria-label="기사 이해 도우미"
     >
-      <p className="text-xs text-amber-600 dark:text-amber-400 font-medium mb-3">
-        관리자 베타
-      </p>
-
       {error && (
         <div className="mb-3 text-sm text-red-600 dark:text-red-400">{error}</div>
       )}
@@ -302,15 +285,6 @@ export default function ArticleChatPanel({ newsId, articleTitle }: ArticleChatPa
         })}
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-2 mb-2">
-        <button
-          type="button"
-          onClick={downloadLast}
-          className="px-4 py-2 rounded-lg border border-page text-sm text-page-secondary hover:bg-page-secondary sm:w-auto w-full"
-        >
-          마지막 답변 .md 저장
-        </button>
-      </div>
     </section>
   )
 }

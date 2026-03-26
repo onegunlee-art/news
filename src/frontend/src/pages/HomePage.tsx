@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import MaterialIcon from '../components/Common/MaterialIcon'
 import { newsApi } from '../services/api'
@@ -31,6 +31,8 @@ interface NewsItem {
 
 const PER_PAGE = 20
 const SCROLL_SAVE_KEY = 'home_scroll_'
+const TAB_SWIPE_MIN_PX = 56
+const TAB_SWIPE_RATIO = 1.2
 
 function filterPlaceholder(items: NewsItem[]): NewsItem[] {
   const placeholderPhrases = ['무엇이 처음부터 왔었']
@@ -146,6 +148,41 @@ export default function HomePage() {
     }
   }
 
+  const tabTouchStartRef = useRef<{ x: number; y: number } | null>(null)
+
+  const switchTabBySwipe = useCallback(
+    (direction: 'prev' | 'next') => {
+      if (tabLabels.length < 2) return
+      const idx = tabLabels.indexOf(activeTab)
+      if (idx < 0) return
+      const nextIdx = direction === 'next' ? idx + 1 : idx - 1
+      if (nextIdx < 0 || nextIdx >= tabLabels.length) return
+      const next = tabLabels[nextIdx]
+      if (next === activeTab) return
+      window.scrollTo(0, 0)
+      setActiveTab(next)
+    },
+    [activeTab, tabLabels]
+  )
+
+  const onTabAreaTouchStart = (e: React.TouchEvent) => {
+    const te = e.changedTouches[0]
+    tabTouchStartRef.current = { x: te.clientX, y: te.clientY }
+  }
+
+  const onTabAreaTouchEnd = (e: React.TouchEvent) => {
+    const start = tabTouchStartRef.current
+    tabTouchStartRef.current = null
+    if (!start) return
+    const ev = e.changedTouches[0]
+    const dx = ev.clientX - start.x
+    const dy = ev.clientY - start.y
+    if (Math.abs(dx) < TAB_SWIPE_MIN_PX) return
+    if (Math.abs(dx) <= Math.abs(dy) * TAB_SWIPE_RATIO) return
+    if (dx < 0) switchTabBySwipe('next')
+    else switchTabBySwipe('prev')
+  }
+
   return (
     <div className="min-h-screen bg-page pb-8">
       {/* 탭 네비게이션 - 이미지처럼 연한 배경으로 본문과 구분 */}
@@ -186,8 +223,12 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* 기사 목록 - 메뉴~첫기사는 흰 배경, 기사와 기사 사이에만 회색 띠(이미지와 동일) */}
-      <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 md:px-8 lg:px-12 xl:px-16 pt-4 md:pt-5 bg-page">
+      {/* 기사 목록 — 탭 탭 + 이 영역 좌우 스와이프로 이전/다음 탭 */}
+      <div
+        className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 md:px-8 lg:px-12 xl:px-16 pt-4 md:pt-5 bg-page"
+        onTouchStart={onTabAreaTouchStart}
+        onTouchEnd={onTabAreaTouchEnd}
+      >
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
             <LoadingSpinner size="large" />

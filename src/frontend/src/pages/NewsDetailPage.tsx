@@ -489,7 +489,7 @@ export default function NewsDetailPage() {
           )}
 
           {user?.role === 'admin' && (
-            <ArticleChatPanel newsId={news.id} articleTitle={news.title} />
+            <ArticleChatPanel newsId={news.id} />
           )}
 
           {/* 하단 네비: 3줄 (이전 · 목록 · 다음) */}
