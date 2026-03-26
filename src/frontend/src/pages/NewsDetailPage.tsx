@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, type RefObject } from 'react'
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import MaterialIcon from '../components/Common/MaterialIcon'
@@ -15,6 +15,7 @@ import { formatContentHtml, stripHtml, stripAnalysisMetaPhrases } from '../utils
 import PaywallOverlay from '../components/Paywall/PaywallOverlay'
 import ArticleChatPanel from '../components/ArticleChat/ArticleChatPanel'
 import { useMenuConfig } from '../hooks/useMenuConfig'
+import { useSwipeNavigation } from '../hooks/useSwipeNavigation'
 import { apiErrorMessage } from '../utils/apiErrorMessage'
 
 interface NewsDetail {
@@ -51,7 +52,9 @@ export default function NewsDetailPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { subCategoryToLabel, parentKeyToLabel, fromTabToApi, tabLabels } = useMenuConfig()
-  const fromTab = (location.state as { fromTab?: string } | null)?.fromTab
+  const locationState = (location.state as { fromTab?: string; swipeDir?: 'left' | 'right' } | null) ?? null
+  const fromTab = locationState?.fromTab
+  const swipeDir = locationState?.swipeDir
 
   const { isAuthenticated, login, user } = useAuthStore()
   const addAudioItem = useAudioListStore((s) => s.addItem)
@@ -127,6 +130,28 @@ export default function NewsDetailPage() {
       setIsLoading(false)
     }
   }, [fromTab, fromTabToApi])
+
+  const onSwipePrev = useCallback(() => {
+    if (!news?.prev_article) return
+    navigate(`/news/${news.prev_article.id}`, {
+      state: fromTab ? { fromTab, swipeDir: 'right' as const } : { swipeDir: 'right' as const },
+    })
+  }, [news, fromTab, navigate])
+
+  const onSwipeNext = useCallback(() => {
+    if (!news?.next_article) return
+    navigate(`/news/${news.next_article.id}`, {
+      state: fromTab ? { fromTab, swipeDir: 'left' as const } : { swipeDir: 'left' as const },
+    })
+  }, [news, fromTab, navigate])
+
+  const { containerRef, offsetX, isSwiping, cssTransition } = useSwipeNavigation({
+    enabled: !!news && !isLoading,
+    hasPrev: !!news?.prev_article,
+    hasNext: !!news?.next_article,
+    onSwipePrev,
+    onSwipeNext,
+  })
 
   useEffect(() => {
     if (id) void fetchNewsDetail(parseInt(id, 10))
@@ -321,10 +346,27 @@ export default function NewsDetailPage() {
       </div>
 
       <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto flex flex-col lg:flex-row lg:gap-8">
+        <div
+          ref={containerRef as RefObject<HTMLDivElement>}
+          className="flex-1 min-w-0 touch-pan-y overflow-x-hidden"
+          style={{
+            transform: `translate3d(${offsetX}px, 0, 0)`,
+            transition: cssTransition,
+            willChange: isSwiping ? 'transform' : undefined,
+          }}
+        >
       <motion.article
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="flex-1 min-w-0"
+        key={news.id}
+        initial={
+          swipeDir === 'left'
+            ? { x: '100%', opacity: 0.88 }
+            : swipeDir === 'right'
+              ? { x: '-100%', opacity: 0.88 }
+              : { opacity: 0 }
+        }
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ type: 'tween', duration: 0.28, ease: [0.25, 0.1, 0.25, 1] }}
+        className="w-full min-w-0"
       >
         {/* 대표 이미지 - 썸네일 정책: 정사각형(1:1) */}
         <div className="aspect-square bg-page-secondary overflow-hidden">
@@ -559,6 +601,7 @@ export default function NewsDetailPage() {
           })()}
         </div>
       </motion.article>
+        </div>
       </div>
 
       {error && (
