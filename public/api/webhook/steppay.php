@@ -15,6 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 require_once __DIR__ . '/../lib/auth.php';
 require_once __DIR__ . '/../lib/steppay.php';
 require_once __DIR__ . '/../lib/log.php';
+require_once __DIR__ . '/../lib/promotion_codes.php';
 
 $rawBody = file_get_contents('php://input');
 $payload = json_decode($rawBody, true);
@@ -124,7 +125,13 @@ function handlePaymentCompleted(PDO $pdo, array $data): void {
         return;
     }
 
-    $pdo->prepare("UPDATE users SET is_subscribed = 1, last_payment_error = NULL, last_payment_error_at = NULL WHERE id = ?")->execute([$user['id']]);
+    try {
+        promotionMarkUsageCompleted($pdo, (int) $user['id'], (string) $orderCode);
+    } catch (Throwable $e) {
+        payment_log('webhook promotionMarkUsageCompleted 실패', ['error' => $e->getMessage()]);
+    }
+
+    $pdo->prepare("UPDATE users SET is_subscribed = 1, last_payment_error = NULL, last_payment_error_at = NULL, pending_checkout_plan_id = NULL, pending_promotion_code_id = NULL WHERE id = ?")->execute([$user['id']]);
 }
 
 function handlePaymentFailed(PDO $pdo, array $data): void {

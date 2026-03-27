@@ -33,6 +33,7 @@ DirectorySlash Off
     # 구독 결제 API
     RewriteRule ^api/subscription/order$ api/subscription/order.php [QSA,L]
     RewriteRule ^api/subscription/verify$ api/subscription/verify.php [QSA,L]
+    RewriteRule ^api/subscription/verify-promo$ api/subscription/verify-promo.php [QSA,L]
     RewriteRule ^api/subscription/status$ api/subscription/status.php [QSA,L]
     RewriteRule ^api/subscription/detail$ api/subscription/detail.php [QSA,L]
     RewriteRule ^api/subscription/auto-renew$ api/subscription/auto-renew.php [QSA,L]
@@ -46,6 +47,7 @@ DirectorySlash Off
     # 분석 API 직접 처리
     RewriteRule ^api/analysis/news/([0-9]+)$ api/analysis/news.php [QSA,L]
 
+    RewriteRule ^api/admin/promotion-codes$ api/admin/promotion-codes.php [QSA,L]
     # Admin API는 항상 Router 경유 (인증 + JSON 에러 래핑)
     RewriteRule ^api/admin/(.+\.php)$ api.php?__path=/api/admin/$1 [QSA,L]
 

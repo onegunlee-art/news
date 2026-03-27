@@ -487,7 +487,7 @@ const AdminPage: React.FC = () => {
       navigate('/', { replace: true });
     }
   }, [user, isAuthenticated, isLoading, isInitialized, navigate]);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'news' | 'drafts' | 'ai' | 'workspace' | 'persona' | 'knowledge' | 'usage' | 'settings' | 'cancel'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'news' | 'drafts' | 'ai' | 'workspace' | 'persona' | 'knowledge' | 'usage' | 'settings' | 'promotions' | 'cancel'>('dashboard');
 
   const { subCategoryToLabel } = useMenuConfig();
   const subCategoryOptions = useMemo(
@@ -517,6 +517,51 @@ const AdminPage: React.FC = () => {
   useEffect(() => {
     fetchCancelRequests()
   }, [fetchCancelRequests])
+
+  type PromotionRow = {
+    id: number
+    code: string
+    description: string | null
+    discount_percent: number
+    plan_price_map: Record<string, { price_code: string; amount: number; product_code?: string }>
+    max_uses: number | null
+    used_count: number
+    starts_at: string | null
+    expires_at: string | null
+    is_active: number
+    created_at: string
+  }
+  const [promotionRows, setPromotionRows] = useState<PromotionRow[]>([])
+  const [promotionLoading, setPromotionLoading] = useState(false)
+  const [promoForm, setPromoForm] = useState({
+    code: '',
+    description: '',
+    discount_percent: '30',
+    max_uses: '',
+    starts_at: '',
+    expires_at: '',
+    mapJson: '{\n  "1m": { "price_code": "price_스텝페이할인가격코드", "amount": 5390 },\n  "3m": { "price_code": "price_스텝페이할인가격코드", "amount": 12936 }\n}',
+  })
+  const [promoMessage, setPromoMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+
+  const fetchPromotionCodes = useCallback(async () => {
+    setPromotionLoading(true)
+    try {
+      const res = await api.get<{ success: boolean; data?: { items: PromotionRow[] } }>('/admin/promotion-codes')
+      if (res.data?.success && res.data.data?.items) {
+        setPromotionRows(res.data.data.items)
+      }
+    } catch {
+      setPromoMessage({ type: 'error', text: '프로모션 목록을 불러오지 못했습니다.' })
+    } finally {
+      setPromotionLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (activeTab !== 'promotions') return
+    fetchPromotionCodes()
+  }, [activeTab, fetchPromotionCodes])
 
   // feedback useEffect deps에서 참조되므로 컴포넌트 최상단에 선언
   const [articleUrl, setArticleUrl] = useState('');
@@ -1370,6 +1415,7 @@ const AdminPage: React.FC = () => {
     { id: 'knowledge', name: '이론 라이브러리', iconName: 'menu_book' },
     { id: 'usage', name: 'API 과금', iconName: 'payments' },
     { id: 'settings', name: '설정', iconName: 'settings' },
+    { id: 'promotions', name: '프로모션 코드', iconName: 'local_offer' },
     { id: 'cancel', name: '취소 요청', iconName: 'cancel' },
   ] as const;
 
@@ -4971,6 +5017,234 @@ const AdminPage: React.FC = () => {
                 <button className="bg-gradient-to-r from-cyan-500 to-emerald-500 text-white px-6 py-2 rounded-lg hover:opacity-90 transition">
                   설정 저장
                 </button>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'promotions' && (
+            <div className="space-y-8 max-w-5xl">
+              <div>
+                <h2 className="text-2xl font-bold text-white mb-1">프로모션 코드 (구독)</h2>
+                <p className="text-slate-400 text-sm">
+                  StepPay에 미리 등록한 할인 <strong className="text-slate-300">price_code</strong>를 플랜별로 매핑합니다. 고객이 코드를 입력하면 해당 금액으로 결제됩니다.
+                </p>
+              </div>
+
+              <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50">
+                <h3 className="text-lg font-semibold text-white mb-4">새 코드 등록</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-slate-400 text-xs mb-1">코드 (대문자 저장)</label>
+                    <input
+                      value={promoForm.code}
+                      onChange={(e) => setPromoForm((f) => ({ ...f, code: e.target.value }))}
+                      className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm"
+                      placeholder="예: OPEN30"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-400 text-xs mb-1">표시용 할인율 (%)</label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={promoForm.discount_percent}
+                      onChange={(e) => setPromoForm((f) => ({ ...f, discount_percent: e.target.value }))}
+                      className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-slate-400 text-xs mb-1">설명</label>
+                    <input
+                      value={promoForm.description}
+                      onChange={(e) => setPromoForm((f) => ({ ...f, description: e.target.value }))}
+                      className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm"
+                      placeholder="오픈 기념 30% 할인"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-400 text-xs mb-1">전체 사용 상한 (비우면 무제한)</label>
+                    <input
+                      type="number"
+                      min={1}
+                      value={promoForm.max_uses}
+                      onChange={(e) => setPromoForm((f) => ({ ...f, max_uses: e.target.value }))}
+                      className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-slate-400 text-xs mb-1">시작일시</label>
+                      <input
+                        type="datetime-local"
+                        value={promoForm.starts_at}
+                        onChange={(e) => setPromoForm((f) => ({ ...f, starts_at: e.target.value }))}
+                        className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-400 text-xs mb-1">종료일시</label>
+                      <input
+                        type="datetime-local"
+                        value={promoForm.expires_at}
+                        onChange={(e) => setPromoForm((f) => ({ ...f, expires_at: e.target.value }))}
+                        className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm"
+                      />
+                    </div>
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-slate-400 text-xs mb-1">plan_price_map (JSON)</label>
+                    <textarea
+                      value={promoForm.mapJson}
+                      onChange={(e) => setPromoForm((f) => ({ ...f, mapJson: e.target.value }))}
+                      rows={8}
+                      className="w-full font-mono text-xs bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-emerald-200"
+                    />
+                    <p className="text-slate-500 text-xs mt-1">키: 1m, 3m, 6m, 12m — StepPay 콘솔의 할인 price와 금액(원)을 넣으세요.</p>
+                  </div>
+                </div>
+                {promoMessage && (
+                  <p
+                    className={`mt-3 text-sm ${
+                      promoMessage.type === 'success' ? 'text-emerald-400' : 'text-red-400'
+                    }`}
+                  >
+                    {promoMessage.text}
+                  </p>
+                )}
+                <button
+                  type="button"
+                  className="mt-4 px-5 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-medium"
+                  onClick={async () => {
+                    setPromoMessage(null)
+                    const code = promoForm.code.trim()
+                    if (!code) {
+                      setPromoMessage({ type: 'error', text: '코드를 입력하세요.' })
+                      return
+                    }
+                    let plan_price_map: Record<string, unknown>
+                    try {
+                      plan_price_map = JSON.parse(promoForm.mapJson) as Record<string, unknown>
+                    } catch {
+                      setPromoMessage({ type: 'error', text: 'JSON 형식이 올바르지 않습니다.' })
+                      return
+                    }
+                    try {
+                      const res = await api.post('/admin/promotion-codes', {
+                        action: 'create',
+                        code,
+                        description: promoForm.description.trim() || null,
+                        discount_percent: parseInt(promoForm.discount_percent, 10) || 0,
+                        plan_price_map,
+                        max_uses: promoForm.max_uses.trim() === '' ? null : parseInt(promoForm.max_uses, 10),
+                        starts_at: promoForm.starts_at.trim() || null,
+                        expires_at: promoForm.expires_at.trim() || null,
+                        is_active: 1,
+                      })
+                      if (res.data?.success) {
+                        setPromoMessage({ type: 'success', text: '등록되었습니다.' })
+                        setPromoForm((f) => ({
+                          ...f,
+                          code: '',
+                          description: '',
+                        }))
+                        fetchPromotionCodes()
+                      } else {
+                        setPromoMessage({
+                          type: 'error',
+                          text: (res.data as { message?: string })?.message || '실패',
+                        })
+                      }
+                    } catch (e) {
+                      setPromoMessage({
+                        type: 'error',
+                        text: (e as Error)?.message || '요청 실패',
+                      })
+                    }
+                  }}
+                >
+                  등록
+                </button>
+              </div>
+
+              <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-white">등록된 코드</h3>
+                  <button
+                    type="button"
+                    onClick={() => fetchPromotionCodes()}
+                    className="text-cyan-400 hover:text-cyan-300 text-sm"
+                  >
+                    새로고침
+                  </button>
+                </div>
+                {promotionLoading ? (
+                  <div className="flex justify-center py-12">
+                    <div className="animate-spin rounded-full h-10 w-10 border-4 border-cyan-500 border-t-transparent" />
+                  </div>
+                ) : promotionRows.length === 0 ? (
+                  <p className="text-slate-500 text-sm">등록된 프로모션이 없습니다. DB 마이그레이션(create_promotion_codes.sql)을 적용했는지 확인하세요.</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                      <thead>
+                        <tr className="text-slate-400 border-b border-slate-700">
+                          <th className="py-2 pr-3">코드</th>
+                          <th className="py-2 pr-3">할인%</th>
+                          <th className="py-2 pr-3">사용</th>
+                          <th className="py-2 pr-3">활성</th>
+                          <th className="py-2 pr-3">유효기간</th>
+                          <th className="py-2">매핑</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {promotionRows.map((r) => (
+                          <tr key={r.id} className="border-b border-slate-700/50 text-slate-300">
+                            <td className="py-2 pr-3 font-mono text-cyan-300">{r.code}</td>
+                            <td className="py-2 pr-3">{r.discount_percent}%</td>
+                            <td className="py-2 pr-3">
+                              {r.used_count}
+                              {r.max_uses != null ? ` / ${r.max_uses}` : ''}
+                            </td>
+                            <td className="py-2 pr-3">
+                              <button
+                                type="button"
+                                className={`text-xs px-2 py-0.5 rounded ${
+                                  r.is_active
+                                    ? 'bg-emerald-500/20 text-emerald-400'
+                                    : 'bg-slate-600 text-slate-400'
+                                }`}
+                                onClick={async () => {
+                                  try {
+                                    await api.post('/admin/promotion-codes', {
+                                      action: 'set_active',
+                                      id: r.id,
+                                      is_active: r.is_active ? 0 : 1,
+                                    })
+                                    fetchPromotionCodes()
+                                  } catch {
+                                    /* ignore */
+                                  }
+                                }}
+                              >
+                                {r.is_active ? 'ON' : 'OFF'}
+                              </button>
+                            </td>
+                            <td className="py-2 pr-3 text-xs text-slate-500 whitespace-nowrap">
+                              {r.starts_at && <span>{r.starts_at}</span>}
+                              {r.starts_at && r.expires_at && ' ~ '}
+                              {r.expires_at && <span>{r.expires_at}</span>}
+                              {!r.starts_at && !r.expires_at && '—'}
+                            </td>
+                            <td className="py-2 max-w-xs truncate font-mono text-[10px] text-slate-500">
+                              {JSON.stringify(r.plan_price_map)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             </div>
           )}

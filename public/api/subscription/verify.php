@@ -21,6 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 require_once __DIR__ . '/../lib/auth.php';
 require_once __DIR__ . '/../lib/steppay.php';
 require_once __DIR__ . '/../lib/log.php';
+require_once __DIR__ . '/../lib/promotion_codes.php';
 
 $pdo = getDb();
 $userId = getAuthUserId($pdo);
@@ -92,9 +93,19 @@ $itemPriceCode = $order['items'][0]['price']['code'] ?? '';
 foreach ($plans as $pid => $pl) {
     if ($pl['price_code'] === $itemPriceCode) {
         $matchedPlanId = $pid;
-        $months = $pl['months'];
+        $months = (int) ($pl['months'] ?? 1);
         break;
     }
+}
+
+$pendStmt = $pdo->prepare('SELECT pending_checkout_plan_id, pending_promotion_code_id FROM users WHERE id = ? LIMIT 1');
+$pendStmt->execute([$userId]);
+$pendRow = $pendStmt->fetch(PDO::FETCH_ASSOC);
+$pendingPlanId = $pendRow['pending_checkout_plan_id'] ?? null;
+
+if (!$matchedPlanId && $pendingPlanId && isset($plans[$pendingPlanId])) {
+    $matchedPlanId = $pendingPlanId;
+    $months = (int) ($plans[$pendingPlanId]['months'] ?? 1);
 }
 
 if (!$expiresAt) {
@@ -103,8 +114,14 @@ if (!$expiresAt) {
 
 $startDate = date('Y-m-d H:i:s');
 
-$pdo->prepare("UPDATE users SET is_subscribed = 1, subscription_expires_at = ?, steppay_subscription_id = ?, steppay_order_code = ?, subscription_plan = ?, subscription_start_date = ?, last_payment_error = NULL, last_payment_error_at = NULL WHERE id = ?")
+$pdo->prepare("UPDATE users SET is_subscribed = 1, subscription_expires_at = ?, steppay_subscription_id = ?, steppay_order_code = ?, subscription_plan = ?, subscription_start_date = ?, last_payment_error = NULL, last_payment_error_at = NULL, pending_checkout_plan_id = NULL, pending_promotion_code_id = NULL WHERE id = ?")
     ->execute([$expiresAt, $subscriptionId, $orderCode, $matchedPlanId, $startDate, $userId]);
+
+try {
+    promotionMarkUsageCompleted($pdo, $userId, $orderCode);
+} catch (Throwable $e) {
+    payment_log('promotionMarkUsageCompleted 실패', ['error' => $e->getMessage(), 'userId' => $userId]);
+}
 
 payment_log("verify 성공 userId={$userId} plan={$matchedPlanId} expires={$expiresAt}");
 

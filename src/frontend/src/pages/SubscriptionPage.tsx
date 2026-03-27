@@ -63,11 +63,24 @@ const PLANS: Plan[] = [
   },
 ]
 
+type AppliedPromo = {
+  code: string
+  description: string | null
+  discount_percent: number
+  original_amount: number
+  discounted_amount: number
+  plan_label: string
+}
+
 export default function SubscriptionPage() {
   const [selectedPlan, setSelectedPlan] = useState('3m')
   const [loading, setLoading] = useState(false)
   const [loadingOnetime, setLoadingOnetime] = useState<string | null>(null)
   const [error, setError] = useState<{ source: string; message: string } | null>(null)
+  const [promoInput, setPromoInput] = useState('')
+  const [promoLoading, setPromoLoading] = useState(false)
+  const [promoFieldError, setPromoFieldError] = useState<string | null>(null)
+  const [appliedPromo, setAppliedPromo] = useState<AppliedPromo | null>(null)
   const { isAuthenticated, isSubscribed, accessToken, isInitialized } = useAuthStore()
   const navigate = useNavigate()
 
@@ -86,6 +99,38 @@ export default function SubscriptionPage() {
     }).catch(() => {})
   }, [])
 
+  useEffect(() => {
+    setAppliedPromo(null)
+    setPromoFieldError(null)
+  }, [selectedPlan])
+
+  const handleApplyPromo = async () => {
+    const code = promoInput.trim()
+    if (!code) {
+      setPromoFieldError('코드를 입력해 주세요.')
+      return
+    }
+    setPromoLoading(true)
+    setPromoFieldError(null)
+    try {
+      const res = await api.post<{ success: boolean; message?: string; data?: AppliedPromo }>(
+        '/subscription/verify-promo',
+        { code, planId: selectedPlan }
+      )
+      if (res.data?.success && res.data.data) {
+        setAppliedPromo(res.data.data)
+      } else {
+        setAppliedPromo(null)
+        setPromoFieldError(res.data?.message || '코드를 확인할 수 없습니다.')
+      }
+    } catch (err: unknown) {
+      setAppliedPromo(null)
+      setPromoFieldError(apiErrorMessage(err, '코드 확인에 실패했습니다.'))
+    } finally {
+      setPromoLoading(false)
+    }
+  }
+
   const handleCheckout = async () => {
     if (!isInitialized) return
     if (!isAuthenticated) {
@@ -97,7 +142,9 @@ export default function SubscriptionPage() {
     setLoading(true)
     setError(null)
     try {
-      const res = await api.post('/subscription/order', { planId: selectedPlan }, {
+      const body: { planId: string; promoCode?: string } = { planId: selectedPlan }
+      if (appliedPromo?.code) body.promoCode = appliedPromo.code
+      const res = await api.post('/subscription/order', body, {
         headers: { Authorization: `Bearer ${accessToken}` },
       })
       if (res.data?.success && res.data?.data?.paymentUrl) {
@@ -313,6 +360,57 @@ export default function SubscriptionPage() {
           })}
         </motion.div>
 
+        {/* 프로모션 코드 */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, delay: 0.15 }}
+          className="mt-6 rounded-xl border border-dashed border-gray-300 dark:border-gray-600 bg-gray-50/80 dark:bg-gray-800/40 p-4"
+        >
+          <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-2">프로모션 코드 (선택)</p>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <input
+              type="text"
+              value={promoInput}
+              onChange={(e) => setPromoInput(e.target.value)}
+              placeholder="코드 입력"
+              disabled={isSubscribed || promoLoading}
+              className="flex-1 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder:text-gray-400"
+            />
+            <button
+              type="button"
+              disabled={isSubscribed || promoLoading}
+              onClick={handleApplyPromo}
+              className="shrink-0 px-4 py-2 rounded-lg text-sm font-semibold border border-primary-500 text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20 disabled:opacity-50"
+            >
+              {promoLoading ? '확인 중...' : '적용'}
+            </button>
+          </div>
+          {promoFieldError && (
+            <p className="mt-2 text-xs text-red-600 dark:text-red-400">{promoFieldError}</p>
+          )}
+          {appliedPromo && (
+            <div className="mt-3 text-sm text-emerald-700 dark:text-emerald-400 space-y-0.5">
+              <p className="font-medium">
+                {appliedPromo.code}
+                {appliedPromo.description ? ` — ${appliedPromo.description}` : ''}
+              </p>
+              <p>
+                결제 예상 금액:{' '}
+                <span className="line-through text-gray-500 dark:text-gray-400 mr-1">
+                  {appliedPromo.original_amount.toLocaleString('ko-KR')}원
+                </span>
+                <span className="font-bold">
+                  {appliedPromo.discounted_amount.toLocaleString('ko-KR')}원
+                </span>
+                {appliedPromo.discount_percent > 0 && (
+                  <span className="text-xs ml-1">({appliedPromo.discount_percent}% 표시)</span>
+                )}
+              </p>
+            </div>
+          )}
+        </motion.div>
+
         {/* 단건 상품 */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -421,7 +519,13 @@ export default function SubscriptionPage() {
                   : 'bg-primary-500 hover:bg-primary-600 text-white shadow-lg shadow-primary-500/20'
             }`}
           >
-            {loading ? '처리 중...' : isSubscribed ? '구독 중' : '결제하기'}
+            {loading
+              ? '처리 중...'
+              : isSubscribed
+                ? '구독 중'
+                : appliedPromo
+                  ? `${appliedPromo.discounted_amount.toLocaleString('ko-KR')}원 결제하기`
+                  : '결제하기'}
           </button>
           <p className="text-center text-xs font-bold text-gray-600 dark:text-gray-500 mt-3">
             언제든지 자동 연장을 취소할 수 있습니다

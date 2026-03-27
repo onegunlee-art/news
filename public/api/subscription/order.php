@@ -3,7 +3,7 @@
  * POST /api/subscription/order
  * 구독 플랜 선택 → StepPay 주문 생성 → 결제 URL 반환
  *
- * Body: { "planId": "1m" | "3m" | "6m" | "12m" }
+ * Body: { "planId": "1m" | "3m" | "6m" | "12m", "promoCode"?: "OPEN30" }
  */
 
 header('Content-Type: application/json; charset=utf-8');
@@ -21,6 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 require_once __DIR__ . '/../lib/auth.php';
 require_once __DIR__ . '/../lib/steppay.php';
 require_once __DIR__ . '/../lib/log.php';
+require_once __DIR__ . '/../lib/promotion_codes.php';
 
 $pdo = getDb();
 $userId = getAuthUserId($pdo);
@@ -33,6 +34,7 @@ if (!$userId) {
 $input = json_decode(file_get_contents('php://input'), true) ?: [];
 $planId = $input['planId'] ?? '';
 $onetimeId = $input['onetimeId'] ?? '';
+$promoCodeRaw = isset($input['promoCode']) ? trim((string) $input['promoCode']) : '';
 
 $cfg = getSteppayConfig();
 $plans = $cfg['plans'] ?? [];
@@ -41,8 +43,16 @@ $onetimeProducts = $cfg['onetime_products'] ?? [];
 $plan = null;
 $productCode = null;
 $priceCode = null;
+$promotionIdForOrder = null;
+$discountedAmountForLog = null;
+$originalAmountForLog = null;
 
 if ($onetimeId && isset($onetimeProducts[$onetimeId])) {
+    if ($promoCodeRaw !== '') {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => '단건 상품에는 프로모션 코드를 적용할 수 없습니다.'], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
     $plan = $onetimeProducts[$onetimeId];
     $productCode = $plan['product_code'];
     $priceCode = $plan['price_code'];
@@ -50,6 +60,26 @@ if ($onetimeId && isset($onetimeProducts[$onetimeId])) {
     $plan = $plans[$planId];
     $productCode = $cfg['product_code'];
     $priceCode = $plan['price_code'];
+
+    if ($promoCodeRaw !== '') {
+        $pv = promotionValidateForPlan($pdo, $promoCodeRaw, $planId, $cfg);
+        if (!$pv['ok']) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => $pv['message'] ?? '프로모션 코드를 확인해 주세요.'], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+        $block = promotionAssertUserCanUse($pdo, (int) $pv['promotion']['id'], $userId);
+        if ($block !== null) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => $block], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+        $priceCode = $pv['price_code'];
+        $productCode = $pv['product_code'];
+        $promotionIdForOrder = (int) $pv['promotion']['id'];
+        $discountedAmountForLog = $pv['discounted_amount'];
+        $originalAmountForLog = $pv['original_amount'];
+    }
 } else {
     http_response_code(400);
     echo json_encode(['success' => false, 'message' => '유효하지 않은 상품입니다.'], JSON_UNESCAPED_UNICODE);
@@ -66,7 +96,13 @@ if (!$user) {
     exit;
 }
 
-payment_log('주문 시작', ['userId' => $userId, 'planId' => $planId ?: $onetimeId, 'steppay_customer_id' => $user['steppay_customer_id']], $userId);
+payment_log('주문 시작', [
+    'userId' => $userId,
+    'planId' => $planId ?: $onetimeId,
+    'steppay_customer_id' => $user['steppay_customer_id'],
+    'promotion_id' => $promotionIdForOrder,
+    'discounted_amount' => $discountedAmountForLog,
+], $userId);
 
 $steppayCustomerId = $user['steppay_customer_id'];
 
@@ -152,7 +188,34 @@ if (!$orderResult['success'] || empty($orderResult['data']['orderCode'])) {
 $orderCode = $orderResult['data']['orderCode'];
 $orderId = $orderResult['data']['orderId'] ?? null;
 
-$pdo->prepare("UPDATE users SET steppay_order_code = ? WHERE id = ?")->execute([$orderCode, $userId]);
+$pendingPlan = ($planId && isset($plans[$planId])) ? $planId : null;
+$pendingPromo = $promotionIdForOrder;
+
+$pdo->prepare(
+    "UPDATE users SET steppay_order_code = ?, pending_checkout_plan_id = ?, pending_promotion_code_id = ? WHERE id = ?"
+)->execute([$orderCode, $pendingPlan, $pendingPromo, $userId]);
+
+if ($promotionIdForOrder !== null && $pendingPlan !== null && $originalAmountForLog !== null && $discountedAmountForLog !== null) {
+    try {
+        promotionUpsertPendingUsage(
+            $pdo,
+            $promotionIdForOrder,
+            $userId,
+            $pendingPlan,
+            $originalAmountForLog,
+            $discountedAmountForLog,
+            $orderCode
+        );
+    } catch (Throwable $e) {
+        payment_log('promotion usage upsert 실패', ['error' => $e->getMessage(), 'userId' => $userId], $userId);
+        http_response_code(500);
+        echo json_encode([
+            'success' => false,
+            'message' => '주문 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.',
+        ], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+}
 
 $paymentUrl = steppayGetPaymentUrl($orderCode);
 
