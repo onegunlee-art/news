@@ -183,13 +183,6 @@ try {
         exit;
     }
     
-    // 조회수 증가 (GET 1회당 1회, view_count 컬럼 있을 때만)
-    if ($hasViewCount) {
-        try {
-            $db->prepare("UPDATE news SET view_count = view_count + 1 WHERE id = ?")->execute([$news['id']]);
-        } catch (Exception $e) { /* 무시 */ }
-    }
-    
     // 표시용 날짜 정책: published_at 우선 (게시 시점). 없으면 created_at (docs/DATE_POLICY.md)
     $dateForDisplay = $news['published_at'] ?? $news['created_at'];
     
@@ -250,7 +243,7 @@ try {
             $prevStmt->execute([$currentPub, $currentPub, $news['id']]);
             $prevArticle = $prevStmt->fetch(PDO::FETCH_ASSOC);
         } elseif ($fromTab === 'popular' && $hasViewCount) {
-            // 조회수는 이미 이 요청에서 +1 반영됨. 이전/다음은 '현재 기사 기준'으로만 비교 (원래 view_count 사용)
+            // 이전/다음은 +1 전 DB view_count 기준 (하단에서 조회 후 view_count 증가)
             $currentVc = (int)($news['view_count'] ?? 0);
             $nextSql = "SELECT id, title FROM news WHERE 1=1 $statusCond AND (view_count < ? OR (view_count = ? AND id < ?)) ORDER BY view_count DESC, id DESC LIMIT 1";
             $nextStmt = $db->prepare($nextSql);
@@ -302,6 +295,13 @@ try {
             }
         }
     } catch (Exception $e) {}
+
+    // 조회수 증가: prev/next 계산 이후 (인기 탭 인접 기사와 DB 값 불일치 방지)
+    if ($hasViewCount) {
+        try {
+            $db->prepare("UPDATE news SET view_count = view_count + 1 WHERE id = ?")->execute([$news['id']]);
+        } catch (Exception $e) { /* 무시 */ }
+    }
 
     // category_parent: 기사 소속 상위 카테고리 (외교/경제/특집) - 상세 back 버튼 등에 사용
     $categoryParent = null;

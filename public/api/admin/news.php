@@ -622,9 +622,10 @@ if ($method === 'GET') {
             $selectColumns .= ', also_special';
         }
         
-        $orderBy = 'ORDER BY COALESCE(published_at, created_at) DESC';
+        // id DESC: 목록 정렬을 detail.php prev/next와 동일하게 (동일 시각·동일 조회수 tie-break)
+        $orderBy = 'ORDER BY COALESCE(published_at, created_at) DESC, id DESC';
         if ($popular && $hasViewCount) {
-            $orderBy = 'ORDER BY view_count DESC';
+            $orderBy = 'ORDER BY view_count DESC, id DESC';
         }
         
         $stmt = $db->prepare("

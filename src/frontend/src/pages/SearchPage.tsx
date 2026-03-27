@@ -15,6 +15,7 @@ import { stripHtml } from '../utils/sanitizeHtml'
 import { queryKeys } from '../lib/queryClient'
 import { useMenuConfig } from '../hooks/useMenuConfig'
 import { apiErrorMessage } from '../utils/apiErrorMessage'
+import { newsDetailPath } from '../utils/newsDetailLink'
 
 interface NewsItem {
   id?: number
@@ -235,7 +236,7 @@ function SearchArticleCard({ article, subCategoryToLabel }: { article: NewsItem;
     }
   }
 
-  const detailUrl = `/news/${article.id ?? ''}`
+  const detailUrl = article.id ? newsDetailPath(article.id, '최신') : '/news/'
 
   return (
     <article className="bg-page py-5">

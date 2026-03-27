@@ -14,6 +14,7 @@ import { stripHtml } from '../utils/sanitizeHtml'
 import { useInfiniteNewsList, usePopularNews } from '../hooks/useNews'
 import { useMenuConfig } from '../hooks/useMenuConfig'
 import { apiErrorMessage } from '../utils/apiErrorMessage'
+import { newsDetailPath } from '../utils/newsDetailLink'
 
 interface NewsItem {
   id?: number
@@ -367,7 +368,7 @@ function ArticleCard({ article, activeTab, subCategoryToLabel }: { article: News
   }
 
   const newsId = article.id ?? article.news_id
-  const detailUrl = `/news/${newsId || ''}`
+  const detailUrl = newsId ? newsDetailPath(Number(newsId), activeTab) : '/news/'
 
   return (
     <article className="bg-page py-5">

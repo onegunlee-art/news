@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, type RefObject } from 'react'
-import { useParams, Link, useNavigate, useLocation } from 'react-router-dom'
+import { useParams, Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import MaterialIcon from '../components/Common/MaterialIcon'
 import { newsApi } from '../services/api'
@@ -17,6 +17,7 @@ import ArticleChatPanel from '../components/ArticleChat/ArticleChatPanel'
 import { useMenuConfig } from '../hooks/useMenuConfig'
 import { useSwipeNavigation } from '../hooks/useSwipeNavigation'
 import { apiErrorMessage } from '../utils/apiErrorMessage'
+import { newsDetailPath } from '../utils/newsDetailLink'
 
 interface NewsDetail {
   id: number
@@ -51,9 +52,10 @@ export default function NewsDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const location = useLocation()
+  const [searchParams] = useSearchParams()
   const { subCategoryToLabel, parentKeyToLabel, fromTabToApi, tabLabels } = useMenuConfig()
   const locationState = (location.state as { fromTab?: string; swipeDir?: 'left' | 'right' } | null) ?? null
-  const fromTab = locationState?.fromTab
+  const fromTab = locationState?.fromTab || searchParams.get('tab') || undefined
   const swipeDir = locationState?.swipeDir
 
   const { isAuthenticated, login, user } = useAuthStore()
@@ -133,16 +135,24 @@ export default function NewsDetailPage() {
 
   const onSwipePrev = useCallback(() => {
     if (!news?.prev_article) return
-    navigate(`/news/${news.prev_article.id}`, {
-      state: fromTab ? { fromTab, swipeDir: 'right' as const } : { swipeDir: 'right' as const },
-    })
+    navigate(
+      {
+        pathname: `/news/${news.prev_article.id}`,
+        search: fromTab ? `tab=${encodeURIComponent(fromTab)}` : '',
+      },
+      { state: fromTab ? { fromTab, swipeDir: 'right' as const } : { swipeDir: 'right' as const } },
+    )
   }, [news, fromTab, navigate])
 
   const onSwipeNext = useCallback(() => {
     if (!news?.next_article) return
-    navigate(`/news/${news.next_article.id}`, {
-      state: fromTab ? { fromTab, swipeDir: 'left' as const } : { swipeDir: 'left' as const },
-    })
+    navigate(
+      {
+        pathname: `/news/${news.next_article.id}`,
+        search: fromTab ? `tab=${encodeURIComponent(fromTab)}` : '',
+      },
+      { state: fromTab ? { fromTab, swipeDir: 'left' as const } : { swipeDir: 'left' as const } },
+    )
   }, [news, fromTab, navigate])
 
   const { containerRef, offsetX, isSwiping, cssTransition } = useSwipeNavigation({
@@ -324,7 +334,9 @@ export default function NewsDetailPage() {
                   e.stopPropagation()
                   if (!isAuthenticated) {
                     if (confirm('로그인이 필요합니다. 로그인 페이지로 이동하시겠습니까?')) {
-                      navigate('/login', { state: { returnTo: id ? `/news/${id}` : undefined } })
+                      navigate('/login', {
+                        state: { returnTo: id ? newsDetailPath(parseInt(id, 10), fromTab) : undefined },
+                      })
                     }
                     return
                   }
@@ -461,7 +473,7 @@ export default function NewsDetailPage() {
                     ? news.restriction_type
                     : null) as 'subscription_required' | 'login_or_subscribe' | undefined
                 }
-                returnTo={id ? `/news/${id}` : undefined}
+                returnTo={id ? newsDetailPath(parseInt(id, 10), fromTab) : undefined}
                 onKakaoLogin={login}
               />
             </div>
@@ -544,7 +556,7 @@ export default function NewsDetailPage() {
                   <div className="border-b border-page">
                     {news.prev_article ? (
                       <Link
-                        to={`/news/${news.prev_article.id}`}
+                        to={newsDetailPath(news.prev_article.id, fromTab)}
                         state={fromTab ? { fromTab } : undefined}
                         className="flex items-center gap-3 px-4 py-5 group transition-colors hover:bg-page-secondary"
                       >
@@ -578,7 +590,7 @@ export default function NewsDetailPage() {
                   <div>
                     {news.next_article ? (
                       <Link
-                        to={`/news/${news.next_article.id}`}
+                        to={newsDetailPath(news.next_article.id, fromTab)}
                         state={fromTab ? { fromTab } : undefined}
                         className="flex items-center justify-end gap-3 px-4 py-5 group transition-colors hover:bg-page-secondary"
                       >
