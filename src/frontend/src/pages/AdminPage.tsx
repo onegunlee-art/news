@@ -543,6 +543,16 @@ const AdminPage: React.FC = () => {
     mapJson: '{\n  "1m": { "price_code": "price_스텝페이할인가격코드", "amount": 5390 },\n  "3m": { "price_code": "price_스텝페이할인가격코드", "amount": 12936 }\n}',
   })
   const [promoMessage, setPromoMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [editingPromo, setEditingPromo] = useState<PromotionRow | null>(null)
+  const [editPromoForm, setEditPromoForm] = useState({
+    code: '',
+    description: '',
+    discount_percent: '',
+    max_uses: '',
+    starts_at: '',
+    expires_at: '',
+    mapJson: '',
+  })
 
   const fetchPromotionCodes = useCallback(async () => {
     setPromotionLoading(true)
@@ -5194,7 +5204,8 @@ const AdminPage: React.FC = () => {
                           <th className="py-2 pr-3">사용</th>
                           <th className="py-2 pr-3">활성</th>
                           <th className="py-2 pr-3">유효기간</th>
-                          <th className="py-2">매핑</th>
+                          <th className="py-2 pr-3">매핑</th>
+                          <th className="py-2">관리</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -5236,8 +5247,50 @@ const AdminPage: React.FC = () => {
                               {r.expires_at && <span>{r.expires_at}</span>}
                               {!r.starts_at && !r.expires_at && '—'}
                             </td>
-                            <td className="py-2 max-w-xs truncate font-mono text-[10px] text-slate-500">
+                            <td className="py-2 pr-3 max-w-xs truncate font-mono text-[10px] text-slate-500">
                               {JSON.stringify(r.plan_price_map)}
+                            </td>
+                            <td className="py-2 whitespace-nowrap">
+                              <button
+                                type="button"
+                                className="text-xs px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 mr-1"
+                                onClick={() => {
+                                  const toLocal = (dt: string | null) => {
+                                    if (!dt) return ''
+                                    const d = new Date(dt.replace(' ', 'T') + (dt.includes('+') || dt.includes('Z') ? '' : 'Z'))
+                                    if (isNaN(d.getTime())) return dt.slice(0, 16).replace(' ', 'T')
+                                    return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
+                                  }
+                                  setEditingPromo(r)
+                                  setEditPromoForm({
+                                    code: r.code,
+                                    description: r.description || '',
+                                    discount_percent: String(r.discount_percent),
+                                    max_uses: r.max_uses != null ? String(r.max_uses) : '',
+                                    starts_at: toLocal(r.starts_at),
+                                    expires_at: toLocal(r.expires_at),
+                                    mapJson: JSON.stringify(r.plan_price_map, null, 2),
+                                  })
+                                }}
+                              >
+                                수정
+                              </button>
+                              <button
+                                type="button"
+                                className="text-xs px-2 py-0.5 rounded bg-red-500/20 text-red-400 hover:bg-red-500/30"
+                                onClick={async () => {
+                                  if (!window.confirm(`"${r.code}" 코드를 삭제하시겠습니까?\n사용 이력도 함께 삭제됩니다.`)) return
+                                  try {
+                                    await api.post('/admin/promotion-codes', { action: 'delete', id: r.id })
+                                    fetchPromotionCodes()
+                                    setPromoMessage({ type: 'success', text: `"${r.code}" 삭제 완료` })
+                                  } catch {
+                                    setPromoMessage({ type: 'error', text: '삭제 실패' })
+                                  }
+                                }}
+                              >
+                                삭제
+                              </button>
                             </td>
                           </tr>
                         ))}
@@ -5246,6 +5299,133 @@ const AdminPage: React.FC = () => {
                   </div>
                 )}
               </div>
+
+              {editingPromo && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                  <div className="bg-slate-800 rounded-2xl p-6 border border-slate-700 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+                    <h3 className="text-lg font-semibold text-white mb-4">코드 수정 — {editingPromo.code}</h3>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-slate-400 text-xs mb-1">코드</label>
+                        <input
+                          value={editPromoForm.code}
+                          onChange={(e) => setEditPromoForm((f) => ({ ...f, code: e.target.value }))}
+                          className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-slate-400 text-xs mb-1">설명</label>
+                        <input
+                          value={editPromoForm.description}
+                          onChange={(e) => setEditPromoForm((f) => ({ ...f, description: e.target.value }))}
+                          className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-slate-400 text-xs mb-1">할인율 (%)</label>
+                          <input
+                            type="number" min={0} max={100}
+                            value={editPromoForm.discount_percent}
+                            onChange={(e) => setEditPromoForm((f) => ({ ...f, discount_percent: e.target.value }))}
+                            className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-slate-400 text-xs mb-1">사용 상한 (비우면 무제한)</label>
+                          <input
+                            type="number" min={1}
+                            value={editPromoForm.max_uses}
+                            onChange={(e) => setEditPromoForm((f) => ({ ...f, max_uses: e.target.value }))}
+                            className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm"
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-slate-400 text-xs mb-1">시작일시</label>
+                          <input
+                            type="datetime-local"
+                            value={editPromoForm.starts_at}
+                            onChange={(e) => setEditPromoForm((f) => ({ ...f, starts_at: e.target.value }))}
+                            className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-slate-400 text-xs mb-1">종료일시</label>
+                          <input
+                            type="datetime-local"
+                            value={editPromoForm.expires_at}
+                            onChange={(e) => setEditPromoForm((f) => ({ ...f, expires_at: e.target.value }))}
+                            className="w-full bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-slate-400 text-xs mb-1">plan_price_map (JSON)</label>
+                        <textarea
+                          value={editPromoForm.mapJson}
+                          onChange={(e) => setEditPromoForm((f) => ({ ...f, mapJson: e.target.value }))}
+                          rows={6}
+                          className="w-full font-mono text-xs bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-2 text-emerald-200"
+                        />
+                      </div>
+                    </div>
+                    {promoMessage && (
+                      <p className={`mt-3 text-sm ${promoMessage.type === 'success' ? 'text-emerald-400' : 'text-red-400'}`}>
+                        {promoMessage.text}
+                      </p>
+                    )}
+                    <div className="flex justify-end gap-2 mt-5">
+                      <button
+                        type="button"
+                        className="px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 text-sm"
+                        onClick={() => { setEditingPromo(null); setPromoMessage(null) }}
+                      >
+                        취소
+                      </button>
+                      <button
+                        type="button"
+                        className="px-4 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-medium"
+                        onClick={async () => {
+                          setPromoMessage(null)
+                          let plan_price_map: Record<string, unknown>
+                          try {
+                            plan_price_map = JSON.parse(editPromoForm.mapJson) as Record<string, unknown>
+                          } catch {
+                            setPromoMessage({ type: 'error', text: 'JSON 형식이 올바르지 않습니다.' })
+                            return
+                          }
+                          try {
+                            const res = await api.post('/admin/promotion-codes', {
+                              action: 'update',
+                              id: editingPromo.id,
+                              code: editPromoForm.code.trim(),
+                              description: editPromoForm.description.trim() || null,
+                              discount_percent: parseInt(editPromoForm.discount_percent, 10) || 0,
+                              plan_price_map,
+                              max_uses: editPromoForm.max_uses.trim() === '' ? null : parseInt(editPromoForm.max_uses, 10),
+                              starts_at: editPromoForm.starts_at.trim() || null,
+                              expires_at: editPromoForm.expires_at.trim() || null,
+                            })
+                            if (res.data?.success) {
+                              setPromoMessage({ type: 'success', text: '수정 완료' })
+                              setEditingPromo(null)
+                              fetchPromotionCodes()
+                            } else {
+                              setPromoMessage({ type: 'error', text: (res.data as { message?: string })?.message || '수정 실패' })
+                            }
+                          } catch (e) {
+                            setPromoMessage({ type: 'error', text: (e as Error)?.message || '요청 실패' })
+                          }
+                        }}
+                      >
+                        저장
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

@@ -93,6 +93,19 @@ try {
     $input = json_decode(file_get_contents('php://input'), true) ?: [];
     $action = $input['action'] ?? 'create';
 
+    if ($action === 'delete') {
+        $id = (int) ($input['id'] ?? 0);
+        if ($id <= 0) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'id가 필요합니다.'], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+        $pdo->prepare('DELETE FROM promotion_code_usage WHERE promotion_code_id = ?')->execute([$id]);
+        $pdo->prepare('DELETE FROM promotion_codes WHERE id = ?')->execute([$id]);
+        echo json_encode(['success' => true], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
     if ($action === 'set_active') {
         $id = (int) ($input['id'] ?? 0);
         $active = (int) ($input['is_active'] ?? 0) ? 1 : 0;
