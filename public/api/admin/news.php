@@ -221,9 +221,12 @@ if ($method === 'POST') {
     if ($hasStatus && !in_array($status, ['draft', 'published'])) {
         $status = 'published';
     }
-    // 게시 정책: published 상태일 때만 현재 시각으로 published_at 설정 (draft는 null 유지)
+    // 게시 정책: published 상태일 때만 현재 시각으로 published_at 설정
+    // draft는 클라이언트가 보낸 원본기사 작성일 등을 published_at에 넣지 않음 (DATE_POLICY.md)
     if ($status === 'published') {
         $publishedAt = date('Y-m-d H:i:s');
+    } else {
+        $publishedAt = null;
     }
     
     // 디버그 로깅
@@ -753,9 +756,10 @@ if ($method === 'PUT') {
     }
     $category = mb_substr(trim($category), 0, 100) ?: $categoryParent;
     try {
-        // 뉴스 존재 + 기존 published_at 조회 (첫 게시일 고정 정책)
+        // 뉴스 존재 + 기존 published_at·status 조회 (첫 게시일 고정 정책)
         $existCols = 'id';
         if ($hasPublishedAt) $existCols .= ', published_at';
+        if ($hasStatus) $existCols .= ', status';
         $stmt = $db->prepare("SELECT $existCols FROM news WHERE id = ?");
         $stmt->execute([$id]);
         $existingRow = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -765,10 +769,21 @@ if ($method === 'PUT') {
             exit;
         }
 
-        // 첫 게시일 고정 정책: published_at은 최초 게시 시 한 번만 설정
+        // 첫 게시일 고정 정책: 이미 게시(published) 상태였던 기사는 published_at 유지.
+        // draft에 잘못 저장된 원본기사일 등은 status가 published가 아니면 재게시 시 현재 시각으로 보정.
         $existingPublishedAt = $existingRow['published_at'] ?? null;
+        $existingStatus = $hasStatus ? ($existingRow['status'] ?? null) : null;
         if ($status === 'published') {
-            $publishedAt = !empty($existingPublishedAt) ? $existingPublishedAt : date('Y-m-d H:i:s');
+            if ($hasStatus) {
+                if (!empty($existingPublishedAt) && $existingStatus === 'published') {
+                    $publishedAt = $existingPublishedAt;
+                } else {
+                    $publishedAt = date('Y-m-d H:i:s');
+                }
+            } else {
+                // status 컬럼 없음: 레거시 동작 유지
+                $publishedAt = !empty($existingPublishedAt) ? $existingPublishedAt : date('Y-m-d H:i:s');
+            }
         }
         
         // UTF-8 안전한 description: 사용자 지정 요약이 있으면 사용, 없으면 content에서 생성 (300자)
