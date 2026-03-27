@@ -148,13 +148,24 @@ export const kakaoLogin = async (): Promise<void> => {
   if (KAKAO_JAVASCRIPT_KEY) {
     const sdkInitialized = await initKakao();
     if (sdkInitialized) {
+      const sdkStateBytes = new Uint8Array(24);
+      crypto.getRandomValues(sdkStateBytes);
+      const sdkState = Array.from(sdkStateBytes, b => b.toString(16).padStart(2, '0')).join('');
+      document.cookie = `oauth_state=${sdkState};path=/;max-age=600;SameSite=Lax;Secure`;
       window.Kakao.Auth.authorize({
         redirectUri: REDIRECT_URI,
         scope: 'profile_nickname,profile_image',
+        state: sdkState,
       });
       return;
     }
   }
+
+  // CSRF 방지용 state 생성 → 쿠키에 저장하여 백엔드에서 검증
+  const stateBytes = new Uint8Array(24);
+  crypto.getRandomValues(stateBytes);
+  const state = Array.from(stateBytes, b => b.toString(16).padStart(2, '0')).join('');
+  document.cookie = `oauth_state=${state};path=/;max-age=600;SameSite=Lax;Secure`;
 
   // REST API 방식으로 직접 리다이렉트 (SDK 불필요)
   const params = new URLSearchParams({
@@ -162,6 +173,7 @@ export const kakaoLogin = async (): Promise<void> => {
     redirect_uri: REDIRECT_URI,
     response_type: 'code',
     scope: 'profile_nickname,profile_image',
+    state,
   });
 
   window.location.href = `https://kauth.kakao.com/oauth/authorize?${params.toString()}`;

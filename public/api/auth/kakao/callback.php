@@ -82,6 +82,16 @@ if (isset($_GET['error'])) {
     kakaoRedirectError($_GET['error'] ?? 'unknown', $_GET['error_description'] ?? '카카오 인증 중 에러가 발생했습니다.');
 }
 
+// OAuth state(CSRF) 검증: 프론트엔드가 쿠키로 보낸 값과 카카오가 돌려준 값 비교
+$stateFromKakao = $_GET['state'] ?? null;
+$stateFromCookie = $_COOKIE['oauth_state'] ?? null;
+if ($stateFromKakao && $stateFromCookie) {
+    if (!hash_equals($stateFromCookie, $stateFromKakao)) {
+        kakaoRedirectError('state_mismatch', '보안 검증에 실패했습니다. 다시 로그인해주세요.');
+    }
+    setcookie('oauth_state', '', time() - 3600, '/', '', true, true);
+}
+
 // 인가 코드 확인
 $code = $_GET['code'] ?? null;
 if (empty($code)) {
@@ -141,28 +151,7 @@ curl_close($ch);
 kakaoLog('token_response', ['http' => $httpCode, 'curl_err' => $curlErr, 'body_preview' => mb_substr($tokenResponse ?: '', 0, 200)]);
 
 if ($curlErr) {
-    if (strpos($curlErr, 'SSL') !== false || strpos($curlErr, 'certificate') !== false) {
-        kakaoLog('ssl_retry', 'Retrying without SSL verification');
-        $ch = curl_init();
-        curl_setopt_array($ch, [
-            CURLOPT_URL => $config['oauth']['token_url'],
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => http_build_query($tokenPostData),
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT => 15,
-            CURLOPT_HTTPHEADER => ['Content-Type: application/x-www-form-urlencoded;charset=utf-8'],
-            CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_FOLLOWLOCATION => true,
-        ]);
-        $tokenResponse = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $curlErr = curl_error($ch);
-        curl_close($ch);
-        kakaoLog('ssl_retry_result', ['http' => $httpCode, 'curl_err' => $curlErr]);
-    }
-    if ($curlErr) {
-        kakaoRedirectError('curl_error', 'curl 오류: ' . $curlErr);
-    }
+    kakaoRedirectError('curl_error', 'curl 오류: ' . $curlErr);
 }
 
 if ($httpCode !== 200) {
@@ -251,7 +240,7 @@ try {
     kakaoLog('db_ok', ['dbUserId' => $dbUserId, 'isNew' => $isNewUser]);
 } catch (Throwable $e) {
     kakaoLog('db_error', ['msg' => $e->getMessage()]);
-    $dbUserId = $kakaoId;
+    kakaoRedirectError('db_error', '서버에 일시적인 문제가 발생했습니다. 잠시 후 다시 로그인해주세요.');
 }
 
 // JWT secret: config/app.php와 동일한 값 사용 (AuthController 검증과 일치)
@@ -293,6 +282,14 @@ $refreshPayload = ['user_id' => $dbUserId, 'type' => 'refresh', 'iat' => time(),
 $refreshPayloadEncoded = rtrim(strtr(base64_encode(json_encode($refreshPayload)), '+/', '-_'), '=');
 $refreshSignature = rtrim(strtr(base64_encode(hash_hmac('sha256', "$jwtHeader.$refreshPayloadEncoded", $jwtSecret, true)), '+/', '-_'), '=');
 $refreshTokenJwt = "$jwtHeader.$refreshPayloadEncoded.$refreshSignature";
+
+// refresh 토큰을 user_tokens 테이블에 저장
+try {
+    $pdo->prepare("INSERT INTO user_tokens (user_id, token, token_type, expires_at) VALUES (?, ?, 'refresh', FROM_UNIXTIME(?))")
+        ->execute([$dbUserId, $refreshTokenJwt, $refreshPayload['exp']]);
+} catch (Throwable $e) {
+    kakaoLog('token_save_warn', ['msg' => $e->getMessage()]);
+}
 
 // 구독 상태를 DB에서 조회
 $subStmt = $pdo->prepare("SELECT is_subscribed, subscription_expires_at FROM users WHERE id = ?");

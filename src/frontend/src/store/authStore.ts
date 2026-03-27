@@ -132,22 +132,29 @@ export const useAuthStore = create<AuthState>()(
       },
 
       initializeAuth: () => {
-        const accessToken = localStorage.getItem('access_token')
-        const refreshToken = localStorage.getItem('refresh_token')
-        const userStr = localStorage.getItem('user')
+        try {
+          const accessToken = localStorage.getItem('access_token')
+          const refreshToken = localStorage.getItem('refresh_token')
+          const userStr = localStorage.getItem('user')
 
-        if (accessToken && refreshToken) {
-          set({
-            accessToken,
-            refreshToken,
-            isAuthenticated: true,
-            user: userStr ? JSON.parse(userStr) : null,
-            isInitialized: true,
-          })
-          
-          // 사용자 정보 갱신
-          get().fetchUser()
-        } else {
+          let user = null
+          if (userStr) {
+            try { user = JSON.parse(userStr) } catch { /* corrupted */ }
+          }
+
+          if (accessToken && refreshToken) {
+            set({
+              accessToken,
+              refreshToken,
+              isAuthenticated: true,
+              user,
+              isInitialized: true,
+            })
+            get().fetchUser()
+          } else {
+            set({ isInitialized: true })
+          }
+        } catch {
           set({ isInitialized: true })
         }
       },

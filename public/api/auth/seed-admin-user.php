@@ -11,6 +11,30 @@ header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, OPTIONS');
 
+// api.php 미경유 직접 호출 시에도 루트 .env 적용
+$__envFile = dirname(__DIR__, 3) . '/.env';
+if (is_file($__envFile) && is_readable($__envFile)) {
+    foreach (file($__envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $__line) {
+        $__line = trim($__line);
+        if ($__line === '' || ($__line[0] ?? '') === '#') continue;
+        if (strpos($__line, '=') !== false) {
+            [$__n, $__v] = explode('=', $__line, 2);
+            $__n = trim($__n);
+            $__v = trim($__v, " \t\"'");
+            if ($__n !== '') { putenv("$__n=$__v"); $_ENV[$__n] = $__v; }
+        }
+    }
+}
+
+// 프로덕션 보호: 시크릿 헤더 없이는 실행 불가
+$seedSecret = getenv('SEED_SECRET') ?: ($_ENV['SEED_SECRET'] ?? null) ?: null;
+$reqSecret = $_GET['secret'] ?? ($_SERVER['HTTP_X_SEED_SECRET'] ?? null);
+if ($seedSecret && $reqSecret !== $seedSecret) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'Forbidden'], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;

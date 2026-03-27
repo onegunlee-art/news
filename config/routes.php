@@ -188,6 +188,10 @@ $router->get('/health', function (Request $request): Response {
 $router->group(['prefix' => '/auth'], function (Router $router) {
     // 테스트 계정 생성 (1회 실행용, 완료 후 라우트 제거 권장)
     $router->get('/seed-test-user', function (Request $request): Response {
+        $seedSecret = getenv('SEED_SECRET') ?: null;
+        if ($seedSecret && ($request->query('secret') ?? '') !== $seedSecret) {
+            return Response::error('Forbidden', 403);
+        }
         $messages = [];
         try {
             $db = \App\Core\Database::getInstance();
@@ -230,6 +234,10 @@ $router->group(['prefix' => '/auth'], function (Router $router) {
     // 관리자 계정 생성/업그레이드 (1회 실행용, 완료 후 라우트 제거 권장)
     // ?email=xxx 로 특정 이메일을 admin으로 업그레이드 가능 (없으면 test@test.com)
     $router->get('/seed-admin-user', function (Request $request): Response {
+        $seedSecret = getenv('SEED_SECRET') ?: null;
+        if ($seedSecret && ($request->query('secret') ?? '') !== $seedSecret) {
+            return Response::error('Forbidden', 403);
+        }
         try {
             $db = \App\Core\Database::getInstance();
         } catch (Throwable $e) {
