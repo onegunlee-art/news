@@ -8,6 +8,16 @@ import { extractTitleFromUrl } from '../../utils/extractTitleFromUrl'
 import { adminFetch } from '../../services/api'
 import { useMenuConfig } from '../../hooks/useMenuConfig'
 import GistLogo from '../Common/GistLogo'
+import {
+  AUTOSAVE_SCHEMA_VERSION,
+  clearDraftAutosave,
+  isQuotaExceededError,
+  loadDraftAutosave,
+  saveDraftAutosave,
+  serializeDraftPayload,
+  shouldOfferLocalRestore,
+  type DraftAutosavePayload,
+} from '../../utils/adminDraftLocalBackup'
 
 /** Admin draft article (from admin/news.php?id=X) */
 export interface DraftArticle {
@@ -100,6 +110,46 @@ export default function AdminDraftPreviewEdit({
   const contentEditorRef = useRef<HTMLDivElement>(null)
   const narrationEditorRef = useRef<HTMLDivElement>(null)
   const whyImportantEditorRef = useRef<HTMLDivElement>(null)
+  const serverBaselineUpdatedAtRef = useRef<string | null>(null)
+  const didRunRestoreCheckRef = useRef(false)
+  const stateRef = useRef({
+    news,
+    categoryParent,
+    categorySub,
+    categorySubCustom,
+    dallePrompt,
+  })
+  const [pendingRestore, setPendingRestore] = useState<DraftAutosavePayload | null>(null)
+  const [autosaveBanner, setAutosaveBanner] = useState<string | null>(null)
+
+  useEffect(() => {
+    stateRef.current = {
+      news,
+      categoryParent,
+      categorySub,
+      categorySubCustom,
+      dallePrompt,
+    }
+  }, [news, categoryParent, categorySub, categorySubCustom, dallePrompt])
+
+  const buildAutosavePayload = useCallback((): DraftAutosavePayload => {
+    const s = stateRef.current
+    const contentHtml = contentEditorRef.current?.innerHTML ?? s.news.content
+    const narrationHtml = narrationEditorRef.current?.innerHTML ?? s.news.narration
+    const whyHtml = whyImportantEditorRef.current?.innerHTML ?? s.news.why_important
+    return {
+      news: {
+        ...s.news,
+        content: contentHtml,
+        narration: narrationHtml,
+        why_important: whyHtml,
+      },
+      categoryParent: s.categoryParent,
+      categorySub: s.categorySub,
+      categorySubCustom: s.categorySubCustom,
+      dallePrompt: s.dallePrompt,
+    }
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -134,6 +184,7 @@ export default function AdminDraftPreviewEdit({
             status: a.status ?? 'draft',
           }
           setNews(draft)
+          serverBaselineUpdatedAtRef.current = draft.updated_at ?? null
           const parent = draft.category_parent ?? (draft.category === 'entertainment' ? 'special' : draft.category ?? 'diplomacy')
           setCategoryParent(parent)
           const sub = draft.category || ''
@@ -157,6 +208,108 @@ export default function AdminDraftPreviewEdit({
       })
     return () => { cancelled = true }
   }, [draftId])
+
+  useEffect(() => {
+    if (isLoading || loadError || !news.id || news.id !== draftId) return
+    if (didRunRestoreCheckRef.current) return
+    didRunRestoreCheckRef.current = true
+
+    const serverPayload: DraftAutosavePayload = {
+      news,
+      categoryParent,
+      categorySub,
+      categorySubCustom,
+      dallePrompt,
+    }
+    const serverJson = serializeDraftPayload(serverPayload)
+    const local = loadDraftAutosave(draftId)
+    const localJson = local ? serializeDraftPayload(local.payload) : ''
+    if (shouldOfferLocalRestore(local, news.updated_at ?? null, serverJson, localJson)) {
+      setPendingRestore(local!.payload)
+    }
+  }, [
+    isLoading,
+    loadError,
+    draftId,
+    news,
+    categoryParent,
+    categorySub,
+    categorySubCustom,
+    dallePrompt,
+  ])
+
+  useEffect(() => {
+    if (isLoading || loadError || !news.id || news.id !== draftId) return
+    if (pendingRestore) return
+
+    const bannerClearRef = { t: 0 as number | undefined }
+    const id = window.setInterval(() => {
+      try {
+        const payload = buildAutosavePayload()
+        saveDraftAutosave(
+          {
+            v: AUTOSAVE_SCHEMA_VERSION,
+            savedAt: Date.now(),
+            serverUpdatedAtWhenLoaded: serverBaselineUpdatedAtRef.current,
+            payload,
+          },
+          draftId
+        )
+        if (bannerClearRef.t) window.clearTimeout(bannerClearRef.t)
+        setAutosaveBanner(
+          `로컬 백업됨 ${new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`
+        )
+        bannerClearRef.t = window.setTimeout(() => setAutosaveBanner(null), 4000)
+      } catch (e) {
+        if (isQuotaExceededError(e)) {
+          setAutosaveBanner('브라우저 저장 공간이 부족해 로컬 백업에 실패했습니다.')
+        }
+      }
+    }, 60_000)
+
+    return () => {
+      window.clearInterval(id)
+      if (bannerClearRef.t) window.clearTimeout(bannerClearRef.t)
+    }
+  }, [isLoading, loadError, draftId, news.id, buildAutosavePayload, pendingRestore])
+
+  const applyRestoredPayload = (payload: DraftAutosavePayload) => {
+    const d = payload.news
+    setNews({
+      id: d.id,
+      title: d.title,
+      description: d.description ?? null,
+      content: d.content,
+      why_important: d.why_important,
+      narration: d.narration,
+      future_prediction: d.future_prediction ?? null,
+      source: d.source,
+      source_url: d.source_url,
+      original_source: d.original_source,
+      original_title: d.original_title,
+      url: d.url,
+      published_at: d.published_at,
+      created_at: d.created_at ?? null,
+      updated_at: d.updated_at ?? null,
+      image_url: d.image_url ?? null,
+      author: d.author ?? null,
+      category: d.category ?? null,
+      category_parent: d.category_parent ?? null,
+      status: d.status ?? 'draft',
+    })
+    setCategoryParent(payload.categoryParent)
+    const sub = payload.categorySub
+    const opts = subCategoryOptionsRef.current
+    if (opts.some((o) => o.value === sub)) {
+      setCategorySub(sub)
+      setCategorySubCustom('')
+    } else {
+      setCategorySub(sub ? '__custom__' : '')
+      setCategorySubCustom(payload.categorySubCustom || sub || '')
+    }
+    setDallePrompt(payload.dallePrompt)
+    setPendingRestore(null)
+  }
 
   const formatHeaderDate = () => {
     const s = news.updated_at || news.created_at
@@ -249,6 +402,8 @@ export default function AdminDraftPreviewEdit({
 
       if (data.data?.article) {
         const a = data.data.article
+        const ua = a.updated_at as string | undefined
+        if (ua) serverBaselineUpdatedAtRef.current = ua
         setNews((prev) => ({
           ...prev,
           ...Object.fromEntries(Object.entries(a).filter(([, v]) => v !== undefined)),
@@ -266,6 +421,7 @@ export default function AdminDraftPreviewEdit({
       }
       setEditingSection(null)
       setSaveMsg({ type: 'success', text: '임시저장이 업데이트되었습니다.' })
+      clearDraftAutosave(draftId)
       setTimeout(() => setSaveMsg(null), 4000)
     } catch (e) {
       setSaveMsg({ type: 'error', text: (e as Error).message || '임시저장 업데이트 실패' })
@@ -311,6 +467,7 @@ export default function AdminDraftPreviewEdit({
       }
       if (!data.success) throw new Error(data.message || '게시 실패')
 
+      clearDraftAutosave(draftId)
       setSaveMsg({ type: 'success', text: '기사가 게시되었습니다.' })
       setTimeout(() => {
         setSaveMsg(null)
@@ -347,7 +504,52 @@ export default function AdminDraftPreviewEdit({
   }
 
   return (
-    <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 py-6">
+    <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 py-6 relative">
+      {pendingRestore && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="draft-restore-title"
+        >
+          <div className="bg-slate-800 border border-slate-600 rounded-xl max-w-md w-full p-6 shadow-xl">
+            <h2 id="draft-restore-title" className="text-lg font-semibold text-white mb-2">
+              로컬에 더 새로운 초안이 있습니다
+            </h2>
+            <p className="text-slate-300 text-sm mb-6">
+              이 브라우저에 저장된 편집 내용이 서버 버전보다 최신입니다. 불러오시겠습니까? (아니오는 서버 버전을 유지하고 로컬 백업을 삭제합니다.)
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                type="button"
+                className="px-4 py-2 rounded-lg bg-slate-600 hover:bg-slate-500 text-white text-sm"
+                onClick={() => {
+                  clearDraftAutosave(draftId)
+                  setPendingRestore(null)
+                }}
+              >
+                아니오, 서버 유지
+              </button>
+              <button
+                type="button"
+                className="px-4 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-sm font-medium"
+                onClick={() => {
+                  if (pendingRestore) applyRestoredPayload(pendingRestore)
+                }}
+              >
+                예, 불러오기
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {autosaveBanner && (
+        <div className="mb-3 px-3 py-2 rounded-lg text-xs text-slate-300 bg-slate-800/80 border border-slate-600/50">
+          {autosaveBanner}
+        </div>
+      )}
+
       {/* 상단 액션 바 */}
       <div className="flex flex-wrap items-center gap-3 mb-6 pb-4 border-b border-slate-600">
         <button
