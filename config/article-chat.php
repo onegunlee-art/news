@@ -168,12 +168,6 @@ PROMPT,
                 'label'    => '우리나라에 어떤 영향이 있을까?',
                 'priority' => 4,
             ],
-            [
-                'id'       => 'similar_cases',
-                'category' => 'comparison',
-                'label'    => '이 사건과 비슷한 사례가 있었어?',
-                'priority' => 5,
-            ],
         ],
 
         'extra_pool' => [],
@@ -184,8 +178,8 @@ PROMPT,
         ],
 
         'display' => [
-            'max_visible'   => 5,
-            'fixed_count'   => 5,
+            'max_visible'   => 4,
+            'fixed_count'   => 4,
             'dynamic_count' => 0,
         ],
     ],

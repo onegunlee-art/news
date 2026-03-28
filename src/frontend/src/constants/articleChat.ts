@@ -4,7 +4,6 @@ export type ChipCategory =
   | 'intention'
   | 'risk'
   | 'scenario'
-  | 'comparison'
 
 export interface ChatChip {
   id: string
@@ -42,20 +41,14 @@ export const FIXED_CHIPS: ChatChip[] = [
     label: '우리나라에 어떤 영향이 있을까?',
     priority: 4,
   },
-  {
-    id: 'similar_cases',
-    category: 'comparison',
-    label: '이 사건과 비슷한 사례가 있었어?',
-    priority: 5,
-  },
 ]
 
 /**
  * 칩 노출 규칙 (API 폴백용)
  */
 export const CHIP_DISPLAY = {
-  maxVisible: 5,
-  fixedCount: 5,
+  maxVisible: 4,
+  fixedCount: 4,
   dynamicCount: 0,
 } as const
 
@@ -85,7 +78,6 @@ export const CATEGORY_LABELS: Record<ChipCategory, string> = {
   intention: '의도',
   risk: '리스크',
   scenario: '미래',
-  comparison: '비교',
 }
 
 /**
@@ -97,5 +89,4 @@ export const CATEGORY_ROLES: Record<ChipCategory, string> = {
   intention: '몰입',
   risk: '긴장',
   scenario: '확장',
-  comparison: '연결',
 }
