@@ -305,7 +305,7 @@ export default function ArticleChatPanel({ newsId }: ArticleChatPanelProps) {
                   type="button"
                   disabled={streaming || usedChipIds.has(c.id)}
                   onClick={() => void sendMessage(c.label, c.id)}
-                  className="w-full px-4 py-3 text-sm bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-50 transition-colors text-left font-medium"
+                  className="w-full px-4 py-3 text-sm bg-[#0A0A0B] text-white hover:bg-[#161618] disabled:opacity-50 transition-colors text-left font-medium"
                 >
                   {c.label}
                 </button>
