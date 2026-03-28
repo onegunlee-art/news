@@ -69,6 +69,7 @@ function chipIdToAnswerType(?string $chipId): ?string
         'why_important' => 'summary',
         'impact_korea' => 'structure',
         'scenario_forecast' => 'scenario',
+        'similar_cases' => 'comparison',
         'understand_summary' => 'summary',
         'structure_benefit' => 'structure',
         'intention_hidden' => 'intent',
@@ -105,7 +106,7 @@ function buildArticleBodyFromNews(array $news): string
 /**
  * @return array{lines: string[], refs: array<int, array<string, mixed>>}
  */
-function buildRagForArticle(RAGService $rag, string $query, int $newsId, float $minSim): array
+function buildRagForArticle(RAGService $rag, string $query, int $newsId, float $minSim, ?PDO $pdo = null): array
 {
     if (!$rag->isConfigured()) {
         return ['lines' => [], 'refs' => []];
@@ -133,7 +134,25 @@ function buildRagForArticle(RAGService $rag, string $query, int $newsId, float $
     usort($fromArticle, fn ($a, $b) => $b['sim'] <=> $a['sim']);
     usort($other, fn ($a, $b) => $b['sim'] <=> $a['sim']);
     $fromArticle = array_slice($fromArticle, 0, 2);
-    $other = array_slice($other, 0, 2);
+    $other = array_slice($other, 0, 3);
+
+    $otherTitles = [];
+    if ($pdo && !empty($other)) {
+        $otherIds = array_unique(array_column($other, 'news_id'));
+        $otherIds = array_filter($otherIds, fn ($id) => $id > 0);
+        if (!empty($otherIds)) {
+            $placeholders = implode(',', array_fill(0, count($otherIds), '?'));
+            try {
+                $titleSt = $pdo->prepare("SELECT id, title FROM news WHERE id IN ({$placeholders})");
+                $titleSt->execute(array_values($otherIds));
+                foreach ($titleSt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+                    $otherTitles[(int) $row['id']] = (string) $row['title'];
+                }
+            } catch (PDOException $e) {
+                error_log('buildRagForArticle title lookup: ' . $e->getMessage());
+            }
+        }
+    }
 
     $lines = [];
     $refs = [];
@@ -142,8 +161,10 @@ function buildRagForArticle(RAGService $rag, string $query, int $newsId, float $
         $refs[] = ['scope' => 'same_article', 'news_id' => $newsId, 'similarity' => $x['sim']];
     }
     foreach ($other as $x) {
-        $lines[] = '- [다른 기사·참고, 유사도 ' . round($x['sim'], 3) . '] ' . mb_substr($x['text'], 0, 600);
-        $refs[] = ['scope' => 'global', 'news_id' => $x['news_id'], 'similarity' => $x['sim']];
+        $nid = $x['news_id'];
+        $titleTag = isset($otherTitles[$nid]) ? '제목: "' . $otherTitles[$nid] . '", ' : '';
+        $lines[] = '- [관련 기사, ' . $titleTag . '유사도 ' . round($x['sim'], 3) . '] ' . mb_substr($x['text'], 0, 600);
+        $refs[] = ['scope' => 'global', 'news_id' => $nid, 'similarity' => $x['sim'], 'title' => $otherTitles[$nid] ?? null];
     }
     foreach ($ctx['knowledge'] ?? [] as $k) {
         $sim = (float) ($k['similarity'] ?? 0);
@@ -154,7 +175,7 @@ function buildRagForArticle(RAGService $rag, string $query, int $newsId, float $
         $content = mb_substr((string) ($k['content'] ?? ''), 0, 400);
         $lines[] = '- [지식라이브러리, 유사도 ' . round($sim, 3) . '] ' . $title . ': ' . $content;
         $refs[] = ['scope' => 'knowledge', 'title' => $title, 'similarity' => $sim];
-        if (count($lines) >= 6) {
+        if (count($lines) >= 8) {
             break;
         }
     }
@@ -407,7 +428,7 @@ if ($chipId !== '') {
     }
 }
 
-$ragPack = buildRagForArticle($rag, $message, $newsId, $minRagSim);
+$ragPack = buildRagForArticle($rag, $message, $newsId, $minRagSim, $pdo);
 $ragText = $ragPack['lines'] === [] ? '(보조 맥락 없음)' : implode("\n", $ragPack['lines']);
 $refsJson = json_encode($ragPack['refs'], JSON_UNESCAPED_UNICODE);
 
