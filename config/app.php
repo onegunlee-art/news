@@ -45,7 +45,7 @@ return [
     
     'security' => [
         'jwt_secret' => getenv('JWT_SECRET') ?: 'news-context-jwt-secret-key-2026',
-        'jwt_expiry' => 3600 * 24, // 24시간
+        'jwt_expiry' => 3600, // 1시간 (동시 로그인 방지)
         'jwt_refresh_expiry' => 3600 * 24 * 7, // 7일
         'bcrypt_rounds' => 12,
     ],
