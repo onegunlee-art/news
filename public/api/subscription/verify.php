@@ -39,8 +39,17 @@ if (empty($orderCode)) {
     exit;
 }
 
-$maxRetries = 5;
-$retryDelay = 3;
+// 주문 소유권 검증: 이 사용자가 생성한 주문인지 확인
+$ownerStmt = $pdo->prepare('SELECT id FROM users WHERE id = ? AND steppay_order_code = ? LIMIT 1');
+$ownerStmt->execute([$userId, $orderCode]);
+if (!$ownerStmt->fetch()) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => '이 주문에 대한 권한이 없습니다.'], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
+$retryDelays = [2, 3, 3, 4, 4, 4, 5];
+$maxRetries = count($retryDelays);
 $order = null;
 $paymentDate = null;
 $lastApiError = null;
@@ -51,7 +60,7 @@ for ($attempt = 0; $attempt <= $maxRetries; $attempt++) {
         $lastApiError = $orderResult['error'] ?? 'API 호출 실패 (HTTP ' . ($orderResult['http_code'] ?? '?') . ')';
         payment_log("verify API 실패 attempt={$attempt} orderCode={$orderCode}", $orderResult);
         if ($attempt < $maxRetries) {
-            sleep($retryDelay);
+            sleep($retryDelays[$attempt]);
             continue;
         }
         payment_log("verify 최종 실패 orderCode={$orderCode} userId={$userId}");
@@ -63,7 +72,7 @@ for ($attempt = 0; $attempt <= $maxRetries; $attempt++) {
     $order = $orderResult['data'];
     $paymentDate = $order['paymentDate'] ?? null;
     if (!empty($paymentDate)) break;
-    if ($attempt < $maxRetries) sleep($retryDelay);
+    if ($attempt < $maxRetries) sleep($retryDelays[$attempt]);
 }
 
 if (empty($paymentDate)) {

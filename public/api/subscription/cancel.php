@@ -47,4 +47,14 @@ if (!$result['success']) {
     exit;
 }
 
+$subResult = steppayGetSubscription($subscriptionId);
+if ($subResult['success'] && !empty($subResult['data'])) {
+    $sub = $subResult['data'];
+    $status = $sub['status'] ?? '';
+    $isActive = in_array($status, ['ACTIVE', 'PENDING_PAUSE', 'PENDING_CANCEL']);
+    $expiresAt = $sub['currentPeriodEnd'] ?? $sub['endDate'] ?? null;
+    $pdo->prepare("UPDATE users SET is_subscribed = ?, subscription_expires_at = ? WHERE id = ?")
+        ->execute([$isActive ? 1 : 0, $expiresAt, $userId]);
+}
+
 echo json_encode(['success' => true, 'message' => '다음 결제일부터 구독이 해지됩니다. 현재 기간까지는 정상 이용 가능합니다.'], JSON_UNESCAPED_UNICODE);

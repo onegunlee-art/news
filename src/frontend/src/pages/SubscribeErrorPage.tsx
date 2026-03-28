@@ -1,8 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import { useAuthStore } from '../store/authStore'
 import { api } from '../services/api'
+import axios from 'axios'
 import MaterialIcon from '../components/Common/MaterialIcon'
+import GistLogo from '../components/Common/GistLogo'
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api'
 
 interface ErrorInfo {
   source: string
@@ -10,13 +15,35 @@ interface ErrorInfo {
   order_status: string
 }
 
+async function silentRefresh(): Promise<boolean> {
+  const refreshToken = localStorage.getItem('refresh_token')
+  if (!refreshToken) return false
+  try {
+    const res = await axios.post(`${API_BASE_URL}/auth/refresh`, { refresh_token: refreshToken })
+    if (res.data?.success && res.data?.data) {
+      const { access_token, refresh_token: newRefresh } = res.data.data
+      localStorage.setItem('access_token', access_token)
+      localStorage.setItem('refresh_token', newRefresh)
+      try { useAuthStore.getState().setTokens(access_token, newRefresh) } catch { /* store not ready */ }
+      return true
+    }
+  } catch { /* refresh failed */ }
+  return false
+}
+
 export default function SubscribeErrorPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
+  const { setSubscribed, fetchUser } = useAuthStore()
   const [errorInfo, setErrorInfo] = useState<ErrorInfo | null>(null)
   const [loading, setLoading] = useState(true)
+  const [recovered, setRecovered] = useState(false)
+  const calledRef = useRef(false)
 
   useEffect(() => {
+    if (calledRef.current) return
+    calledRef.current = true
+
     const orderCode = searchParams.get('order_code') || searchParams.get('orderCode')
     if (!orderCode) {
       setErrorInfo({ source: '결제 실패', message: '결제가 완료되지 않았습니다.', order_status: 'unknown' })
@@ -24,21 +51,87 @@ export default function SubscribeErrorPage() {
       return
     }
 
-    api.get(`/subscription/order-status?order_code=${encodeURIComponent(orderCode)}`)
-      .then((res) => {
-        if (res.data?.success && res.data?.data) {
-          setErrorInfo(res.data.data)
-        } else {
-          setErrorInfo({ source: '결제 실패', message: '결제가 완료되지 않았습니다.', order_status: 'unknown' })
+    const run = async () => {
+      try {
+        const statusRes = await api.get(`/subscription/order-status?order_code=${encodeURIComponent(orderCode)}`)
+        const data = statusRes.data?.success ? statusRes.data.data : null
+
+        if (data?.order_status === 'paid') {
+          await tryRecoverPayment(orderCode)
+          return
         }
-      })
-      .catch(() => {
+
+        setErrorInfo(data || { source: '결제 실패', message: '결제가 완료되지 않았습니다.', order_status: 'unknown' })
+      } catch {
         setErrorInfo({ source: '결제 실패', message: '결제가 완료되지 않았습니다.', order_status: 'unknown' })
-      })
-      .finally(() => setLoading(false))
-  }, [searchParams])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    const tryRecoverPayment = async (orderCode: string) => {
+      for (let i = 0; i < 3; i++) {
+        const ok = await silentRefresh()
+        if (ok) break
+        if (i < 2) await new Promise(r => setTimeout(r, 1000))
+      }
+
+      const token = localStorage.getItem('access_token')
+      if (!token) {
+        setRecovered(true)
+        setLoading(false)
+        return
+      }
+
+      try {
+        const verifyRes = await api.post('/subscription/verify', { order_code: orderCode }, {
+          headers: { Authorization: `Bearer ${token}` },
+          timeout: 60000,
+        })
+        if (verifyRes.data?.success) {
+          setSubscribed(true)
+          fetchUser()
+          setRecovered(true)
+          setLoading(false)
+          return
+        }
+      } catch { /* verify failed but payment is confirmed paid */ }
+
+      setRecovered(true)
+      setLoading(false)
+    }
+
+    run()
+  }, [searchParams, setSubscribed, fetchUser])
 
   const isCanceled = errorInfo?.source === '결제 취소'
+
+  if (recovered) {
+    return (
+      <div className="min-h-screen bg-page flex items-center justify-center px-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8 text-center"
+        >
+          <div className="w-16 h-16 mx-auto mb-6 bg-green-100 rounded-full flex items-center justify-center">
+            <MaterialIcon name="check_circle" className="w-8 h-8 text-green-600" size={32} filled />
+          </div>
+          <h1 className="text-xl font-bold text-gray-900 mb-2">결제 완료!</h1>
+          <p className="text-gray-500 text-sm mb-8">
+            <GistLogo as="span" size="inline" link={false} /> 의 모든 컨텐츠를 만나세요
+          </p>
+          <button
+            onClick={() => navigate('/')}
+            className="w-full py-3 rounded-lg bg-primary-500 hover:bg-primary-600 text-white font-semibold transition-colors"
+          >
+            홈으로 이동
+          </button>
+        </motion.div>
+      </div>
+    )
+  }
+
   const title = isCanceled ? '결제 취소' : '결제 실패'
   const iconName = isCanceled ? 'close' : 'warning'
   const iconBg = isCanceled ? 'bg-gray-100' : 'bg-red-100'

@@ -125,15 +125,21 @@ function promotionUpsertPendingUsage(
  * 결제 검증 성공 시: usage 완료 + used_count 증가
  */
 function promotionMarkUsageCompleted(PDO $pdo, int $userId, string $orderCode): void {
+    $affected = $pdo->prepare(
+        'UPDATE promotion_code_usage SET completed = 1 WHERE user_id = ? AND order_code = ? AND completed = 0'
+    );
+    $affected->execute([$userId, $orderCode]);
+    if ($affected->rowCount() === 0) {
+        return;
+    }
+
     $stmt = $pdo->prepare(
-        'SELECT id, promotion_code_id, completed FROM promotion_code_usage WHERE user_id = ? AND order_code = ? LIMIT 1'
+        'SELECT promotion_code_id FROM promotion_code_usage WHERE user_id = ? AND order_code = ? LIMIT 1'
     );
     $stmt->execute([$userId, $orderCode]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC);
-    if (!$row || (int) $row['completed'] === 1) {
-        return;
+    if ($row) {
+        $pdo->prepare('UPDATE promotion_codes SET used_count = used_count + 1 WHERE id = ?')
+            ->execute([(int) $row['promotion_code_id']]);
     }
-    $pdo->prepare('UPDATE promotion_code_usage SET completed = 1 WHERE id = ?')->execute([$row['id']]);
-    $pdo->prepare('UPDATE promotion_codes SET used_count = used_count + 1 WHERE id = ?')
-        ->execute([(int) $row['promotion_code_id']]);
 }

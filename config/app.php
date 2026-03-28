@@ -120,5 +120,6 @@ return [
         ],
         'success_url' => getenv('APP_URL') ? getenv('APP_URL') . '/subscribe/success' : 'https://www.thegist.co.kr/subscribe/success',
         'error_url'   => getenv('APP_URL') ? getenv('APP_URL') . '/subscribe/error'   : 'https://www.thegist.co.kr/subscribe/error',
+        'webhook_secret' => getenv('STEPPAY_WEBHOOK_SECRET') ?: '',
     ],
 ];

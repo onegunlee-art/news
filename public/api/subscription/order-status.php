@@ -32,6 +32,22 @@ if (empty($orderCode)) {
 }
 
 $pdo = getDb();
+
+$token = getBearerToken();
+if ($token) {
+    $jwt = decodeJwt($token);
+    $jwtUserId = $jwt['user_id'] ?? null;
+    if ($jwtUserId) {
+        $chk = $pdo->prepare('SELECT id FROM users WHERE id = ? AND steppay_order_code = ? LIMIT 1');
+        $chk->execute([(int) $jwtUserId, $orderCode]);
+        if (!$chk->fetch()) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'message' => '이 주문에 대한 권한이 없습니다.'], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+    }
+}
+
 $errorMessage = null;
 $orderStatus = 'unknown';
 
