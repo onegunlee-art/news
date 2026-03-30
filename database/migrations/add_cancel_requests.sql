@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS `cancel_requests` (
     `user_id` INT UNSIGNED NULL COMMENT '요청한 사용자 ID (비로그인이면 NULL)',
     `contact` VARCHAR(255) NOT NULL COMMENT '연락처 (이메일 또는 휴대폰)',
     `message` TEXT NULL COMMENT '취소 사유',
+    `prepared_at` TIMESTAMP NULL DEFAULT NULL COMMENT '환불 준비(취소 처리) 확정 시각',
     `status` ENUM('pending', 'done') NOT NULL DEFAULT 'pending' COMMENT '처리 상태',
     `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '요청 시각',
     `processed_at` TIMESTAMP NULL COMMENT '처리 완료 시각',

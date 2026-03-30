@@ -388,6 +388,8 @@ $router->group(['prefix' => '/admin'], function (Router $router) {
     
     // 구독 취소 요청 관리
     $router->get('/cancel-requests', [AdminController::class, 'cancelRequests']);
+    $router->put('/cancel-requests/{id}/prepare', [AdminController::class, 'cancelRequestPrepare']);
+    $router->put('/cancel-requests/{id}/unprepare', [AdminController::class, 'cancelRequestUnprepare']);
     $router->put('/cancel-requests/{id}/done', [AdminController::class, 'cancelRequestDone']);
 
     // 뉴스 관리

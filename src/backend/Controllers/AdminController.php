@@ -988,7 +988,7 @@ final class AdminController
             $pendingCount = (int) $pendingStmt->fetchColumn();
 
             $stmt = $this->db->prepare("
-                SELECT cr.id, cr.user_id, cr.contact, cr.message, cr.status, cr.created_at, cr.processed_at,
+                SELECT cr.id, cr.user_id, cr.contact, cr.message, cr.prepared_at, cr.status, cr.created_at, cr.processed_at,
                        u.nickname, u.email, u.is_subscribed, u.subscription_expires_at
                 FROM cancel_requests cr
                 LEFT JOIN users u ON cr.user_id = u.id
@@ -1015,7 +1015,77 @@ final class AdminController
     }
 
     /**
-     * 구독 취소 요청 처리 완료 마킹
+     * 구독 취소 요청 — 환불 준비(취소 처리) 확정
+     *
+     * PUT /api/admin/cancel-requests/{id}/prepare
+     */
+    public function cancelRequestPrepare(Request $request): Response
+    {
+        $adminId = $this->checkAdminAuth($request);
+        if (!$adminId) {
+            return Response::unauthorized('관리자 권한이 필요합니다.');
+        }
+
+        $reqId = (int) $request->param('id');
+        if ($reqId <= 0) {
+            return Response::error('유효하지 않은 요청 ID입니다.', 400);
+        }
+
+        try {
+            $this->ensureCancelRequestsTable();
+
+            $stmt = $this->db->prepare(
+                "UPDATE cancel_requests SET prepared_at = NOW() WHERE id = ? AND status = 'pending' AND prepared_at IS NULL"
+            );
+            $stmt->execute([$reqId]);
+
+            if ($stmt->rowCount() === 0) {
+                return Response::error('대기 중인 요청만 처리할 수 있거나 이미 취소 처리된 건입니다.', 400);
+            }
+
+            return Response::success(null, '환불 준비(취소 처리)로 표시했습니다.');
+        } catch (RuntimeException $e) {
+            return Response::error('처리 실패: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * 구독 취소 요청 — 환불 준비(취소 처리) 취소
+     *
+     * PUT /api/admin/cancel-requests/{id}/unprepare
+     */
+    public function cancelRequestUnprepare(Request $request): Response
+    {
+        $adminId = $this->checkAdminAuth($request);
+        if (!$adminId) {
+            return Response::unauthorized('관리자 권한이 필요합니다.');
+        }
+
+        $reqId = (int) $request->param('id');
+        if ($reqId <= 0) {
+            return Response::error('유효하지 않은 요청 ID입니다.', 400);
+        }
+
+        try {
+            $this->ensureCancelRequestsTable();
+
+            $stmt = $this->db->prepare(
+                "UPDATE cancel_requests SET prepared_at = NULL WHERE id = ? AND status = 'pending' AND prepared_at IS NOT NULL"
+            );
+            $stmt->execute([$reqId]);
+
+            if ($stmt->rowCount() === 0) {
+                return Response::error('취소 처리를 되돌릴 수 있는 상태가 아닙니다.', 400);
+            }
+
+            return Response::success(null, '취소 처리를 취소했습니다.');
+        } catch (RuntimeException $e) {
+            return Response::error('처리 실패: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * 구독 취소 요청 처리 완료 마킹 (환불 준비 후에만 가능)
      *
      * PUT /api/admin/cancel-requests/{id}/done
      */
@@ -1032,13 +1102,15 @@ final class AdminController
         }
 
         try {
+            $this->ensureCancelRequestsTable();
+
             $stmt = $this->db->prepare(
-                "UPDATE cancel_requests SET status = 'done', processed_at = NOW() WHERE id = ?"
+                "UPDATE cancel_requests SET status = 'done', processed_at = NOW() WHERE id = ? AND status = 'pending' AND prepared_at IS NOT NULL"
             );
             $stmt->execute([$reqId]);
 
             if ($stmt->rowCount() === 0) {
-                return Response::notFound('요청을 찾을 수 없습니다.');
+                return Response::error('먼저 「취소 처리(환불 준비)」를 진행한 뒤 완결할 수 있습니다.', 400);
             }
 
             return Response::success(null, '처리 완료되었습니다.');
@@ -1058,6 +1130,7 @@ final class AdminController
                     `user_id` INT UNSIGNED NULL,
                     `contact` VARCHAR(255) NOT NULL,
                     `message` TEXT NULL,
+                    `prepared_at` TIMESTAMP NULL DEFAULT NULL,
                     `status` ENUM('pending','done') NOT NULL DEFAULT 'pending',
                     `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
                     `processed_at` TIMESTAMP NULL,
@@ -1065,6 +1138,25 @@ final class AdminController
                     INDEX `idx_cancel_created` (`created_at`)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
             ");
+        }
+        $this->ensureCancelRequestsPreparedAtColumn();
+    }
+
+    /**
+     * 기존 DB에 prepared_at 컬럼 보강
+     */
+    private function ensureCancelRequestsPreparedAtColumn(): void
+    {
+        try {
+            $check = $this->db->query("SHOW COLUMNS FROM cancel_requests LIKE 'prepared_at'");
+            if ($check !== false && $check->rowCount() > 0) {
+                return;
+            }
+            $this->db->exec(
+                "ALTER TABLE cancel_requests ADD COLUMN prepared_at TIMESTAMP NULL DEFAULT NULL COMMENT '환불 준비(취소 처리) 확정 시각' AFTER message"
+            );
+        } catch (\Throwable) {
+            // 테이블 없음 등은 상위 ensure에서 처리
         }
     }
 

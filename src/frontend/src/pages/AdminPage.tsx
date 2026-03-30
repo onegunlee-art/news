@@ -498,7 +498,20 @@ const AdminPage: React.FC = () => {
 
 
   // 취소 요청 상태
-  type CancelRequest = { id: number; user_id: number | null; contact: string; message: string | null; status: string; created_at: string; processed_at: string | null; nickname: string | null; email: string | null; is_subscribed: number | null; subscription_expires_at: string | null }
+  type CancelRequest = {
+    id: number
+    user_id: number | null
+    contact: string
+    message: string | null
+    prepared_at?: string | null
+    status: string
+    created_at: string
+    processed_at: string | null
+    nickname: string | null
+    email: string | null
+    is_subscribed: number | null
+    subscription_expires_at: string | null
+  }
   const [cancelRequests, setCancelRequests] = useState<CancelRequest[]>([])
   const [cancelPendingCount, setCancelPendingCount] = useState(0)
   const [cancelLoading, setCancelLoading] = useState(false)
@@ -5476,6 +5489,11 @@ const AdminPage: React.FC = () => {
                             <span className="text-slate-500 text-xs">
                               {new Date(cr.created_at).toLocaleString('ko-KR')}
                             </span>
+                            {!!cr.prepared_at && cr.status === 'pending' && (
+                              <span className="text-amber-400 text-xs">
+                                환불 준비: {new Date(cr.prepared_at).toLocaleString('ko-KR')}
+                              </span>
+                            )}
                             {cr.processed_at && (
                               <span className="text-emerald-500 text-xs">
                                 처리: {new Date(cr.processed_at).toLocaleString('ko-KR')}
@@ -5512,48 +5530,103 @@ const AdminPage: React.FC = () => {
                         </div>
 
                         {cr.status === 'pending' && (
-                          <div className="flex gap-2 shrink-0">
-                            {cr.user_id && cr.is_subscribed === 1 && (
+                          <div className="flex flex-col items-end gap-2 shrink-0">
+                            <div className="flex flex-wrap gap-2 justify-end">
+                              {!cr.prepared_at ? (
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    if (!confirm('환불 준비(취소 처리)로 표시합니다. 나중에 「취소 처리 취소」로 되돌릴 수 있습니다. 진행할까요?')) return
+                                    try {
+                                      const res = await api.put<{ success: boolean; message?: string }>(`/admin/cancel-requests/${cr.id}/prepare`)
+                                      if (res.data?.success) {
+                                        fetchCancelRequests()
+                                      } else {
+                                        alert((res.data as { message?: string })?.message ?? '처리 실패')
+                                      }
+                                    } catch (e) {
+                                      const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message
+                                      alert(msg || '취소 처리에 실패했습니다.')
+                                    }
+                                  }}
+                                  className="px-3 py-1.5 text-xs font-medium rounded-lg bg-amber-600/90 text-white hover:bg-amber-600 transition-colors"
+                                >
+                                  취소 처리 (환불 준비)
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    if (!confirm('환불 준비 표시를 취소합니다. 계속할까요?')) return
+                                    try {
+                                      const res = await api.put<{ success: boolean; message?: string }>(`/admin/cancel-requests/${cr.id}/unprepare`)
+                                      if (res.data?.success) {
+                                        fetchCancelRequests()
+                                      } else {
+                                        alert((res.data as { message?: string })?.message ?? '되돌리기 실패')
+                                      }
+                                    } catch (e) {
+                                      const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message
+                                      alert(msg || '취소 처리 취소에 실패했습니다.')
+                                    }
+                                  }}
+                                  className="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-600 text-white hover:bg-slate-500 transition-colors"
+                                >
+                                  취소 처리 취소
+                                </button>
+                              )}
+                              {cr.user_id && cr.is_subscribed === 1 && (
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    if (!confirm(`${cr.nickname || '해당 회원'}의 구독을 해제하시겠습니까?`)) return
+                                    try {
+                                      const res = await api.put<{ success: boolean; message?: string }>(`/admin/users/${cr.user_id}/subscription`, {
+                                        is_subscribed: 0,
+                                        subscription_expires_at: null,
+                                      })
+                                      if (res.data?.success) {
+                                        alert('구독이 해제되었습니다.')
+                                        fetchCancelRequests()
+                                      } else {
+                                        alert(res.data?.message ?? '구독 해제 실패')
+                                      }
+                                    } catch {
+                                      alert('구독 해제에 실패했습니다.')
+                                    }
+                                  }}
+                                  className="px-3 py-1.5 text-xs font-medium rounded-lg bg-red-600/80 text-white hover:bg-red-600 transition-colors"
+                                >
+                                  구독 해제
+                                </button>
+                              )}
                               <button
                                 type="button"
+                                disabled={!cr.prepared_at}
+                                title={!cr.prepared_at ? '먼저 「취소 처리(환불 준비)」를 진행하세요.' : undefined}
                                 onClick={async () => {
-                                  if (!confirm(`${cr.nickname || '해당 회원'}의 구독을 해제하시겠습니까?`)) return
+                                  if (!cr.prepared_at) return
+                                  if (!confirm('이 요청을 완결(처리 완료)합니다. 계속할까요?')) return
                                   try {
-                                    const res = await api.put<{ success: boolean; message?: string }>(`/admin/users/${cr.user_id}/subscription`, {
-                                      is_subscribed: 0,
-                                      subscription_expires_at: null,
-                                    })
+                                    const res = await api.put<{ success: boolean; message?: string }>(`/admin/cancel-requests/${cr.id}/done`)
                                     if (res.data?.success) {
-                                      alert('구독이 해제되었습니다.')
                                       fetchCancelRequests()
                                     } else {
-                                      alert(res.data?.message ?? '구독 해제 실패')
+                                      alert((res.data as { message?: string })?.message ?? '처리 완료 실패')
                                     }
-                                  } catch {
-                                    alert('구독 해제에 실패했습니다.')
+                                  } catch (e) {
+                                    const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message
+                                    alert(msg || '처리 완료 마킹에 실패했습니다.')
                                   }
                                 }}
-                                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-red-600/80 text-white hover:bg-red-600 transition-colors"
+                                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-emerald-600/80 text-white hover:bg-emerald-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-emerald-600/80"
                               >
-                                구독 해제
+                                완결 (처리 완료)
                               </button>
-                            )}
-                            <button
-                              type="button"
-                              onClick={async () => {
-                                try {
-                                  const res = await api.put<{ success: boolean }>(`/admin/cancel-requests/${cr.id}/done`)
-                                  if (res.data?.success) {
-                                    fetchCancelRequests()
-                                  }
-                                } catch {
-                                  alert('처리 완료 마킹에 실패했습니다.')
-                                }
-                              }}
-                              className="px-3 py-1.5 text-xs font-medium rounded-lg bg-emerald-600/80 text-white hover:bg-emerald-600 transition-colors"
-                            >
-                              처리 완료
-                            </button>
+                            </div>
+                            <p className="text-[10px] text-slate-500 max-w-[280px] text-right leading-snug">
+                              취소 처리는 내부 환불 준비 표시입니다. 완결은 취소 처리 후에만 가능합니다.
+                            </p>
                           </div>
                         )}
                       </div>
