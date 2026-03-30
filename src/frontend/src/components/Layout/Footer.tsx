@@ -4,6 +4,7 @@ import TermsModal from '../Common/TermsModal'
 import GistLogo from '../Common/GistLogo'
 import { siteSettingsApi } from '../../services/api'
 import { DEFAULT_VISION } from '../../constants/site'
+import { formatContentHtml } from '../../utils/sanitizeHtml'
 const defaultCopyright = () => `© ${new Date().getFullYear()} the gist.`
 
 export default function Footer() {
@@ -27,7 +28,10 @@ export default function Footer() {
       <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 pt-12 pb-2">
         <div className="flex flex-col items-center text-center">
           <GistLogo as="h2" size="default" link />
-          <p className="text-page-secondary text-sm mt-2">{vision}</p>
+          <div
+            className="text-page-secondary text-sm mt-2 [&_b]:font-bold [&_strong]:font-bold"
+            dangerouslySetInnerHTML={{ __html: formatContentHtml(vision) }}
+          />
           <p className="text-xs text-page-muted mt-12 whitespace-nowrap">
             <button
               type="button"
@@ -55,7 +59,10 @@ export default function Footer() {
         <p className="text-xs text-page-muted mt-1 break-words whitespace-normal min-w-0">주소: (07332) 서울특별시 영등포구 국제금융로8길 27-8, 4116호</p>
         <p className="text-xs text-page-muted mt-1 break-words whitespace-normal min-w-0">전화: 1551-6210</p>
         <p className="text-xs text-page-muted mt-1 break-words whitespace-normal min-w-0">통신판매업신고번호: 2026-서울영등포-0613</p>
-        <p className="text-xs text-page-muted mt-1 break-words whitespace-normal min-w-0">{copyright}</p>
+        <div
+          className="text-xs text-page-muted mt-1 break-words whitespace-normal min-w-0 [&_b]:font-bold [&_strong]:font-bold"
+          dangerouslySetInnerHTML={{ __html: formatContentHtml(copyright) }}
+        />
       </div>
 
       <TermsModal isOpen={showTermsModal} onClose={() => setShowTermsModal(false)} />

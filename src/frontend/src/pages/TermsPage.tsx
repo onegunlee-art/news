@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import MaterialIcon from '../components/Common/MaterialIcon'
 import { api } from '../services/api'
+import { formatContentHtml } from '../utils/sanitizeHtml'
 
 const DEFAULT_TERMS = `이용약관
 
@@ -47,9 +48,10 @@ export default function TermsPage() {
         {loading ? (
           <div className="animate-pulse h-64 bg-gray-200 rounded" />
         ) : (
-          <div className="prose prose-gray max-w-none whitespace-pre-wrap text-gray-700 leading-relaxed">
-            {content}
-          </div>
+          <div
+            className="prose prose-gray max-w-none text-gray-700 leading-relaxed [&_b]:font-bold [&_strong]:font-bold [&_ul]:my-2 [&_ol]:my-2 [&_li]:my-0.5"
+            dangerouslySetInnerHTML={{ __html: formatContentHtml(content ?? '') }}
+          />
         )}
       </div>
     </div>

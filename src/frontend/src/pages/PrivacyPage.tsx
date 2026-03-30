@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import MaterialIcon from '../components/Common/MaterialIcon'
 import { api } from '../services/api'
 import { PRIVACY_POLICY_CONTENT } from '../components/Common/PrivacyPolicyContent'
+import { formatContentHtml } from '../utils/sanitizeHtml'
 
 export default function PrivacyPage() {
   const [content, setContent] = useState<string | null>(null)
@@ -29,9 +30,10 @@ export default function PrivacyPage() {
         {loading ? (
           <div className="animate-pulse h-64 bg-gray-200 rounded" />
         ) : (
-          <div className="prose prose-gray max-w-none whitespace-pre-wrap text-gray-700 leading-relaxed">
-            {content}
-          </div>
+          <div
+            className="prose prose-gray max-w-none text-gray-700 leading-relaxed [&_b]:font-bold [&_strong]:font-bold [&_ul]:my-2 [&_ol]:my-2 [&_li]:my-0.5"
+            dangerouslySetInnerHTML={{ __html: formatContentHtml(content ?? '') }}
+          />
         )}
       </div>
     </div>

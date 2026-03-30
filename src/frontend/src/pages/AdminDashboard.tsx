@@ -9,6 +9,12 @@ import MaterialIcon from '../components/Common/MaterialIcon'
 import { api } from '../services/api'
 import { adminSettingsApi } from '../services/api'
 import { PRIVACY_POLICY_CONTENT } from '../components/Common/PrivacyPolicyContent'
+import RichTextEditor from '../components/Common/RichTextEditor'
+import { formatContentHtml } from '../utils/sanitizeHtml'
+import { DEFAULT_VISION } from '../constants/site'
+
+const adminRichPaste = (t: string) =>
+  t.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')
 
 type TabId = 'dashboard' | 'members' | 'privacy' | 'settings' | 'news'
 
@@ -139,10 +145,10 @@ export default function AdminDashboard() {
         if (r.data?.success && r.data?.data) {
           const d = r.data.data as Record<string, string>
           setSettings(d)
-          setPrivacyContent(d.privacy_policy || PRIVACY_POLICY_CONTENT)
-          setTermsContent(d.terms_of_service || '')
-          setCopyrightContent(d.copyright || '')
-          setTheGistContent(d.the_gist || '')
+          setPrivacyContent(formatContentHtml(d.privacy_policy || PRIVACY_POLICY_CONTENT))
+          setTermsContent(formatContentHtml(d.terms_of_service || ''))
+          setCopyrightContent(formatContentHtml(d.copyright_text || ''))
+          setTheGistContent(formatContentHtml(d.the_gist_vision || DEFAULT_VISION))
         }
       })
       .catch(() => {})
@@ -192,7 +198,7 @@ export default function AdminDashboard() {
     setSaving(true)
     setMessage(null)
     try {
-      await adminSettingsApi.updateSettings({ the_gist: theGistContent })
+      await adminSettingsApi.updateSettings({ the_gist_vision: theGistContent })
       setMessage({ type: 'success', text: 'The Gist가 저장되었습니다.' })
     } catch {
       setMessage({ type: 'error', text: '저장에 실패했습니다.' })
@@ -208,10 +214,10 @@ export default function AdminDashboard() {
       const r = await adminSettingsApi.getSettings()
       if (r.data?.success && r.data?.data) {
         const d = r.data.data as Record<string, string>
-        setPrivacyContent(d.privacy_policy || PRIVACY_POLICY_CONTENT)
-        setTermsContent(d.terms_of_service || '')
-        setCopyrightContent(d.copyright || '')
-        setTheGistContent(d.the_gist || '')
+        setPrivacyContent(formatContentHtml(d.privacy_policy || PRIVACY_POLICY_CONTENT))
+        setTermsContent(formatContentHtml(d.terms_of_service || ''))
+        setCopyrightContent(formatContentHtml(d.copyright_text || ''))
+        setTheGistContent(formatContentHtml(d.the_gist_vision || DEFAULT_VISION))
         setMessage({ type: 'success', text: '설정을 다시 불러왔습니다.' })
       }
     } catch {
@@ -416,11 +422,14 @@ export default function AdminDashboard() {
                   {/* 개인정보처리방침 */}
                   <div className="bg-slate-800/50 rounded-lg p-4">
                     <label className="block text-slate-400 text-sm mb-2">개인정보처리방침</label>
-                    <textarea
+                    <RichTextEditor
                       value={privacyContent}
-                      onChange={(e) => setPrivacyContent(e.target.value)}
-                      className="w-full h-48 bg-slate-800 text-white rounded-lg p-4 text-sm font-mono"
+                      onChange={setPrivacyContent}
+                      sanitizePaste={adminRichPaste}
                       placeholder="개인정보처리방침 전문"
+                      rows={12}
+                      noMaxHeight
+                      className="w-full bg-slate-800 text-white rounded-lg border border-slate-600 text-sm"
                     />
                     <div className="mt-2 flex gap-2">
                       <button onClick={handleReloadSettings} disabled={loading} className="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-500 disabled:opacity-50">
@@ -435,11 +444,14 @@ export default function AdminDashboard() {
                   {/* 이용약관 */}
                   <div className="bg-slate-800/50 rounded-lg p-4">
                     <label className="block text-slate-400 text-sm mb-2">이용약관</label>
-                    <textarea
+                    <RichTextEditor
                       value={termsContent}
-                      onChange={(e) => setTermsContent(e.target.value)}
-                      className="w-full h-48 bg-slate-800 text-white rounded-lg p-4 text-sm font-mono"
+                      onChange={setTermsContent}
+                      sanitizePaste={adminRichPaste}
                       placeholder="이용약관 전문"
+                      rows={12}
+                      noMaxHeight
+                      className="w-full bg-slate-800 text-white rounded-lg border border-slate-600 text-sm"
                     />
                     <div className="mt-2 flex gap-2">
                       <button onClick={handleReloadSettings} disabled={loading} className="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-500 disabled:opacity-50">
@@ -454,11 +466,13 @@ export default function AdminDashboard() {
                   {/* 저작권 */}
                   <div className="bg-slate-800/50 rounded-lg p-4">
                     <label className="block text-slate-400 text-sm mb-2">저작권</label>
-                    <textarea
+                    <RichTextEditor
                       value={copyrightContent}
-                      onChange={(e) => setCopyrightContent(e.target.value)}
-                      className="w-full h-32 bg-slate-800 text-white rounded-lg p-4 text-sm font-mono"
+                      onChange={setCopyrightContent}
+                      sanitizePaste={adminRichPaste}
                       placeholder="저작권 안내 내용"
+                      rows={4}
+                      className="w-full bg-slate-800 text-white rounded-lg border border-slate-600 text-sm"
                     />
                     <div className="mt-2 flex gap-2">
                       <button onClick={handleReloadSettings} disabled={loading} className="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-500 disabled:opacity-50">
@@ -472,12 +486,14 @@ export default function AdminDashboard() {
 
                   {/* The Gist */}
                   <div className="bg-slate-800/50 rounded-lg p-4">
-                    <label className="block text-slate-400 text-sm mb-2">The Gist</label>
-                    <textarea
+                    <label className="block text-slate-400 text-sm mb-2">The Gist 비전</label>
+                    <RichTextEditor
                       value={theGistContent}
-                      onChange={(e) => setTheGistContent(e.target.value)}
-                      className="w-full h-32 bg-slate-800 text-white rounded-lg p-4 text-sm font-mono"
+                      onChange={setTheGistContent}
+                      sanitizePaste={adminRichPaste}
                       placeholder="The Gist 소개 및 설명"
+                      rows={4}
+                      className="w-full bg-slate-800 text-white rounded-lg border border-slate-600 text-sm"
                     />
                     <div className="mt-2 flex gap-2">
                       <button onClick={handleReloadSettings} disabled={loading} className="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-500 disabled:opacity-50">

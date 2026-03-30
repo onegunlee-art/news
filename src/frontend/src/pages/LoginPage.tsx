@@ -7,6 +7,7 @@ import GistLogo from '../components/Common/GistLogo';
 import { DEFAULT_VISION } from '../constants/site';
 import { saveAuthReturnState, getAuthRedirectTarget } from '../utils/authReturnState';
 import { apiErrorMessage } from '../utils/apiErrorMessage';
+import { formatContentHtml } from '../utils/sanitizeHtml';
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -72,7 +73,10 @@ const LoginPage: React.FC = () => {
         {/* 로고 */}
         <div className="text-center mb-8">
           <GistLogo as="h1" size="default" link />
-          <p className="text-gray-500 mt-2">{vision}</p>
+          <div
+            className="text-gray-500 mt-2 [&_b]:font-bold [&_strong]:font-bold"
+            dangerouslySetInnerHTML={{ __html: formatContentHtml(vision) }}
+          />
         </div>
 
         {/* 로그인 카드 */}

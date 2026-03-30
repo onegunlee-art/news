@@ -5,7 +5,7 @@ import { formatSourceDisplayName, buildEditorialLine } from '../utils/formatSour
 import { extractTitleFromUrl } from '../utils/extractTitleFromUrl';
 import MaterialIcon from '../components/Common/MaterialIcon';
 import RichTextEditor from '../components/Common/RichTextEditor';
-import { normalizeEditorHtml } from '../utils/sanitizeHtml';
+import { normalizeEditorHtml, formatContentHtml } from '../utils/sanitizeHtml';
 import AIWorkspace from '../components/AIWorkspace/AIWorkspace';
 import type { ArticleContext } from '../components/AIWorkspace/AIWorkspace';
 import CritiqueEditor from '../components/CritiqueEditor/CritiqueEditor';
@@ -208,9 +208,9 @@ const SubscriptionSettingsSection: React.FC = () => {
     adminSettingsApi.getSettings().then((res) => {
       if (res.data?.success && res.data?.data) {
         const d = res.data.data as Record<string, string>;
-        setNotice(d.subscription_page_intro ?? '');
+        setNotice(formatContentHtml(d.subscription_page_intro ?? ''));
         setProfileTaglineTitle(d.profile_page_tagline_title ?? '');
-        setProfileTagline(d.profile_page_tagline ?? '');
+        setProfileTagline(formatContentHtml(d.profile_page_tagline ?? ''));
       }
     }).catch(() => {}).finally(() => setLoading(false));
   }, []);
@@ -246,12 +246,13 @@ const SubscriptionSettingsSection: React.FC = () => {
 
       <div>
         <label className="block text-slate-400 text-sm font-medium mb-2">/subscribe 상단, &apos;…의 모든 컨텐츠를 만나세요&apos; 아래 부가 문구</label>
-        <textarea
+        <RichTextEditor
           value={notice}
-          onChange={(e) => setNotice(e.target.value)}
-          placeholder="예: 외교·정치·안보·분쟁에서&#10;비즈니스·에너지·첨단기술·사회문화에 이르기까지&#10;글로벌 이슈를 관통하는&#10;품격 있는 가치와 생각으로 하루를 시작하세요"
-          rows={4}
-          className="w-full px-4 py-2 rounded-lg bg-slate-900/50 border border-slate-600 text-white placeholder-slate-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50"
+          onChange={setNotice}
+          sanitizePaste={(t) => sanitizeText(t).replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}
+          placeholder="외교·정치·안보… 부가 문구"
+          rows={5}
+          className="w-full bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-slate-500"
         />
       </div>
 
@@ -268,12 +269,13 @@ const SubscriptionSettingsSection: React.FC = () => {
 
       <div>
         <label className="block text-slate-400 text-sm font-medium mb-2">/profile 마이페이지 — 카드 본문 (사용자 이름·구독 카드와 My Library 사이)</label>
-        <textarea
+        <RichTextEditor
           value={profileTagline}
-          onChange={(e) => setProfileTagline(e.target.value)}
+          onChange={setProfileTagline}
+          sanitizePaste={(t) => sanitizeText(t).replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}
           placeholder="예: the gist."
-          rows={3}
-          className="w-full px-4 py-2 rounded-lg bg-slate-900/50 border border-slate-600 text-white placeholder-slate-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50"
+          rows={4}
+          className="w-full bg-slate-900/50 border border-slate-600 rounded-lg text-white placeholder-slate-500"
         />
         <p className="text-slate-500 text-xs mt-1">제목과 본문을 모두 입력해야 마이페이지에 카드가 표시됩니다.</p>
       </div>
@@ -1368,13 +1370,13 @@ const AdminPage: React.FC = () => {
         setDashboardUsers(usersRes.data.data.items);
       const s = settingsRes.data?.data;
       if (s) {
-        setPrivacyContent((s.privacy_policy && s.privacy_policy.trim()) ? s.privacy_policy : PRIVACY_POLICY_CONTENT);
-        setTermsContent(s.terms_of_service ?? '');
+        setPrivacyContent(formatContentHtml((s.privacy_policy && s.privacy_policy.trim()) ? s.privacy_policy : PRIVACY_POLICY_CONTENT));
+        setTermsContent(formatContentHtml(s.terms_of_service ?? ''));
         setWelcomeMessage(s.welcome_popup_message ?? 'the gist. 가입을 감사드립니다.');
         setWelcomeTitleTemplate(s.welcome_popup_title ?? '{name}님');
         setContactEmail(s.contact_email ?? 'onegunlee@gmail.com');
-        setCopyrightText(s.copyright_text ?? '');
-        setTheGistVision(s.the_gist_vision ?? DEFAULT_VISION);
+        setCopyrightText(formatContentHtml(s.copyright_text ?? ''));
+        setTheGistVision(formatContentHtml(s.the_gist_vision ?? DEFAULT_VISION));
         setSpecialBadgeText(s.special_badge_text ?? 'MSC');
         if (s.menu_tabs && typeof s.menu_tabs === 'string') {
           try {
@@ -1557,11 +1559,14 @@ const AdminPage: React.FC = () => {
                   {/* 개인정보처리방침 수정 */}
                   <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50">
                     <h3 className="text-lg font-semibold text-white mb-4">개인정보처리방침 수정</h3>
-                    <textarea
+                    <RichTextEditor
                       value={privacyContent}
-                      onChange={(e) => setPrivacyContent(e.target.value)}
+                      onChange={setPrivacyContent}
+                      sanitizePaste={(t) => sanitizeText(t).replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}
                       placeholder="개인정보처리방침 내용을 입력하세요. 공개 페이지 /privacy 에 표시됩니다."
-                      className="w-full h-32 px-4 py-3 bg-slate-900/50 border border-slate-600 rounded-lg text-slate-200 placeholder-slate-500 focus:ring-2 focus:ring-cyan-500 focus:border-transparent resize-none"
+                      rows={14}
+                      noMaxHeight
+                      className="w-full bg-slate-900/50 border border-slate-600 rounded-lg text-slate-200 placeholder-slate-500"
                     />
                     <div className="flex items-center gap-3 mt-3">
                       <button
@@ -1654,11 +1659,14 @@ const AdminPage: React.FC = () => {
                   {/* 이용약관 수정 */}
                   <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50">
                     <h3 className="text-lg font-semibold text-white mb-4">이용약관 수정</h3>
-                    <textarea
+                    <RichTextEditor
                       value={termsContent}
-                      onChange={(e) => setTermsContent(e.target.value)}
+                      onChange={setTermsContent}
+                      sanitizePaste={(t) => sanitizeText(t).replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}
                       placeholder="이용약관 내용을 입력하세요. 공개 페이지 /terms 및 푸터에 표시됩니다."
-                      className="w-full h-32 px-4 py-3 bg-slate-900/50 border border-slate-600 rounded-lg text-slate-200 placeholder-slate-500 focus:ring-2 focus:ring-cyan-500 focus:border-transparent resize-none"
+                      rows={14}
+                      noMaxHeight
+                      className="w-full bg-slate-900/50 border border-slate-600 rounded-lg text-slate-200 placeholder-slate-500"
                     />
                     <div className="flex items-center gap-3 mt-3">
                       <button
@@ -1703,22 +1711,24 @@ const AdminPage: React.FC = () => {
                       </div>
                       <div>
                         <label className="block text-slate-400 text-sm mb-1">The Gist 비전 문구</label>
-                        <textarea
+                        <RichTextEditor
                           value={theGistVision}
-                          onChange={(e) => setTheGistVision(e.target.value)}
+                          onChange={setTheGistVision}
+                          sanitizePaste={(t) => sanitizeText(t).replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}
                           placeholder={DEFAULT_VISION}
-                          rows={2}
-                          className="w-full px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-slate-200 placeholder-slate-500 resize-none"
+                          rows={3}
+                          className="w-full bg-slate-900/50 border border-slate-600 rounded-lg text-slate-200 placeholder-slate-500"
                         />
                       </div>
                       <div>
                         <label className="block text-slate-400 text-sm mb-1">저작권 문구</label>
-                        <input
-                          type="text"
+                        <RichTextEditor
                           value={copyrightText}
-                          onChange={(e) => setCopyrightText(e.target.value)}
+                          onChange={setCopyrightText}
+                          sanitizePaste={(t) => sanitizeText(t).replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}
                           placeholder="비어 있으면 © 2026 the gist. 사용"
-                          className="w-full px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-slate-200"
+                          rows={2}
+                          className="w-full bg-slate-900/50 border border-slate-600 rounded-lg text-slate-200 placeholder-slate-500"
                         />
                       </div>
                       <div>

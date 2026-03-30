@@ -9,6 +9,7 @@ import TermsModal from '../components/Common/TermsModal'
 import WelcomePopup from '../components/Common/WelcomePopup'
 import GistLogo from '../components/Common/GistLogo'
 import { DEFAULT_VISION } from '../constants/site'
+import { formatContentHtml } from '../utils/sanitizeHtml'
 
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate()
@@ -204,7 +205,10 @@ const RegisterPage: React.FC = () => {
         {/* 로고 */}
         <div className="text-center mb-8">
           <GistLogo as="h1" size="default" link />
-          <p className="text-gray-500 mt-2">{vision}</p>
+          <div
+            className="text-gray-500 mt-2 [&_b]:font-bold [&_strong]:font-bold"
+            dangerouslySetInnerHTML={{ __html: formatContentHtml(vision) }}
+          />
         </div>
 
         <div className="bg-white rounded-lg shadow-lg border border-gray-200 p-8">

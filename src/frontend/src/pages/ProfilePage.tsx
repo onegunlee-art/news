@@ -10,6 +10,7 @@ import { formatSourceDisplayName } from '../utils/formatSource'
 import MaterialIcon from '../components/Common/MaterialIcon'
 import { useMenuConfig } from '../hooks/useMenuConfig'
 import { apiErrorMessage } from '../utils/apiErrorMessage'
+import { formatContentHtml } from '../utils/sanitizeHtml'
 
 type BookmarkRow = {
   id: number
@@ -215,7 +216,10 @@ export default function ProfilePage() {
                 </button>
                 {expandedTagline && (
                   <div className="px-5 pb-5 pt-1 min-h-0 border-t border-page">
-                    <p className="text-page text-sm font-medium leading-relaxed whitespace-pre-line">{profileTagline}</p>
+                    <div
+                      className="text-page text-sm font-medium leading-relaxed [&_b]:font-bold [&_strong]:font-bold [&_ul]:my-2 [&_ol]:my-2"
+                      dangerouslySetInnerHTML={{ __html: formatContentHtml(profileTagline) }}
+                    />
                   </div>
                 )}
               </li>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { api } from '../../services/api'
 import MaterialIcon from './MaterialIcon'
+import { formatContentHtml } from '../../utils/sanitizeHtml'
 
 const DEFAULT_TERMS = `이용약관
 
@@ -75,8 +76,12 @@ const TermsModal: React.FC<TermsModalProps> = ({ isOpen, onClose }) => {
                   <MaterialIcon name="close" className="w-5 h-5" size={20} />
                 </button>
               </div>
-              <div className="flex-1 overflow-y-auto px-6 py-5 text-sm text-gray-700 leading-relaxed whitespace-pre-line">
-                {loading ? '로딩 중...' : content}
+              <div className="flex-1 overflow-y-auto px-6 py-5 text-sm text-gray-700 leading-relaxed [&_b]:font-bold [&_strong]:font-bold">
+                {loading ? (
+                  '로딩 중...'
+                ) : (
+                  <div dangerouslySetInnerHTML={{ __html: formatContentHtml(content) }} />
+                )}
               </div>
               <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
                 <button

@@ -6,6 +6,7 @@ import { apiErrorMessage } from '../utils/apiErrorMessage'
 import { api, siteSettingsApi } from '../services/api'
 import MaterialIcon from '../components/Common/MaterialIcon'
 import GistLogo from '../components/Common/GistLogo'
+import { formatContentHtml } from '../utils/sanitizeHtml'
 
 type PlanDetailFields = { product_title: string; service_content: string; service_period: string; delivery_method: string }
 
@@ -202,9 +203,15 @@ export default function SubscriptionPage() {
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white leading-snug">
             <GistLogo as="span" size="inline" link={false} />의 모든 컨텐츠를 만나세요
           </h1>
-          <p className="mt-4 text-sm text-gray-600 dark:text-gray-400 leading-relaxed whitespace-pre-line">
-            {pageIntro || '외교·정치·안보·분쟁에서\n비즈니스·에너지·첨단기술·사회문화에 이르기까지\n글로벌 이슈를 관통하는\n품격 있는 가치와 생각으로 하루를 시작하세요'}
-          </p>
+          <div
+            className="mt-4 text-sm text-gray-600 dark:text-gray-400 leading-relaxed [&_b]:font-bold [&_strong]:font-bold"
+            dangerouslySetInnerHTML={{
+              __html: formatContentHtml(
+                pageIntro ||
+                  '외교·정치·안보·분쟁에서\n비즈니스·에너지·첨단기술·사회문화에 이르기까지\n글로벌 이슈를 관통하는\n품격 있는 가치와 생각으로 하루를 시작하세요'
+              ),
+            }}
+          />
         </motion.div>
 
         {/* 비회원: 이미 회원이신가요? 로그인 */}
