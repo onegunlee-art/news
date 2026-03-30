@@ -462,6 +462,9 @@ export default function ProfilePage() {
             <h3 id="withdraw-title" className="text-lg font-semibold text-page mb-2">회원탈퇴</h3>
             {isSubscribed ? (
               <>
+                <p className="text-sm text-page-secondary mb-4 leading-relaxed text-center">
+                  먼저 구독을 취소하시고, 탈퇴를 진행해 주시기 바랍니다.
+                </p>
                 <p className="text-sm font-bold text-orange-500 dark:text-orange-400 mb-6 leading-relaxed text-center">
                   (구독 관리 → 구독 취소 및 환불 → 담당자 연락 후 취소 및 환불 조치 → 회원탈퇴)
                 </p>
