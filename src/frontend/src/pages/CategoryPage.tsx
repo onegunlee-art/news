@@ -67,8 +67,7 @@ const CategoryPage: React.FC = () => {
         } else {
           setNews(getDemoNews(category!));
         }
-      } catch (err) {
-        console.error('Failed to fetch news:', err);
+      } catch {
         setNews(getDemoNews(category!));
       } finally {
         setLoading(false);

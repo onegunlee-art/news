@@ -77,7 +77,6 @@ export const useAuthStore = create<AuthState>()(
             }).catch(() => {}) // 백엔드 로그아웃 실패해도 계속 진행
           }
         } catch (error) {
-          console.error('Logout error:', error)
         } finally {
           // 로컬 상태 초기화
           set({
@@ -120,7 +119,6 @@ export const useAuthStore = create<AuthState>()(
             return true
           }
         } catch (error: unknown) {
-          console.error('Token refresh failed:', error)
           const axios = await import('axios')
           const hasServerResponse = axios.default.isAxiosError(error) && error.response != null
           if (hasServerResponse) {

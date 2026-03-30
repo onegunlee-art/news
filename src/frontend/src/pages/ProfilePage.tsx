@@ -86,8 +86,7 @@ export default function ProfilePage() {
       if (activeTabRef.current === 'bookmarks' && response.data.success) {
         setBookmarks(response.data.data.items || [])
       }
-    } catch (error) {
-      console.error('Failed to fetch bookmarks:', error)
+    } catch {
     } finally {
       if (activeTabRef.current === 'bookmarks') setIsLoading(false)
     }

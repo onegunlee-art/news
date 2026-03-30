@@ -29,7 +29,7 @@ if (is_file($__envFile) && is_readable($__envFile)) {
 // 프로덕션 보호: 시크릿 헤더 없이는 실행 불가
 $seedSecret = getenv('SEED_SECRET') ?: ($_ENV['SEED_SECRET'] ?? null) ?: null;
 $reqSecret = $_GET['secret'] ?? ($_SERVER['HTTP_X_SEED_SECRET'] ?? null);
-if ($seedSecret && $reqSecret !== $seedSecret) {
+if (!$seedSecret || $reqSecret !== $seedSecret) {
     http_response_code(403);
     echo json_encode(['success' => false, 'message' => 'Forbidden'], JSON_UNESCAPED_UNICODE);
     exit;

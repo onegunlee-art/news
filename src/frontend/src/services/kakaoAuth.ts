@@ -91,12 +91,10 @@ const loadKakaoSDK = (): Promise<void> => {
     script.crossOrigin = 'anonymous';
     
     script.onload = () => {
-      console.log('Kakao SDK loaded successfully');
       resolve();
     };
     
     script.onerror = () => {
-      console.error('Failed to load Kakao SDK');
       sdkLoading = null;
       reject(new Error('Failed to load Kakao SDK'));
     };
@@ -119,22 +117,18 @@ export const initKakao = async (): Promise<boolean> => {
     // SDK 로드 시도
     await loadKakaoSDK();
   } catch (error) {
-    console.log('Kakao SDK not loaded, using REST API method');
     return false;
   }
 
   if (!window.Kakao) {
-    console.log('Kakao SDK not available, using REST API method');
     return false;
   }
 
   if (!window.Kakao.isInitialized()) {
     if (!KAKAO_JAVASCRIPT_KEY) {
-      console.log('Kakao JavaScript Key is not set, using REST API method');
       return false;
     }
     window.Kakao.init(KAKAO_JAVASCRIPT_KEY);
-    console.log('Kakao SDK initialized:', window.Kakao.isInitialized());
   }
 
   return window.Kakao.isInitialized();
@@ -191,7 +185,6 @@ export const kakaoLogout = (): Promise<void> => {
 
     if (window.Kakao.Auth.getAccessToken()) {
       window.Kakao.Auth.logout(() => {
-        console.log('Kakao logout completed');
         resolve();
       });
     } else {
@@ -306,7 +299,6 @@ export const shareToKakao = async (article: {
     });
     return true;
   } catch (error) {
-    console.error('Kakao share failed:', error);
     // 폴백: 일반 공유 창 열기
     const shareUrl = `https://story.kakao.com/share?url=${encodeURIComponent(article.webUrl)}`;
     window.open(shareUrl, '_blank', 'width=600,height=400');

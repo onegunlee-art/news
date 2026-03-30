@@ -28,14 +28,18 @@ if (!$payload) {
 
 $cfg = getSteppayConfig();
 $webhookSecret = $cfg['webhook_secret'] ?? '';
-if ($webhookSecret !== '') {
-    $headerSecret = $_SERVER['HTTP_X_WEBHOOK_SECRET'] ?? $_SERVER['HTTP_X_STEPPAY_SECRET'] ?? '';
-    if (!hash_equals($webhookSecret, $headerSecret)) {
-        payment_log('REJECT: 웹훅 시크릿 불일치', ['remote_addr' => $_SERVER['REMOTE_ADDR'] ?? '']);
-        http_response_code(403);
-        echo json_encode(['success' => false, 'message' => 'Forbidden']);
-        exit;
-    }
+if ($webhookSecret === '') {
+    payment_log('REJECT: 웹훅 시크릿 미설정', ['remote_addr' => $_SERVER['REMOTE_ADDR'] ?? '']);
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'Forbidden']);
+    exit;
+}
+$headerSecret = $_SERVER['HTTP_X_WEBHOOK_SECRET'] ?? $_SERVER['HTTP_X_STEPPAY_SECRET'] ?? '';
+if (!hash_equals($webhookSecret, $headerSecret)) {
+    payment_log('REJECT: 웹훅 시크릿 불일치', ['remote_addr' => $_SERVER['REMOTE_ADDR'] ?? '']);
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'Forbidden']);
+    exit;
 }
 
 payment_log('webhook 수신', ['eventType' => $payload['eventType'] ?? 'unknown', 'raw_length' => strlen($rawBody)]);

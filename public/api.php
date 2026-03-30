@@ -125,8 +125,5 @@ try {
     echo json_encode([
         'success' => false,
         'error' => 'Internal Server Error',
-        'message' => $msg,
-        'file' => basename($file),
-        'line' => $line,
     ], JSON_UNESCAPED_UNICODE);
 }

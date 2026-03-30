@@ -18,6 +18,7 @@ use App\Controllers\NewsController;
 use App\Controllers\AnalysisController;
 use App\Controllers\AdminController;
 use App\Controllers\TTSController;
+use App\Middleware\RateLimitMiddleware;
 
 /** @var Router $router */
 
@@ -189,14 +190,14 @@ $router->group(['prefix' => '/auth'], function (Router $router) {
     // 테스트 계정 생성 (1회 실행용, 완료 후 라우트 제거 권장)
     $router->get('/seed-test-user', function (Request $request): Response {
         $seedSecret = getenv('SEED_SECRET') ?: null;
-        if ($seedSecret && ($request->query('secret') ?? '') !== $seedSecret) {
+        if (!$seedSecret || ($request->query('secret') ?? '') !== $seedSecret) {
             return Response::error('Forbidden', 403);
         }
         $messages = [];
         try {
             $db = \App\Core\Database::getInstance();
         } catch (Throwable $e) {
-            return Response::error('DB 연결 실패: ' . $e->getMessage(), 500);
+            return Response::error('DB 연결 실패', 500);
         }
         try {
             $db->executeQuery("ALTER TABLE `users` ADD COLUMN `password_hash` VARCHAR(255) NULL COMMENT '비밀번호 해시' AFTER `profile_image`");
@@ -235,13 +236,13 @@ $router->group(['prefix' => '/auth'], function (Router $router) {
     // ?email=xxx 로 특정 이메일을 admin으로 업그레이드 가능 (없으면 test@test.com)
     $router->get('/seed-admin-user', function (Request $request): Response {
         $seedSecret = getenv('SEED_SECRET') ?: null;
-        if ($seedSecret && ($request->query('secret') ?? '') !== $seedSecret) {
+        if (!$seedSecret || ($request->query('secret') ?? '') !== $seedSecret) {
             return Response::error('Forbidden', 403);
         }
         try {
             $db = \App\Core\Database::getInstance();
         } catch (Throwable $e) {
-            return Response::error('DB 연결 실패: ' . $e->getMessage(), 500);
+            return Response::error('DB 연결 실패', 500);
         }
         $email = trim((string) ($request->query('email') ?? 'test@test.com'));
         if ($email === '') {
@@ -276,15 +277,13 @@ $router->group(['prefix' => '/auth'], function (Router $router) {
         ], '관리자 설정 완료');
     });
 
-    // 이메일/비밀번호 로그인
-    $router->post('/login', [AuthController::class, 'login']);
-    
-    // 이메일 인증 (회원가입용)
-    $router->post('/send-verification', [AuthController::class, 'sendVerification']);
-    $router->post('/verify-code', [AuthController::class, 'verifyCode']);
-    
-    // 이메일/비밀번호 회원가입
-    $router->post('/register', [AuthController::class, 'register']);
+    // 이메일/비밀번호 로그인·회원가입 (IP당 10회/분 제한)
+    $router->group(['middleware' => [RateLimitMiddleware::create(10, 60)]], function () use ($router) {
+        $router->post('/login', [AuthController::class, 'login']);
+        $router->post('/send-verification', [AuthController::class, 'sendVerification']);
+        $router->post('/verify-code', [AuthController::class, 'verifyCode']);
+        $router->post('/register', [AuthController::class, 'register']);
+    });
     
     // 카카오 로그인 URL 리다이렉트
     $router->get('/kakao', [AuthController::class, 'kakaoLogin']);

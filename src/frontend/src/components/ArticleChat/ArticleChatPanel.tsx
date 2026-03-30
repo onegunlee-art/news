@@ -46,12 +46,14 @@ function parseSseBuffer(
 async function postArticleChatStream(
   body: Record<string, unknown>,
   onToken: (text: string) => void,
-  onDone: (data: { full_text?: string; disclaimer?: string }) => void
+  onDone: (data: { full_text?: string; disclaimer?: string }) => void,
+  signal?: AbortSignal,
 ): Promise<void> {
   const res = await adminFetch(`${API_BASE}/article-chat.php`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
+    signal,
   })
 
   if (!res.ok) {
@@ -126,6 +128,11 @@ export default function ArticleChatPanel({ newsId }: ArticleChatPanelProps) {
   const [error, setError] = useState<string | null>(null)
   const [expandedByChipId, setExpandedByChipId] = useState<Record<string, boolean>>({})
   const panelScrollRefs = useRef<Record<string, HTMLDivElement | null>>({})
+  const abortRef = useRef<AbortController | null>(null)
+
+  useEffect(() => {
+    return () => { abortRef.current?.abort() }
+  }, [])
 
   const usedChipIds = useMemo(() => {
     const s = new Set<string>()
@@ -241,6 +248,8 @@ export default function ArticleChatPanel({ newsId }: ArticleChatPanelProps) {
     setMessages((prev) => [...prev, { role: 'assistant', content: '' }])
 
     try {
+      abortRef.current?.abort()
+      abortRef.current = new AbortController()
       const history = messages.map((m) => ({ role: m.role, content: m.content }))
       await postArticleChatStream(
         {
@@ -261,7 +270,8 @@ export default function ArticleChatPanel({ newsId }: ArticleChatPanelProps) {
             return next
           })
         },
-        () => {}
+        () => {},
+        abortRef.current.signal,
       )
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : '전송 실패')

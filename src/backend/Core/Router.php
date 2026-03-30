@@ -356,19 +356,20 @@ final class Router
     private function handleException(\Throwable $e): void
     {
         $statusCode = method_exists($e, 'getStatusCode') ? $e->getStatusCode() : 500;
-        
+
+        $config = require dirname(__DIR__, 3) . '/config/app.php';
+        $debug = $config['debug'] ?? false;
+
         $response = [
             'success' => false,
-            'message' => $e->getMessage(),
+            'message' => $debug ? $e->getMessage() : '서버 오류가 발생했습니다.',
             'timestamp' => date('c'),
         ];
-        
-        // 디버그 모드에서만 스택 트레이스 포함
-        $config = require dirname(__DIR__, 3) . '/config/app.php';
-        if ($config['debug'] ?? false) {
+
+        if ($debug) {
             $response['trace'] = $e->getTraceAsString();
         }
-        
+
         Response::json($response, $statusCode)->send();
     }
 

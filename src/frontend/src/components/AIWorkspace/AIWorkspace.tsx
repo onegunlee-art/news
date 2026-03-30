@@ -56,6 +56,10 @@ const AIWorkspace: React.FC<AIWorkspaceProps> = ({ articleContext }) => {
     scrollToBottom();
   }, [messages]);
 
+  useEffect(() => {
+    return () => { abortRef.current?.abort() };
+  }, []);
+
   // 대화 목록 로드
   const loadConversations = useCallback(async () => {
     setConvListLoading(true);

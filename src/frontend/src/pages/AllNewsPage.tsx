@@ -30,8 +30,7 @@ export default function AllNewsPage() {
         setNews(response.data.data.items || [])
         setTotalPages(response.data.data.pagination?.total_pages || 1)
       }
-    } catch (error) {
-      console.error('Failed to fetch news:', error)
+    } catch {
     } finally {
       setIsLoading(false)
     }

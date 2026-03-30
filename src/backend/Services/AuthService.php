@@ -123,7 +123,12 @@ final class AuthService
      */
     public function getGoogleLoginUrl(): string
     {
-        return $this->googleAuth->getAuthorizationUrl(bin2hex(random_bytes(16)));
+        $state = bin2hex(random_bytes(16));
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        $_SESSION['google_oauth_state'] = $state;
+        return $this->googleAuth->getAuthorizationUrl($state);
     }
 
     /**
@@ -131,6 +136,15 @@ final class AuthService
      */
     public function handleGoogleCallback(string $code, ?string $state = null): array
     {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        $expected = $_SESSION['google_oauth_state'] ?? null;
+        unset($_SESSION['google_oauth_state']);
+        if (!$state || !$expected || !hash_equals($expected, $state)) {
+            throw new RuntimeException('OAuth state 검증 실패. 다시 시도해 주세요.');
+        }
+
         $tokenData = $this->googleAuth->getAccessToken($code);
         $googleUser = $this->googleAuth->getUserInfo($tokenData['access_token']);
         [$userId, $isNewUser] = $this->userRepository->createOrUpdateFromGoogle($googleUser);

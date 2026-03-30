@@ -316,8 +316,7 @@ const UsersManagementSection: React.FC<{
         setStats(res.data.data.stats ?? { total: 0, subscribed: 0, unsubscribed: 0, new_this_month: 0 });
         setPagination(res.data.data.pagination);
       }
-    } catch (e) {
-      console.error(e);
+    } catch {
     } finally {
       setLoading(false);
     }
@@ -430,8 +429,7 @@ const UsersManagementSection: React.FC<{
                               } else {
                                 alert('사용자 정보를 불러올 수 없습니다.');
                               }
-                            } catch (e) {
-                              console.error(e);
+                            } catch {
                               alert('사용자 상세 조회 실패: 서버 오류가 발생했습니다.');
                             }
                           }}
@@ -807,8 +805,7 @@ const AdminPage: React.FC = () => {
       if (data.success) {
         setFeedbackHistory(data.history ?? []);
       }
-    } catch (e) {
-      console.error('Failed to load feedback history:', e);
+    } catch {
     }
   }, []);
 
@@ -931,8 +928,7 @@ const AdminPage: React.FC = () => {
       if (data.success) {
         setKnowledgeItems(data.items ?? []);
       }
-    } catch (e) {
-      console.error('Failed to load knowledge library:', e);
+    } catch {
     } finally {
       setKnowledgeLoading(false);
     }
@@ -1165,8 +1161,7 @@ const AdminPage: React.FC = () => {
         setNewsList(data.data.items);
         if (data.data.pagination) setNewsPagination(data.data.pagination);
       }
-    } catch (error) {
-      console.error('Failed to load news:', error);
+    } catch {
     } finally {
       setIsLoadingNews(false);
     }
@@ -1183,7 +1178,6 @@ const AdminPage: React.FC = () => {
       const response = await adminFetch(`/api/admin/news.php?${params.toString()}`);
       const text = await response.text();
       if (!text || text.trim().startsWith('<')) {
-        console.error('Drafts API returned HTML instead of JSON');
         setDraftList([]);
         return;
       }
@@ -1194,8 +1188,7 @@ const AdminPage: React.FC = () => {
       } else {
         setDraftList([]);
       }
-    } catch (error) {
-      console.error('Failed to load drafts:', error);
+    } catch {
       setDraftList([]);
     } finally {
       setIsLoadingDrafts(false);
@@ -1394,8 +1387,7 @@ const AdminPage: React.FC = () => {
           } catch { /* ignore */ }
         }
       }
-    } catch (e) {
-      console.error('대시보드 로드 실패:', e);
+    } catch {
     } finally {
       setLoading(false);
     }
@@ -1543,8 +1535,7 @@ const AdminPage: React.FC = () => {
                                   } else {
                                     alert('사용자 정보를 불러올 수 없습니다.');
                                   }
-                                } catch (e) {
-                                  console.error(e);
+                                } catch {
                                   alert('사용자 상세 조회 실패: 서버 오류가 발생했습니다.');
                                 }
                               }}
@@ -2220,7 +2211,6 @@ const AdminPage: React.FC = () => {
                               setSaveMessage({ type: 'error', text: ttsErrMsg });
                             }
                           } catch (error: unknown) {
-                            console.error('GPT 분석 에러:', error);
                             const err = error as Error & { name?: string };
                             let msg: string;
                             if (err.name === 'AbortError') {
@@ -2263,7 +2253,6 @@ const AdminPage: React.FC = () => {
                             ? `상태: ${d.status} | Mock: ${d.mock_mode ? '예' : '아니오'} | API키: ${d.openai_key_set ? '설정됨' : '없음'} | env: ${d.env_loaded ? '로드됨' : '없음'} | root: ${(d.project_root || '').slice(-30)}`
                             : `상태 오류: ${d.error || r.status}`;
                           setSaveMessage({ type: d.openai_key_set ? 'success' : 'error', text: msg });
-                          if (d.env_tried?.length) console.log('env_tried', d.env_tried);
                         } catch (e) {
                           const em = (e as Error).message;
                           const hint = em.includes('Failed to fetch')
@@ -3034,12 +3023,6 @@ const AdminPage: React.FC = () => {
                             image_url: articleImageUrl.trim() || null,
                             status: 'published' as const,
                           };
-                          
-                          console.log('Sending request:', { 
-                            method: isEditing ? 'PUT' : 'POST',
-                            contentLength: newsContent.length,
-                            bodySize: JSON.stringify(requestBody).length 
-                          });
                           
                           const response = await adminFetch('/api/admin/news.php', {
                             method: isEditing ? 'PUT' : 'POST',
@@ -4028,8 +4011,7 @@ const AdminPage: React.FC = () => {
                             setLearnedPatterns(data.patterns);
                             setLearningTexts('');
                           }
-                        } catch (error) {
-                          console.error('Learning failed:', error);
+                        } catch {
                         } finally {
                           setIsLearning(false);
                         }
@@ -4064,8 +4046,7 @@ const AdminPage: React.FC = () => {
                           });
                           const data = await response.json();
                           setLearnedPatterns(data.patterns);
-                        } catch (error) {
-                          console.error('Status check failed:', error);
+                        } catch {
                         }
                       }}
                       className="text-slate-400 hover:text-white text-sm underline"
@@ -4893,7 +4874,6 @@ const AdminPage: React.FC = () => {
                           ? `상태: ${d.status} | Mock: ${d.mock_mode ? '예' : '아니오'} | API키: ${d.openai_key_set ? '설정됨' : '없음'} | env: ${d.env_loaded ? '로드됨' : '없음'} | root: ${(d.project_root || '').slice(-40)}`
                           : `오류: ${d.error || r.status}`;
                         setSaveMessage({ type: d.openai_key_set ? 'success' : 'error', text: msg });
-                        if (d.env_tried?.length) console.log('env_tried', d.env_tried);
                       } catch (e) {
                         setSaveMessage({ type: 'error', text: '상태 확인 실패: ' + (e as Error).message });
                       }
