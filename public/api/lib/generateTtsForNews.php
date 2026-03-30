@@ -93,11 +93,81 @@ function getTtsCachedUrl(array $row): ?string
         if (is_file($storageDir . '/tts_' . $safeHash . '.wav')) {
             return '/storage/audio/tts_' . $safeHash . '.wav';
         }
+
+        $fromSb = _getTtsFileUrlFromSupabaseByHash($projectRoot, $cacheHash);
+        if ($fromSb !== null && $fromSb !== '') {
+            return $fromSb;
+        }
     } catch (\Throwable $e) {
         // 조회 실패 시 null — 프론트에서 fallback
     }
 
     return null;
+}
+
+/**
+ * TTSController::getTtsCacheFromSupabase 와 동일 (RPC 우선, REST+해시 검증 폴백)
+ */
+function _getTtsFileUrlFromSupabaseByHash(string $projectRoot, string $cacheHash): ?string
+{
+    $path = $projectRoot . '/src/agents/services/SupabaseService.php';
+    if (!file_exists($path)) {
+        return null;
+    }
+    try {
+        require_once $path;
+        $cfg = file_exists($projectRoot . '/config/supabase.php') ? require $projectRoot . '/config/supabase.php' : [];
+        $supabase = new \Agents\Services\SupabaseService($cfg);
+        if (!$supabase->isConfigured()) {
+            return null;
+        }
+
+        $rpcResult = $supabase->rpc('get_tts_cache_by_hash', ['p_hash' => $cacheHash]);
+        if (is_array($rpcResult) && !empty($rpcResult[0]['file_url'])) {
+            return (string) $rpcResult[0]['file_url'];
+        }
+
+        $cacheQuery = 'media_type=eq.tts&generation_params->>hash=eq.' . rawurlencode($cacheHash);
+        $cached = $supabase->select('media_cache', $cacheQuery, 1);
+        if (!empty($cached) && is_array($cached) && !empty($cached[0]['file_url'])) {
+            $rowHash = $cached[0]['generation_params']['hash'] ?? null;
+            if ($rowHash === $cacheHash) {
+                return (string) $cached[0]['file_url'];
+            }
+        }
+    } catch (\Throwable $e) {
+        error_log('[getTtsCachedUrl] Supabase: ' . $e->getMessage());
+    }
+
+    return null;
+}
+
+/**
+ * ai-analyze generate_tts 레거시 필드용 매체 설명 (Listen / NewsDetail 과 동일 문장)
+ */
+function tts_build_editorial_meta_for_legacy_api(string $rawSource, string $originalTitleMeta): string
+{
+    $raw = trim($rawSource);
+    if ($raw === '' || strcasecmp($raw, 'Admin') === 0) {
+        $raw = 'the gist.';
+    }
+    $sourceDisplay = _formatSourceDisplayNameForTts($raw);
+    if ($sourceDisplay === '') {
+        $sourceDisplay = 'the gist.';
+    }
+    $ot = trim($originalTitleMeta) !== '' ? trim($originalTitleMeta) : '원문';
+
+    return sprintf(
+        '이 글은 %s에 게재된 %s 글의 시각을 참고하였습니다.',
+        $sourceDisplay,
+        $ot
+    );
+}
+
+/** Listen 선처리와 동일한 HTML 제거 (외부 API용) */
+function tts_strip_html_for_listen(?string $text): string
+{
+    return _stripHtmlForTts($text);
 }
 
 function _getTtsVoice(string $projectRoot): string
@@ -129,13 +199,33 @@ function _getTtsVoice(string $projectRoot): string
 }
 
 /**
- * 프론트 formatSourceDisplayName 과 동일 (맨 뒤 " Magazine" 제거, 대소문자 무시)
+ * 프론트 formatSourceDisplayName 과 동일 (도메인→브랜드, 맨 뒤 " Magazine" 제거)
  */
 function _formatSourceDisplayNameForTts(string $source): string
 {
     $trimmed = trim($source);
     if ($trimmed === '') {
         return '';
+    }
+    $lower = mb_strtolower($trimmed, 'UTF-8');
+    static $domainToPublication = [
+        'economist.com' => 'The Economist',
+        'ft.com' => 'Financial Times',
+        'foreignaffairs.com' => 'Foreign Affairs',
+        'nytimes.com' => 'The New York Times',
+        'wsj.com' => 'The Wall Street Journal',
+        'washingtonpost.com' => 'The Washington Post',
+        'theguardian.com' => 'The Guardian',
+        'bbc.com' => 'BBC',
+        'bbc.co.uk' => 'BBC',
+        'reuters.com' => 'Reuters',
+        'bloomberg.com' => 'Bloomberg',
+        'apnews.com' => 'Associated Press',
+    ];
+    foreach ($domainToPublication as $domain => $name) {
+        if ($lower === $domain || $lower === 'www.' . $domain || str_ends_with($lower, '.' . $domain)) {
+            return $name;
+        }
     }
     $len = mb_strlen($trimmed, 'UTF-8');
     $suffix = ' magazine';

@@ -375,6 +375,7 @@ if ($method === 'POST') {
 
         // published 기사 TTS 선생성 (실패해도 게시 성공 유지)
         if ($status === 'published') {
+            set_time_limit(2700);
             require_once __DIR__ . '/../lib/generateTtsForNews.php';
             generateTtsForNews([
                 'id' => $newsId,
@@ -422,6 +423,7 @@ if ($method === 'POST') {
                 if ($status === 'published') {
                     require_once __DIR__ . '/../lib/storePublishedNewsEmbedding.php';
                     storePublishedNewsEmbedding($db, (int) $newsId);
+                    set_time_limit(2700);
                     require_once __DIR__ . '/../lib/generateTtsForNews.php';
                     generateTtsForNews([
                         'id' => $newsId, 'title' => $title, 'narration' => $narration,
@@ -911,6 +913,7 @@ if ($method === 'PUT') {
 
         // published 기사 TTS 선생성 (무효화 후 최신 내용으로 재생성, 실패해도 수정 성공 유지)
         if ($status === 'published') {
+            set_time_limit(2700);
             require_once __DIR__ . '/../lib/generateTtsForNews.php';
             generateTtsForNews([
                 'id' => $id,

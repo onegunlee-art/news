@@ -207,21 +207,6 @@ function sendResponseAndContinue(array $data, int $status = 200): void {
     ignore_user_abort(true);
 }
 
-/**
- * TTS 미디어 캐시 키 (동일 입력이면 동일 해시 → 캐시 히트)
- */
-function buildTtsCacheKey(string $narration, ?string $ttsVoice, ?string $newsTitle, ?string $source, ?string $author, ?string $publishedAt = null): string {
-    $payload = [
-        trim($narration),
-        $ttsVoice ?? '',
-        $newsTitle ?? '',
-        $source ?? '',
-        $author ?? '',
-        $publishedAt ?? '',
-    ];
-    return hash('sha256', json_encode($payload, JSON_UNESCAPED_UNICODE));
-}
-
 // URL 분석 실행
 function analyzeUrl(string $url, array $options = []): array {
     global $projectRoot, $envLoaded, $envTried;
@@ -653,138 +638,15 @@ function analyzeContent(string $content, string $url, string $title, array $opti
 }
 
 /**
- * TTS 생성 (2단계: 분석 완료 후 호출)
- * 순서: 제목 → 1초 휴식 → 편집 문구(날짜·출처) → 1초 휴식 → 내레이션(발췌)
- * 입력: narration (필수), tts_voice (선택), news_title, source, published_at (선택, 있으면 구조화 재생)
- * 출력: { success, audio_url } 또는 { success: false, error }
- * 긴 기사(예: Foreign Affairs)는 내레이션이 매우 길어 TTS 시 메모리/타임아웃/API 제한에 걸릴 수 있으므로 바이트 상한 적용.
- */
-function generateTtsFromNarration(string $narration, ?string $ttsVoice = null, ?string $newsTitle = null, ?string $source = null, ?string $author = null, ?string $publishedAt = null): array {
-    global $projectRoot;
-
-    set_time_limit(3600); // TTS 40청크 + 재시도 고려 (3배: 60분)
-
-    $narration = trim($narration);
-    if ($narration === '') {
-        return ['success' => false, 'error' => 'narration is required'];
-    }
-
-    // 긴 내레이션 시 메모리·타임아웃·Google 청크 수 제한 회피 (UTF-8 경계로 자르기)
-    $maxNarrationBytes = 192000; // 40청크(4800바이트) 분량 → 약 10분 분량
-    if (strlen($narration) > $maxNarrationBytes) {
-        $narration = mb_strcut($narration, 0, $maxNarrationBytes, 'UTF-8');
-    }
-
-    // 저장 경로 사전 생성 (권한 문제 미리 방지)
-    $storageDir = rtrim($projectRoot, '/') . '/storage/audio';
-    if (!is_dir($storageDir)) {
-        @mkdir($storageDir, 0755, true);
-    }
-    $googleTtsConfig = file_exists($projectRoot . 'config/google_tts.php')
-        ? require $projectRoot . 'config/google_tts.php'
-        : [];
-    $googleTtsKey = $_ENV['GOOGLE_TTS_API_KEY'] ?? getenv('GOOGLE_TTS_API_KEY');
-    if (is_string($googleTtsKey) && $googleTtsKey !== '') {
-        $googleTtsConfig['api_key'] = $googleTtsKey;
-    }
-    $googleTtsConfig['audio_storage_path'] = $storageDir;
-    $voice = $googleTtsConfig['default_voice'] ?? 'ko-KR-Standard-A';
-    if ($ttsVoice !== null && $ttsVoice !== '') {
-        $voice = $ttsVoice;
-    } elseif (file_exists($projectRoot . 'src/backend/Core/Database.php')) {
-        require_once $projectRoot . 'src/backend/Core/Database.php';
-        try {
-            $db = \App\Core\Database::getInstance()->getConnection();
-            $stmt = $db->prepare("SELECT `value` FROM settings WHERE `key` = ?");
-            $stmt->execute(['tts_voice']);
-            $row = $stmt->fetch(\PDO::FETCH_ASSOC);
-            if ($row && $row['value'] !== '') {
-                $voice = $row['value'];
-            }
-        } catch (\Throwable $e) {
-            // DB 실패 시 config 기본값 유지
-        }
-    }
-
-    $title = $newsTitle !== null && trim($newsTitle) !== '' ? trim($newsTitle) : '제목 없음';
-    $sourceName = ($source !== null && trim($source) !== '') ? trim($source) : 'The Gist';
-    // "Foreign Affairs Magazine" → "Foreign Affairs" (Magazine 제거)
-    if (preg_match('/^(.+?)\s+Magazine$/i', $sourceName, $m)) {
-        $sourceName = $m[1];
-    }
-    $dateStr = '';
-    if ($publishedAt !== null && trim($publishedAt) !== '') {
-        try {
-            $dt = new \DateTime(trim($publishedAt));
-            $dateStr = $dt->format('Y년 n월 j일');
-        } catch (\Throwable $e) {
-            $dateStr = '';
-        }
-    }
-    if ($dateStr === '') {
-        $dateStr = (new \DateTime())->format('Y년 n월 j일');
-    }
-    $meta = $dateStr . '자 ' . $sourceName . ' 저널의 "' . $title . '"을 AI 번역, 요약하고 The Gist에서 일부 편집한 글입니다.';
-
-    $audioUrl = null;
-    $lastError = '';
-    if (!empty($googleTtsConfig) && is_string($googleTtsKey) && $googleTtsKey !== '') {
-        $googleTts = new GoogleTTSService($googleTtsConfig);
-        $audioUrl = $googleTts->textToSpeechStructured($title, $meta, $narration, ['voice' => $voice]);
-        if ($audioUrl === null || $audioUrl === '') {
-            $lastError = $googleTts->getLastError();
-            $audioUrl = $googleTts->textToSpeech($narration, ['voice' => $voice]);
-        }
-        if (($audioUrl === null || $audioUrl === '') && $lastError === '') {
-            $lastError = $googleTts->getLastError();
-        }
-        if ($audioUrl === null || $audioUrl === '') {
-            $lastError = $lastError ?: 'Google TTS 실패 (저장 경로 또는 API 확인)';
-        }
-    }
-    if ($audioUrl === null || $audioUrl === '') {
-        try {
-            $openai = new OpenAIService([]);
-            $audioUrl = $openai->textToSpeech($narration);
-        } catch (\Throwable $e) {
-            $lastError = $lastError ?: ('OpenAI TTS: ' . $e->getMessage());
-        }
-    }
-    if (($audioUrl === null || $audioUrl === '') && strlen($narration) > 4800) {
-        $shortNarration = mb_strcut($narration, 0, 4000, 'UTF-8');
-        if (!empty($googleTtsConfig) && is_string($googleTtsKey) && $googleTtsKey !== '') {
-            $googleTts = new GoogleTTSService(array_merge($googleTtsConfig, ['audio_storage_path' => $storageDir]));
-            $audioUrl = $googleTts->textToSpeech($shortNarration, ['voice' => $voice]);
-            if ($audioUrl === null && $lastError === '') {
-                $lastError = $googleTts->getLastError();
-            }
-        }
-        if (($audioUrl === null || $audioUrl === '') && $shortNarration !== '') {
-            try {
-                $openai = new OpenAIService([]);
-                $audioUrl = $openai->textToSpeech($shortNarration);
-            } catch (\Throwable $e) {
-                $lastError = $lastError ?: ('OpenAI TTS: ' . $e->getMessage());
-            }
-        }
-    }
-
-    if ($audioUrl !== null && $audioUrl !== '') {
-        return ['success' => true, 'audio_url' => $audioUrl];
-    }
-    $errMsg = $lastError !== '' ? ('TTS 생성 실패: ' . $lastError) : 'TTS 생성 실패. Google TTS 또는 OpenAI TTS 설정을 확인하세요.';
-    return ['success' => false, 'error' => $errMsg];
-}
-
-/**
  * Listen과 동일한 구조로 TTS 생성 (제목 pause 매체설명 pause 내레이션 pause Critique)
  * cache_hash로 tts_{hash}.wav 저장 → Listen 캐시와 공유
  */
 function generateTtsFromNarrationStructured(string $title, string $meta, string $narration, string $critiquePart, string $voice, string $cacheHash, string $projectRoot): array {
-    $storageDir = rtrim($projectRoot, '/') . '/storage/audio';
+    $pr = rtrim($projectRoot, '/\\') . '/';
+    $storageDir = $pr . 'storage/audio';
     if (!is_dir($storageDir)) @mkdir($storageDir, 0755, true);
 
-    $googleTtsConfig = file_exists($projectRoot . 'config/google_tts.php') ? require $projectRoot . 'config/google_tts.php' : [];
+    $googleTtsConfig = file_exists($pr . 'config/google_tts.php') ? require $pr . 'config/google_tts.php' : [];
     $googleTtsKey = $_ENV['GOOGLE_TTS_API_KEY'] ?? getenv('GOOGLE_TTS_API_KEY');
     if (is_string($googleTtsKey) && $googleTtsKey !== '') $googleTtsConfig['api_key'] = $googleTtsKey;
     $googleTtsConfig['audio_storage_path'] = $storageDir;
@@ -1169,65 +1031,76 @@ try {
                     exit;
 
                 case 'generate_tts':
-                    // Listen과 동일한 해시/구조 사용 → 기사 생성 시 TTS가 Listen 캐시에 선반입됨
+                    require_once __DIR__ . '/../lib/generateTtsForNews.php';
+                    // Listen/TTSController와 동일: title|meta|critique|narration|voice 해시
                     $newsIdForCache = isset($input['news_id']) && (is_int($input['news_id']) || ctype_digit((string) $input['news_id'])) ? (int) $input['news_id'] : null;
                     $ttsVoice = isset($input['tts_voice']) && is_string($input['tts_voice']) ? trim($input['tts_voice']) : null;
-                    $voiceForParams = $ttsVoice ?: ((function() use ($projectRoot) {
-                        $cfg = file_exists($projectRoot . 'config/google_tts.php') ? require $projectRoot . 'config/google_tts.php' : [];
+                    $pr = rtrim((string) $projectRoot, '/\\') . '/';
+                    $voiceForParams = $ttsVoice ?: ((function () use ($pr) {
+                        $cfgPath = $pr . 'config/google_tts.php';
+                        $cfg = file_exists($cfgPath) ? require $cfgPath : [];
                         return $cfg['default_voice'] ?? 'ko-KR-Standard-A';
                     })());
 
-                    // 신규 형식: title, meta, narration, critique_part (Listen과 동일)
                     $title = isset($input['title']) ? trim((string) $input['title']) : '';
                     $meta = isset($input['meta']) ? trim((string) $input['meta']) : '';
                     $narration = isset($input['narration']) ? trim((string) $input['narration']) : '';
                     $critiquePart = isset($input['critique_part']) ? trim((string) $input['critique_part']) : '';
 
-                    // 구형 형식: narration, news_title, source, author, published_at → title, meta, critique_part로 변환
+                    // 구형: narration + news_title, source, original_title → Listen 매체 문구와 동일
                     if ($title === '' && $meta === '' && $narration !== '') {
                         $newsTitle = isset($input['news_title']) && is_string($input['news_title']) ? trim($input['news_title']) : '제목 없음';
-                        $source = isset($input['source']) && is_string($input['source']) ? trim($input['source']) : 'The Gist';
-                        $author = isset($input['author']) && is_string($input['author']) ? trim($input['author']) : '';
-                        $publishedAt = isset($input['published_at']) && is_string($input['published_at']) ? trim($input['published_at']) : null;
-                        if (preg_match('/^(.+?)\s+Magazine$/i', $source, $m)) $source = $m[1];
-                        $dateStr = '';
-                        if ($publishedAt) {
-                            try { $dt = new \DateTime($publishedAt); $dateStr = $dt->format('Y년 n월 j일'); } catch (\Throwable $e) {}
-                        }
-                        if ($dateStr === '') $dateStr = (new \DateTime())->format('Y년 n월 j일');
+                        $rawSource = isset($input['source']) && is_string($input['source']) ? trim($input['source']) : '';
+                        $originalTitleMeta = isset($input['original_title']) && is_string($input['original_title']) ? trim($input['original_title']) : '원문';
                         $title = $newsTitle;
-                        $meta = $dateStr . '자 ' . $source . ' 저널의 "' . $title . '"을 AI 번역, 요약하고 The Gist에서 일부 편집한 글입니다.';
+                        $meta = tts_build_editorial_meta_for_legacy_api($rawSource, $originalTitleMeta);
                     }
+
+                    $title = tts_strip_html_for_listen($title);
+                    $meta = tts_strip_html_for_listen($meta);
+                    $narration = tts_strip_html_for_listen($narration);
+                    $critiquePart = tts_strip_html_for_listen($critiquePart);
 
                     if ($narration === '' && $critiquePart === '') {
                         sendResponse(['success' => false, 'error' => 'narration or critique_part is required']);
                         break;
                     }
 
-                    $fullPayload = $title . '|' . $meta . '|' . $narration . '|' . $critiquePart . '|' . $voiceForParams;
+                    $fullPayload = $title . '|' . $meta . '|' . $critiquePart . '|' . $narration . '|' . $voiceForParams;
                     $ttsCacheKey = hash('sha256', $fullPayload);
 
                     $supabaseForMedia = new SupabaseService([]);
-                    $storageDir = rtrim($projectRoot, '/') . '/storage/audio';
+                    $storageDir = rtrim((string) $projectRoot, '/\\') . '/storage/audio';
                     $safeHash = preg_replace('/[^a-f0-9]/', '', $ttsCacheKey);
 
-                    // 파일 캐시
                     if (is_file($storageDir . '/tts_' . $safeHash . '.wav')) {
                         sendResponse(['success' => true, 'audio_url' => '/storage/audio/tts_' . $safeHash . '.wav', 'from_cache' => true]);
                         break;
                     }
-                    // Supabase 캐시
                     if ($supabaseForMedia->isConfigured()) {
-                        $cacheQuery = 'media_type=eq.tts&generation_params->>hash=eq.' . rawurlencode($ttsCacheKey);
-                        $cached = $supabaseForMedia->select('media_cache', $cacheQuery, 1);
-                        if (!empty($cached) && is_array($cached) && !empty($cached[0]['file_url'])) {
-                            sendResponse(['success' => true, 'audio_url' => $cached[0]['file_url'], 'from_cache' => true]);
+                        $cachedUrl = null;
+                        $rpcResult = $supabaseForMedia->rpc('get_tts_cache_by_hash', ['p_hash' => $ttsCacheKey]);
+                        if (is_array($rpcResult) && !empty($rpcResult[0]['file_url'])) {
+                            $cachedUrl = (string) $rpcResult[0]['file_url'];
+                        }
+                        if ($cachedUrl === null || $cachedUrl === '') {
+                            $cacheQuery = 'media_type=eq.tts&generation_params->>hash=eq.' . rawurlencode($ttsCacheKey);
+                            $cached = $supabaseForMedia->select('media_cache', $cacheQuery, 1);
+                            if (!empty($cached) && is_array($cached) && !empty($cached[0]['file_url'])) {
+                                $rowHash = $cached[0]['generation_params']['hash'] ?? null;
+                                if ($rowHash === $ttsCacheKey) {
+                                    $cachedUrl = (string) $cached[0]['file_url'];
+                                }
+                            }
+                        }
+                        if ($cachedUrl !== null && $cachedUrl !== '') {
+                            sendResponse(['success' => true, 'audio_url' => $cachedUrl, 'from_cache' => true]);
                             break;
                         }
                     }
 
                     set_time_limit(3600);
-                    $result = generateTtsFromNarrationStructured($title ?: '제목 없음', $meta ?: ' ', $narration, $critiquePart, $voiceForParams, $ttsCacheKey, $projectRoot);
+                    $result = generateTtsFromNarrationStructured($title ?: '제목 없음', $meta !== '' ? $meta : ' ', $narration, $critiquePart, $voiceForParams, $ttsCacheKey, $projectRoot);
 
                     if ($result['success'] && !empty($result['audio_url']) && $supabaseForMedia->isConfigured()) {
                         $supabaseForMedia->insert('media_cache', [
