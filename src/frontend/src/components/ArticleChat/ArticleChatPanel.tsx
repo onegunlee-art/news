@@ -315,7 +315,7 @@ export default function ArticleChatPanel({ newsId }: ArticleChatPanelProps) {
                   type="button"
                   disabled={streaming || usedChipIds.has(c.id)}
                   onClick={() => void sendMessage(c.label, c.id)}
-                  className="w-full px-4 py-3 text-sm bg-[#0A0A0B] text-white hover:bg-[#161618] disabled:opacity-50 transition-colors text-left font-medium"
+                  className="w-full px-4 py-3 text-sm bg-[#0A0A0B] text-white hover:bg-[#161618] disabled:opacity-50 transition-colors text-left font-normal"
                 >
                   {c.label}
                 </button>
@@ -330,21 +330,21 @@ export default function ArticleChatPanel({ newsId }: ArticleChatPanelProps) {
                     }}
                     aria-expanded={panelOpen}
                     aria-controls={`article-chat-answer-body-${c.id}`}
-                    className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${
-                      panelOpen ? 'bg-page-secondary' : 'hover:bg-page-secondary/50'
-                    } ${isLive ? 'cursor-default' : ''}`}
+                    className={`w-full flex items-center gap-3 px-4 py-3 text-sm text-left transition-colors bg-[#0A0A0B] text-white hover:bg-[#161618] ${
+                      isLive ? 'cursor-default' : ''
+                    }`}
                   >
-                    <span className="flex-1 text-page text-sm font-medium min-w-0">
+                    <span className="flex-1 text-sm font-normal min-w-0">
                       {c.label}
                     </span>
                     {isLive && (
-                      <span className="text-xs text-page-secondary shrink-0" aria-live="polite">
+                      <span className="text-xs text-white/70 shrink-0" aria-live="polite">
                         생성 중…
                       </span>
                     )}
                     <MaterialIcon
                       name="chevron_right"
-                      className={`w-5 h-5 text-page-muted shrink-0 transition-transform ${
+                      className={`w-5 h-5 text-white/70 shrink-0 transition-transform ${
                         panelOpen ? 'rotate-90' : ''
                       }`}
                       size={20}

@@ -20,7 +20,7 @@ export const FIXED_CHIPS: ChatChip[] = [
   {
     id: 'content_summary_5',
     category: 'understanding',
-    label: '이 콘텐츠의 핵심을 5줄로 정리해줘',
+    label: '이 콘텐츠의 핵심을 5문장으로 정리해줘',
     priority: 1,
   },
   {
