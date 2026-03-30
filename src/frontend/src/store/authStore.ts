@@ -76,7 +76,8 @@ export const useAuthStore = create<AuthState>()(
               headers: { Authorization: `Bearer ${accessToken}` }
             }).catch(() => {}) // 백엔드 로그아웃 실패해도 계속 진행
           }
-        } catch (error) {
+        } catch {
+          /* 카카오/백엔드 로그아웃 실패해도 로컬 정리는 진행 */
         } finally {
           // 로컬 상태 초기화
           set({

@@ -317,6 +317,7 @@ const UsersManagementSection: React.FC<{
         setPagination(res.data.data.pagination);
       }
     } catch {
+      /* 로드 실패 시 미표기 */
     } finally {
       setLoading(false);
     }
@@ -806,6 +807,7 @@ const AdminPage: React.FC = () => {
         setFeedbackHistory(data.history ?? []);
       }
     } catch {
+      /* 히스토리 로드 실패 무시 */
     }
   }, []);
 
@@ -929,6 +931,7 @@ const AdminPage: React.FC = () => {
         setKnowledgeItems(data.items ?? []);
       }
     } catch {
+      /* 지식 라이브러리 로드 실패 무시 */
     } finally {
       setKnowledgeLoading(false);
     }
@@ -1162,6 +1165,7 @@ const AdminPage: React.FC = () => {
         if (data.data.pagination) setNewsPagination(data.data.pagination);
       }
     } catch {
+      /* 뉴스 목록 로드 실패 무시 */
     } finally {
       setIsLoadingNews(false);
     }
@@ -1388,6 +1392,7 @@ const AdminPage: React.FC = () => {
         }
       }
     } catch {
+      /* 대시보드 로드 실패 무시 */
     } finally {
       setLoading(false);
     }
@@ -4012,6 +4017,7 @@ const AdminPage: React.FC = () => {
                             setLearningTexts('');
                           }
                         } catch {
+                          /* 학습 요청 실패 무시 */
                         } finally {
                           setIsLearning(false);
                         }
@@ -4047,6 +4053,7 @@ const AdminPage: React.FC = () => {
                           const data = await response.json();
                           setLearnedPatterns(data.patterns);
                         } catch {
+                          /* 상태 조회 실패 무시 */
                         }
                       }}
                       className="text-slate-400 hover:text-white text-sm underline"

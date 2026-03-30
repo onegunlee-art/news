@@ -87,6 +87,7 @@ export default function ProfilePage() {
         setBookmarks(response.data.data.items || [])
       }
     } catch {
+      /* 북마크 로드 실패 무시 */
     } finally {
       if (activeTabRef.current === 'bookmarks') setIsLoading(false)
     }

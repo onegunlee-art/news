@@ -31,6 +31,7 @@ export default function AllNewsPage() {
         setTotalPages(response.data.data.pagination?.total_pages || 1)
       }
     } catch {
+      /* 목록 로드 실패 무시 */
     } finally {
       setIsLoading(false)
     }
