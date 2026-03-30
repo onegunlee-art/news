@@ -224,14 +224,6 @@ $refreshPayloadEncoded = rtrim(strtr(base64_encode(json_encode($refreshPayload))
 $refreshSignature = rtrim(strtr(base64_encode(hash_hmac('sha256', "$jwtHeader.$refreshPayloadEncoded", $jwtSecret, true)), '+/', '-_'), '=');
 $refreshTokenJwt = "$jwtHeader.$refreshPayloadEncoded.$refreshSignature";
 
-// 기존 refresh token 전부 폐기 (동시 로그인 방지)
-try {
-    $pdo->prepare("UPDATE user_tokens SET revoked_at = NOW() WHERE user_id = ? AND revoked_at IS NULL")
-        ->execute([$dbUserId]);
-} catch (Throwable $e) {
-    error_log('[kakao-token] revoke error: ' . $e->getMessage());
-}
-
 // refresh token을 user_tokens 테이블에 저장 (이메일 로그인과 동일한 정책)
 try {
     $pdo->prepare(

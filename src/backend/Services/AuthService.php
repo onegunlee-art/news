@@ -92,11 +92,8 @@ final class AuthService
         if (!$userData) {
             throw new RuntimeException('Failed to retrieve user data');
         }
-        
-        // 5. 기존 토큰 전부 폐기 (동시 로그인 방지)
-        $this->userRepository->revokeAllTokens($userId);
 
-        // 6. JWT 토큰 발급
+        // 5. JWT 토큰 발급
         $accessToken = $this->jwt->createAccessToken($userId, [
             'nickname' => $userData['nickname'],
             'role' => $userData['role'],
@@ -104,7 +101,7 @@ final class AuthService
         
         $refreshToken = $this->jwt->createRefreshToken($userId);
         
-        // 7. 리프레시 토큰 저장
+        // 6. 리프레시 토큰 저장
         $refreshExpiry = new \DateTimeImmutable('+7 days');
         $this->userRepository->saveRefreshToken($userId, $refreshToken, $refreshExpiry);
         
@@ -152,7 +149,6 @@ final class AuthService
         if (!$userData) {
             throw new RuntimeException('Failed to retrieve user data');
         }
-        $this->userRepository->revokeAllTokens($userId);
         $accessToken = $this->jwt->createAccessToken($userId, [
             'nickname' => $userData['nickname'],
             'role' => $userData['role'],
@@ -346,7 +342,6 @@ final class AuthService
         
         $userId = (int) $userData['id'];
         $this->userRepository->updateLastLogin($userId);
-        $this->userRepository->revokeAllTokens($userId);
         
         $accessToken = $this->jwt->createAccessToken($userId, [
             'nickname' => $userData['nickname'],
