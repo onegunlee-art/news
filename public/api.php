@@ -97,7 +97,8 @@ try {
         if (!empty($rl['enabled'])) {
             $router->middleware(\App\Middleware\RateLimitMiddleware::create(
                 (int) ($rl['max_requests'] ?? 100),
-                (int) (($rl['per_minutes'] ?? 1) * 60)
+                (int) (($rl['per_minutes'] ?? 1) * 60),
+                'global'
             ));
         }
 

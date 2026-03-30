@@ -25,14 +25,15 @@ final class RateLimitMiddleware
 {
     /**
      * Rate Limit 미들웨어 생성
-     * 
+     *
      * @param int $maxRequests 최대 요청 수
      * @param int $perSeconds 기간 (초)
+     * @param string $bucket 카운터 분리용 접두사(전역·로그인 등 서로 다른 버킷)
      */
-    public static function create(int $maxRequests = 100, int $perSeconds = 60): Closure
+    public static function create(int $maxRequests = 100, int $perSeconds = 60, string $bucket = 'global'): Closure
     {
-        return function (Request $request, Closure $next) use ($maxRequests, $perSeconds): Response {
-            $key = self::getKey($request);
+        return function (Request $request, Closure $next) use ($maxRequests, $perSeconds, $bucket): Response {
+            $key = self::getKey($request, $bucket);
             $service = RateLimitService::getInstance();
             $result = $service->check($key, $maxRequests, $perSeconds);
             
@@ -59,17 +60,17 @@ final class RateLimitMiddleware
     }
 
     /**
-     * Rate Limit 키 생성
+     * Rate Limit 키 생성 (버킷별로 분리해 전역 한도와 라우트 한도가 같은 카운터를 쓰지 않음)
      */
-    private static function getKey(Request $request): string
+    private static function getKey(Request $request, string $bucket): string
     {
         $ip = $request->getClientIp();
         $token = $request->bearerToken();
-        
+
         if ($token) {
-            return 'user_' . md5($token);
+            return $bucket . ':user_' . md5($token);
         }
-        
-        return 'ip_' . $ip;
+
+        return $bucket . ':ip_' . $ip;
     }
 }
