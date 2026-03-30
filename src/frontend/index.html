@@ -22,15 +22,15 @@
   <body>
     <div id="root"></div>
     <script>
-      // PWA / TWA: Service Worker 등록 (installable 조건 충족)
+      // PWA 임시 비활성화(진단용): 신규 등록 없이 기존 SW만 제거. 재개 시 register 블록 복구.
       (function () {
         if (!('serviceWorker' in navigator)) return
         window.addEventListener('load', function () {
-          navigator.serviceWorker
-            .register('/sw.js', { scope: '/' })
-            .catch(function () {
-              /* ignore */
+          navigator.serviceWorker.getRegistrations().then(function (regs) {
+            regs.forEach(function (r) {
+              r.unregister().catch(function () {})
             })
+          })
         })
       })()
     </script>

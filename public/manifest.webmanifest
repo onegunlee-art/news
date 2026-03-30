@@ -5,7 +5,7 @@
   "description": "Gisters, Becoming Leaders - 키워드 추출, 감정 분석, 맥락 요약",
   "start_url": "/",
   "scope": "/",
-  "display": "standalone",
+  "display": "browser",
   "orientation": "portrait-primary",
   "background_color": "#0a0a0f",
   "theme_color": "#0a0a0f",

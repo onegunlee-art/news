@@ -2,7 +2,8 @@ import { useEffect } from 'react'
 import { Outlet } from 'react-router-dom'
 import Header from './Header'
 import Footer from './Footer'
-import InstallPrompt from '../PWA/InstallPrompt'
+// PWA 임시 비활성화(진단용): InstallPrompt 숨김
+// import InstallPrompt from '../PWA/InstallPrompt'
 import { useViewSettingsStore } from '../../store/viewSettingsStore'
 
 export default function Layout() {
@@ -24,7 +25,7 @@ export default function Layout() {
         <Outlet />
       </main>
       <Footer />
-      <InstallPrompt />
+      {/* <InstallPrompt /> */}
     </div>
   )
 }
