@@ -735,6 +735,7 @@ function ContactForm() {
           value={subject}
           onChange={(e) => setSubject(e.target.value)}
           placeholder="문의 제목"
+          required
           className="w-full px-4 py-2 border border-page rounded-lg text-page placeholder-[var(--text-muted)] focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-page"
         />
       </div>
@@ -746,16 +747,18 @@ function ContactForm() {
           value={contact}
           onChange={(e) => setContact(e.target.value)}
           placeholder="답변 받을 이메일 또는 휴대폰 번호"
+          required
           className="w-full px-4 py-2 border border-page rounded-lg text-page placeholder-[var(--text-muted)] focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-page"
         />
       </div>
       <div>
-        <label htmlFor="contact-message" className="block text-sm text-page-secondary mb-1">내용</label>
+        <label htmlFor="contact-message" className="block text-sm text-page-secondary mb-1">내용 <span className="text-red-500">*필수</span></label>
         <textarea
           id="contact-message"
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           placeholder="문의 내용을 입력하세요."
+          required
           rows={4}
           className="w-full px-4 py-2 border border-page rounded-lg text-page placeholder-[var(--text-muted)] focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none bg-page"
         />
