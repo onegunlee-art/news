@@ -1,6 +1,6 @@
 <?php
 /**
- * 기사 챗봇 API (관리자 베타 전용)
+ * 기사 챗봇 API (로그인 사용자)
  *
  * GET  ?action=chips&news_id=1
  * GET  ?action=session&news_id=1
@@ -241,14 +241,9 @@ if (!$userRow) {
     sendJsonErrorArticleChat('사용자를 찾을 수 없습니다.', 403);
 }
 
-$isAdmin = ($userRow['role'] ?? '') === 'admin';
-if (!$isAdmin) {
-    sendJsonErrorArticleChat('관리자만 이용할 수 있습니다. (베타)', 403);
-}
-
 $enabled = !empty($acConfig['enabled']);
 if (!$enabled) {
-    // 비활성 시에도 관리자는 사용 가능 (베타)
+    // config enabled=false 이고 별도 차단이 필요하면 ARTICLE_CHAT_ENABLED=1 및 여기서 503 처리
 }
 
 $limits = $acConfig['limits'] ?? [];

@@ -58,7 +58,7 @@ export default function NewsDetailPage() {
   const fromTab = locationState?.fromTab || searchParams.get('tab') || undefined
   const swipeDir = locationState?.swipeDir
 
-  const { isAuthenticated, login, user } = useAuthStore()
+  const { isAuthenticated, login } = useAuthStore()
   const addAudioItem = useAudioListStore((s) => s.addItem)
   const openAndPlay = useAudioPlayerStore((s) => s.openAndPlay)
   const [news, setNews] = useState<NewsDetail | null>(null)
@@ -542,7 +542,7 @@ export default function NewsDetailPage() {
             </>
           )}
 
-          {user?.role === 'admin' && (
+          {isAuthenticated && !news.access_restricted && (
             <ArticleChatPanel newsId={news.id} />
           )}
 
