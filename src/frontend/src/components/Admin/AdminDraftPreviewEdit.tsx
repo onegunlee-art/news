@@ -744,13 +744,15 @@ export default function AdminDraftPreviewEdit({
               </button>
             </div>
             {editingSection === 'title' ? (
-              <input
-                type="text"
-                value={news.title}
-                onChange={(e) => handleSectionChange('title', e.target.value)}
-                className="w-full text-2xl font-bold text-gray-900 bg-slate-50 border border-slate-200 px-3 py-2"
-                placeholder="제목"
-              />
+              <div className="p-4 bg-black border border-neutral-700 rounded-lg">
+                <input
+                  type="text"
+                  value={news.title}
+                  onChange={(e) => handleSectionChange('title', e.target.value)}
+                  className="w-full text-2xl font-bold text-white bg-neutral-900 border border-neutral-600 rounded-lg px-3 py-2 placeholder:text-slate-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+                  placeholder="제목"
+                />
+              </div>
             ) : (
               <h1 className="text-2xl font-bold text-gray-900 leading-snug">{news.title}</h1>
             )}
@@ -785,15 +787,15 @@ export default function AdminDraftPreviewEdit({
               </button>
             </div>
             {editingSection === 'editorial' ? (
-              <div className="p-4 bg-gray-50 border border-gray-100 rounded-lg">
+              <div className="p-4 bg-black border border-neutral-700 rounded-lg">
                 <input
                   ref={editorialInputRef}
                   type="text"
                   defaultValue={getEditorialLine()}
                   placeholder="이 글은 {매체}에 게재된 {원문 제목} 글의 시각을 참고하였습니다."
-                  className="w-full px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-800 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full px-4 py-2 bg-neutral-900 border border-neutral-600 rounded-lg text-white text-sm placeholder:text-slate-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
                 />
-                <p className="text-xs text-gray-500 mt-2">
+                <p className="text-xs text-slate-400 mt-2">
                   포맷: 이 글은 [매체]에 게재된 [원문 제목] 글의 시각을 참고하였습니다.
                 </p>
               </div>
@@ -840,7 +842,7 @@ export default function AdminDraftPreviewEdit({
               </button>
             </div>
             {editingSection === 'content' ? (
-              <div className="p-4 bg-gray-50 border border-gray-100 min-w-0 overflow-x-hidden">
+              <div className="p-4 bg-black border border-neutral-700 rounded-lg min-w-0 overflow-x-hidden">
                 <RichTextEditor
                   ref={contentEditorRef}
                   value={ensureBrForEditor(news.content)}
@@ -850,7 +852,7 @@ export default function AdminDraftPreviewEdit({
                   }
                   placeholder="원문 AI 요약..."
                   rows={12}
-                  className="w-full bg-slate-800/30 border border-slate-600 rounded-none text-slate-200"
+                  className="w-full bg-neutral-900 border border-neutral-600 rounded-lg text-white"
                 />
               </div>
             ) : (
@@ -877,7 +879,7 @@ export default function AdminDraftPreviewEdit({
               </button>
             </div>
             {editingSection === 'narration' ? (
-              <div className="p-4 bg-gray-50 border border-gray-100 min-w-0 overflow-x-hidden">
+              <div className="p-4 bg-black border border-neutral-700 rounded-lg min-w-0 overflow-x-hidden">
                 <RichTextEditor
                     ref={narrationEditorRef}
                     value={ensureBrForEditor(news.narration)}
@@ -887,7 +889,7 @@ export default function AdminDraftPreviewEdit({
                     }
                     placeholder="내레이션..."
                     rows={10}
-                    className="w-full bg-slate-800/30 border border-slate-600 rounded-none text-slate-200"
+                    className="w-full bg-neutral-900 border border-neutral-600 rounded-lg text-white"
                   />
               </div>
             ) : (
@@ -916,7 +918,7 @@ export default function AdminDraftPreviewEdit({
               </button>
             </div>
             {editingSection === 'why_important' ? (
-              <div className="border-l-4 border-orange-500 bg-gradient-to-r from-orange-50/50 via-amber-50/50 to-white p-4 min-w-0 overflow-x-hidden">
+              <div className="rounded-lg border border-y border-r border-neutral-700 border-l-4 border-l-orange-500 bg-black p-4 min-w-0 overflow-x-hidden">
                 <RichTextEditor
                   ref={whyImportantEditorRef}
                   value={ensureBrForEditor(news.why_important)}
@@ -926,7 +928,7 @@ export default function AdminDraftPreviewEdit({
                   }
                   placeholder="The Gist's Critique..."
                   rows={6}
-                  className="w-full bg-slate-800/30 border border-slate-600 rounded-none text-slate-200"
+                  className="w-full bg-neutral-900 border border-neutral-600 rounded-lg text-white"
                 />
               </div>
             ) : (
