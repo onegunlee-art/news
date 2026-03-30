@@ -1,5 +1,14 @@
+import axios from 'axios'
 import { create } from 'zustand'
 import { ttsApi } from '../services/api'
+
+/** Listen TTS 요청 묶음 — 닫기·재시작 시 이전 Promise 콜백 무효화 */
+let listenTtsSession = 0
+let ttsInFlightAbort: AbortController | null = null
+
+function isTtsRequestCanceled(err: unknown): boolean {
+  return axios.isCancel(err)
+}
 
 interface AudioPlayerState {
   isOpen: boolean
@@ -55,6 +64,11 @@ export const useAudioPlayerStore = create<AudioPlayerState & AudioPlayerActions>
     if (!fullText) return
     if ('speechSynthesis' in window) window.speechSynthesis.cancel()
 
+    listenTtsSession += 1
+    const mySession = listenTtsSession
+    ttsInFlightAbort?.abort()
+    ttsInFlightAbort = null
+
     // 선생성된 audio_url이 있으면 API 호출 없이 즉시 재생
     if (preloadedUrl) {
       set({
@@ -72,7 +86,9 @@ export const useAudioPlayerStore = create<AudioPlayerState & AudioPlayerActions>
       return
     }
 
-    // fallback: 선생성 없으면 기존 방식으로 서버에서 생성
+    const ac = new AbortController()
+    ttsInFlightAbort = ac
+
     set({
       isOpen: true,
       isPlaying: false,
@@ -86,8 +102,9 @@ export const useAudioPlayerStore = create<AudioPlayerState & AudioPlayerActions>
       ttsError: null,
     })
     ttsApi
-      .generateStructured(t, m, n, c, newsId)
+      .generateStructured(t, m, n, c, newsId, { signal: ac.signal })
       .then((res) => {
+        if (mySession !== listenTtsSession) return
         const url = res.data?.data?.url
         if (url) {
           set({ audioUrl: url, isTtsLoading: false, ttsError: null })
@@ -96,6 +113,8 @@ export const useAudioPlayerStore = create<AudioPlayerState & AudioPlayerActions>
         }
       })
       .catch((err) => {
+        if (mySession !== listenTtsSession) return
+        if (isTtsRequestCanceled(err)) return
         const msg = err.response?.data?.message ?? err.message ?? '오디오 생성에 실패했습니다. 서버 연결을 확인해 주세요.'
         set({ isTtsLoading: false, ttsError: msg })
       })
@@ -119,6 +138,9 @@ export const useAudioPlayerStore = create<AudioPlayerState & AudioPlayerActions>
 
   close: () => {
     if ('speechSynthesis' in window) window.speechSynthesis.cancel()
+    listenTtsSession += 1
+    ttsInFlightAbort?.abort()
+    ttsInFlightAbort = null
     set({ ...initial })
   },
 }))

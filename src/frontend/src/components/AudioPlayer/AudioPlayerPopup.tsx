@@ -138,10 +138,10 @@ export default function AudioPlayerPopup() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setProgress])
 
-  // ── audioUrl 변경 시 소스 로드 & 자동 재생 ──
+  // ── audioUrl 변경 시 소스 로드 & 자동 재생 (팝업이 열린 상태에서만; 닫은 뒤 늦은 TTS 응답으로 숨은 재생 방지)
   useEffect(() => {
     const el = audioRef.current
-    if (!el || !audioUrl) return
+    if (!el || !audioUrl || !isOpen) return
 
     setDuration(0)
     el.src = audioUrl
@@ -157,7 +157,7 @@ export default function AudioPlayerPopup() {
 
     // Media Session 메타데이터 설정
     updateMediaSession(title, imageUrl)
-  }, [audioUrl, title, imageUrl])
+  }, [audioUrl, title, imageUrl, isOpen])
 
   // ── Media Session 액션 핸들러 등록 ──
   useEffect(() => {

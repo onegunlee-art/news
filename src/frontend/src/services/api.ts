@@ -257,14 +257,25 @@ export const analysisApi = {
 /** TTS 생성 (Google 보이스 - Admin 설정 적용) */
 export const ttsApi = {
   /** 구조화: 제목 pause 매체설명 pause 내레이션 pause Critique (Listen용) */
-  generateStructured: (title: string, meta: string, narration: string, critiquePart: string, newsId?: number) =>
-    api.post<{ success: boolean; data: { url: string } }>('/tts/generate', {
-      title,
-      meta,
-      narration,
-      critique_part: critiquePart,
-      ...(newsId != null && { news_id: newsId }),
-    }, { timeout: 810000 }),
+  generateStructured: (
+    title: string,
+    meta: string,
+    narration: string,
+    critiquePart: string,
+    newsId?: number,
+    options?: { signal?: AbortSignal }
+  ) =>
+    api.post<{ success: boolean; data: { url: string } }>(
+      '/tts/generate',
+      {
+        title,
+        meta,
+        narration,
+        critique_part: critiquePart,
+        ...(newsId != null && { news_id: newsId }),
+      },
+      { timeout: 810000, signal: options?.signal }
+    ),
   /** 단순 텍스트 (Admin 미리듣기용) */
   generate: (text: string) =>
     api.post<{ success: boolean; data: { url: string } }>('/tts/generate', { text }, { timeout: 810000 }),
