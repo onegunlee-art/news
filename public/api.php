@@ -83,8 +83,7 @@ if (!isset($_GET['__path']) && !str_starts_with($requestUri, '/api/')) {
     exit;
 }
 
-// API 전용: 항상 JSON 응답
-header('Content-Type: application/json; charset=UTF-8');
+// Content-Type은 각 Response 객체가 설정 (302 리다이렉트 등에 JSON 타입이 붙지 않도록 전역 설정 제거)
 
 try {
     $routerPath = $projectRoot . '/src/backend/Core/Router.php';
@@ -106,6 +105,7 @@ try {
         if (file_exists($routesPath)) require $routesPath;
         $router->dispatch($requestMethod, $requestUri);
     } else {
+        header('Content-Type: application/json; charset=UTF-8');
         echo json_encode([
             'success' => true,
             'message' => 'News 맥락 분석 API',
@@ -114,6 +114,9 @@ try {
         ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
     }
 } catch (Throwable $e) {
+    if (!headers_sent()) {
+        header('Content-Type: application/json; charset=UTF-8');
+    }
     http_response_code(500);
     $msg = $e->getMessage();
     $file = $e->getFile();

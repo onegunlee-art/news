@@ -27,6 +27,14 @@ export default function AuthCallback() {
     const errorParam = searchParams.get('error')
     
     if (authError || errorParam) {
+      // 이전 세션 잔존 토큰 정리 (다른 로그인 실패 뒤 test 등 계정 자동 인증 방지)
+      try {
+        localStorage.removeItem('access_token')
+        localStorage.removeItem('refresh_token')
+        localStorage.removeItem('user')
+        localStorage.removeItem('auth-storage')
+        localStorage.removeItem('is_subscribed')
+      } catch { /* ignore */ }
       setError(authError?.description || decodeURIComponent(errorParam || '알 수 없는 오류'))
       setTimeout(() => navigate('/'), 3000)
       return

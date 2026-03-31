@@ -46,15 +46,8 @@ final class AuthService
      */
     public function getKakaoLoginUrl(): string
     {
-        // CSRF 방지를 위한 state 생성
-        $state = bin2hex(random_bytes(16));
-        
-        // 세션에 state 저장
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-        $_SESSION['oauth_state'] = $state;
-        
+        $state = $this->buildSignedOAuthState();
+
         return $this->kakaoAuth->getAuthorizationUrl($state);
     }
 
@@ -63,20 +56,8 @@ final class AuthService
      */
     public function handleKakaoCallback(string $code, ?string $state = null): array
     {
-        // State 검증 (CSRF 방지)
-        if ($state !== null) {
-            if (session_status() === PHP_SESSION_NONE) {
-                session_start();
-            }
-            
-            $savedState = $_SESSION['oauth_state'] ?? null;
-            unset($_SESSION['oauth_state']);
-            
-            if ($savedState !== $state) {
-                throw new RuntimeException('Invalid state parameter');
-            }
-        }
-        
+        $this->verifySignedOAuthState($state);
+
         // 1. 인가 코드로 액세스 토큰 발급
         $tokenData = $this->kakaoAuth->getAccessToken($code);
         
@@ -120,11 +101,8 @@ final class AuthService
      */
     public function getGoogleLoginUrl(): string
     {
-        $state = bin2hex(random_bytes(16));
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-        $_SESSION['google_oauth_state'] = $state;
+        $state = $this->buildSignedOAuthState();
+
         return $this->googleAuth->getAuthorizationUrl($state);
     }
 
@@ -133,14 +111,7 @@ final class AuthService
      */
     public function handleGoogleCallback(string $code, ?string $state = null): array
     {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-        $expected = $_SESSION['google_oauth_state'] ?? null;
-        unset($_SESSION['google_oauth_state']);
-        if (!$state || !$expected || !hash_equals($expected, $state)) {
-            throw new RuntimeException('OAuth state 검증 실패. 다시 시도해 주세요.');
-        }
+        $this->verifySignedOAuthState($state);
 
         $tokenData = $this->googleAuth->getAccessToken($code);
         $googleUser = $this->googleAuth->getUserInfo($tokenData['access_token']);
@@ -461,5 +432,57 @@ final class AuthService
         }
         $db->executeQuery('UPDATE email_verifications SET verified_at = NOW() WHERE id = :id', ['id' => $row['id']]);
         return true;
+    }
+
+    /** OAuth state(구글·카카오 공통) 유효 시간(초) — 세션 없이 HMAC만으로 검증 */
+    private const OAUTH_STATE_MAX_AGE_SECONDS = 600;
+
+    private function getOAuthStateSecret(): string
+    {
+        static $cached = null;
+        if ($cached !== null) {
+            return $cached;
+        }
+        $config = require dirname(__DIR__, 3) . '/config/app.php';
+        $secret = (string) ($config['security']['jwt_secret'] ?? '');
+        if ($secret === '') {
+            throw new RuntimeException('JWT_SECRET(OAuth state 서명용)이 설정되지 않았습니다.');
+        }
+        $cached = $secret;
+
+        return $cached;
+    }
+
+    private function buildSignedOAuthState(): string
+    {
+        $nonce = bin2hex(random_bytes(16));
+        $ts = (string) time();
+        $payload = $nonce . '.' . $ts;
+
+        return $payload . '.' . hash_hmac('sha256', $payload, $this->getOAuthStateSecret());
+    }
+
+    private function verifySignedOAuthState(?string $state): void
+    {
+        if ($state === null || $state === '') {
+            throw new RuntimeException('OAuth state가 없습니다. 다시 시도해 주세요.');
+        }
+        $parts = explode('.', $state, 3);
+        if (count($parts) !== 3) {
+            throw new RuntimeException('OAuth state 검증 실패. 다시 시도해 주세요.');
+        }
+        [$nonce, $tsStr, $sig] = $parts;
+        if ($nonce === '' || !ctype_digit($tsStr)) {
+            throw new RuntimeException('OAuth state 검증 실패. 다시 시도해 주세요.');
+        }
+        $ts = (int) $tsStr;
+        if (abs(time() - $ts) > self::OAUTH_STATE_MAX_AGE_SECONDS) {
+            throw new RuntimeException('OAuth state가 만료되었습니다. 다시 시도해 주세요.');
+        }
+        $payload = $nonce . '.' . $tsStr;
+        $expected = hash_hmac('sha256', $payload, $this->getOAuthStateSecret());
+        if (!hash_equals($expected, $sig)) {
+            throw new RuntimeException('OAuth state 검증 실패. 다시 시도해 주세요.');
+        }
     }
 }

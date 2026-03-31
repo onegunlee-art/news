@@ -25,8 +25,21 @@ final class GoogleAuthService
         $this->httpClient = new HttpClient();
     }
 
+    private function assertGoogleCredentialsConfigured(): void
+    {
+        if (
+            ($this->config['client_id'] ?? '') === ''
+            || ($this->config['client_secret'] ?? '') === ''
+        ) {
+            throw new RuntimeException(
+                'Google OAuth 설정 누락: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET 환경변수를 확인하세요.'
+            );
+        }
+    }
+
     public function getAuthorizationUrl(string $state): string
     {
+        $this->assertGoogleCredentialsConfigured();
         $params = [
             'client_id' => $this->config['client_id'],
             'redirect_uri' => $this->config['oauth']['redirect_uri'],
@@ -41,6 +54,7 @@ final class GoogleAuthService
 
     public function getAccessToken(string $code): array
     {
+        $this->assertGoogleCredentialsConfigured();
         $params = [
             'code' => $code,
             'client_id' => $this->config['client_id'],
