@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+
+Disallow: /api/
+Disallow: /admin
+Disallow: /admin/
+Disallow: /profile
+Disallow: /profile/
+Disallow: /subscription
+Disallow: /subscription/
+Disallow: /auth/
+Disallow: /storage/
+
+Sitemap: https://www.thegist.co.kr/sitemap.xml

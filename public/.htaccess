@@ -44,6 +44,9 @@ DirectorySlash Off
     RewriteRule ^api/subscription/test-steppay$ api/subscription/test-steppay.php [QSA,L]
     # 관리자 계정 생성 (1회 실행용)
     RewriteRule ^api/auth/seed-admin-user$ api/auth/seed-admin-user.php [QSA,L]
+    # Sitemap (동적 생성)
+    RewriteRule ^sitemap\.xml$ sitemap.php [L]
+
     # 분석 API 직접 처리
     RewriteRule ^api/analysis/news/([0-9]+)$ api/analysis/news.php [QSA,L]
 
