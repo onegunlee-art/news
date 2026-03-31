@@ -104,7 +104,10 @@ if ($title === null) {
 
 $pageTitle = $title . ' | the gist.';
 $ogDesc = $description !== null ? mb_substr(strip_tags($description), 0, 200, 'UTF-8') : 'the gist. — 글로벌 이슈를 한눈에';
-$ogImage = $imageUrl ?: $brandImage;
+$rawImage = $imageUrl ?: $brandImage;
+$ogImage = (str_starts_with($rawImage, 'http://') || str_starts_with($rawImage, 'https://'))
+    ? $rawImage
+    : $baseUrl . '/' . ltrim($rawImage, '/');
 $bodyText = $narration ?: $description ?: '';
 $bodyText = strip_tags($bodyText);
 
