@@ -277,6 +277,12 @@ $router->group(['prefix' => '/auth'], function (Router $router) {
         ], '관리자 설정 완료');
     });
 
+    // 이메일 로그인 OTP 검증·재발송 (별도 버킷으로 남용 방지)
+    $router->group(['middleware' => [RateLimitMiddleware::create(30, 60, 'login_otp')]], function () use ($router) {
+        $router->post('/login/verify-otp', [AuthController::class, 'loginVerifyOtp']);
+        $router->post('/login/resend-otp', [AuthController::class, 'loginResendOtp']);
+    });
+
     // 이메일/비밀번호 로그인·회원가입 (IP당 10회/분, 전역 레이트리밋과 별도 버킷)
     $router->group(['middleware' => [RateLimitMiddleware::create(10, 60, 'auth_cred')]], function () use ($router) {
         $router->post('/login', [AuthController::class, 'login']);

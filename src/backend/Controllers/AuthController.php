@@ -183,10 +183,58 @@ final class AuthController
         }
         
         try {
-            $result = $this->authService->loginWithEmail($email, $password);
+            $result = $this->authService->startEmailLogin($email, $password);
+            if (!empty($result['requires_otp'])) {
+                return Response::success([
+                    'requires_otp' => true,
+                    'otp_session' => $result['otp_session'],
+                ], '이메일로 인증 코드를 발송했습니다.');
+            }
+
             return Response::success($result, '로그인되었습니다.');
         } catch (RuntimeException $e) {
             return Response::unauthorized($e->getMessage());
+        }
+    }
+
+    /**
+     * 이메일 로그인 OTP 확인
+     *
+     * POST /api/auth/login/verify-otp
+     */
+    public function loginVerifyOtp(Request $request): Response
+    {
+        $session = $request->json('otp_session');
+        $code = $request->json('code');
+        if (!is_string($session) || trim($session) === '' || !is_string($code) || trim($code) === '') {
+            return Response::error('세션 정보와 인증 코드를 입력해주세요.', 400);
+        }
+        try {
+            $result = $this->authService->completeEmailLoginWithOtp($session, $code);
+
+            return Response::success($result, '로그인되었습니다.');
+        } catch (RuntimeException $e) {
+            return Response::unauthorized($e->getMessage());
+        }
+    }
+
+    /**
+     * 이메일 로그인 OTP 재발송
+     *
+     * POST /api/auth/login/resend-otp
+     */
+    public function loginResendOtp(Request $request): Response
+    {
+        $session = $request->json('otp_session');
+        if (!is_string($session) || trim($session) === '') {
+            return Response::error('세션 정보가 필요합니다.', 400);
+        }
+        try {
+            $this->authService->resendLoginOtp($session);
+
+            return Response::success(null, '인증 코드를 다시 발송했습니다.');
+        } catch (RuntimeException $e) {
+            return Response::error($e->getMessage(), 400);
         }
     }
 

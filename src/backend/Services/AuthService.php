@@ -16,7 +16,9 @@ use App\Core\Database;
 use App\Models\User;
 use App\Repositories\UserRepository;
 use App\Utils\JWT;
+use PDOException;
 use RuntimeException;
+use Throwable;
 
 /**
  * AuthService 클래스
@@ -25,6 +27,10 @@ use RuntimeException;
  */
 final class AuthService
 {
+    private const LOGIN_OTP_EXPIRY_MINUTES = 10;
+    private const LOGIN_OTP_MAX_ATTEMPTS = 5;
+    private const LOGIN_OTP_RESEND_SECONDS = 60;
+
     private UserRepository $userRepository;
     private JWT $jwt;
     private KakaoAuthService $kakaoAuth;
@@ -296,24 +302,201 @@ final class AuthService
     }
 
     /**
-     * 이메일/비밀번호 로그인
+     * 이메일/비밀번호 로그인 1단계 (관리자는 즉시 토큰, 일반 사용자는 OTP 필요)
+     *
+     * @return array{requires_otp: true, otp_session: string}|array{user: mixed, access_token: string, refresh_token: string, token_type: string, expires_in: int}
      */
-    public function loginWithEmail(string $email, string $password): array
+    public function startEmailLogin(string $email, string $password): array
+    {
+        $userData = $this->assertActiveUserWithPassword($email, $password);
+        $userId = (int) $userData['id'];
+        $role = (string) ($userData['role'] ?? 'user');
+
+        if ($role === 'admin') {
+            return $this->completeEmailLoginIssueTokens($userData);
+        }
+
+        $db = Database::getInstance();
+        $sessionToken = bin2hex(random_bytes(32));
+        $plainCode = (string) random_int(100000, 999999);
+        $codeHash = password_hash($plainCode, PASSWORD_DEFAULT);
+        if ($codeHash === false) {
+            throw new RuntimeException('로그인 처리 중 오류가 발생했습니다.');
+        }
+        $expiresAt = (new \DateTimeImmutable('+' . self::LOGIN_OTP_EXPIRY_MINUTES . ' minutes'))->format('Y-m-d H:i:s');
+        $now = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
+
+        try {
+            $db->executeQuery(
+                'UPDATE email_login_challenges SET consumed_at = :now WHERE user_id = :uid AND consumed_at IS NULL',
+                ['now' => $now, 'uid' => $userId]
+            );
+        } catch (PDOException) {
+            throw new RuntimeException('로그인 인증 설정이 완료되지 않았습니다. 관리자에게 문의하세요.');
+        }
+
+        try {
+            $challengeId = $db->insert('email_login_challenges', [
+                'token' => $sessionToken,
+                'user_id' => $userId,
+                'code_hash' => $codeHash,
+                'expires_at' => $expiresAt,
+                'attempts' => 0,
+                'consumed_at' => null,
+                'last_code_sent_at' => $now,
+            ]);
+        } catch (PDOException) {
+            throw new RuntimeException('로그인 인증 설정이 완료되지 않았습니다. 관리자에게 문의하세요.');
+        }
+
+        $userEmail = (string) ($userData['email'] ?? $email);
+        try {
+            $this->sendLoginOtpEmail($userEmail, $plainCode);
+        } catch (Throwable) {
+            $db->executeQuery('DELETE FROM email_login_challenges WHERE id = :id', ['id' => $challengeId]);
+
+            throw new RuntimeException('인증 메일 발송에 실패했습니다. 잠시 후 다시 시도해주세요.');
+        }
+
+        return [
+            'requires_otp' => true,
+            'otp_session' => $sessionToken,
+        ];
+    }
+
+    /**
+     * 이메일 로그인 OTP 검증 후 토큰 발급
+     *
+     * @return array{user: mixed, access_token: string, refresh_token: string, token_type: string, expires_in: int}
+     */
+    public function completeEmailLoginWithOtp(string $otpSession, string $code): array
+    {
+        $otpSession = trim($otpSession);
+        $this->assertOpaqueSessionToken($otpSession);
+        $code = trim($code);
+        if (strlen($code) !== 6 || !ctype_digit($code)) {
+            throw new RuntimeException('인증 코드는 6자리 숫자입니다.');
+        }
+
+        $db = Database::getInstance();
+        $row = $db->fetchOne(
+            'SELECT id, user_id, code_hash, expires_at, attempts, consumed_at FROM email_login_challenges WHERE token = :t LIMIT 1',
+            ['t' => $otpSession]
+        );
+        if (!$row) {
+            throw new RuntimeException('유효하지 않은 로그인 세션입니다. 처음부터 다시 로그인해주세요.');
+        }
+        if ($row['consumed_at'] !== null) {
+            throw new RuntimeException('이미 사용되었거나 만료된 로그인 세션입니다.');
+        }
+        if (strtotime((string) $row['expires_at']) <= time()) {
+            throw new RuntimeException('인증 코드가 만료되었습니다. 처음부터 다시 로그인해주세요.');
+        }
+        if ((int) $row['attempts'] >= self::LOGIN_OTP_MAX_ATTEMPTS) {
+            throw new RuntimeException('인증 시도 횟수를 초과했습니다. 처음부터 다시 로그인해주세요.');
+        }
+
+        if (!password_verify($code, (string) $row['code_hash'])) {
+            $db->executeQuery(
+                'UPDATE email_login_challenges SET attempts = attempts + 1 WHERE id = :id',
+                ['id' => $row['id']]
+            );
+            $newAttempts = (int) $row['attempts'] + 1;
+            if ($newAttempts >= self::LOGIN_OTP_MAX_ATTEMPTS) {
+                $db->executeQuery(
+                    'UPDATE email_login_challenges SET consumed_at = NOW() WHERE id = :id',
+                    ['id' => $row['id']]
+                );
+            }
+
+            throw new RuntimeException('인증 코드가 올바르지 않습니다.');
+        }
+
+        $db->executeQuery(
+            'UPDATE email_login_challenges SET consumed_at = NOW() WHERE id = :id',
+            ['id' => $row['id']]
+        );
+
+        $userData = $this->userRepository->findById((int) $row['user_id']);
+        if (!$userData || ($userData['status'] ?? '') !== 'active') {
+            throw new RuntimeException('계정을 확인할 수 없습니다.');
+        }
+
+        return $this->completeEmailLoginIssueTokens($userData);
+    }
+
+    /**
+     * 로그인 OTP 재발송 (동일 otp_session)
+     */
+    public function resendLoginOtp(string $otpSession): void
+    {
+        $otpSession = trim($otpSession);
+        $this->assertOpaqueSessionToken($otpSession);
+        $db = Database::getInstance();
+        $row = $db->fetchOne(
+            'SELECT id, user_id, expires_at, consumed_at, last_code_sent_at FROM email_login_challenges WHERE token = :t LIMIT 1',
+            ['t' => $otpSession]
+        );
+        if (!$row || $row['consumed_at'] !== null) {
+            throw new RuntimeException('유효하지 않은 로그인 세션입니다. 처음부터 다시 로그인해주세요.');
+        }
+        if (strtotime((string) $row['expires_at']) <= time()) {
+            throw new RuntimeException('로그인 세션이 만료되었습니다. 처음부터 다시 로그인해주세요.');
+        }
+        $lastSent = strtotime((string) $row['last_code_sent_at']);
+        if ($lastSent !== false && (time() - $lastSent) < self::LOGIN_OTP_RESEND_SECONDS) {
+            throw new RuntimeException('인증 메일은 1분에 한 번만 요청할 수 있습니다.');
+        }
+
+        $plainCode = (string) random_int(100000, 999999);
+        $codeHash = password_hash($plainCode, PASSWORD_DEFAULT);
+        if ($codeHash === false) {
+            throw new RuntimeException('인증 코드 재발송에 실패했습니다.');
+        }
+        $expiresAt = (new \DateTimeImmutable('+' . self::LOGIN_OTP_EXPIRY_MINUTES . ' minutes'))->format('Y-m-d H:i:s');
+        $now = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
+
+        $db->executeQuery(
+            'UPDATE email_login_challenges SET code_hash = :h, expires_at = :e, attempts = 0, last_code_sent_at = :n WHERE id = :id',
+            ['h' => $codeHash, 'e' => $expiresAt, 'n' => $now, 'id' => $row['id']]
+        );
+
+        $userData = $this->userRepository->findById((int) $row['user_id']);
+        if (!$userData) {
+            throw new RuntimeException('계정을 확인할 수 없습니다.');
+        }
+        $this->sendLoginOtpEmail((string) $userData['email'], $plainCode);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function assertActiveUserWithPassword(string $email, string $password): array
     {
         $userData = $this->userRepository->findByEmail($email);
-        
+
         if (!$userData || $userData['status'] !== 'active') {
             throw new RuntimeException('이메일 또는 비밀번호가 올바르지 않습니다.');
         }
-        
+
         $passwordHash = $userData['password_hash'] ?? null;
         if (!$passwordHash || !password_verify($password, $passwordHash)) {
             throw new RuntimeException('이메일 또는 비밀번호가 올바르지 않습니다.');
         }
-        
+
+        return $userData;
+    }
+
+    /**
+     * @param array<string, mixed> $userData
+     *
+     * @return array{user: mixed, access_token: string, refresh_token: string, token_type: string, expires_in: int}
+     */
+    private function completeEmailLoginIssueTokens(array $userData): array
+    {
         $userId = (int) $userData['id'];
         $this->userRepository->updateLastLogin($userId);
-        
+
         $accessToken = $this->jwt->createAccessToken($userId, [
             'nickname' => $userData['nickname'],
             'role' => $userData['role'],
@@ -321,9 +504,9 @@ final class AuthService
         $refreshToken = $this->jwt->createRefreshToken($userId);
         $refreshExpiry = new \DateTimeImmutable('+7 days');
         $this->userRepository->saveRefreshToken($userId, $refreshToken, $refreshExpiry);
-        
+
         $user = User::fromArray($userData)->toJson();
-        
+
         return [
             'user' => $user,
             'access_token' => $accessToken,
@@ -331,6 +514,23 @@ final class AuthService
             'token_type' => 'Bearer',
             'expires_in' => 3600,
         ];
+    }
+
+    private function sendLoginOtpEmail(string $email, string $plainCode): void
+    {
+        $mailer = new MailService();
+        $subject = '[The Gist] 로그인 인증 코드';
+        $body = "로그인 인증 코드: {$plainCode}\n\n" . self::LOGIN_OTP_EXPIRY_MINUTES . "분 내에 입력해주세요.";
+        $html = '<p>로그인 인증 코드: <strong>' . htmlspecialchars($plainCode) . '</strong></p><p>'
+            . self::LOGIN_OTP_EXPIRY_MINUTES . '분 내에 입력해주세요.</p>';
+        $mailer->send($email, $subject, $body, $html);
+    }
+
+    private function assertOpaqueSessionToken(string $token): void
+    {
+        if (strlen($token) !== 64 || !ctype_xdigit($token)) {
+            throw new RuntimeException('유효하지 않은 로그인 세션입니다.');
+        }
     }
 
     /**

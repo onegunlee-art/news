@@ -330,9 +330,17 @@ export const adminTtsApi = {
 }
 
 export const authApi = {
-  /** 이메일/비밀번호 로그인 */
+  /** 이메일/비밀번호 로그인 (일반 사용자는 2단계 OTP 필요) */
   login: (email: string, password: string) =>
     api.post('/auth/login', { email, password }),
+
+  /** 이메일 로그인 OTP 확인 */
+  verifyLoginOtp: (otpSession: string, code: string) =>
+    api.post('/auth/login/verify-otp', { otp_session: otpSession, code }),
+
+  /** 이메일 로그인 OTP 재발송 */
+  resendLoginOtp: (otpSession: string) =>
+    api.post('/auth/login/resend-otp', { otp_session: otpSession }),
   
   /** 이메일 인증 코드 발송 */
   sendVerification: (email: string) =>
