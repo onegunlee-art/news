@@ -174,12 +174,22 @@ api.interceptors.response.use(
       }
 
       processQueue(error, null)
-      forceLogoutOnce()
+      {
+        const freshToken = localStorage.getItem('access_token')
+        const freshRefresh = localStorage.getItem('refresh_token')
+        if (!freshToken || freshRefresh === refreshToken) {
+          forceLogoutOnce()
+        }
+      }
     } catch (refreshError: unknown) {
       processQueue(refreshError, null)
       const hasServerResponse = axios.isAxiosError(refreshError) && refreshError.response != null
       if (hasServerResponse) {
-        forceLogoutOnce()
+        const freshToken = localStorage.getItem('access_token')
+        const freshRefresh = localStorage.getItem('refresh_token')
+        if (!freshToken || freshRefresh === refreshToken) {
+          forceLogoutOnce()
+        }
       }
     } finally {
       isRefreshing = false

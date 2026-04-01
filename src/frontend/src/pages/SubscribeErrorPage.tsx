@@ -3,32 +3,14 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuthStore } from '../store/authStore'
 import { api } from '../services/api'
-import axios from 'axios'
 import MaterialIcon from '../components/Common/MaterialIcon'
 import GistLogo from '../components/Common/GistLogo'
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api'
+import { waitForAccessToken } from '../utils/waitForAccessToken'
 
 interface ErrorInfo {
   source: string
   message: string
   order_status: string
-}
-
-async function silentRefresh(): Promise<boolean> {
-  const refreshToken = localStorage.getItem('refresh_token')
-  if (!refreshToken) return false
-  try {
-    const res = await axios.post(`${API_BASE_URL}/auth/refresh`, { refresh_token: refreshToken })
-    if (res.data?.success && res.data?.data) {
-      const { access_token, refresh_token: newRefresh } = res.data.data
-      localStorage.setItem('access_token', access_token)
-      localStorage.setItem('refresh_token', newRefresh)
-      try { useAuthStore.getState().setTokens(access_token, newRefresh) } catch { /* store not ready */ }
-      return true
-    }
-  } catch { /* refresh failed */ }
-  return false
 }
 
 export default function SubscribeErrorPage() {
@@ -70,13 +52,10 @@ export default function SubscribeErrorPage() {
     }
 
     const tryRecoverPayment = async (orderCode: string) => {
-      for (let i = 0; i < 3; i++) {
-        const ok = await silentRefresh()
-        if (ok) break
-        if (i < 2) await new Promise(r => setTimeout(r, 1000))
+      let token = localStorage.getItem('access_token')
+      if (!token && localStorage.getItem('refresh_token')) {
+        token = await waitForAccessToken(5000)
       }
-
-      const token = localStorage.getItem('access_token')
       if (!token) {
         setRecovered(true)
         setLoading(false)
@@ -85,7 +64,6 @@ export default function SubscribeErrorPage() {
 
       try {
         const verifyRes = await api.post('/subscription/verify', { order_code: orderCode }, {
-          headers: { Authorization: `Bearer ${token}` },
           timeout: 60000,
         })
         if (verifyRes.data?.success) {

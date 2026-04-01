@@ -3,31 +3,10 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuthStore } from '../store/authStore'
 import { api } from '../services/api'
-import axios, { AxiosError } from 'axios'
+import { AxiosError } from 'axios'
 import MaterialIcon from '../components/Common/MaterialIcon'
 import GistLogo from '../components/Common/GistLogo'
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api'
-
-async function silentRefreshWithRetry(maxAttempts = 3): Promise<boolean> {
-  const refreshToken = localStorage.getItem('refresh_token')
-  if (!refreshToken) return false
-
-  for (let i = 0; i < maxAttempts; i++) {
-    try {
-      const res = await axios.post(`${API_BASE_URL}/auth/refresh`, { refresh_token: refreshToken })
-      if (res.data?.success && res.data?.data) {
-        const { access_token, refresh_token: newRefresh } = res.data.data
-        localStorage.setItem('access_token', access_token)
-        localStorage.setItem('refresh_token', newRefresh)
-        try { useAuthStore.getState().setTokens(access_token, newRefresh) } catch { /* store not ready */ }
-        return true
-      }
-    } catch { /* retry */ }
-    if (i < maxAttempts - 1) await new Promise(r => setTimeout(r, 1000))
-  }
-  return false
-}
+import { waitForAccessToken } from '../utils/waitForAccessToken'
 
 export default function SubscribeSuccessPage() {
   const [searchParams] = useSearchParams()
@@ -52,8 +31,11 @@ export default function SubscribeSuccessPage() {
     }
 
     const run = async () => {
-      await silentRefreshWithRetry(3)
-      const token = localStorage.getItem('access_token') || accessToken
+      // silentRefresh 제거: 인터셉터와 동시 갱신 시 리프레시 토큰 경쟁 → forceLogoutOnce 유발 방지
+      let token = localStorage.getItem('access_token') || accessToken || null
+      if (!token && localStorage.getItem('refresh_token')) {
+        token = await waitForAccessToken(5000)
+      }
 
       if (!token) {
         setStatus('token_lost')
@@ -63,7 +45,6 @@ export default function SubscribeSuccessPage() {
 
       try {
         const res = await api.post('/subscription/verify', { order_code: code }, {
-          headers: { Authorization: `Bearer ${token}` },
           timeout: 60000,
         })
         if (res.data?.success) {
@@ -106,8 +87,10 @@ export default function SubscribeSuccessPage() {
     setStatus('verifying')
     setMessage('다시 확인 중입니다...')
 
-    await silentRefreshWithRetry(2)
-    const token = localStorage.getItem('access_token')
+    let token = localStorage.getItem('access_token')
+    if (!token && localStorage.getItem('refresh_token')) {
+      token = await waitForAccessToken(5000)
+    }
     if (!token) {
       setStatus('token_lost')
       setMessage('결제는 완료되었습니다. 로그인하시면 구독이 확인됩니다.')
@@ -116,7 +99,6 @@ export default function SubscribeSuccessPage() {
 
     try {
       const res = await api.post('/subscription/verify', { order_code: orderCode }, {
-        headers: { Authorization: `Bearer ${token}` },
         timeout: 60000,
       })
       if (res.data?.success) {
@@ -198,13 +180,23 @@ export default function SubscribeSuccessPage() {
               <MaterialIcon name="check_circle" className="w-8 h-8 text-green-600" size={32} filled />
             </div>
             <h1 className="text-xl font-bold text-gray-900 mb-2">결제 완료</h1>
-            <p className="text-gray-500 text-sm mb-8">{message}</p>
-            <button
-              onClick={() => navigate('/login', { state: { returnTo: `/subscribe/success?order_code=${orderCode}` } })}
-              className="w-full py-3 rounded-lg bg-primary-500 hover:bg-primary-600 text-white font-semibold transition-colors"
-            >
-              로그인하여 확인
-            </button>
+            <p className="text-gray-500 text-sm mb-6">{message}</p>
+            <div className="flex flex-col gap-3">
+              <button
+                type="button"
+                onClick={() => void handleRetryVerify()}
+                className="w-full py-3 rounded-lg bg-primary-500 hover:bg-primary-600 text-white font-semibold transition-colors"
+              >
+                다시 확인하기
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/login', { state: { returnTo: orderCode ? `/subscribe/success?order_code=${orderCode}` : '/subscribe/success' } })}
+                className="w-full py-3 rounded-lg border border-gray-200 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+              >
+                로그인하여 확인
+              </button>
+            </div>
           </>
         )}
 
