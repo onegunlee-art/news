@@ -283,10 +283,14 @@ $router->group(['prefix' => '/auth'], function (Router $router) {
         $router->post('/login/resend-otp', [AuthController::class, 'loginResendOtp']);
     });
 
-    // 이메일/비밀번호 로그인·회원가입 (IP당 10회/분, 전역 레이트리밋과 별도 버킷)
+    // 회원가입 인증 메일 발송 — login/register와 별도 버킷 (재발송·재시도 여유)
+    $router->group(['middleware' => [RateLimitMiddleware::create(20, 60, 'send_verification')]], function () use ($router) {
+        $router->post('/send-verification', [AuthController::class, 'sendVerification']);
+    });
+
+    // 이메일/비밀번호 로그인·회원가입 (10회/분, 전역 레이트리밋과 별도 버킷)
     $router->group(['middleware' => [RateLimitMiddleware::create(10, 60, 'auth_cred')]], function () use ($router) {
         $router->post('/login', [AuthController::class, 'login']);
-        $router->post('/send-verification', [AuthController::class, 'sendVerification']);
         $router->post('/verify-code', [AuthController::class, 'verifyCode']);
         $router->post('/register', [AuthController::class, 'register']);
     });

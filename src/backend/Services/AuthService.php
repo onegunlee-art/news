@@ -448,6 +448,12 @@ final class AuthService
             throw new RuntimeException('인증 메일은 1분에 한 번만 요청할 수 있습니다.');
         }
 
+        $userData = $this->userRepository->findById((int) $row['user_id']);
+        if (!$userData) {
+            throw new RuntimeException('계정을 확인할 수 없습니다.');
+        }
+        $userEmail = (string) $userData['email'];
+
         $plainCode = (string) random_int(100000, 999999);
         $codeHash = password_hash($plainCode, PASSWORD_DEFAULT);
         if ($codeHash === false) {
@@ -456,16 +462,13 @@ final class AuthService
         $expiresAt = (new \DateTimeImmutable('+' . self::LOGIN_OTP_EXPIRY_MINUTES . ' minutes'))->format('Y-m-d H:i:s');
         $now = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
 
+        // 메일 성공 후에만 DB 갱신 (발송 실패 시 기존 코드·쿨다운 유지)
+        $this->sendLoginOtpEmail($userEmail, $plainCode);
+
         $db->executeQuery(
             'UPDATE email_login_challenges SET code_hash = :h, expires_at = :e, attempts = 0, last_code_sent_at = :n WHERE id = :id',
             ['h' => $codeHash, 'e' => $expiresAt, 'n' => $now, 'id' => $row['id']]
         );
-
-        $userData = $this->userRepository->findById((int) $row['user_id']);
-        if (!$userData) {
-            throw new RuntimeException('계정을 확인할 수 없습니다.');
-        }
-        $this->sendLoginOtpEmail((string) $userData['email'], $plainCode);
     }
 
     /**
@@ -523,7 +526,9 @@ final class AuthService
         $body = "로그인 인증 코드: {$plainCode}\n\n" . self::LOGIN_OTP_EXPIRY_MINUTES . "분 내에 입력해주세요.";
         $html = '<p>로그인 인증 코드: <strong>' . htmlspecialchars($plainCode) . '</strong></p><p>'
             . self::LOGIN_OTP_EXPIRY_MINUTES . '분 내에 입력해주세요.</p>';
-        $mailer->send($email, $subject, $body, $html);
+        if (!$mailer->send($email, $subject, $body, $html)) {
+            throw new RuntimeException('인증 메일 발송에 실패했습니다. 잠시 후 다시 시도해주세요.');
+        }
     }
 
     private function assertOpaqueSessionToken(string $token): void
@@ -600,16 +605,19 @@ final class AuthService
         }
         $code = (string) random_int(100000, 999999);
         $expiresAt = (new \DateTimeImmutable('+10 minutes'))->format('Y-m-d H:i:s');
+        $mailer = new MailService();
+        $subject = '[The Gist] 이메일 인증 코드';
+        $body = "인증 코드: {$code}\n\n10분 내에 입력해주세요.";
+        $html = '<p>인증 코드: <strong>' . htmlspecialchars($code) . '</strong></p><p>10분 내에 입력해주세요.</p>';
+        // 발송 성공 후에만 DB 기록 (실패 시 행이 없어 재시도·쿨다운에 걸리지 않음)
+        if (!$mailer->send($email, $subject, $body, $html)) {
+            throw new RuntimeException('이메일 발송에 실패했습니다. 잠시 후 다시 시도해주세요.');
+        }
         $db->insert('email_verifications', [
             'email' => $email,
             'code' => $code,
             'expires_at' => $expiresAt,
         ]);
-        $mailer = new MailService();
-        $subject = '[The Gist] 이메일 인증 코드';
-        $body = "인증 코드: {$code}\n\n10분 내에 입력해주세요.";
-        $html = '<p>인증 코드: <strong>' . htmlspecialchars($code) . '</strong></p><p>10분 내에 입력해주세요.</p>';
-        $mailer->send($email, $subject, $body, $html);
     }
 
     /**
