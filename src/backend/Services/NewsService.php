@@ -73,6 +73,88 @@ final class NewsService
     }
 
     /**
+     * 라우터 GET /api/news/{id}용 상세: 본문 포함 + news/detail.php와 동일 페이월
+     *
+     * @param array<string, mixed>|null $userJson AuthService::getUserFromToken() 결과 또는 null
+     */
+    public function getNewsByIdForShowWithPaywall(int $id, ?array $userJson, bool $isBookmarked): ?array
+    {
+        $raw = $this->newsRepository->findById($id);
+        if (!$raw) {
+            return null;
+        }
+
+        $base = News::fromArray($raw)->toJson();
+        $base['content'] = $raw['content'] ?? null;
+        if (!empty($raw['created_at'])) {
+            $base['created_at'] = $raw['created_at'];
+        }
+        if (!empty($raw['updated_at'])) {
+            $base['updated_at'] = $raw['updated_at'];
+        }
+        foreach (['why_important', 'narration', 'future_prediction', 'category_parent'] as $extra) {
+            if (array_key_exists($extra, $raw)) {
+                $base[$extra] = $raw[$extra];
+            }
+        }
+
+        $base['is_bookmarked'] = $isBookmarked;
+
+        $latestIds = $this->newsRepository->findLatestPaywallFreeArticleIds(2);
+        $authUserId = isset($userJson['id']) ? (int) $userJson['id'] : null;
+        $userRole = $userJson['role'] ?? null;
+        $userIsSubscribed = !empty($userJson['is_subscribed']);
+
+        $categoryParent = $raw['category_parent'] ?? null;
+        if ($categoryParent === null || $categoryParent === '') {
+            $cat = $raw['category'] ?? null;
+            if ($cat === 'economy') {
+                $categoryParent = 'economy';
+            } elseif (in_array($cat, ['entertainment', 'technology', 'special'], true)) {
+                $categoryParent = 'special';
+            } else {
+                $categoryParent = $cat ?: 'diplomacy';
+            }
+        }
+
+        $accessGranted = true;
+        $restrictionType = null;
+        if ($userRole === 'admin' || $userIsSubscribed) {
+            $accessGranted = true;
+        } elseif (in_array($id, $latestIds, true)) {
+            $accessGranted = true;
+        } elseif ($authUserId && ($categoryParent === 'special')) {
+            $accessGranted = true;
+        } else {
+            $accessGranted = false;
+            $restrictionType = $authUserId ? 'subscription_required' : 'login_or_subscribe';
+        }
+
+        if (!$accessGranted) {
+            $truncate = static function (?string $text, int $len = 200): ?string {
+                if ($text === null || $text === '') {
+                    return $text;
+                }
+                $stripped = strip_tags($text);
+                return mb_strlen($stripped) > $len ? mb_substr($stripped, 0, $len) . '...' : $stripped;
+            };
+            $base['description'] = $truncate($base['description'] ?? null);
+            if (array_key_exists('why_important', $base)) {
+                $base['why_important'] = $truncate($base['why_important'] ?? null);
+            }
+            if (array_key_exists('narration', $base)) {
+                $base['narration'] = $truncate($base['narration'] ?? null);
+            }
+            $base['content'] = null;
+            $base['future_prediction'] = null;
+            $base['access_restricted'] = true;
+            $base['restriction_type'] = $restrictionType;
+        }
+
+        return $base;
+    }
+
+    /**
      * URL로 뉴스 조회 또는 생성
      */
     public function getOrCreateByUrl(string $url, ?string $title = null): ?array

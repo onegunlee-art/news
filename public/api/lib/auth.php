@@ -4,9 +4,14 @@
  * config/app.php의 jwt_secret 사용 (callback.php, AuthController와 동일)
  */
 
-function getJwtSecret(): string {
+require_once __DIR__ . '/env_bootstrap.php';
+
+function getJwtSecret(): string
+{
     static $secret = null;
-    if ($secret !== null) return $secret;
+    if ($secret !== null) {
+        return $secret;
+    }
     $tryPaths = [
         $_SERVER['DOCUMENT_ROOT'] . '/config/app.php',
         $_SERVER['DOCUMENT_ROOT'] . '/../config/app.php',
@@ -16,12 +21,18 @@ function getJwtSecret(): string {
     foreach ($tryPaths as $p) {
         if (file_exists($p)) {
             $config = require $p;
-            $secret = $config['security']['jwt_secret'] ?? 'news-context-jwt-secret-key-2026';
-            return $secret ?: 'news-context-jwt-secret-key-2026';
+            $secret = $config['security']['jwt_secret'] ?? '';
+            if ($secret !== '') {
+                return $secret;
+            }
+            break;
         }
     }
-    $secret = 'news-context-jwt-secret-key-2026';
-    return $secret;
+    $secret = getenv('JWT_SECRET') ?: '';
+    if ($secret !== '') {
+        return $secret;
+    }
+    throw new RuntimeException('JWT secret is not configured. Set JWT_SECRET in .env.');
 }
 
 function getBearerToken(): ?string {

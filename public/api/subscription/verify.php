@@ -6,12 +6,13 @@
  * Body: { "order_code": "order_XXXXX" }
  */
 
+require_once __DIR__ . '/../lib/cors.php';
 header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Authorization');
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(200); exit; }
+setCorsHeaders();
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(204);
+    exit;
+}
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['success' => false, 'message' => 'Method not allowed'], JSON_UNESCAPED_UNICODE);
@@ -20,6 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 require_once __DIR__ . '/../lib/auth.php';
 require_once __DIR__ . '/../lib/steppay.php';
+require_once __DIR__ . '/../lib/subscription_order_apply.php';
 require_once __DIR__ . '/../lib/log.php';
 require_once __DIR__ . '/../lib/promotion_codes.php';
 
@@ -84,47 +86,14 @@ if (empty($paymentDate)) {
     exit;
 }
 
-$subscriptions = $order['subscriptions'] ?? [];
-$subscriptionId = null;
-$expiresAt = null;
+applyVerifiedOrderToUserDb($pdo, $userId, $orderCode, $order);
 
-if (!empty($subscriptions)) {
-    $sub = $subscriptions[0];
-    $subscriptionId = $sub['id'] ?? null;
-    $expiresAt = $sub['endDate'] ?? $sub['currentPeriodEnd'] ?? null;
-}
-
-$cfg = getSteppayConfig();
-$plans = $cfg['plans'] ?? [];
-$matchedPlanId = null;
-$months = 1;
-$itemPriceCode = $order['items'][0]['price']['code'] ?? '';
-foreach ($plans as $pid => $pl) {
-    if ($pl['price_code'] === $itemPriceCode) {
-        $matchedPlanId = $pid;
-        $months = (int) ($pl['months'] ?? 1);
-        break;
-    }
-}
-
-$pendStmt = $pdo->prepare('SELECT pending_checkout_plan_id, pending_promotion_code_id FROM users WHERE id = ? LIMIT 1');
-$pendStmt->execute([$userId]);
-$pendRow = $pendStmt->fetch(PDO::FETCH_ASSOC);
-$pendingPlanId = $pendRow['pending_checkout_plan_id'] ?? null;
-
-if (!$matchedPlanId && $pendingPlanId && isset($plans[$pendingPlanId])) {
-    $matchedPlanId = $pendingPlanId;
-    $months = (int) ($plans[$pendingPlanId]['months'] ?? 1);
-}
-
-if (!$expiresAt) {
-    $expiresAt = date('Y-m-d H:i:s', strtotime("+{$months} months"));
-}
-
-$startDate = date('Y-m-d H:i:s');
-
-$pdo->prepare("UPDATE users SET is_subscribed = 1, subscription_expires_at = ?, steppay_subscription_id = ?, steppay_order_code = ?, subscription_plan = ?, subscription_start_date = ?, last_payment_error = NULL, last_payment_error_at = NULL, pending_checkout_plan_id = NULL, pending_promotion_code_id = NULL WHERE id = ?")
-    ->execute([$expiresAt, $subscriptionId, $orderCode, $matchedPlanId, $startDate, $userId]);
+$snapshot = $pdo->prepare('SELECT subscription_expires_at, steppay_subscription_id, subscription_plan FROM users WHERE id = ? LIMIT 1');
+$snapshot->execute([$userId]);
+$snap = $snapshot->fetch(PDO::FETCH_ASSOC) ?: [];
+$expiresAt = $snap['subscription_expires_at'] ?? null;
+$subscriptionId = $snap['steppay_subscription_id'] ?? null;
+$matchedPlanId = $snap['subscription_plan'] ?? null;
 
 try {
     promotionMarkUsageCompleted($pdo, $userId, $orderCode);
@@ -132,7 +101,7 @@ try {
     payment_log('promotionMarkUsageCompleted 실패', ['error' => $e->getMessage(), 'userId' => $userId]);
 }
 
-payment_log("verify 성공 userId={$userId} plan={$matchedPlanId} expires={$expiresAt}");
+payment_log("verify 성공 userId={$userId} plan=" . ($matchedPlanId ?? '') . " expires={$expiresAt}");
 
 echo json_encode([
     'success' => true,

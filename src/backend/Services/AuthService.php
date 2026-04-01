@@ -379,50 +379,56 @@ final class AuthService
         }
 
         $db = Database::getInstance();
-        $row = $db->fetchOne(
-            'SELECT id, user_id, code_hash, expires_at, attempts, consumed_at FROM email_login_challenges WHERE token = :t LIMIT 1',
-            ['t' => $otpSession]
-        );
-        if (!$row) {
-            throw new RuntimeException('유효하지 않은 로그인 세션입니다. 처음부터 다시 로그인해주세요.');
-        }
-        if ($row['consumed_at'] !== null) {
-            throw new RuntimeException('이미 사용되었거나 만료된 로그인 세션입니다.');
-        }
-        if (strtotime((string) $row['expires_at']) <= time()) {
-            throw new RuntimeException('인증 코드가 만료되었습니다. 처음부터 다시 로그인해주세요.');
-        }
-        if ((int) $row['attempts'] >= self::LOGIN_OTP_MAX_ATTEMPTS) {
-            throw new RuntimeException('인증 시도 횟수를 초과했습니다. 처음부터 다시 로그인해주세요.');
-        }
 
-        if (!password_verify($code, (string) $row['code_hash'])) {
-            $db->executeQuery(
-                'UPDATE email_login_challenges SET attempts = attempts + 1 WHERE id = :id',
-                ['id' => $row['id']]
+        return $db->transaction(function () use ($db, $otpSession, $code) {
+            $row = $db->fetchOne(
+                'SELECT id, user_id, code_hash, expires_at, attempts, consumed_at FROM email_login_challenges WHERE token = :t LIMIT 1 FOR UPDATE',
+                ['t' => $otpSession]
             );
-            $newAttempts = (int) $row['attempts'] + 1;
-            if ($newAttempts >= self::LOGIN_OTP_MAX_ATTEMPTS) {
-                $db->executeQuery(
-                    'UPDATE email_login_challenges SET consumed_at = NOW() WHERE id = :id',
-                    ['id' => $row['id']]
-                );
+            if (!$row) {
+                throw new RuntimeException('유효하지 않은 로그인 세션입니다. 처음부터 다시 로그인해주세요.');
+            }
+            if ($row['consumed_at'] !== null) {
+                throw new RuntimeException('이미 사용되었거나 만료된 로그인 세션입니다.');
+            }
+            if (strtotime((string) $row['expires_at']) <= time()) {
+                throw new RuntimeException('인증 코드가 만료되었습니다. 처음부터 다시 로그인해주세요.');
+            }
+            if ((int) $row['attempts'] >= self::LOGIN_OTP_MAX_ATTEMPTS) {
+                throw new RuntimeException('인증 시도 횟수를 초과했습니다. 처음부터 다시 로그인해주세요.');
             }
 
-            throw new RuntimeException('인증 코드가 올바르지 않습니다.');
-        }
+            if (!password_verify($code, (string) $row['code_hash'])) {
+                $db->executeQuery(
+                    'UPDATE email_login_challenges SET attempts = attempts + 1 WHERE id = :id',
+                    ['id' => $row['id']]
+                );
+                $newAttempts = (int) $row['attempts'] + 1;
+                if ($newAttempts >= self::LOGIN_OTP_MAX_ATTEMPTS) {
+                    $db->executeQuery(
+                        'UPDATE email_login_challenges SET consumed_at = NOW() WHERE id = :id',
+                        ['id' => $row['id']]
+                    );
+                }
 
-        $db->executeQuery(
-            'UPDATE email_login_challenges SET consumed_at = NOW() WHERE id = :id',
-            ['id' => $row['id']]
-        );
+                throw new RuntimeException('인증 코드가 올바르지 않습니다.');
+            }
 
-        $userData = $this->userRepository->findById((int) $row['user_id']);
-        if (!$userData || ($userData['status'] ?? '') !== 'active') {
-            throw new RuntimeException('계정을 확인할 수 없습니다.');
-        }
+            $consumeStmt = $db->executeQuery(
+                'UPDATE email_login_challenges SET consumed_at = NOW() WHERE id = :id AND consumed_at IS NULL',
+                ['id' => $row['id']]
+            );
+            if ($consumeStmt->rowCount() !== 1) {
+                throw new RuntimeException('이미 사용되었거나 만료된 로그인 세션입니다.');
+            }
 
-        return $this->completeEmailLoginIssueTokens($userData);
+            $userData = $this->userRepository->findById((int) $row['user_id']);
+            if (!$userData || ($userData['status'] ?? '') !== 'active') {
+                throw new RuntimeException('계정을 확인할 수 없습니다.');
+            }
+
+            return $this->completeEmailLoginIssueTokens($userData);
+        });
     }
 
     /**

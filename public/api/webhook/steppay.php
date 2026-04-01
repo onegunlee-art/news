@@ -14,6 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 require_once __DIR__ . '/../lib/auth.php';
 require_once __DIR__ . '/../lib/steppay.php';
+require_once __DIR__ . '/../lib/subscription_order_apply.php';
 require_once __DIR__ . '/../lib/log.php';
 require_once __DIR__ . '/../lib/promotion_codes.php';
 
@@ -141,27 +142,34 @@ function handlePaymentCompleted(PDO $pdo, array $data): void {
         return;
     }
 
+    $orderFetch = steppayGetOrder($orderCode);
+    if (!$orderFetch['success'] || empty($orderFetch['data']['paymentDate'])) {
+        payment_log('WARN: payment.completed 처리 중 주문 재조회 실패', ['orderCode' => $orderCode, 'userId' => $user['id']]);
+        return;
+    }
+
+    applyVerifiedOrderToUserDb($pdo, (int) $user['id'], (string) $orderCode, $orderFetch['data']);
+    payment_log('payment.completed 구독 DB 반영', ['orderCode' => $orderCode, 'userId' => $user['id']]);
+
     try {
         promotionMarkUsageCompleted($pdo, (int) $user['id'], (string) $orderCode);
     } catch (Throwable $e) {
         payment_log('webhook promotionMarkUsageCompleted 실패', ['error' => $e->getMessage()]);
     }
-
-    $pdo->prepare("UPDATE users SET is_subscribed = 1, last_payment_error = NULL, last_payment_error_at = NULL, pending_checkout_plan_id = NULL, pending_promotion_code_id = NULL WHERE id = ?")->execute([$user['id']]);
 }
 
 function handlePaymentFailed(PDO $pdo, array $data): void {
     $orderCode = $data['orderCode'] ?? null;
     if (!$orderCode) return;
 
-    $stmt = $pdo->prepare("SELECT id FROM users WHERE steppay_order_code = ? LIMIT 1");
+    $stmt = $pdo->prepare("SELECT id, subscription_expires_at FROM users WHERE steppay_order_code = ? LIMIT 1");
     $stmt->execute([$orderCode]);
     $user = $stmt->fetch();
 
     if (!$user) {
         $customerId = $data['customerId'] ?? $data['customer_id'] ?? null;
         if ($customerId) {
-            $stmt = $pdo->prepare("SELECT id FROM users WHERE steppay_customer_id = ? LIMIT 1");
+            $stmt = $pdo->prepare("SELECT id, subscription_expires_at FROM users WHERE steppay_customer_id = ? LIMIT 1");
             $stmt->execute([$customerId]);
             $user = $stmt->fetch();
         }
@@ -172,6 +180,14 @@ function handlePaymentFailed(PDO $pdo, array $data): void {
     $errorMessage = $data['errorMessage'] ?? null;
     payment_log('payment.failed errorMessage', ['userId' => $user['id'], 'errorMessage' => $errorMessage, 'orderCode' => $orderCode]);
 
-    $pdo->prepare("UPDATE users SET is_subscribed = 0, last_payment_error = ?, last_payment_error_at = NOW() WHERE id = ?")
-        ->execute([$errorMessage, $user['id']]);
+    $expiresAt = $user['subscription_expires_at'] ?? null;
+    $periodStillActive = $expiresAt !== null && $expiresAt !== '' && strtotime((string) $expiresAt) > time();
+
+    if ($periodStillActive) {
+        $pdo->prepare("UPDATE users SET last_payment_error = ?, last_payment_error_at = NOW() WHERE id = ?")
+            ->execute([$errorMessage, $user['id']]);
+    } else {
+        $pdo->prepare("UPDATE users SET is_subscribed = 0, last_payment_error = ?, last_payment_error_at = NOW() WHERE id = ?")
+            ->execute([$errorMessage, $user['id']]);
+    }
 }

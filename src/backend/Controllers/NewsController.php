@@ -106,20 +106,16 @@ final class NewsController
         if ($id <= 0) {
             return Response::error('유효하지 않은 뉴스 ID입니다.', 400);
         }
-        
-        $news = $this->newsService->getNewsById($id);
+
+        $accessToken = $request->bearerToken();
+        $userJson = $accessToken ? $this->authService->getUserFromToken($accessToken) : null;
+        $userId = $userJson['id'] ?? null;
+        $isBookmarked = $userId ? $this->newsService->isBookmarked((int) $userId, $id) : false;
+
+        $news = $this->newsService->getNewsByIdForShowWithPaywall($id, $userJson, $isBookmarked);
         
         if (!$news) {
             return Response::notFound('뉴스를 찾을 수 없습니다.');
-        }
-        
-        // 북마크 여부 확인 (로그인한 경우)
-        $accessToken = $request->bearerToken();
-        if ($accessToken) {
-            $userId = $this->authService->getAuthenticatedUserId($accessToken);
-            if ($userId) {
-                $news['is_bookmarked'] = $this->newsService->isBookmarked($userId, $id);
-            }
         }
         
         return Response::success($news, '뉴스 조회 성공');

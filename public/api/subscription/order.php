@@ -6,12 +6,13 @@
  * Body: { "planId": "1m" | "3m" | "6m" | "12m", "promoCode"?: "OPEN30" }
  */
 
+require_once __DIR__ . '/../lib/cors.php';
 header('Content-Type: application/json; charset=utf-8');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Authorization');
-
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(200); exit; }
+setCorsHeaders();
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(204);
+    exit;
+}
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['success' => false, 'message' => 'Method not allowed'], JSON_UNESCAPED_UNICODE);
@@ -86,7 +87,7 @@ if ($onetimeId && isset($onetimeProducts[$onetimeId])) {
     exit;
 }
 
-$stmt = $pdo->prepare("SELECT id, nickname, email, steppay_customer_id FROM users WHERE id = ?");
+$stmt = $pdo->prepare("SELECT id, nickname, email, steppay_customer_id, steppay_order_code FROM users WHERE id = ?");
 $stmt->execute([$userId]);
 $user = $stmt->fetch();
 
@@ -168,6 +169,25 @@ if (!$steppayCustomerId) {
 
     $pdo->prepare("UPDATE users SET steppay_customer_id = ? WHERE id = ?")->execute([$steppayCustomerId, $userId]);
     payment_log('DB 고객 ID 저장', ['steppay_customer_id' => $steppayCustomerId], $userId);
+}
+
+// 진행 중인 미결제 주문이 있으면 steppay_order_code 덮어쓰기 방지 (verify 소유권 불일치 방지)
+$existingOrderCode = trim((string) ($user['steppay_order_code'] ?? ''));
+if ($existingOrderCode !== '') {
+    $existingFetch = steppayGetOrder($existingOrderCode);
+    if ($existingFetch['success'] && !empty($existingFetch['data'])) {
+        $ex = $existingFetch['data'];
+        $itemStatus = $ex['items'][0]['status'] ?? '';
+        $alreadyPaid = !empty($ex['paymentDate']) || $itemStatus === 'PAID';
+        if (!$alreadyPaid && ($itemStatus === 'CREATED' || $itemStatus === '' || $itemStatus === null)) {
+            http_response_code(409);
+            echo json_encode([
+                'success' => false,
+                'message' => '이미 진행 중인 결제가 있습니다. 결제를 완료하시거나, 잠시 후 다시 시도해 주세요.',
+            ], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+    }
 }
 
 $orderResult = steppayCreateOrder($steppayCustomerId, $priceCode, $productCode);

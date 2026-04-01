@@ -270,4 +270,23 @@ final class NewsRepository extends BaseRepository
             'news_id' => $newsId,
         ]) !== false;
     }
+
+    /**
+     * 페이월 무료 공개용 최신 기사 ID 목록 (public/api/news/detail.php와 동일 규칙)
+     */
+    public function findLatestPaywallFreeArticleIds(int $limit = 2): array
+    {
+        $schemaFile = dirname(__DIR__, 3) . '/storage/cache/news_schema.json';
+        $hasStatus = false;
+        if (is_file($schemaFile)) {
+            $cols = json_decode((string) file_get_contents($schemaFile), true);
+            $hasStatus = is_array($cols) && in_array('status', $cols, true);
+        }
+        $where = $hasStatus ? "(status = 'published' OR status IS NULL)" : '1=1';
+        $limit = max(1, min(20, $limit));
+        $sql = "SELECT id FROM news WHERE {$where} ORDER BY COALESCE(published_at, created_at) DESC LIMIT {$limit}";
+        $rows = $this->db->fetchAll($sql);
+
+        return array_map(static fn (array $r): int => (int) ($r['id'] ?? 0), $rows);
+    }
 }

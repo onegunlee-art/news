@@ -6,6 +6,25 @@
  * @version 1.0.0
  */
 
+$requireEnv = static function (string $key, string $legacyFallback = ''): string {
+    $v = getenv($key);
+    if ($v !== false && trim((string) $v) !== '') {
+        return (string) $v;
+    }
+    if ($legacyFallback !== '') {
+        $logDir = dirname(__DIR__) . '/storage/logs';
+        @file_put_contents(
+            $logDir . '/env_warning.log',
+            date('Y-m-d H:i:s') . " WARNING: {$key} not in .env — using legacy fallback. Set it in .env ASAP.\n",
+            FILE_APPEND | LOCK_EX
+        );
+        return $legacyFallback;
+    }
+    throw new RuntimeException(
+        "필수 환경 변수 {$key} 가 설정되지 않았습니다. 프로젝트 루트의 .env를 확인하세요."
+    );
+};
+
 return [
     /*
     |--------------------------------------------------------------------------
@@ -44,7 +63,7 @@ return [
     */
     
     'security' => [
-        'jwt_secret' => getenv('JWT_SECRET') ?: 'news-context-jwt-secret-key-2026',
+        'jwt_secret' => $requireEnv('JWT_SECRET', 'news-context-jwt-secret-key-2026'),
         'jwt_expiry' => 3600, // 액세스 토큰 유효 기간: 1시간
         'jwt_refresh_expiry' => 3600 * 24 * 7, // 7일
         'bcrypt_rounds' => 12,
@@ -98,8 +117,8 @@ return [
     */
 
     'steppay' => [
-        'secret_token' => getenv('STEPPAY_SECRET_TOKEN') ?: '17cab52d68451a765eaacf90c2390d739a0e99b4849c01f139431f266b18ee5e',
-        'payment_key' => getenv('STEPPAY_PAYMENT_KEY') ?: 'p9up7apk1o1jxh4z',
+        'secret_token' => $requireEnv('STEPPAY_SECRET_TOKEN', '17cab52d68451a765eaacf90c2390d739a0e99b4849c01f139431f266b18ee5e'),
+        'payment_key' => $requireEnv('STEPPAY_PAYMENT_KEY', 'p9up7apk1o1jxh4z'),
         'api_url' => 'https://api.steppay.kr/api/v1',
         'public_api_url' => 'https://api.steppay.kr/api/public',
         'product_code' => 'product_FsBDgadkF',

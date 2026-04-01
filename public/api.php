@@ -19,24 +19,10 @@ ini_set('log_errors', '1');
 // 타임존 설정
 date_default_timezone_set('Asia/Seoul');
 
-// CORS 설정 (config/app.php 기반)
-require_once __DIR__ . '/api/lib/cors.php';
-handleOptionsRequest();
-setCorsHeaders();
-
-// Apache/CGI에서 Authorization 헤더가 제거되는 경우 대비
-if (empty($_SERVER['HTTP_AUTHORIZATION'])) {
-    if (!empty($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
-        $_SERVER['HTTP_AUTHORIZATION'] = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
-    } elseif (!empty($_SERVER['HTTP_X_AUTHORIZATION'])) {
-        $_SERVER['HTTP_AUTHORIZATION'] = $_SERVER['HTTP_X_AUTHORIZATION'];
-    }
-}
-
 // 프로젝트 루트
 $projectRoot = file_exists(__DIR__ . '/config/routes.php') ? __DIR__ : dirname(__DIR__);
 
-// .env 로드
+// .env 로드 (config/app.php · CORS보다 먼저 — JWT/StepPay 등 getenv 필수)
 $envFile = $projectRoot . '/.env';
 if (is_file($envFile) && is_readable($envFile)) {
     foreach (file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
@@ -51,6 +37,20 @@ if (is_file($envFile) && is_readable($envFile)) {
                 $_ENV[$name] = $value;
             }
         }
+    }
+}
+
+// CORS 설정 (config/app.php 기반)
+require_once __DIR__ . '/api/lib/cors.php';
+handleOptionsRequest();
+setCorsHeaders();
+
+// Apache/CGI에서 Authorization 헤더가 제거되는 경우 대비
+if (empty($_SERVER['HTTP_AUTHORIZATION'])) {
+    if (!empty($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+        $_SERVER['HTTP_AUTHORIZATION'] = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
+    } elseif (!empty($_SERVER['HTTP_X_AUTHORIZATION'])) {
+        $_SERVER['HTTP_AUTHORIZATION'] = $_SERVER['HTTP_X_AUTHORIZATION'];
     }
 }
 

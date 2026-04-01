@@ -267,6 +267,42 @@ jobs:
           ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" \
             'CONF=/etc/nginx/sites-available/thegist && sudo sed -i "/location \/ {/,/}/{s|try_files \$uri \$uri/ /index.html;|try_files \$uri \$uri/ /index.html;\n        add_header Cache-Control \"no-cache, no-store, must-revalidate\" always;\n        add_header Pragma \"no-cache\" always;|}" "$CONF" && sudo nginx -t && sudo systemctl reload nginx && echo "location / no-cache patched and nginx reloaded"'
 
+      - name: Ensure required env vars in server .env
+        env:
+          V_JWT: ${{ secrets.JWT_SECRET }}
+          V_STEPPAY_TOKEN: ${{ secrets.STEPPAY_SECRET_TOKEN }}
+          V_STEPPAY_PAY: ${{ secrets.STEPPAY_PAYMENT_KEY }}
+          V_STEPPAY_WH: ${{ secrets.STEPPAY_WEBHOOK_SECRET }}
+        run: |
+          REMOTE="${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}"
+          KEY="$HOME/.ssh/ec2_key"
+          ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" 'bash -s' << ENVEOF
+            ENV_FILE="/var/www/thegist/.env"
+            ensure_env() {
+              local key="\$1" val="\$2"
+              if [ -z "\$val" ]; then
+                echo "SKIP (no value provided): \$key"
+                return
+              fi
+              if grep -q "^\${key}=" "\$ENV_FILE" 2>/dev/null; then
+                cur=\$(grep "^\${key}=" "\$ENV_FILE" | head -1 | cut -d= -f2-)
+                if [ -z "\$cur" ]; then
+                  sudo sed -i "s|^\${key}=.*|\${key}=\${val}|" "\$ENV_FILE"
+                  echo "UPDATED (was empty): \$key"
+                else
+                  echo "OK (already set): \$key"
+                fi
+              else
+                echo "\${key}=\${val}" | sudo tee -a "\$ENV_FILE" > /dev/null
+                echo "ADDED: \$key"
+              fi
+            }
+            ensure_env "JWT_SECRET"            "${V_JWT}"
+            ensure_env "STEPPAY_SECRET_TOKEN"   "${V_STEPPAY_TOKEN}"
+            ensure_env "STEPPAY_PAYMENT_KEY"    "${V_STEPPAY_PAY}"
+            ensure_env "STEPPAY_WEBHOOK_SECRET" "${V_STEPPAY_WH}"
+          ENVEOF
+
       - name: Post-deploy tasks
         run: |
           REMOTE="${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}"

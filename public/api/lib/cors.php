@@ -4,6 +4,8 @@
  * config/app.php의 cors 설정을 사용합니다.
  */
 
+require_once __DIR__ . '/env_bootstrap.php';
+
 function setCorsHeaders(): void {
     static $applied = false;
     if ($applied) return;
