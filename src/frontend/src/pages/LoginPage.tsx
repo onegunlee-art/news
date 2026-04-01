@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useAuthStore } from '../store/authStore';
+import { useAuthStore, type User } from '../store/authStore';
 import { authApi, siteSettingsApi } from '../services/api';
 import GistLogo from '../components/Common/GistLogo';
 import { DEFAULT_VISION } from '../constants/site';
@@ -43,14 +43,14 @@ const LoginPage: React.FC = () => {
   }, [resendCooldown]);
 
   const finishLoginWithTokens = (
-    user: unknown,
+    user: User,
     accessToken: string,
     refreshToken: string
   ) => {
     setTokens(accessToken, refreshToken);
     setUser(user);
     localStorage.setItem('user', JSON.stringify(user));
-    const isAdmin = (user as { role?: string })?.role === 'admin';
+    const isAdmin = user.role === 'admin';
     const target = getAuthRedirectTarget(returnTo, intent, isAdmin);
     navigate(target, { replace: true });
   };
@@ -75,7 +75,7 @@ const LoginPage: React.FC = () => {
           return;
         }
         const { user, access_token, refresh_token } = data as {
-          user: unknown;
+          user: User;
           access_token: string;
           refresh_token: string;
         };
@@ -104,7 +104,7 @@ const LoginPage: React.FC = () => {
       const res = await authApi.verifyLoginOtp(otpSession, code);
       if (res.data.success && res.data.data) {
         const { user, access_token, refresh_token } = res.data.data as {
-          user: unknown;
+          user: User;
           access_token: string;
           refresh_token: string;
         };

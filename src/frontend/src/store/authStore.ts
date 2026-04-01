@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware'
 import { api } from '../services/api'
 import { kakaoLogin as kakaoLoginService, kakaoLogout } from '../services/kakaoAuth'
 
-interface User {
+export interface User {
   id: number
   nickname: string
   email: string | null
