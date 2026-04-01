@@ -22,43 +22,42 @@ interface Plan {
 }
 
 const PLANS: Plan[] = [
-  // 6개월·12개월은 PG사 심사 완료 후 아래 주석 해제
-  // {
-  //   id: '12m',
-  //   label: '연간 구독',
-  //   monthlyPrice: '4,620',
-  //   totalPrice: '55,440',
-  //   discount: '월간 구독 대비 40% 할인',
-  //   billing: '이후 매년 자동 연장',
-  //   renewal: '',
-  //   bestValue: true,
-  // },
-  // {
-  //   id: '6m',
-  //   label: '6개월 구독',
-  //   monthlyPrice: '5,390',
-  //   totalPrice: '32,340',
-  //   discount: '월간 구독 대비 30% 할인',
-  //   billing: '기간 종료후 6개월씩 자동 연장',
-  //   renewal: '',
-  //   bestValue: false,
-  // },
   {
-    id: '3m',
-    label: '3개월 구독',
-    monthlyPrice: '6,160',
-    totalPrice: '18,480',
-    discount: '월간 구독 대비 20% 할인',
-    billing: '기간 종료후 3개월씩 자동 연장',
+    id: '12m',
+    label: '연간 구독',
+    monthlyPrice: '6,600',
+    totalPrice: '79,200',
+    discount: '월간 구독 대비 40% 할인',
+    billing: '',
     renewal: '',
     bestValue: true,
   },
   {
+    id: '6m',
+    label: '6개월 구독',
+    monthlyPrice: '7,700',
+    totalPrice: '46,200',
+    discount: '월간 구독 대비 30% 할인',
+    billing: '',
+    renewal: '',
+    bestValue: false,
+  },
+  {
+    id: '3m',
+    label: '3개월 구독',
+    monthlyPrice: '8,800',
+    totalPrice: '26,400',
+    discount: '월간 구독 대비 20% 할인',
+    billing: '',
+    renewal: '',
+    bestValue: false,
+  },
+  {
     id: '1m',
     label: '1개월 구독',
-    monthlyPrice: '7,700',
+    monthlyPrice: '11,000',
     discount: null,
-    billing: '기간 종료후 1개월씩 자동 연장',
+    billing: '',
     renewal: '',
     bestValue: false,
   },
@@ -303,12 +302,15 @@ export default function SubscriptionPage() {
                       {plan.discount && (
                         <p className="text-xs text-primary-600 dark:text-primary-400 font-medium">{plan.discount}</p>
                       )}
-                      <p className="text-xs text-gray-600 dark:text-gray-400">{plan.billing}</p>
+                      {plan.billing && (
+                        <p className="text-xs text-gray-600 dark:text-gray-400">{plan.billing}</p>
+                      )}
                     </div>
                   </div>
                 </button>
 
-                {hasDetail && (
+                {/* 상세보기 — 현재 숨김 처리 */}
+                {false && hasDetail && (
                   <>
                     <button
                       type="button"
@@ -418,8 +420,8 @@ export default function SubscriptionPage() {
           )}
         </motion.div>
 
-        {/* 단건 상품 */}
-        <motion.div
+        {/* 단건 상품 — 현재 숨김 처리 */}
+        {false && <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.2 }}
@@ -505,7 +507,7 @@ export default function SubscriptionPage() {
               </>
             )
           })()}
-        </motion.div>
+        </motion.div>}
 
         {/* 결제 버튼 */}
         <motion.div

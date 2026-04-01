@@ -104,10 +104,10 @@ return [
         'public_api_url' => 'https://api.steppay.kr/api/public',
         'product_code' => 'product_FsBDgadkF',
         'plans' => [
-            '1m'  => ['price_code' => 'price_NIXgpyLfN', 'amount' => 7700,  'months' => 1,  'label' => '1개월'],
-            '3m'  => ['price_code' => 'price_BMMfkyJhl', 'amount' => 18480, 'months' => 3,  'label' => '3개월'],
-            '6m'  => ['price_code' => 'price_6bZGMnvVg', 'amount' => 32340, 'months' => 6,  'label' => '6개월'],
-            '12m' => ['price_code' => 'price_u8G79YOU8', 'amount' => 55400, 'months' => 12, 'label' => '12개월'],
+            '1m'  => ['price_code' => 'price_NIXgpyLfN', 'amount' => 11000, 'months' => 1,  'label' => '1개월'],
+            '3m'  => ['price_code' => 'price_BMMfkyJhl', 'amount' => 26400, 'months' => 3,  'label' => '3개월'],
+            '6m'  => ['price_code' => 'price_0meGlMmZB', 'amount' => 46200, 'months' => 6,  'label' => '6개월'],
+            '12m' => ['price_code' => 'price_Pa13NObnM', 'amount' => 79200, 'months' => 12, 'label' => '12개월'],
         ],
         'onetime_products' => [
             'newsletter_feb' => [
