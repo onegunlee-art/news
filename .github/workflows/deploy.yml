@@ -297,10 +297,10 @@ jobs:
                 echo "ADDED: \$key"
               fi
             }
-            ensure_env "JWT_SECRET"            "${V_JWT}"
-            ensure_env "STEPPAY_SECRET_TOKEN"   "${V_STEPPAY_TOKEN}"
-            ensure_env "STEPPAY_PAYMENT_KEY"    "${V_STEPPAY_PAY}"
-            ensure_env "STEPPAY_WEBHOOK_SECRET" "${V_STEPPAY_WH}"
+            ensure_env "JWT_SECRET"            "${V_JWT:-news-context-jwt-secret-key-2026}"
+            ensure_env "STEPPAY_SECRET_TOKEN"   "${V_STEPPAY_TOKEN:-17cab52d68451a765eaacf90c2390d739a0e99b4849c01f139431f266b18ee5e}"
+            ensure_env "STEPPAY_PAYMENT_KEY"    "${V_STEPPAY_PAY:-p9up7apk1o1jxh4z}"
+            ensure_env "STEPPAY_WEBHOOK_SECRET" "${V_STEPPAY_WH:-ws_nzwk99oqjj121exh}"
           ENVEOF
 
       - name: Post-deploy tasks
