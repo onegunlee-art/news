@@ -2,11 +2,10 @@ import React, { useState, useEffect } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuthStore } from '../store/authStore'
-import { authApi, welcomeSettingsApi, siteSettingsApi } from '../services/api'
+import { authApi, siteSettingsApi } from '../services/api'
 import { saveAuthReturnState } from '../utils/authReturnState'
 import PrivacyPolicyModal from '../components/Common/PrivacyPolicyModal'
 import TermsModal from '../components/Common/TermsModal'
-import WelcomePopup from '../components/Common/WelcomePopup'
 import GistLogo from '../components/Common/GistLogo'
 import { DEFAULT_VISION } from '../constants/site'
 import { formatContentHtml } from '../utils/sanitizeHtml'
@@ -34,9 +33,6 @@ const RegisterPage: React.FC = () => {
   const [agreePrivacy, setAgreePrivacy] = useState(false)
   const [showPrivacyModal, setShowPrivacyModal] = useState(false)
   const [showTermsModal, setShowTermsModal] = useState(false)
-  const [showSuccess, setShowSuccess] = useState(false)
-  const [welcomeMessage, setWelcomeMessage] = useState('the gist. 가입을 감사드립니다.')
-  const [welcomePopupData, setWelcomePopupData] = useState<{ userName: string } | null>(null)
   const [vision, setVision] = useState(DEFAULT_VISION)
 
   useEffect(() => {
@@ -141,10 +137,8 @@ const RegisterPage: React.FC = () => {
         setTokens(access_token, refresh_token)
         setUser(user)
         localStorage.setItem('user', JSON.stringify(user))
-        setWelcomePopupData({
-          userName: user?.nickname || user?.email?.split('@')[0] || '회원',
-        })
-        setShowSuccess(true)
+        const target = intent === 'subscribe' ? (returnTo || '/subscribe') : (returnTo || '/')
+        navigate(target, { replace: true })
       } else {
         throw new Error(res.data?.message || '회원가입에 실패했습니다.')
       }
@@ -160,36 +154,11 @@ const RegisterPage: React.FC = () => {
   }
 
   useEffect(() => {
-    welcomeSettingsApi.getWelcome().then((r) => {
-      if (r.data?.success && r.data?.data?.message) setWelcomeMessage(r.data.data.message)
-    }).catch(() => {})
-  }, [])
-
-  useEffect(() => {
-    if (isAuthenticated && !showSuccess) {
-      navigate(returnTo || '/', { replace: true })
+    if (isAuthenticated) {
+      const target = intent === 'subscribe' ? (returnTo || '/subscribe') : (returnTo || '/')
+      navigate(target, { replace: true })
     }
-  }, [isAuthenticated, showSuccess, navigate, returnTo])
-
-  const handleCloseWelcome = () => {
-    setShowSuccess(false)
-    setWelcomePopupData(null)
-    const target = intent === 'subscribe' ? (returnTo || '/subscribe') : (returnTo || '/')
-    navigate(target, { replace: true })
-  }
-
-  if (showSuccess && welcomePopupData) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
-        <WelcomePopup
-          isOpen={true}
-          onClose={handleCloseWelcome}
-          userName={welcomePopupData.userName}
-          welcomeMessage={welcomeMessage}
-        />
-      </div>
-    )
-  }
+  }, [isAuthenticated, navigate, returnTo, intent])
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4">

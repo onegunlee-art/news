@@ -377,9 +377,7 @@ final class AuthController
 
         $consentJs = '';
         if ($isNewUser) {
-            $nickname = $tokenData['user']['nickname'] ?? $tokenData['user']['email'] ?? '회원';
             $consentJs = "localStorage.setItem('consent_required', '1');\n";
-            $consentJs .= "localStorage.setItem('welcome_popup', JSON.stringify({userName:" . json_encode($nickname, JSON_UNESCAPED_UNICODE) . ",ts:Date.now()}));";
         }
 
         $html = <<<HTML

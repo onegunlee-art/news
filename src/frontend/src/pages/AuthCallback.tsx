@@ -121,11 +121,6 @@ export default function AuthCallback() {
           
           if (data.is_new_user) {
             localStorage.setItem('consent_required', '1')
-            const userName = data.user?.nickname || data.user?.email?.split('@')[0] || '회원'
-            localStorage.setItem('welcome_popup', JSON.stringify({
-              userName,
-              ts: Date.now(),
-            }))
           }
           
           setTokens(data.access_token, data.refresh_token || '')

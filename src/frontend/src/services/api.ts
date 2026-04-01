@@ -291,11 +291,6 @@ export const ttsApi = {
     api.post<{ success: boolean; data: { url: string } }>('/tts/generate', { text }, { timeout: 810000 }),
 }
 
-/** 가입 환영 설정 (공개) */
-export const welcomeSettingsApi = {
-  getWelcome: () => api.get<{ success: boolean; data: { message: string; title_template: string } }>('/settings/welcome'),
-}
-
 /** 사이트 공개 설정 (My Page/푸터: 문의 이메일, 저작권, 비전, 메뉴 설정) */
 export const siteSettingsApi = {
   getSite: () =>

@@ -4,10 +4,8 @@ import { useAuthStore } from './store/authStore'
 import { useVersionCheck } from './hooks/useVersionCheck'
 import Layout from './components/Layout/Layout'
 import AudioPlayerPopup from './components/AudioPlayer/AudioPlayerPopup'
-import WelcomePopup from './components/Common/WelcomePopup'
 import ConsentModal from './components/Common/ConsentModal'
 import ErrorBoundary from './components/Common/ErrorBoundary'
-import { welcomeSettingsApi } from './services/api'
 import HomePage from './pages/HomePage'
 import AllNewsPage from './pages/AllNewsPage'
 import NewsDetailPage from './pages/NewsDetailPage'
@@ -28,7 +26,6 @@ import SubscribeErrorPage from './pages/SubscribeErrorPage'
 import SubscriptionManagePage from './pages/SubscriptionManagePage'
 
 function App() {
-  const [welcomeData, setWelcomeData] = useState<{ userName: string; welcomeMessage: string } | null>(null)
   const [showConsent, setShowConsent] = useState(() => localStorage.getItem('consent_required') === '1')
 
   useVersionCheck()
@@ -36,33 +33,6 @@ function App() {
   useEffect(() => {
     useAuthStore.getState().initializeAuth()
   }, [])
-
-  // 동의 팝업이 닫힌 후에만 환영 팝업 처리
-  useEffect(() => {
-    if (showConsent) return
-    const raw = localStorage.getItem('welcome_popup')
-    if (!raw) return
-    try {
-      const data = JSON.parse(raw)
-      const FIVE_MINUTES = 5 * 60 * 1000
-      if (data.userName && data.ts && Date.now() - data.ts < FIVE_MINUTES) {
-        welcomeSettingsApi.getWelcome().then((r) => {
-          const msg = r.data?.success && r.data?.data?.message ? r.data.data.message : 'the gist. 가입을 감사드립니다.'
-          setWelcomeData({
-            userName: data.userName,
-            welcomeMessage: msg,
-          })
-        }).catch(() => {
-          setWelcomeData({
-            userName: data.userName,
-            welcomeMessage: 'the gist. 가입을 감사드립니다.',
-          })
-        })
-        return
-      }
-      localStorage.removeItem('welcome_popup')
-    } catch { localStorage.removeItem('welcome_popup') }
-  }, [showConsent])
 
   const handleConsentAgree = () => {
     localStorage.removeItem('consent_required')
@@ -84,7 +54,6 @@ function App() {
       }
     } catch { /* ignore */ }
     localStorage.removeItem('consent_required')
-    localStorage.removeItem('welcome_popup')
     localStorage.removeItem('access_token')
     localStorage.removeItem('refresh_token')
     localStorage.removeItem('user')
@@ -102,14 +71,6 @@ function App() {
         onAgree={handleConsentAgree}
         onCancel={handleConsentCancel}
       />
-      {welcomeData && (
-        <WelcomePopup
-          isOpen={!!welcomeData}
-          onClose={() => setWelcomeData(null)}
-          userName={welcomeData.userName}
-          welcomeMessage={welcomeData.welcomeMessage}
-        />
-      )}
       <Routes>
         <Route path="/" element={<Layout />}>
           <Route index element={<HomePage />} />

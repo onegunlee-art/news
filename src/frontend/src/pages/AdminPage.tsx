@@ -12,7 +12,6 @@ import CritiqueEditor from '../components/CritiqueEditor/CritiqueEditor';
 import RAGTester from '../components/RAGTester/RAGTester';
 import { api, adminFetch, adminSettingsApi, adminTtsApi, ttsApi } from '../services/api';
 import { PRIVACY_POLICY_CONTENT } from '../components/Common/PrivacyPolicyContent';
-import WelcomePopup from '../components/Common/WelcomePopup';
 import AdminDraftPreviewEdit from '../components/Admin/AdminDraftPreviewEdit';
 import GistLogo from '../components/Common/GistLogo';
 import { DEFAULT_VISION } from '../constants/site';
@@ -1123,11 +1122,6 @@ const AdminPage: React.FC = () => {
   const [privacyMessage, setPrivacyMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [termsSaving, setTermsSaving] = useState(false);
   const [termsMessage, setTermsMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const [welcomeMessage, setWelcomeMessage] = useState('');
-  const [welcomeTitleTemplate, setWelcomeTitleTemplate] = useState('{name}님');
-  const [welcomeSaving, setWelcomeSaving] = useState(false);
-  const [welcomeSaveMsg, setWelcomeSaveMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const [showWelcomePreview, setShowWelcomePreview] = useState(false);
   const [contactEmail, setContactEmail] = useState('onegunlee@gmail.com');
   const [copyrightText, setCopyrightText] = useState('');
   const [theGistVision, setTheGistVision] = useState(DEFAULT_VISION);
@@ -1385,8 +1379,6 @@ const AdminPage: React.FC = () => {
       if (s) {
         setPrivacyContent(formatContentHtml((s.privacy_policy && s.privacy_policy.trim()) ? s.privacy_policy : PRIVACY_POLICY_CONTENT));
         setTermsContent(formatContentHtml(s.terms_of_service ?? ''));
-        setWelcomeMessage(s.welcome_popup_message ?? 'the gist. 가입을 감사드립니다.');
-        setWelcomeTitleTemplate(s.welcome_popup_title ?? '{name}님');
         setContactEmail(s.contact_email ?? 'onegunlee@gmail.com');
         setCopyrightText(formatContentHtml(s.copyright_text ?? ''));
         setTheGistVision(formatContentHtml(s.the_gist_vision ?? DEFAULT_VISION));
@@ -1607,68 +1599,6 @@ const AdminPage: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* 가입 환영 팝업 설정 */}
-                  <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50">
-                    <h3 className="text-lg font-semibold text-white mb-4">가입 환영 팝업 설정</h3>
-                    <p className="text-slate-400 text-sm mb-4">가입 완료 시 표시되는 환영 팝업 메시지를 설정합니다.</p>
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-slate-400 text-sm mb-1">환영 메시지</label>
-                        <input
-                          type="text"
-                          value={welcomeMessage}
-                          onChange={(e) => setWelcomeMessage(e.target.value)}
-                          placeholder="the gist. 가입을 감사드립니다."
-                          className="w-full px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-slate-200"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-slate-400 text-sm mb-1">이름 표시 형식 (&#123;name&#125; = 닉네임)</label>
-                        <input
-                          type="text"
-                          value={welcomeTitleTemplate}
-                          onChange={(e) => setWelcomeTitleTemplate(e.target.value)}
-                          placeholder="{name}님"
-                          className="w-full px-4 py-2 bg-slate-900/50 border border-slate-600 rounded-lg text-slate-200"
-                        />
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 mt-4">
-                      <button
-                        type="button"
-                        onClick={() => setShowWelcomePreview(true)}
-                        className="px-4 py-2 bg-slate-600 hover:bg-slate-500 text-white rounded-lg text-sm"
-                      >
-                        미리보기
-                      </button>
-                      <button
-                        type="button"
-                        disabled={welcomeSaving}
-                        onClick={async () => {
-                          setWelcomeSaving(true);
-                          setWelcomeSaveMsg(null);
-                          try {
-                            await adminSettingsApi.updateSettings({
-                              welcome_popup_message: welcomeMessage,
-                              welcome_popup_title: welcomeTitleTemplate,
-                            });
-                            setWelcomeSaveMsg({ type: 'success', text: '저장되었습니다.' });
-                          } catch (e) {
-                            setWelcomeSaveMsg({ type: 'error', text: '저장에 실패했습니다.' });
-                          } finally {
-                            setWelcomeSaving(false);
-                          }
-                        }}
-                        className="px-4 py-2 bg-orange-600 hover:bg-orange-500 disabled:opacity-50 text-white rounded-lg text-sm"
-                      >
-                        {welcomeSaving ? '저장 중...' : '저장'}
-                      </button>
-                      {welcomeSaveMsg && (
-                        <span className={welcomeSaveMsg.type === 'success' ? 'text-emerald-400' : 'text-red-400'}>{welcomeSaveMsg.text}</span>
-                      )}
-                    </div>
-                  </div>
-
                   {/* 이용약관 수정 */}
                   <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50">
                     <h3 className="text-lg font-semibold text-white mb-4">이용약관 수정</h3>
@@ -1866,15 +1796,6 @@ const AdminPage: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* 환영 팝업 미리보기 */}
-                  {showWelcomePreview && (
-                    <WelcomePopup
-                      isOpen={true}
-                      onClose={() => setShowWelcomePreview(false)}
-                      userName="홍길동"
-                      welcomeMessage={welcomeMessage || 'the gist. 가입을 감사드립니다.'}
-                    />
-                  )}
                 </>
               )}
             </div>

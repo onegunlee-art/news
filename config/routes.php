@@ -47,23 +47,6 @@ $router->get('/settings/terms', function (Request $request): Response {
     }
 });
 
-// 가입 환영 팝업 설정 (공개용 - 메시지 등)
-$router->get('/settings/welcome', function (Request $request): Response {
-    try {
-        $db = \App\Core\Database::getInstance()->getConnection();
-        $stmt = $db->query("SELECT `key`, `value` FROM settings WHERE `key` IN ('welcome_popup_message', 'welcome_popup_title')");
-        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-        $data = ['message' => 'The Gist 가입을 감사드립니다.', 'title_template' => '{name}님'];
-        foreach ($rows as $r) {
-            if ($r['key'] === 'welcome_popup_message') $data['message'] = $r['value'] ?? $data['message'];
-            if ($r['key'] === 'welcome_popup_title') $data['title_template'] = $r['value'] ?? $data['title_template'];
-        }
-        return Response::success($data, 'OK');
-    } catch (Throwable $e) {
-        return Response::success(['message' => 'The Gist 가입을 감사드립니다.', 'title_template' => '{name}님'], 'OK');
-    }
-});
-
 // 사이트 공개 설정 (My Page/푸터용: 문의 이메일, 저작권, 비전, 메뉴 설정)
 $router->get('/settings/site', function (Request $request): Response {
     $year = date('Y');

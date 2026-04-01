@@ -318,11 +318,10 @@ $userObj = [
 
 kakaoLog('success', ['dbUserId' => $dbUserId, 'nickname' => $nickname]);
 
-// 신규 가입 시: 이용약관 동의 팝업 + 환영 팝업 데이터
-$welcomePopupJs = '';
+// 신규 가입 시: 이용약관 동의 팝업
+$consentRequiredJs = '';
 if ($isNewUser) {
-    $welcomePopupJs = 'localStorage.setItem("consent_required", "1");';
-    $welcomePopupJs .= 'localStorage.setItem("welcome_popup", JSON.stringify({userName:' . json_encode($nickname) . ',ts:Date.now()}));';
+    $consentRequiredJs = 'localStorage.setItem("consent_required", "1");';
 }
 
 // HTML → localStorage 저장 후 프론트엔드로 이동
@@ -341,7 +340,7 @@ try {
     localStorage.setItem("user", JSON.stringify(' . json_encode($userObj) . '));
     var authStorage = { state: { accessToken: ' . json_encode($accessTokenJwt) . ', refreshToken: ' . json_encode($refreshTokenJwt) . ', isSubscribed: ' . ($dbIsSubscribed ? 'true' : 'false') . ' }, version: 0 };
     localStorage.setItem("auth-storage", JSON.stringify(authStorage));
-    ' . $welcomePopupJs . '
+    ' . $consentRequiredJs . '
 } catch(e) { console.error("localStorage error:", e); }
 window.location.href = ' . json_encode($frontendBase . '/auth/callback#access_token=' . urlencode($accessTokenJwt) . '&refresh_token=' . urlencode($refreshTokenJwt)) . ';
 </script>
