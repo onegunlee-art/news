@@ -35,6 +35,10 @@ export default function SubscribeErrorPage() {
 
     const run = async () => {
       try {
+        let token = localStorage.getItem('access_token')
+        if (!token && localStorage.getItem('refresh_token')) {
+          token = await waitForAccessToken(5000)
+        }
         const statusRes = await api.get(`/subscription/order-status?order_code=${encodeURIComponent(orderCode)}`)
         const data = statusRes.data?.success ? statusRes.data.data : null
 
@@ -57,7 +61,7 @@ export default function SubscribeErrorPage() {
         token = await waitForAccessToken(5000)
       }
       if (!token) {
-        setRecovered(true)
+        setErrorInfo({ source: '결제 확인', message: '로그인 후 구독 상태를 확인해 주세요.', order_status: 'paid' })
         setLoading(false)
         return
       }
@@ -73,9 +77,9 @@ export default function SubscribeErrorPage() {
           setLoading(false)
           return
         }
-      } catch { /* verify failed but payment is confirmed paid */ }
+      } catch { /* verify failed — will show pending message below */ }
 
-      setRecovered(true)
+      setErrorInfo({ source: '결제 확인', message: '결제는 확인되었으나 구독 반영이 지연되고 있습니다. 잠시 후 다시 확인해 주세요.', order_status: 'paid' })
       setLoading(false)
     }
 

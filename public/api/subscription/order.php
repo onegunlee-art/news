@@ -198,18 +198,23 @@ if ($existingOrderCode !== '') {
                 $isRecent = $createdTs !== false && (time() - $createdTs) < 600;
             }
             if ($isRecent) {
-                $existingPaymentUrl = steppayGetPaymentUrl($existingOrderCode);
-                payment_log('기존 미결제 주문 재사용 (10분 이내)', ['orderCode' => $existingOrderCode, 'userId' => $userId], $userId);
-                echo json_encode([
-                    'success' => true,
-                    'data' => [
-                        'orderCode' => $existingOrderCode,
-                        'orderId' => $ex['orderId'] ?? null,
-                        'paymentUrl' => $existingPaymentUrl,
-                        'plan' => $plan,
-                    ],
-                ], JSON_UNESCAPED_UNICODE);
-                exit;
+                $existingProductCode = $ex['items'][0]['productCode'] ?? $ex['items'][0]['product_code'] ?? '';
+                $samePlan = ($existingProductCode === $productCode);
+                if ($samePlan) {
+                    $existingPaymentUrl = steppayGetPaymentUrl($existingOrderCode);
+                    payment_log('기존 미결제 주문 재사용 (10분 이내, 동일 플랜)', ['orderCode' => $existingOrderCode, 'userId' => $userId], $userId);
+                    echo json_encode([
+                        'success' => true,
+                        'data' => [
+                            'orderCode' => $existingOrderCode,
+                            'orderId' => $ex['orderId'] ?? null,
+                            'paymentUrl' => $existingPaymentUrl,
+                            'plan' => $plan,
+                        ],
+                    ], JSON_UNESCAPED_UNICODE);
+                    exit;
+                }
+                payment_log('기존 미결제 주문과 플랜 불일치, 새 주문 생성', ['oldOrderCode' => $existingOrderCode, 'oldProduct' => $existingProductCode, 'newProduct' => $productCode, 'userId' => $userId], $userId);
             }
             payment_log('기존 미결제 주문 만료, 새 주문 생성 허용', ['oldOrderCode' => $existingOrderCode, 'userId' => $userId], $userId);
         }

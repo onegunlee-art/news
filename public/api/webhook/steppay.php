@@ -50,7 +50,10 @@ payment_log('webhook 수신', ['eventType' => $payload['eventType'] ?? 'unknown'
 $eventType = $payload['eventType'] ?? '';
 $data = $payload['data'] ?? [];
 
+set_time_limit(120);
+
 // 역검증: payment.completed / order.payment_completed 이벤트는 StepPay API로 주문 조회하여 실제 결제 여부 확인
+$verifiedOrderData = null;
 if ($eventType === 'payment.completed' || $eventType === 'order.payment_completed') {
     $orderCode = $data['orderCode'] ?? $data['order_code'] ?? null;
     if ($orderCode) {
@@ -59,12 +62,14 @@ if ($eventType === 'payment.completed' || $eventType === 'order.payment_complete
             $verifyResult = steppayGetOrder($orderCode);
             if ($verifyResult['success'] && !empty($verifyResult['data']['paymentDate'])) {
                 $verified = true;
+                $verifiedOrderData = $verifyResult['data'];
                 break;
             }
             if ($vAttempt < 2) sleep(2);
         }
         if (!$verified) {
             payment_log("REJECT: 역검증 실패 (3회 시도)", ['orderCode' => $orderCode]);
+            http_response_code(503);
             echo json_encode(['success' => false, 'message' => 'Verification failed']);
             exit;
         }
@@ -82,7 +87,7 @@ try {
 
         case 'payment.completed':
         case 'order.payment_completed':
-            handlePaymentCompleted($pdo, $data);
+            handlePaymentCompleted($pdo, $data, $verifiedOrderData);
             break;
 
         case 'payment.failed':
@@ -96,6 +101,9 @@ try {
     }
 } catch (Throwable $e) {
     payment_log('webhook 처리 에러', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString(), 'eventType' => $eventType]);
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'Internal error']);
+    exit;
 }
 
 echo json_encode(['success' => true]);
@@ -110,7 +118,10 @@ function handleSubscriptionUpdate(PDO $pdo, array $data): void {
     $stmt = $pdo->prepare("SELECT id, steppay_order_code FROM users WHERE steppay_subscription_id = ? LIMIT 1");
     $stmt->execute([$subscriptionId]);
     $user = $stmt->fetch();
-    if (!$user) return;
+    if (!$user) {
+        payment_log('subscription.*: 매칭 사용자 없음 (subscription_id 미등록)', ['subscriptionId' => $subscriptionId, 'status' => $status]);
+        return;
+    }
 
     $isActive = in_array($status, ['ACTIVE', 'PENDING_PAUSE', 'PENDING_CANCEL']);
     $expiresAt = $data['currentPeriodEnd'] ?? $data['endDate'] ?? null;
@@ -134,7 +145,7 @@ function handleSubscriptionUpdate(PDO $pdo, array $data): void {
     payment_log('subscription.* DB 반영', ['subscriptionId' => $subscriptionId, 'status' => $status, 'userId' => $user['id']]);
 }
 
-function handlePaymentCompleted(PDO $pdo, array $data): void {
+function handlePaymentCompleted(PDO $pdo, array $data, ?array $verifiedOrderData = null): void {
     $orderCode = $data['orderCode'] ?? $data['order_code'] ?? null;
     if (!$orderCode) {
         payment_log('payment.completed: orderCode 없음, 스킵', ['keys' => array_keys($data)]);
@@ -145,7 +156,6 @@ function handlePaymentCompleted(PDO $pdo, array $data): void {
     $stmt->execute([$orderCode]);
     $user = $stmt->fetch();
 
-    // 폴백: order_code가 덮어씌워져 매칭 실패 시, steppay_customer_id로 재시도 (1명만 매칭될 때)
     if (!$user) {
         $customerId = $data['customerId'] ?? $data['customer_id'] ?? null;
         if ($customerId) {
@@ -167,13 +177,17 @@ function handlePaymentCompleted(PDO $pdo, array $data): void {
         return;
     }
 
-    $orderFetch = steppayGetOrder($orderCode);
-    if (!$orderFetch['success'] || empty($orderFetch['data']['paymentDate'])) {
-        payment_log('WARN: payment.completed 처리 중 주문 재조회 실패', ['orderCode' => $orderCode, 'userId' => $user['id']]);
-        return;
+    $orderData = $verifiedOrderData;
+    if (!$orderData) {
+        $orderFetch = steppayGetOrder($orderCode);
+        if (!$orderFetch['success'] || empty($orderFetch['data']['paymentDate'])) {
+            payment_log('WARN: payment.completed 처리 중 주문 재조회 실패', ['orderCode' => $orderCode, 'userId' => $user['id']]);
+            return;
+        }
+        $orderData = $orderFetch['data'];
     }
 
-    applyVerifiedOrderToUserDb($pdo, (int) $user['id'], (string) $orderCode, $orderFetch['data']);
+    applyVerifiedOrderToUserDb($pdo, (int) $user['id'], (string) $orderCode, $orderData);
     payment_log('payment.completed 구독 DB 반영', ['orderCode' => $orderCode, 'userId' => $user['id']]);
 
     try {

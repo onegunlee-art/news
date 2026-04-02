@@ -353,7 +353,9 @@ export default function ProfilePage() {
                                 if (res.data?.success) {
                                   setSubscriptionDetail((d) => d ? { ...d, auto_renew: newVal, status: newVal ? 'ACTIVE' : 'PENDING_CANCEL', status_label: newVal ? '활성화' : '해지 예정' } : null)
                                 }
-                              } catch { /* ignore */ } finally {
+                              } catch {
+                                alert('자동 갱신 변경에 실패했습니다. 잠시 후 다시 시도해주세요.')
+                              } finally {
                                 setAutoRenewToggling(false)
                               }
                             }}

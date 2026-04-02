@@ -57,7 +57,7 @@ if ($enabled) {
 }
 
 if (!$result['success']) {
-    $message = $result['data']['errorMessage'] ?? $result['data']['message'] ?? $result['error'] ?? '처리에 실패했습니다.';
+    $message = ($result['data'] ?? [])['errorMessage'] ?? ($result['data'] ?? [])['message'] ?? $result['error'] ?? '처리에 실패했습니다.';
     http_response_code(502);
     echo json_encode(['success' => false, 'message' => $message], JSON_UNESCAPED_UNICODE);
     exit;

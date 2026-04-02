@@ -31,6 +31,11 @@ if (!$userId) {
 $stmt = $pdo->prepare("SELECT is_subscribed, steppay_subscription_id, subscription_plan, subscription_start_date, subscription_expires_at FROM users WHERE id = ?");
 $stmt->execute([$userId]);
 $user = $stmt->fetch();
+if (!$user) {
+    http_response_code(404);
+    echo json_encode(['success' => false, 'message' => '사용자를 찾을 수 없습니다.'], JSON_UNESCAPED_UNICODE);
+    exit;
+}
 
 $subscriptionId = $user['steppay_subscription_id'] ?? null;
 if (!$user['is_subscribed']) {

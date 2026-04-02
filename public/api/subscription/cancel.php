@@ -42,7 +42,7 @@ $subscriptionId = (int) $subscriptionId;
 $result = steppayCancelSubscription($subscriptionId, 'END_OF_PERIOD');
 
 if (!$result['success']) {
-    $message = $result['data']['errorMessage'] ?? $result['data']['message'] ?? $result['error'] ?? '구독 취소에 실패했습니다.';
+    $message = ($result['data'] ?? [])['errorMessage'] ?? ($result['data'] ?? [])['message'] ?? $result['error'] ?? '구독 취소에 실패했습니다.';
     http_response_code(502);
     echo json_encode(['success' => false, 'message' => $message], JSON_UNESCAPED_UNICODE);
     exit;
@@ -52,7 +52,7 @@ $subResult = steppayGetSubscription($subscriptionId);
 if ($subResult['success'] && !empty($subResult['data'])) {
     $sub = $subResult['data'];
     $status = $sub['status'] ?? '';
-    $isActive = in_array($status, ['ACTIVE', 'PENDING_PAUSE', 'PENDING_CANCEL']);
+    $isActive = in_array($status, ['ACTIVE', 'PENDING_PAUSE', 'PENDING_CANCEL'], true);
     $expiresAt = $sub['currentPeriodEnd'] ?? $sub['endDate'] ?? null;
     $pdo->prepare("UPDATE users SET is_subscribed = ?, subscription_expires_at = ? WHERE id = ?")
         ->execute([$isActive ? 1 : 0, $expiresAt, $userId]);

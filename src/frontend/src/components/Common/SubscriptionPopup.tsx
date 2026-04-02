@@ -4,10 +4,10 @@ import MaterialIcon from './MaterialIcon'
 import GistLogo from './GistLogo'
 
 const PLANS = [
-  { id: '1m', title: '1개월', priceLabel: '7,700원', periodLabel: '1개월' },
-  { id: '3m', title: '3개월', priceLabel: '18,480원', periodLabel: '3개월' },
-  { id: '6m', title: '6개월', priceLabel: '32,340원', periodLabel: '6개월', badge: '인기' },
-  { id: '12m', title: '12개월', priceLabel: '55,400원', periodLabel: '12개월', badge: '최저가' },
+  { id: '1m', title: '1개월', priceLabel: '11,000원', periodLabel: '1개월' },
+  { id: '3m', title: '3개월', priceLabel: '26,400원', periodLabel: '3개월' },
+  { id: '6m', title: '6개월', priceLabel: '46,200원', periodLabel: '6개월', badge: '인기' },
+  { id: '12m', title: '12개월', priceLabel: '79,200원', periodLabel: '12개월', badge: '최저가' },
 ]
 
 interface SubscriptionPopupProps {
