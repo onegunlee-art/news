@@ -434,18 +434,8 @@ $router->group(['prefix' => '/admin'], function (Router $router) {
         return Response::error('백필 실행 중 오류가 발생했습니다.', 500);
     });
 
-    // 구독 동기화 (일회용 — 웹훅 실패 복구)
+    // 구독 동기화 (자체 JWT 인증 포함 — 라우터 인증 불필요)
     $router->get('/sync-subscriptions', function (Request $request): Response {
-        $token = $request->bearerToken();
-        if (!$token) return Response::unauthorized('관리자 권한이 필요합니다.');
-        $authService = new \App\Services\AuthService();
-        $adminId = $authService->getAuthenticatedUserId($token);
-        if (!$adminId) return Response::unauthorized('관리자 권한이 필요합니다.');
-        $db = \App\Core\Database::getInstance()->getConnection();
-        $stmt = $db->prepare("SELECT role FROM users WHERE id = ?");
-        $stmt->execute([$adminId]);
-        $u = $stmt->fetch(\PDO::FETCH_ASSOC);
-        if (!$u || ($u['role'] ?? '') !== 'admin') return Response::unauthorized('관리자 권한이 필요합니다.');
         $projectRoot = dirname(__DIR__);
         $scriptPath = $projectRoot . '/public/api/admin/sync-subscriptions.php';
         if (!is_file($scriptPath)) return Response::notFound('Script not found');
