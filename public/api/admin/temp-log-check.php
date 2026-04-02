@@ -7,9 +7,10 @@ if ($secret !== 'ws_nzwk99oqjj121exh') {
     exit;
 }
 
-$logPath = $_SERVER['DOCUMENT_ROOT'] . '/../storage/logs/payment.log';
+$root = dirname(__DIR__, 3);
+$logPath = $root . '/storage/logs/error_payment.log';
 if (!file_exists($logPath)) {
-    $logPath = __DIR__ . '/../../../storage/logs/payment.log';
+    $logPath = $root . '/storage/logs/payment.log';
 }
 if (!file_exists($logPath)) {
     echo "payment.log not found\nTried: " . $logPath;
