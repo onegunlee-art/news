@@ -1,32 +1,6 @@
-# 참고: 최신 분리 예시는 thegist-nginx.conf + thegist-server-locations.inc (443/80 동일 include)
-# SEO: 봇 UA 화이트리스트 (검색엔진 + SNS 크롤러)
-map $http_user_agent $is_seo_bot {
-    default 0;
-    ~*Googlebot              1;
-    ~*Google-InspectionTool  1;
-    ~*GoogleOther            1;
-    ~*bingbot                1;
-    ~*Yeti                   1;
-    ~*Naverbot               1;
-    ~*facebookexternalhit  1;
-    ~*Facebot              1;
-    ~*Twitterbot           1;
-    ~*LinkedInBot          1;
-    ~*TelegramBot          1;
-    ~*Slackbot             1;
-    ~*WhatsApp             1;
-    ~*discordbot           1;
-    ~*Pinterest            1;
-}
-
-server {
-    server_name www.thegist.co.kr thegist.co.kr 15.165.197.87;
-
-    root /var/www/thegist/public;
-    index index.html index.php;
-
-    client_max_body_size 50M;
-    charset utf-8;
+# nginx server { } 내부에서만 include 하세요.
+# EC2 예: include /var/www/thegist/aws/thegist-server-locations.inc;
+# 로컬 검증 전 deploy 로 이 파일이 서버에 있어야 합니다.
 
     # ──────────────────────────────────────
     # Gzip 압축
@@ -68,6 +42,21 @@ server {
     }
 
     # ──────────────────────────────────────
+    # SPA 엔트리 HTML + version.json: 항상 재검증 (구버전 번들 참조 방지)
+    # ──────────────────────────────────────
+    location = /index.html {
+        expires -1;
+        add_header Cache-Control "no-cache, no-store, must-revalidate" always;
+        add_header Pragma "no-cache" always;
+    }
+    location = /version.json {
+        expires -1;
+        add_header Cache-Control "no-cache, no-store, must-revalidate" always;
+        add_header Pragma "no-cache" always;
+        try_files $uri =404;
+    }
+
+    # ──────────────────────────────────────
     # 정적 파일 캐시
     # ──────────────────────────────────────
     location ~* \.(jpg|jpeg|png|gif|svg|webp|ico)$ {
@@ -85,6 +74,15 @@ server {
     location = /manifest.webmanifest {
         expires -1;
         add_header Cache-Control "no-cache, no-store, must-revalidate";
+        try_files $uri =404;
+    }
+    # Digital Asset Links (TWA ↔ 도메인 검증)
+    location = /.well-known/assetlinks.json {
+        default_type application/json;
+        charset utf-8;
+        expires -1;
+        add_header Cache-Control "no-cache, no-store, must-revalidate";
+        add_header Pragma "no-cache";
         try_files $uri =404;
     }
     location ~* \.(css|js)$ {
@@ -126,7 +124,7 @@ server {
     }
 
     # ──────────────────────────────────────
-    # 카카오 로그인 API
+    # 카카오 로그인 API (직접 PHP 파일 처리 — AuthController가 아님)
     # ──────────────────────────────────────
     location = /api/auth/kakao {
         rewrite ^ /api/auth/kakao.php last;
@@ -183,7 +181,7 @@ server {
     location = /api/subscription/order {
         rewrite ^ /api/subscription/order.php last;
     }
-    location = /api/subscription/verify { 
+    location = /api/subscription/verify {
         rewrite ^ /api/subscription/verify.php last;
     }
     location = /api/subscription/verify-promo {
@@ -207,6 +205,9 @@ server {
     location = /api/subscription/settings {
         rewrite ^ /api/subscription/settings.php last;
     }
+    location = /api/subscription/order-status {
+        rewrite ^ /api/subscription/order-status.php last;
+    }
 
     # ──────────────────────────────────────
     # StepPay 웹훅
@@ -224,15 +225,16 @@ server {
     location ~ ^/api/analysis/news/([0-9]+)$ {
         rewrite ^ /api/analysis/news.php last;
     }
+
+    # ──────────────────────────────────────
+    # Admin API -> api.php 라우터 경유
+    # ──────────────────────────────────────
     location = /api/admin/promotion-codes {
         rewrite ^ /api/admin/promotion-codes.php last;
     }
     location = /api/admin/promotion-codes/ {
         rewrite ^ /api/admin/promotion-codes.php last;
     }
-    # ──────────────────────────────────────
-    # Admin API -> api.php 라우터 경유
-    # ──────────────────────────────────────
     location ~ ^/api/admin/ {
         rewrite ^/api/admin/(.*)$ /api.php?__path=/api/admin/$1 last;
     }
@@ -249,6 +251,13 @@ server {
     }
 
     # ──────────────────────────────────────
+    # SEO: /news/{id}/ → 표준 URL(비슬래시), 중복·표준 없음 완화
+    # ──────────────────────────────────────
+    location ~ ^/news/([0-9]+)/$ {
+        return 301 https://www.thegist.co.kr/news/$1$is_args$args;
+    }
+
+    # ──────────────────────────────────────
     # SEO: sitemap.xml → sitemap.php (동적 생성)
     # ──────────────────────────────────────
     location = /sitemap.xml {
@@ -256,12 +265,7 @@ server {
     }
 
     # ──────────────────────────────────────
-    # SEO: /news/{id}/ → 표준 URL
-    location ~ ^/news/([0-9]+)/$ {
-        return 301 https://www.thegist.co.kr/news/$1$is_args$args;
-    }
-
-    # SEO: /news/{id} 봇 분기 — 검색엔진/SNS 크롤러만 og-news-html.php
+    # SEO: /news/{id} 봇 분기 — 검색엔진/SNS 크롤러만 og-news-html.php 로
     # ──────────────────────────────────────
     location ~ ^/news/([0-9]+)$ {
         set $news_id $1;
@@ -276,34 +280,9 @@ server {
     # ──────────────────────────────────────
     location / {
         try_files $uri $uri/ /index.html;
+
+        # SPA fallback으로 index.html이 반환될 때 캐시 방지
+        # 정적 파일(js/css/img)은 위 location 블록에서 먼저 매칭되므로 영향 없음
         add_header Cache-Control "no-cache, no-store, must-revalidate" always;
         add_header Pragma "no-cache" always;
     }
-
-    listen 443 ssl; # managed by Certbot
-    ssl_certificate /etc/letsencrypt/live/thegist.co.kr/fullchain.pem; # managed by Certbot
-    ssl_certificate_key /etc/letsencrypt/live/thegist.co.kr/privkey.pem; # managed by Certbot
-    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
-    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
-
-
-}
-server {
-    if ($host = thegist.co.kr) {
-        return 301 https://$host$request_uri;
-    } # managed by Certbot
-
-
-    if ($host = www.thegist.co.kr) {
-        return 301 https://$host$request_uri;
-    } # managed by Certbot
-
-
-    listen 80;
-    server_name www.thegist.co.kr thegist.co.kr 15.165.197.87;
-    return 404; # managed by Certbot
-
-
-
-
-}

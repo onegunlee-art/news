@@ -191,6 +191,10 @@ jobs:
             -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
             database/ "$REMOTE:$DEST/database/"
 
+          rsync -avz \
+            -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
+            aws/thegist-server-locations.inc "$REMOTE:$DEST/aws/"
+
       # Nginx config는 서버에서 직접 관리 (certbot SSL 블록 포함).
       # sw.js/registerSW.js no-cache 블록만 없으면 추가한다.
       - name: Ensure sw.js no-cache in Nginx config
@@ -400,3 +404,35 @@ jobs:
             fi
             echo "✅ $path → HTTP $code"
           done
+
+      - name: Verify Googlebot receives crawler HTML for /news/1 (SEO)
+        run: |
+          BASE="${{ env.SITE_URL }}"
+          UA="Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+          tmp=$(mktemp)
+          code=$(curl -sS -o "$tmp" -w "%{http_code}" --connect-timeout 25 --max-time 60 -A "$UA" "$BASE/news/1" 2>/dev/null || echo "000")
+          code=$(echo "$code" | tr -d '[:space:]')
+          echo "Googlebot GET /news/1 → HTTP $code"
+          if [ "$code" = "404" ]; then
+            echo "✅ 404 acceptable (no article or og-news-html 404 after deploy)"
+            rm -f "$tmp"
+            exit 0
+          fi
+          if [ "$code" != "200" ]; then
+            echo "⚠️ Non-200/non-404 ($code) — nginx/앱 점검"
+            rm -f "$tmp"
+            exit 1
+          fi
+          if grep -q 'rel="canonical"' "$tmp"; then
+            echo "✅ Crawler HTML includes rel=canonical (og-news-html path)"
+            rm -f "$tmp"
+            exit 0
+          fi
+          if grep -q 'og:title" content="the gist\."' "$tmp" 2>/dev/null; then
+            echo "❌ Googlebot still gets generic SPA index — 443 블록에 thegist-server-locations.inc 와 동일 location 적용 필요"
+            head -25 "$tmp"
+            rm -f "$tmp"
+            exit 1
+          fi
+          echo "✅ 200 without obvious SPA shell (non-/canonical page)"
+          rm -f "$tmp"

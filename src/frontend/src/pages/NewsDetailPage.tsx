@@ -67,6 +67,19 @@ export default function NewsDetailPage() {
   const [error, setError] = useState<string | null>(null)
   const [analysisCollapsed, setAnalysisCollapsed] = useState(true)
 
+  /** 검색·공유 시 표준 URL 고정 (www HTTPS, 슬래시 없음) — og-news-html.php 과 동일 */
+  useEffect(() => {
+    if (!id || !/^\d+$/.test(id)) return
+    const href = `https://www.thegist.co.kr/news/${id}`
+    const link = document.createElement('link')
+    link.rel = 'canonical'
+    link.href = href
+    document.head.appendChild(link)
+    return () => {
+      link.remove()
+    }
+  }, [id])
+
   // 전역 팝업 플레이어에서 재생 (제목 → 매체설명 → 내레이션 → The Gist)
   // Listen 클릭 시 최신 기사 데이터를 강제 조회하여 stale state로 인한 이전 보이스 재생 방지
   const playArticle = async () => {

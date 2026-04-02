@@ -108,15 +108,14 @@ try {
     // DB 오류 시 title=null 유지 → fallback
 }
 
-// 기사를 찾지 못하면 SPA index.html을 반환 (빈 화면 방지)
+// 기사가 없거나 비공개면 404 (200+SPA 껍데기는 Google Soft 404 유발)
 if ($title === null) {
-    $indexPath = __DIR__ . '/index.html';
-    if (file_exists($indexPath)) {
-        readfile($indexPath);
-    } else {
-        http_response_code(404);
-        echo '<!DOCTYPE html><html><head><title>Not found</title></head><body></body></html>';
-    }
+    http_response_code(404);
+    header('X-Robots-Tag: noindex, nofollow');
+    echo '<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8" />'
+        . '<meta name="robots" content="noindex, nofollow" />'
+        . '<title>기사를 찾을 수 없음 | the gist.</title></head>'
+        . '<body><h1>기사를 찾을 수 없습니다</h1><p>삭제되었거나 주소가 잘못되었을 수 있습니다.</p></body></html>';
     exit;
 }
 
