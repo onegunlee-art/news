@@ -17,16 +17,17 @@ require_once __DIR__ . '/../lib/log.php';
 
 $pdo = getDb();
 
+$authenticated = false;
+
 $userId = getAuthUserId($pdo);
-if (!$userId) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'message' => 'Unauthorized'], JSON_UNESCAPED_UNICODE);
-    exit;
+if ($userId) {
+    $roleStmt = $pdo->prepare("SELECT role FROM users WHERE id = ? LIMIT 1");
+    $roleStmt->execute([$userId]);
+    $role = ($roleStmt->fetch())['role'] ?? '';
+    if ($role === 'admin') $authenticated = true;
 }
-$roleStmt = $pdo->prepare("SELECT role FROM users WHERE id = ? LIMIT 1");
-$roleStmt->execute([$userId]);
-$role = ($roleStmt->fetch())['role'] ?? '';
-if ($role !== 'admin') {
+
+if (!$authenticated) {
     http_response_code(403);
     echo json_encode(['success' => false, 'message' => 'Admin only'], JSON_UNESCAPED_UNICODE);
     exit;

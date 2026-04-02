@@ -235,6 +235,9 @@
     location = /api/admin/promotion-codes/ {
         rewrite ^ /api/admin/promotion-codes.php last;
     }
+    location = /api/admin/sync-subscriptions {
+        rewrite ^ /api/admin/sync-subscriptions.php last;
+    }
     location ~ ^/api/admin/ {
         rewrite ^/api/admin/(.*)$ /api.php?__path=/api/admin/$1 last;
     }

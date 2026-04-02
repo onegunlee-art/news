@@ -434,6 +434,25 @@ $router->group(['prefix' => '/admin'], function (Router $router) {
         return Response::error('백필 실행 중 오류가 발생했습니다.', 500);
     });
 
+    // 구독 동기화 (일회용 — 웹훅 실패 복구)
+    $router->get('/sync-subscriptions', function (Request $request): Response {
+        $token = $request->bearerToken();
+        if (!$token) return Response::unauthorized('관리자 권한이 필요합니다.');
+        $authService = new \App\Services\AuthService();
+        $adminId = $authService->getAuthenticatedUserId($token);
+        if (!$adminId) return Response::unauthorized('관리자 권한이 필요합니다.');
+        $db = \App\Core\Database::getInstance()->getConnection();
+        $stmt = $db->prepare("SELECT role FROM users WHERE id = ?");
+        $stmt->execute([$adminId]);
+        $u = $stmt->fetch(\PDO::FETCH_ASSOC);
+        if (!$u || ($u['role'] ?? '') !== 'admin') return Response::unauthorized('관리자 권한이 필요합니다.');
+        $projectRoot = dirname(__DIR__);
+        $scriptPath = $projectRoot . '/public/api/admin/sync-subscriptions.php';
+        if (!is_file($scriptPath)) return Response::notFound('Script not found');
+        include $scriptPath;
+        exit;
+    });
+
     // Admin PHP 스크립트 프록시 (api/admin/*.php → Router 경유, 인증 적용)
     $router->any('/{script}.php', function (Request $request): Response {
         $script = $request->param('script') . '.php';
