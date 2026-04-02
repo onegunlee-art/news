@@ -146,10 +146,10 @@ jobs:
                      /var/www/thegist/src/backend \
                      /var/www/thegist/src/agents \
                      /var/www/thegist/config \
-                     /var/www/thegist/database; do
-              if [ -d "$d" ]; then
-                sudo chown -R "$U:$U" "$d"
-              fi
+                     /var/www/thegist/database \
+                     /var/www/thegist/aws; do
+              sudo mkdir -p "$d"
+              sudo chown -R "$U:$U" "$d"
             done
             echo "Remote deploy dirs chowned to $U"
           '
