@@ -168,8 +168,9 @@ export default function ArticleChatPanel({ newsId }: ArticleChatPanelProps) {
 
   const loadSession = useCallback(async () => {
     try {
+      const sk = encodeURIComponent(sessionKey.current)
       const res = await adminFetch(
-        `${API_BASE}/article-chat.php?action=session&news_id=${newsId}`,
+        `${API_BASE}/article-chat.php?action=session&news_id=${newsId}&session_key=${sk}`,
         { method: 'GET' }
       )
       const j = await res.json()

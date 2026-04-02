@@ -555,7 +555,7 @@ export default function NewsDetailPage() {
             </>
           )}
 
-          {isAuthenticated && !news.access_restricted && (
+          {!news.access_restricted && (
             <ArticleChatPanel newsId={news.id} />
           )}
 

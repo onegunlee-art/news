@@ -1,9 +1,12 @@
 <?php
 /**
- * 기사 챗봇 API (로그인 사용자)
+ * 기사 챗봇 API
+ *
+ * 로그인 선택: 토큰 없음 = 게스트(무료 기사만). 토큰 있음 = 유효해야 함.
+ * 무료 기사 = news/detail.php와 동일(최신 2편·로그인+특집·관리자·구독).
  *
  * GET  ?action=chips&news_id=1
- * GET  ?action=session&news_id=1
+ * GET  ?action=session&news_id=1&session_key=...
  * POST { news_id, message, chip_id?, session_key?, history?[] } — SSE 스트림
  *
  * URL: /api/article-chat.php (nginx가 .php 직접 실행)
@@ -183,6 +186,74 @@ function buildRagForArticle(RAGService $rag, string $query, int $newsId, float $
     return ['lines' => $lines, 'refs' => $refs];
 }
 
+/**
+ * news/detail.php 페이월과 동일: 이 기사에 챗봇(본문 열람) 허용 여부.
+ *
+ * @param ?int $authUserId JWT에서 추출한 users.id, 게스트는 null
+ */
+function articleChatAccessAllowed(PDO $pdo, int $newsId, ?int $authUserId): bool
+{
+    $role = null;
+    $isSubscribed = false;
+    if ($authUserId !== null) {
+        $st = $pdo->prepare('SELECT role, is_subscribed FROM users WHERE id = ? LIMIT 1');
+        $st->execute([$authUserId]);
+        $u = $st->fetch(PDO::FETCH_ASSOC);
+        if (!$u) {
+            return false;
+        }
+        $role = $u['role'] ?? 'user';
+        $isSubscribed = (bool) ($u['is_subscribed'] ?? false);
+    }
+    if ($role === 'admin' || $isSubscribed) {
+        return true;
+    }
+
+    $latestIds = [];
+    try {
+        $latestStmt = $pdo->query(
+            "SELECT id FROM news WHERE (status = 'published' OR status IS NULL) ORDER BY COALESCE(published_at, created_at) DESC LIMIT 2"
+        );
+        $latestIds = array_map('intval', $latestStmt->fetchAll(PDO::FETCH_COLUMN));
+    } catch (PDOException $e) {
+        try {
+            $latestStmt = $pdo->query(
+                'SELECT id FROM news ORDER BY COALESCE(published_at, created_at) DESC LIMIT 2'
+            );
+            $latestIds = array_map('intval', $latestStmt->fetchAll(PDO::FETCH_COLUMN));
+        } catch (PDOException $e2) {
+            $latestIds = [];
+        }
+    }
+    if (in_array($newsId, $latestIds, true)) {
+        return true;
+    }
+
+    if ($authUserId !== null) {
+        try {
+            $st = $pdo->prepare('SELECT category_parent FROM news WHERE id = ? LIMIT 1');
+            $st->execute([$newsId]);
+            $row = $st->fetch(PDO::FETCH_ASSOC);
+            if ($row && (($row['category_parent'] ?? '') === 'special')) {
+                return true;
+            }
+        } catch (PDOException $e) {
+            // ignore
+        }
+    }
+
+    return false;
+}
+
+function sanitizeArticleChatSessionKey(?string $raw): string
+{
+    if ($raw === null || $raw === '') {
+        return '';
+    }
+
+    return substr(preg_replace('/[^a-zA-Z0-9_-]/', '', $raw), 0, 64);
+}
+
 try {
     $projectRoot = findProjectRootArticleChat();
 } catch (Throwable $e) {
@@ -218,27 +289,26 @@ require_once $projectRoot . 'src/agents/autoload.php';
 
 $acConfig = require $projectRoot . 'config/article-chat.php';
 
-$token = getBearerToken();
-if (!$token) {
-    sendJsonErrorArticleChat('로그인이 필요합니다.', 401);
-}
-$payload = decodeJwt($token);
-if (!$payload || empty($payload['user_id'])) {
-    sendJsonErrorArticleChat('유효하지 않은 토큰입니다.', 401);
-}
-
 try {
     $pdo = getDb();
 } catch (Throwable $e) {
     sendJsonErrorArticleChat('데이터베이스 연결 실패', 500);
 }
 
-$userId = (int) $payload['user_id'];
-$stmtUser = $pdo->prepare('SELECT id, role, email FROM users WHERE id = ? LIMIT 1');
-$stmtUser->execute([$userId]);
-$userRow = $stmtUser->fetch(PDO::FETCH_ASSOC);
-if (!$userRow) {
-    sendJsonErrorArticleChat('사용자를 찾을 수 없습니다.', 403);
+$userId = null;
+$token = getBearerToken();
+if ($token !== null && $token !== '') {
+    $payload = decodeJwt($token);
+    if (!$payload || empty($payload['user_id'])) {
+        sendJsonErrorArticleChat('유효하지 않은 토큰입니다.', 401);
+    }
+    $uid = (int) $payload['user_id'];
+    $stmtUser = $pdo->prepare('SELECT id FROM users WHERE id = ? LIMIT 1');
+    $stmtUser->execute([$uid]);
+    if (!$stmtUser->fetch(PDO::FETCH_ASSOC)) {
+        sendJsonErrorArticleChat('사용자를 찾을 수 없습니다.', 403);
+    }
+    $userId = $uid;
 }
 
 $enabled = !empty($acConfig['enabled']);
@@ -266,6 +336,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         if ($newsId <= 0) {
             sendJsonErrorArticleChat('news_id가 필요합니다.', 400);
         }
+        if (!articleChatAccessAllowed($pdo, $newsId, $userId)) {
+            sendJsonErrorArticleChat('이 기사에서는 챗봇을 사용할 수 없습니다.', 403);
+        }
         $fixed = $acConfig['chips']['fixed'] ?? [];
         sendJsonArticleChat([
             'success' => true,
@@ -281,11 +354,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         if ($newsId <= 0) {
             sendJsonErrorArticleChat('news_id가 필요합니다.', 400);
         }
+        if (!articleChatAccessAllowed($pdo, $newsId, $userId)) {
+            sendJsonErrorArticleChat('이 기사에서는 챗봇을 사용할 수 없습니다.', 403);
+        }
+        $sessionKeyGet = sanitizeArticleChatSessionKey($_GET['session_key'] ?? '');
+        if ($sessionKeyGet === '') {
+            sendJsonArticleChat([
+                'success' => true,
+                'data' => [
+                    'session_id' => null,
+                    'question_count' => 0,
+                    'question_limit' => $maxQ,
+                    'remaining' => $maxQ,
+                    'messages' => [],
+                ],
+            ]);
+        }
         try {
             $st = $pdo->prepare(
-                'SELECT id, question_count, question_limit FROM article_chat_sessions WHERE news_id = ? AND user_id = ? LIMIT 1'
+                'SELECT id, question_count, question_limit FROM article_chat_sessions WHERE news_id = ? AND session_key = ? LIMIT 1'
             );
-            $st->execute([$newsId, $userId]);
+            $st->execute([$newsId, $sessionKeyGet]);
             $sess = $st->fetch(PDO::FETCH_ASSOC);
             if (!$sess) {
                 sendJsonArticleChat([
@@ -342,11 +431,14 @@ if (!is_array($input)) {
 $newsId = (int) ($input['news_id'] ?? 0);
 $message = isset($input['message']) ? trim((string) $input['message']) : '';
 $chipId = isset($input['chip_id']) ? (string) $input['chip_id'] : '';
-$sessionKey = isset($input['session_key']) ? substr(preg_replace('/[^a-zA-Z0-9_-]/', '', (string) $input['session_key']), 0, 64) : '';
+$sessionKey = sanitizeArticleChatSessionKey(isset($input['session_key']) ? (string) $input['session_key'] : null);
 $history = isset($input['history']) && is_array($input['history']) ? $input['history'] : [];
 
 if ($newsId <= 0 || $message === '') {
     sendJsonErrorArticleChat('news_id와 message가 필요합니다.', 400);
+}
+if (!articleChatAccessAllowed($pdo, $newsId, $userId)) {
+    sendJsonErrorArticleChat('이 기사에서는 챗봇을 사용할 수 없습니다.', 403);
 }
 if (mb_strlen($message) > $maxChars) {
     sendJsonErrorArticleChat("메시지는 {$maxChars}자 이하로 입력해 주세요.", 400);
@@ -376,21 +468,33 @@ if ($articleBody === '') {
 }
 
 try {
+    if ($sessionKey === '') {
+        $sessionKey = bin2hex(random_bytes(16));
+    }
     $sessSt = $pdo->prepare(
-        'SELECT * FROM article_chat_sessions WHERE news_id = ? AND user_id = ? LIMIT 1'
+        'SELECT * FROM article_chat_sessions WHERE news_id = ? AND session_key = ? LIMIT 1'
     );
-    $sessSt->execute([$newsId, $userId]);
+    $sessSt->execute([$newsId, $sessionKey]);
     $session = $sessSt->fetch(PDO::FETCH_ASSOC);
     if (!$session) {
-        if ($sessionKey === '') {
-            $sessionKey = bin2hex(random_bytes(16));
-        }
         $ins = $pdo->prepare(
             'INSERT INTO article_chat_sessions (news_id, user_id, session_key, question_limit) VALUES (?,?,?,?)'
         );
-        $ins->execute([$newsId, $userId, $sessionKey, $maxQ]);
-        $sessSt->execute([$newsId, $userId]);
-        $session = $sessSt->fetch(PDO::FETCH_ASSOC);
+        try {
+            $ins->execute([$newsId, $userId, $sessionKey, $maxQ]);
+        } catch (PDOException $e) {
+            $mysqlErr = (int) ($e->errorInfo[1] ?? 0);
+            if (($e->errorInfo[0] ?? '') === '23000' || $mysqlErr === 1062 || stripos($e->getMessage(), 'Duplicate') !== false) {
+                $sessSt->execute([$newsId, $sessionKey]);
+                $session = $sessSt->fetch(PDO::FETCH_ASSOC);
+            } else {
+                throw $e;
+            }
+        }
+        if (!$session) {
+            $sessSt->execute([$newsId, $sessionKey]);
+            $session = $sessSt->fetch(PDO::FETCH_ASSOC);
+        }
     }
 } catch (PDOException $e) {
     if (strpos($e->getMessage(), 'article_chat') !== false) {
