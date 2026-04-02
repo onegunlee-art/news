@@ -107,7 +107,7 @@ function handleSubscriptionUpdate(PDO $pdo, array $data): void {
     $status = $data['status'] ?? '';
     if (!$subscriptionId) return;
 
-    $stmt = $pdo->prepare("SELECT id FROM users WHERE steppay_subscription_id = ? LIMIT 1");
+    $stmt = $pdo->prepare("SELECT id, steppay_order_code FROM users WHERE steppay_subscription_id = ? LIMIT 1");
     $stmt->execute([$subscriptionId]);
     $user = $stmt->fetch();
     if (!$user) return;
@@ -115,8 +115,23 @@ function handleSubscriptionUpdate(PDO $pdo, array $data): void {
     $isActive = in_array($status, ['ACTIVE', 'PENDING_PAUSE', 'PENDING_CANCEL']);
     $expiresAt = $data['currentPeriodEnd'] ?? $data['endDate'] ?? null;
 
+    if ($isActive) {
+        $orderCode = $user['steppay_order_code'] ?? null;
+        if ($orderCode) {
+            $orderCheck = steppayGetOrder($orderCode);
+            if (!$orderCheck['success'] || empty($orderCheck['data']['paymentDate'])) {
+                payment_log('subscription.* 이벤트: 결제 미확인으로 is_subscribed 변경 차단', [
+                    'subscriptionId' => $subscriptionId, 'status' => $status,
+                    'orderCode' => $orderCode, 'userId' => $user['id'],
+                ]);
+                return;
+            }
+        }
+    }
+
     $pdo->prepare("UPDATE users SET is_subscribed = ?, subscription_expires_at = ? WHERE id = ?")
         ->execute([$isActive ? 1 : 0, $expiresAt, $user['id']]);
+    payment_log('subscription.* DB 반영', ['subscriptionId' => $subscriptionId, 'status' => $status, 'userId' => $user['id']]);
 }
 
 function handlePaymentCompleted(PDO $pdo, array $data): void {
@@ -127,16 +142,19 @@ function handlePaymentCompleted(PDO $pdo, array $data): void {
     $stmt->execute([$orderCode]);
     $user = $stmt->fetch();
 
-    // 폴백: order_code가 덮어씌워져 매칭 실패 시, steppay_customer_id로 재시도
+    // 폴백: order_code가 덮어씌워져 매칭 실패 시, steppay_customer_id로 재시도 (1명만 매칭될 때)
     if (!$user) {
         $customerId = $data['customerId'] ?? $data['customer_id'] ?? null;
         if ($customerId) {
-            $stmt = $pdo->prepare("SELECT id FROM users WHERE steppay_customer_id = ? LIMIT 1");
+            $stmt = $pdo->prepare("SELECT id FROM users WHERE steppay_customer_id = ?");
             $stmt->execute([$customerId]);
-            $user = $stmt->fetch();
-            if ($user) {
-                payment_log("FALLBACK: customer_id 매칭 성공", ['customerId' => $customerId, 'userId' => $user['id']]);
+            $candidates = $stmt->fetchAll();
+            if (count($candidates) === 1) {
+                $user = $candidates[0];
+                payment_log("FALLBACK: customer_id 매칭 성공 (유일)", ['customerId' => $customerId, 'userId' => $user['id']]);
                 $pdo->prepare("UPDATE users SET steppay_order_code = ? WHERE id = ?")->execute([$orderCode, $user['id']]);
+            } elseif (count($candidates) > 1) {
+                payment_log("WARN: customer_id에 여러 사용자 매칭, 폴백 차단", ['customerId' => $customerId, 'count' => count($candidates)]);
             }
         }
     }
@@ -173,9 +191,14 @@ function handlePaymentFailed(PDO $pdo, array $data): void {
     if (!$user) {
         $customerId = $data['customerId'] ?? $data['customer_id'] ?? null;
         if ($customerId) {
-            $stmt = $pdo->prepare("SELECT id, subscription_expires_at FROM users WHERE steppay_customer_id = ? LIMIT 1");
+            $stmt = $pdo->prepare("SELECT id, subscription_expires_at FROM users WHERE steppay_customer_id = ?");
             $stmt->execute([$customerId]);
-            $user = $stmt->fetch();
+            $candidates = $stmt->fetchAll();
+            if (count($candidates) === 1) {
+                $user = $candidates[0];
+            } elseif (count($candidates) > 1) {
+                payment_log("WARN: payment.failed customer_id에 여러 사용자 매칭, 폴백 차단", ['customerId' => $customerId]);
+            }
         }
     }
 

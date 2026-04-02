@@ -143,14 +143,24 @@ if (!$steppayCustomerId) {
         }
 
         if ($existingId) {
-            $steppayCustomerId = (int) $existingId;
-            payment_log('기존 고객 발견', ['id' => $steppayCustomerId], $userId);
-        } else {
+            $dupCheck = $pdo->prepare("SELECT id FROM users WHERE steppay_customer_id = ? AND id != ? LIMIT 1");
+            $dupCheck->execute([$existingId, $userId]);
+            if ($dupCheck->fetch()) {
+                payment_log('WARN: 기존 고객 ID가 다른 사용자에 할당됨, 새 고객 생성', ['existingId' => $existingId, 'userId' => $userId], $userId);
+                $existingId = null;
+            } else {
+                $steppayCustomerId = (int) $existingId;
+                payment_log('기존 고객 발견', ['id' => $steppayCustomerId], $userId);
+            }
+        }
+        if (!$existingId) {
+            $uniqueCode = 'thegist_user_' . $userId . '_' . substr(md5((string)microtime(true)), 0, 6);
             $custRetry = steppayCreateCustomer(
                 $user['nickname'] ?: '회원',
-                $user['email']
+                $user['email'],
+                $uniqueCode
             );
-            payment_log('코드 없이 고객 재생성 응답', $custRetry, $userId);
+            payment_log('유니크 코드로 고객 재생성 응답', $custRetry, $userId);
 
             if (!$custRetry['success'] || empty($custRetry['data']['id'])) {
                 http_response_code(502);
