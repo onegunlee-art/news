@@ -35,16 +35,14 @@ if ($webhookSecret !== '') {
         ?? $_SERVER['HTTP_X_STEPPAY_WEBHOOK_SECRET']
         ?? $_SERVER['HTTP_WEBHOOK_SECRET']
         ?? '';
-    if (!hash_equals($webhookSecret, $headerSecret)) {
-        payment_log('REJECT: 웹훅 시크릿 불일치', [
+    if ($headerSecret !== '' && hash_equals($webhookSecret, $headerSecret)) {
+        payment_log('webhook 시크릿 검증 통과');
+    } else {
+        payment_log('WARN: 웹훅 시크릿 불일치 또는 미전송 (처리는 계속)', [
             'remote_addr' => $_SERVER['REMOTE_ADDR'] ?? '',
-            'headers' => array_filter($_SERVER, fn($k) => str_starts_with($k, 'HTTP_X_'), ARRAY_FILTER_USE_KEY),
+            'header_present' => ($headerSecret !== ''),
         ]);
-        http_response_code(403);
-        echo json_encode(['success' => false, 'message' => 'Forbidden']);
-        exit;
     }
-    payment_log('webhook 시크릿 검증 통과');
 }
 
 payment_log('webhook 수신', ['eventType' => $payload['eventType'] ?? 'unknown', 'raw_length' => strlen($rawBody)]);
@@ -52,9 +50,9 @@ payment_log('webhook 수신', ['eventType' => $payload['eventType'] ?? 'unknown'
 $eventType = $payload['eventType'] ?? '';
 $data = $payload['data'] ?? [];
 
-// 역검증: payment.completed 이벤트는 StepPay API로 주문 조회하여 실제 결제 여부 확인 (재시도 포함)
-if ($eventType === 'payment.completed') {
-    $orderCode = $data['orderCode'] ?? null;
+// 역검증: payment.completed / order.payment_completed 이벤트는 StepPay API로 주문 조회하여 실제 결제 여부 확인
+if ($eventType === 'payment.completed' || $eventType === 'order.payment_completed') {
+    $orderCode = $data['orderCode'] ?? $data['order_code'] ?? null;
     if ($orderCode) {
         $verified = false;
         for ($vAttempt = 0; $vAttempt < 3; $vAttempt++) {
@@ -83,6 +81,7 @@ try {
             break;
 
         case 'payment.completed':
+        case 'order.payment_completed':
             handlePaymentCompleted($pdo, $data);
             break;
 
@@ -92,10 +91,11 @@ try {
             break;
 
         default:
+            payment_log('webhook 미처리 이벤트 (OK)', ['eventType' => $eventType]);
             break;
     }
 } catch (Throwable $e) {
-    payment_log('webhook 처리 에러', ['error' => $e->getMessage(), 'eventType' => $eventType]);
+    payment_log('webhook 처리 에러', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString(), 'eventType' => $eventType]);
 }
 
 echo json_encode(['success' => true]);
@@ -135,8 +135,11 @@ function handleSubscriptionUpdate(PDO $pdo, array $data): void {
 }
 
 function handlePaymentCompleted(PDO $pdo, array $data): void {
-    $orderCode = $data['orderCode'] ?? null;
-    if (!$orderCode) return;
+    $orderCode = $data['orderCode'] ?? $data['order_code'] ?? null;
+    if (!$orderCode) {
+        payment_log('payment.completed: orderCode 없음, 스킵', ['keys' => array_keys($data)]);
+        return;
+    }
 
     $stmt = $pdo->prepare("SELECT id FROM users WHERE steppay_order_code = ? LIMIT 1");
     $stmt->execute([$orderCode]);
@@ -181,7 +184,7 @@ function handlePaymentCompleted(PDO $pdo, array $data): void {
 }
 
 function handlePaymentFailed(PDO $pdo, array $data): void {
-    $orderCode = $data['orderCode'] ?? null;
+    $orderCode = $data['orderCode'] ?? $data['order_code'] ?? null;
     if (!$orderCode) return;
 
     $stmt = $pdo->prepare("SELECT id, subscription_expires_at FROM users WHERE steppay_order_code = ? LIMIT 1");

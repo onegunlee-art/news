@@ -181,7 +181,8 @@ if (!$steppayCustomerId) {
     payment_log('DB 고객 ID 저장', ['steppay_customer_id' => $steppayCustomerId], $userId);
 }
 
-// 진행 중인 미결제 주문이 있으면 steppay_order_code 덮어쓰기 방지 (verify 소유권 불일치 방지)
+// 진행 중인 미결제 주문 처리: 최근(10분 이내) CREATED 주문이면 기존 결제 URL 반환,
+// 오래된 CREATED 주문이면 새 주문으로 교체 허용
 $existingOrderCode = trim((string) ($user['steppay_order_code'] ?? ''));
 if ($existingOrderCode !== '') {
     $existingFetch = steppayGetOrder($existingOrderCode);
@@ -190,12 +191,27 @@ if ($existingOrderCode !== '') {
         $itemStatus = $ex['items'][0]['status'] ?? '';
         $alreadyPaid = !empty($ex['paymentDate']) || $itemStatus === 'PAID';
         if (!$alreadyPaid && ($itemStatus === 'CREATED' || $itemStatus === '' || $itemStatus === null)) {
-            http_response_code(409);
-            echo json_encode([
-                'success' => false,
-                'message' => '이미 진행 중인 결제가 있습니다. 결제를 완료하시거나, 잠시 후 다시 시도해 주세요.',
-            ], JSON_UNESCAPED_UNICODE);
-            exit;
+            $orderCreatedAt = $ex['createdAt'] ?? $ex['orderedAt'] ?? null;
+            $isRecent = false;
+            if ($orderCreatedAt) {
+                $createdTs = strtotime($orderCreatedAt);
+                $isRecent = $createdTs !== false && (time() - $createdTs) < 600;
+            }
+            if ($isRecent) {
+                $existingPaymentUrl = steppayGetPaymentUrl($existingOrderCode);
+                payment_log('기존 미결제 주문 재사용 (10분 이내)', ['orderCode' => $existingOrderCode, 'userId' => $userId], $userId);
+                echo json_encode([
+                    'success' => true,
+                    'data' => [
+                        'orderCode' => $existingOrderCode,
+                        'orderId' => $ex['orderId'] ?? null,
+                        'paymentUrl' => $existingPaymentUrl,
+                        'plan' => $plan,
+                    ],
+                ], JSON_UNESCAPED_UNICODE);
+                exit;
+            }
+            payment_log('기존 미결제 주문 만료, 새 주문 생성 허용', ['oldOrderCode' => $existingOrderCode, 'userId' => $userId], $userId);
         }
     }
 }
