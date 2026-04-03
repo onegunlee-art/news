@@ -209,13 +209,16 @@ class RAGService
     /**
      * 기사 게시 시 최종 output 임베딩 저장 (기존 해당 news_id 임베딩 삭제 후 재저장).
      * narration + why_important + description/content 요약을 합쳐 저장.
+     *
+     * @param array<string, mixed> $extraMetadata GPT 추출 등 RAG 메타데이터( topic_label 등 ) — 청크별 metadata에 merge
      */
     public function storePublishedArticleEmbedding(
         int $newsId,
         string $articleUrl,
         string $narration,
         string $whyImportant,
-        string $descriptionOrContent
+        string $descriptionOrContent,
+        array $extraMetadata = []
     ): int {
         if (!$this->isConfigured()) {
             return 0;
@@ -234,7 +237,7 @@ class RAGService
             $articleUrl,
             $text,
             'published',
-            ['source' => 'published_article']
+            array_merge(['source' => 'published_article'], $extraMetadata)
         );
     }
 

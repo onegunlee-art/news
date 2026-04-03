@@ -320,15 +320,23 @@ if ($method === 'POST') {
             }
 
             if (trim($textToEmbed) !== '') {
+                $enrichedMeta = [];
+                if ($openai->isConfigured()) {
+                    try {
+                        $enrichedMeta = $openai->extractRagChunkMetadata($textToEmbed);
+                    } catch (\Throwable $e) {
+                        error_log('[feedback-api approve] metadata extract: ' . $e->getMessage());
+                    }
+                }
                 $embeddedCount += $rag->storeAnalysisEmbedding(
                     $articleId ? (int) $articleId : null,
                     $articleUrl,
                     $textToEmbed,
                     'approved_analysis',
-                    [
+                    array_merge([
                         'news_title' => $finalAnalysis['news_title'] ?? '',
                         'approved' => true,
-                    ]
+                    ], $enrichedMeta)
                 );
             }
         }

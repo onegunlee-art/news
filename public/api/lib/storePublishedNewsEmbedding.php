@@ -73,12 +73,27 @@ function storePublishedNewsEmbedding(PDO $db, int $newsId): void
         $content = trim(strip_tags((string) ($row['content'] ?? '')));
         $descriptionOrContent = $description !== '' ? $description : mb_substr($content, 0, 2000);
 
+        $textForMeta = trim(implode("\n\n", array_filter([
+            $whyImportant,
+            $narration,
+            mb_substr(strip_tags($descriptionOrContent), 0, 2000),
+        ])));
+        $extraMetadata = [];
+        if ($textForMeta !== '') {
+            try {
+                $extraMetadata = $openai->extractRagChunkMetadata($textForMeta);
+            } catch (Throwable $metaEx) {
+                error_log('[storePublishedNewsEmbedding] metadata extract skipped: ' . $metaEx->getMessage());
+            }
+        }
+
         $rag->storePublishedArticleEmbedding(
             (int) $row['id'],
             $url,
             $narration,
             $whyImportant,
-            $descriptionOrContent
+            $descriptionOrContent,
+            $extraMetadata
         );
     } catch (Throwable $e) {
         error_log('[storePublishedNewsEmbedding] news_id=' . $newsId . ' error: ' . $e->getMessage());

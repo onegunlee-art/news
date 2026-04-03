@@ -387,6 +387,17 @@ class OpenAIService
      */
     private function generateMockJsonResponse(string $prompt): string
     {
+        // RAG chunk metadata (topic_label + topic_category)
+        if (strpos($prompt, 'topic_label') !== false && strpos($prompt, 'topic_category') !== false) {
+            return json_encode([
+                'topic_label' => '[Mock] 글로벌 이슈 분석',
+                'topic_category' => '외교',
+                'entities' => ['미국', '중국'],
+                'region' => ['아시아'],
+                'time_relevance' => date('Y-m'),
+            ], JSON_UNESCAPED_UNICODE);
+        }
+
         // full_analysis 요청 (v3 스키마: content_summary, narration 장문, critical_analysis 비움)
         if (strpos($prompt, 'key_points') !== false || strpos($prompt, 'narration') !== false || strpos($prompt, 'news_title') !== false || strpos($prompt, 'content_summary') !== false || strpos($prompt, 'translation_summary') !== false) {
             $longNarration = '[Mock 내레이션] 오늘 주목할 뉴스입니다. 글로벌 정책의 대전환이 시작되었습니다. 주요 국가들이 잇따라 새로운 경제 정책을 발표하면서 세계 경제 질서에 큰 변화가 예고되고 있습니다. 특히 이번 정책 변화는 한국의 반도체, 자동차 등 주력 산업에 직접적인 영향을 미칠 것으로 보입니다. 전문가들은 한국 기업들이 선제적으로 대응 전략을 마련해야 한다고 조언합니다. 구체적으로 살펴보면, 먼저 유럽 연합을 중심으로 한 탄소 국경조정메커니즘 도입이 예정되어 있으며, 이는 수출 의존도가 높은 한국 기업에 추가 비용을 부담시키게 됩니다. 둘째, 미국의 인플레이션 감축법(IRA)과 반도체법(CHIPS)에 따른 보조금 경쟁이 격화되면서 한국 기업의 해외 투자 결정에 영향을 주고 있습니다. 셋째, 중국의 산업 정책 변화와 수요 둔화가 글로벌 공급망 재편을 가속하고 있어, 한국의 중간재 수출 구조 조정이 필요하다는 지적이 나옵니다. 마지막으로, 국제 에너지 기구(IEA) 등은 2030년까지 재생에너지 비중이 크게 높아질 것으로 전망하며, 한국의 에너지 다각화와 원자력·수소 투자가 중요한 변수가 될 것으로 보입니다. (이것은 Mock 모드 응답입니다. 실제 OpenAI API 키를 설정하면 GPT-5.2 기반 정밀 분석이 제공됩니다.)';
@@ -723,6 +734,120 @@ class OpenAIService
         }
 
         return $embedding;
+    }
+
+    /** RAG analysis_embeddings.metadata용 허용 topic_category 값 */
+    private const RAG_TOPIC_CATEGORIES = ['무역', '외교', '군사', '에너지', '금융', '기술', '정치'];
+
+    /**
+     * 분석/게시 텍스트에서 RAG용 메타데이터 추출 (gpt-4o-mini, JSON).
+     * 실패·파싱 오류·빈 입력 시 빈 배열 반환 (호출부에서 임베딩 저장은 계속 가능).
+     *
+     * @return array{topic_label?: string, topic_category?: string, entities?: string[], region?: string[], time_relevance?: string}
+     */
+    public function extractRagChunkMetadata(string $text): array
+    {
+        $text = trim($text);
+        if ($text === '') {
+            return [];
+        }
+
+        $truncated = mb_substr($text, 0, 12000);
+        $system = '당신은 뉴스 메타데이터 추출기입니다. 반드시 지정된 키만 갖는 JSON 객체만 출력합니다. 텍스트에 근거하고 과도한 추측은 하지 마세요.';
+
+        $user = <<<PROMPT
+다음 뉴스 분석 텍스트를 읽고 JSON으로 구조화하라.
+
+조건:
+- topic_label: 이 글의 주제를 한국어 15자 이내의 자연어 문장으로
+- topic_category: 무역 | 외교 | 군사 | 에너지 | 금융 | 기술 | 정치 중 정확히 1개
+- entities: 핵심 고유명사(인물/국가/기업) 최대 3개 (문자열 배열)
+- region: 관련 지역 최대 2개 (문자열 배열)
+- time_relevance: 다루는 시점 (YYYY-MM 형식, 불명확하면 텍스트에서 추정)
+
+출력(JSON만):
+{"topic_label":"","topic_category":"","entities":[],"region":[],"time_relevance":""}
+
+텍스트:
+{$truncated}
+PROMPT;
+
+        try {
+            $raw = $this->chat($system, $user, [
+                'model' => 'gpt-4o-mini',
+                'temperature' => 0.2,
+                'max_tokens' => 400,
+                'json_mode' => true,
+                'timeout' => 45,
+            ]);
+        } catch (\Throwable $e) {
+            error_log('[OpenAIService::extractRagChunkMetadata] ' . $e->getMessage());
+            return [];
+        }
+
+        $decoded = json_decode($raw, true);
+        if (!is_array($decoded)) {
+            error_log('[OpenAIService::extractRagChunkMetadata] JSON decode failed: ' . mb_substr((string) $raw, 0, 200));
+            return [];
+        }
+
+        return $this->normalizeRagChunkMetadata($decoded);
+    }
+
+    /**
+     * @param array<string, mixed> $raw
+     * @return array<string, mixed>
+     */
+    private function normalizeRagChunkMetadata(array $raw): array
+    {
+        $out = [];
+
+        $label = isset($raw['topic_label']) ? trim((string) $raw['topic_label']) : '';
+        if ($label !== '') {
+            $out['topic_label'] = mb_substr($label, 0, 15);
+        }
+
+        $cat = isset($raw['topic_category']) ? trim((string) $raw['topic_category']) : '';
+        if (in_array($cat, self::RAG_TOPIC_CATEGORIES, true)) {
+            $out['topic_category'] = $cat;
+        } elseif ($cat !== '') {
+            $out['topic_category'] = '정치';
+        }
+
+        $entities = $raw['entities'] ?? [];
+        if (is_array($entities)) {
+            $clean = [];
+            foreach ($entities as $e) {
+                $s = trim((string) $e);
+                if ($s !== '' && count($clean) < 3) {
+                    $clean[] = mb_substr($s, 0, 80);
+                }
+            }
+            if ($clean !== []) {
+                $out['entities'] = $clean;
+            }
+        }
+
+        $regions = $raw['region'] ?? [];
+        if (is_array($regions)) {
+            $cleanR = [];
+            foreach ($regions as $r) {
+                $s = trim((string) $r);
+                if ($s !== '' && count($cleanR) < 2) {
+                    $cleanR[] = mb_substr($s, 0, 80);
+                }
+            }
+            if ($cleanR !== []) {
+                $out['region'] = $cleanR;
+            }
+        }
+
+        $time = isset($raw['time_relevance']) ? trim((string) $raw['time_relevance']) : '';
+        if (preg_match('/^\d{4}-\d{2}$/', $time)) {
+            $out['time_relevance'] = $time;
+        }
+
+        return $out;
     }
 
     /**
