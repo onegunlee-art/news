@@ -24,6 +24,7 @@ interface SemanticResult {
 
 interface SearchCluster {
   name: string
+  question: string
   article_indices: number[]
   hero_index: number
 }
@@ -251,12 +252,6 @@ function ClusterCard({ cluster, results }: { cluster: SearchCluster; results: Se
   const [analysisText, setAnalysisText] = useState('')
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [analysisError, setAnalysisError] = useState('')
-  const heroResult = results[cluster.hero_index]
-  const otherIndices = cluster.article_indices.filter((i) => i !== cluster.hero_index)
-
-  if (!heroResult) return null
-
-  const heroDetailUrl = newsDetailPath(heroResult.news_id, '최신')
 
   const handleAnalysis = async () => {
     if (expanded && analysisText) {
@@ -315,84 +310,49 @@ function ClusterCard({ cluster, results }: { cluster: SearchCluster; results: Se
     }
   }
 
+  const displayLabel = cluster.question || cluster.name
+
   return (
-    <div className="rounded-2xl border border-page bg-page-secondary/30 p-4">
-      <h3 className="text-sm font-bold text-page mb-3">{cluster.name}</h3>
-
-      {/* Hero article */}
-      <Link to={heroDetailUrl} state={{ fromTab: '최신' }} className="flex items-start gap-3 mb-2">
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-page line-clamp-2">{heroResult.title}</p>
-          <p className="text-[11px] text-page-muted mt-0.5">
-            유사도 {Math.round(heroResult.similarity * 100)}%
-          </p>
-        </div>
-        {heroResult.image_url && (
-          <img
-            src={heroResult.image_url}
-            alt=""
-            className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
-            loading="lazy"
-          />
-        )}
-      </Link>
-
-      {/* Other articles in cluster */}
-      {otherIndices.length > 0 && (
-        <div className="space-y-1 ml-1 mb-3">
-          {otherIndices.map((idx) => {
-            const r = results[idx]
-            if (!r) return null
-            return (
-              <Link
-                key={r.news_id}
-                to={newsDetailPath(r.news_id, '최신')}
-                state={{ fromTab: '최신' }}
-                className="flex items-center gap-2 text-xs text-page-secondary hover:text-page transition-colors"
-              >
-                <span className="text-page-muted">·</span>
-                <span className="line-clamp-1 flex-1">{r.title}</span>
-                <span className="text-page-muted whitespace-nowrap">({Math.round(r.similarity * 100)}%)</span>
-              </Link>
-            )
-          })}
-        </div>
-      )}
-
-      {/* 종합 분석 버튼 */}
+    <div>
       <button
         type="button"
         onClick={handleAnalysis}
         disabled={isAnalyzing}
-        className={`w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-semibold transition-colors ${
-          isAnalyzing
-            ? 'text-page-muted bg-page-secondary cursor-wait'
-            : 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20 hover:bg-primary-100 dark:hover:bg-primary-900/30'
-        }`}
+        className={`w-full text-left rounded-2xl border transition-all ${
+          expanded
+            ? 'border-primary-300 dark:border-primary-700 bg-primary-50/50 dark:bg-primary-900/10'
+            : 'border-page bg-page hover:border-primary-200 dark:hover:border-primary-800 hover:bg-primary-50/30 dark:hover:bg-primary-900/10'
+        } p-4`}
       >
-        {isAnalyzing ? (
-          <>
-            <span className="inline-block w-4 h-4 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
-            분석 중...
-          </>
-        ) : (
-          <>
-            <MaterialIcon name="analytics" size={16} />
-            종합 분석 보기
-            <MaterialIcon name={expanded ? 'expand_less' : 'expand_more'} size={16} />
-          </>
-        )}
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-page leading-snug">{displayLabel}</p>
+            <span className="text-[11px] text-page-muted mt-1 block">
+              기사 {cluster.article_indices.length}건 기반 분석
+            </span>
+          </div>
+          <div className="flex-shrink-0">
+            {isAnalyzing ? (
+              <span className="inline-block w-5 h-5 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <MaterialIcon
+                name={expanded ? 'expand_less' : 'arrow_forward'}
+                size={20}
+                className="text-primary-500 dark:text-primary-400"
+              />
+            )}
+          </div>
+        </div>
       </button>
 
-      {/* 종합 분석 결과 */}
       {expanded && (
-        <div className="mt-3 p-4 rounded-xl bg-page border border-page">
+        <div className="mt-2 mx-2 p-4 rounded-xl bg-page-secondary/40 border border-page">
           {analysisError ? (
             <p className="text-xs text-red-500 text-center py-2">{analysisError}</p>
           ) : analysisText ? (
             <p className="text-sm text-page leading-relaxed whitespace-pre-wrap">{analysisText}</p>
           ) : isAnalyzing ? (
-            <p className="text-xs text-page-muted text-center py-4">AI가 기사들을 종합 분석하고 있습니다...</p>
+            <p className="text-xs text-page-muted text-center py-4">AI가 종합 분석하고 있습니다...</p>
           ) : null}
         </div>
       )}

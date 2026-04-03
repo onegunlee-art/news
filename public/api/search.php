@@ -183,6 +183,8 @@ if (count($results) >= 2) {
 
     $clusterSystem = '당신은 뉴스 분석 전문가입니다. 반드시 JSON만 출력합니다.';
     $clusterPrompt = <<<PROMPT
+검색어: "{$query}"
+
 검색 결과의 기사 주제 목록이다:
 
 {$topicList}
@@ -192,19 +194,23 @@ if (count($results) >= 2) {
    - 기사 간 공통 패턴 1개
    - 예상 밖의 사실 1개
    - 시장 또는 정치적 영향 1개
-2. clusters: 2~3개 주제 클러스터. 각각 name(자연어, 한국어)과 article_indices(번호 배열).
+2. clusters: 2~3개 주제 클러스터. 각각:
+   - name: 클러스터 주제(자연어, 한국어)
+   - question: 독자의 호기심을 자극하는 질문 1개(한국어). 검색어와 해당 클러스터 기사들이 답할 수 있는 질문.
+     예: 검색어 "중국의 경제 성장" + 클러스터 "미중 무역전쟁 확대" → "2026년 미중 무역전쟁, 승자는 누구인가?"
+   - article_indices: 번호 배열
    - 모든 기사 번호가 최소 1개 클러스터에 포함되어야 함
    - 기사가 3개 미만이면 클러스터 1개만 가능
 
 JSON만 출력:
-{"insight":"","clusters":[{"name":"","article_indices":[]}]}
+{"insight":"","clusters":[{"name":"","question":"","article_indices":[]}]}
 PROMPT;
 
     try {
         $clusterRaw = $openai->chat($clusterSystem, $clusterPrompt, [
             'model' => 'gpt-4o-mini',
             'temperature' => 0.3,
-            'max_tokens' => 500,
+            'max_tokens' => 800,
             'json_mode' => true,
             'timeout' => 30,
         ]);
@@ -233,6 +239,7 @@ PROMPT;
                     }
                     $clusters[] = [
                         'name' => (string) ($c['name'] ?? ''),
+                        'question' => (string) ($c['question'] ?? ''),
                         'article_indices' => $validIndices,
                         'hero_index' => $heroIndex,
                     ];

@@ -129,18 +129,15 @@ if ($supabase->isConfigured()) {
     }
 }
 
-// 3. Build structured prompt
+// 3. Build structured prompt — no article numbering, content only
 $articleBlocks = [];
-$idx = 1;
 foreach ($newsIds as $nid) {
     $art = $articles[$nid] ?? null;
     if (!$art) {
         continue;
     }
-    $title = (string) ($art['title'] ?? '');
     $whyImportant = trim((string) ($art['why_important'] ?? ''));
     $narration = trim((string) ($art['narration'] ?? ''));
-    $description = trim((string) ($art['description'] ?? ''));
 
     $chunkSummary = '';
     if (!empty($chunks[$nid])) {
@@ -148,7 +145,7 @@ foreach ($newsIds as $nid) {
         $chunkSummary = mb_substr(trim((string) ($topChunk['chunk_text'] ?? '')), 0, 800);
     }
 
-    $block = "[기사 {$idx}] {$title}";
+    $block = '---';
     if ($whyImportant !== '') {
         $block .= "\n핵심: {$whyImportant}";
     }
@@ -159,7 +156,6 @@ foreach ($newsIds as $nid) {
     }
 
     $articleBlocks[] = $block;
-    $idx++;
 }
 
 $articleText = implode("\n\n", $articleBlocks);
@@ -167,21 +163,20 @@ $topicLine = $clusterName !== '' ? "주제: \"{$clusterName}\"\n\n" : '';
 
 $systemPrompt = '당신은 뉴스 분석 전문 AI입니다. 여러 기사를 종합하여 깊이 있는 분석을 제공합니다.';
 $userPrompt = <<<PROMPT
-{$topicLine}다음 기사들을 종합 분석하라:
+{$topicLine}다음 기사 자료들을 종합 분석하라:
 
 {$articleText}
 
-분석 구조 (반드시 이 순서로):
-1. 각 기사의 핵심 주장을 1문장씩 요약
-2. 기사 간 충돌하는 관점이 있다면 식별
-3. 기사들에서 공통적으로 나타나는 핵심 흐름 도출
-4. 이 주제에 대한 종합 판단 제시
+분석 구조:
+1. 핵심 결론을 첫 문장에 구체적으로 제시
+2. 기사들의 관점을 비교 분석 (일치하는 점 vs 충돌하는 점)
+3. 이 흐름이 향후 미칠 영향과 종합 판단
 
 규칙:
+- "기사1", "기사2" 등 기사 번호로 언급하지 말 것. 내용 자체로 자연스럽게 녹여서 서술
 - 한국어 존댓말(~이에요, ~거든요, ~있어요)로 답변
 - 마크다운 문법 사용 금지 (번호와 하이픈만 허용)
 - 근거 없는 추측 금지
-- 첫 문장에 핵심 결론을 구체적으로 제시
 PROMPT;
 
 // 4. SSE streaming
