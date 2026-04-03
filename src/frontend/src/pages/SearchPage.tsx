@@ -1,36 +1,12 @@
-import { useState, useMemo } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import MaterialIcon from '../components/Common/MaterialIcon'
 import { newsApi } from '../services/api'
-import ShareMenu from '../components/Common/ShareMenu'
-import { useAuthStore } from '../store/authStore'
-import { useAudioListStore } from '../store/audioListStore'
-import { useAudioPlayerStore } from '../store/audioPlayerStore'
 import LoadingSpinner from '../components/Common/LoadingSpinner'
 import { getPlaceholderImageUrl } from '../utils/imagePolicy'
-import { formatSourceDisplayName, buildEditorialLine } from '../utils/formatSource'
-import { extractTitleFromUrl } from '../utils/extractTitleFromUrl'
 import { stripHtml } from '../utils/sanitizeHtml'
-import { queryKeys } from '../lib/queryClient'
-import { useMenuConfig } from '../hooks/useMenuConfig'
-import { apiErrorMessage } from '../utils/apiErrorMessage'
 import { newsDetailPath } from '../utils/newsDetailLink'
-
-interface NewsItem {
-  id?: number
-  title: string
-  description: string
-  url: string
-  source: string | null
-  display_date?: string | null
-  published_at: string | null
-  time_ago?: string
-  category?: string
-  image_url?: string | null
-  original_source?: string | null
-  narration?: string | null
-}
 
 interface SemanticResult {
   news_id: number
@@ -64,62 +40,33 @@ interface SemanticSearchResponse {
   }
 }
 
-const TOPIC_CATEGORIES = ['무역', '외교', '군사', '에너지', '금융', '기술', '정치'] as const
-
 /** useMemo 의존성 안정화용 (매 렌더마다 []를 쓰면 exhaustive-deps 경고 발생) */
 const EMPTY_SEMANTIC_RESULTS: SemanticResult[] = []
 
 export default function SearchPage() {
   const [searchParams] = useSearchParams()
   const q = searchParams.get('q')?.trim() ?? ''
-  const [searchMode, setSearchMode] = useState<'ai' | 'keyword'>('ai')
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
 
-  const { subCategoryToLabel } = useMenuConfig()
-
-  // 키워드 검색 (기존)
-  const keywordQuery = useQuery({
-    queryKey: queryKeys.news.search(q),
-    queryFn: async () => {
-      const res = await newsApi.search(q, 1, 30)
-      if (res.data.success && res.data.data?.items) {
-        return res.data.data.items as NewsItem[]
-      }
-      return []
-    },
-    enabled: q.length >= 1 && searchMode === 'keyword',
-    staleTime: 1000 * 60 * 2,
-  })
-
-  // AI 벡터 검색
   const semanticQuery = useQuery({
-    queryKey: ['semanticSearch', q, selectedCategory],
+    queryKey: ['semanticSearch', q],
     queryFn: async () => {
-      const res = await newsApi.semanticSearch(q, selectedCategory ?? undefined, 20)
+      const res = await newsApi.semanticSearch(q, undefined, 20)
       return res.data as SemanticSearchResponse
     },
-    enabled: q.length >= 1 && searchMode === 'ai',
+    enabled: q.length >= 1,
     staleTime: 1000 * 60 * 2,
   })
 
-  const isLoading = searchMode === 'ai' ? semanticQuery.isLoading : keywordQuery.isLoading
-  const isFetched = searchMode === 'ai' ? semanticQuery.isFetched : keywordQuery.isFetched
+  const isLoading = semanticQuery.isLoading
+  const isFetched = semanticQuery.isFetched
   const searched = isFetched && q.length >= 1
 
-  const keywordResults = keywordQuery.data ?? []
   const semanticData = semanticQuery.data
   const semanticResults = semanticData?.results ?? EMPTY_SEMANTIC_RESULTS
   const insight = semanticData?.insight ?? null
   const clusters = semanticData?.clusters ?? []
 
-  const availableCategories = useMemo(() => {
-    const list = semanticData?.results
-    if (!list?.length) return []
-    const cats = new Set(list.map((r) => r.topic_category).filter(Boolean))
-    return TOPIC_CATEGORIES.filter((c) => cats.has(c))
-  }, [semanticData])
-
-  const resultCount = searchMode === 'ai' ? semanticResults.length : keywordResults.length
+  const resultCount = semanticResults.length
 
   return (
     <div className="min-h-screen bg-page pb-8">
@@ -134,89 +81,20 @@ export default function SearchPage() {
           )}
         </div>
 
-        {/* 검색 모드 토글 */}
-        {q && (
-          <div className="flex gap-2 mb-4">
-            <button
-              type="button"
-              onClick={() => setSearchMode('ai')}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                searchMode === 'ai'
-                  ? 'bg-primary-500 text-white'
-                  : 'bg-page-secondary text-page-secondary hover:text-page'
-              }`}
-            >
-              AI 검색
-            </button>
-            <button
-              type="button"
-              onClick={() => setSearchMode('keyword')}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                searchMode === 'keyword'
-                  ? 'bg-primary-500 text-white'
-                  : 'bg-page-secondary text-page-secondary hover:text-page'
-              }`}
-            >
-              키워드 검색
-            </button>
-          </div>
-        )}
-
-        {/* AI 검색 카테고리 필터 */}
-        {q && searchMode === 'ai' && availableCategories.length > 0 && (
-          <div className="flex gap-2 mb-5 overflow-x-auto pb-1 scrollbar-hide">
-            <button
-              type="button"
-              onClick={() => setSelectedCategory(null)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
-                selectedCategory === null
-                  ? 'bg-primary-500 text-white'
-                  : 'bg-page-secondary text-page-secondary hover:text-page'
-              }`}
-            >
-              전체
-            </button>
-            {availableCategories.map((cat) => (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => setSelectedCategory(selectedCategory === cat ? null : cat)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
-                  selectedCategory === cat
-                    ? 'bg-primary-500 text-white'
-                    : 'bg-page-secondary text-page-secondary hover:text-page'
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-        )}
-
         {/* 메인 콘텐츠 */}
         {!q ? (
           <EmptySearchState />
         ) : isLoading ? (
           <div className="flex flex-col justify-center items-center py-20 gap-3">
             <LoadingSpinner size="large" />
-            {searchMode === 'ai' && (
-              <p className="text-sm text-page-secondary">AI가 검색어를 분석 중...</p>
-            )}
+            <p className="text-sm text-page-secondary">AI가 검색어를 분석 중...</p>
           </div>
-        ) : searchMode === 'ai' ? (
+        ) : (
           <AISearchResults
             results={semanticResults}
             insight={insight}
             clusters={clusters}
           />
-        ) : keywordResults.length === 0 ? (
-          <NoResultsState />
-        ) : (
-          <div className="space-y-0 lg:grid lg:grid-cols-2 lg:gap-x-12 lg:gap-y-0 lg:border-t lg:border-page">
-            {keywordResults.map((item, index) => (
-              <SearchArticleCard key={item.id ?? index} article={item} subCategoryToLabel={subCategoryToLabel} />
-            ))}
-          </div>
         )}
       </div>
     </div>
@@ -240,10 +118,12 @@ function AISearchResults({
 
   return (
     <div className="space-y-6">
-      {/* 인사이트 카드 */}
       {insight && <InsightCard insight={insight} />}
 
-      {/* 검색 결과 목록 */}
+      {clusters.length > 0 && (
+        <ClusterSection clusters={clusters} results={results} />
+      )}
+
       <div>
         <h2 className="text-sm font-semibold text-page-secondary mb-3">검색 결과</h2>
         <div className="space-y-0">
@@ -252,11 +132,6 @@ function AISearchResults({
           ))}
         </div>
       </div>
-
-      {/* 클러스터 영역 */}
-      {clusters.length > 0 && (
-        <ClusterSection clusters={clusters} results={results} />
-      )}
     </div>
   )
 }
@@ -264,15 +139,8 @@ function AISearchResults({
 function InsightCard({ insight }: { insight: string }) {
   return (
     <div className="rounded-2xl bg-gradient-to-r from-primary-50 to-blue-50 dark:from-primary-900/20 dark:to-blue-900/20 border border-primary-200 dark:border-primary-800/40 p-4 md:p-5">
-      <div className="flex items-start gap-3">
-        <span className="flex-shrink-0 w-8 h-8 rounded-full bg-primary-500/10 flex items-center justify-center mt-0.5">
-          <MaterialIcon name="lightbulb" className="text-primary-500" size={18} />
-        </span>
-        <div>
-          <p className="text-xs font-semibold text-primary-600 dark:text-primary-400 mb-1">핵심 인사이트</p>
-          <p className="text-sm text-page leading-relaxed">{insight}</p>
-        </div>
-      </div>
+      <p className="text-xs font-semibold text-primary-600 dark:text-primary-400 mb-1.5">핵심 인사이트</p>
+      <p className="text-sm text-page leading-relaxed">{insight}</p>
     </div>
   )
 }
@@ -368,10 +236,7 @@ function SemanticArticleCard({ result }: { result: SemanticResult }) {
 function ClusterSection({ clusters, results }: { clusters: SearchCluster[]; results: SemanticResult[] }) {
   return (
     <div>
-      <h2 className="text-sm font-semibold text-page-secondary mb-3 flex items-center gap-1.5">
-        <MaterialIcon name="auto_awesome" size={16} className="text-primary-500" />
-        이런 주제는 어떠세요?
-      </h2>
+      <h2 className="text-sm font-semibold text-page-secondary mb-3">이런 주제는 어떠세요?</h2>
       <div className="space-y-3">
         {clusters.map((cluster, ci) => (
           <ClusterCard key={ci} cluster={cluster} results={results} />
@@ -541,7 +406,7 @@ function EmptySearchState() {
   return (
     <div className="text-center py-16 text-page-secondary">
       <p className="mb-2">상단 검색 아이콘을 눌러 검색어를 입력해 주세요.</p>
-      <p className="text-sm">AI 검색은 의미 기반으로, 키워드 검색은 제목·내용에서 찾습니다.</p>
+      <p className="text-sm">의미 기반으로 관련 기사를 찾아 드립니다.</p>
     </div>
   )
 }
@@ -560,220 +425,5 @@ function NoResultsState() {
         죄송합니다 해당 검색어로는 검색이 되지 않습니다.
       </p>
     </div>
-  )
-}
-
-// ── Keyword Search Card (기존 보존) ────────────────────
-
-function SearchArticleCard({ article, subCategoryToLabel }: { article: NewsItem; subCategoryToLabel: Record<string, string> }) {
-  const navigate = useNavigate()
-  const { isAuthenticated } = useAuthStore()
-  const addAudioItem = useAudioListStore((s) => s.addItem)
-  const openAndPlay = useAudioPlayerStore((s) => s.openAndPlay)
-  const [isBookmarked, setIsBookmarked] = useState(false)
-  const [isBookmarking, setIsBookmarking] = useState(false)
-
-  const imageUrl =
-    article.image_url ||
-    getPlaceholderImageUrl(
-      {
-        id: article.id,
-        title: article.title,
-        description: article.description,
-        published_at: article.published_at,
-        category: article.category,
-      },
-      200,
-      200
-    )
-
-  const formatDate = () => {
-    if (article.time_ago) return article.time_ago
-    const dateStr = article.display_date ?? article.published_at
-    if (dateStr) {
-      const date = new Date(dateStr)
-      return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일`
-    }
-    return ''
-  }
-
-  const getSourceName = () => {
-    let raw: string
-    if (article.original_source && String(article.original_source).trim()) raw = article.original_source
-    else if (article.source === 'Admin') return 'the gist.'
-    else raw = article.source || 'the gist.'
-    return formatSourceDisplayName(raw) || 'the gist.'
-  }
-
-  const getCategoryLabel = () => {
-    if (article.category) return subCategoryToLabel[article.category] ?? article.category
-    if (article.source === 'Admin') return 'the gist.'
-    return formatSourceDisplayName(article.source) || 'the gist.'
-  }
-
-  const handlePlayAudio = async (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    const newsId = article.id
-    if (!newsId) return
-
-    addAudioItem({
-      id: Number(newsId),
-      title: article.title,
-      description: article.description ?? null,
-      source: article.source ?? null,
-      category: article.category ?? null,
-      published_at: article.published_at ?? null,
-    })
-
-    try {
-      const res = await newsApi.getDetail(Number(newsId))
-      const detail = res.data?.data
-      if (detail) {
-        const originalTitle = (detail.original_title && String(detail.original_title).trim()) || extractTitleFromUrl(detail.url) || '원문'
-        const displayDate = (detail as { display_date?: string }).display_date ?? detail.published_at ?? detail.created_at
-        const dateStr = displayDate
-          ? `${new Date(displayDate).getFullYear()}년 ${new Date(displayDate).getMonth() + 1}월 ${new Date(displayDate).getDate()}일`
-          : ''
-        const rawSource = (detail.original_source && String(detail.original_source).trim()) || (detail.source === 'Admin' ? 'the gist.' : detail.source || 'the gist.')
-        const sourceDisplay = formatSourceDisplayName(rawSource) || 'the gist.'
-        const editorialLine = buildEditorialLine({ dateStr, sourceDisplay, originalTitle })
-        const mainContent = stripHtml(detail.narration || detail.content || detail.description || article.description || '')
-        const critiquePart = detail.why_important ? stripHtml(detail.why_important) : ''
-        const img = detail.image_url || article.image_url || ''
-        openAndPlay(detail.title, editorialLine, mainContent, critiquePart, 1.0, img, Number(newsId))
-        return
-      }
-    } catch { /* fallback */ }
-
-    const text = `${article.title}. ${article.description || ''}`.trim()
-    if (text) {
-      const url = (article as { url?: string; source_url?: string }).url || (article as { source_url?: string }).source_url
-      const originalTitle = extractTitleFromUrl(url) || '원문'
-      const sourceDisplay = getSourceName()
-      const displayDate = article.display_date ?? article.published_at
-      const dateStr = displayDate
-        ? `${new Date(displayDate).getFullYear()}년 ${new Date(displayDate).getMonth() + 1}월 ${new Date(displayDate).getDate()}일`
-        : ''
-      const editorialLine = buildEditorialLine({ dateStr, sourceDisplay, originalTitle })
-      openAndPlay(article.title, editorialLine, text, '', 1.0, undefined, Number(newsId))
-    }
-  }
-
-  const shareWebUrl = `${window.location.origin}/news/${article.id}`
-
-  const handleBookmark = async (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    const newsId = article.id
-    if (!newsId) {
-      alert('이 기사는 즐겨찾기에 추가할 수 없습니다.')
-      return
-    }
-    if (!isAuthenticated) {
-      if (confirm('로그인이 필요합니다. 로그인 페이지로 이동하시겠습니까?')) navigate('/login', { state: { returnTo: window.location.pathname } })
-      return
-    }
-    setIsBookmarking(true)
-    try {
-      if (isBookmarked) {
-        await newsApi.removeBookmark(Number(newsId))
-        setIsBookmarked(false)
-      } else {
-        await newsApi.bookmark(Number(newsId))
-        setIsBookmarked(true)
-      }
-    } catch (err: unknown) {
-      alert(apiErrorMessage(err, '즐겨찾기 처리에 실패했습니다.'))
-    } finally {
-      setIsBookmarking(false)
-    }
-  }
-
-  const detailUrl = article.id ? newsDetailPath(article.id, '최신') : '/news/'
-
-  return (
-    <article className="bg-page py-5">
-      <div className="grid grid-cols-[1fr_auto] items-start gap-4">
-        <div className="min-w-0 flex flex-col">
-          <Link to={detailUrl} state={{ fromTab: '최신' }} className="flex flex-col justify-center">
-            <h2 className="text-lg font-bold text-page leading-snug mb-1.5 line-clamp-2 break-keep-ko-mobile">
-              {article.title}
-            </h2>
-            {(article.narration || article.description) && (
-              <p className="text-xs text-page-secondary leading-relaxed line-clamp-3 break-keep-ko-mobile">
-                {stripHtml(article.narration?.trim() || article.description)}
-              </p>
-            )}
-          </Link>
-        </div>
-        <Link to={detailUrl} state={{ fromTab: '최신' }} className="w-28 h-28 flex-shrink-0 rounded-none overflow-hidden bg-page-secondary block aspect-square">
-          <img
-            src={imageUrl}
-            alt={article.title}
-            className="w-full h-full object-cover"
-            loading="lazy"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = getPlaceholderImageUrl(
-                {
-                  id: article.id,
-                  title: article.title,
-                  description: article.description,
-                  published_at: article.published_at,
-                  category: article.category,
-                  url: article.url,
-                  source: article.source,
-                },
-                200,
-                200
-              )
-            }}
-          />
-        </Link>
-      </div>
-      <div className="flex items-center justify-between pt-2 mt-2 border-t border-page">
-        <Link to={detailUrl} state={{ fromTab: '최신' }} className="flex items-center gap-1.5 text-xs shrink-0">
-          <span className="font-medium text-primary-500">{getCategoryLabel()}</span>
-          <span className="text-page-muted">|</span>
-          <span className="text-page-secondary">{formatDate()}</span>
-        </Link>
-        <div className="flex items-center gap-2 shrink-0" role="group" aria-label="기사 액션">
-          <button
-            type="button"
-            onClick={handlePlayAudio}
-            className="p-1 transition-colors text-page-secondary hover:text-page"
-            title="음성으로 듣기"
-            aria-label="재생"
-          >
-            <MaterialIcon name="headphones" className="w-5 h-5 shrink-0" size={20} />
-          </button>
-          <ShareMenu
-            title={article.title}
-            description={article.description || ''}
-            imageUrl={imageUrl}
-            webUrl={shareWebUrl}
-            className="text-page-secondary hover:text-page"
-            titleAttr="공유하기"
-            iconClassName="w-5 h-5"
-          />
-          <button
-            type="button"
-            onClick={handleBookmark}
-            disabled={isBookmarking}
-            className={`p-1 transition-colors ${isBookmarked ? 'text-primary-500' : 'text-page-secondary hover:text-page'} ${isBookmarking ? 'opacity-60 cursor-wait' : ''}`}
-            title="즐겨찾기"
-            aria-label={isBookmarked ? '즐겨찾기 해제' : '즐겨찾기 추가'}
-          >
-            {isBookmarking ? (
-              <span className="inline-block w-5 h-5 shrink-0 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
-            ) : isBookmarked ? (
-              <MaterialIcon name="bookmark" filled className="w-5 h-5 shrink-0 text-primary-500" size={20} />
-            ) : (
-              <MaterialIcon name="bookmark_border" className="w-5 h-5 shrink-0" size={20} />
-            )}
-          </button>
-        </div>
-      </div>
-    </article>
   )
 }
