@@ -228,6 +228,11 @@ class OpenAIService
                 CURLOPT_CONNECTTIMEOUT => 15,
             ]);
 
+            if (getenv('PHP_CURL_SSL_NO_VERIFY') === '1') {
+                curl_setopt($ch, \CURLOPT_SSL_VERIFYPEER, false);
+                curl_setopt($ch, \CURLOPT_SSL_VERIFYHOST, 0);
+            }
+
             $response = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             $curlError = curl_error($ch);

@@ -8,6 +8,10 @@ declare(strict_types=1);
 
 function log_api_usage(array $data): void
 {
+    if (getenv('SKIP_DB_LOG') === '1') {
+        return;
+    }
+
     static $pdo = null;
     static $tableChecked = false;
 

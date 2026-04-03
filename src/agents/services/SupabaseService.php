@@ -141,6 +141,13 @@ class SupabaseService
                 CURLOPT_CONNECTTIMEOUT => 10,
             ]);
 
+            // Windows CLI: PHP 번들 OpenSSL이 시스템 CA 저장소를 못 읽는 경우 우회
+            // 환경변수 PHP_CURL_SSL_NO_VERIFY=1 설정 시에만 적용 (로컬 배치 전용)
+            if (getenv('PHP_CURL_SSL_NO_VERIFY') === '1') {
+                curl_setopt($ch, \CURLOPT_SSL_VERIFYPEER, false);
+                curl_setopt($ch, \CURLOPT_SSL_VERIFYHOST, 0);
+            }
+
             if ($body !== null && in_array($method, ['POST', 'PATCH', 'PUT'], true)) {
                 curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($body));
             }
