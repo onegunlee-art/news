@@ -266,3 +266,45 @@ begin
     limit match_count;
 end;
 $$;
+
+-- ============================================================
+-- Hybrid search: article-level vector search with metadata filtering
+-- Groups chunks by news_id, returns best similarity per article
+-- ============================================================
+create or replace function search_articles_by_embedding(
+  query_embedding vector(1536),
+  match_count int default 20,
+  filter_category text default null
+)
+returns table (
+  news_id int,
+  max_similarity float,
+  topic_label text,
+  topic_category text,
+  entities jsonb,
+  region jsonb
+)
+language plpgsql
+as $$
+begin
+  return query
+    select
+      ae.news_id,
+      max(1 - (ae.embedding <=> query_embedding))::float as max_similarity,
+      (array_agg(ae.metadata->>'topic_label'
+         order by 1 - (ae.embedding <=> query_embedding) desc))[1] as topic_label,
+      (array_agg(ae.metadata->>'topic_category'
+         order by 1 - (ae.embedding <=> query_embedding) desc))[1] as topic_category,
+      (array_agg(ae.metadata->'entities'
+         order by 1 - (ae.embedding <=> query_embedding) desc))[1] as entities,
+      (array_agg(ae.metadata->'region'
+         order by 1 - (ae.embedding <=> query_embedding) desc))[1] as region
+    from analysis_embeddings ae
+    where ae.news_id is not null
+      and (filter_category is null
+           or ae.metadata->>'topic_category' = filter_category)
+    group by ae.news_id
+    order by max_similarity desc
+    limit match_count;
+end;
+$$;

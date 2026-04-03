@@ -127,7 +127,17 @@ function buildRagForArticle(RAGService $rag, string $query, int $newsId, float $
         if ($text === '') {
             continue;
         }
-        $item = ['sim' => $sim, 'text' => $text, 'news_id' => $nid];
+        $meta = $row['metadata'] ?? [];
+        if (is_string($meta)) {
+            $meta = json_decode($meta, true) ?: [];
+        }
+        $item = [
+            'sim' => $sim,
+            'text' => $text,
+            'news_id' => $nid,
+            'topic_label' => trim((string) ($meta['topic_label'] ?? '')),
+            'topic_category' => trim((string) ($meta['topic_category'] ?? '')),
+        ];
         if ($nid === $newsId) {
             $fromArticle[] = $item;
         } else {
@@ -166,7 +176,12 @@ function buildRagForArticle(RAGService $rag, string $query, int $newsId, float $
     foreach ($other as $x) {
         $nid = $x['news_id'];
         $titleTag = isset($otherTitles[$nid]) ? '제목: "' . $otherTitles[$nid] . '", ' : '';
-        $lines[] = '- [관련 기사, ' . $titleTag . '유사도 ' . round($x['sim'], 3) . '] ' . mb_substr($x['text'], 0, 600);
+        $topicTag = '';
+        if ($x['topic_category'] !== '' || $x['topic_label'] !== '') {
+            $parts = array_filter([$x['topic_category'], $x['topic_label']]);
+            $topicTag = implode(' | ', $parts) . ', ';
+        }
+        $lines[] = '- [관련 기사, ' . $topicTag . $titleTag . '유사도 ' . round($x['sim'], 3) . '] ' . mb_substr($x['text'], 0, 600);
         $refs[] = ['scope' => 'global', 'news_id' => $nid, 'similarity' => $x['sim'], 'title' => $otherTitles[$nid] ?? null];
     }
     foreach ($ctx['knowledge'] ?? [] as $k) {
@@ -527,6 +542,8 @@ if ($chipId !== '') {
     }
 }
 
+$answerType = chipIdToAnswerType($chipId !== '' ? $chipId : null);
+
 $ragPack = buildRagForArticle($rag, $message, $newsId, $minRagSim, $pdo);
 $ragText = $ragPack['lines'] === [] ? '(보조 맥락 없음)' : implode("\n", $ragPack['lines']);
 $refsJson = json_encode($ragPack['refs'], JSON_UNESCAPED_UNICODE);
@@ -537,6 +554,11 @@ $systemPrompt = str_replace(
     [$articleTitle, $articleBody, $ragText],
     $promptTemplate
 );
+
+$typeInstr = $acConfig['prompts']['type_instructions'][$answerType] ?? '';
+if ($typeInstr !== '') {
+    $systemPrompt .= "\n\n## 이 질문의 답변 방향\n" . $typeInstr;
+}
 
 $userInput = '';
 foreach ($history as $msg) {
@@ -561,7 +583,6 @@ while (ob_get_level()) {
 
 sendSSEArticleChat('start', ['session_id' => $sessionId]);
 
-$answerType = chipIdToAnswerType($chipId !== '' ? $chipId : null);
 $maxOut = (int) ($openaiCfg['max_tokens'] ?? 2000);
 $temp = (float) ($openaiCfg['temperature'] ?? 0.6);
 $timeout = (int) ($openaiCfg['timeout'] ?? 60);

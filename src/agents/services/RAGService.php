@@ -89,7 +89,18 @@ class RAGService
                 $text = $a['chunk_text'] ?? '';
                 $score = isset($a['similarity']) ? round((float) $a['similarity'], 3) : '?';
                 if ($text !== '') {
-                    $parts[] = "- [유사도 {$score}] {$text}";
+                    $meta = $a['metadata'] ?? [];
+                    if (is_string($meta)) {
+                        $meta = json_decode($meta, true) ?: [];
+                    }
+                    $topicCategory = trim((string) ($meta['topic_category'] ?? ''));
+                    $topicLabel = trim((string) ($meta['topic_label'] ?? ''));
+                    $topicTag = '';
+                    if ($topicCategory !== '' || $topicLabel !== '') {
+                        $tp = array_filter([$topicCategory, $topicLabel]);
+                        $topicTag = ' | ' . implode(' | ', $tp);
+                    }
+                    $parts[] = "- [유사도 {$score}{$topicTag}] {$text}";
                 }
             }
             if ($parts !== []) {

@@ -217,6 +217,20 @@ export const newsApi = {
     api.get('/admin/news.php', {
       params: { query, page, per_page: perPage, published_only: '1' },
     }),
+
+  // AI 벡터 검색 (인사이트 + 클러스터링 포함)
+  semanticSearch: (query: string, category?: string, limit?: number) =>
+    api.post('/search.php', { query, category, limit }),
+
+  // 종합 분석 SSE 스트리밍
+  clusterAnalysis: (newsIds: number[], clusterName: string) => {
+    const baseUrl = import.meta.env.VITE_API_URL || '/api'
+    return fetch(`${baseUrl}/search-analysis.php`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ news_ids: newsIds, cluster_name: clusterName }),
+    })
+  },
   
   getDetail: (id: number, params?: Record<string, unknown>) =>
     api.get('/news/detail.php', { params: { id, ...params } }),

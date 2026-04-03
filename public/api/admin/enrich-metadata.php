@@ -96,6 +96,7 @@ if (!$supabase->isConfigured() || !$openai->isConfigured()) {
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $total = 0;
     $enriched = 0;
+    $shortLabels = 0;
     $offset = 0;
     while (true) {
         $rows = $supabase->select(
@@ -107,8 +108,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         foreach ($rows as $r) {
             $total++;
             $m = $r['metadata'] ?? [];
-            if (is_array($m) && trim($m['topic_label'] ?? '') !== '') {
+            $label = is_array($m) ? trim($m['topic_label'] ?? '') : '';
+            if ($label !== '') {
                 $enriched++;
+                if (mb_strlen($label) < 10) {
+                    $shortLabels++;
+                }
             }
         }
         $offset += count($rows);
@@ -116,10 +121,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     }
     ob_clean();
     echo json_encode([
-        'success'  => true,
-        'total'    => $total,
-        'enriched' => $enriched,
-        'missing'  => $total - $enriched,
+        'success'      => true,
+        'total'        => $total,
+        'enriched'     => $enriched,
+        'missing'      => $total - $enriched,
+        'short_labels' => $shortLabels,
     ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
     exit;
 }
@@ -136,6 +142,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $rawInput = file_get_contents('php://input');
 $input    = json_decode($rawInput, true) ?: [];
 $batchSize = max(1, min(50, (int) ($input['batch'] ?? 10)));
+$reEnrichShort = !empty($input['re_enrich_short']);
 
 $results = [];
 $processed = 0;
@@ -160,7 +167,12 @@ while ($processed < $batchSize) {
         $meta = $row['metadata'] ?? [];
         if (!is_array($meta)) $meta = [];
 
-        if (trim($meta['topic_label'] ?? '') !== '') continue;
+        $existingLabel = trim($meta['topic_label'] ?? '');
+        if ($reEnrichShort) {
+            if ($existingLabel === '' || mb_strlen($existingLabel) >= 10) continue;
+        } else {
+            if ($existingLabel !== '') continue;
+        }
         if ($id === '' || trim($text) === '') { $skipped++; $processed++; continue; }
 
         try {
