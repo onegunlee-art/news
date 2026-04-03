@@ -243,8 +243,8 @@ function AISearchResults({
       <div>
         <h2 className="text-sm font-semibold text-page-secondary mb-3">검색 결과</h2>
         <div className="space-y-0">
-          {results.map((item, index) => (
-            <SemanticArticleCard key={item.news_id} result={item} rank={index + 1} />
+          {results.map((item) => (
+            <SemanticArticleCard key={item.news_id} result={item} />
           ))}
         </div>
       </div>
@@ -273,7 +273,7 @@ function InsightCard({ insight }: { insight: string }) {
   )
 }
 
-function SemanticArticleCard({ result, rank }: { result: SemanticResult; rank: number }) {
+function SemanticArticleCard({ result }: { result: SemanticResult }) {
   const detailUrl = newsDetailPath(result.news_id, '최신')
   const simPercent = Math.round(result.similarity * 100)
 
