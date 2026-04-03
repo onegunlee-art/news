@@ -66,6 +66,9 @@ interface SemanticSearchResponse {
 
 const TOPIC_CATEGORIES = ['무역', '외교', '군사', '에너지', '금융', '기술', '정치'] as const
 
+/** useMemo 의존성 안정화용 (매 렌더마다 []를 쓰면 exhaustive-deps 경고 발생) */
+const EMPTY_SEMANTIC_RESULTS: SemanticResult[] = []
+
 export default function SearchPage() {
   const [searchParams] = useSearchParams()
   const q = searchParams.get('q')?.trim() ?? ''
@@ -105,15 +108,16 @@ export default function SearchPage() {
 
   const keywordResults = keywordQuery.data ?? []
   const semanticData = semanticQuery.data
-  const semanticResults = semanticData?.results ?? []
+  const semanticResults = semanticData?.results ?? EMPTY_SEMANTIC_RESULTS
   const insight = semanticData?.insight ?? null
   const clusters = semanticData?.clusters ?? []
 
   const availableCategories = useMemo(() => {
-    if (!semanticResults.length) return []
-    const cats = new Set(semanticResults.map((r) => r.topic_category).filter(Boolean))
+    const list = semanticData?.results
+    if (!list?.length) return []
+    const cats = new Set(list.map((r) => r.topic_category).filter(Boolean))
     return TOPIC_CATEGORIES.filter((c) => cats.has(c))
-  }, [semanticResults])
+  }, [semanticData])
 
   const resultCount = searchMode === 'ai' ? semanticResults.length : keywordResults.length
 
@@ -416,11 +420,12 @@ function ClusterCard({ cluster, results }: { cluster: SearchCluster; results: Se
       const decoder = new TextDecoder()
       let buffer = ''
 
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-
-        buffer += decoder.decode(value, { stream: true })
+      let readResult = await reader.read()
+      while (!readResult.done) {
+        const chunk = readResult.value
+        if (chunk) {
+          buffer += decoder.decode(chunk, { stream: true })
+        }
         const lines = buffer.split('\n')
         buffer = lines.pop() || ''
 
@@ -436,6 +441,7 @@ function ClusterCard({ cluster, results }: { cluster: SearchCluster; results: Se
             }
           }
         }
+        readResult = await reader.read()
       }
     } catch (err) {
       setAnalysisError(err instanceof Error ? err.message : '분석 중 오류가 발생했습니다.')
