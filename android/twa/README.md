@@ -62,7 +62,7 @@ base64 -w0 my-upload-key.keystore
 
 `Out-File`은 구버전 PowerShell에서 기본 인코딩이 UTF-16일 수 있습니다. 디코딩 오류가 나면 **`utf8`(또는 PowerShell 7+ `utf8NoBOM`)** 과 **파일 맨 앞 BOM·맨 끝 불필요한 빈 줄 제거**를 확인하세요. GitHub 시크릿 값은 **순수 Base64 한 줄**이어야 합니다.
 
-업로드 키를 **JDK 21 이상 `keytool`로 만든 경우**, 예전 Android `apksigner`(build-tools 34)로는 PKCS12를 읽다가 `Tag number over 30 is not supported` 가 날 수 있습니다. GitHub 워크플로에서는 Bubblewrap이 쓰는 build-tools 버전을 **36.0.0**에 맞추도록 패치합니다. 로컬에서 같은 오류가 나면 JDK 17 `keytool`로 keystore를 새로 만들거나, Android SDK build-tools를 최신에 맞추세요.
+업로드 키를 **JDK 21 이상 `keytool`로 만든 경우**, 예전 `apksigner`(build-tools 34)가 JDK 17 런타임으로 실행되면 `Tag number over 30 is not supported` 오류가 납니다. GitHub 워크플로에서는 **JDK 21**을 사용하고 build-tools도 **36.0.0**에 맞추도록 패치하여 이 문제를 해결합니다.
 
 실행이 끝나면 **Actions** 탭에서 해당 실행을 열고 **Artifacts**에서 **`twa-release-aab`** 를 내려받습니다(다운로드한 ZIP을 풀면 그 안에 `app-release.aab` 등 번들 파일이 있습니다). 러너 상 기본 출력 경로는 `app/build/outputs/bundle/release/app-release.aab` 이며, 워크플로에 `find … *.aab` 로그 스텝이 있어 실제 파일명을 실행 로그에서 확인할 수 있습니다. CI에서는 네트워크·타임아웃 이슈를 줄이기 위해 `bubblewrap build`에 **`--skipPwaValidation`** 을 사용합니다. PWA 품질 검증은 배포 전에 로컬에서 `bubblewrap validate --url=…` 등으로 보완하세요.
 

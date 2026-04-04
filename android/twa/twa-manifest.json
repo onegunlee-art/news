@@ -18,8 +18,8 @@
   "maskableIconUrl": "https://www.thegist.co.kr/icon-512.png",
   "splashScreenFadeOutDuration": 300,
   "signingKey": {
-    "path": "./android.keystore",
-    "alias": "android"
+    "path": "../../aws/my-upload-key.keystore",
+    "alias": "my-key-alias"
   },
   "appVersionCode": 1,
   "appVersion": "1",
@@ -37,7 +37,12 @@
   "fullScopeUrl": "https://www.thegist.co.kr/",
   "minSdkVersion": 21,
   "orientation": "portrait-primary",
-  "fingerprints": [],
+  "fingerprints": [
+    {
+      "type": "sha256Cert",
+      "value": "BF:CD:50:27:E1:7D:F4:D8:F6:CC:7D:FE:EC:8D:03:D1:E5:09:A1:FF:0C:AE:FF:A6:DC:29:B4:B5:29:1C:80:E0"
+    }
+  ],
   "additionalTrustedOrigins": [],
   "retainedBundles": []
 }

@@ -12,7 +12,7 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: "21"
 
       # Bubblewrap 최신 템플릿은 compileSdk 36 — 플랫폼·빌드 도구 없으면 Gradle이 바로 실패(exit 1)
       - uses: android-actions/setup-android@v4
@@ -26,8 +26,9 @@ jobs:
       - name: Install Bubblewrap CLI
         run: npm install -g @bubblewrap/cli
 
-      # @bubblewrap/core은 apksigner 경로를 build-tools 34.0.0으로 고정함. JDK 21+ keytool PKCS12는
-      # 해당 apksigner에서 "Tag number over 30 is not supported" 로 실패할 수 있어 36.0.0으로 맞춤.
+      # @bubblewrap/core은 apksigner 경로를 build-tools 34.0.0으로 고정함.
+      # CI JDK를 21로 올렸으므로 PKCS12 "Tag number over 30" 문제는 해소되지만,
+      # Bubblewrap이 설치되지 않은 34.0.0 경로를 참조하면 FileNotFound로 실패하므로 36.0.0에 맞춤.
       - name: Patch Bubblewrap BUILD_TOOLS_VERSION for apksigner
         run: |
           F="$(find "$(npm root -g)" -path '*/@bubblewrap/core/dist/lib/androidSdk/AndroidSdkTools.js' 2>/dev/null | head -n1)"
@@ -54,6 +55,15 @@ jobs:
           PLAY_UPLOAD_KEYSTORE_BASE64: ${{ secrets.PLAY_UPLOAD_KEYSTORE_BASE64 }}
         run: |
           echo "$PLAY_UPLOAD_KEYSTORE_BASE64" | base64 -d > "${RUNNER_TEMP}/upload.keystore"
+
+      - name: Verify decoded keystore
+        env:
+          BUBBLEWRAP_KEYSTORE_PASSWORD: ${{ secrets.PLAY_KEYSTORE_PASSWORD }}
+        run: |
+          keytool -list -keystore "${RUNNER_TEMP}/upload.keystore" \
+            -storepass "${BUBBLEWRAP_KEYSTORE_PASSWORD}" \
+            -alias "${{ secrets.PLAY_KEY_ALIAS }}" -v 2>&1 | head -30
+          echo "--- Keystore file size: $(wc -c < "${RUNNER_TEMP}/upload.keystore") bytes ---"
 
       - name: Build signed AAB
         working-directory: android/twa

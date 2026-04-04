@@ -55,6 +55,8 @@ keytool -list -v -keystore your.keystore -alias your_alias
 
 워크플로에서는 CI 안정성을 위해 `bubblewrap build`에 **`--skipPwaValidation`** 이 붙어 있습니다. 스토어 정책·PWA 품질은 Play 콘솔·수동 검증으로 보완하고, 필요 시 로컬에서 `bubblewrap validate`를 실행하세요.
 
+> **JDK 21 사용**: keystore가 JDK 21+ `keytool`로 생성된 경우 JDK 17의 `apksigner`에서 `Tag number over 30 is not supported` 오류가 발생합니다. 워크플로는 **JDK 21**을 사용하여 이 문제를 해결합니다.
+
 이 파이프라인은 Play Developer API로 자동 업로드하지 않습니다. 아티팩트 AAB를 받아 Play Console **내부 테스트** 등에 수동 업로드합니다.
 
 ## 5. 내부 테스트 시 확인할 기능 (체크리스트)
