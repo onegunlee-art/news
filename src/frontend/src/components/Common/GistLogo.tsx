@@ -12,6 +12,8 @@ type GistLogoProps = {
   /** 시맨틱 태그. link 사용 시 권장: 헤더 h1, 푸터 h2 */
   as?: 'h1' | 'h2' | 'span'
   className?: string
+  /** LOBSTER_STYLE 위에 병합 (예: fontSize) */
+  style?: React.CSSProperties
 }
 
 const sizeClasses: Record<GistLogoSize, string> = {
@@ -22,12 +24,12 @@ const sizeClasses: Record<GistLogoSize, string> = {
   inline: 'text-page',
 }
 
-export default function GistLogo({ size = 'default', link = true, as: Tag = 'span', className = '' }: GistLogoProps) {
+export default function GistLogo({ size = 'default', link = true, as: Tag = 'span', className = '', style }: GistLogoProps) {
   const hoverClass = link && size === 'default' ? 'group-hover:opacity-90 transition-opacity duration-200' : ''
   const content = (
     <Tag
       className={`${sizeClasses[size]} ${hoverClass} ${className}`.trim()}
-      style={LOBSTER_STYLE}
+      style={{ ...LOBSTER_STYLE, ...style }}
     >
       the gist.
     </Tag>

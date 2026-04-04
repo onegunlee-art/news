@@ -1,21 +1,62 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useLayoutEffect } from 'react'
 import GistLogo from '../components/Common/GistLogo'
 
 interface LandingPageProps {
   onEnter: () => void
 }
 
-const MEDIA_SOURCES = ['The Economist', 'Foreign Affairs', 'Financial Times', 'UN Meetings']
+const MEDIA_SOURCES = ['The Economist', 'Foreign Affairs', 'Financial Times', 'UN Meetings'] as const
 
-const BG_COLORS = [
-  '#2D2D2D',
-  '#3D5A80',
-  '#B07340',
-  '#4A7A5A',
-]
+/** letter-spacing으로 박스 안 정렬감 조절 (동일 박스 크기) */
+const BOX_TRACKING: Record<(typeof MEDIA_SOURCES)[number], string> = {
+  'The Economist': '0.06em',
+  'Foreign Affairs': '0.04em',
+  'Financial Times': '0.02em',
+  'UN Meetings': '0.12em',
+}
+
+const BG_COLORS = ['#2D2D2D', '#3D5A80', '#B07340', '#4A7A5A'] as const
+
+/** 0 차콜·2 오렌지: 흰 글자 / 1 블루·3 그린: 검정 글자 */
+function foregroundForIndex(index: number): { main: string; muted: string; border: string } {
+  const darkText = index === 1 || index === 3
+  if (darkText) {
+    return { main: '#000000', muted: 'rgba(0,0,0,0.72)', border: 'rgba(0,0,0,0.45)' }
+  }
+  return { main: '#ffffff', muted: 'rgba(255,255,255,0.85)', border: 'rgba(255,255,255,0.55)' }
+}
+
+function fitLogoFontToWidth(targetWidth: number): number {
+  if (targetWidth < 1) return 48
+  const el = document.createElement('span')
+  el.style.fontFamily = "'Lobster', cursive"
+  el.style.fontWeight = '400'
+  el.style.position = 'absolute'
+  el.style.left = '-9999px'
+  el.style.visibility = 'hidden'
+  el.style.whiteSpace = 'nowrap'
+  el.textContent = 'the gist.'
+  document.body.appendChild(el)
+  let low = 12
+  let high = 320
+  for (let i = 0; i < 28; i++) {
+    const mid = (low + high) / 2
+    el.style.fontSize = `${mid}px`
+    const w = el.offsetWidth
+    if (w <= targetWidth * 0.98) low = mid
+    else high = mid
+  }
+  document.body.removeChild(el)
+  return Math.max(24, Math.floor(low))
+}
 
 export default function LandingPage({ onEnter }: LandingPageProps) {
   const [colorIndex, setColorIndex] = useState(0)
+  const fitRef = useRef<HTMLDivElement>(null)
+  const [logoFontPx, setLogoFontPx] = useState(64)
+
+  const bg = BG_COLORS[colorIndex]
+  const fg = foregroundForIndex(colorIndex)
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -24,60 +65,99 @@ export default function LandingPage({ onEnter }: LandingPageProps) {
     return () => clearInterval(id)
   }, [])
 
+  useLayoutEffect(() => {
+    const run = () => {
+      const el = fitRef.current
+      if (!el) return
+      setLogoFontPx(fitLogoFontToWidth(el.clientWidth))
+    }
+    run()
+    const ro = new ResizeObserver(run)
+    if (fitRef.current) ro.observe(fitRef.current)
+    window.addEventListener('resize', run)
+    return () => {
+      ro.disconnect()
+      window.removeEventListener('resize', run)
+    }
+  }, [colorIndex])
+
   return (
     <div
       className="min-h-[100dvh] flex flex-col items-start justify-start px-6 pt-16 pb-28 md:px-16 md:pt-20 md:pb-36 lg:px-24 lg:pt-24"
       style={{
         fontFamily: "'Noto Sans KR', sans-serif",
-        backgroundColor: BG_COLORS[colorIndex],
+        backgroundColor: bg,
         transition: 'background-color 1s ease',
+        color: fg.main,
       }}
     >
-      <div className="w-full max-w-5xl flex flex-col gap-10 md:gap-14">
-        {/* Media source tags */}
-        <div className="flex flex-col items-start gap-3 md:flex-row md:flex-wrap md:gap-4">
+      <div className="w-full max-w-5xl flex flex-col">
+        {/* Media boxes — 직각, 동일 크기 */}
+        <div className="flex flex-col gap-3 md:grid md:grid-cols-2 lg:grid-cols-4 md:gap-4 w-full">
           {MEDIA_SOURCES.map((name) => (
-            <span
+            <div
               key={name}
-              className="inline-block px-5 py-2.5 md:px-7 md:py-3 rounded-full border-2 border-white/50 text-2xl md:text-3xl lg:text-4xl text-white/95 tracking-wide"
+              role="presentation"
+              className="flex h-24 md:h-28 w-full items-center justify-center border-2 px-3 text-center text-2xl md:text-3xl lg:text-4xl font-normal"
+              style={{
+                borderColor: fg.border,
+                color: fg.main,
+                letterSpacing: BOX_TRACKING[name],
+              }}
             >
               {name}
-            </span>
+            </div>
           ))}
         </div>
 
-        {/* Tagline */}
-        <p className="text-3xl md:text-5xl lg:text-6xl text-white/80 font-light tracking-wide leading-snug">
-          글로벌 이슈, <span className="font-bold text-white">AI로 심플하게</span>
-        </p>
+        {/* 박스 ↔ 태그라인 간격 (기존 대비 약 3배) */}
+        <div className="h-24 md:h-32 lg:h-36 shrink-0" aria-hidden />
 
-        {/* Logo + Enter button */}
-        <div className="flex items-center justify-between w-full gap-6">
-          <GistLogo
-            size="header"
-            link={false}
-            className="!text-white !text-[3.3rem] md:!text-[5.5rem] lg:!text-[6.5rem]"
-          />
-          <button
-            type="button"
-            onClick={onEnter}
-            className="flex-shrink-0 w-20 h-20 md:w-28 md:h-28 rounded-full border-[3px] border-white/60 bg-white flex items-center justify-center text-black hover:bg-white/90 transition-colors duration-300"
-            aria-label="들어가기"
+        <div className="w-full">
+          {/* 태그라인·로고 가용 폭 = 전체 − (화살표 버튼 + gap) */}
+          <p
+            className="w-full pr-[calc(5rem+1rem)] text-3xl font-light leading-snug tracking-wide md:pr-[calc(7rem+1.5rem)] md:text-5xl lg:text-6xl"
+            style={{ color: fg.muted }}
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="w-10 h-10 md:w-14 md:h-14"
+            글로벌 이슈,{' '}
+            <span className="font-bold" style={{ color: fg.main }}>
+              AI로 심플하게
+            </span>
+          </p>
+
+          <div className="h-8 shrink-0 md:h-10" aria-hidden />
+
+          <div className="flex w-full items-center gap-4 md:gap-6">
+            <div ref={fitRef} className="min-w-0 flex-1">
+              <GistLogo
+                size="inline"
+                link={false}
+                className="block whitespace-nowrap leading-none font-normal !p-0 !text-inherit"
+                style={{ fontSize: logoFontPx, color: fg.main }}
+              />
+            </div>
+            <button
+              type="button"
+              onClick={onEnter}
+              className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-full border-[3px] bg-white md:h-28 md:w-28"
+              style={{ borderColor: fg.border }}
+              aria-label="들어가기"
             >
-              <path d="M5 12h14" />
-              <path d="m12 5 7 7-7 7" />
-            </svg>
-          </button>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke={bg}
+                strokeWidth={2.5}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-10 w-10 md:h-14 md:w-14"
+              >
+                <path d="M5 12h14" />
+                <path d="m12 5 7 7-7 7" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
     </div>
