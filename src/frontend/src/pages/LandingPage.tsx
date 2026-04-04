@@ -50,10 +50,54 @@ function fitLogoFontToWidth(targetWidth: number): number {
   return Math.max(24, Math.floor(low))
 }
 
+function EnterButton({
+  onEnter,
+  bg,
+  arrowCircleDark,
+  fg,
+  className,
+}: {
+  onEnter: () => void
+  bg: string
+  arrowCircleDark: boolean
+  fg: { border: string }
+  className: string
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onEnter}
+      className={[
+        'flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-full border-[3px] md:h-28 md:w-28',
+        arrowCircleDark ? 'border-black/50 bg-black' : 'bg-white',
+        className,
+      ].join(' ')}
+      style={{ borderColor: arrowCircleDark ? 'rgba(0,0,0,0.35)' : fg.border }}
+      aria-label="들어가기"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke={bg}
+        strokeWidth={2.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="h-10 w-10 md:h-14 md:w-14"
+      >
+        <path d="M5 12h14" />
+        <path d="m12 5 7 7-7 7" />
+      </svg>
+    </button>
+  )
+}
+
 export default function LandingPage({ onEnter }: LandingPageProps) {
   const [colorIndex, setColorIndex] = useState(0)
   const fitRef = useRef<HTMLDivElement>(null)
+  const tagRef = useRef<HTMLParagraphElement>(null)
   const [logoFontPx, setLogoFontPx] = useState(64)
+  const [tagLetterSpacing, setTagLetterSpacing] = useState('0.02em')
 
   const bg = BG_COLORS[colorIndex]
   const fg = foregroundForIndex(colorIndex)
@@ -85,6 +129,47 @@ export default function LandingPage({ onEnter }: LandingPageProps) {
     }
   }, [colorIndex])
 
+  /** 모바일: 태그라인 시각 폭을 로고 폭에 가깝게 — letter-spacing 이진 탐색 */
+  useLayoutEffect(() => {
+    const run = () => {
+      const tag = tagRef.current
+      const logoBox = fitRef.current
+      if (!tag || !logoBox) return
+      if (!window.matchMedia('(max-width: 767px)').matches) {
+        tag.style.letterSpacing = ''
+        setTagLetterSpacing('0.02em')
+        return
+      }
+      const target = logoBox.scrollWidth
+      let low = -0.08
+      let high = 0.55
+      for (let i = 0; i < 24; i++) {
+        const mid = (low + high) / 2
+        tag.style.letterSpacing = `${mid}em`
+        const w = tag.scrollWidth
+        if (w < target * 0.97) low = mid
+        else high = mid
+      }
+      setTagLetterSpacing(`${low}em`)
+    }
+    let raf = 0
+    const schedule = () => {
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(run)
+    }
+    schedule()
+    window.addEventListener('resize', schedule)
+    return () => {
+      cancelAnimationFrame(raf)
+      window.removeEventListener('resize', schedule)
+    }
+  }, [logoFontPx, colorIndex])
+
+  const boxClass = [
+    'flex min-w-0 w-full items-center justify-center border-2 font-bold max-md:h-[4.2rem] max-md:px-2 max-md:text-[1.05rem] md:h-28 md:px-2 md:text-xl lg:text-2xl',
+    'whitespace-nowrap md:overflow-hidden md:text-ellipsis',
+  ].join(' ')
+
   return (
     <div
       className="min-h-[100dvh] flex flex-col items-start justify-start px-6 pt-16 pb-28 md:px-16 md:pt-20 md:pb-36 lg:px-24 lg:pt-24"
@@ -95,36 +180,43 @@ export default function LandingPage({ onEnter }: LandingPageProps) {
         color: fg.main,
       }}
     >
-      <div className="w-full max-w-5xl flex flex-col">
-        {/* Media boxes — 모바일 약 30% 축소 / PC 3+1 그리드, 글자 1줄 */}
-        <div className="flex w-full flex-col gap-1.5 md:grid md:grid-cols-3 md:gap-4">
-          {MEDIA_SOURCES.map((name, i) => (
-            <div
-              key={name}
-              role="presentation"
-              className={[
-                'flex min-w-0 w-full items-center justify-center border-2 font-normal max-md:h-[4.2rem] max-md:px-2 max-md:text-[1.05rem] md:h-28 md:px-2 md:text-xl lg:text-2xl',
-                i === 3 ? 'md:col-start-1' : '',
-                'whitespace-nowrap md:overflow-hidden md:text-ellipsis',
-              ].join(' ')}
-              style={{
-                borderColor: fg.border,
-                color: fg.main,
-                letterSpacing: BOX_TRACKING[name],
-              }}
-            >
-              {name}
+      <div className="w-full max-w-5xl flex flex-col md:max-w-none md:w-full">
+        {/* 모바일: 박스 열 + 화살표(박스 높이 중앙) / PC: 박스만 전체 폭 */}
+        <div className="flex w-full flex-row items-center gap-3 md:block md:w-full">
+          <div className="flex min-w-0 flex-1 flex-col gap-1.5 md:w-full md:max-w-none">
+            <div className="flex w-full flex-col gap-1.5 md:grid md:grid-cols-3 md:gap-4">
+              {MEDIA_SOURCES.map((name, i) => (
+                <div
+                  key={name}
+                  role="presentation"
+                  className={[boxClass, i === 3 ? 'md:col-start-1' : ''].join(' ')}
+                  style={{
+                    borderColor: fg.border,
+                    color: fg.main,
+                    letterSpacing: BOX_TRACKING[name],
+                  }}
+                >
+                  {name}
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
+          <EnterButton
+            onEnter={onEnter}
+            bg={bg}
+            arrowCircleDark={arrowCircleDark}
+            fg={fg}
+            className="md:hidden"
+          />
         </div>
 
         <div className="h-24 shrink-0 max-md:h-16 md:h-32 lg:h-36" aria-hidden />
 
-        {/* 모바일: 로고·화살표를 위로(툴바 가림 완화) */}
-        <div className="w-full max-md:-translate-y-6 max-md:pb-8">
+        <div className="relative w-full max-md:-translate-y-6 max-md:pb-8 md:pr-[8rem]">
           <p
-            className="w-full pr-[calc(5rem+1rem)] font-light leading-snug tracking-wide max-md:whitespace-nowrap max-md:text-[clamp(0.9375rem,3.8vw,1.125rem)] md:pr-[calc(7rem+1.5rem)] md:text-5xl lg:text-6xl"
-            style={{ color: fg.muted }}
+            ref={tagRef}
+            className="w-full font-medium leading-snug max-md:whitespace-nowrap max-md:text-2xl max-md:leading-tight md:text-5xl md:font-light lg:text-6xl"
+            style={{ color: fg.muted, letterSpacing: tagLetterSpacing }}
           >
             글로벌 이슈,{' '}
             <span className="font-bold" style={{ color: fg.main }}>
@@ -134,8 +226,8 @@ export default function LandingPage({ onEnter }: LandingPageProps) {
 
           <div className="h-8 shrink-0 max-md:h-5 md:h-10" aria-hidden />
 
-          <div className="flex w-full items-center gap-4 max-md:gap-3 md:gap-6">
-            <div ref={fitRef} className="min-w-0 flex-1">
+          <div className="flex w-full items-center gap-4 md:block md:relative">
+            <div ref={fitRef} className="min-w-0 flex-1 md:w-full">
               <GistLogo
                 size="inline"
                 link={false}
@@ -143,30 +235,13 @@ export default function LandingPage({ onEnter }: LandingPageProps) {
                 style={{ fontSize: logoFontPx, color: fg.main }}
               />
             </div>
-            <button
-              type="button"
-              onClick={onEnter}
-              className={[
-                'flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-full border-[3px] md:h-28 md:w-28',
-                arrowCircleDark ? 'border-black/50 bg-black' : 'bg-white',
-              ].join(' ')}
-              style={{ borderColor: arrowCircleDark ? 'rgba(0,0,0,0.35)' : fg.border }}
-              aria-label="들어가기"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke={bg}
-                strokeWidth={2.5}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-10 w-10 md:h-14 md:w-14"
-              >
-                <path d="M5 12h14" />
-                <path d="m12 5 7 7-7 7" />
-              </svg>
-            </button>
+            <EnterButton
+              onEnter={onEnter}
+              bg={bg}
+              arrowCircleDark={arrowCircleDark}
+              fg={fg}
+              className="hidden md:flex md:absolute md:right-0 md:top-1/2 md:-translate-y-1/2"
+            />
           </div>
         </div>
       </div>
