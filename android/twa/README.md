@@ -33,7 +33,7 @@ bubblewrap init --manifest https://www.thegist.co.kr/manifest.webmanifest
 
 | Secret | 설명 |
 |--------|------|
-| `PLAY_UPLOAD_KEYSTORE_BASE64` | 업로드 keystore 파일을 Base64로 인코딩한 전체 문자열 |
+| `PLAY_KEYSTORE_BASE64` | 업로드 keystore 파일을 Base64로 인코딩한 전체 문자열 |
 | `PLAY_KEYSTORE_PASSWORD` | keystore 비밀번호 (워크플로에서 `BUBBLEWRAP_KEYSTORE_PASSWORD`로 전달) |
 | `PLAY_KEY_PASSWORD` | key 비밀번호 (`BUBBLEWRAP_KEY_PASSWORD`) |
 | `PLAY_KEY_ALIAS` | 예: `my-key-alias` (`--signingKeyAlias`) |
