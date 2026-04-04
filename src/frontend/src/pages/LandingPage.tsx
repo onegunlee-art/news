@@ -68,7 +68,7 @@ function EnterButton({
       type="button"
       onClick={onEnter}
       className={[
-        'flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-full border-[3px] md:h-28 md:w-28',
+        'flex h-[4.5rem] w-[4.5rem] flex-shrink-0 items-center justify-center rounded-full border-[3px] md:h-28 md:w-28',
         arrowCircleDark ? 'border-black/50 bg-black' : 'bg-white',
         className,
       ].join(' ')}
@@ -83,7 +83,7 @@ function EnterButton({
         strokeWidth={2.5}
         strokeLinecap="round"
         strokeLinejoin="round"
-        className="h-10 w-10 md:h-14 md:w-14"
+        className="h-9 w-9 md:h-14 md:w-14"
       >
         <path d="M5 12h14" />
         <path d="m12 5 7 7-7 7" />
@@ -182,7 +182,7 @@ export default function LandingPage({ onEnter }: LandingPageProps) {
     >
       <div className="w-full max-w-5xl flex flex-col md:max-w-none md:w-full">
         {/* 박스: 모바일·PC 모두 화살표 열 너비만큼 왼쪽으로 몰기 (3번째 박스 끝 ≈ 화살표 시작) */}
-        <div className="w-full max-w-[calc(100%-5rem-1rem)] md:max-w-[calc(100%-7rem-1.5rem)]">
+        <div className="w-full max-w-[calc(100%-4.5rem-0.75rem)] md:max-w-[min(66.666667%,calc(100%-7rem-1.5rem))]">
           <div className="flex w-full flex-col gap-1.5 md:grid md:grid-cols-3 md:gap-4">
             {MEDIA_SOURCES.map((name, i) => (
               <div
@@ -207,7 +207,7 @@ export default function LandingPage({ onEnter }: LandingPageProps) {
         <div className="relative w-full max-md:-translate-y-6 max-md:pb-8 md:pr-[8rem]">
           <p
             ref={tagRef}
-            className="w-full pr-[calc(5rem+1rem)] font-medium leading-snug max-md:whitespace-nowrap max-md:text-2xl max-md:leading-tight md:pr-0 md:text-5xl md:font-light lg:text-6xl"
+            className="w-full pr-[calc(4.5rem+0.75rem)] font-medium leading-snug max-md:whitespace-nowrap max-md:text-[1.35rem] max-md:leading-tight md:pr-0 md:text-[2.7rem] md:font-light lg:text-[3.375rem]"
             style={{ color: fg.muted, letterSpacing: tagLetterSpacing }}
           >
             글로벌 이슈,{' '}
