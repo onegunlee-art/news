@@ -115,8 +115,8 @@ export default function LandingPage({ onEnter }: LandingPageProps) {
       const el = fitRef.current
       if (!el) return
       let px = fitLogoFontToWidth(el.clientWidth)
-      if (window.matchMedia('(max-width: 767px)').matches) px *= 0.9
-      else px *= 0.8
+      if (window.matchMedia('(max-width: 767px)').matches) px *= 0.9 * 0.8
+      else px *= 0.8 * 0.85
       setLogoFontPx(Math.max(18, Math.floor(px)))
     }
     run()
@@ -181,41 +181,33 @@ export default function LandingPage({ onEnter }: LandingPageProps) {
       }}
     >
       <div className="w-full max-w-5xl flex flex-col md:max-w-none md:w-full">
-        {/* 모바일: 박스 열 + 화살표(박스 높이 중앙) / PC: 박스만 전체 폭 */}
-        <div className="flex w-full flex-row items-center gap-3 md:block md:w-full">
-          <div className="flex min-w-0 flex-1 flex-col gap-1.5 md:w-full md:max-w-none">
-            <div className="flex w-full flex-col gap-1.5 md:grid md:grid-cols-3 md:gap-4">
-              {MEDIA_SOURCES.map((name, i) => (
-                <div
-                  key={name}
-                  role="presentation"
-                  className={[boxClass, i === 3 ? 'md:col-start-1' : ''].join(' ')}
-                  style={{
-                    borderColor: fg.border,
-                    color: fg.main,
-                    letterSpacing: BOX_TRACKING[name],
-                  }}
-                >
-                  {name}
-                </div>
-              ))}
-            </div>
+        {/* 박스: 모바일·PC 모두 화살표 열 너비만큼 왼쪽으로 몰기 (3번째 박스 끝 ≈ 화살표 시작) */}
+        <div className="w-full max-w-[calc(100%-5rem-1rem)] md:max-w-[calc(100%-7rem-1.5rem)]">
+          <div className="flex w-full flex-col gap-1.5 md:grid md:grid-cols-3 md:gap-4">
+            {MEDIA_SOURCES.map((name, i) => (
+              <div
+                key={name}
+                role="presentation"
+                className={[boxClass, i === 3 ? 'md:col-start-1' : ''].join(' ')}
+                style={{
+                  borderColor: fg.border,
+                  color: fg.main,
+                  letterSpacing: BOX_TRACKING[name],
+                }}
+              >
+                {name}
+              </div>
+            ))}
           </div>
-          <EnterButton
-            onEnter={onEnter}
-            bg={bg}
-            arrowCircleDark={arrowCircleDark}
-            fg={fg}
-            className="md:hidden"
-          />
         </div>
 
-        <div className="h-24 shrink-0 max-md:h-16 md:h-32 lg:h-36" aria-hidden />
+        {/* 모바일: 박스↔글자 간격 2배 (기존 max-md:h-16의 2배 → h-32) */}
+        <div className="h-24 shrink-0 max-md:h-32 md:h-32 lg:h-36" aria-hidden />
 
         <div className="relative w-full max-md:-translate-y-6 max-md:pb-8 md:pr-[8rem]">
           <p
             ref={tagRef}
-            className="w-full font-medium leading-snug max-md:whitespace-nowrap max-md:text-2xl max-md:leading-tight md:text-5xl md:font-light lg:text-6xl"
+            className="w-full pr-[calc(5rem+1rem)] font-medium leading-snug max-md:whitespace-nowrap max-md:text-2xl max-md:leading-tight md:pr-0 md:text-5xl md:font-light lg:text-6xl"
             style={{ color: fg.muted, letterSpacing: tagLetterSpacing }}
           >
             글로벌 이슈,{' '}
@@ -226,7 +218,7 @@ export default function LandingPage({ onEnter }: LandingPageProps) {
 
           <div className="h-8 shrink-0 max-md:h-5 md:h-10" aria-hidden />
 
-          <div className="flex w-full items-center gap-4 md:block md:relative">
+          <div className="flex w-full items-center gap-4 max-md:gap-3 md:block md:relative">
             <div ref={fitRef} className="min-w-0 flex-1 md:w-full">
               <GistLogo
                 size="inline"
@@ -235,6 +227,13 @@ export default function LandingPage({ onEnter }: LandingPageProps) {
                 style={{ fontSize: logoFontPx, color: fg.main }}
               />
             </div>
+            <EnterButton
+              onEnter={onEnter}
+              bg={bg}
+              arrowCircleDark={arrowCircleDark}
+              fg={fg}
+              className="flex-shrink-0 md:hidden"
+            />
             <EnterButton
               onEnter={onEnter}
               bg={bg}
