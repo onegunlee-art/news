@@ -57,6 +57,7 @@ export default function LandingPage({ onEnter }: LandingPageProps) {
 
   const bg = BG_COLORS[colorIndex]
   const fg = foregroundForIndex(colorIndex)
+  const arrowCircleDark = colorIndex === 1 || colorIndex === 3
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -69,7 +70,10 @@ export default function LandingPage({ onEnter }: LandingPageProps) {
     const run = () => {
       const el = fitRef.current
       if (!el) return
-      setLogoFontPx(fitLogoFontToWidth(el.clientWidth))
+      let px = fitLogoFontToWidth(el.clientWidth)
+      if (window.matchMedia('(max-width: 767px)').matches) px *= 0.9
+      else px *= 0.8
+      setLogoFontPx(Math.max(18, Math.floor(px)))
     }
     run()
     const ro = new ResizeObserver(run)
@@ -92,13 +96,17 @@ export default function LandingPage({ onEnter }: LandingPageProps) {
       }}
     >
       <div className="w-full max-w-5xl flex flex-col">
-        {/* Media boxes — 직각, 동일 크기 */}
-        <div className="flex flex-col gap-3 md:grid md:grid-cols-2 lg:grid-cols-4 md:gap-4 w-full">
-          {MEDIA_SOURCES.map((name) => (
+        {/* Media boxes — 모바일 약 30% 축소 / PC 3+1 그리드, 글자 1줄 */}
+        <div className="flex w-full flex-col gap-1.5 md:grid md:grid-cols-3 md:gap-4">
+          {MEDIA_SOURCES.map((name, i) => (
             <div
               key={name}
               role="presentation"
-              className="flex h-24 md:h-28 w-full items-center justify-center border-2 px-3 text-center text-2xl md:text-3xl lg:text-4xl font-normal"
+              className={[
+                'flex min-w-0 w-full items-center justify-center border-2 font-normal max-md:h-[4.2rem] max-md:px-2 max-md:text-[1.05rem] md:h-28 md:px-2 md:text-xl lg:text-2xl',
+                i === 3 ? 'md:col-start-1' : '',
+                'whitespace-nowrap md:overflow-hidden md:text-ellipsis',
+              ].join(' ')}
               style={{
                 borderColor: fg.border,
                 color: fg.main,
@@ -110,13 +118,12 @@ export default function LandingPage({ onEnter }: LandingPageProps) {
           ))}
         </div>
 
-        {/* 박스 ↔ 태그라인 간격 (기존 대비 약 3배) */}
-        <div className="h-24 md:h-32 lg:h-36 shrink-0" aria-hidden />
+        <div className="h-24 shrink-0 max-md:h-16 md:h-32 lg:h-36" aria-hidden />
 
-        <div className="w-full">
-          {/* 태그라인·로고 가용 폭 = 전체 − (화살표 버튼 + gap) */}
+        {/* 모바일: 로고·화살표를 위로(툴바 가림 완화) */}
+        <div className="w-full max-md:-translate-y-6 max-md:pb-8">
           <p
-            className="w-full pr-[calc(5rem+1rem)] text-3xl font-light leading-snug tracking-wide md:pr-[calc(7rem+1.5rem)] md:text-5xl lg:text-6xl"
+            className="w-full pr-[calc(5rem+1rem)] font-light leading-snug tracking-wide max-md:whitespace-nowrap max-md:text-[clamp(0.9375rem,3.8vw,1.125rem)] md:pr-[calc(7rem+1.5rem)] md:text-5xl lg:text-6xl"
             style={{ color: fg.muted }}
           >
             글로벌 이슈,{' '}
@@ -125,9 +132,9 @@ export default function LandingPage({ onEnter }: LandingPageProps) {
             </span>
           </p>
 
-          <div className="h-8 shrink-0 md:h-10" aria-hidden />
+          <div className="h-8 shrink-0 max-md:h-5 md:h-10" aria-hidden />
 
-          <div className="flex w-full items-center gap-4 md:gap-6">
+          <div className="flex w-full items-center gap-4 max-md:gap-3 md:gap-6">
             <div ref={fitRef} className="min-w-0 flex-1">
               <GistLogo
                 size="inline"
@@ -139,8 +146,11 @@ export default function LandingPage({ onEnter }: LandingPageProps) {
             <button
               type="button"
               onClick={onEnter}
-              className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-full border-[3px] bg-white md:h-28 md:w-28"
-              style={{ borderColor: fg.border }}
+              className={[
+                'flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-full border-[3px] md:h-28 md:w-28',
+                arrowCircleDark ? 'border-black/50 bg-black' : 'bg-white',
+              ].join(' ')}
+              style={{ borderColor: arrowCircleDark ? 'rgba(0,0,0,0.35)' : fg.border }}
               aria-label="들어가기"
             >
               <svg
