@@ -1,143 +1,49 @@
-import { useCallback, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import type { CSSProperties } from 'react'
 
 interface LandingPageProps {
   onEnter: () => void
 }
 
-/** 0: 골드→버nt 오렌지, 1~3: 다크·블루·그린 */
-const GRADIENTS = [
-  'linear-gradient(180deg, #E8C84A 0%, #D4AF37 28%, #C4621A 72%, #B84312 100%)',
-  'linear-gradient(180deg, #2A2A2A 0%, #1A1A1A 100%)',
-  'linear-gradient(180deg, #4A9FE8 0%, #2E6CB5 55%, #1E4A8A 100%)',
-  'linear-gradient(180deg, #6BC94E 0%, #4A9E38 50%, #2F6E28 100%)',
+/** Figma: conic gold/orange + 다크·블루·그린 변주 */
+const BACKGROUNDS = [
+  'conic-gradient(from 105.22deg at 146.27% 57.89%, #FFE563 -122.88deg, #D94800 99.25deg, #B47500 164.79deg, #FFE563 237.12deg, #D94800 459.25deg)',
+  'conic-gradient(from 105deg at 130% 55%, #4a4a4a -100deg, #0f0f0f 80deg, #2d2d2d 200deg, #4a4a4a 260deg)',
+  'conic-gradient(from 105deg at 130% 55%, #9fd4ff -100deg, #1a4a8a 80deg, #3d7dcc 200deg, #9fd4ff 260deg)',
+  'conic-gradient(from 105deg at 130% 55%, #c8f090 -100deg, #1e5a18 80deg, #5aaf3e 200deg, #c8f090 260deg)',
 ] as const
 
-const BARCODE_TRACK_CLASS = 'w-[min(160px,85vw)]'
-
-/** 막대·간격 교차 시퀀스(짝수 인덱스 = 흰 막대). 4종 서로 다른 패턴 */
-const BARCODE_PATTERNS: readonly (readonly number[])[] = [
-  [
-    2, 1, 3, 1, 2, 1, 1, 3, 1, 2, 3, 1, 1, 2, 1, 3, 1, 2, 1, 1, 3, 2, 1, 1, 2, 1, 3, 1, 2, 2,
-  ],
-  [
-    3, 2, 1, 2, 1, 3, 2, 1, 1, 2, 3, 1, 2, 1, 1, 2, 2, 1, 3, 1, 1, 2, 1, 3, 2, 1, 2, 1, 3, 1,
-  ],
-  [
-    1, 2, 2, 3, 1, 1, 2, 3, 2, 1, 1, 3, 1, 2, 2, 1, 3, 1, 1, 2, 3, 1, 2, 1, 2, 1, 3, 2, 1, 2,
-  ],
-  [
-    2, 2, 1, 1, 3, 2, 1, 3, 1, 2, 1, 2, 3, 1, 1, 2, 1, 3, 2, 2, 1, 1, 2, 1, 3, 1, 2, 2, 1, 3,
-  ],
+const BARCODE_LABELS = [
+  'The Economist',
+  'Foreign Affairs',
+  'Financial Times',
+  'and UN Meetings',
 ] as const
 
-const BARCODE_ROWS: readonly { label: string; patternIndex: number }[] = [
-  { label: 'The Economist', patternIndex: 0 },
-  { label: 'Foreign Affairs', patternIndex: 1 },
-  { label: 'Financial Times', patternIndex: 2 },
-  { label: 'and UN Meetings', patternIndex: 3 },
-]
-
-function Barcode({ pattern }: { pattern: readonly number[] }) {
-  let x = 0
-  const rects: { x: number; w: number }[] = []
-  pattern.forEach((w, i) => {
-    if (i % 2 === 0) rects.push({ x, w })
-    x += w
-  })
-  const total = x
-  return (
-    <svg
-      viewBox={`0 0 ${total} 28`}
-      className="block h-7 w-full opacity-90"
-      preserveAspectRatio="none"
-      aria-hidden
-    >
-      {rects.map((r, i) => (
-        <rect key={i} x={r.x} y={0} width={r.w} height={28} fill="white" />
-      ))}
-    </svg>
-  )
+/** Figma: Libre Barcode 128 Text 48px / line-height 35px / right / -0.05em */
+const barcodeBlockStyle: CSSProperties = {
+  fontFamily: "'Libre Barcode 128 Text', system-ui, sans-serif",
+  fontWeight: 400,
+  fontSize: 'clamp(1.5rem, 11vw, 3rem)',
+  lineHeight: 'clamp(28px, 9vw, 40px)',
+  textAlign: 'right',
+  letterSpacing: '-0.05em',
+  color: '#FFFFFF',
 }
 
-const CAPTION_FONT =
-  'ui-monospace, "Cascadia Mono", "Segoe UI Mono", "Roboto Mono", "Courier New", Courier, monospace'
-
-/** 라벨 시각 폭 = 바코드 폭: 자간 우선, 필요 시 scaleX */
-function BarcodeCaption({ text }: { text: string }) {
-  const wrapRef = useRef<HTMLDivElement>(null)
-  const spanRef = useRef<HTMLSpanElement>(null)
-  const [style, setStyle] = useState<CSSProperties>({
-    letterSpacing: '0.02em',
-    transform: undefined,
-    transformOrigin: 'center',
-  })
-
-  const fit = () => {
-    const wrap = wrapRef.current
-    const span = spanRef.current
-    if (!wrap || !span) return
-    const target = wrap.clientWidth
-    if (target < 1) return
-
-    span.style.letterSpacing = '0'
-    span.style.transform = 'none'
-    const natural = span.scrollWidth
-
-    if (natural > target) {
-      const scale = Math.max(0.65, target / natural)
-      setStyle({
-        letterSpacing: '0',
-        transform: `scaleX(${scale})`,
-        transformOrigin: 'center',
-      })
-      return
-    }
-
-    let low = -0.04
-    let high = 0.55
-    for (let i = 0; i < 26; i++) {
-      const mid = (low + high) / 2
-      span.style.letterSpacing = `${mid}em`
-      const w = span.scrollWidth
-      if (w < target) low = mid
-      else high = mid
-    }
-    setStyle({
-      letterSpacing: `${low}em`,
-      transform: undefined,
-      transformOrigin: 'center',
-    })
-  }
-
-  useLayoutEffect(() => {
-    fit()
-    const wrap = wrapRef.current
-    if (!wrap || typeof ResizeObserver === 'undefined') return
-    const ro = new ResizeObserver(() => fit())
-    ro.observe(wrap)
-    return () => ro.disconnect()
-  }, [text])
-
-  return (
-    <div ref={wrapRef} className="w-full min-w-0">
-      <span
-        ref={spanRef}
-        className="block whitespace-nowrap text-center font-normal leading-tight text-white/95"
-        style={{
-          fontFamily: CAPTION_FONT,
-          fontSize: '10px',
-          ...style,
-        }}
-      >
-        {text}
-      </span>
-    </div>
-  )
+/** Figma: Noto Sans KR 300, 17px, line-height 28px, -0.05em */
+const bodyBlockStyle: CSSProperties = {
+  fontFamily: "'Noto Sans KR', sans-serif",
+  fontWeight: 300,
+  fontSize: '17px',
+  lineHeight: '28px',
+  letterSpacing: '-0.05em',
+  color: '#FFFFFF',
+  maxWidth: '203px',
 }
 
 export default function LandingPage({ onEnter }: LandingPageProps) {
-  const [index] = useState(() => Math.floor(Math.random() * GRADIENTS.length))
+  const [index] = useState(() => Math.floor(Math.random() * BACKGROUNDS.length))
   const enteredRef = useRef(false)
 
   const handleEnter = useCallback(() => {
@@ -148,7 +54,7 @@ export default function LandingPage({ onEnter }: LandingPageProps) {
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex cursor-pointer items-center justify-center touch-manipulation"
+      className="fixed inset-0 z-[9999] flex cursor-pointer items-stretch justify-center touch-manipulation"
       role="button"
       tabIndex={0}
       aria-label="화면을 눌러 계속하기"
@@ -161,54 +67,48 @@ export default function LandingPage({ onEnter }: LandingPageProps) {
       }}
     >
       <div
-        className="pointer-events-none flex h-full w-full flex-col justify-between px-8 py-12 md:px-16 md:py-20"
+        className="pointer-events-none mx-auto flex h-full min-h-[100dvh] w-full max-w-[402px] flex-col px-8 py-12 md:px-12 md:py-16"
         style={{
-          background: GRADIENTS[index],
-          fontFamily: "'Noto Sans KR', sans-serif",
-          color: '#ffffff',
+          background: BACKGROUNDS[index],
         }}
       >
-        <div>
+        {/* Figma: Lobster 36px, line-height 45px */}
+        <header className="shrink-0">
           <h1
-            className="mb-0 leading-none"
+            className="m-0 text-white"
             style={{
               fontFamily: "'Lobster', cursive",
               fontWeight: 400,
-              fontSize: 'clamp(2rem, 8vw, 3.5rem)',
+              fontSize: 'clamp(28px, 9vw, 36px)',
+              lineHeight: '45px',
             }}
           >
             the gist.
           </h1>
-        </div>
+        </header>
 
-        <div className="flex flex-col gap-8 md:gap-12">
-          <div
-            className="flex flex-col gap-1 leading-relaxed"
-            style={{ fontSize: 'clamp(0.85rem, 3.2vw, 1.15rem)' }}
-          >
-            <span>+ 이코노미스트</span>
-            <span>+ 포린 어페어즈</span>
-            <span>+ 파이낸셜 타임즈</span>
-          </div>
-
-          <div
-            className="leading-snug"
-            style={{ fontSize: 'clamp(1rem, 4vw, 1.5rem)' }}
-          >
-            <p className="m-0">
-              유명 저널 <strong>AI 분석으로</strong>
+        <div className="flex min-h-0 flex-1 flex-col justify-center py-8">
+          <div style={bodyBlockStyle}>
+            <div className="flex flex-col">
+              <span>+ 이코노미스트</span>
+              <span>+ 포린 어페어즈</span>
+              <span>+ 파이낸셜 타임즈</span>
+            </div>
+            <p className="m-0 mt-4">
+              유명 저널 <strong className="font-semibold">AI 분석으로</strong>
             </p>
-            <p className="m-0">
-              <strong>글로벌 이슈 심플하게 따라잡기</strong>
-            </p>
+            <p className="m-0 font-semibold">글로벌 이슈 심플하게 따라잡기</p>
           </div>
         </div>
 
-        <div className={`ml-auto flex flex-col items-end gap-3 ${BARCODE_TRACK_CLASS}`}>
-          {BARCODE_ROWS.map(({ label, patternIndex }) => (
-            <div key={label} className="flex w-full flex-col gap-0.5">
-              <Barcode pattern={BARCODE_PATTERNS[patternIndex]} />
-              <BarcodeCaption text={label} />
+        {/* Figma: 바코드 블록 width 317px, text-align right — 폰트가 바코드+라벨 통합 */}
+        <div
+          className="mt-auto flex w-full max-w-[317px] shrink-0 flex-col gap-3 self-end"
+          aria-hidden
+        >
+          {BARCODE_LABELS.map((label) => (
+            <div key={label} style={barcodeBlockStyle}>
+              {label}
             </div>
           ))}
         </div>
