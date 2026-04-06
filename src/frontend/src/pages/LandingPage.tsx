@@ -1,26 +1,47 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useLayoutEffect, useRef, useState } from 'react'
+import type { CSSProperties } from 'react'
 
 interface LandingPageProps {
   onEnter: () => void
 }
 
+/** 0: 골드→버nt 오렌지, 1~3: 다크·블루·그린 */
 const GRADIENTS = [
-  'linear-gradient(180deg, #D4893C 0%, #B86A1A 100%)',
+  'linear-gradient(180deg, #E8C84A 0%, #D4AF37 28%, #C4621A 72%, #B84312 100%)',
   'linear-gradient(180deg, #2A2A2A 0%, #1A1A1A 100%)',
-  'linear-gradient(180deg, #3A7BD5 0%, #2558A3 100%)',
-  'linear-gradient(180deg, #5AAF3E 0%, #3D8A28 100%)',
+  'linear-gradient(180deg, #4A9FE8 0%, #2E6CB5 55%, #1E4A8A 100%)',
+  'linear-gradient(180deg, #6BC94E 0%, #4A9E38 50%, #2F6E28 100%)',
 ] as const
 
 const BARCODE_TRACK_CLASS = 'w-[min(160px,85vw)]'
 
-function Barcode() {
-  const bars = [
-    2, 1, 3, 1, 2, 1, 1, 3, 1, 2, 3, 1, 1, 2, 1, 3, 1, 2, 1, 1, 3, 2, 1, 1,
-    2, 1, 3, 1, 2, 1, 1, 2, 3, 1, 1, 2, 1, 3, 1, 2, 1, 1, 2, 1, 3, 2, 1, 1,
-  ]
+/** 막대·간격 교차 시퀀스(짝수 인덱스 = 흰 막대). 4종 서로 다른 패턴 */
+const BARCODE_PATTERNS: readonly (readonly number[])[] = [
+  [
+    2, 1, 3, 1, 2, 1, 1, 3, 1, 2, 3, 1, 1, 2, 1, 3, 1, 2, 1, 1, 3, 2, 1, 1, 2, 1, 3, 1, 2, 2,
+  ],
+  [
+    3, 2, 1, 2, 1, 3, 2, 1, 1, 2, 3, 1, 2, 1, 1, 2, 2, 1, 3, 1, 1, 2, 1, 3, 2, 1, 2, 1, 3, 1,
+  ],
+  [
+    1, 2, 2, 3, 1, 1, 2, 3, 2, 1, 1, 3, 1, 2, 2, 1, 3, 1, 1, 2, 3, 1, 2, 1, 2, 1, 3, 2, 1, 2,
+  ],
+  [
+    2, 2, 1, 1, 3, 2, 1, 3, 1, 2, 1, 2, 3, 1, 1, 2, 1, 3, 2, 2, 1, 1, 2, 1, 3, 1, 2, 2, 1, 3,
+  ],
+] as const
+
+const BARCODE_ROWS: readonly { label: string; patternIndex: number }[] = [
+  { label: 'The Economist', patternIndex: 0 },
+  { label: 'Foreign Affairs', patternIndex: 1 },
+  { label: 'Financial Times', patternIndex: 2 },
+  { label: 'and UN Meetings', patternIndex: 3 },
+]
+
+function Barcode({ pattern }: { pattern: readonly number[] }) {
   let x = 0
   const rects: { x: number; w: number }[] = []
-  bars.forEach((w, i) => {
+  pattern.forEach((w, i) => {
     if (i % 2 === 0) rects.push({ x, w })
     x += w
   })
@@ -28,7 +49,7 @@ function Barcode() {
   return (
     <svg
       viewBox={`0 0 ${total} 28`}
-      className="block h-7 w-full opacity-80"
+      className="block h-7 w-full opacity-90"
       preserveAspectRatio="none"
       aria-hidden
     >
@@ -39,11 +60,14 @@ function Barcode() {
   )
 }
 
-/** 라벨 시각 폭을 컨테이너(=바코드 폭)에 맞춤: 자간 우선, 필요 시 scaleX */
+const CAPTION_FONT =
+  'ui-monospace, "Cascadia Mono", "Segoe UI Mono", "Roboto Mono", "Courier New", Courier, monospace'
+
+/** 라벨 시각 폭 = 바코드 폭: 자간 우선, 필요 시 scaleX */
 function BarcodeCaption({ text }: { text: string }) {
   const wrapRef = useRef<HTMLDivElement>(null)
   const spanRef = useRef<HTMLSpanElement>(null)
-  const [style, setStyle] = useState<React.CSSProperties>({
+  const [style, setStyle] = useState<CSSProperties>({
     letterSpacing: '0.02em',
     transform: undefined,
     transformOrigin: 'center',
@@ -99,9 +123,10 @@ function BarcodeCaption({ text }: { text: string }) {
     <div ref={wrapRef} className="w-full min-w-0">
       <span
         ref={spanRef}
-        className="block whitespace-nowrap text-center text-xs opacity-70"
+        className="block whitespace-nowrap text-center font-normal leading-tight text-white/95"
         style={{
-          fontFamily: 'monospace, ui-monospace, monospace',
+          fontFamily: CAPTION_FONT,
+          fontSize: '10px',
           ...style,
         }}
       >
@@ -113,34 +138,36 @@ function BarcodeCaption({ text }: { text: string }) {
 
 export default function LandingPage({ onEnter }: LandingPageProps) {
   const [index] = useState(() => Math.floor(Math.random() * GRADIENTS.length))
-  const [visible, setVisible] = useState(true)
+  const enteredRef = useRef(false)
 
-  useEffect(() => {
-    const fade = setTimeout(() => setVisible(false), 900)
-    const go = setTimeout(() => onEnter(), 1200)
-    return () => {
-      clearTimeout(fade)
-      clearTimeout(go)
-    }
+  const handleEnter = useCallback(() => {
+    if (enteredRef.current) return
+    enteredRef.current = true
+    onEnter()
   }, [onEnter])
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center"
-      style={{
-        opacity: visible ? 1 : 0,
-        transition: 'opacity 0.3s ease-out',
+      className="fixed inset-0 z-[9999] flex cursor-pointer items-center justify-center touch-manipulation"
+      role="button"
+      tabIndex={0}
+      aria-label="화면을 눌러 계속하기"
+      onClick={handleEnter}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          handleEnter()
+        }
       }}
     >
       <div
-        className="flex h-full w-full flex-col justify-between px-8 py-12 md:px-16 md:py-20"
+        className="pointer-events-none flex h-full w-full flex-col justify-between px-8 py-12 md:px-16 md:py-20"
         style={{
           background: GRADIENTS[index],
           fontFamily: "'Noto Sans KR', sans-serif",
           color: '#ffffff',
         }}
       >
-        {/* 상단: 로고 */}
         <div>
           <h1
             className="mb-0 leading-none"
@@ -154,15 +181,14 @@ export default function LandingPage({ onEnter }: LandingPageProps) {
           </h1>
         </div>
 
-        {/* 중단: 소스 리스트 + 태그라인 */}
         <div className="flex flex-col gap-8 md:gap-12">
           <div
             className="flex flex-col gap-1 leading-relaxed"
             style={{ fontSize: 'clamp(0.85rem, 3.2vw, 1.15rem)' }}
           >
-            <span>+이코노미스트</span>
-            <span>+포린 어페어즈</span>
-            <span>+파이낸셜 타임즈</span>
+            <span>+ 이코노미스트</span>
+            <span>+ 포린 어페어즈</span>
+            <span>+ 파이낸셜 타임즈</span>
           </div>
 
           <div
@@ -170,7 +196,7 @@ export default function LandingPage({ onEnter }: LandingPageProps) {
             style={{ fontSize: 'clamp(1rem, 4vw, 1.5rem)' }}
           >
             <p className="m-0">
-              유명 지널 <strong>AI 분석</strong>으로
+              유명 저널 <strong>AI 분석으로</strong>
             </p>
             <p className="m-0">
               <strong>글로벌 이슈 심플하게 따라잡기</strong>
@@ -178,17 +204,13 @@ export default function LandingPage({ onEnter }: LandingPageProps) {
           </div>
         </div>
 
-        {/* 하단: 바코드 + 라벨 — 오른쪽 끝, 라벨 폭 = 바코드 폭 */}
         <div className={`ml-auto flex flex-col items-end gap-3 ${BARCODE_TRACK_CLASS}`}>
-          {['The Economist', 'Foreign Affairs', 'Financial Times'].map((name) => (
-            <div key={name} className="flex w-full flex-col gap-0.5">
-              <Barcode />
-              <BarcodeCaption text={name} />
+          {BARCODE_ROWS.map(({ label, patternIndex }) => (
+            <div key={label} className="flex w-full flex-col gap-0.5">
+              <Barcode pattern={BARCODE_PATTERNS[patternIndex]} />
+              <BarcodeCaption text={label} />
             </div>
           ))}
-          <div className="mt-1 w-full">
-            <BarcodeCaption text="and UN Meetings" />
-          </div>
         </div>
       </div>
     </div>
