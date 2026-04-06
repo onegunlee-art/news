@@ -42,8 +42,8 @@ export default function LandingPage({ onEnter }: LandingPageProps) {
   const [visible, setVisible] = useState(true)
 
   useEffect(() => {
-    const fade = setTimeout(() => setVisible(false), 500)
-    const go = setTimeout(() => onEnter(), 800)
+    const fade = setTimeout(() => setVisible(false), 900)
+    const go = setTimeout(() => onEnter(), 1200)
     return () => {
       clearTimeout(fade)
       clearTimeout(go)
