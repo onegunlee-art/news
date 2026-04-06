@@ -54,10 +54,11 @@ export default function PaywallOverlay({
           모든 컨텐츠를 만나세요
         </h2>
 
-        {/* 구독 CTA */}
+        {/* 구독 CTA — 컨테이너(max-w-md) 전체 폭, flex로 다른 버튼과 동일 레이아웃 */}
         <button
+          type="button"
           onClick={goSubscribe}
-          className="inline-block w-full max-w-xs px-8 py-3.5 bg-primary-500 hover:bg-primary-600
+          className="flex w-full items-center justify-center px-8 py-3.5 bg-primary-500 hover:bg-primary-600
             text-white font-semibold rounded-lg transition-colors text-base shadow-sm"
         >
           구독 플랜 보기
@@ -77,8 +78,9 @@ export default function PaywallOverlay({
             </p>
 
             <button
+              type="button"
               onClick={goRegister}
-              className="inline-block w-full max-w-xs px-8 py-3 border-2 border-page
+              className="flex w-full items-center justify-center px-8 py-3.5 border-2 border-page
                 text-page font-semibold rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800
                 transition-colors text-base"
             >
@@ -86,9 +88,10 @@ export default function PaywallOverlay({
             </button>
             {onKakaoLogin && (
               <button
+                type="button"
                 onClick={onKakaoLogin}
-                className="mt-3 w-full max-w-xs flex items-center justify-center gap-2 px-8 py-3
-                  bg-[#FEE500] hover:bg-[#FDD835] text-[#3C1E1E] font-semibold rounded-lg transition-colors"
+                className="mt-3 flex w-full items-center justify-center gap-2 px-8 py-3.5
+                  bg-[#FEE500] hover:bg-[#FDD835] text-[#3C1E1E] font-semibold rounded-lg transition-colors text-base"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 3C6.48 3 2 6.48 2 10.8c0 2.76 1.84 5.17 4.6 6.53-.2.75-.73 2.72-.84 3.14-.13.51.19.5.4.37.16-.1 2.59-1.76 3.64-2.48.72.1 1.47.16 2.2.16 5.52 0 10-3.48 10-7.72S17.52 3 12 3z" />
