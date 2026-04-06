@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 interface LandingPageProps {
   onEnter: () => void
@@ -11,7 +11,9 @@ const GRADIENTS = [
   'linear-gradient(180deg, #5AAF3E 0%, #3D8A28 100%)',
 ] as const
 
-function Barcode({ width = 140 }: { width?: number }) {
+const BARCODE_TRACK_CLASS = 'w-[min(160px,85vw)]'
+
+function Barcode() {
   const bars = [
     2, 1, 3, 1, 2, 1, 1, 3, 1, 2, 3, 1, 1, 2, 1, 3, 1, 2, 1, 1, 3, 2, 1, 1,
     2, 1, 3, 1, 2, 1, 1, 2, 3, 1, 1, 2, 1, 3, 1, 2, 1, 1, 2, 1, 3, 2, 1, 1,
@@ -26,14 +28,86 @@ function Barcode({ width = 140 }: { width?: number }) {
   return (
     <svg
       viewBox={`0 0 ${total} 28`}
-      width={width}
+      className="block h-7 w-full opacity-80"
       preserveAspectRatio="none"
-      className="opacity-80"
+      aria-hidden
     >
       {rects.map((r, i) => (
         <rect key={i} x={r.x} y={0} width={r.w} height={28} fill="white" />
       ))}
     </svg>
+  )
+}
+
+/** 라벨 시각 폭을 컨테이너(=바코드 폭)에 맞춤: 자간 우선, 필요 시 scaleX */
+function BarcodeCaption({ text }: { text: string }) {
+  const wrapRef = useRef<HTMLDivElement>(null)
+  const spanRef = useRef<HTMLSpanElement>(null)
+  const [style, setStyle] = useState<React.CSSProperties>({
+    letterSpacing: '0.02em',
+    transform: undefined,
+    transformOrigin: 'center',
+  })
+
+  const fit = () => {
+    const wrap = wrapRef.current
+    const span = spanRef.current
+    if (!wrap || !span) return
+    const target = wrap.clientWidth
+    if (target < 1) return
+
+    span.style.letterSpacing = '0'
+    span.style.transform = 'none'
+    const natural = span.scrollWidth
+
+    if (natural > target) {
+      const scale = Math.max(0.65, target / natural)
+      setStyle({
+        letterSpacing: '0',
+        transform: `scaleX(${scale})`,
+        transformOrigin: 'center',
+      })
+      return
+    }
+
+    let low = -0.04
+    let high = 0.55
+    for (let i = 0; i < 26; i++) {
+      const mid = (low + high) / 2
+      span.style.letterSpacing = `${mid}em`
+      const w = span.scrollWidth
+      if (w < target * 0.98) low = mid
+      else high = mid
+    }
+    setStyle({
+      letterSpacing: `${low}em`,
+      transform: undefined,
+      transformOrigin: 'center',
+    })
+  }
+
+  useLayoutEffect(() => {
+    fit()
+    const wrap = wrapRef.current
+    if (!wrap || typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(() => fit())
+    ro.observe(wrap)
+    return () => ro.disconnect()
+  }, [text])
+
+  return (
+    <div ref={wrapRef} className="w-full min-w-0">
+      <span
+        ref={spanRef}
+        className="block whitespace-nowrap text-center text-xs opacity-70"
+        style={{
+          fontFamily: 'monospace, ui-monospace, monospace',
+          ...style,
+        }}
+      >
+        {text}
+      </span>
+    </div>
   )
 }
 
@@ -104,27 +178,17 @@ export default function LandingPage({ onEnter }: LandingPageProps) {
           </div>
         </div>
 
-        {/* 하단: 바코드 장식 */}
-        <div className="flex flex-col gap-3">
-          {['The Economist', 'Foreign Affairs', 'Financial Times'].map(
-            (name) => (
-              <div key={name} className="flex flex-col gap-0.5">
-                <Barcode width={160} />
-                <span
-                  className="text-xs tracking-wider opacity-70"
-                  style={{ fontFamily: 'monospace' }}
-                >
-                  {name}
-                </span>
-              </div>
-            ),
-          )}
-          <span
-            className="mt-1 text-xs tracking-wider opacity-70"
-            style={{ fontFamily: 'monospace' }}
-          >
-            and UN Meetings
-          </span>
+        {/* 하단: 바코드 + 라벨 — 오른쪽 끝, 라벨 폭 = 바코드 폭 */}
+        <div className={`ml-auto flex flex-col items-end gap-3 ${BARCODE_TRACK_CLASS}`}>
+          {['The Economist', 'Foreign Affairs', 'Financial Times'].map((name) => (
+            <div key={name} className="flex w-full flex-col gap-0.5">
+              <Barcode />
+              <BarcodeCaption text={name} />
+            </div>
+          ))}
+          <div className="mt-1 w-full">
+            <BarcodeCaption text="and UN Meetings" />
+          </div>
         </div>
       </div>
     </div>
