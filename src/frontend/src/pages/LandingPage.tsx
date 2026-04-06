@@ -16,6 +16,22 @@ const BARCODE_LABELS = [
   'and UN Meetings',
 ] as const
 
+/** 바코드 영역과 동일 폰트, 리스트용으로 한 단계 작게 */
+const sourceListStyle: CSSProperties = {
+  fontFamily: "'Libre Barcode 128 Text', system-ui, sans-serif",
+  fontWeight: 400,
+  fontSize: 'clamp(0.95rem, 4.5vw, 1.2rem)',
+  lineHeight: 1.35,
+  letterSpacing: '-0.05em',
+  color: '#FFFFFF',
+}
+
+const SOURCE_LINES = [
+  '+ The Economist',
+  '+ Foreign Affairs',
+  '+ Financial Times',
+] as const
+
 const barcodeBlockStyle: CSSProperties = {
   fontFamily: "'Libre Barcode 128 Text', system-ui, sans-serif",
   fontWeight: 400,
@@ -78,10 +94,10 @@ export default function LandingPage({ onEnter }: LandingPageProps) {
 
         <div className="flex min-h-0 flex-1 flex-col justify-center py-8">
           <div style={bodyBlockStyle}>
-            <div className="flex flex-col">
-              <span>+ 이코노미스트</span>
-              <span>+ 포린 어페어즈</span>
-              <span>+ 파이낸셜 타임즈</span>
+            <div className="flex flex-col gap-0.5" style={sourceListStyle}>
+              {SOURCE_LINES.map((line) => (
+                <span key={line}>{line}</span>
+              ))}
             </div>
             <p className="m-0 mt-4">
               유명 저널 <strong className="font-semibold">AI 분석으로</strong>
