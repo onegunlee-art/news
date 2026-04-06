@@ -100,7 +100,7 @@ function BarcodeCaption({ text }: { text: string }) {
       const mid = (low + high) / 2
       span.style.letterSpacing = `${mid}em`
       const w = span.scrollWidth
-      if (w < target * 0.98) low = mid
+      if (w < target) low = mid
       else high = mid
     }
     setStyle({
