@@ -1,17 +1,9 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useRef } from 'react'
 import type { CSSProperties } from 'react'
 
 interface LandingPageProps {
   onEnter: () => void
 }
-
-/** Figma: conic gold/orange + 다크·블루·그린 변주 */
-const BACKGROUNDS = [
-  'conic-gradient(from 105.22deg at 146.27% 57.89%, #FFE563 -122.88deg, #D94800 99.25deg, #B47500 164.79deg, #FFE563 237.12deg, #D94800 459.25deg)',
-  'conic-gradient(from 105deg at 130% 55%, #4a4a4a -100deg, #0f0f0f 80deg, #2d2d2d 200deg, #4a4a4a 260deg)',
-  'conic-gradient(from 105deg at 130% 55%, #9fd4ff -100deg, #1a4a8a 80deg, #3d7dcc 200deg, #9fd4ff 260deg)',
-  'conic-gradient(from 105deg at 130% 55%, #c8f090 -100deg, #1e5a18 80deg, #5aaf3e 200deg, #c8f090 260deg)',
-] as const
 
 const BARCODE_LABELS = [
   'The Economist',
@@ -20,7 +12,6 @@ const BARCODE_LABELS = [
   'and UN Meetings',
 ] as const
 
-/** Figma: Libre Barcode 128 Text 48px / line-height 35px / right / -0.05em */
 const barcodeBlockStyle: CSSProperties = {
   fontFamily: "'Libre Barcode 128 Text', system-ui, sans-serif",
   fontWeight: 400,
@@ -31,7 +22,7 @@ const barcodeBlockStyle: CSSProperties = {
   color: '#FFFFFF',
 }
 
-/** Figma: Noto Sans KR 300, 17px, line-height 28px, -0.05em */
+/** 본문: 둘째 태그라인이 한 줄에 들어가도록 maxWidth 여유 */
 const bodyBlockStyle: CSSProperties = {
   fontFamily: "'Noto Sans KR', sans-serif",
   fontWeight: 300,
@@ -39,11 +30,10 @@ const bodyBlockStyle: CSSProperties = {
   lineHeight: '28px',
   letterSpacing: '-0.05em',
   color: '#FFFFFF',
-  maxWidth: '203px',
+  maxWidth: 'min(280px, calc(100vw - 4rem))',
 }
 
 export default function LandingPage({ onEnter }: LandingPageProps) {
-  const [index] = useState(() => Math.floor(Math.random() * BACKGROUNDS.length))
   const enteredRef = useRef(false)
 
   const handleEnter = useCallback(() => {
@@ -54,7 +44,7 @@ export default function LandingPage({ onEnter }: LandingPageProps) {
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex cursor-pointer items-stretch justify-center touch-manipulation"
+      className="fixed inset-0 z-[9999] flex cursor-pointer items-stretch justify-center bg-black touch-manipulation outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-white/25"
       role="button"
       tabIndex={0}
       aria-label="화면을 눌러 계속하기"
@@ -66,13 +56,7 @@ export default function LandingPage({ onEnter }: LandingPageProps) {
         }
       }}
     >
-      <div
-        className="pointer-events-none mx-auto flex h-full min-h-[100dvh] w-full max-w-[402px] flex-col px-8 py-12 md:px-12 md:py-16"
-        style={{
-          background: BACKGROUNDS[index],
-        }}
-      >
-        {/* Figma: Lobster 36px, line-height 45px */}
+      <div className="pointer-events-none mx-auto flex h-full min-h-[100dvh] w-full max-w-[402px] flex-col bg-black px-8 py-12 md:px-12 md:py-16">
         <header className="shrink-0">
           <h1
             className="m-0 text-white"
@@ -97,11 +81,12 @@ export default function LandingPage({ onEnter }: LandingPageProps) {
             <p className="m-0 mt-4">
               유명 저널 <strong className="font-semibold">AI 분석으로</strong>
             </p>
-            <p className="m-0 font-semibold">글로벌 이슈 심플하게 따라잡기</p>
+            <p className="m-0 whitespace-nowrap font-semibold">
+              글로벌 이슈 심플하게 따라잡기
+            </p>
           </div>
         </div>
 
-        {/* Figma: 바코드 블록 width 317px, text-align right — 폰트가 바코드+라벨 통합 */}
         <div
           className="mt-auto flex w-full max-w-[317px] shrink-0 flex-col gap-3 self-end"
           aria-hidden
