@@ -5,6 +5,10 @@ interface LandingPageProps {
   onEnter: () => void
 }
 
+/** 다크 톤 conic 그라데이션 (단색 검정 대신 입체감) */
+const DARK_CONIC_BACKGROUND =
+  'conic-gradient(from 105deg at 130% 55%, #4a4a4a -100deg, #0f0f0f 80deg, #2d2d2d 200deg, #4a4a4a 260deg)'
+
 const BARCODE_LABELS = [
   'The Economist',
   'Foreign Affairs',
@@ -44,7 +48,8 @@ export default function LandingPage({ onEnter }: LandingPageProps) {
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex cursor-pointer items-stretch justify-center bg-black touch-manipulation outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-white/25"
+      className="fixed inset-0 z-[9999] flex cursor-pointer items-stretch justify-center touch-manipulation outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-white/25"
+      style={{ background: DARK_CONIC_BACKGROUND }}
       role="button"
       tabIndex={0}
       aria-label="화면을 눌러 계속하기"
@@ -56,7 +61,7 @@ export default function LandingPage({ onEnter }: LandingPageProps) {
         }
       }}
     >
-      <div className="pointer-events-none mx-auto flex h-full min-h-[100dvh] w-full max-w-[402px] flex-col bg-black px-8 py-12 md:px-12 md:py-16">
+      <div className="pointer-events-none mx-auto flex h-full min-h-[100dvh] w-full max-w-[402px] flex-col bg-transparent px-8 py-12 md:px-12 md:py-16">
         <header className="shrink-0">
           <h1
             className="m-0 text-white"
