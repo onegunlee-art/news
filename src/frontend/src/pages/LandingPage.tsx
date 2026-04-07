@@ -100,9 +100,9 @@ export default function LandingPage({ onEnter }: LandingPageProps) {
               ))}
             </div>
             <p className="m-0 mt-4">
-              유명 저널 <strong className="font-semibold">AI 분석으로</strong>
+              <strong className="font-semibold">유명 저널 AI 분석</strong>으로
             </p>
-            <p className="m-0 whitespace-nowrap font-semibold">
+            <p className="m-0 whitespace-nowrap">
               글로벌 이슈 심플하게 따라잡기
             </p>
           </div>
