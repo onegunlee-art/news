@@ -32,7 +32,6 @@ interface SearchCluster {
 interface SemanticSearchResponse {
   success: boolean
   results: SemanticResult[]
-  insight: string | null
   clusters: SearchCluster[]
   meta: {
     query: string
@@ -64,7 +63,6 @@ export default function SearchPage() {
 
   const semanticData = semanticQuery.data
   const semanticResults = semanticData?.results ?? EMPTY_SEMANTIC_RESULTS
-  const insight = semanticData?.insight ?? null
   const clusters = semanticData?.clusters ?? []
 
   const resultCount = semanticResults.length
@@ -91,11 +89,7 @@ export default function SearchPage() {
             <p className="text-sm text-page-secondary">AI가 검색어를 분석 중...</p>
           </div>
         ) : (
-          <AISearchResults
-            results={semanticResults}
-            insight={insight}
-            clusters={clusters}
-          />
+          <AISearchResults results={semanticResults} clusters={clusters} />
         )}
       </div>
     </div>
@@ -106,11 +100,9 @@ export default function SearchPage() {
 
 function AISearchResults({
   results,
-  insight,
   clusters,
 }: {
   results: SemanticResult[]
-  insight: string | null
   clusters: SearchCluster[]
 }) {
   if (results.length === 0) {
@@ -119,8 +111,6 @@ function AISearchResults({
 
   return (
     <div className="space-y-6">
-      {insight && <InsightCard insight={insight} />}
-
       {clusters.length > 0 && (
         <ClusterSection clusters={clusters} results={results} />
       )}
@@ -133,15 +123,6 @@ function AISearchResults({
           ))}
         </div>
       </div>
-    </div>
-  )
-}
-
-function InsightCard({ insight }: { insight: string }) {
-  return (
-    <div className="rounded-2xl bg-gradient-to-r from-primary-50 to-blue-50 dark:from-primary-900/20 dark:to-blue-900/20 border border-primary-200 dark:border-primary-800/40 p-4 md:p-5">
-      <p className="text-xs font-semibold text-primary-600 dark:text-primary-400 mb-1.5">핵심 인사이트</p>
-      <p className="text-sm text-page leading-relaxed">{insight}</p>
     </div>
   )
 }
