@@ -28,7 +28,6 @@ import SubscriptionManagePage from './pages/SubscriptionManagePage'
 
 function App() {
   const location = useLocation()
-  const { user, isAuthenticated, isInitialized } = useAuthStore()
   const [showConsent, setShowConsent] = useState(() => localStorage.getItem('consent_required') === '1')
   const [hasEntered, setHasEntered] = useState(() => sessionStorage.getItem('landing_entered') === '1')
 
@@ -66,10 +65,7 @@ function App() {
     window.location.href = '/login'
   }
 
-  const isAdmin = isInitialized && isAuthenticated
-    && (user as { role?: string })?.role === 'admin'
-
-  if (isAdmin && !hasEntered && location.pathname === '/') {
+  if (!hasEntered && location.pathname === '/') {
     return (
       <LandingPage onEnter={() => {
         sessionStorage.setItem('landing_entered', '1')
