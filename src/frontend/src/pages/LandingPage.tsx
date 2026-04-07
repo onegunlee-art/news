@@ -16,12 +16,12 @@ const BARCODE_LABELS = [
   'and UN Meetings',
 ] as const
 
-/** + 리스트: 본문 대비 2배 타이포 (기존 17px → 34px) */
+/** 모바일; md 이상은 Tailwind로 1.5배 */
 const sourceListStyle: CSSProperties = {
   fontFamily: "'Noto Sans', 'Noto Sans KR', sans-serif",
   fontWeight: 300,
-  fontSize: '34px',
-  lineHeight: '48px',
+  fontSize: '17px',
+  lineHeight: '24px',
   letterSpacing: '-0.05em',
   color: '#FFFFFF',
 }
@@ -32,6 +32,7 @@ const SOURCE_LINES = [
   '+ Financial Times',
 ] as const
 
+/** 모바일; PC는 클래스로 크기 업 */
 const barcodeBlockStyle: CSSProperties = {
   fontFamily: "'Libre Barcode 128 Text', system-ui, sans-serif",
   fontWeight: 400,
@@ -42,15 +43,15 @@ const barcodeBlockStyle: CSSProperties = {
   color: '#FFFFFF',
 }
 
-/** 한글 본문: 2배 타이포 */
+/** 모바일 본문; md 이상은 Tailwind */
 const bodyBlockStyle: CSSProperties = {
   fontFamily: "'Noto Sans KR', sans-serif",
   fontWeight: 300,
-  fontSize: '34px',
-  lineHeight: '56px',
+  fontSize: '17px',
+  lineHeight: '28px',
   letterSpacing: '-0.05em',
   color: '#FFFFFF',
-  maxWidth: 'min(560px, calc(100vw - 4rem))',
+  maxWidth: 'min(280px, calc(100vw - 4rem))',
 }
 
 export default function LandingPage({ onEnter }: LandingPageProps) {
@@ -78,37 +79,45 @@ export default function LandingPage({ onEnter }: LandingPageProps) {
       }}
     >
       <div className="pointer-events-none mx-auto flex h-full min-h-[100dvh] w-full max-w-[402px] flex-col bg-transparent px-8 py-12 md:max-w-5xl md:px-12 md:py-16">
-        {/* 1레이어: 로고 */}
         <header className="w-full shrink-0 text-center">
           <h1 className="m-0 font-normal text-white [font-family:'Lobster',cursive] text-[clamp(28px,9vw,36px)] leading-[45px] md:text-[clamp(56px,6vw,72px)] md:leading-[90px]">
             the gist.
           </h1>
         </header>
 
-        {/* 2·3레이어: 가운데 영역 = 글(위) / 바코드(하단 고정) */}
-        <div className="flex min-h-0 flex-1 flex-col py-8">
-          <div className="flex min-h-0 flex-1 flex-col justify-center">
-            <div style={bodyBlockStyle}>
-              <div className="flex flex-col gap-1" style={sourceListStyle}>
+        <div className="flex min-h-0 flex-1 flex-col py-8 md:flex-row md:items-end md:justify-between md:gap-12 lg:gap-20">
+          <div className="flex min-h-0 flex-1 flex-col justify-center md:flex-none md:justify-end">
+            <div
+              className="md:max-w-[min(420px,calc(100%-1rem))] md:text-[25.5px] md:leading-[42px] md:tracking-[-0.05em]"
+              style={bodyBlockStyle}
+            >
+              <div
+                className="flex flex-col gap-0.5 md:text-[25.5px] md:leading-9 md:tracking-[-0.05em]"
+                style={sourceListStyle}
+              >
                 {SOURCE_LINES.map((line) => (
                   <span key={line}>{line}</span>
                 ))}
               </div>
-              <p className="m-0 mt-6">
+              <p className="m-0 mt-4">
                 <strong className="font-semibold">유명 저널 AI 분석</strong>으로
               </p>
-              <p className="m-0 max-w-full break-keep-ko-mobile">
+              <p className="m-0 whitespace-nowrap md:whitespace-normal">
                 글로벌 이슈 심플하게 따라잡기
               </p>
             </div>
           </div>
 
           <div
-            className="mt-8 flex w-full max-w-[317px] shrink-0 flex-col gap-3 self-end md:max-w-md md:gap-4"
+            className="mt-auto flex w-full max-w-[317px] shrink-0 flex-col gap-3 self-end md:mt-0 md:max-w-none md:flex-initial md:gap-4"
             aria-hidden
           >
             {BARCODE_LABELS.map((label) => (
-              <div key={label} style={barcodeBlockStyle}>
+              <div
+                key={label}
+                className="md:[font-size:clamp(2.25rem,4.2vw,4rem)] md:[line-height:clamp(40px,5.5vw,52px)]"
+                style={barcodeBlockStyle}
+              >
                 {label}
               </div>
             ))}
