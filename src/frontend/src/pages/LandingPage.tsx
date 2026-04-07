@@ -16,7 +16,7 @@ const BARCODE_LABELS = [
   'and UN Meetings',
 ] as const
 
-/** 모바일; md 이상은 Tailwind로 1.5배 */
+/** 모바일 기본; md 이상은 Tailwind로 2배 */
 const sourceListStyle: CSSProperties = {
   fontFamily: "'Noto Sans', 'Noto Sans KR', sans-serif",
   fontWeight: 300,
@@ -43,7 +43,7 @@ const barcodeBlockStyle: CSSProperties = {
   color: '#FFFFFF',
 }
 
-/** 모바일 본문; md 이상은 Tailwind */
+/** 모바일 본문; md 이상은 Tailwind로 2배 */
 const bodyBlockStyle: CSSProperties = {
   fontFamily: "'Noto Sans KR', sans-serif",
   fontWeight: 300,
@@ -85,31 +85,32 @@ export default function LandingPage({ onEnter }: LandingPageProps) {
           </h1>
         </header>
 
-        <div className="flex min-h-0 flex-1 flex-col py-8 md:flex-row md:items-end md:justify-between md:gap-12 lg:gap-20">
-          <div className="flex min-h-0 flex-1 flex-col justify-center md:flex-none md:justify-end">
+        {/* 모바일: 기존과 동일. md+: 1 로고 / 2 글(중앙) / 3 바코드(하단) */}
+        <div className="flex min-h-0 flex-1 flex-col py-8">
+          <div className="flex min-h-0 flex-1 flex-col justify-center">
             <div
-              className="md:max-w-[min(420px,calc(100%-1rem))] md:text-[25.5px] md:leading-[42px] md:tracking-[-0.05em]"
+              className="md:max-w-[min(560px,calc(100%-1rem))] md:text-[34px] md:leading-[56px] md:tracking-[-0.05em]"
               style={bodyBlockStyle}
             >
               <div
-                className="flex flex-col gap-0.5 md:text-[25.5px] md:leading-9 md:tracking-[-0.05em]"
+                className="flex flex-col gap-0.5 md:gap-1 md:text-[34px] md:leading-[48px] md:tracking-[-0.05em]"
                 style={sourceListStyle}
               >
                 {SOURCE_LINES.map((line) => (
                   <span key={line}>{line}</span>
                 ))}
               </div>
-              <p className="m-0 mt-4">
+              <p className="m-0 mt-4 md:mt-6">
                 <strong className="font-semibold">유명 저널 AI 분석</strong>으로
               </p>
-              <p className="m-0 whitespace-nowrap md:whitespace-normal">
+              <p className="m-0 whitespace-nowrap md:whitespace-normal md:max-w-full break-keep-ko-mobile">
                 글로벌 이슈 심플하게 따라잡기
               </p>
             </div>
           </div>
 
           <div
-            className="mt-auto flex w-full max-w-[317px] shrink-0 flex-col gap-3 self-end md:mt-0 md:max-w-none md:flex-initial md:gap-4"
+            className="mt-auto flex w-full max-w-[317px] shrink-0 flex-col gap-3 self-end md:mt-8 md:max-w-md md:gap-4"
             aria-hidden
           >
             {BARCODE_LABELS.map((label) => (
