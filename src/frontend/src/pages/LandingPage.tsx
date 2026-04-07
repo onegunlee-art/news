@@ -16,12 +16,12 @@ const BARCODE_LABELS = [
   'and UN Meetings',
 ] as const
 
-/** 바코드 영역과 동일 폰트, 리스트용으로 한 단계 작게 */
+/** 영어 소스 목록: 라틴은 Noto Sans (본문 KR과 동일 계열) */
 const sourceListStyle: CSSProperties = {
-  fontFamily: "'Libre Barcode 128 Text', system-ui, sans-serif",
-  fontWeight: 400,
-  fontSize: 'clamp(0.95rem, 4.5vw, 1.2rem)',
-  lineHeight: 1.35,
+  fontFamily: "'Noto Sans', 'Noto Sans KR', sans-serif",
+  fontWeight: 300,
+  fontSize: '17px',
+  lineHeight: '24px',
   letterSpacing: '-0.05em',
   color: '#FFFFFF',
 }
