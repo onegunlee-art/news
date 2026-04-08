@@ -79,7 +79,7 @@ export default function LandingPage({ onEnter }: LandingPageProps) {
       }}
     >
       <div className="pointer-events-none mx-auto flex h-full min-h-[100dvh] w-full max-w-[402px] flex-col bg-transparent px-8 py-12 md:max-w-5xl md:px-12 md:py-16">
-        <header className="w-full shrink-0 text-center">
+        <header className="w-full shrink-0 text-left md:text-center">
           <h1 className="m-0 font-normal text-white [font-family:'Lobster',cursive] text-[clamp(28px,9vw,36px)] leading-[45px] md:text-[clamp(56px,6vw,72px)] md:leading-[90px]">
             the gist.
           </h1>
