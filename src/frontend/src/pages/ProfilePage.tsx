@@ -360,7 +360,9 @@ export default function ProfilePage() {
                               }
                             }}
                             className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-0 ring-0 border-0 disabled:opacity-50 ${
-                              (subscriptionDetail?.auto_renew ?? true) ? 'bg-primary-500' : 'bg-page-secondary'
+                              (subscriptionDetail?.auto_renew ?? true)
+                                ? 'bg-primary-500'
+                                : 'bg-neutral-300 dark:bg-neutral-700'
                             }`}
                           >
                             <span
@@ -411,7 +413,7 @@ export default function ProfilePage() {
                 aria-checked={theme === 'dark'}
                 onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                 className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-0 ring-0 border-0 ${
-                  theme === 'dark' ? 'bg-primary-500' : 'bg-page-secondary'
+                  theme === 'dark' ? 'bg-primary-500' : 'bg-neutral-300 dark:bg-neutral-700'
                 }`}
               >
                 <span
