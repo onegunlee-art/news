@@ -69,7 +69,7 @@ function chipIdToAnswerType(?string $chipId): ?string
     }
     $map = [
         'content_summary_5' => 'summary',
-        'why_important' => 'summary',
+        'why_important' => 'importance',
         'impact_korea' => 'structure',
         'scenario_forecast' => 'scenario',
         'similar_cases' => 'comparison',
@@ -584,7 +584,11 @@ while (ob_get_level()) {
 sendSSEArticleChat('start', ['session_id' => $sessionId]);
 
 $maxOut = (int) ($openaiCfg['max_tokens'] ?? 2000);
-$temp = (float) ($openaiCfg['temperature'] ?? 0.6);
+$defaultTemp = (float) ($openaiCfg['temperature'] ?? 0.6);
+$tempOverrides = $acConfig['answer_type_temperature'] ?? [];
+$temp = ($answerType !== null && $answerType !== '' && isset($tempOverrides[$answerType]))
+    ? (float) $tempOverrides[$answerType]
+    : $defaultTemp;
 $timeout = (int) ($openaiCfg['timeout'] ?? 60);
 
 $fullResponse = '';
