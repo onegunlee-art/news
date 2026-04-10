@@ -298,6 +298,46 @@ export default function NewsDetailPage() {
 
   if (!news) return null
 
+  const seriesNavEl =
+    news.series_articles && news.series_articles.length > 1 ? (
+      <div className="mb-8 rounded-xl border border-page bg-page-secondary/30 overflow-hidden">
+        <div className="px-4 py-3 bg-page-secondary/50 border-b border-page">
+          <h3 className="text-sm font-semibold text-page">
+            {news.series_title || '시리즈'}
+            <span className="ml-2 text-xs font-normal text-page-secondary">({news.series_articles.length}편)</span>
+          </h3>
+        </div>
+        <ul className="divide-y divide-page">
+          {news.series_articles.map((sa, idx) => {
+            const isCurrent = sa.id === news.id
+            return (
+              <li key={sa.id}>
+                {isCurrent ? (
+                  <div className="flex items-center gap-3 px-4 py-3 bg-primary-500/10">
+                    <span className="shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-primary-500 text-white text-xs font-bold">
+                      {idx + 1}
+                    </span>
+                    <span className="text-sm font-medium text-primary-500 truncate">{sa.title}</span>
+                  </div>
+                ) : (
+                  <Link
+                    to={newsDetailPath(sa.id, fromTab)}
+                    state={fromTab ? { fromTab } : undefined}
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-page-secondary transition-colors"
+                  >
+                    <span className="shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-page-secondary text-page-secondary text-xs font-medium">
+                      {idx + 1}
+                    </span>
+                    <span className="text-sm text-page-secondary truncate hover:text-primary-500 transition-colors">{sa.title}</span>
+                  </Link>
+                )}
+              </li>
+            )
+          })}
+        </ul>
+      </div>
+    ) : null
+
   return (
     <div className="min-h-screen bg-page pb-8">
       {/* 상단 헤더 - Layout Header(h-14) 바로 아래에 붙도록 top-14 */}
@@ -454,46 +494,49 @@ export default function NewsDetailPage() {
 
           {/* === 접근 제한 시: 부분 콘텐츠 + 그래디언트 페이드 + 페이월 === */}
           {news.access_restricted ? (
-            <div className="relative">
-              {/* 부분 콘텐츠 (잘린 텍스트) + 하단 그래디언트 페이드 */}
-              <div className="max-h-[40vh] overflow-hidden relative">
-                {news.why_important && (
-                  <div className="mb-6 bg-amber-50 dark:bg-gray-800 dark:border dark:border-gray-700 rounded-xl shadow-sm overflow-hidden">
-                    <div className="px-5 py-5 sm:px-6 sm:py-6">
-                      <div
-                        className="text-gray-800 dark:text-gray-50 leading-relaxed whitespace-pre-wrap"
-                        dangerouslySetInnerHTML={{ __html: formatContentHtml(news.why_important) }}
-                      />
+            <>
+              <div className="relative">
+                {/* 부분 콘텐츠 (잘린 텍스트) + 하단 그래디언트 페이드 */}
+                <div className="max-h-[40vh] overflow-hidden relative">
+                  {news.why_important && (
+                    <div className="mb-6 bg-amber-50 dark:bg-gray-800 dark:border dark:border-gray-700 rounded-xl shadow-sm overflow-hidden">
+                      <div className="px-5 py-5 sm:px-6 sm:py-6">
+                        <div
+                          className="text-gray-800 dark:text-gray-50 leading-relaxed whitespace-pre-wrap"
+                          dangerouslySetInnerHTML={{ __html: formatContentHtml(news.why_important) }}
+                        />
+                      </div>
                     </div>
-                  </div>
-                )}
-                {news.narration && (
-                  <div className="prose prose-lg max-w-none text-page-secondary leading-relaxed whitespace-pre-wrap"
-                    dangerouslySetInnerHTML={{ __html: formatContentHtml(news.narration) }}
-                  />
-                )}
-                {!news.narration && news.description && (
-                  <div className="prose prose-lg max-w-none text-page-secondary leading-relaxed"
-                    dangerouslySetInnerHTML={{ __html: formatContentHtml(news.description) }}
-                  />
-                )}
-                {/* 그래디언트 페이드 오버레이 */}
-                <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-white dark:from-gray-900 to-transparent pointer-events-none" />
-              </div>
+                  )}
+                  {news.narration && (
+                    <div className="prose prose-lg max-w-none text-page-secondary leading-relaxed whitespace-pre-wrap"
+                      dangerouslySetInnerHTML={{ __html: formatContentHtml(news.narration) }}
+                    />
+                  )}
+                  {!news.narration && news.description && (
+                    <div className="prose prose-lg max-w-none text-page-secondary leading-relaxed"
+                      dangerouslySetInnerHTML={{ __html: formatContentHtml(news.description) }}
+                    />
+                  )}
+                  {/* 그래디언트 페이드 오버레이 */}
+                  <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-white dark:from-gray-900 to-transparent pointer-events-none" />
+                </div>
 
-              {/* 페이월 오버레이 */}
-              <PaywallOverlay
-                isAuthenticated={isAuthenticated}
-                restrictionType={
-                  (news.restriction_type === 'subscription_required' ||
-                    news.restriction_type === 'login_or_subscribe'
-                    ? news.restriction_type
-                    : null) as 'subscription_required' | 'login_or_subscribe' | undefined
-                }
-                returnTo={id ? newsDetailPath(parseInt(id, 10), fromTab) : undefined}
-                onKakaoLogin={login}
-              />
-            </div>
+                {/* 페이월 오버레이 */}
+                <PaywallOverlay
+                  isAuthenticated={isAuthenticated}
+                  restrictionType={
+                    (news.restriction_type === 'subscription_required' ||
+                      news.restriction_type === 'login_or_subscribe'
+                      ? news.restriction_type
+                      : null) as 'subscription_required' | 'login_or_subscribe' | undefined
+                  }
+                  returnTo={id ? newsDetailPath(parseInt(id, 10), fromTab) : undefined}
+                  onKakaoLogin={login}
+                />
+              </div>
+              {seriesNavEl}
+            </>
           ) : (
             <>
               {/* === 전체 접근: 기존 기사 콘텐츠 렌더링 === */}
@@ -523,9 +566,11 @@ export default function NewsDetailPage() {
                 />
               )}
 
+              {seriesNavEl}
+
               {/* 참고 글 AI 구조 분석 */}
               {(news.content || (news.url && news.url !== '#')) && (
-                <div className="mb-8 border-t border-page pt-6 mt-20">
+                <div className="mb-8 border-t border-page pt-6 mt-8">
                   <div className="flex justify-between items-center gap-4 mb-3">
                     <h3 className="flex items-center gap-2 text-sm font-semibold text-primary-500 uppercase tracking-wider shrink-0">
                       <MaterialIcon name="cognition_2" className="w-4 h-4" size={16} />
@@ -561,46 +606,6 @@ export default function NewsDetailPage() {
 
           {!news.access_restricted && (
             <ArticleChatPanel newsId={news.id} />
-          )}
-
-          {/* 시리즈 내비게이션 */}
-          {news.series_articles && news.series_articles.length > 1 && (
-            <div className="mt-8 rounded-xl border border-page bg-page-secondary/30 overflow-hidden">
-              <div className="px-4 py-3 bg-page-secondary/50 border-b border-page">
-                <h3 className="text-sm font-semibold text-page">
-                  {news.series_title || '시리즈'}
-                  <span className="ml-2 text-xs font-normal text-page-secondary">({news.series_articles.length}편)</span>
-                </h3>
-              </div>
-              <ul className="divide-y divide-page">
-                {news.series_articles.map((sa, idx) => {
-                  const isCurrent = sa.id === news.id
-                  return (
-                    <li key={sa.id}>
-                      {isCurrent ? (
-                        <div className="flex items-center gap-3 px-4 py-3 bg-primary-500/10">
-                          <span className="shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-primary-500 text-white text-xs font-bold">
-                            {idx + 1}
-                          </span>
-                          <span className="text-sm font-medium text-primary-500 truncate">{sa.title}</span>
-                        </div>
-                      ) : (
-                        <Link
-                          to={newsDetailPath(sa.id, fromTab)}
-                          state={fromTab ? { fromTab } : undefined}
-                          className="flex items-center gap-3 px-4 py-3 hover:bg-page-secondary transition-colors"
-                        >
-                          <span className="shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-page-secondary text-page-secondary text-xs font-medium">
-                            {idx + 1}
-                          </span>
-                          <span className="text-sm text-page-secondary truncate hover:text-primary-500 transition-colors">{sa.title}</span>
-                        </Link>
-                      )}
-                    </li>
-                  )
-                })}
-              </ul>
-            </div>
           )}
 
           {/* 하단 네비: 3줄 (이전 · 목록 · 다음) */}
