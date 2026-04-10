@@ -573,14 +573,14 @@ export default function NewsDetailPage() {
                 </h3>
               </div>
               <ul className="divide-y divide-page">
-                {news.series_articles.map((sa) => {
+                {news.series_articles.map((sa, idx) => {
                   const isCurrent = sa.id === news.id
                   return (
                     <li key={sa.id}>
                       {isCurrent ? (
                         <div className="flex items-center gap-3 px-4 py-3 bg-primary-500/10">
                           <span className="shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-primary-500 text-white text-xs font-bold">
-                            {sa.series_order}
+                            {idx + 1}
                           </span>
                           <span className="text-sm font-medium text-primary-500 truncate">{sa.title}</span>
                         </div>
@@ -591,7 +591,7 @@ export default function NewsDetailPage() {
                           className="flex items-center gap-3 px-4 py-3 hover:bg-page-secondary transition-colors"
                         >
                           <span className="shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-page-secondary text-page-secondary text-xs font-medium">
-                            {sa.series_order}
+                            {idx + 1}
                           </span>
                           <span className="text-sm text-page-secondary truncate hover:text-primary-500 transition-colors">{sa.title}</span>
                         </Link>
