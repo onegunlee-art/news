@@ -139,8 +139,29 @@ class NarrationAgent extends BaseAgent
         ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
 
         $articleContent = '';
+        $isEconomist = false;
         if ($article !== null) {
             $articleContent = $this->truncateContent($article->getContent(), 25000);
+            $host = parse_url($article->getUrl(), PHP_URL_HOST) ?? '';
+            $isEconomist = str_contains($host, 'economist.com');
+        }
+
+        if ($isEconomist) {
+            $contentLength = mb_strlen($articleContent);
+            if ($contentLength <= 3000) {
+                $charRange = '800~1,200자';
+            } elseif ($contentLength <= 8000) {
+                $charRange = '1,000~1,500자';
+            } else {
+                $charRange = '1,200~1,800자';
+            }
+            $lengthRule = "1. 내래이션은 반드시 {$charRange} 범위로 작성하세요. 이 범위를 초과하지 마세요.";
+            $lengthRef = $charRange;
+            $economistRule = "\n7. 원문의 50% 이하 분량으로 압축하세요. 번역이 아니라 요약입니다.\n8. 섹션별 나열이 아닌, 핵심 논점 중심으로 자연스럽게 이어 쓰세요.";
+        } else {
+            $lengthRule = '1. 내래이션은 반드시 1,300자 이상 작성하세요.';
+            $lengthRef = '1,300자 이상';
+            $economistRule = '';
         }
 
         return <<<PROMPT
@@ -149,12 +170,12 @@ class NarrationAgent extends BaseAgent
 ##############################################################
 
 [절대 규칙 - 반드시 준수]
-1. 내래이션은 반드시 1,300자 이상 작성하세요.
+{$lengthRule}
 2. 모든 문장은 공손한 높임말 (~입니다, ~합니다, ~됩니다)
 3. 평어/반말 절대 금지 (~이다, ~한다, ~된다)
 4. 부드럽고 따뜻하면서도 전문적인 어조
 5. 인사말 없이 바로 핵심으로 시작
-6. 기사에 없는 주장이나 과도한 확신 금지
+6. 기사에 없는 주장이나 과도한 확신 금지{$economistRule}
 
 [출력 형식]
 JSON으로만 응답하세요.
@@ -242,7 +263,7 @@ JSON으로만 응답하세요.
 
 ---
 
-위 분석 결과와 원문을 참고하여, 예시와 같은 형식과 어조로 1,300자 이상의 narration을 작성하세요.
+위 분석 결과와 원문을 참고하여, 예시와 같은 형식과 어조로 {$lengthRef}의 narration을 작성하세요.
 예시의 '주제'가 아닌 '형식과 어조'만 따르세요.
 PROMPT;
     }
