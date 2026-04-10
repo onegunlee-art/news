@@ -104,6 +104,9 @@ try {
     $hasCategoryParent = in_array('category_parent', $newsColumns, true);
     $hasAlsoSpecial = in_array('also_special', $newsColumns, true);
     $hasViewCount = in_array('view_count', $newsColumns, true);
+    $hasSeriesId = in_array('series_id', $newsColumns, true);
+    $hasSeriesOrder = in_array('series_order', $newsColumns, true);
+    $hasSeriesTitle = in_array('series_title', $newsColumns, true);
     
     // 기본 컬럼 (url: extractTitleFromUrl용, source_url 없을 때 fallback)
     $columns = 'id, category, title, description, content, source, url, image_url, created_at';
@@ -156,6 +159,9 @@ try {
     if ($hasOriginalTitle) {
         $columns .= ', original_title';
     }
+    if ($hasSeriesId) $columns .= ', series_id';
+    if ($hasSeriesOrder) $columns .= ', series_order';
+    if ($hasSeriesTitle) $columns .= ', series_title';
     // #region agent log
     $debugPayload('detail.php:columns', 'optional columns built', ['hasWhyImportant' => $hasWhyImportant, 'hasNarration' => $hasNarration, 'hasSourceUrl' => $hasSourceUrl, 'hasPublishedAt' => $hasPublishedAt, 'hasOriginalSource' => $hasOriginalSource, 'hasOriginalTitle' => $hasOriginalTitle, 'hasUpdatedAt' => $hasUpdatedAt, 'columns' => $columns], 'H1');
     // #endregion
@@ -347,6 +353,15 @@ try {
         'prev_article' => $prevArticle ? ['id' => (int)$prevArticle['id'], 'title' => $prevArticle['title']] : null,
         'next_article' => $nextArticle ? ['id' => (int)$nextArticle['id'], 'title' => $nextArticle['title']] : null,
     ];
+    // 시리즈 기사면 같은 시리즈의 기사 목록 포함
+    if ($hasSeriesId && !empty($news['series_id'])) {
+        $sStmt = $db->prepare("SELECT id, title, series_order FROM news WHERE series_id = ?" . $statusCond . " ORDER BY series_order ASC, id ASC");
+        $sStmt->execute([$news['series_id']]);
+        $responseData['series_id'] = $news['series_id'];
+        $responseData['series_title'] = $news['series_title'] ?? null;
+        $responseData['series_order'] = (int)($news['series_order'] ?? 0);
+        $responseData['series_articles'] = $sStmt->fetchAll(PDO::FETCH_ASSOC);
+    }
     // 페이월: 접근 권한 판단
     $accessGranted = true;
     $restrictionType = null;

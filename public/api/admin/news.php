@@ -123,6 +123,9 @@ $hasUpdatedAt      = isset($newsColumns['updated_at']);
 $hasCategoryParent = isset($newsColumns['category_parent']);
 $hasAlsoSpecial    = isset($newsColumns['also_special']);
 $hasViewCount      = isset($newsColumns['view_count']);
+$hasSeriesId       = isset($newsColumns['series_id']);
+$hasSeriesOrder    = isset($newsColumns['series_order']);
+$hasSeriesTitle    = isset($newsColumns['series_title']);
 
 $method = $_SERVER['REQUEST_METHOD'];
 
@@ -201,6 +204,11 @@ if ($method === 'POST') {
     $originalSource = $input['source'] ?? null;  // 원본 출처 (예: Financial Times)
     $author = $input['author'] ?? null;  // 원본 작성자
     $customImageUrl = $input['image_url'] ?? null;  // 사용자 지정 이미지 URL
+    
+    // 시리즈(분할 기사) 필드
+    $seriesId = $input['series_id'] ?? null;
+    $seriesOrder = isset($input['series_order']) ? (int) $input['series_order'] : null;
+    $seriesTitle = $input['series_title'] ?? null;
     
     // published_at 처리: 빈 문자열이면 null, 그렇지 않으면 날짜 형식 변환 시도. 비어있으면 현재 날짜(우리 게시일)로 설정
     $publishedAtRaw = $input['published_at'] ?? null;
@@ -351,6 +359,21 @@ if ($method === 'POST') {
             $values[] = $status;
             $placeholders[] = '?';
         }
+        if ($hasSeriesId && $seriesId !== null) {
+            $columns[] = 'series_id';
+            $values[] = $seriesId;
+            $placeholders[] = '?';
+        }
+        if ($hasSeriesOrder && $seriesOrder !== null) {
+            $columns[] = 'series_order';
+            $values[] = $seriesOrder;
+            $placeholders[] = '?';
+        }
+        if ($hasSeriesTitle && $seriesTitle !== null) {
+            $columns[] = 'series_title';
+            $values[] = $seriesTitle;
+            $placeholders[] = '?';
+        }
         
         $columnStr = implode(', ', $columns);
         $placeholderStr = implode(', ', $placeholders);
@@ -456,6 +479,26 @@ if ($method === 'POST') {
 
 // GET: 뉴스 단건 조회 (id 있을 때) 또는 목록 조회
 if ($method === 'GET') {
+    // 시리즈 목록 조회: GET ?series_list=1 → 기존 시리즈 그룹 목록 반환
+    if (isset($_GET['series_list']) && $hasSeriesId) {
+        try {
+            $stmt = $db->query("
+                SELECT series_id, series_title, COUNT(*) as article_count,
+                       MIN(series_order) as min_order, MAX(series_order) as max_order
+                FROM news
+                WHERE series_id IS NOT NULL
+                GROUP BY series_id, series_title
+                ORDER BY MAX(id) DESC
+            ");
+            $seriesList = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            echo json_encode(['success' => true, 'data' => ['series' => $seriesList]], JSON_UNESCAPED_UNICODE);
+        } catch (PDOException $e) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => '시리즈 조회 실패: ' . $e->getMessage()]);
+        }
+        exit;
+    }
+
     $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
     
     // 단건 조회: Admin용 (draft 포함, status 무관)
@@ -475,6 +518,9 @@ if ($method === 'GET') {
             if ($hasPublishedAt) $selCols .= ', published_at';
             if ($hasStatus) $selCols .= ', status';
             if ($hasAlsoSpecial) $selCols .= ', also_special';
+            if ($hasSeriesId) $selCols .= ', series_id';
+            if ($hasSeriesOrder) $selCols .= ', series_order';
+            if ($hasSeriesTitle) $selCols .= ', series_title';
             $stmt = $db->prepare("SELECT $selCols FROM news WHERE id = ?");
             $stmt->execute([$id]);
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -482,6 +528,12 @@ if ($method === 'GET') {
                 http_response_code(404);
                 echo json_encode(['success' => false, 'message' => '뉴스를 찾을 수 없습니다.']);
                 exit;
+            }
+            // 시리즈 기사면 같은 시리즈의 다른 기사 목록 포함
+            if ($hasSeriesId && !empty($row['series_id'])) {
+                $sStmt = $db->prepare("SELECT id, title, series_order FROM news WHERE series_id = ? ORDER BY series_order ASC, id ASC");
+                $sStmt->execute([$row['series_id']]);
+                $row['series_articles'] = $sStmt->fetchAll(PDO::FETCH_ASSOC);
             }
             api_log('admin/news', 'GET', 200);
             $json = json_encode(['success' => true, 'data' => ['article' => $row]], JSON_UNESCAPED_UNICODE);
@@ -623,6 +675,9 @@ if ($method === 'GET') {
         if ($hasAlsoSpecial) {
             $selectColumns .= ', also_special';
         }
+        if ($hasSeriesId) $selectColumns .= ', series_id';
+        if ($hasSeriesOrder) $selectColumns .= ', series_order';
+        if ($hasSeriesTitle) $selectColumns .= ', series_title';
         
         // id DESC: 목록 정렬을 detail.php prev/next와 동일하게 (동일 시각·동일 조회수 tie-break)
         $orderBy = 'ORDER BY COALESCE(published_at, created_at) DESC, id DESC';
@@ -702,6 +757,11 @@ if ($method === 'PUT') {
     $originalTitle = $input['original_title'] ?? null;
     $author = $input['author'] ?? null;
     $customImageUrl = $input['image_url'] ?? null;
+    
+    // 시리즈(분할 기사) 필드
+    $seriesId = $input['series_id'] ?? null;
+    $seriesOrder = isset($input['series_order']) ? (int) $input['series_order'] : null;
+    $seriesTitle = $input['series_title'] ?? null;
     
     // published_at 처리: 빈 문자열이면 null, 그렇지 않으면 날짜 형식 변환 시도
     $publishedAtRaw = $input['published_at'] ?? null;
@@ -819,8 +879,9 @@ if ($method === 'PUT') {
             }
         }
         
-        // 이미지 URL: 사용자 지정 URL이 있으면 그것을 사용, 없으면 자동 생성
-        $imageUrl = !empty($customImageUrl) ? $customImageUrl : smartImageUrl($title, $category, $db);
+        // 이미지 URL: 명시적으로 보냈을 때만 변경, 미전송 시 기존 DB 값 유지
+        $imageUrlProvided = array_key_exists('image_url', $input) && !empty($input['image_url']);
+        $imageUrl = $imageUrlProvided ? $customImageUrl : null;
         
         // source 값: source 필드가 있으면 사용
         $sourceValue = !empty($sourceField) ? $sourceField : null;
@@ -829,11 +890,15 @@ if ($method === 'PUT') {
         
         // 동적 UPDATE 쿼리 생성 (category_parent + category; 없으면 category만)
         if ($hasCategoryParent) {
-            $setClauses = ['category_parent = ?', 'category = ?', 'title = ?', 'description = ?', 'content = ?', 'image_url = ?'];
-            $values = [$categoryParent, $category, $title, $description, $content, $imageUrl];
+            $setClauses = ['category_parent = ?', 'category = ?', 'title = ?', 'description = ?', 'content = ?'];
+            $values = [$categoryParent, $category, $title, $description, $content];
         } else {
-            $setClauses = ['category = ?', 'title = ?', 'description = ?', 'content = ?', 'image_url = ?'];
-            $values = [$categoryParent, $title, $description, $content, $imageUrl];
+            $setClauses = ['category = ?', 'title = ?', 'description = ?', 'content = ?'];
+            $values = [$categoryParent, $title, $description, $content];
+        }
+        if ($imageUrlProvided) {
+            $setClauses[] = 'image_url = ?';
+            $values[] = $imageUrl;
         }
         if ($hasUpdatedAt) {
             $setClauses[] = 'updated_at = NOW()';
@@ -894,6 +959,18 @@ if ($method === 'PUT') {
             $setClauses[] = 'also_special = ?';
             $values[] = !empty($input['also_special']) ? 1 : 0;
         }
+        if ($hasSeriesId && array_key_exists('series_id', $input)) {
+            $setClauses[] = 'series_id = ?';
+            $values[] = $seriesId;
+        }
+        if ($hasSeriesOrder && array_key_exists('series_order', $input)) {
+            $setClauses[] = 'series_order = ?';
+            $values[] = $seriesOrder;
+        }
+        if ($hasSeriesTitle && array_key_exists('series_title', $input)) {
+            $setClauses[] = 'series_title = ?';
+            $values[] = $seriesTitle;
+        }
         
         $values[] = $id;  // WHERE 절용
         $setStr = implode(', ', $setClauses);
@@ -944,6 +1021,9 @@ if ($method === 'PUT') {
         if ($hasPublishedAt) $selCols .= ', published_at';
         if ($hasStatus) $selCols .= ', status';
         if ($hasAlsoSpecial) $selCols .= ', also_special';
+        if ($hasSeriesId) $selCols .= ', series_id';
+        if ($hasSeriesOrder) $selCols .= ', series_order';
+        if ($hasSeriesTitle) $selCols .= ', series_title';
 
         $freshStmt = $db->prepare("SELECT $selCols FROM news WHERE id = ?");
         $freshStmt->execute([$id]);

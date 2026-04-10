@@ -705,7 +705,17 @@ const AdminPage: React.FC = () => {
   const [isRegeneratingDalle, setIsRegeneratingDalle] = useState(false);
   const [dallePrompt, setDallePrompt] = useState('');
   const [isRegeneratingTts, setIsRegeneratingTts] = useState(false);
+
+  // 시리즈(분할 기사) 상태
+  const [seriesMode, setSeriesMode] = useState<'none' | 'new' | 'existing'>('none');
+  const [seriesTitle, setSeriesTitle] = useState('');
+  const [seriesOrder, setSeriesOrder] = useState(1);
+  const [existingSeriesId, setExistingSeriesId] = useState('');
+  const [seriesList, setSeriesList] = useState<{ series_id: string; series_title: string; article_count: number; max_order: number }[]>([]);
   const [regeneratedTtsUrl, setRegeneratedTtsUrl] = useState<string | null>(null);
+
+  // 파이프라인 분석 후 이미지 선택 (기존 vs AI)
+  const [thumbnailChoice, setThumbnailChoice] = useState<{ existing: string; ai: string } | null>(null);
 
   // 임시저장 탭 상태
   const [draftList, setDraftList] = useState<NewsArticle[]>([]);
@@ -1179,6 +1189,17 @@ const AdminPage: React.FC = () => {
       setIsLoadingNews(false);
     }
   }, [selectedCategory, newsSearchQuery, newsPage]);
+
+  // 시리즈 목록 로드
+  const loadSeriesList = useCallback(async () => {
+    try {
+      const res = await adminFetch('/api/admin/news.php?series_list=1');
+      const data = await res.json();
+      if (data.success && data.data?.series) {
+        setSeriesList(data.data.series);
+      }
+    } catch { /* ignore */ }
+  }, []);
 
   // 임시저장 목록 로드 (20개씩 페이지네이션)
   const loadDraftsList = useCallback(async () => {
@@ -2552,6 +2573,84 @@ const AdminPage: React.FC = () => {
                             className="w-full bg-slate-800/50 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-500 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition"
                           />
                         </div>
+
+                        {/* 시리즈(분할 기사) 설정 */}
+                        <div className="border border-slate-600 rounded-xl p-4 bg-slate-800/30">
+                          <label className="block text-slate-300 text-sm font-medium mb-3">시리즈 설정</label>
+                          <div className="flex gap-4 mb-3">
+                            {(['none', 'new', 'existing'] as const).map((mode) => (
+                              <label key={mode} className="flex items-center gap-1.5 text-sm text-slate-400 cursor-pointer">
+                                <input
+                                  type="radio"
+                                  name="seriesMode"
+                                  checked={seriesMode === mode}
+                                  onChange={() => {
+                                    setSeriesMode(mode);
+                                    if (mode === 'existing' && seriesList.length === 0) loadSeriesList();
+                                  }}
+                                  className="accent-cyan-500"
+                                />
+                                {mode === 'none' ? '단독 기사' : mode === 'new' ? '새 시리즈 시작' : '기존 시리즈에 추가'}
+                              </label>
+                            ))}
+                          </div>
+                          {seriesMode === 'new' && (
+                            <div className="space-y-2">
+                              <input
+                                type="text"
+                                value={seriesTitle}
+                                onChange={(e) => setSeriesTitle(e.target.value)}
+                                placeholder="시리즈 제목 (예: 트럼프 관세 분석)"
+                                className="w-full bg-slate-800/50 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm placeholder-slate-500 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition"
+                              />
+                              <div className="flex items-center gap-2">
+                                <label className="text-slate-500 text-xs whitespace-nowrap">순서:</label>
+                                <input
+                                  type="number"
+                                  min={1}
+                                  value={seriesOrder}
+                                  onChange={(e) => setSeriesOrder(Math.max(1, Number(e.target.value)))}
+                                  className="w-20 bg-slate-800/50 border border-slate-600 rounded-lg px-3 py-1.5 text-white text-sm focus:border-cyan-500 outline-none"
+                                />
+                                <span className="text-slate-500 text-xs">번째 기사</span>
+                              </div>
+                            </div>
+                          )}
+                          {seriesMode === 'existing' && (
+                            <div className="space-y-2">
+                              <select
+                                value={existingSeriesId}
+                                onChange={(e) => {
+                                  setExistingSeriesId(e.target.value);
+                                  const s = seriesList.find((s) => s.series_id === e.target.value);
+                                  if (s) {
+                                    setSeriesTitle(s.series_title || '');
+                                    setSeriesOrder((s.max_order || 0) + 1);
+                                  }
+                                }}
+                                className="w-full bg-slate-800/50 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm focus:border-cyan-500 outline-none"
+                              >
+                                <option value="">시리즈 선택...</option>
+                                {seriesList.map((s) => (
+                                  <option key={s.series_id} value={s.series_id}>
+                                    {s.series_title || '(제목 없음)'} ({s.article_count}편)
+                                  </option>
+                                ))}
+                              </select>
+                              <div className="flex items-center gap-2">
+                                <label className="text-slate-500 text-xs whitespace-nowrap">순서:</label>
+                                <input
+                                  type="number"
+                                  min={1}
+                                  value={seriesOrder}
+                                  onChange={(e) => setSeriesOrder(Math.max(1, Number(e.target.value)))}
+                                  className="w-20 bg-slate-800/50 border border-slate-600 rounded-lg px-3 py-1.5 text-white text-sm focus:border-cyan-500 outline-none"
+                                />
+                                <span className="text-slate-500 text-xs">번째 기사</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                         
                         {/* 썸네일 URL */}
                         <div>
@@ -2604,6 +2703,36 @@ const AdminPage: React.FC = () => {
                         </div>
                       </div>
                       
+                      {/* 썸네일 선택 (기존 vs AI) */}
+                      {thumbnailChoice && (
+                        <div className="mt-3 p-4 border border-amber-600/50 rounded-xl bg-amber-900/20">
+                          <p className="text-amber-300 text-sm font-medium mb-3">기존 썸네일과 AI 생성 썸네일 중 선택하세요</p>
+                          <div className="flex gap-4">
+                            {[
+                              { key: 'existing' as const, label: '기존 이미지 유지', url: thumbnailChoice.existing },
+                              { key: 'ai' as const, label: 'AI 생성 이미지', url: thumbnailChoice.ai },
+                            ].map(({ key, label, url }) => (
+                              <button
+                                key={key}
+                                type="button"
+                                onClick={() => {
+                                  setArticleImageUrl(url);
+                                  setThumbnailChoice(null);
+                                }}
+                                className={`flex-1 rounded-lg border-2 p-2 transition-all hover:border-cyan-500 ${
+                                  articleImageUrl === url ? 'border-cyan-500 ring-2 ring-cyan-500/30' : 'border-slate-600'
+                                }`}
+                              >
+                                <div className="w-full h-20 bg-slate-800 rounded overflow-hidden mb-2">
+                                  <img src={url} alt={label} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                                </div>
+                                <span className="text-xs text-slate-300">{label}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
                       {/* 썸네일 미리보기 */}
                       {articleImageUrl && (
                         <div className="mt-3 space-y-3">
@@ -2664,6 +2793,44 @@ const AdminPage: React.FC = () => {
                                 {isRegeneratingDalle ? '생성 중...' : 'DALL-E로 수정'}
                               </button>
                             </div>
+                          </div>
+                          {/* 직접 이미지 업로드 */}
+                          <div className="pt-2 border-t border-slate-700/50">
+                            <label className="block text-slate-400 text-sm mb-1">직접 이미지 업로드</label>
+                            <p className="text-slate-500 text-xs mb-2">JPG, PNG, WebP, GIF (최대 10MB)</p>
+                            <input
+                              type="file"
+                              accept="image/jpeg,image/png,image/webp,image/gif"
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+                                if (file.size > 10 * 1024 * 1024) {
+                                  setSaveMessage({ type: 'error', text: '파일 크기가 10MB를 초과합니다.' });
+                                  return;
+                                }
+                                setSaveMessage(null);
+                                try {
+                                  const formData = new FormData();
+                                  formData.append('file', file);
+                                  const res = await adminFetch('/api/admin/upload-thumbnail.php', {
+                                    method: 'POST',
+                                    body: formData,
+                                  });
+                                  const data = await res.json();
+                                  if (data.success && data.image_url) {
+                                    setArticleImageUrl(data.image_url);
+                                    setSaveMessage({ type: 'success', text: '이미지가 업로드되었습니다.' });
+                                  } else {
+                                    setSaveMessage({ type: 'error', text: data.message || '이미지 업로드 실패' });
+                                  }
+                                } catch (err) {
+                                  setSaveMessage({ type: 'error', text: '업로드 실패: ' + (err as Error).message });
+                                } finally {
+                                  e.target.value = '';
+                                }
+                              }}
+                              className="text-sm text-slate-400 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-slate-700 file:text-slate-200 hover:file:bg-slate-600 file:cursor-pointer"
+                            />
                           </div>
                         </div>
                       )}
@@ -2885,6 +3052,11 @@ const AdminPage: React.FC = () => {
                             author: articleAuthor.trim() || null,
                             published_at: articlePublishedAt.trim() || null,
                             image_url: articleImageUrl.trim() || null,
+                            ...(seriesMode !== 'none' && {
+                              series_id: seriesMode === 'existing' ? existingSeriesId : crypto.randomUUID(),
+                              series_order: seriesOrder,
+                              series_title: seriesTitle.trim() || null,
+                            }),
                             status: 'draft' as const,
                           };
                           const response = await adminFetch('/api/admin/news.php', {
@@ -2970,6 +3142,11 @@ const AdminPage: React.FC = () => {
                             author: articleAuthor.trim() || null,
                             published_at: articlePublishedAt.trim() || null,
                             image_url: articleImageUrl.trim() || null,
+                            ...(seriesMode !== 'none' && {
+                              series_id: seriesMode === 'existing' ? existingSeriesId : crypto.randomUUID(),
+                              series_order: seriesOrder,
+                              series_title: seriesTitle.trim() || null,
+                            }),
                             status: 'published' as const,
                           };
                           
@@ -3496,7 +3673,13 @@ const AdminPage: React.FC = () => {
                             return;
                           }
                           if (data.article) {
-                            setArticleImageUrl(data.article.image_url || '');
+                            const aiImage = data.article.image_url || '';
+                            if (articleImageUrl.trim() && aiImage && aiImage !== articleImageUrl.trim()) {
+                              setThumbnailChoice({ existing: articleImageUrl.trim(), ai: aiImage });
+                            } else {
+                              setArticleImageUrl(aiImage);
+                              setThumbnailChoice(null);
+                            }
                             setNewsTitle(data.article.title || '');
                             setArticleSummary(data.article.description || '');
                             if (data.article.published_at) setArticlePublishedAt(data.article.published_at);

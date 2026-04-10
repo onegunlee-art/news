@@ -720,6 +720,49 @@ export default function AdminDraftPreviewEdit({
               {thumbnailMessage.text}
             </p>
           )}
+
+          {/* 직접 이미지 업로드 */}
+          <div className="mt-3 pt-3 border-t border-gray-200">
+            <label className="block text-gray-600 text-sm font-medium mb-1">직접 이미지 업로드</label>
+            <p className="text-gray-500 text-xs mb-2">JPG, PNG, WebP, GIF (최대 10MB)</p>
+            <div className="flex gap-2 items-center">
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0]
+                  if (!file) return
+                  if (file.size > 10 * 1024 * 1024) {
+                    setThumbnailMessage({ type: 'error', text: '파일 크기가 10MB를 초과합니다.' })
+                    return
+                  }
+                  setThumbnailMessage(null)
+                  setIsRegeneratingDalle(true)
+                  try {
+                    const formData = new FormData()
+                    formData.append('file', file)
+                    const res = await adminFetch('/api/admin/upload-thumbnail.php', {
+                      method: 'POST',
+                      body: formData,
+                    })
+                    const data = await res.json()
+                    if (data.success && data.image_url) {
+                      setNews((prev) => ({ ...prev, image_url: data.image_url }))
+                      setThumbnailMessage({ type: 'success', text: '이미지가 업로드되었습니다. 아래 "임시 저장 업데이트"를 누르면 저장됩니다.' })
+                    } else {
+                      setThumbnailMessage({ type: 'error', text: data.message || '이미지 업로드 실패' })
+                    }
+                  } catch (err) {
+                    setThumbnailMessage({ type: 'error', text: '업로드 실패: ' + (err as Error).message })
+                  } finally {
+                    setIsRegeneratingDalle(false)
+                    e.target.value = ''
+                  }
+                }}
+                className="text-sm text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 file:cursor-pointer"
+              />
+            </div>
+          </div>
         </div>
 
         <div className="px-4 pt-5 pb-8">

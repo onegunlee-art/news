@@ -46,6 +46,10 @@ interface NewsDetail {
   audio_url?: string | null
   access_restricted?: boolean
   restriction_type?: string
+  series_id?: string | null
+  series_title?: string | null
+  series_order?: number | null
+  series_articles?: { id: number; title: string; series_order: number }[] | null
 }
 
 export default function NewsDetailPage() {
@@ -557,6 +561,46 @@ export default function NewsDetailPage() {
 
           {!news.access_restricted && (
             <ArticleChatPanel newsId={news.id} />
+          )}
+
+          {/* 시리즈 내비게이션 */}
+          {news.series_articles && news.series_articles.length > 1 && (
+            <div className="mt-8 rounded-xl border border-page bg-page-secondary/30 overflow-hidden">
+              <div className="px-4 py-3 bg-page-secondary/50 border-b border-page">
+                <h3 className="text-sm font-semibold text-page">
+                  {news.series_title || '시리즈'}
+                  <span className="ml-2 text-xs font-normal text-page-secondary">({news.series_articles.length}편)</span>
+                </h3>
+              </div>
+              <ul className="divide-y divide-page">
+                {news.series_articles.map((sa) => {
+                  const isCurrent = sa.id === news.id
+                  return (
+                    <li key={sa.id}>
+                      {isCurrent ? (
+                        <div className="flex items-center gap-3 px-4 py-3 bg-primary-500/10">
+                          <span className="shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-primary-500 text-white text-xs font-bold">
+                            {sa.series_order}
+                          </span>
+                          <span className="text-sm font-medium text-primary-500 truncate">{sa.title}</span>
+                        </div>
+                      ) : (
+                        <Link
+                          to={newsDetailPath(sa.id, fromTab)}
+                          state={fromTab ? { fromTab } : undefined}
+                          className="flex items-center gap-3 px-4 py-3 hover:bg-page-secondary transition-colors"
+                        >
+                          <span className="shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-page-secondary text-page-secondary text-xs font-medium">
+                            {sa.series_order}
+                          </span>
+                          <span className="text-sm text-page-secondary truncate hover:text-primary-500 transition-colors">{sa.title}</span>
+                        </Link>
+                      )}
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
           )}
 
           {/* 하단 네비: 3줄 (이전 · 목록 · 다음) */}
