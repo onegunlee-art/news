@@ -8,7 +8,10 @@ export async function adminFetch(url: string, init?: RequestInit): Promise<Respo
 
   const buildHeaders = (token: string | null) => {
     const headers = new Headers(init?.headers)
-    headers.set('Content-Type', 'application/json')
+    const isFormData = init?.body instanceof FormData
+    if (!isFormData) {
+      headers.set('Content-Type', 'application/json')
+    }
     if (method === 'GET') {
       headers.set('Cache-Control', 'no-cache')
       headers.set('Pragma', 'no-cache')
