@@ -63,6 +63,7 @@ $title = null;
 $description = null;
 $imageUrl = null;
 $publishedAt = null;
+$updatedAt = null;
 $category = null;
 $narration = null;
 
@@ -79,7 +80,7 @@ try {
         $db->query("SHOW COLUMNS FROM news")->fetchAll(PDO::FETCH_ASSOC)
     );
     $select = ['title'];
-    foreach (['description', 'image_url', 'published_at', 'category', 'narration'] as $col) {
+    foreach (['description', 'image_url', 'published_at', 'updated_at', 'category', 'narration'] as $col) {
         if (in_array($col, $cols, true)) {
             $select[] = $col;
         }
@@ -101,6 +102,7 @@ try {
         $description = !empty($row['description']) ? (string) $row['description'] : null;
         $imageUrl = !empty($row['image_url']) ? (string) $row['image_url'] : null;
         $publishedAt = !empty($row['published_at']) ? (string) $row['published_at'] : null;
+        $updatedAt = !empty($row['updated_at']) ? (string) $row['updated_at'] : null;
         $category = !empty($row['category']) ? (string) $row['category'] : null;
         $narration = !empty($row['narration']) ? (string) $row['narration'] : null;
     }
@@ -120,7 +122,15 @@ if ($title === null) {
 }
 
 $pageTitle = $title . ' | the gist.';
-$ogDesc = $description !== null ? mb_substr(strip_tags($description), 0, 200, 'UTF-8') : 'the gist. — 글로벌 이슈를 한눈에';
+$descStripped = $description !== null ? trim(strip_tags($description)) : '';
+$narrStripped = $narration !== null ? trim(strip_tags($narration)) : '';
+if ($descStripped !== '') {
+    $ogDesc = mb_substr($descStripped, 0, 200, 'UTF-8');
+} elseif ($narrStripped !== '') {
+    $ogDesc = mb_substr($narrStripped, 0, 200, 'UTF-8');
+} else {
+    $ogDesc = 'the gist. — 글로벌 이슈를 한눈에';
+}
 $rawImage = $imageUrl ?: $brandImage;
 $ogImage = (str_starts_with($rawImage, 'http://') || str_starts_with($rawImage, 'https://'))
     ? $rawImage
@@ -149,6 +159,9 @@ $jsonLd = [
 if ($publishedAt !== null) {
     $jsonLd['datePublished'] = date('c', strtotime($publishedAt));
 }
+if ($updatedAt !== null) {
+    $jsonLd['dateModified'] = date('c', strtotime($updatedAt));
+}
 if ($category !== null) {
     $jsonLd['articleSection'] = $category;
 }
@@ -161,6 +174,7 @@ $jsonLdJson = json_encode($jsonLd, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASH
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title><?= $esc($pageTitle) ?></title>
   <meta name="description" content="<?= $esc($ogDesc) ?>" />
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
   <link rel="canonical" href="<?= $esc($canonical) ?>" />
   <meta property="og:type" content="article" />
   <meta property="og:title" content="<?= $esc($pageTitle) ?>" />

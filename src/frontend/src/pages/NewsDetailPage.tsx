@@ -84,6 +84,27 @@ export default function NewsDetailPage() {
     }
   }, [id])
 
+  useEffect(() => {
+    if (!news || news.id !== Number(id)) return
+    const prevTitle = document.title
+    document.title = `${news.title} | the gist.`
+    const descText = stripHtml(news.description || news.narration || '').slice(0, 160)
+    let metaDesc = document.querySelector<HTMLMetaElement>('meta[name="description"]')
+    const prevDesc = metaDesc?.content ?? ''
+    if (descText) {
+      if (!metaDesc) {
+        metaDesc = document.createElement('meta')
+        metaDesc.name = 'description'
+        document.head.appendChild(metaDesc)
+      }
+      metaDesc.content = descText
+    }
+    return () => {
+      document.title = prevTitle
+      if (metaDesc) metaDesc.content = prevDesc
+    }
+  }, [news, id])
+
   // 전역 팝업 플레이어에서 재생 (제목 → 매체설명 → 내레이션 → The Gist)
   // Listen 클릭 시 최신 기사 데이터를 강제 조회하여 stale state로 인한 이전 보이스 재생 방지
   const playArticle = async () => {
