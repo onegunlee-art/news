@@ -52,36 +52,38 @@ export default function LandingOverlay() {
             )`,
           }}
         >
-          {/* 로고 */}
-          <h1
-            className="absolute text-white"
+          {/* 로고 + 태그라인: 절대 좌표 분리 시 PC에서 줄바꿈 시 겹침 → flex 스택 + gap */}
+          <div
+            className="absolute z-[1] flex flex-col gap-5 md:gap-10"
             style={{
-              fontFamily: '"Lobster", cursive',
-              fontSize: 'clamp(36px, 8vw, 56px)',
-              lineHeight: 1.2,
-              top: '18dvh',
+              top: 'clamp(3rem, 16dvh, 9rem)',
               left: '10%',
+              maxWidth: 'min(28rem, calc(100vw - 20%))',
             }}
           >
-            the gist.
-          </h1>
-
-          {/* 태그라인 */}
-          <p
-            className="absolute text-white"
-            style={{
-              fontFamily: '"Noto Sans KR", sans-serif',
-              fontWeight: 300,
-              fontSize: 'clamp(12px, 3.5vw, 15px)',
-              lineHeight: '28px',
-              letterSpacing: '-0.05em',
-              top: '24dvh',
-              left: '10%',
-              maxWidth: 'min(295px, 80%)',
-            }}
-          >
-            The Economist / Foreign Affairs / Financial Times etc. 유명 글로벌 저널 AI 분석
-          </p>
+            <h1
+              className="m-0 text-white shrink-0"
+              style={{
+                fontFamily: '"Lobster", cursive',
+                fontSize: 'clamp(36px, 6vw, 56px)',
+                lineHeight: 1.15,
+              }}
+            >
+              the gist.
+            </h1>
+            <p
+              className="m-0 text-white md:max-w-xl"
+              style={{
+                fontFamily: '"Noto Sans KR", sans-serif',
+                fontWeight: 300,
+                fontSize: 'clamp(12px, 2.25vw, 16px)',
+                lineHeight: 1.65,
+                letterSpacing: '-0.05em',
+              }}
+            >
+              The Economist / Foreign Affairs / Financial Times etc. 유명 글로벌 저널 AI 분석
+            </p>
+          </div>
 
           {/* 추상 나선 SVG */}
           <svg
