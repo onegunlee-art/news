@@ -1,7 +1,6 @@
-import { Routes, Route, useLocation } from 'react-router-dom'
+import { Routes, Route } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { useAuthStore } from './store/authStore'
-import LandingPage from './pages/LandingPage'
 import { useVersionCheck } from './hooks/useVersionCheck'
 import Layout from './components/Layout/Layout'
 import AudioPlayerPopup from './components/AudioPlayer/AudioPlayerPopup'
@@ -27,9 +26,7 @@ import SubscribeErrorPage from './pages/SubscribeErrorPage'
 import SubscriptionManagePage from './pages/SubscriptionManagePage'
 
 function App() {
-  const location = useLocation()
   const [showConsent, setShowConsent] = useState(() => localStorage.getItem('consent_required') === '1')
-  const [hasEntered, setHasEntered] = useState(() => sessionStorage.getItem('landing_entered') === '1')
 
   useVersionCheck()
 
@@ -63,15 +60,6 @@ function App() {
     localStorage.removeItem('auth-storage')
     localStorage.removeItem('is_subscribed')
     window.location.href = '/login'
-  }
-
-  if (!hasEntered && location.pathname === '/') {
-    return (
-      <LandingPage onEnter={() => {
-        sessionStorage.setItem('landing_entered', '1')
-        setHasEntered(true)
-      }} />
-    )
   }
 
   return (
