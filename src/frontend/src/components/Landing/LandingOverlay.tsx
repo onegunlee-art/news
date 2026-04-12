@@ -85,46 +85,20 @@ export default function LandingOverlay() {
             </p>
           </div>
 
-          {/* 추상 나선 SVG */}
-          <svg
-            viewBox="0 0 704 678"
-            xmlns="http://www.w3.org/2000/svg"
+          {/* 추상 스피로그래프 — Figma: 704x678, left:-317, top:373 → 왼쪽 하단 */}
+          <img
+            src="/img/landing-spiral.svg"
+            alt=""
             aria-hidden="true"
             className="absolute pointer-events-none"
             style={{
-              width: 'max(65vw, 400px)',
+              width: 'clamp(400px, 85vw, 720px)',
               height: 'auto',
-              right: '-15%',
-              bottom: '-10%',
-              opacity: 0.35,
+              left: 'clamp(-45%, -35vw, -20%)',
+              bottom: 'clamp(-15%, -10dvh, -5%)',
+              opacity: 0.55,
             }}
-          >
-            <path
-              d="M352 40 C540 40 650 190 650 350 C650 550 430 640 352 660 C274 640 54 550 54 350 C54 190 164 40 352 40 Z"
-              fill="none" stroke="#fff" strokeWidth="0.5"
-              style={{ vectorEffect: 'non-scaling-stroke' }}
-            />
-            <path
-              d="M352 100 C490 100 580 225 580 345 C580 490 410 560 352 578 C294 560 124 490 124 345 C124 225 214 100 352 100 Z"
-              fill="none" stroke="#fff" strokeWidth="0.5" opacity="0.8"
-              style={{ vectorEffect: 'non-scaling-stroke' }}
-            />
-            <path
-              d="M352 160 C445 160 515 252 515 340 C515 440 395 500 352 514 C309 500 189 440 189 340 C189 252 259 160 352 160 Z"
-              fill="none" stroke="#fff" strokeWidth="0.5" opacity="0.6"
-              style={{ vectorEffect: 'non-scaling-stroke' }}
-            />
-            <path
-              d="M352 220 C405 220 450 275 450 335 C450 395 385 440 352 452 C319 440 254 395 254 335 C254 275 299 220 352 220 Z"
-              fill="none" stroke="#fff" strokeWidth="0.5" opacity="0.4"
-              style={{ vectorEffect: 'non-scaling-stroke' }}
-            />
-            <path
-              d="M352 270 C380 270 400 300 400 330 C400 362 372 385 352 392 C332 385 304 362 304 330 C304 300 324 270 352 270 Z"
-              fill="none" stroke="#fff" strokeWidth="0.5" opacity="0.25"
-              style={{ vectorEffect: 'non-scaling-stroke' }}
-            />
-          </svg>
+          />
 
           {/* 하단 힌트 */}
           <span
