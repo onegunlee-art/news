@@ -67,6 +67,7 @@ export default function LandingOverlay() {
                 fontFamily: '"Lobster", cursive',
                 fontSize: 'clamp(54px, 9vw, 84px)',
                 lineHeight: 1.15,
+                marginTop: '-clamp(0.35rem, 1.2dvh, 0.85rem)',
               }}
             >
               the gist.
