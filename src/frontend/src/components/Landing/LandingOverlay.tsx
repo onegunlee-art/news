@@ -65,7 +65,7 @@ export default function LandingOverlay() {
               className="m-0 text-white shrink-0"
               style={{
                 fontFamily: '"Lobster", cursive',
-                fontSize: 'clamp(36px, 6vw, 56px)',
+                fontSize: 'clamp(54px, 9vw, 84px)',
                 lineHeight: 1.15,
               }}
             >
@@ -78,7 +78,7 @@ export default function LandingOverlay() {
               style={{
                 fontFamily: '"Noto Sans KR", sans-serif',
                 fontWeight: 300,
-                fontSize: 'clamp(12px, 2.25vw, 16px)',
+                fontSize: 'clamp(14.4px, 2.7vw, 19.2px)',
                 lineHeight: 1.65,
                 letterSpacing: '-0.05em',
               }}
