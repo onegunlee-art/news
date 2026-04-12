@@ -15,6 +15,7 @@ import { useInfiniteNewsList, usePopularNews } from '../hooks/useNews'
 import { useMenuConfig } from '../hooks/useMenuConfig'
 import { apiErrorMessage } from '../utils/apiErrorMessage'
 import { newsDetailPath } from '../utils/newsDetailLink'
+import LandingOverlay from '../components/Landing/LandingOverlay'
 
 interface NewsItem {
   id?: number
@@ -155,6 +156,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-page pb-8">
+      <LandingOverlay />
       {/* 탭 네비게이션 - 이미지처럼 연한 배경으로 본문과 구분 */}
       <div className="sticky top-14 z-[41] bg-page-secondary border-b border-page overflow-visible">
         <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 md:px-8 lg:px-12 xl:px-16">
