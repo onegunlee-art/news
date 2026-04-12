@@ -94,6 +94,7 @@ export const useAuthStore = create<AuthState>()(
           localStorage.removeItem('user')
           localStorage.removeItem('is_subscribed')
           localStorage.removeItem('auth-storage')
+          localStorage.removeItem('landing_seen')
         }
       },
 
