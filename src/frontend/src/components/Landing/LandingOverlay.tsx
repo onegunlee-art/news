@@ -71,8 +71,10 @@ export default function LandingOverlay() {
             >
               the gist.
             </h1>
-            <p
-              className="m-0 text-white md:max-w-xl"
+            <div
+              className="flex flex-col gap-1 text-white md:max-w-xl"
+              role="group"
+              aria-label="The Economist / Foreign Affairs / Financial Times etc. 유명 글로벌 저널 AI 분석"
               style={{
                 fontFamily: '"Noto Sans KR", sans-serif',
                 fontWeight: 300,
@@ -81,8 +83,11 @@ export default function LandingOverlay() {
                 letterSpacing: '-0.05em',
               }}
             >
-              The Economist / Foreign Affairs / Financial Times etc. 유명 글로벌 저널 AI 분석
-            </p>
+              <p className="m-0">
+                The Economist / Foreign Affairs / Financial Times etc.
+              </p>
+              <p className="m-0">유명 글로벌 저널 AI 분석</p>
+            </div>
           </div>
 
           {/* 추상 스피로그래프 — Figma: 704x678, left:-317, top:373 → 왼쪽 하단 */}
