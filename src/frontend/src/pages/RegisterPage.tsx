@@ -134,7 +134,7 @@ const RegisterPage: React.FC = () => {
 
       if (res.data?.success && res.data?.data) {
         const { user, access_token, refresh_token } = res.data.data
-        setTokens(access_token, refresh_token)
+        setTokens(access_token, refresh_token, { clearLandingSeen: true })
         setUser(user)
         localStorage.setItem('user', JSON.stringify(user))
         const target = intent === 'subscribe' ? (returnTo || '/subscribe') : (returnTo || '/')

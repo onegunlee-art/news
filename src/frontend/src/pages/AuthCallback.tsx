@@ -62,7 +62,7 @@ export default function AuthCallback() {
           } catch { /* ignore parse error */ }
         }
 
-        setTokens(token, refreshToken)
+        setTokens(token, refreshToken, { clearLandingSeen: true })
 
         const saved = consumeAuthReturnState()
         const isAdmin = user?.role === 'admin'
@@ -123,7 +123,7 @@ export default function AuthCallback() {
             localStorage.setItem('consent_required', '1')
           }
           
-          setTokens(data.access_token, data.refresh_token || '')
+          setTokens(data.access_token, data.refresh_token || '', { clearLandingSeen: true })
 
           const saved = consumeAuthReturnState()
           const isAdmin = data.user?.role === 'admin'

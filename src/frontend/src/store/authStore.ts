@@ -27,7 +27,11 @@ interface AuthState {
   
   // Actions
   setUser: (user: User | null) => void
-  setTokens: (accessToken: string, refreshToken: string) => void
+  setTokens: (
+    accessToken: string,
+    refreshToken: string,
+    options?: { clearLandingSeen?: boolean }
+  ) => void
   login: () => void
   logout: () => Promise<void>
   refreshAccessToken: () => Promise<boolean>
@@ -53,10 +57,15 @@ export const useAuthStore = create<AuthState>()(
         set({ user, isAuthenticated: !!user })
       },
 
-      setTokens: (accessToken, refreshToken) => {
+      setTokens: (accessToken, refreshToken, options) => {
         set({ accessToken, refreshToken, isAuthenticated: true })
         localStorage.setItem('access_token', accessToken)
         localStorage.setItem('refresh_token', refreshToken)
+        if (options?.clearLandingSeen) {
+          try {
+            localStorage.removeItem('landing_seen')
+          } catch { /* ignore */ }
+        }
       },
 
       login: async () => {
@@ -94,7 +103,6 @@ export const useAuthStore = create<AuthState>()(
           localStorage.removeItem('user')
           localStorage.removeItem('is_subscribed')
           localStorage.removeItem('auth-storage')
-          localStorage.removeItem('landing_seen')
         }
       },
 

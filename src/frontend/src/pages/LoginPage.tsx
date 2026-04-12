@@ -47,7 +47,7 @@ const LoginPage: React.FC = () => {
     accessToken: string,
     refreshToken: string
   ) => {
-    setTokens(accessToken, refreshToken);
+    setTokens(accessToken, refreshToken, { clearLandingSeen: true });
     setUser(user);
     localStorage.setItem('user', JSON.stringify(user));
     const isAdmin = user.role === 'admin';
