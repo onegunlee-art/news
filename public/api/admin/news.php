@@ -204,6 +204,7 @@ if ($method === 'POST') {
     $originalSource = $input['source'] ?? null;  // 원본 출처 (예: Financial Times)
     $author = $input['author'] ?? null;  // 원본 작성자
     $customImageUrl = $input['image_url'] ?? null;  // 사용자 지정 이미지 URL
+    $aiOriginal = isset($input['ai_original']) && is_array($input['ai_original']) ? $input['ai_original'] : null;
     
     // 시리즈(분할 기사) 필드
     $seriesId = $input['series_id'] ?? null;
@@ -396,6 +397,26 @@ if ($method === 'POST') {
             storePublishedNewsEmbedding($db, (int) $newsId);
         }
 
+        // Judgement Layer: AI 원본 vs 에디터 최종 (관찰 모드, 실패해도 게시 성공 유지)
+        if ($status === 'published' && $aiOriginal !== null && $aiOriginal !== []) {
+            try {
+                require_once __DIR__ . '/../lib/storeJudgementRecord.php';
+                storeJudgementRecord(
+                    (int) $newsId,
+                    $aiOriginal,
+                    [
+                        'title' => $title,
+                        'narration' => $narration,
+                        'why_important' => $whyImportant,
+                        'content' => $content,
+                    ],
+                    'publish'
+                );
+            } catch (Throwable $e) {
+                logError('[news POST] storeJudgementRecord: ' . $e->getMessage());
+            }
+        }
+
         // published 기사 TTS 선생성 (실패해도 게시 성공 유지)
         if ($status === 'published') {
             set_time_limit(2700);
@@ -446,6 +467,24 @@ if ($method === 'POST') {
                 if ($status === 'published') {
                     require_once __DIR__ . '/../lib/storePublishedNewsEmbedding.php';
                     storePublishedNewsEmbedding($db, (int) $newsId);
+                    if ($aiOriginal !== null && $aiOriginal !== []) {
+                        try {
+                            require_once __DIR__ . '/../lib/storeJudgementRecord.php';
+                            storeJudgementRecord(
+                                (int) $newsId,
+                                $aiOriginal,
+                                [
+                                    'title' => $title,
+                                    'narration' => $narration,
+                                    'why_important' => $whyImportant,
+                                    'content' => $content,
+                                ],
+                                'publish'
+                            );
+                        } catch (Throwable $e) {
+                            logError('[news POST retry] storeJudgementRecord: ' . $e->getMessage());
+                        }
+                    }
                     set_time_limit(2700);
                     require_once __DIR__ . '/../lib/generateTtsForNews.php';
                     generateTtsForNews([
@@ -762,6 +801,7 @@ if ($method === 'PUT') {
     $seriesId = $input['series_id'] ?? null;
     $seriesOrder = isset($input['series_order']) ? (int) $input['series_order'] : null;
     $seriesTitle = $input['series_title'] ?? null;
+    $aiOriginal = isset($input['ai_original']) && is_array($input['ai_original']) ? $input['ai_original'] : null;
     
     // published_at 처리: 빈 문자열이면 null, 그렇지 않으면 날짜 형식 변환 시도
     $publishedAtRaw = $input['published_at'] ?? null;
@@ -986,6 +1026,26 @@ if ($method === 'PUT') {
         if ($status === 'published') {
             require_once __DIR__ . '/../lib/storePublishedNewsEmbedding.php';
             storePublishedNewsEmbedding($db, (int) $id);
+        }
+
+        // Judgement Layer: AI 원본 vs 에디터 최종 (관찰 모드)
+        if ($status === 'published' && $aiOriginal !== null && $aiOriginal !== []) {
+            try {
+                require_once __DIR__ . '/../lib/storeJudgementRecord.php';
+                storeJudgementRecord(
+                    (int) $id,
+                    $aiOriginal,
+                    [
+                        'title' => $title,
+                        'narration' => $narration,
+                        'why_important' => $whyImportant,
+                        'content' => $content,
+                    ],
+                    'publish'
+                );
+            } catch (Throwable $e) {
+                logError('[news PUT] storeJudgementRecord: ' . $e->getMessage());
+            }
         }
 
         // published 기사 TTS 선생성 (무효화 후 최신 내용으로 재생성, 실패해도 수정 성공 유지)
