@@ -13,6 +13,7 @@ import RAGTester from '../components/RAGTester/RAGTester';
 import { api, adminFetch, adminSettingsApi, adminTtsApi, ttsApi } from '../services/api';
 import { PRIVACY_POLICY_CONTENT } from '../components/Common/PrivacyPolicyContent';
 import AdminDraftPreviewEdit from '../components/Admin/AdminDraftPreviewEdit';
+import WeeklyGist from '../components/Admin/WeeklyGist';
 import GistLogo from '../components/Common/GistLogo';
 import { DEFAULT_VISION } from '../constants/site';
 import { useMenuConfig } from '../hooks/useMenuConfig';
@@ -487,7 +488,7 @@ const AdminPage: React.FC = () => {
       navigate('/', { replace: true });
     }
   }, [user, isAuthenticated, isLoading, isInitialized, navigate]);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'news' | 'drafts' | 'ai' | 'workspace' | 'persona' | 'knowledge' | 'usage' | 'settings' | 'promotions' | 'cancel'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'news' | 'drafts' | 'ai' | 'workspace' | 'persona' | 'knowledge' | 'usage' | 'settings' | 'promotions' | 'cancel' | 'weekly'>('dashboard');
 
   const { subCategoryToLabel } = useMenuConfig();
   const subCategoryOptions = useMemo(
@@ -1452,6 +1453,7 @@ const AdminPage: React.FC = () => {
     { id: 'settings', name: '설정', iconName: 'settings' },
     { id: 'promotions', name: '프로모션 코드', iconName: 'local_offer' },
     { id: 'cancel', name: '취소 요청', iconName: 'cancel' },
+    { id: 'weekly', name: '위클리 Gist', iconName: 'summarize' },
   ] as const;
 
   // 인증 초기화/검증 중 또는 권한 없음(리다이렉트 예정)에는 로딩 표시 (새로고침 시 어드민 유지)
@@ -5740,6 +5742,10 @@ const AdminPage: React.FC = () => {
                 </div>
               )}
             </div>
+          )}
+
+          {activeTab === 'weekly' && (
+            <WeeklyGist />
           )}
         </div>
       </div>
