@@ -100,7 +100,7 @@ final class NewsService
 
         $base['is_bookmarked'] = $isBookmarked;
 
-        $latestIds = $this->newsRepository->findLatestPaywallFreeArticleIds(2);
+        $latestIds = $this->newsRepository->findLatestPaywallFreeArticleIds();
         $authUserId = isset($userJson['id']) ? (int) $userJson['id'] : null;
         $userRole = $userJson['role'] ?? null;
         $userIsSubscribed = !empty($userJson['is_subscribed']);

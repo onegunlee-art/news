@@ -365,11 +365,14 @@ try {
     // 페이월: 접근 권한 판단
     $accessGranted = true;
     $restrictionType = null;
+    $paywallCfgPath = __DIR__ . '/../../../config/paywall.php';
+    $paywallCfg = is_file($paywallCfgPath) ? require $paywallCfgPath : [];
+    $freeLatestLimit = max(1, min(20, (int)($paywallCfg['free_latest_article_limit'] ?? 3)));
     try {
         $statusFilter = $hasStatus ? "(status = 'published' OR status IS NULL)" : "1=1";
         $latestCol = 'COALESCE(published_at, created_at)';
         $latestStmt = $db->query(
-            "SELECT id FROM news WHERE $statusFilter ORDER BY $latestCol DESC LIMIT 2"
+            "SELECT id FROM news WHERE $statusFilter ORDER BY $latestCol DESC LIMIT {$freeLatestLimit}"
         );
         $latestIds = array_map('intval', $latestStmt->fetchAll(PDO::FETCH_COLUMN));
     } catch (Exception $e) {

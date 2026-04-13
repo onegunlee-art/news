@@ -74,7 +74,7 @@ export default function PaywallOverlay({
             </div>
 
             <p className="text-sm text-page-secondary mb-4 leading-relaxed">
-              무료 가입하고 매일 최신 컨텐츠 2개를 열람하세요.
+              무료 가입하고 매일 최신 컨텐츠 3개를 열람하세요.
             </p>
 
             <button

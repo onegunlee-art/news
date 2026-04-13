@@ -3,7 +3,7 @@
  * 기사 챗봇 API
  *
  * 로그인 선택: 토큰 없음 = 게스트(무료 기사만). 토큰 있음 = 유효해야 함.
- * 무료 기사 = news/detail.php와 동일(최신 2편·로그인+특집·관리자·구독).
+ * 무료 기사 = news/detail.php와 동일(최신 3편·로그인+특집·관리자·구독).
  *
  * GET  ?action=chips&news_id=1
  * GET  ?action=session&news_id=1&session_key=...
@@ -208,6 +208,10 @@ function buildRagForArticle(RAGService $rag, string $query, int $newsId, float $
  */
 function articleChatAccessAllowed(PDO $pdo, int $newsId, ?int $authUserId): bool
 {
+    $paywallCfgPath = __DIR__ . '/../../config/paywall.php';
+    $paywallCfg = is_file($paywallCfgPath) ? require $paywallCfgPath : [];
+    $freeLatestLimit = max(1, min(20, (int)($paywallCfg['free_latest_article_limit'] ?? 3)));
+
     $role = null;
     $isSubscribed = false;
     if ($authUserId !== null) {
@@ -227,13 +231,13 @@ function articleChatAccessAllowed(PDO $pdo, int $newsId, ?int $authUserId): bool
     $latestIds = [];
     try {
         $latestStmt = $pdo->query(
-            "SELECT id FROM news WHERE (status = 'published' OR status IS NULL) ORDER BY COALESCE(published_at, created_at) DESC LIMIT 2"
+            "SELECT id FROM news WHERE (status = 'published' OR status IS NULL) ORDER BY COALESCE(published_at, created_at) DESC LIMIT {$freeLatestLimit}"
         );
         $latestIds = array_map('intval', $latestStmt->fetchAll(PDO::FETCH_COLUMN));
     } catch (PDOException $e) {
         try {
             $latestStmt = $pdo->query(
-                'SELECT id FROM news ORDER BY COALESCE(published_at, created_at) DESC LIMIT 2'
+                "SELECT id FROM news ORDER BY COALESCE(published_at, created_at) DESC LIMIT {$freeLatestLimit}"
             );
             $latestIds = array_map('intval', $latestStmt->fetchAll(PDO::FETCH_COLUMN));
         } catch (PDOException $e2) {

@@ -273,9 +273,20 @@ final class NewsRepository extends BaseRepository
 
     /**
      * 페이월 무료 공개용 최신 기사 ID 목록 (public/api/news/detail.php와 동일 규칙)
+     *
+     * @param ?int $limit null이면 config/paywall.php의 free_latest_article_limit
      */
-    public function findLatestPaywallFreeArticleIds(int $limit = 2): array
+    public function findLatestPaywallFreeArticleIds(?int $limit = null): array
     {
+        $paywallPath = dirname(__DIR__, 3) . '/config/paywall.php';
+        $configLimit = 3;
+        if (is_file($paywallPath)) {
+            $pc = require $paywallPath;
+            $configLimit = max(1, min(20, (int)($pc['free_latest_article_limit'] ?? 3)));
+        }
+        if ($limit === null) {
+            $limit = $configLimit;
+        }
         $schemaFile = dirname(__DIR__, 3) . '/storage/cache/news_schema.json';
         $hasStatus = false;
         if (is_file($schemaFile)) {
