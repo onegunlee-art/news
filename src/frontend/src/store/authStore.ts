@@ -158,6 +158,15 @@ export const useAuthStore = create<AuthState>()(
               user,
               isInitialized: true,
             })
+
+            // 액세스 토큰 만료 10분 전이면 선제 갱신 (401 대기 없이 끊김 방지)
+            try {
+              const payload = JSON.parse(atob(accessToken.split('.')[1]))
+              if (payload.exp && payload.exp - Date.now() / 1000 < 600) {
+                get().refreshAccessToken()
+              }
+            } catch { /* 파싱 실패 시 fetchUser에서 401로 처리 */ }
+
             get().fetchUser()
           } else {
             set({ isInitialized: true })

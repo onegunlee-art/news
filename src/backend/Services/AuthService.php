@@ -48,6 +48,16 @@ final class AuthService
     }
 
     /**
+     * config/app.php의 jwt_refresh_expiry 기준 리프레시 만료 시각
+     */
+    private function getRefreshExpiry(): \DateTimeImmutable
+    {
+        $config = require dirname(__DIR__, 3) . '/config/app.php';
+        $ttl = (int)($config['security']['jwt_refresh_expiry'] ?? 15552000);
+        return new \DateTimeImmutable("+{$ttl} seconds");
+    }
+
+    /**
      * 카카오 로그인 URL 반환
      */
     public function getKakaoLoginUrl(): string
@@ -89,8 +99,7 @@ final class AuthService
         $refreshToken = $this->jwt->createRefreshToken($userId);
         
         // 6. 리프레시 토큰 저장
-        $refreshExpiry = new \DateTimeImmutable('+7 days');
-        $this->userRepository->saveRefreshToken($userId, $refreshToken, $refreshExpiry);
+        $this->userRepository->saveRefreshToken($userId, $refreshToken, $this->getRefreshExpiry());
         
         return [
             'user' => User::fromArray($userData)->toJson(),
@@ -131,8 +140,7 @@ final class AuthService
             'role' => $userData['role'],
         ]);
         $refreshToken = $this->jwt->createRefreshToken($userId);
-        $refreshExpiry = new \DateTimeImmutable('+7 days');
-        $this->userRepository->saveRefreshToken($userId, $refreshToken, $refreshExpiry);
+        $this->userRepository->saveRefreshToken($userId, $refreshToken, $this->getRefreshExpiry());
         return [
             'user' => User::fromArray($userData)->toJson(),
             'access_token' => $accessToken,
@@ -183,8 +191,7 @@ final class AuthService
         $newRefreshToken = $this->jwt->createRefreshToken($userId);
         
         // 6. 새 리프레시 토큰 저장
-        $refreshExpiry = new \DateTimeImmutable('+7 days');
-        $this->userRepository->saveRefreshToken($userId, $newRefreshToken, $refreshExpiry);
+        $this->userRepository->saveRefreshToken($userId, $newRefreshToken, $this->getRefreshExpiry());
         
         return [
             'access_token' => $newAccessToken,
@@ -511,8 +518,7 @@ final class AuthService
             'role' => $userData['role'],
         ]);
         $refreshToken = $this->jwt->createRefreshToken($userId);
-        $refreshExpiry = new \DateTimeImmutable('+7 days');
-        $this->userRepository->saveRefreshToken($userId, $refreshToken, $refreshExpiry);
+        $this->userRepository->saveRefreshToken($userId, $refreshToken, $this->getRefreshExpiry());
 
         $user = User::fromArray($userData)->toJson();
 
@@ -581,8 +587,7 @@ final class AuthService
             'role' => $userData['role'],
         ]);
         $refreshToken = $this->jwt->createRefreshToken($userId);
-        $refreshExpiry = new \DateTimeImmutable('+7 days');
-        $this->userRepository->saveRefreshToken($userId, $refreshToken, $refreshExpiry);
+        $this->userRepository->saveRefreshToken($userId, $refreshToken, $this->getRefreshExpiry());
         
         $user = User::fromArray($userData)->toJson();
         

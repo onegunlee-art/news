@@ -180,26 +180,13 @@ if (!$dbUserId) {
     exit;
 }
 
-// JWT secret: config/app.php와 동일한 값 사용 (AuthController 검증과 일치)
-$appConfigPath = null;
-$appConfigTryPaths = [
-    $_SERVER['DOCUMENT_ROOT'] . '/config/app.php',
-    $_SERVER['DOCUMENT_ROOT'] . '/../config/app.php',
-    dirname(__DIR__, 3) . '/config/app.php',
-    dirname(__DIR__, 4) . '/config/app.php',
-    __DIR__ . '/../../../../config/app.php',
-];
-foreach ($appConfigTryPaths as $p) {
-    if (file_exists($p)) { $appConfigPath = $p; break; }
-}
-$appConfig = $appConfigPath ? (require $appConfigPath) : [];
-$jwtSecret = $appConfig['security']['jwt_secret'] ?? 'news-context-jwt-secret-key-2026';
-if (empty($jwtSecret)) {
-    $jwtSecret = 'news-context-jwt-secret-key-2026';
-}
+// 공용 헬퍼 로드 (JWT 생성 + TTL 설정)
+require_once __DIR__ . '/../../lib/auth.php';
+$jwtSecret = getJwtSecret();
+$refreshTtl = getRefreshTtlSeconds();
 
 // JWT 토큰 생성 (AuthService::getUserFromToken 검증에 맞춤: type 필드 필수)
-$jwtPayload = [
+$accessTokenJwt = createJwtToken($jwtSecret, [
     'user_id' => $dbUserId,
     'type' => 'access',
     'kakao_id' => (string)$kakaoId,
@@ -207,24 +194,17 @@ $jwtPayload = [
     'provider' => 'kakao',
     'iat' => time(),
     'exp' => time() + 3600,
-];
+]);
 
-$jwtHeader = rtrim(strtr(base64_encode(json_encode(['typ' => 'JWT', 'alg' => 'HS256'])), '+/', '-_'), '=');
-$jwtPayloadEncoded = rtrim(strtr(base64_encode(json_encode($jwtPayload)), '+/', '-_'), '=');
-$jwtSignature = rtrim(strtr(base64_encode(hash_hmac('sha256', "$jwtHeader.$jwtPayloadEncoded", $jwtSecret, true)), '+/', '-_'), '=');
-$accessTokenJwt = "$jwtHeader.$jwtPayloadEncoded.$jwtSignature";
-
-$refreshPayload = [
+$refreshExp = time() + $refreshTtl;
+$refreshTokenJwt = createJwtToken($jwtSecret, [
     'user_id' => $dbUserId,
     'type' => 'refresh',
     'iat' => time(),
-    'exp' => time() + 86400 * 30,
-];
-$refreshPayloadEncoded = rtrim(strtr(base64_encode(json_encode($refreshPayload)), '+/', '-_'), '=');
-$refreshSignature = rtrim(strtr(base64_encode(hash_hmac('sha256', "$jwtHeader.$refreshPayloadEncoded", $jwtSecret, true)), '+/', '-_'), '=');
-$refreshTokenJwt = "$jwtHeader.$refreshPayloadEncoded.$refreshSignature";
+    'exp' => $refreshExp,
+]);
 
-// refresh token을 user_tokens 테이블에 저장 (이메일 로그인과 동일한 정책)
+// refresh token을 user_tokens 테이블에 저장
 try {
     $pdo->prepare(
         "INSERT INTO user_tokens (user_id, token, token_type, expires_at, created_at)
@@ -232,7 +212,7 @@ try {
     )->execute([
         $dbUserId,
         $refreshTokenJwt,
-        date('Y-m-d H:i:s', time() + 86400 * 30),
+        date('Y-m-d H:i:s', $refreshExp),
     ]);
 } catch (Throwable $e) {
     error_log('[kakao-token] Failed to save refresh token: ' . $e->getMessage());

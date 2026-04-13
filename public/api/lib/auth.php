@@ -86,6 +86,41 @@ function getAuthUserId(PDO $pdo): ?int {
     return null;
 }
 
+/**
+ * config/app.php를 한 번만 로드해 캐싱 (카카오 PHP 등에서도 사용)
+ */
+function getAppConfig(): array {
+    static $cfg;
+    if ($cfg !== null) return $cfg;
+    $tryPaths = [
+        __DIR__ . '/../../../config/app.php',
+        $_SERVER['DOCUMENT_ROOT'] . '/../config/app.php',
+        $_SERVER['DOCUMENT_ROOT'] . '/config/app.php',
+    ];
+    foreach ($tryPaths as $p) {
+        if (is_file($p)) { $cfg = require $p; return $cfg; }
+    }
+    $cfg = [];
+    return $cfg;
+}
+
+/**
+ * 리프레시 토큰 TTL(초). config/app.php jwt_refresh_expiry 기준.
+ */
+function getRefreshTtlSeconds(): int {
+    return (int)(getAppConfig()['security']['jwt_refresh_expiry'] ?? 15552000);
+}
+
+/**
+ * HS256 JWT 생성 — callback.php/token.php 수동 조립 통합용
+ */
+function createJwtToken(string $secret, array $payload): string {
+    $header = rtrim(strtr(base64_encode(json_encode(['typ' => 'JWT', 'alg' => 'HS256'])), '+/', '-_'), '=');
+    $body   = rtrim(strtr(base64_encode(json_encode($payload)), '+/', '-_'), '=');
+    $sig    = rtrim(strtr(base64_encode(hash_hmac('sha256', "$header.$body", $secret, true)), '+/', '-_'), '=');
+    return "$header.$body.$sig";
+}
+
 function getDb(): PDO {
     static $pdo = null;
     if ($pdo !== null) return $pdo;

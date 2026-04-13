@@ -65,7 +65,7 @@ return [
     'security' => [
         'jwt_secret' => $requireEnv('JWT_SECRET', 'news-context-jwt-secret-key-2026'),
         'jwt_expiry' => 3600, // 액세스 토큰 유효 기간: 1시간
-        'jwt_refresh_expiry' => 3600 * 24 * 7, // 7일
+        'jwt_refresh_expiry' => 3600 * 24 * 180, // 리프레시: 180일 (슬라이딩 윈도)
         'bcrypt_rounds' => 12,
     ],
     
