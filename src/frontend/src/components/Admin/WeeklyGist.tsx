@@ -10,6 +10,12 @@ interface Perspective {
   difference_reason: string;
 }
 
+interface SoWhat {
+  implication: string;
+  why_it_matters: string;
+  what_to_watch: string[];
+}
+
 interface Cluster {
   cluster_id: number;
   title: string;
@@ -21,7 +27,12 @@ interface Cluster {
   source_article_ids: number[];
   narrative: string;
   perspectives: Perspective[];
-  so_what: string;
+  so_what: SoWhat | string;
+}
+
+interface ActionHints {
+  watch: string[];
+  consider: string[];
 }
 
 interface CrossConnection {
@@ -36,6 +47,7 @@ interface GistData {
   clusters: Cluster[];
   cross_connections: CrossConnection[];
   next_week_watch: string[];
+  action_hints?: ActionHints;
   meta: {
     total_articles: number;
     period: string;
@@ -667,9 +679,33 @@ function GistViewer({
                   ))}
                 </div>
 
-                <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 rounded-xl p-4 border border-amber-500/20">
-                  <h4 className="text-amber-400 text-xs font-semibold uppercase tracking-wider mb-2">So What</h4>
-                  <p className="text-white font-medium">{cluster.so_what}</p>
+                <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 rounded-xl p-4 border border-amber-500/20 space-y-3">
+                  <h4 className="text-amber-400 text-xs font-semibold uppercase tracking-wider">So What</h4>
+                  {typeof cluster.so_what === 'object' && cluster.so_what !== null ? (
+                    <>
+                      <p className="text-white font-medium">{cluster.so_what.implication}</p>
+                      {cluster.so_what.why_it_matters && (
+                        <div className="pl-3 border-l-2 border-amber-500/40">
+                          <span className="text-amber-400/70 text-[10px] font-semibold uppercase tracking-wider">Why it matters</span>
+                          <p className="text-slate-300 text-sm mt-0.5">{cluster.so_what.why_it_matters}</p>
+                        </div>
+                      )}
+                      {cluster.so_what.what_to_watch?.length > 0 && (
+                        <div className="pl-3 border-l-2 border-cyan-500/40">
+                          <span className="text-cyan-400/70 text-[10px] font-semibold uppercase tracking-wider">Watch signals</span>
+                          <ul className="mt-1 space-y-1">
+                            {cluster.so_what.what_to_watch.map((sig, si) => (
+                              <li key={si} className="text-slate-400 text-xs flex items-start gap-1.5">
+                                <span className="text-cyan-400 mt-0.5">▹</span>{sig}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-white font-medium">{String(cluster.so_what)}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -767,6 +803,43 @@ function GistViewer({
               </li>
             ))}
           </ul>
+        </div>
+      )}
+
+      {data.action_hints && (data.action_hints.watch?.length > 0 || data.action_hints.consider?.length > 0) && (
+        <div className="bg-gradient-to-br from-rose-500/10 to-orange-500/10 backdrop-blur-sm rounded-2xl p-6 border border-rose-500/20">
+          <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
+            <MaterialIcon name="lightbulb" className="w-5 h-5 text-rose-400" size={20} />
+            Action Hints
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {data.action_hints.watch?.length > 0 && (
+              <div>
+                <h4 className="text-rose-400 text-xs font-semibold uppercase tracking-wider mb-2">Watch — 추적 행동</h4>
+                <ul className="space-y-2">
+                  {data.action_hints.watch.map((item, i) => (
+                    <li key={i} className="flex items-start gap-2 text-slate-300 text-sm">
+                      <span className="text-rose-400 mt-0.5">▸</span>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {data.action_hints.consider?.length > 0 && (
+              <div>
+                <h4 className="text-orange-400 text-xs font-semibold uppercase tracking-wider mb-2">Consider — 검토 사항</h4>
+                <ul className="space-y-2">
+                  {data.action_hints.consider.map((item, i) => (
+                    <li key={i} className="flex items-start gap-2 text-slate-300 text-sm">
+                      <span className="text-orange-400 mt-0.5">▸</span>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
         </div>
       )}
 

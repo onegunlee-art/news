@@ -441,6 +441,22 @@ Step 3 — 교차 연결:
 Step 4 — So What:
   이번 주 전체를 관통하는 한 줄 메시지.
 
+[so_what 품질 규칙]
+- implication: "증가하고 있다", "중요하다", "영향을 준다" 같은 모호한 표현 금지.
+  반드시 구조적 변화의 방향을 명시하라.
+- why_it_matters: 반드시 "A → B → C" 인과 체인 형태로 작성.
+  1단계 인과("X가 Y에 영향") 금지. 최소 2단계("X → Y → Z").
+- what_to_watch: 의견이 아닌 외부에서 추적 가능한 지표/사건만 기재.
+  "상황 추이", "동향 변화" 같은 모호 표현 금지.
+
+[action_hints 규칙]
+- watch: "무엇을 어떻게 추적할 것인가"를 명시. "상황을 모니터링한다" 금지.
+- consider: 직접적 행동 지시 금지. "재검토", "준비", "노출도 평가" 수준.
+  "매수/매도", 특정 종목 언급 절대 금지.
+- what_to_watch(클러스터)와 watch(action_hints)의 차이:
+  what_to_watch = "어떤 신호를 볼 것인가" (지표)
+  watch = "그것을 어떻게 추적할 것인가" (행동)
+
 [출력 JSON 스키마]
 {
   "headline": "이번 주 한 줄 (30자 이내)",
@@ -468,7 +484,11 @@ Step 4 — So What:
           "difference_reason": "이 관점의 근거"
         }
       ],
-      "so_what": "그래서 뭐냐 (1~2문장)"
+      "so_what": {
+        "implication": "무슨 구조적 변화가 일어나고 있는가 (1문장, 방향성 명시)",
+        "why_it_matters": "인과 체인: A → B → C (최소 2단계)",
+        "what_to_watch": ["추적할 외부 신호/지표 1", "신호 2"]
+      }
     }
   ],
   "cross_connections": [
@@ -479,6 +499,10 @@ Step 4 — So What:
     }
   ],
   "next_week_watch": ["다음 주 주목 포인트 1", "다음 주 주목 포인트 2"],
+  "action_hints": {
+    "watch": ["무엇을 어떻게 모니터링할 것인가 (구체적 행동)"],
+    "consider": ["무엇을 재검토/준비할 것인가 (의사결정 준비)"]
+  },
   "meta": {
     "total_articles": {$articleCount},
     "period": "{$startDate} ~ {$endDate}"
@@ -489,12 +513,19 @@ Step 4 — So What:
 - "이번 주 A 기사에서는 X, B 기사에서는 Y, C 기사에서는 Z" (나열)
 - 모든 클러스터의 impact_score가 동일
 - perspectives가 1개뿐인 클러스터 (최소 2개 관점)
-- so_what이 narrative의 반복
+- so_what.implication이 narrative의 반복
+- so_what.why_it_matters가 1단계 인과 ("X가 Y에 영향")
+- so_what.what_to_watch에 "상황 추이", "동향 변화" 등 모호 표현
+- action_hints.watch에 "상황을 모니터링한다" 같은 비구체적 표현
 
 [성공 패턴 — 이렇게 나와야 함]
 - "3개 매체가 일관되게 X를 경고하지만, 근거가 다르다: A는 수치 기반, B는 정치적 맥락, C는 역사적 선례"
 - cluster 간 cross_connection으로 인과 사슬 제시
-- so_what이 해당 이슈의 실질적 함의를 한 줄로 명시
+- so_what.implication: "에너지 공급 리스크가 가격이 아닌 물량 안정성 중심으로 이동"
+- so_what.why_it_matters: "공급 불확실성 확대 → 유동성 프리미엄 상승 → 기업 자금조달 비용 증가"
+- so_what.what_to_watch: ["호르무즈 해협 통과 선박 지연 일수", "아시아 국가의 러시아산 원유 계약 증가 여부"]
+- action_hints.watch: ["호르무즈 지연 5일 이상 지속 여부 추적"]
+- action_hints.consider: ["장기 LNG 계약 비중 재검토 준비"]
 
 ##############################################################
 # 입력 기사 목록
