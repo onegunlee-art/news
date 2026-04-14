@@ -164,17 +164,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 foreach ($newsIds as $nid) {
                     $rows = $supabase->select(
                         'analysis_embeddings',
-                        'news_id=eq.' . (int)$nid . '&select=news_id,metadata&limit=1',
-                        1
+                        'news_id=eq.' . (int)$nid . '&select=news_id,chunk_text,metadata&order=created_at.asc&limit=3',
+                        3
                     );
                     if ($rows && count($rows) > 0) {
                         $meta = $rows[0]['metadata'] ?? [];
+                        $chunkTexts = [];
+                        foreach ($rows as $row) {
+                            $ct = trim((string)($row['chunk_text'] ?? ''));
+                            if ($ct !== '') $chunkTexts[] = mb_substr($ct, 0, 600);
+                        }
                         if (is_array($meta)) {
                             $idMap[(int)$nid] = [
                                 'topic_label'    => $meta['topic_label'] ?? '',
                                 'topic_category' => $meta['topic_category'] ?? '',
                                 'entities'       => $meta['entities'] ?? [],
                                 'region'         => $meta['region'] ?? [],
+                                'chunk_text'     => implode("\n", $chunkTexts),
                             ];
                         }
                     }
@@ -371,7 +377,17 @@ foreach ($articles as $i => $art) {
         'narration'         => mb_substr($art['narration'] ?? '', 0, 500),
     ];
     if (!empty($art['rag_metadata'])) {
-        $entry['rag_metadata'] = $art['rag_metadata'];
+        $rag = $art['rag_metadata'];
+        $entry['rag_metadata'] = [
+            'topic_label'    => $rag['topic_label'] ?? '',
+            'topic_category' => $rag['topic_category'] ?? '',
+            'entities'       => $rag['entities'] ?? [],
+            'region'         => $rag['region'] ?? [],
+        ];
+        $chunkText = trim((string)($rag['chunk_text'] ?? ''));
+        if ($chunkText !== '') {
+            $entry['analysis_context'] = mb_substr($chunkText, 0, 800);
+        }
     }
     $articleInputs[] = $entry;
 }
@@ -400,6 +416,14 @@ $userPrompt = <<<PROMPT
 3. 서로 충돌하는 관점이 있으면 반드시 대비하여 정리할 것.
 4. 각 이슈의 마지막은 "그래서 뭐냐(So What)"로 끝낼 것.
 5. 출력은 반드시 아래 JSON 스키마를 따를 것.
+
+[입력 데이터 레이어 구조]
+- description: 기사 원문 요약 (Layer 1 — 현실)
+- why_important, narration, future_prediction: 1차 AI 분석 (Layer 2 — 해석)
+- rag_metadata: 구조화 힌트 (Layer 3 — 분류)
+- analysis_context: 임베딩 원본 분석 텍스트 (Layer 1.5 — 원문 근거)
+  이 필드가 있는 기사는 1차 해석의 근거를 직접 확인할 수 있다.
+  1차 해석과 analysis_context가 다르면, analysis_context를 우선하라.
 
 [메타인지 규칙 — 입력 데이터의 한계를 인식하라]
 입력의 why_important, narration, future_prediction은
