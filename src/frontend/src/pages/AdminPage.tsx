@@ -5745,7 +5745,23 @@ const AdminPage: React.FC = () => {
           )}
 
           {activeTab === 'weekly' && (
-            <WeeklyGist />
+            <WeeklyGist
+              onEditNewsArticle={async (newsId) => {
+                try {
+                  const response = await adminFetch(`/api/admin/news.php?id=${newsId}`);
+                  const data = await response.json();
+                  const article = data.data?.article;
+                  if (!data.success || !article) {
+                    alert('기사를 불러올 수 없습니다.');
+                    return;
+                  }
+                  handleEditNews(article as NewsArticle);
+                  setActiveTab('news');
+                } catch {
+                  alert('기사를 불러오지 못했습니다.');
+                }
+              }}
+            />
           )}
         </div>
       </div>

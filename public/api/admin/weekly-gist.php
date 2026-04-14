@@ -2,8 +2,11 @@
 /**
  * Weekly Gist API — Admin-only
  *
- * GET  ?action=articles&start=YYYY-MM-DD&end=YYYY-MM-DD  → 기간 내 기사 목록 + RAG 메타데이터
- * POST { action: "generate", start, end, articles }      → GPT 호출 → 위클리 Gist JSON
+ * GET  ?action=articles&start=&end=  → 기간 내 기사 + RAG 메타
+ * GET  ?action=list&limit=          → 저장된 리포트 목록
+ * GET  ?action=detail&id=           → 저장된 리포트 단건 (gist JSON)
+ * POST { action: "generate", ... }  → GPT 생성 후 DB 저장, saved_id 반환
+ * POST { action: "update_gist", id, gist } → 편집본 저장
  */
 
 error_reporting(E_ALL);
@@ -84,6 +87,29 @@ function getDb(): PDO {
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
     ]);
     return $pdo;
+}
+
+/**
+ * weekly_gist_reports 테이블 (없으면 생성 — 마이그레이션 미적용 서버 대비)
+ */
+function ensureWeeklyGistTable(\PDO $pdo): void
+{
+    $pdo->exec(
+        'CREATE TABLE IF NOT EXISTS `weekly_gist_reports` (
+          `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+          `period_start` DATE NOT NULL,
+          `period_end` DATE NOT NULL,
+          `headline` VARCHAR(500) NULL,
+          `gist_json` LONGTEXT NOT NULL,
+          `article_ids_json` TEXT NULL,
+          `article_titles_json` TEXT NULL,
+          `article_count` INT UNSIGNED NOT NULL DEFAULT 0,
+          `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          PRIMARY KEY (`id`),
+          KEY `idx_wg_created` (`created_at` DESC)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
+    );
 }
 
 // ── Services ───────────────────────────────────────────
@@ -179,13 +205,83 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         }
     }
 
+    if ($action === 'list') {
+        try {
+            $pdo = getDb();
+            ensureWeeklyGistTable($pdo);
+            $limit = min(100, max(1, (int)($_GET['limit'] ?? 50)));
+            $stmt = $pdo->query(
+                'SELECT id, period_start, period_end, headline, article_count, created_at, updated_at
+                 FROM weekly_gist_reports ORDER BY created_at DESC LIMIT ' . (int)$limit
+            );
+            $items = $stmt->fetchAll();
+            ob_clean();
+            echo json_encode(['success' => true, 'data' => ['items' => $items]], JSON_UNESCAPED_UNICODE);
+            exit;
+        } catch (\Throwable $e) {
+            ob_clean();
+            http_response_code(500);
+            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+            exit;
+        }
+    }
+
+    if ($action === 'detail') {
+        $id = (int)($_GET['id'] ?? 0);
+        if ($id < 1) {
+            ob_clean();
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'id 필요']);
+            exit;
+        }
+        try {
+            $pdo = getDb();
+            ensureWeeklyGistTable($pdo);
+            $stmt = $pdo->prepare('SELECT * FROM weekly_gist_reports WHERE id = ?');
+            $stmt->execute([$id]);
+            $row = $stmt->fetch();
+            if (!$row) {
+                ob_clean();
+                http_response_code(404);
+                echo json_encode(['success' => false, 'error' => '리포트를 찾을 수 없습니다.']);
+                exit;
+            }
+            $gist = json_decode($row['gist_json'] ?? 'null', true);
+            $titles = json_decode($row['article_titles_json'] ?? '{}', true);
+            if (!is_array($titles)) {
+                $titles = [];
+            }
+            ob_clean();
+            echo json_encode([
+                'success' => true,
+                'data'    => [
+                    'id'                  => (int)$row['id'],
+                    'period_start'        => $row['period_start'],
+                    'period_end'          => $row['period_end'],
+                    'headline_row'        => $row['headline'],
+                    'gist'                => $gist,
+                    'article_titles_map'  => $titles,
+                    'article_ids'         => json_decode($row['article_ids_json'] ?? '[]', true),
+                    'created_at'          => $row['created_at'],
+                    'updated_at'          => $row['updated_at'],
+                ],
+            ], JSON_UNESCAPED_UNICODE);
+            exit;
+        } catch (\Throwable $e) {
+            ob_clean();
+            http_response_code(500);
+            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+            exit;
+        }
+    }
+
     ob_clean();
     http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'Unknown action. Use ?action=articles']);
+    echo json_encode(['success' => false, 'error' => 'Unknown GET action (articles|list|detail)']);
     exit;
 }
 
-// ── POST: GPT로 위클리 Gist 생성 ───────────────────────
+// ── POST ───────────────────────────────────────────────
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     ob_clean();
@@ -198,10 +294,47 @@ $rawInput = file_get_contents('php://input');
 $input    = json_decode($rawInput, true) ?: [];
 $action   = $input['action'] ?? '';
 
+// POST: 편집본 저장 (휴먼 인 더 루프)
+if ($action === 'update_gist') {
+    $id = (int)($input['id'] ?? 0);
+    $gist = $input['gist'] ?? null;
+    if ($id < 1 || !is_array($gist)) {
+        ob_clean();
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'id와 gist 객체가 필요합니다.']);
+        exit;
+    }
+    try {
+        $pdo = getDb();
+        ensureWeeklyGistTable($pdo);
+        $headline = mb_substr((string)($gist['headline'] ?? ''), 0, 500);
+        $json = json_encode($gist, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        if ($json === false) {
+            throw new \RuntimeException('JSON 인코딩 실패');
+        }
+        $stmt = $pdo->prepare('UPDATE weekly_gist_reports SET gist_json = ?, headline = ?, updated_at = NOW() WHERE id = ?');
+        $stmt->execute([$json, $headline, $id]);
+        if ($stmt->rowCount() === 0) {
+            ob_clean();
+            http_response_code(404);
+            echo json_encode(['success' => false, 'error' => '리포트 id를 찾을 수 없습니다.']);
+            exit;
+        }
+        ob_clean();
+        echo json_encode(['success' => true, 'data' => ['id' => $id]], JSON_UNESCAPED_UNICODE);
+        exit;
+    } catch (\Throwable $e) {
+        ob_clean();
+        http_response_code(500);
+        echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+        exit;
+    }
+}
+
 if ($action !== 'generate') {
     ob_clean();
     http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'POST action must be "generate"']);
+    echo json_encode(['success' => false, 'error' => 'POST action은 generate 또는 update_gist']);
     exit;
 }
 
@@ -437,10 +570,48 @@ try {
         'model'          => 'gpt-5.2',
     ]);
 
+    $savedId = null;
+    $saveError = null;
+    try {
+        $pdo = getDb();
+        ensureWeeklyGistTable($pdo);
+        $articleIds = [];
+        $titleMap = [];
+        foreach ($articles as $art) {
+            $aid = isset($art['id']) ? (int)$art['id'] : 0;
+            if ($aid > 0) {
+                $articleIds[] = $aid;
+                $titleMap[$aid] = (string)($art['title'] ?? '');
+            }
+        }
+        $headlineDb = mb_substr((string)($gistData['headline'] ?? ''), 0, 500);
+        $gistJson = json_encode($gistData, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $ins = $pdo->prepare(
+            'INSERT INTO weekly_gist_reports
+            (period_start, period_end, headline, gist_json, article_ids_json, article_titles_json, article_count)
+            VALUES (?, ?, ?, ?, ?, ?, ?)'
+        );
+        $ins->execute([
+            $startDate,
+            $endDate,
+            $headlineDb,
+            $gistJson,
+            json_encode($articleIds, JSON_UNESCAPED_UNICODE),
+            json_encode($titleMap, JSON_UNESCAPED_UNICODE),
+            count($articleIds),
+        ]);
+        $savedId = (int)$pdo->lastInsertId();
+    } catch (\Throwable $dbEx) {
+        error_log('[weekly-gist] DB save failed: ' . $dbEx->getMessage());
+        $saveError = $dbEx->getMessage();
+    }
+
     ob_clean();
     echo json_encode([
-        'success' => true,
-        'data'    => $gistData,
+        'success'    => true,
+        'data'       => $gistData,
+        'saved_id'   => $savedId,
+        'save_error' => $saveError,
     ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
 
 } catch (\Throwable $e) {
