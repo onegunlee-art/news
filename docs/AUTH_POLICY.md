@@ -16,6 +16,7 @@ TTL 변경 시 `config/app.php`의 `security` 블록 **한 곳만** 수정하면
 - **카카오**: `public/api/auth/kakao/callback.php`, `token.php` → `lib/auth.php` 공용 헬퍼
 - **Google**: `AuthService::handleGoogleCallback` → `JWT.php`
 - **이메일/비밀번호 + OTP**: `AuthService::startEmailLogin` / `verifyLoginOtp` → `JWT.php`
+  - `config/app.php` → `security.login_otp_skip_emails`에 등록된 이메일(예: 프로모 계정)은 OTP 없이 즉시 토큰 발급. `role`은 그대로(`user`면 어드민 비접근).
 - **회원가입**: `AuthService::registerWithEmail` → `JWT.php`
 
 ## 슬라이딩 윈도 (Sliding Window)

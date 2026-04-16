@@ -309,7 +309,26 @@ final class AuthService
     }
 
     /**
-     * 이메일/비밀번호 로그인 1단계 (관리자는 즉시 토큰, 일반 사용자는 OTP 필요)
+     * config security.login_otp_skip_emails 에 포함된 이메일은 OTP 생략 (관리자와 동일하게 즉시 토큰).
+     */
+    private function shouldSkipLoginOtpForEmail(string $email): bool
+    {
+        $email = strtolower(trim($email));
+        if ($email === '') {
+            return false;
+        }
+        $config = require dirname(__DIR__, 3) . '/config/app.php';
+        $list = $config['security']['login_otp_skip_emails'] ?? [];
+        if (!is_array($list) || $list === []) {
+            return false;
+        }
+        $normalized = array_map(static fn (string $e): string => strtolower(trim($e)), $list);
+
+        return in_array($email, $normalized, true);
+    }
+
+    /**
+     * 이메일/비밀번호 로그인 1단계 (관리자·OTP 생략 목록은 즉시 토큰, 그 외는 OTP 필요)
      *
      * @return array{requires_otp: true, otp_session: string}|array{user: mixed, access_token: string, refresh_token: string, token_type: string, expires_in: int}
      */
@@ -320,6 +339,10 @@ final class AuthService
         $role = (string) ($userData['role'] ?? 'user');
 
         if ($role === 'admin') {
+            return $this->completeEmailLoginIssueTokens($userData);
+        }
+
+        if ($this->shouldSkipLoginOtpForEmail((string) ($userData['email'] ?? $email))) {
             return $this->completeEmailLoginIssueTokens($userData);
         }
 

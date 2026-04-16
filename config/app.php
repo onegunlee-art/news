@@ -67,6 +67,10 @@ return [
         'jwt_expiry' => 3600, // 액세스 토큰 유효 기간: 1시간
         'jwt_refresh_expiry' => 3600 * 24 * 180, // 리프레시: 180일 (슬라이딩 윈도)
         'bcrypt_rounds' => 12,
+        // 이메일 로그인 시 OTP 생략 (프로모/데모 계정). AuthService에서 소문자로 비교.
+        'login_otp_skip_emails' => [
+            'promo@thegist.co.kr',
+        ],
     ],
     
     /*
