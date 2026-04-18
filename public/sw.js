@@ -1,25 +1,20 @@
 /**
- * PWA 임시 비활성화: 이 파일이 활성화되면 자신을 해제하고 캐시를 비웁니다.
- * 이전에 등록된 클라이언트는 다음 방문 시 일반 네트워크 로드로 동작합니다.
+ * the gist. — 최소 Service Worker (PWA 설치 요건 충족용)
+ *
+ * - 캐싱 없음: 네트워크 통과 (뉴스 사이트 특성상 콘텐츠 신선도 우선)
+ * - fetch 리스너 존재 == Chrome의 installability 요건 충족
+ * - 과거 kill-switch SW 사용자: 이 SW로 자연 교체됨
  */
-self.addEventListener('install', (event) => {
+const SW_VERSION = 'v1.0.0'
+
+self.addEventListener('install', () => {
   self.skipWaiting()
 })
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    (async () => {
-      try {
-        const keys = await caches.keys()
-        await Promise.all(keys.map((k) => caches.delete(k)))
-      } catch {
-        /* ignore */
-      }
-      try {
-        await self.registration.unregister()
-      } catch {
-        /* ignore */
-      }
-    })(),
-  )
+  event.waitUntil(self.clients.claim())
+})
+
+self.addEventListener('fetch', () => {
+  // 명시적 pass-through. 브라우저 기본 처리.
 })

@@ -33,15 +33,11 @@
   <body>
     <div id="root"></div>
     <script>
-      // PWA 임시 비활성화(진단용): 신규 등록 없이 기존 SW만 제거. 재개 시 register 블록 복구.
+      // PWA 활성화: 설치 가능한 Service Worker 등록 (TWA/홈 화면 설치 시 주소창 제거)
       (function () {
         if (!('serviceWorker' in navigator)) return
         window.addEventListener('load', function () {
-          navigator.serviceWorker.getRegistrations().then(function (regs) {
-            regs.forEach(function (r) {
-              r.unregister().catch(function () {})
-            })
-          })
+          navigator.serviceWorker.register('/sw.js').catch(function () {})
         })
       })()
     </script>
