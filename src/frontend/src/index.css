@@ -1,5 +1,4 @@
-/* Google Fonts Import */
-@import url('https://fonts.googleapis.com/css2?family=Lobster&family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
+/* 텍스트 폰트는 index.html에서 한 번만 로드 (중복 @import 제거 → 초기 네트워크 절감) */
 
 @tailwind base;
 @tailwind components;

@@ -79,13 +79,14 @@ export function useNewsDetail(id: number, params: NewsDetailParams = {}) {
   })
 }
 
-export function usePopularNews() {
+export function usePopularNews(enabled = true) {
   return useQuery({
     queryKey: queryKeys.news.popular(),
     queryFn: async () => {
       const response = await newsApi.getPopular()
       return response.data
     },
+    enabled,
     staleTime: 1000 * 60 * 2, // 2분 캐시
   })
 }

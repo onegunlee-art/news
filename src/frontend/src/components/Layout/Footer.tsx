@@ -1,27 +1,38 @@
-import { useState, useEffect } from 'react'
+import { useState, useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import PrivacyPolicyModal from '../Common/PrivacyPolicyModal'
 import TermsModal from '../Common/TermsModal'
 import GistLogo from '../Common/GistLogo'
 import { siteSettingsApi } from '../../services/api'
 import { DEFAULT_VISION } from '../../constants/site'
 import { formatContentHtml } from '../../utils/sanitizeHtml'
+
 const defaultCopyright = () => `© ${new Date().getFullYear()} the gist.`
 
 export default function Footer() {
   const [showPrivacyModal, setShowPrivacyModal] = useState(false)
   const [showTermsModal, setShowTermsModal] = useState(false)
-  const [vision, setVision] = useState(DEFAULT_VISION)
-  const [copyright, setCopyright] = useState(defaultCopyright())
 
-  useEffect(() => {
-    siteSettingsApi.getSite().then((res) => {
-      if (res.data?.data) {
-        setVision(res.data.data.the_gist_vision?.trim() || DEFAULT_VISION)
-        if (res.data.data.copyright_text?.trim()) setCopyright(res.data.data.copyright_text.trim())
-        else setCopyright(defaultCopyright())
-      }
-    }).catch(() => {})
-  }, [])
+  const { data: siteData } = useQuery({
+    queryKey: ['site', 'settings'],
+    queryFn: async () => {
+      const res = await siteSettingsApi.getSite()
+      return res.data?.data
+    },
+    staleTime: 1000 * 60 * 5,
+  })
+
+  const vision = useMemo(
+    () => siteData?.the_gist_vision?.trim() || DEFAULT_VISION,
+    [siteData?.the_gist_vision],
+  )
+  const copyright = useMemo(
+    () =>
+      siteData?.copyright_text?.trim()
+        ? siteData.copyright_text.trim()
+        : defaultCopyright(),
+    [siteData?.copyright_text],
+  )
 
   return (
     <footer className="bg-page-secondary border-t border-page pb-6 md:pb-0">

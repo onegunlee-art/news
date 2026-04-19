@@ -73,9 +73,11 @@ $router->get('/settings/site', function (Request $request): Response {
                 $data[$r['key']] = $r['value'] ?? $data[$r['key']];
             }
         }
-        return Response::success($data, 'OK');
+        return Response::success($data, 'OK')
+            ->setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=600');
     } catch (Throwable $e) {
-        return Response::success($data, 'OK');
+        return Response::success($data, 'OK')
+            ->setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=600');
     }
 });
 

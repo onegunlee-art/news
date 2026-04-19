@@ -100,15 +100,33 @@ try {
     exit;
 }
 
-// ── 컬럼 존재 여부를 한 번만 확인 (SHOW COLUMNS x6 → DESCRIBE x1) ──
+// ── 컬럼 존재 여부: storage/cache/news_schema.json 1시간 캐시 (detail.php와 동일 파일 포맷) ──
 $newsColumns = [];
-try {
-    $colStmt = $db->query("DESCRIBE news");
-    while ($row = $colStmt->fetch()) {
-        $newsColumns[$row['Field']] = true;
+$schemaCacheFile = __DIR__ . '/../../../storage/cache/news_schema.json';
+$schemaCacheTtl = 3600;
+if (file_exists($schemaCacheFile) && (time() - filemtime($schemaCacheFile)) < $schemaCacheTtl) {
+    $names = json_decode((string) file_get_contents($schemaCacheFile), true);
+    if (is_array($names)) {
+        foreach ($names as $name) {
+            if (is_string($name) && $name !== '') {
+                $newsColumns[$name] = true;
+            }
+        }
     }
-} catch (Exception $e) {
-    logError('DESCRIBE news failed: ' . $e->getMessage());
+}
+if (empty($newsColumns)) {
+    try {
+        $colStmt = $db->query('DESCRIBE news');
+        while ($row = $colStmt->fetch()) {
+            $newsColumns[$row['Field']] = true;
+        }
+        if (!is_dir(dirname($schemaCacheFile))) {
+            @mkdir(dirname($schemaCacheFile), 0755, true);
+        }
+        @file_put_contents($schemaCacheFile, json_encode(array_keys($newsColumns)));
+    } catch (Exception $e) {
+        logError('DESCRIBE news failed: ' . $e->getMessage());
+    }
 }
 $hasSourceUrl      = isset($newsColumns['source_url']);
 $hasWhyImportant   = isset($newsColumns['why_important']);
@@ -658,10 +676,16 @@ if ($method === 'GET') {
         
         $where = count($conditions) > 0 ? 'WHERE ' . implode(' AND ', $conditions) : '';
         
-        // 전체 수
-        $stmt = $db->prepare("SELECT COUNT(*) FROM news $where");
-        $stmt->execute($params);
-        $total = (int) $stmt->fetchColumn();
+        // 전체 수 (인기 탭은 페이지 1 고정·total을 count($news)로 덮어쓰므로 COUNT 생략)
+        $total = 0;
+        if (!$popular) {
+            $stmt = $db->prepare("SELECT COUNT(*) FROM news $where");
+            $stmt->execute($params);
+            $total = (int) $stmt->fetchColumn();
+        }
+        
+        // 유저 공개 목록·인기: LONGTEXT content 제외 (상세에서만 본문 로드)
+        $omitListContent = $publishedOnly || $popular;
         
         // ★ 컬럼 존재 여부는 상단 DESCRIBE에서 이미 조회됨 (SHOW COLUMNS 제거)
         $selectColumns = $hasCategoryParent
@@ -717,6 +741,10 @@ if ($method === 'GET') {
         if ($hasSeriesId) $selectColumns .= ', series_id';
         if ($hasSeriesOrder) $selectColumns .= ', series_order';
         if ($hasSeriesTitle) $selectColumns .= ', series_title';
+        
+        if ($omitListContent) {
+            $selectColumns = preg_replace('/\bcontent,\s*/', '', $selectColumns);
+        }
         
         // id DESC: 목록 정렬을 detail.php prev/next와 동일하게 (동일 시각·동일 조회수 tie-break)
         $orderBy = 'ORDER BY COALESCE(published_at, created_at) DESC, id DESC';

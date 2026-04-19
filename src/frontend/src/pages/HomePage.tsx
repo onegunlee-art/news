@@ -81,7 +81,7 @@ export default function HomePage() {
     fetchNextPage,
   } = useInfiniteNewsList(category, PER_PAGE)
 
-  const { data: popularData, isLoading: isLoadingPopular } = usePopularNews()
+  const { data: popularData, isLoading: isLoadingPopular } = usePopularNews(isPopularTab)
 
   // 뉴스 데이터 통합
   const news = useMemo(() => {

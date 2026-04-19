@@ -12,6 +12,12 @@
     gzip_min_length 256;
     gzip_vary on;
 
+    # Brotli: Ubuntu 패키지 nginx-module-brotli 설치 후에만 사용 (없으면 nginx -t 실패)
+    # include 전 확인: nginx -V 2>&1 | grep brotli
+    # brotli on;
+    # brotli_comp_level 5;
+    # brotli_types text/plain text/css text/xml text/javascript application/javascript application/json application/xml image/svg+xml;
+
     # ──────────────────────────────────────
     # 보안 헤더
     # ──────────────────────────────────────
@@ -83,6 +89,12 @@
         expires -1;
         add_header Cache-Control "no-cache, no-store, must-revalidate";
         add_header Pragma "no-cache";
+        try_files $uri =404;
+    }
+    # Vite 빌드 산출물 (파일명에 콘텐츠 해시): 재배포 시 파일명이 바뀌므로 1년 캐시 안전
+    location ~* ^/assets/.+\.(js|css)$ {
+        expires 365d;
+        add_header Cache-Control "public, max-age=31536000, immutable";
         try_files $uri =404;
     }
     location ~* \.(css|js)$ {

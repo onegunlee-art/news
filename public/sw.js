@@ -1,13 +1,12 @@
 /**
- * the gist. — 최소 Service Worker (PWA 설치 요건 충족용)
- *
- * - 캐싱 없음: 네트워크 통과 (뉴스 사이트 특성상 콘텐츠 신선도 우선)
- * - fetch 리스너 존재 == Chrome의 installability 요건 충족
- * - 과거 kill-switch SW 사용자: 이 SW로 자연 교체됨
+ * the gist. — Service Worker
+ * - /assets/* (Vite 해시 번들): stale-while-revalidate 캐시로 재방문 즉시 로드
+ * - 그 외: 네트워크 통과 (뉴스 HTML/API 신선도)
  */
-const SW_VERSION = 'v1.0.0'
+const ASSETS_CACHE = 'gist-assets-v1'
+const ASSETS_PREFIX = '/assets/'
 
-self.addEventListener('install', () => {
+self.addEventListener('install', (event) => {
   self.skipWaiting()
 })
 
@@ -15,6 +14,27 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(self.clients.claim())
 })
 
-self.addEventListener('fetch', () => {
-  // 명시적 pass-through. 브라우저 기본 처리.
+self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url)
+  if (url.origin !== self.location.origin) return
+  if (!url.pathname.startsWith(ASSETS_PREFIX)) return
+  if (event.request.method !== 'GET') return
+
+  event.respondWith(
+    caches.open(ASSETS_CACHE).then((cache) =>
+      cache.match(event.request).then((cached) => {
+        const networkPromise = fetch(event.request).then((response) => {
+          if (response.ok) {
+            cache.put(event.request, response.clone())
+          }
+          return response
+        })
+        if (cached) {
+          networkPromise.catch(() => {})
+          return cached
+        }
+        return networkPromise
+      }),
+    ),
+  )
 })
