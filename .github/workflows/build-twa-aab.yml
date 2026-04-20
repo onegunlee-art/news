@@ -50,20 +50,55 @@ jobs:
         working-directory: android/twa
         run: bubblewrap update --skipVersionUpgrade
 
+      # 4개 시크릿 중 하나라도 비어 있으면 빌드가 "초록불로 미서명 AAB"를 만드는 현상을 막는다.
+      - name: Assert Play signing secrets are set
+        env:
+          PLAY_KEYSTORE_BASE64: ${{ secrets.PLAY_KEYSTORE_BASE64 }}
+          PLAY_KEYSTORE_PASSWORD: ${{ secrets.PLAY_KEYSTORE_PASSWORD }}
+          PLAY_KEY_PASSWORD: ${{ secrets.PLAY_KEY_PASSWORD }}
+          PLAY_KEY_ALIAS: ${{ secrets.PLAY_KEY_ALIAS }}
+        shell: bash
+        run: |
+          set -eu
+          missing=0
+          for v in PLAY_KEYSTORE_BASE64 PLAY_KEYSTORE_PASSWORD PLAY_KEY_PASSWORD PLAY_KEY_ALIAS; do
+            if [ -z "${!v:-}" ]; then
+              echo "::error::Secret $v is empty. Register it in repo Settings → Secrets and variables → Actions."
+              missing=$((missing + 1))
+            else
+              echo "OK: $v is set"
+            fi
+          done
+          if [ "$missing" -gt 0 ]; then
+            exit 1
+          fi
+
       - name: Decode Play upload keystore
         env:
           PLAY_KEYSTORE_BASE64: ${{ secrets.PLAY_KEYSTORE_BASE64 }}
+        shell: bash
         run: |
-          echo "$PLAY_KEYSTORE_BASE64" | base64 -d > "${RUNNER_TEMP}/upload.keystore"
+          set -euo pipefail
+          # BOM/개행 등을 제거한 뒤 디코드. 실패 시 즉시 종료.
+          printf '%s' "$PLAY_KEYSTORE_BASE64" | tr -d '\r\n ' | base64 -d > "${RUNNER_TEMP}/upload.keystore"
+          if [ ! -s "${RUNNER_TEMP}/upload.keystore" ]; then
+            echo "::error::Decoded keystore is empty. PLAY_KEYSTORE_BASE64 may be blank or malformed."
+            exit 1
+          fi
+          echo "Keystore decoded: $(wc -c < "${RUNNER_TEMP}/upload.keystore") bytes"
 
-      - name: Verify decoded keystore
+      - name: Verify decoded keystore (alias + password must match)
         env:
-          BUBBLEWRAP_KEYSTORE_PASSWORD: ${{ secrets.PLAY_KEYSTORE_PASSWORD }}
+          PLAY_KEYSTORE_PASSWORD: ${{ secrets.PLAY_KEYSTORE_PASSWORD }}
+          PLAY_KEY_ALIAS: ${{ secrets.PLAY_KEY_ALIAS }}
+        shell: bash
         run: |
-          keytool -list -keystore "${RUNNER_TEMP}/upload.keystore" \
-            -storepass "${BUBBLEWRAP_KEYSTORE_PASSWORD}" \
-            -alias "${{ secrets.PLAY_KEY_ALIAS }}" -v 2>&1 | head -30
-          echo "--- Keystore file size: $(wc -c < "${RUNNER_TEMP}/upload.keystore") bytes ---"
+          set -euo pipefail
+          # 파이프를 쓰면 keytool 실패가 묻히므로 직접 실행.
+          keytool -list -v \
+            -keystore "${RUNNER_TEMP}/upload.keystore" \
+            -storepass "${PLAY_KEYSTORE_PASSWORD}" \
+            -alias "${PLAY_KEY_ALIAS}"
 
       - name: Build signed AAB
         working-directory: android/twa
@@ -71,15 +106,37 @@ jobs:
           BUBBLEWRAP_KEYSTORE_PASSWORD: ${{ secrets.PLAY_KEYSTORE_PASSWORD }}
           BUBBLEWRAP_KEY_PASSWORD: ${{ secrets.PLAY_KEY_PASSWORD }}
           UPLOAD_KEYSTORE: ${{ runner.temp }}/upload.keystore
+          PLAY_KEY_ALIAS: ${{ secrets.PLAY_KEY_ALIAS }}
+        shell: bash
         run: |
+          set -euo pipefail
           bubblewrap build \
             --signingKeyPath="${UPLOAD_KEYSTORE}" \
-            --signingKeyAlias="${{ secrets.PLAY_KEY_ALIAS }}" \
+            --signingKeyAlias="${PLAY_KEY_ALIAS}" \
             --skipPwaValidation
 
       - name: List AAB outputs (logs)
         working-directory: android/twa
         run: find app/build/outputs -name '*.aab' -ls
+
+      # 산출물이 실제로 서명되었는지 강제 검증. 미서명이면 여기서 실패시켜 Artifact 업로드 방지.
+      - name: Assert AAB is signed
+        working-directory: android/twa
+        shell: bash
+        run: |
+          set -euo pipefail
+          AAB="$(find app/build/outputs -name '*.aab' | head -n1)"
+          if [ -z "$AAB" ]; then
+            echo "::error::No AAB produced."
+            exit 1
+          fi
+          echo "Verifying: $AAB"
+          jarsigner -verify -verbose:summary "$AAB"
+          if ! jarsigner -verify "$AAB" 2>&1 | grep -q 'jar verified'; then
+            echo "::error::AAB is NOT signed. Check PLAY_KEYSTORE_PASSWORD / PLAY_KEY_PASSWORD / PLAY_KEY_ALIAS."
+            exit 1
+          fi
+          echo "OK: AAB signature verified."
 
       - uses: actions/upload-artifact@v4
         with:
