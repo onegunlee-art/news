@@ -4,9 +4,18 @@
 
 ---
 
+## 0. Play Console 업로드용 파일 이름 (중요)
+
+- **기능 그래픽·스크린샷은 `play-` 접두사 ASCII 파일**을 쓰세요:  
+  [exports/play-feature-graphic-1024x500.png](./exports/play-feature-graphic-1024x500.png),  
+  [exports/play-phone-screenshot-01.jpg](./exports/play-phone-screenshot-01.jpg) 등.
+- 한글 파일명(`스크린샷*.jpg`)은 업로드 실패 원인이 될 수 있습니다.
+
+---
+
 ## 1. 앱 아이콘 — 512 × 512 px
 
-**파일:** [exports/app-icon-512.png](./exports/app-icon-512.png)
+**파일:** [exports/app-icon-512.png](./exports/app-icon-512.png) (RGB PNG, 투명 없음)
 
 | 항목 | 요구 |
 |------|------|
@@ -20,11 +29,13 @@
 
 ## 2. 기능 그래픽 (Feature graphic) — 1024 × 500 px
 
-**파일:** [exports/feature-graphic-1024x500.png](./exports/feature-graphic-1024x500.png)
+**파일 (권장):** [exports/play-feature-graphic-1024x500.png](./exports/play-feature-graphic-1024x500.png)  
+동일 내용 JPEG: [exports/play-feature-graphic-1024x500.jpg](./exports/play-feature-graphic-1024x500.jpg)  
+동기화된 레거시 이름: [exports/feature-graphic-1024x500.png](./exports/feature-graphic-1024x500.png)
 
 | 항목 | 요구 |
 |------|------|
-| 크기 | **1024 × 500** |
+| 크기 | **정확히 1024 × 500** (가로×세로; 다른 비율·픽셀이면 업로드 거절) |
 | 용도 | 스토어 상단 배너 |
 
 **카피 예시 (한국어)**
@@ -42,10 +53,10 @@
 
 ## 3. 스크린샷 — 최소 2장 (휴대전화)
 
-**파일:**
+**파일 (ASCII 이름, 권장):**
 
-- [exports/screenshot-01-home.png](./exports/screenshot-01-home.png) — 홈·피드 목업
-- [exports/screenshot-02-article-ai.png](./exports/screenshot-02-article-ai.png) — 기사·AI 분석 목업
+- [exports/play-phone-screenshot-01.jpg](./exports/play-phone-screenshot-01.jpg) ~ [play-phone-screenshot-08.jpg](./exports/play-phone-screenshot-08.jpg)  
+  (`스크린샷1.jpg` … `8` 과 동일 순서로 복사됨)
 
 | 항목 | 요구 |
 |------|------|
