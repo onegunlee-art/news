@@ -100,7 +100,9 @@ jobs:
             -storepass "${PLAY_KEYSTORE_PASSWORD}" \
             -alias "${PLAY_KEY_ALIAS}"
 
-      - name: Build signed AAB
+      # bubblewrap build가 환경에 따라 서명을 silent skip하여 unsigned AAB를 남기는 이슈가 있다.
+      # 여기서는 bubblewrap에게 AAB 생성까지만 맡기고, 서명은 다음 스텝의 jarsigner로 직접 수행한다.
+      - name: Build AAB (bubblewrap may leave it unsigned)
         working-directory: android/twa
         env:
           BUBBLEWRAP_KEYSTORE_PASSWORD: ${{ secrets.PLAY_KEYSTORE_PASSWORD }}
@@ -119,21 +121,40 @@ jobs:
         working-directory: android/twa
         run: find app/build/outputs -name '*.aab' -ls
 
-      # 산출물이 실제로 서명되었는지 강제 검증. 미서명이면 여기서 실패시켜 Artifact 업로드 방지.
+      # jarsigner로 직접 서명. AAB는 JAR이므로 V1(jar) 서명만으로 Play Upload 서명 요건을 충족한다.
+      # 이미 같은 alias로 서명돼 있으면 jarsigner가 기존 서명을 갱신한다.
+      - name: Sign AAB with jarsigner (guaranteed)
+        working-directory: android/twa
+        env:
+          UPLOAD_KEYSTORE: ${{ runner.temp }}/upload.keystore
+          PLAY_KEYSTORE_PASSWORD: ${{ secrets.PLAY_KEYSTORE_PASSWORD }}
+          PLAY_KEY_PASSWORD: ${{ secrets.PLAY_KEY_PASSWORD }}
+          PLAY_KEY_ALIAS: ${{ secrets.PLAY_KEY_ALIAS }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          AAB="$(find app/build/outputs -name '*.aab' | head -n1)"
+          if [ -z "$AAB" ]; then
+            echo "::error::No AAB produced by bubblewrap."
+            exit 1
+          fi
+          echo "Signing: $AAB"
+          jarsigner -sigalg SHA256withRSA -digestalg SHA-256 \
+            -keystore "$UPLOAD_KEYSTORE" \
+            -storepass "$PLAY_KEYSTORE_PASSWORD" \
+            -keypass "$PLAY_KEY_PASSWORD" \
+            "$AAB" "$PLAY_KEY_ALIAS"
+
       - name: Assert AAB is signed
         working-directory: android/twa
         shell: bash
         run: |
           set -euo pipefail
           AAB="$(find app/build/outputs -name '*.aab' | head -n1)"
-          if [ -z "$AAB" ]; then
-            echo "::error::No AAB produced."
-            exit 1
-          fi
           echo "Verifying: $AAB"
           jarsigner -verify -verbose:summary "$AAB"
           if ! jarsigner -verify "$AAB" 2>&1 | grep -q 'jar verified'; then
-            echo "::error::AAB is NOT signed. Check PLAY_KEYSTORE_PASSWORD / PLAY_KEY_PASSWORD / PLAY_KEY_ALIAS."
+            echo "::error::AAB is still NOT signed. Investigate jarsigner step output above."
             exit 1
           fi
           echo "OK: AAB signature verified."
