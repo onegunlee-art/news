@@ -144,6 +144,7 @@ $hasViewCount      = isset($newsColumns['view_count']);
 $hasSeriesId       = isset($newsColumns['series_id']);
 $hasSeriesOrder    = isset($newsColumns['series_order']);
 $hasSeriesTitle    = isset($newsColumns['series_title']);
+$hasAiOriginalSnapshot = isset($newsColumns['ai_original_snapshot']);
 
 $method = $_SERVER['REQUEST_METHOD'];
 
@@ -393,7 +394,15 @@ if ($method === 'POST') {
             $values[] = $seriesTitle;
             $placeholders[] = '?';
         }
-        
+
+        // Judgement Layer: 임시저장 시점에도 GPT 분석 원본 스냅샷을 보존해야
+        // 임시저장 → 게시 PUT 경로에서 비교 입력을 복원할 수 있다.
+        if ($hasAiOriginalSnapshot && $aiOriginal !== null && $aiOriginal !== []) {
+            $columns[] = 'ai_original_snapshot';
+            $values[] = json_encode($aiOriginal, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            $placeholders[] = '?';
+        }
+
         $columnStr = implode(', ', $columns);
         $placeholderStr = implode(', ', $placeholders);
         
@@ -1039,7 +1048,14 @@ if ($method === 'PUT') {
             $setClauses[] = 'series_title = ?';
             $values[] = $seriesTitle;
         }
-        
+
+        // Judgement Layer: ai_original이 새로 들어오면 스냅샷 갱신.
+        // 들어오지 않을 때는 기존 스냅샷을 보존해야 하므로 SET 절에서 제외.
+        if ($hasAiOriginalSnapshot && $aiOriginal !== null && $aiOriginal !== []) {
+            $setClauses[] = 'ai_original_snapshot = ?';
+            $values[] = json_encode($aiOriginal, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        }
+
         $values[] = $id;  // WHERE 절용
         $setStr = implode(', ', $setClauses);
         
@@ -1054,6 +1070,28 @@ if ($method === 'PUT') {
         if ($status === 'published') {
             require_once __DIR__ . '/../lib/storePublishedNewsEmbedding.php';
             storePublishedNewsEmbedding($db, (int) $id);
+        }
+
+        // Judgement Layer fallback: PUT published 시 클라이언트가 ai_original을 보내지 않았다면
+        // (대표적으로 AdminDraftPreviewEdit.tsx 경로), 임시저장 시점에 보존된 스냅샷을 사용한다.
+        if ($status === 'published'
+            && ($aiOriginal === null || $aiOriginal === [])
+            && $hasAiOriginalSnapshot
+        ) {
+            try {
+                $snapStmt = $db->prepare("SELECT ai_original_snapshot FROM news WHERE id = ?");
+                $snapStmt->execute([$id]);
+                $snapRow = $snapStmt->fetch(PDO::FETCH_ASSOC);
+                if ($snapRow && !empty($snapRow['ai_original_snapshot'])) {
+                    $decoded = json_decode((string) $snapRow['ai_original_snapshot'], true);
+                    if (is_array($decoded) && $decoded !== []) {
+                        $aiOriginal = $decoded;
+                        logError('[news PUT] ai_original recovered from snapshot', ['id' => $id]);
+                    }
+                }
+            } catch (Throwable $e) {
+                logError('[news PUT] ai_original_snapshot read failed: ' . $e->getMessage());
+            }
         }
 
         // Judgement Layer: AI 원본 vs 에디터 최종 (관찰 모드)

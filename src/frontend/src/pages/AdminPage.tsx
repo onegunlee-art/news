@@ -3060,6 +3060,7 @@ const AdminPage: React.FC = () => {
                               series_title: seriesTitle.trim() || null,
                             }),
                             status: 'draft' as const,
+                            ai_original: aiResult ?? undefined,
                           };
                           const response = await adminFetch('/api/admin/news.php', {
                             method: editingNewsId ? 'PUT' : 'POST',
