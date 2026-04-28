@@ -29,6 +29,8 @@ interface NewsItem {
   time_ago?: string
   category?: string
   image_url?: string | null
+  // 게시 시 선생성된 TTS 캐시 URL (list/getDetail 응답에 들어오면 듣기 클릭 시 즉시 재생)
+  audio_url?: string | null
 }
 
 const PER_PAGE = 20
@@ -313,7 +315,9 @@ function ArticleCard({ article, activeTab, subCategoryToLabel }: { article: News
         const mainContent = stripHtml(detail.narration || detail.content || detail.description || article.description || '')
         const critiquePart = detail.why_important ? stripHtml(detail.why_important) : ''
         const img = detail.image_url || article.image_url || ''
-        openAndPlay(detail.title, editorialLine, mainContent, critiquePart, 1.0, img, Number(newsId))
+        // 게시 시 선생성된 TTS 캐시(detail.audio_url)가 있으면 즉시 재생 (NewsDetailPage 와 동일)
+        const preloadedUrl = (detail as { audio_url?: string | null }).audio_url ?? article.audio_url ?? null
+        openAndPlay(detail.title, editorialLine, mainContent, critiquePart, 1.0, img, Number(newsId), preloadedUrl)
         return
       }
     } catch { /* fallback */ }
@@ -329,7 +333,8 @@ function ArticleCard({ article, activeTab, subCategoryToLabel }: { article: News
         ? `${new Date(displayDate).getFullYear()}년 ${new Date(displayDate).getMonth() + 1}월 ${new Date(displayDate).getDate()}일`
         : ''
       const editorialLine = buildEditorialLine({ dateStr, sourceDisplay, originalTitle })
-      openAndPlay(article.title, editorialLine, text, '', 1.0, undefined, Number(newsId))
+      // list 응답에 audio_url이 들어 있으면 그것도 즉시 재생용으로 활용
+      openAndPlay(article.title, editorialLine, text, '', 1.0, undefined, Number(newsId), article.audio_url ?? null)
     }
   }
 
