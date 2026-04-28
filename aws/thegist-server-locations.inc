@@ -220,6 +220,9 @@
     location = /api/subscription/order-status {
         rewrite ^ /api/subscription/order-status.php last;
     }
+    location = /api/subscription/plans {
+        rewrite ^ /api/subscription/plans.php last;
+    }
 
     # ──────────────────────────────────────
     # StepPay 웹훅

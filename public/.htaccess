@@ -39,6 +39,8 @@ DirectorySlash Off
     RewriteRule ^api/subscription/auto-renew$ api/subscription/auto-renew.php [QSA,L]
     RewriteRule ^api/subscription/cancel$ api/subscription/cancel.php [QSA,L]
     RewriteRule ^api/subscription/settings$ api/subscription/settings.php [QSA,L]
+    RewriteRule ^api/subscription/order-status$ api/subscription/order-status.php [QSA,L]
+    RewriteRule ^api/subscription/plans$ api/subscription/plans.php [QSA,L]
     # StepPay 웹훅
     RewriteRule ^api/webhook/steppay$ api/webhook/steppay.php [QSA,L]
     RewriteRule ^api/subscription/test-steppay$ api/subscription/test-steppay.php [QSA,L]

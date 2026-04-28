@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuthStore } from '../store/authStore'
 import { apiErrorMessage } from '../utils/apiErrorMessage'
-import { api, siteSettingsApi } from '../services/api'
+import { api, siteSettingsApi, subscriptionApi } from '../services/api'
 import MaterialIcon from '../components/Common/MaterialIcon'
 import GistLogo from '../components/Common/GistLogo'
 import { formatContentHtml } from '../utils/sanitizeHtml'
@@ -14,14 +14,17 @@ interface Plan {
   id: string
   label: string
   monthlyPrice: string
-  totalPrice?: string
+  totalPrice?: string | null
   discount: string | null
   billing: string
   renewal: string
   bestValue: boolean
 }
 
-const PLANS: Plan[] = [
+// 서버 fetch 실패 시 사용되는 fallback 가격표.
+// 실제 결제 금액은 서버 config/app.php 의 plans 가 기준이며 priceCode 로 결정됨.
+// 이 상수는 화면 표시 fallback 전용 (네트워크 장애·신규 진입자 첫 페인트 보호용).
+const FALLBACK_PLANS: Plan[] = [
   {
     id: '12m',
     label: '연간 구독',
@@ -87,6 +90,9 @@ export default function SubscriptionPage() {
   const [planDetails, setPlanDetails] = useState<Record<string, PlanDetailFields>>({})
   const [expandedDetail, setExpandedDetail] = useState<string | null>(null)
   const [pageIntro, setPageIntro] = useState('')
+  // 서버에서 로드한 플랜 목록 (성공 시 사용); 실패 시 FALLBACK_PLANS 사용
+  // 서버 응답이 단일 진실의 원천이므로 표시 가격과 결제 금액의 불일치를 방지한다.
+  const [plans, setPlans] = useState<Plan[]>(FALLBACK_PLANS)
 
   useEffect(() => {
     siteSettingsApi.getSite().then((res) => {
@@ -97,6 +103,30 @@ export default function SubscriptionPage() {
       const intro = res.data?.data?.subscription_page_intro
       if (intro && typeof intro === 'string' && intro.trim()) setPageIntro(intro)
     }).catch(() => {})
+  }, [])
+
+  // 서버에서 단일 플랜 소스를 가져온다. 실패 시 FALLBACK_PLANS 유지 (UX 보호).
+  useEffect(() => {
+    let cancelled = false
+    subscriptionApi.getPlans()
+      .then((res) => {
+        if (cancelled) return
+        const list = res.data?.data?.plans
+        if (Array.isArray(list) && list.length > 0) {
+          setPlans(list.map((p) => ({
+            id: p.id,
+            label: p.label,
+            monthlyPrice: p.monthlyPrice,
+            totalPrice: p.totalPrice ?? undefined,
+            discount: p.discount,
+            billing: p.billing,
+            renewal: p.renewal,
+            bestValue: p.bestValue,
+          })))
+        }
+      })
+      .catch(() => { /* fallback 유지 */ })
+    return () => { cancelled = true }
   }, [])
 
   useEffect(() => {
@@ -252,7 +282,7 @@ export default function SubscriptionPage() {
           transition={{ duration: 0.4, delay: 0.1 }}
           className="space-y-3"
         >
-          {PLANS.map((plan) => {
+          {plans.map((plan) => {
             const isSelected = selectedPlan === plan.id
             const detail = planDetails[plan.id]
             const hasDetail = detail && Object.values(detail).some((v) => v.trim())

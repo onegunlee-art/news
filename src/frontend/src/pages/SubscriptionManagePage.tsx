@@ -18,30 +18,54 @@ const STATUS_MAP: Record<string, { label: string; badgeClass: string }> = {
 
 export default function SubscriptionManagePage() {
   const navigate = useNavigate()
-  const { isSubscribed } = useAuthStore()
+  const { isAuthenticated, isInitialized } = useAuthStore()
   const [detail, setDetail] = useState<SubscriptionDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [toggling, setToggling] = useState(false)
   const [showOffConfirm, setShowOffConfirm] = useState(false)
   const [cancelSuccess, setCancelSuccess] = useState(false)
+  // 서버 응답 기준으로 진입 분기. 클라 isSubscribed 캐시(localStorage)는
+  // 결제/만료 직후 서버와 어긋날 수 있어 잘못된 redirect 가 발생할 수 있으므로
+  // 마운트 시 무조건 detail 을 호출하고 그 결과로 분기한다.
+  const [needsSubscribe, setNeedsSubscribe] = useState(false)
 
   useEffect(() => {
-    if (!isSubscribed) {
-      navigate('/profile', { replace: true })
+    // 인증 초기화 전이면 잠시 대기 (refresh 토큰 회전 후 호출하기 위함)
+    if (!isInitialized) return
+    // 비로그인 사용자는 로그인으로 보냄 (returnTo 유지)
+    if (!isAuthenticated) {
+      navigate('/login', { state: { returnTo: '/subscription/manage' }, replace: true })
       return
     }
+    let cancelled = false
     subscriptionApi.getDetail()
       .then((r) => {
+        if (cancelled) return
         if (r.data?.success && r.data.data) {
           setDetail(r.data.data)
         } else {
-          setError('구독 정보를 불러올 수 없습니다.')
+          // 서버는 200 인데 data 가 비어 있는 경우 = 구독 이력 없음
+          setNeedsSubscribe(true)
         }
       })
-      .catch(() => setError('구독 정보를 불러올 수 없습니다.'))
-      .finally(() => setLoading(false))
-  }, [isSubscribed, navigate])
+      .catch((err: { response?: { status?: number } }) => {
+        if (cancelled) return
+        const status = err?.response?.status
+        if (status === 401) {
+          navigate('/login', { state: { returnTo: '/subscription/manage' }, replace: true })
+          return
+        }
+        if (status === 404) {
+          // 구독 정보 자체가 없음 → 구독 페이지 안내
+          setNeedsSubscribe(true)
+          return
+        }
+        setError('구독 정보를 불러올 수 없습니다. 잠시 후 다시 시도해 주세요.')
+      })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [isAuthenticated, isInitialized, navigate])
 
   const isAutoRenewOn = detail ? detail.auto_renew : true
   const canToggle = detail && ['ACTIVE', 'PAUSED', 'PENDING_CANCEL', 'PENDING_PAUSE'].includes(detail.status)
@@ -118,6 +142,26 @@ export default function SubscriptionManagePage() {
         {loading ? (
           <div className="flex justify-center py-16">
             <LoadingSpinner size="large" />
+          </div>
+        ) : needsSubscribe ? (
+          <div className="bg-page rounded-xl border border-page p-6 text-center">
+            <p className="text-page-secondary mb-4">현재 활성화된 구독이 없습니다.</p>
+            <div className="flex justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => navigate('/subscribe')}
+                className="px-4 py-2 bg-primary-500 text-white rounded-lg text-sm font-medium hover:bg-primary-600"
+              >
+                구독하러 가기
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/profile')}
+                className="px-4 py-2 bg-page-secondary text-page rounded-lg text-sm font-medium hover:bg-page-tertiary"
+              >
+                My Page로 이동
+              </button>
+            </div>
           </div>
         ) : error && !detail ? (
           <div className="bg-page rounded-xl border border-page p-6 text-center">

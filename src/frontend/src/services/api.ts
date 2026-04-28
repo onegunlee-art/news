@@ -398,6 +398,25 @@ export type SubscriptionDetail = {
   subscription_id: number | null
 }
 
+export type SubscriptionPlan = {
+  id: string
+  label: string
+  monthlyPrice: string
+  totalPrice?: string | null
+  discount: string | null
+  billing: string
+  renewal: string
+  bestValue: boolean
+  amount: number
+  months: number
+}
+
+export type SubscriptionPlansResponse = {
+  plans: SubscriptionPlan[]
+  onetime_products: Array<{ id: string; label: string; description: string; amount: number; amountFormatted: string }>
+  currency: string
+}
+
 export const subscriptionApi = {
   getDetail: () =>
     api.get<{ success: boolean; data: SubscriptionDetail }>('/subscription/detail'),
@@ -405,5 +424,7 @@ export const subscriptionApi = {
     api.post<{ success: boolean; message?: string }>('/subscription/auto-renew', { enabled }),
   cancel: () =>
     api.post<{ success: boolean; message?: string }>('/subscription/cancel'),
+  getPlans: () =>
+    api.get<{ success: boolean; data: SubscriptionPlansResponse }>('/subscription/plans'),
 }
 
