@@ -466,7 +466,8 @@ export default function NewsDetailPage() {
             width={800}
             height={800}
             className="w-full h-full object-cover"
-            loading="lazy"
+            decoding="async"
+            {...({ fetchpriority: 'high' } as Record<string, string>)}
             onError={(e) => {
               (e.target as HTMLImageElement).src = getPlaceholderImageUrl(
                 { id: news.id, title: news.title, description: news.description, published_at: news.published_at, url: news.url, source: news.source },

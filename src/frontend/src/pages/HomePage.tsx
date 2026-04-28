@@ -208,7 +208,7 @@ export default function HomePage() {
               <div className="lg:hidden">
                 {news.map((item, i) => (
                   <div key={item.id ?? i}>
-                    <ArticleCard article={item} activeTab={activeTab} subCategoryToLabel={subCategoryToLabel} />
+                    <ArticleCard article={item} activeTab={activeTab} subCategoryToLabel={subCategoryToLabel} priority={i < 5} />
                     {i < news.length - 1 && (
                       <div className="h-2 bg-page-secondary" aria-hidden />
                     )}
@@ -220,7 +220,7 @@ export default function HomePage() {
                   <div key={rowIndex}>
                     <div className="grid grid-cols-2 gap-x-12">
                       {row.map((item, idx) => (
-                        <ArticleCard key={item.id ?? rowIndex * 2 + idx} article={item} activeTab={activeTab} subCategoryToLabel={subCategoryToLabel} />
+                        <ArticleCard key={item.id ?? rowIndex * 2 + idx} article={item} activeTab={activeTab} subCategoryToLabel={subCategoryToLabel} priority={rowIndex === 0 && idx < 2} />
                       ))}
                     </div>
                     {rowIndex < chunkBy2(news).length - 1 && (
@@ -252,7 +252,7 @@ export default function HomePage() {
 }
 
 // 기사 카드 - 왼쪽 텍스트 + 오른쪽 이미지. 기사는 흰 배경, 기사 사이 간격에 회색 배경이 비침.
-function ArticleCard({ article, activeTab, subCategoryToLabel }: { article: NewsItem; activeTab: string; subCategoryToLabel: Record<string, string> }) {
+function ArticleCard({ article, activeTab, subCategoryToLabel, priority = false }: { article: NewsItem; activeTab: string; subCategoryToLabel: Record<string, string>; priority?: boolean }) {
   const navigate = useNavigate()
   const { isAuthenticated } = useAuthStore()
   const addAudioItem = useAudioListStore((s) => s.addItem)
@@ -400,7 +400,9 @@ function ArticleCard({ article, activeTab, subCategoryToLabel }: { article: News
             width={112}
             height={112}
             className="w-full h-full object-cover"
-            loading="lazy"
+            loading={priority ? 'eager' : 'lazy'}
+            decoding="async"
+            {...({ fetchpriority: priority ? 'high' : 'auto' } as Record<string, string>)}
             onError={(e) => {
               (e.target as HTMLImageElement).src = getPlaceholderImageUrl(
                 { id: article.id, title: article.title, description: article.description, published_at: article.published_at, category: article.category, url: article.url, source: article.source },
