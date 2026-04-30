@@ -41,6 +41,10 @@
     {
       "type": "sha256Cert",
       "value": "F6:0E:AD:F4:90:40:D2:B0:BA:98:02:38:F5:79:47:58:3B:5E:F6:3B:0C:05:61:1E:1D:90:50:BE:5C:18:82:F2"
+    },
+    {
+      "type": "sha256Cert",
+      "value": "0D:AA:D0:06:58:BE:F8:2B:54:BD:29:66:1E:74:C2:FC:72:29:FE:7D:17:7C:06:49:F8:14:D4:44:67:FF:C2:15"
     }
   ],
   "additionalTrustedOrigins": [],

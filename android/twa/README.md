@@ -7,7 +7,38 @@
 ## 사전 요건
 
 1. 프로덕션에 `manifest.webmanifest`와 `sw.js`가 배포되어 있을 것
-2. `https://www.thegist.co.kr/.well-known/assetlinks.json` 이 JSON으로 응답할 것 (SHA-256은 서명 키 확정 후 갱신)
+2. `https://www.thegist.co.kr/.well-known/assetlinks.json` 이 JSON으로 응답할 것
+3. **JSON 의 `sha256_cert_fingerprints` 에 "Play 앱 서명 키" SHA-256 이 포함되어 있을 것** (아래 ⚠️)
+
+## ⚠️ Digital Asset Links 검증 실패 시 (가장 흔한 원인)
+
+Play Console 에 **"도메인 소유권이 확인되지 않음 / 디지털 애셋 링크 JSON 파일 관련 테스트를 통과하지 못함"** 메시지가 뜨는 거의 모든 사례는 다음과 같다.
+
+- 우리는 **업로드 키**(`aws/my-upload-key.keystore`) 로 AAB 를 서명해 Play Console 에 올린다.
+- Play 는 그 AAB 를 받아 **자기가 가진 "앱 서명 키"** 로 다시 서명해 사용자 기기에 배포한다 (Play App Signing).
+- 사용자 기기의 Android Domain Verification 은 **앱 서명 키 SHA-256** 과 `assetlinks.json` 의 fingerprint 를 비교한다.
+- 따라서 JSON 에 **업로드 키 fingerprint 만** 들어 있으면 절대 통과하지 않는다.
+
+**해결**: `public/.well-known/assetlinks.json` 의 `sha256_cert_fingerprints` 배열에 **두 인증서 SHA-256 (앱 서명 키 + 업로드 키) 모두** 넣는다.
+
+### 두 fingerprint 가져오기 (Play Console)
+
+1. Play Console → 좌측 메뉴 **"테스트 및 출시" → "설정" → "앱 무결성"** → **"앱 서명"** 탭
+2. 페이지에 두 인증서가 표시된다.
+   - **앱 서명 키 인증서** (App signing key certificate) — Play 가 사용자에게 배포할 때 쓰는 키. 이 SHA-256 이 **반드시 필요**.
+   - **업로드 키 인증서** (Upload key certificate) — 우리가 AAB 업로드할 때 쓰는 키. 우리 `assetlinks.json` 에 이미 들어 있는 값.
+3. 각각의 **SHA-256 인증서 디지털 지문**을 복사한다 (`AA:BB:CC:...` 형식).
+4. (편의) 같은 페이지 하단 **"Digital Asset Links JSON"** 섹션에서 **권장 JSON 을 그대로 다운로드** 할 수도 있다. 다운로드한 내용을 `public/.well-known/assetlinks.json` 으로 덮어쓰고 배포하면 끝.
+
+### 적용 후 검증
+
+```powershell
+pwsh ./scripts/verify-assetlinks.ps1 -ExpectedSha256 "<앱 서명 키 SHA-256>"
+```
+
+`[PASS] expected SHA-256 present` 가 나오면 도메인 측은 100% 정상.
+
+이미 설치된 사용자 기기는 안내 문구대로 **앱이 새 버전으로 업데이트된 뒤**에야 링크 캡처가 정상 동작한다 (Android Domain Verification 의 클라이언트 캐시 특성).
 
 ## Bubblewrap 설치
 

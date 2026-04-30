@@ -136,9 +136,29 @@ Options -Indexes
 
 # php_value 제거: 닷홈(FastCGI/PHP-FPM)에서 500 유발. 필요시 php.ini 또는 호스팅 패널에서 설정
 
-# 민감한 파일 접근 차단 (닷홈 호환: 모듈 없으면 스킵)
+# Digital Asset Links: TWA(Trusted Web Activity) 도메인 검증용
+# /.well-known/assetlinks.json 은 Play 가 application/json 200 으로 받아야 하므로
+# 아래 차단 규칙들보다 먼저 명시적으로 허용 + Content-Type 보장.
 <IfModule mod_authz_core.c>
-    <FilesMatch "\.(env|sql|md|json|lock|yml|yaml)$">
+    <Files "assetlinks.json">
+        Require all granted
+    </Files>
+</IfModule>
+<IfModule mod_headers.c>
+    <Files "assetlinks.json">
+        Header set Content-Type "application/json"
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+    </Files>
+</IfModule>
+
+# 민감한 파일 접근 차단 (닷홈 호환: 모듈 없으면 스킵)
+# 주의: .json 을 일괄 차단하면 assetlinks.json / manifest 등 공개되어야 할 JSON 까지
+# 403 이 되어 TWA 도메인 검증을 깨뜨린다. 따라서 차단할 JSON 만 화이트리스트로 지정한다.
+<IfModule mod_authz_core.c>
+    <FilesMatch "\.(env|sql|md|lock|yml|yaml)$">
+        Require all denied
+    </FilesMatch>
+    <FilesMatch "^(composer|composer-lock|package|package-lock|tsconfig|bun|pnpm-lock)\.json$">
         Require all denied
     </FilesMatch>
     <FilesMatch "^\.">
