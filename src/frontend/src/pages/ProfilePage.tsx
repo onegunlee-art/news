@@ -467,29 +467,38 @@ export default function ProfilePage() {
               <p className="text-page text-sm font-medium leading-relaxed mb-4">
                 앱으로 더 편하게 thegist. 를 이용하세요
               </p>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3 items-center">
                 <a
                   href={PLAY_STORE_URL}
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Android · Google Play에서 설치"
-                  className="flex flex-col items-center justify-center gap-2 px-4 py-5 rounded-xl border border-page bg-page-secondary hover:bg-page-secondary/70 transition-colors"
+                  className="block rounded-lg overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
                 >
-                  <MaterialIcon name="android" className="w-9 h-9 text-primary-500" size={36} />
-                  <span className="text-page text-sm font-semibold">Android</span>
-                  <span className="text-page-secondary text-[11px]">Google Play</span>
+                  <img
+                    src="/badges/google-play-badge.png"
+                    alt="Android App on Google Play"
+                    className="w-full h-auto block"
+                    loading="lazy"
+                  />
                 </a>
                 <button
                   type="button"
                   onClick={() => setShowIosGuide(true)}
-                  aria-label="iPhone · Safari로 설치 안내 보기"
-                  className="flex flex-col items-center justify-center gap-2 px-4 py-5 rounded-xl border border-page bg-page-secondary hover:bg-page-secondary/70 transition-colors"
+                  aria-label="iPhone · Safari로 홈 화면에 추가 안내 보기"
+                  className="block w-full rounded-lg overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
                 >
-                  <MaterialIcon name="phone_iphone" className="w-9 h-9 text-page" size={36} />
-                  <span className="text-page text-sm font-semibold">iPhone</span>
-                  <span className="text-page-secondary text-[11px]">Safari로 설치</span>
+                  <img
+                    src="/badges/app-store-badge.svg"
+                    alt="Download on the App Store"
+                    className="w-full h-auto block"
+                    loading="lazy"
+                  />
                 </button>
               </div>
+              <p className="mt-2 text-[11px] text-page-muted text-center leading-snug">
+                App Store 배지는 Safari로 홈 화면에 추가하는 방법을 안내합니다.
+              </p>
               <p className="mt-4 text-page-secondary text-xs leading-relaxed">
                 iPhone/iPad에서는 <strong className="text-page">Safari</strong>로 사이트를 연 뒤 공유 → <strong className="text-page">「홈 화면에 추가」</strong>를 누르면 앱처럼 이용할 수 있어요. 카카오톡 등 인앱 브라우저에서 보고 계시면 Safari로 다시 열어 주세요.
               </p>
