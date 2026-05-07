@@ -467,34 +467,32 @@ export default function ProfilePage() {
               <p className="text-page text-sm font-medium leading-relaxed mb-4">
                 앱으로 더 편하게 thegist. 를 이용하세요
               </p>
-              <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
                 <a
                   href={PLAY_STORE_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-between gap-3 px-4 py-3 rounded-lg bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium transition-colors"
+                  aria-label="Android · Google Play에서 설치"
+                  className="flex flex-col items-center justify-center gap-2 px-4 py-5 rounded-xl border border-page bg-page-secondary hover:bg-page-secondary/70 transition-colors"
                 >
-                  <span className="flex items-center gap-2">
-                    <MaterialIcon name="android" className="w-5 h-5" size={20} />
-                    Android · Google Play에서 설치
-                  </span>
-                  <MaterialIcon name="open_in_new" className="w-4 h-4 opacity-90" size={16} />
+                  <MaterialIcon name="android" className="w-9 h-9 text-primary-500" size={36} />
+                  <span className="text-page text-sm font-semibold">Android</span>
+                  <span className="text-page-secondary text-[11px]">Google Play</span>
                 </a>
                 <button
                   type="button"
                   onClick={() => setShowIosGuide(true)}
-                  className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-lg border border-page text-page text-sm font-medium hover:bg-page-secondary transition-colors"
+                  aria-label="iPhone · Safari로 설치 안내 보기"
+                  className="flex flex-col items-center justify-center gap-2 px-4 py-5 rounded-xl border border-page bg-page-secondary hover:bg-page-secondary/70 transition-colors"
                 >
-                  <span className="flex items-center gap-2">
-                    <MaterialIcon name="phone_iphone" className="w-5 h-5 text-page-secondary" size={20} />
-                    iPhone · iPad — Safari로 설치 안내
-                  </span>
-                  <MaterialIcon name="chevron_right" className="w-5 h-5 text-page-muted" size={20} />
+                  <MaterialIcon name="phone_iphone" className="w-9 h-9 text-page" size={36} />
+                  <span className="text-page text-sm font-semibold">iPhone</span>
+                  <span className="text-page-secondary text-[11px]">Safari로 설치</span>
                 </button>
-                <p className="text-page-secondary text-xs leading-relaxed">
-                  iPhone/iPad에서는 <strong className="text-page">Safari</strong>로 사이트를 연 뒤 공유 → <strong className="text-page">「홈 화면에 추가」</strong>를 누르면 앱처럼 이용할 수 있어요. 카카오톡 등 인앱 브라우저에서 보고 계시면 Safari로 다시 열어 주세요.
-                </p>
               </div>
+              <p className="mt-4 text-page-secondary text-xs leading-relaxed">
+                iPhone/iPad에서는 <strong className="text-page">Safari</strong>로 사이트를 연 뒤 공유 → <strong className="text-page">「홈 화면에 추가」</strong>를 누르면 앱처럼 이용할 수 있어요. 카카오톡 등 인앱 브라우저에서 보고 계시면 Safari로 다시 열어 주세요.
+              </p>
             </div>
           </section>
         )}
@@ -544,9 +542,10 @@ export default function ProfilePage() {
             <button
               type="button"
               onClick={() => setShowIosGuide(false)}
-              className="mt-5 w-full py-2.5 bg-primary-500 text-white rounded-lg text-sm font-medium hover:bg-primary-600 transition-colors"
+              className="mt-5 w-full inline-flex items-center justify-center gap-2 py-2.5 bg-primary-500 text-white rounded-lg text-sm font-medium hover:bg-primary-600 transition-colors"
             >
-              확인
+              <MaterialIcon name="phone_iphone" className="w-5 h-5" size={18} />
+              iOS 설치하기
             </button>
           </div>
         </div>
