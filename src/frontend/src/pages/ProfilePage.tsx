@@ -11,6 +11,7 @@ import MaterialIcon from '../components/Common/MaterialIcon'
 import { useMenuConfig } from '../hooks/useMenuConfig'
 import { apiErrorMessage } from '../utils/apiErrorMessage'
 import { formatContentHtml } from '../utils/sanitizeHtml'
+import { PLAY_STORE_URL } from '../constants/appLinks'
 
 type BookmarkRow = {
   id: number
@@ -54,6 +55,7 @@ export default function ProfilePage() {
   const [profileTaglineTitle, setProfileTaglineTitle] = useState('')
   const [profileTagline, setProfileTagline] = useState('')
   const [expandedTagline, setExpandedTagline] = useState(false)
+  const [showIosGuide, setShowIosGuide] = useState(false)
   const activeTabRef = useRef(activeTab)
   activeTabRef.current = activeTab
 
@@ -458,7 +460,97 @@ export default function ProfilePage() {
           </ul>
         </section>
 
+        {hasAuth && (
+          <section className="mt-6 bg-page rounded-xl overflow-hidden shadow-sm border border-page">
+            <h2 className="px-5 py-4 text-xs font-bold text-primary-500 uppercase tracking-wider">Mobile App</h2>
+            <div className="px-5 pb-5 pt-1 border-t border-page">
+              <p className="text-page text-sm font-medium leading-relaxed mb-4">
+                앱으로 더 편하게 thegist. 를 이용하세요
+              </p>
+              <div className="space-y-3">
+                <a
+                  href={PLAY_STORE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between gap-3 px-4 py-3 rounded-lg bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium transition-colors"
+                >
+                  <span className="flex items-center gap-2">
+                    <MaterialIcon name="android" className="w-5 h-5" size={20} />
+                    Android · Google Play에서 설치
+                  </span>
+                  <MaterialIcon name="open_in_new" className="w-4 h-4 opacity-90" size={16} />
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setShowIosGuide(true)}
+                  className="w-full flex items-center justify-between gap-3 px-4 py-3 rounded-lg border border-page text-page text-sm font-medium hover:bg-page-secondary transition-colors"
+                >
+                  <span className="flex items-center gap-2">
+                    <MaterialIcon name="phone_iphone" className="w-5 h-5 text-page-secondary" size={20} />
+                    iPhone · iPad — Safari로 설치 안내
+                  </span>
+                  <MaterialIcon name="chevron_right" className="w-5 h-5 text-page-muted" size={20} />
+                </button>
+                <p className="text-page-secondary text-xs leading-relaxed">
+                  iPhone/iPad에서는 <strong className="text-page">Safari</strong>로 사이트를 연 뒤 공유 → <strong className="text-page">「홈 화면에 추가」</strong>를 누르면 앱처럼 이용할 수 있어요. 카카오톡 등 인앱 브라우저에서 보고 계시면 Safari로 다시 열어 주세요.
+                </p>
+              </div>
+            </div>
+          </section>
+        )}
+
       </div>
+
+      {showIosGuide && (
+        <div
+          className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="ios-guide-title"
+          onClick={() => setShowIosGuide(false)}
+        >
+          <div
+            className="bg-page border border-page rounded-xl shadow-xl max-w-md w-full p-6 my-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3 mb-1">
+              <h3 id="ios-guide-title" className="text-lg font-semibold text-page">iPhone · Safari 설치 방법</h3>
+              <button
+                type="button"
+                onClick={() => setShowIosGuide(false)}
+                className="-mr-2 -mt-1 p-2 text-page-secondary hover:text-page rounded-lg transition-colors"
+                aria-label="닫기"
+              >
+                <MaterialIcon name="close" size={20} />
+              </button>
+            </div>
+            <p className="text-sm text-page-secondary mb-4">Safari로 사이트를 연 뒤 아래 순서대로 진행해 주세요.</p>
+            <ol className="list-decimal list-inside space-y-4 text-sm text-page-secondary">
+              {[
+                { src: '/ios-install-step-1.svg', caption: 'Safari 하단 중앙의 공유(□↑) 버튼을 누릅니다.' },
+                { src: '/ios-install-step-2.svg', caption: '메뉴를 아래로 스크롤한 뒤 「홈 화면에 추가」를 선택합니다.' },
+                { src: '/ios-install-step-3.svg', caption: '이름을 확인하고 「추가」를 누른 뒤, 홈 화면 아이콘으로 실행하세요.' },
+              ].map((s, i) => (
+                <li key={s.src} className="leading-relaxed">
+                  <span className="text-page font-medium">{i + 1}. </span>
+                  {s.caption}
+                  <div className="mt-2 rounded-lg border border-page overflow-hidden bg-page-secondary/20">
+                    <img src={s.src} alt="" className="w-full h-auto block" loading="lazy" />
+                  </div>
+                </li>
+              ))}
+            </ol>
+            <p className="mt-4 text-[11px] text-page-secondary">iOS 버전에 따라 메뉴 이름이 조금 다를 수 있어요.</p>
+            <button
+              type="button"
+              onClick={() => setShowIosGuide(false)}
+              className="mt-5 w-full py-2.5 bg-primary-500 text-white rounded-lg text-sm font-medium hover:bg-primary-600 transition-colors"
+            >
+              확인
+            </button>
+          </div>
+        </div>
+      )}
 
       {showWithdrawConfirm && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="withdraw-title">
