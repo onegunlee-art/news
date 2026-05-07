@@ -496,12 +496,6 @@ export default function ProfilePage() {
                   />
                 </button>
               </div>
-              <p className="mt-2 text-[11px] text-page-muted text-center leading-snug">
-                App Store 배지는 Safari로 홈 화면에 추가하는 방법을 안내합니다.
-              </p>
-              <p className="mt-4 text-page-secondary text-xs leading-relaxed">
-                iPhone/iPad에서는 <strong className="text-page">Safari</strong>로 사이트를 연 뒤 공유 → <strong className="text-page">「홈 화면에 추가」</strong>를 누르면 앱처럼 이용할 수 있어요. 카카오톡 등 인앱 브라우저에서 보고 계시면 Safari로 다시 열어 주세요.
-              </p>
             </div>
           </section>
         )}
