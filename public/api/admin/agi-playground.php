@@ -1,8 +1,9 @@
 <?php
 /**
- * AGI Playground API - Judgment RAG 적용 생성 + 정합률 측정
+ * AGI Playground API - Judgment RAG 적용 생성 + 정합률 측정 + 학습
  *
- * POST { url, compare_with_published } → AI 생성 결과 + 정합률
+ * POST action=generate { url } → AI 생성 결과 + 정합률
+ * POST action=learn { ai_output, human_output } → 수정내용 패턴 학습
  */
 
 error_reporting(E_ALL);
@@ -97,15 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $rawInput = file_get_contents('php://input');
 $input = json_decode($rawInput, true);
-if (!$input || empty(trim($input['url'] ?? ''))) {
-    ob_clean();
-    http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'url is required']);
-    exit;
-}
-
-$url = trim($input['url']);
-$compareWithPublished = (bool) ($input['compare_with_published'] ?? true);
+$action = $input['action'] ?? 'generate';
 
 $openaiConfig = file_exists($projectRoot . 'config/openai.php')
     ? require $projectRoot . 'config/openai.php'
@@ -126,7 +119,6 @@ if (!$openai->isConfigured()) {
     exit;
 }
 
-// Database connection for comparison
 $dbConfigPath = $projectRoot . 'config/database.php';
 $db = null;
 if (file_exists($dbConfigPath)) {
@@ -139,11 +131,14 @@ if (file_exists($dbConfigPath)) {
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         ]);
     } catch (PDOException $e) {
-        // Continue without DB comparison
+        // Continue without DB
     }
 }
 
-// Fetch article content
+// ═══════════════════════════════════════════════════════════════
+// Helper Functions
+// ═══════════════════════════════════════════════════════════════
+
 function fetchArticleContent(string $url): ?array
 {
     $ch = curl_init();
@@ -163,7 +158,6 @@ function fetchArticleContent(string $url): ?array
         return null;
     }
 
-    // Extract title
     $title = '';
     if (preg_match('/<title[^>]*>([^<]+)<\/title>/i', $html, $m)) {
         $title = html_entity_decode(trim($m[1]), ENT_QUOTES, 'UTF-8');
@@ -172,20 +166,15 @@ function fetchArticleContent(string $url): ?array
         $title = html_entity_decode(trim($m[1]), ENT_QUOTES, 'UTF-8');
     }
 
-    // Extract main content (simplified)
     $content = '';
-    
-    // Remove scripts and styles
     $html = preg_replace('/<script[^>]*>.*?<\/script>/is', '', $html);
     $html = preg_replace('/<style[^>]*>.*?<\/style>/is', '', $html);
     
-    // Try to find article body
     if (preg_match('/<article[^>]*>(.*?)<\/article>/is', $html, $m)) {
         $content = strip_tags($m[1]);
     } elseif (preg_match('/<div[^>]+class=["\'][^"\']*(?:article|content|story|post)[^"\']*["\'][^>]*>(.*?)<\/div>/is', $html, $m)) {
         $content = strip_tags($m[1]);
     } else {
-        // Fallback: extract all paragraph text
         if (preg_match_all('/<p[^>]*>(.*?)<\/p>/is', $html, $matches)) {
             $content = implode("\n\n", array_map('strip_tags', $matches[1]));
         }
@@ -205,8 +194,36 @@ function fetchArticleContent(string $url): ?array
     ];
 }
 
-// Load Judgment patterns
-function loadJudgementPatterns(SupabaseService $supabase, int $minFrequency = 2): array
+/**
+ * 최근 게시된 기사 예시 가져오기 (Few-shot learning용)
+ */
+function loadRecentPublishedExamples(?PDO $db, int $limit = 2): array
+{
+    if ($db === null) {
+        return [];
+    }
+    try {
+        $stmt = $db->query("
+            SELECT title, narration, why_important, content, description
+            FROM news 
+            WHERE status = 'published' 
+              AND narration IS NOT NULL 
+              AND narration != ''
+              AND why_important IS NOT NULL
+              AND why_important != ''
+            ORDER BY published_at DESC 
+            LIMIT {$limit}
+        ");
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    } catch (Throwable $e) {
+        return [];
+    }
+}
+
+/**
+ * Judgment 패턴 로드
+ */
+function loadJudgementPatterns(SupabaseService $supabase, int $minFrequency = 1): array
 {
     if (!$supabase->isConfigured()) {
         return [];
@@ -214,44 +231,105 @@ function loadJudgementPatterns(SupabaseService $supabase, int $minFrequency = 2)
     $patterns = $supabase->select(
         'judgement_patterns',
         'is_active=eq.true&frequency=gte.' . $minFrequency . '&order=weight.desc',
-        20
+        15
     );
     return is_array($patterns) ? $patterns : [];
 }
 
-// Build Judgment-enhanced system prompt
-function buildJudgementPrompt(array $patterns, string $ragContext): string
+/**
+ * The Gist 스타일 기반 향상된 프롬프트 생성
+ */
+function buildEnhancedJudgementPrompt(array $patterns, array $examples, string $ragContext): string
 {
     $basePrompt = <<<'PROMPT'
 당신은 "The Gist"의 수석 에디터입니다. 해외 뉴스를 한국어로 분석하여 독자가 핵심을 빠르게 파악할 수 있도록 합니다.
 
+## The Gist 작성 스타일 (필수 준수)
+
+### 1. news_title (제목)
+- 15-25자 내외의 한국어 제목
+- 원문 번역이 아닌 핵심 메시지 재구성
+- 독자의 호기심을 유발하되 과장 금지
+- 예: "미중 기술패권 경쟁, 반도체 전선 확대"
+
+### 2. narration (핵심 내레이션)
+- 2-3문장으로 핵심만 전달
+- "~했다", "~이다" 종결어미 사용
+- 팩트 중심, 감정적 표현 배제
+- 독자가 30초 안에 뉴스 핵심 파악 가능하게
+
+### 3. why_important (왜 중요한가)
+- 3-5문장으로 이 뉴스의 중요성 설명
+- 한국/독자 관점에서의 영향 포함
+- "이것이 중요한 이유는..." 형태로 시작 가능
+- 배경 지식이 없는 독자도 이해할 수 있게
+
+### 4. content (본문 - HTML 형식)
+- highlight-box로 핵심 요약 시작
+- h3 태그로 섹션 구분: 배경, 핵심 내용, 전망/시사점
+- 300-600자 분량
+- 형식 예시:
+  <div class="highlight-box">핵심 한 줄 요약</div>
+  <h3>배경</h3><p>관련 맥락 설명</p>
+  <h3>핵심 내용</h3><p>뉴스의 주요 내용</p>
+  <h3>시사점</h3><p>앞으로의 전망과 영향</p>
+
+### 5. key_points (핵심 포인트)
+- 3-5개의 불릿 포인트
+- 각 포인트는 한 문장으로 완결
+- 중복 없이 서로 다른 측면 다루기
+
 반드시 다음 JSON 형식으로만 응답하세요:
 {
-  "news_title": "한국어 제목",
-  "narration": "2-3문장의 핵심 내레이션",
-  "why_important": "왜 이 뉴스가 중요한지 설명",
-  "content_summary": "본문 요약 (300-500자)",
-  "key_points": ["핵심 포인트 1", "핵심 포인트 2", ...]
+  "news_title": "한국어 제목 (15-25자)",
+  "narration": "2-3문장 핵심 내레이션",
+  "why_important": "3-5문장 중요성 설명",
+  "content": "<div class='highlight-box'>...</div><h3>배경</h3><p>...</p>...",
+  "key_points": ["포인트1", "포인트2", "포인트3"]
 }
 PROMPT;
 
-    // Add Judgment patterns if available
-    if (!empty($patterns)) {
-        $patternSection = "\n\n[편집장 판단 패턴 - 이 기준을 반영하세요]\n";
-        foreach ($patterns as $p) {
-            $cat = $p['category'] ?? 'general';
-            $desc = $p['description'] ?? '';
-            $correction = $p['editor_correction'] ?? '';
-            if ($correction) {
-                $patternSection .= "- [{$cat}] {$desc} → 편집장 선호: {$correction}\n";
-            } else {
-                $patternSection .= "- [{$cat}] {$desc}\n";
-            }
+    // Few-shot 예제 추가
+    if (!empty($examples)) {
+        $basePrompt .= "\n\n## 실제 편집 예시 (이 스타일과 톤을 따르세요)\n";
+        foreach ($examples as $i => $ex) {
+            $num = $i + 1;
+            $title = $ex['title'] ?? '';
+            $narration = $ex['narration'] ?? '';
+            $why = $ex['why_important'] ?? '';
+            $contentPreview = mb_substr(strip_tags($ex['content'] ?? $ex['description'] ?? ''), 0, 200);
+            
+            $basePrompt .= <<<EX
+
+### 예시 {$num}
+**제목**: {$title}
+**내레이션**: {$narration}
+**왜 중요한가**: {$why}
+**본문 미리보기**: {$contentPreview}...
+EX;
         }
-        $basePrompt .= $patternSection;
     }
 
-    // Add RAG context
+    // Judgment 패턴 추가 (구체적 AI/에디터 비교 형태)
+    if (!empty($patterns)) {
+        $basePrompt .= "\n\n## 편집장 판단 패턴 (학습된 수정 방향)\n";
+        $basePrompt .= "아래는 AI 초안을 편집장이 수정한 패턴입니다. 이를 미리 반영하세요:\n\n";
+        
+        foreach ($patterns as $p) {
+            $cat = $p['category'] ?? 'general';
+            $aiApproach = $p['ai_approach'] ?? '';
+            $editorCorrection = $p['editor_correction'] ?? '';
+            $desc = $p['description'] ?? '';
+            
+            if ($aiApproach && $editorCorrection) {
+                $basePrompt .= "- [{$cat}] AI가 \"{$aiApproach}\"로 쓰면 → \"{$editorCorrection}\"로 수정\n";
+            } elseif ($desc) {
+                $basePrompt .= "- [{$cat}] {$desc}\n";
+            }
+        }
+    }
+
+    // RAG 컨텍스트 추가
     if (!empty($ragContext)) {
         $basePrompt .= "\n\n" . $ragContext;
     }
@@ -259,7 +337,9 @@ PROMPT;
     return $basePrompt;
 }
 
-// Calculate text similarity (simple)
+/**
+ * 텍스트 유사도 계산
+ */
 function calculateSimilarity(string $a, string $b): float
 {
     if (empty($a) || empty($b)) {
@@ -273,7 +353,6 @@ function calculateSimilarity(string $a, string $b): float
         return 100.0;
     }
     
-    // Word overlap similarity
     $wordsA = array_filter(preg_split('/\s+/', $a));
     $wordsB = array_filter(preg_split('/\s+/', $b));
     
@@ -285,8 +364,6 @@ function calculateSimilarity(string $a, string $b): float
     $union = count(array_unique(array_merge($wordsA, $wordsB)));
     
     $jaccard = $union > 0 ? ($intersection / $union) * 100 : 0;
-    
-    // Also consider length similarity
     $lenA = mb_strlen($a);
     $lenB = mb_strlen($b);
     $lenSim = min($lenA, $lenB) / max($lenA, $lenB) * 100;
@@ -294,8 +371,188 @@ function calculateSimilarity(string $a, string $b): float
     return round(($jaccard * 0.7 + $lenSim * 0.3), 1);
 }
 
-// Main execution
+/**
+ * 사용자 수정 내용을 Judgment 패턴으로 학습
+ */
+function learnFromUserEdit(
+    OpenAIService $openai,
+    SupabaseService $supabase,
+    array $aiOutput,
+    array $humanOutput
+): array {
+    if (!$supabase->isConfigured()) {
+        return ['success' => false, 'error' => 'Supabase not configured'];
+    }
+
+    // AI 텍스트 조립
+    $aiText = '';
+    if (!empty($aiOutput['news_title'])) {
+        $aiText .= "[제목] " . $aiOutput['news_title'] . "\n\n";
+    }
+    if (!empty($aiOutput['narration'])) {
+        $aiText .= "[내레이션] " . $aiOutput['narration'] . "\n\n";
+    }
+    if (!empty($aiOutput['why_important'])) {
+        $aiText .= "[왜 중요한가] " . $aiOutput['why_important'] . "\n\n";
+    }
+    if (!empty($aiOutput['content'])) {
+        $aiText .= "[본문] " . mb_substr(strip_tags($aiOutput['content']), 0, 2000);
+    }
+
+    // Human 텍스트 조립
+    $humanText = '';
+    if (!empty($humanOutput['news_title'])) {
+        $humanText .= "[제목] " . $humanOutput['news_title'] . "\n\n";
+    }
+    if (!empty($humanOutput['narration'])) {
+        $humanText .= "[내레이션] " . $humanOutput['narration'] . "\n\n";
+    }
+    if (!empty($humanOutput['why_important'])) {
+        $humanText .= "[왜 중요한가] " . $humanOutput['why_important'] . "\n\n";
+    }
+    if (!empty($humanOutput['content'])) {
+        $humanText .= "[본문] " . mb_substr(strip_tags($humanOutput['content']), 0, 2000);
+    }
+
+    if (mb_strlen($aiText) < 20 || mb_strlen($humanText) < 20) {
+        return ['success' => false, 'error' => 'Not enough content to compare'];
+    }
+
+    // GPT로 시맨틱 diff 추출
+    $system = <<<'SYS'
+당신은 뉴스 편집 분석가입니다. AI 초안과 편집장 수정본을 비교하여 "판단 패턴"을 추출합니다.
+반드시 요청된 JSON 형식으로만 응답하세요.
+SYS;
+
+    $user = <<<USER
+[AI 초안]
+{$aiText}
+
+[편집장 수정본]
+{$humanText}
+
+다음 JSON만 출력하세요:
+{
+  "judgement_patterns": [
+    {
+      "category": "분류 (tone, structure, emphasis, style, length, addition, removal 중 하나)",
+      "description": "어떤 판단 변화가 있었는지 한 문장",
+      "ai_approach": "AI 쪽 경향 (짧게)",
+      "editor_correction": "편집장 쪽 선호 (짧게)"
+    }
+  ],
+  "overall_direction": "전체 편집 방향 한 문장"
+}
+
+패턴은 최대 5개까지. 의미 있는 차이가 없으면 빈 배열로.
+USER;
+
+    try {
+        $raw = $openai->chat($system, $user, [
+            'model' => 'gpt-4o-mini',
+            'temperature' => 0.2,
+            'max_tokens' => 1000,
+            'timeout' => 60,
+            'json_mode' => true,
+        ]);
+
+        $decoded = json_decode($raw, true);
+        if (!is_array($decoded)) {
+            return ['success' => false, 'error' => 'Failed to parse AI response'];
+        }
+
+        $patterns = $decoded['judgement_patterns'] ?? [];
+        $learnedCount = 0;
+
+        foreach ($patterns as $p) {
+            if (!is_array($p)) continue;
+            
+            $category = trim((string) ($p['category'] ?? 'general'));
+            $description = trim((string) ($p['description'] ?? ''));
+            if ($description === '') continue;
+            
+            $aiApproach = isset($p['ai_approach']) ? trim((string) $p['ai_approach']) : null;
+            $editorCorrection = isset($p['editor_correction']) ? trim((string) $p['editor_correction']) : null;
+
+            $hash = hash('sha256', $category . "\0" . mb_strtolower($description));
+
+            $existing = $supabase->select('judgement_patterns', 'pattern_hash=eq.' . $hash, 1);
+            if (is_array($existing) && $existing !== [] && isset($existing[0]['id'])) {
+                $id = $existing[0]['id'];
+                $freq = (int) ($existing[0]['frequency'] ?? 0) + 1;
+                $weight = min(1.0, $freq / 30.0);
+                $supabase->update('judgement_patterns', 'id=eq.' . rawurlencode((string) $id), [
+                    'frequency' => $freq,
+                    'weight' => $weight,
+                    'last_seen_at' => date('c'),
+                    'ai_approach' => $aiApproach,
+                    'editor_correction' => $editorCorrection,
+                ]);
+                $learnedCount++;
+            } else {
+                $result = $supabase->insert('judgement_patterns', [
+                    'pattern_hash' => $hash,
+                    'category' => mb_substr($category, 0, 200),
+                    'description' => mb_substr($description, 0, 2000),
+                    'ai_approach' => $aiApproach !== null ? mb_substr($aiApproach, 0, 4000) : null,
+                    'editor_correction' => $editorCorrection !== null ? mb_substr($editorCorrection, 0, 4000) : null,
+                    'frequency' => 1,
+                    'weight' => min(1.0, 1 / 30.0),
+                    'is_active' => true,
+                    'last_seen_at' => date('c'),
+                ]);
+                if ($result !== null) {
+                    $learnedCount++;
+                }
+            }
+        }
+
+        return [
+            'success' => true,
+            'learned_patterns' => $learnedCount,
+            'overall_direction' => $decoded['overall_direction'] ?? '',
+            'patterns' => $patterns,
+        ];
+
+    } catch (Throwable $e) {
+        return ['success' => false, 'error' => $e->getMessage()];
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Main Execution
+// ═══════════════════════════════════════════════════════════════
+
 try {
+    if ($action === 'learn') {
+        // 학습 모드: 사용자 수정 내용을 패턴으로 저장
+        $aiOutput = $input['ai_output'] ?? [];
+        $humanOutput = $input['human_output'] ?? [];
+        
+        if (empty($aiOutput) || empty($humanOutput)) {
+            ob_clean();
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'ai_output and human_output are required']);
+            exit;
+        }
+
+        $result = learnFromUserEdit($openai, $supabase, $aiOutput, $humanOutput);
+        ob_clean();
+        echo json_encode($result, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        exit;
+    }
+
+    // 생성 모드 (기본)
+    $url = trim($input['url'] ?? '');
+    if ($url === '') {
+        ob_clean();
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'url is required']);
+        exit;
+    }
+
+    $compareWithPublished = (bool) ($input['compare_with_published'] ?? true);
+
     // 1. Fetch article
     $article = fetchArticleContent($url);
     if (!$article) {
@@ -304,10 +561,13 @@ try {
         exit;
     }
 
-    // 2. Load Judgment patterns
+    // 2. Load few-shot examples
+    $examples = loadRecentPublishedExamples($db, 2);
+
+    // 3. Load Judgment patterns
     $patterns = loadJudgementPatterns($supabase);
 
-    // 3. Get RAG context
+    // 4. Get RAG context
     $ragContext = '';
     $ragCounts = ['critiques' => 0, 'analyses' => 0, 'knowledge' => 0];
     if ($rag->isConfigured()) {
@@ -322,25 +582,25 @@ try {
         $ragContext = str_replace('--- RAG Context (편집 전문가 지식) ---', '', $ragContext);
     }
 
-    // 4. Build enhanced prompt
-    $systemPrompt = buildJudgementPrompt($patterns, $ragContext);
+    // 5. Build enhanced prompt
+    $systemPrompt = buildEnhancedJudgementPrompt($patterns, $examples, $ragContext);
 
-    // 5. Generate with AI
+    // 6. Generate with AI
     $userPrompt = <<<USER
-다음 기사를 분석해주세요:
+다음 기사를 The Gist 스타일로 분석해주세요:
 
-[제목] {$article['title']}
+[원문 제목] {$article['title']}
 
-[본문]
+[원문 본문]
 {$article['content']}
 
-위의 JSON 형식으로만 응답하세요.
+위에서 설명한 JSON 형식으로만 응답하세요. HTML 태그는 content 필드에만 사용하세요.
 USER;
 
     $response = $openai->chat($systemPrompt, $userPrompt, [
         'model' => 'gpt-4o',
         'temperature' => 0.3,
-        'max_tokens' => 2000,
+        'max_tokens' => 2500,
         'timeout' => 120,
         'json_mode' => true,
     ]);
@@ -352,14 +612,22 @@ USER;
         exit;
     }
 
-    // 6. Compare with published article if requested
+    // 7. Compare with published article if requested
     $comparison = null;
+    $publishedArticle = null;
     if ($compareWithPublished && $db) {
         $stmt = $db->prepare('SELECT id, title, narration, why_important, content FROM news WHERE source_url = ? AND status = ? LIMIT 1');
         $stmt->execute([$url, 'published']);
         $published = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($published) {
+            $publishedArticle = [
+                'news_title' => $published['title'] ?? '',
+                'narration' => $published['narration'] ?? '',
+                'why_important' => $published['why_important'] ?? '',
+                'content' => $published['content'] ?? '',
+            ];
+
             $differences = [
                 [
                     'field' => '제목',
@@ -369,21 +637,21 @@ USER;
                 ],
                 [
                     'field' => '내레이션',
-                    'ai_value' => mb_substr($aiResult['narration'] ?? '', 0, 200),
-                    'human_value' => mb_substr($published['narration'] ?? '', 0, 200),
+                    'ai_value' => mb_substr($aiResult['narration'] ?? '', 0, 300),
+                    'human_value' => mb_substr($published['narration'] ?? '', 0, 300),
                     'similarity' => calculateSimilarity($aiResult['narration'] ?? '', $published['narration'] ?? ''),
                 ],
                 [
                     'field' => '왜 중요한가',
-                    'ai_value' => mb_substr($aiResult['why_important'] ?? '', 0, 200),
-                    'human_value' => mb_substr($published['why_important'] ?? '', 0, 200),
+                    'ai_value' => mb_substr($aiResult['why_important'] ?? '', 0, 300),
+                    'human_value' => mb_substr($published['why_important'] ?? '', 0, 300),
                     'similarity' => calculateSimilarity($aiResult['why_important'] ?? '', $published['why_important'] ?? ''),
                 ],
                 [
                     'field' => '본문',
-                    'ai_value' => mb_substr($aiResult['content_summary'] ?? '', 0, 300),
-                    'human_value' => mb_substr(strip_tags($published['content'] ?? ''), 0, 300),
-                    'similarity' => calculateSimilarity($aiResult['content_summary'] ?? '', strip_tags($published['content'] ?? '')),
+                    'ai_value' => mb_substr(strip_tags($aiResult['content'] ?? ''), 0, 500),
+                    'human_value' => mb_substr(strip_tags($published['content'] ?? ''), 0, 500),
+                    'similarity' => calculateSimilarity($aiResult['content'] ?? '', strip_tags($published['content'] ?? '')),
                 ],
             ];
 
@@ -405,17 +673,21 @@ USER;
                 'news_title' => $aiResult['news_title'] ?? '',
                 'narration' => $aiResult['narration'] ?? '',
                 'why_important' => $aiResult['why_important'] ?? '',
-                'content_summary' => $aiResult['content_summary'] ?? '',
+                'content' => $aiResult['content'] ?? '',
                 'key_points' => $aiResult['key_points'] ?? [],
             ],
+            'published_article' => $publishedArticle,
             'applied_patterns' => array_map(function ($p) {
                 return [
                     'id' => $p['id'] ?? '',
                     'category' => $p['category'] ?? '',
                     'description' => $p['description'] ?? '',
+                    'ai_approach' => $p['ai_approach'] ?? '',
+                    'editor_correction' => $p['editor_correction'] ?? '',
                     'weight' => $p['weight'] ?? 0,
                 ];
             }, $patterns),
+            'few_shot_count' => count($examples),
             'rag_context' => $ragCounts,
             'comparison' => $comparison,
         ],
