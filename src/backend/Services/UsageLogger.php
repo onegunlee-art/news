@@ -111,14 +111,14 @@ class UsageLogger
     }
 
     /**
-     * OpenAI Images (DALL-E) 사용량 로깅 헬퍼
+     * OpenAI Images (GPT Image) 사용량 로깅 헬퍼
      */
     public static function logOpenAIImages(int $images = 1, ?string $model = null, ?float $costUsd = null): void
     {
         self::getInstance()->log([
             'provider' => 'openai',
             'endpoint' => 'images',
-            'model' => $model ?? 'dall-e-3',
+            'model' => $model ?? 'gpt-image-1.5',
             'images' => $images,
             'estimated_cost_usd' => $costUsd
         ]);

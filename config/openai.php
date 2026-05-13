@@ -48,13 +48,15 @@ return [
         'images' => 'https://api.openai.com/v1/images/generations'
     ],
 
-    // 이미지 생성 (DALL·E 3) - 썸네일용
+    // 이미지 생성 (GPT Image 1.5) - 썸네일용
+    // GPT Image는 b64_json 기본 응답, response_format/style 미지원
+    // quality: low|medium|high|auto (DALL·E의 standard→medium, hd→high 대응)
     'images' => [
-        'model' => 'dall-e-3',
+        'model' => 'gpt-image-1.5',
         'size' => '1024x1024',
-        'quality' => 'standard',
-        'response_format' => 'url',
-        'style' => 'vivid',
+        'quality' => 'medium',
+        'output_format' => 'png',
+        'timeout' => 90,
         'storage_path' => null, // null이면 프로젝트 storage/thumbnails 사용
     ]
 ];

@@ -2751,9 +2751,9 @@ const AdminPage: React.FC = () => {
                               }}
                             />
                           </div>
-                          {/* DALL-E로 썸네일 수정 */}
+                          {/* AI 썸네일 생성 */}
                           <div className="pt-2 border-t border-slate-700/50">
-                            <label className="block text-slate-400 text-sm mb-1">DALL-E로 썸네일 수정</label>
+                            <label className="block text-slate-400 text-sm mb-1">AI 썸네일 생성 (GPT Image)</label>
                             <p className="text-slate-500 text-xs mb-2">기사 제목을 넣으면 메타포 카툰 스타일로 썸네일을 생성합니다 (비워두면 뉴스 제목 사용)</p>
                             <div className="flex gap-2">
                               <input
@@ -2782,19 +2782,19 @@ const AdminPage: React.FC = () => {
                                     const data = await res.json();
                                     if (data.success && data.image_url) {
                                       setArticleImageUrl(data.image_url);
-                                      setSaveMessage({ type: 'success', text: 'DALL-E로 썸네일이 새로 생성되었습니다.' });
+                                      setSaveMessage({ type: 'success', text: 'AI 썸네일이 새로 생성되었습니다.' });
                                     } else {
-                                      setSaveMessage({ type: 'error', text: data.error || 'DALL-E 썸네일 생성 실패' });
+                                      setSaveMessage({ type: 'error', text: data.error || 'AI 썸네일 생성 실패' });
                                     }
                                   } catch (e) {
-                                    setSaveMessage({ type: 'error', text: 'DALL-E 요청 실패: ' + (e as Error).message });
+                                    setSaveMessage({ type: 'error', text: 'AI 썸네일 요청 실패: ' + (e as Error).message });
                                   } finally {
                                     setIsRegeneratingDalle(false);
                                   }
                                 }}
                                 className="px-3 py-2 bg-purple-600 hover:bg-purple-500 text-white text-xs rounded-lg transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
                               >
-                                {isRegeneratingDalle ? '생성 중...' : 'DALL-E로 수정'}
+                                {isRegeneratingDalle ? '생성 중...' : 'AI 썸네일 생성'}
                               </button>
                             </div>
                           </div>
@@ -4819,7 +4819,7 @@ const AdminPage: React.FC = () => {
                   {/* API 연동 상태 */}
                   <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-5 gap-4">
                     {[
-                      { key: 'openai', name: 'OpenAI', label: 'GPT / DALL-E / Embeddings' },
+                      { key: 'openai', name: 'OpenAI', label: 'GPT / GPT Image / Embeddings' },
                       { key: 'google_tts', name: 'Google TTS', label: '음성 합성' },
                       { key: 'kakao', name: 'Kakao', label: '로그인 / 카카오톡' },
                       { key: 'supabase', name: 'Supabase', label: 'DB / RAG / Auth' },
@@ -5053,7 +5053,7 @@ const AdminPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={async () => {
-                      setSaveMessage({ type: 'info', text: 'DALL-E 3 썸네일 연동 테스트 중... (약 30초 소요)' });
+                      setSaveMessage({ type: 'info', text: 'GPT Image 썸네일 연동 테스트 중... (약 30초 소요)' });
                       try {
                         const r = await adminFetch('/api/admin/ai-analyze.php', {
                           method: 'POST',
@@ -5062,17 +5062,17 @@ const AdminPage: React.FC = () => {
                         });
                         const d = await r.json();
                         if (d.success) {
-                          setSaveMessage({ type: 'success', text: `DALL-E 3 연동 성공 (${d.debug?.duration_ms ?? 0}ms) - 생성된 이미지: ${d.image_url ?? ''}` });
+                          setSaveMessage({ type: 'success', text: `GPT Image 연동 성공 (${d.debug?.duration_ms ?? 0}ms) - 생성된 이미지: ${d.image_url ?? ''}` });
                         } else {
                           setSaveMessage({ type: 'error', text: `${d.message ?? d.error ?? '실패'}${d.debug?.mock_mode ? ' (Mock 모드)' : ''}` });
                         }
                       } catch (e) {
-                        setSaveMessage({ type: 'error', text: 'DALL-E 테스트 요청 실패: ' + (e as Error).message });
+                        setSaveMessage({ type: 'error', text: 'GPT Image 테스트 요청 실패: ' + (e as Error).message });
                       }
                     }}
                     className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-lg text-sm transition"
                   >
-                    DALL-E 3 테스트
+                    GPT Image 테스트
                   </button>
                 </div>
               </div>

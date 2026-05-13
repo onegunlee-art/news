@@ -709,9 +709,10 @@ function getStatus(): array {
 }
 
 /**
- * DALL-E로 썸네일 수정 (Admin) – 콘텐츠 레이어 + 스타일 레이어
+ * GPT Image로 썸네일 수정 (Admin) – 콘텐츠 레이어 + 스타일 레이어
  * POST action=regenerate_thumbnail_dalle → { prompt (선택), news_title (선택), news_id (선택) }
  * news_id 있으면 DB에서 기사 조회 후 GPT로 CONTENT 변수 추출; 없으면 prompt/news_title만으로 추출.
+ * 참고: action 이름은 프론트 호환을 위해 유지 (regenerate_thumbnail_dalle)
  */
 function regenerateThumbnailDalle(array $input): array {
     $projectRoot = findProjectRoot();
@@ -723,7 +724,7 @@ function regenerateThumbnailDalle(array $input): array {
 
     $openai = new OpenAIService([]);
     if ($openai->isMockMode()) {
-        return ['success' => false, 'error' => 'OPENAI_API_KEY not set. DALL-E를 사용할 수 없습니다.', 'image_url' => null];
+        return ['success' => false, 'error' => 'OPENAI_API_KEY not set. GPT Image를 사용할 수 없습니다.', 'image_url' => null];
     }
 
     $title = '';
@@ -768,15 +769,16 @@ function regenerateThumbnailDalle(array $input): array {
         if ($url !== null) {
             return ['success' => true, 'image_url' => $url, 'error' => null];
         }
-        return ['success' => false, 'error' => $lastErr ?? 'DALL-E 이미지 생성 실패', 'image_url' => null];
+        return ['success' => false, 'error' => $lastErr ?? 'GPT Image 이미지 생성 실패', 'image_url' => null];
     } catch (\Throwable $e) {
-        return ['success' => false, 'error' => 'DALL-E 오류: ' . $e->getMessage(), 'image_url' => null];
+        return ['success' => false, 'error' => 'GPT Image 오류: ' . $e->getMessage(), 'image_url' => null];
     }
 }
 
 /**
- * DALL-E 3 연동 테스트 (썸네일 생성용)
+ * GPT Image 연동 테스트 (썸네일 생성용)
  * POST action=test_dalle → 단순 프롬프트로 이미지 생성 시도
+ * 참고: action 이름은 프론트 호환을 위해 유지 (test_dalle)
  */
 function testDalleCall(): array {
     global $envLoaded, $envTried;
@@ -806,7 +808,7 @@ function testDalleCall(): array {
         $lastErr = $openai->getLastError();
         return [
             'success' => $url !== null,
-            'message' => $url ? 'DALL-E 3 연동 성공' : ($lastErr ?? 'DALL-E 3 이미지 생성 실패'),
+            'message' => $url ? 'GPT Image 연동 성공' : ($lastErr ?? 'GPT Image 이미지 생성 실패'),
             'debug' => array_merge($debug, ['duration_ms' => $ms]),
             'image_url' => $url,
             'error' => $url ? null : ($lastErr ?? 'createImage returned null'),
@@ -815,7 +817,7 @@ function testDalleCall(): array {
         $ms = round((microtime(true) - $start) * 1000, 2);
         return [
             'success' => false,
-            'message' => 'DALL-E 3 호출 실패: ' . $e->getMessage(),
+            'message' => 'GPT Image 호출 실패: ' . $e->getMessage(),
             'debug' => array_merge($debug, ['duration_ms' => $ms]),
             'error' => $e->getMessage(),
         ];

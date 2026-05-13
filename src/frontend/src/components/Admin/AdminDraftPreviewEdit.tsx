@@ -665,9 +665,9 @@ export default function AdminDraftPreviewEdit({
           />
         </div>
 
-        {/* DALL-E로 썸네일 수정 */}
+        {/* AI 썸네일 생성 */}
         <div className="px-4 py-4 border-t border-gray-200 bg-gray-50">
-          <label className="block text-gray-600 text-sm font-medium mb-1">DALL-E로 썸네일 수정</label>
+          <label className="block text-gray-600 text-sm font-medium mb-1">AI 썸네일 생성 (GPT Image)</label>
           <p className="text-gray-500 text-xs mb-2">기사 제목을 넣으면 메타포 카툰 스타일로 썸네일을 생성합니다 (비워두면 뉴스 제목 사용)</p>
           <div className="flex gap-2">
             <input
@@ -700,19 +700,19 @@ export default function AdminDraftPreviewEdit({
                   const data = await res.json()
                   if (data.success && data.image_url) {
                     setNews((prev) => ({ ...prev, image_url: data.image_url }))
-                    setThumbnailMessage({ type: 'success', text: 'DALL-E로 썸네일이 새로 생성되었습니다. 아래 "임시 저장 업데이트"를 누르면 저장됩니다.' })
+                    setThumbnailMessage({ type: 'success', text: 'AI 썸네일이 새로 생성되었습니다. 아래 "임시 저장 업데이트"를 누르면 저장됩니다.' })
                   } else {
-                    setThumbnailMessage({ type: 'error', text: data.error || data.message || 'DALL-E 썸네일 생성 실패' })
+                    setThumbnailMessage({ type: 'error', text: data.error || data.message || 'AI 썸네일 생성 실패' })
                   }
                 } catch (e) {
-                  setThumbnailMessage({ type: 'error', text: 'DALL-E 요청 실패: ' + (e as Error).message })
+                  setThumbnailMessage({ type: 'error', text: 'AI 썸네일 요청 실패: ' + (e as Error).message })
                 } finally {
                   setIsRegeneratingDalle(false)
                 }
               }}
               className="px-3 py-2 bg-purple-600 hover:bg-purple-500 text-white text-xs rounded-lg transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isRegeneratingDalle ? '생성 중...' : 'DALL-E로 수정'}
+              {isRegeneratingDalle ? '생성 중...' : 'AI 썸네일 생성'}
             </button>
           </div>
           {thumbnailMessage && (

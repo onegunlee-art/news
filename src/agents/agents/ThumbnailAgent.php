@@ -1,15 +1,15 @@
 <?php
 /**
- * Thumbnail Agent v3.0
+ * Thumbnail Agent v3.1
  *
  * 뉴스 기사 썸네일 생성 에이전트.
- * 기사 제목을 기반으로 메타포 카툰 스타일의 DALL·E 3 프롬프트를 생성합니다.
+ * 기사 제목을 기반으로 메타포 카툰 스타일의 GPT Image 프롬프트를 생성합니다.
  *
- * 우선순위: DALL·E 3 생성 → 원본 og:image → 카테고리 플레이스홀더
+ * 우선순위: GPT Image 생성 → 원본 og:image → 카테고리 플레이스홀더
  *
  * @package Agents\Agents
  * @author The Gist AI System
- * @version 3.0.0
+ * @version 3.1.0
  */
 
 declare(strict_types=1);
@@ -157,9 +157,9 @@ class ThumbnailAgent extends BaseAgent
         $thumbnailSource = 'none';
         $usedPrompt = '';
 
-        // ── 1) GPT로 CONTENT 변수 추출 → buildFullPrompt → DALL·E 3 생성 (최우선) ──
+        // ── 1) GPT로 CONTENT 변수 추출 → buildFullPrompt → GPT Image 생성 (최우선) ──
         if ($this->openai->isConfigured()) {
-            // 1-a) 내레이션 기반 프롬프트로 DALL-E 3 시도
+            // 1-a) 내레이션 기반 프롬프트로 GPT Image 시도
             try {
                 $this->ensureThumbnailPromptLoaded();
                 $contentLayer = \App\Utils\ThumbnailPrompt::extractContentLayerFromArticle($title, $contentInput, $this->openai, '');
@@ -168,13 +168,13 @@ class ThumbnailAgent extends BaseAgent
                 $generated = $this->openai->createImage($prompt);
                 if ($generated !== null && $generated !== '') {
                     $newImageUrl = $generated;
-                    $thumbnailSource = 'dall-e-3';
-                    $this->log('Thumbnail generated with DALL·E 3: ' . $newImageUrl, 'info');
+                    $thumbnailSource = 'gpt-image';
+                    $this->log('Thumbnail generated with GPT Image: ' . $newImageUrl, 'info');
                 } else {
-                    $this->log('DALL·E 3 returned null (API error: ' . ($this->openai->getLastError() ?? 'unknown') . ')', 'warning');
+                    $this->log('GPT Image returned null (API error: ' . ($this->openai->getLastError() ?? 'unknown') . ')', 'warning');
                 }
             } catch (\Throwable $e) {
-                $this->log('DALL·E 3 content-layer exception: ' . $e->getMessage(), 'warning');
+                $this->log('GPT Image content-layer exception: ' . $e->getMessage(), 'warning');
             }
 
             // 1-b) 1차 실패 시 제목 기반 간소화 프롬프트로 재시도
@@ -186,20 +186,20 @@ class ThumbnailAgent extends BaseAgent
                     $generated = $this->openai->createImage($prompt);
                     if ($generated !== null && $generated !== '') {
                         $newImageUrl = $generated;
-                        $thumbnailSource = 'dall-e-3';
-                        $this->log('Thumbnail fallback (title-only) DALL·E 3: ' . $newImageUrl, 'info');
+                        $thumbnailSource = 'gpt-image';
+                        $this->log('Thumbnail fallback (title-only) GPT Image: ' . $newImageUrl, 'info');
                     } else {
-                        $this->log('Fallback DALL·E 3 also returned null (API error: ' . ($this->openai->getLastError() ?? 'unknown') . ')', 'warning');
+                        $this->log('Fallback GPT Image also returned null (API error: ' . ($this->openai->getLastError() ?? 'unknown') . ')', 'warning');
                     }
                 } catch (\Throwable $e2) {
-                    $this->log('Fallback DALL·E 3 exception: ' . $e2->getMessage(), 'warning');
+                    $this->log('Fallback GPT Image exception: ' . $e2->getMessage(), 'warning');
                 }
             }
         } else {
-            $this->log('OpenAI not configured for DALL·E, trying fallbacks', 'info');
+            $this->log('OpenAI not configured for GPT Image, trying fallbacks', 'info');
         }
 
-        // ── 2) DALL-E 실패 시 → 원본 기사의 og:image 사용 ──
+        // ── 2) GPT Image 실패 시 → 원본 기사의 og:image 사용 ──
         if (($newImageUrl === null || $newImageUrl === '') && $this->isValidOriginalImage($originalImageUrl)) {
             $newImageUrl = $originalImageUrl;
             $thumbnailSource = 'og:image';
@@ -222,8 +222,8 @@ class ThumbnailAgent extends BaseAgent
                 'thumbnail' => [
                     'image_url' => $newImageUrl,
                     'source' => $thumbnailSource,
-                    'style' => $thumbnailSource === 'dall-e-3' ? 'illustration' : ($thumbnailSource === 'og:image' ? 'original' : 'placeholder'),
-                    'prompt_used' => $thumbnailSource === 'dall-e-3' ? mb_substr($usedPrompt, 0, 500) : null,
+                    'style' => $thumbnailSource === 'gpt-image' ? 'illustration' : ($thumbnailSource === 'og:image' ? 'original' : 'placeholder'),
+                    'prompt_used' => $thumbnailSource === 'gpt-image' ? mb_substr($usedPrompt, 0, 500) : null,
                 ],
             ],
             ['agent' => $this->getName()]
