@@ -14,6 +14,7 @@ import { api, adminFetch, adminSettingsApi, adminTtsApi, ttsApi } from '../servi
 import { PRIVACY_POLICY_CONTENT } from '../components/Common/PrivacyPolicyContent';
 import AdminDraftPreviewEdit from '../components/Admin/AdminDraftPreviewEdit';
 import WeeklyGist from '../components/Admin/WeeklyGist';
+import AGILab from '../components/Admin/AGILab';
 import GistLogo from '../components/Common/GistLogo';
 import { DEFAULT_VISION } from '../constants/site';
 import { useMenuConfig } from '../hooks/useMenuConfig';
@@ -488,7 +489,7 @@ const AdminPage: React.FC = () => {
       navigate('/', { replace: true });
     }
   }, [user, isAuthenticated, isLoading, isInitialized, navigate]);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'news' | 'drafts' | 'ai' | 'workspace' | 'persona' | 'knowledge' | 'usage' | 'settings' | 'promotions' | 'cancel' | 'weekly'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'news' | 'drafts' | 'ai' | 'workspace' | 'persona' | 'knowledge' | 'agi' | 'usage' | 'settings' | 'promotions' | 'cancel' | 'weekly'>('dashboard');
 
   const { subCategoryToLabel } = useMenuConfig();
   const subCategoryOptions = useMemo(
@@ -1449,6 +1450,7 @@ const AdminPage: React.FC = () => {
     { id: 'workspace', name: 'AI Workspace', iconName: 'school' },
     { id: 'persona', name: '페르소나', iconName: 'account_circle' },
     { id: 'knowledge', name: '이론 라이브러리', iconName: 'menu_book' },
+    { id: 'agi', name: 'AGI Lab', iconName: 'psychology' },
     { id: 'usage', name: 'API 과금', iconName: 'payments' },
     { id: 'settings', name: '설정', iconName: 'settings' },
     { id: 'promotions', name: '프로모션 코드', iconName: 'local_offer' },
@@ -4776,6 +4778,10 @@ const AdminPage: React.FC = () => {
                 )}
               </div>
             </div>
+          )}
+
+          {activeTab === 'agi' && (
+            <AGILab />
           )}
 
           {activeTab === 'usage' && (
