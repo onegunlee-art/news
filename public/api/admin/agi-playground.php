@@ -253,13 +253,12 @@ function buildEnhancedJudgementPrompt(array $patterns, array $examples, string $
 - 예: "미중 기술패권 경쟁, 반도체 전선 확대"
 
 ### 2. narration (핵심 내레이션)
-- 2-3문장으로 핵심만 전달
+- 아래 "실제 편집 예시"에 나온 내레이션과 비슷한 분량·깊이로 작성 (예시가 짧으면 짧게, 길면 길게)
 - "~했다", "~이다" 종결어미 사용
 - 팩트 중심, 감정적 표현 배제
-- 독자가 30초 안에 뉴스 핵심 파악 가능하게
 
 ### 3. why_important (왜 중요한가)
-- 3-5문장으로 이 뉴스의 중요성 설명
+- 예시의 "왜 중요한가"와 비슷한 분량·설명 깊이
 - 한국/독자 관점에서의 영향 포함
 - "이것이 중요한 이유는..." 형태로 시작 가능
 - 배경 지식이 없는 독자도 이해할 수 있게
@@ -267,7 +266,7 @@ function buildEnhancedJudgementPrompt(array $patterns, array $examples, string $
 ### 4. content (본문 - HTML 형식)
 - highlight-box로 핵심 요약 시작
 - h3 태그로 섹션 구분: 배경, 핵심 내용, 전망/시사점
-- 300-600자 분량
+- 예시 본문과 비슷한 정보 밀도·분량 (원문이 짧으면 그에 맞게 조정)
 - 형식 예시:
   <div class="highlight-box">핵심 한 줄 요약</div>
   <h3>배경</h3><p>관련 맥락 설명</p>
@@ -282,30 +281,39 @@ function buildEnhancedJudgementPrompt(array $patterns, array $examples, string $
 반드시 다음 JSON 형식으로만 응답하세요:
 {
   "news_title": "한국어 제목 (15-25자)",
-  "narration": "2-3문장 핵심 내레이션",
-  "why_important": "3-5문장 중요성 설명",
+  "narration": "내레이션 (위 예시와 비슷한 분량)",
+  "why_important": "중요성 설명 (위 예시와 비슷한 분량)",
   "content": "<div class='highlight-box'>...</div><h3>배경</h3><p>...</p>...",
   "key_points": ["포인트1", "포인트2", "포인트3"]
 }
 PROMPT;
 
-    // Few-shot 예제 추가
+    // Few-shot 예제 추가 (전체 분량을 AI가 인식하도록 글자 수 표기 + 본문 충분 길이)
     if (!empty($examples)) {
-        $basePrompt .= "\n\n## 실제 편집 예시 (이 스타일과 톤을 따르세요)\n";
+        $basePrompt .= "\n\n## 실제 편집 예시 (스타일·톤·정보 밀도·분량(글자 수)을 이 예시와 같은 스케일로 맞추세요)\n";
         foreach ($examples as $i => $ex) {
             $num = $i + 1;
-            $title = $ex['title'] ?? '';
-            $narration = $ex['narration'] ?? '';
-            $why = $ex['why_important'] ?? '';
-            $contentPreview = mb_substr(strip_tags($ex['content'] ?? $ex['description'] ?? ''), 0, 200);
-            
+            $title = (string) ($ex['title'] ?? '');
+            $narration = (string) ($ex['narration'] ?? '');
+            $why = (string) ($ex['why_important'] ?? '');
+            $bodyPlain = strip_tags((string) ($ex['content'] ?? $ex['description'] ?? ''));
+            $bodyTotalLen = mb_strlen($bodyPlain);
+            $fullContent = mb_substr($bodyPlain, 0, 2000);
+            $contentShownLen = mb_strlen($fullContent);
+            $titleLen = mb_strlen($title);
+            $narrLen = mb_strlen($narration);
+            $whyLen = mb_strlen($why);
+            $contentLenNote = $bodyTotalLen > $contentShownLen
+                ? "표시 {$contentShownLen}자 / 전체 {$bodyTotalLen}자 (본문 앞부분)"
+                : "{$contentShownLen}자";
+
             $basePrompt .= <<<EX
 
 ### 예시 {$num}
-**제목**: {$title}
-**내레이션**: {$narration}
-**왜 중요한가**: {$why}
-**본문 미리보기**: {$contentPreview}...
+**제목** ({$titleLen}자): {$title}
+**내레이션** ({$narrLen}자): {$narration}
+**왜 중요한가** ({$whyLen}자): {$why}
+**본문** ({$contentLenNote}): {$fullContent}
 EX;
         }
     }
@@ -600,7 +608,7 @@ USER;
     $response = $openai->chat($systemPrompt, $userPrompt, [
         'model' => 'gpt-4o',
         'temperature' => 0.3,
-        'max_tokens' => 2500,
+        'max_tokens' => 4096,
         'timeout' => 120,
         'json_mode' => true,
     ]);
