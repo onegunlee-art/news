@@ -14,8 +14,6 @@ declare(strict_types=1);
 
 namespace Agents\Services;
 
-use OpenAI;
-
 class OpenAIService
 {
     private string $apiKey;
@@ -910,98 +908,106 @@ PROMPT;
         $outputFormat = $options['output_format'] ?? $imgConfig['output_format'] ?? 'png';
         $timeout = (int) ($options['timeout'] ?? $imgConfig['timeout'] ?? 90);
 
-        try {
-            $client = OpenAI::factory()
-                ->withApiKey($this->apiKey)
-                ->withHttpClient(new \GuzzleHttp\Client(['timeout' => $timeout, 'connect_timeout' => 15]))
-                ->make();
+        $payload = [
+            'model' => $model,
+            'prompt' => $prompt,
+            'n' => 1,
+            'size' => $size,
+            'quality' => $quality,
+            'output_format' => $outputFormat,
+        ];
 
-            $response = $client->images()->create([
-                'model' => $model,
-                'prompt' => $prompt,
-                'n' => 1,
-                'size' => $size,
-                'quality' => $quality,
-                'output_format' => $outputFormat,
-            ]);
+        $endpoint = $this->config['endpoints']['images'] ?? 'https://api.openai.com/v1/images/generations';
 
-            $imageData = $response->data[0] ?? null;
-            if ($imageData === null) {
-                $this->lastError = 'Invalid response: no image data in response';
-                error_log('[GPT-Image] ' . $this->lastError);
-                return null;
-            }
+        $ch = curl_init($endpoint);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => json_encode($payload),
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/json',
+                'Authorization: Bearer ' . $this->apiKey,
+            ],
+            CURLOPT_TIMEOUT => $timeout,
+            CURLOPT_CONNECTTIMEOUT => 15,
+        ]);
 
-            $b64Json = $imageData->b64Json ?? null;
-            if ($b64Json === null || $b64Json === '') {
-                $this->lastError = 'Invalid response: no b64_json in image data';
-                error_log('[GPT-Image] ' . $this->lastError);
-                return null;
-            }
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch);
+        curl_close($ch);
 
-            $imgBinary = base64_decode($b64Json, true);
-            if ($imgBinary === false || strlen($imgBinary) === 0) {
-                $this->lastError = 'Failed to decode base64 image data';
-                error_log('[GPT-Image] ' . $this->lastError);
-                return null;
-            }
-
-            $storagePath = $imgConfig['storage_path'] ?? dirname(__DIR__, 3) . '/storage/thumbnails';
-
-            if (!is_dir($storagePath)) {
-                $mkResult = @mkdir($storagePath, 0755, true);
-                if (!$mkResult) {
-                    $this->lastError = 'Cannot create storage dir: ' . $storagePath;
-                    error_log('[GPT-Image] ' . $this->lastError);
-                    return null;
-                }
-            }
-            if (!is_writable($storagePath)) {
-                $this->lastError = 'Storage dir not writable: ' . $storagePath;
-                error_log('[GPT-Image] ' . $this->lastError);
-                return null;
-            }
-
-            $ext = $outputFormat === 'jpeg' ? 'jpg' : $outputFormat;
-            $filename = 'gptimg_' . uniqid() . '.' . $ext;
-            $filePath = $storagePath . '/' . $filename;
-
-            if (@file_put_contents($filePath, $imgBinary) === false) {
-                $this->lastError = 'file_put_contents failed: ' . $filePath;
-                error_log('[GPT-Image] ' . $this->lastError);
-                return null;
-            }
-
-            $this->lastError = null;
-
-            $root = dirname(__DIR__, 3);
-            $logPath = file_exists($root . '/public/api/lib/usage_log.php')
-                ? $root . '/public/api/lib/usage_log.php'
-                : $root . '/api/lib/usage_log.php';
-            if (file_exists($logPath)) {
-                require_once $logPath;
-                log_api_usage([
-                    'provider' => 'openai',
-                    'endpoint' => 'images',
-                    'model' => $model,
-                    'images' => 1,
-                ]);
-            }
-
-            return '/storage/thumbnails/' . $filename;
-
-        } catch (\OpenAI\Exceptions\ErrorException $e) {
-            $this->lastError = 'OpenAI API error: ' . $e->getMessage();
-            error_log('[GPT-Image] ' . $this->lastError);
+        if ($curlError !== '') {
+            $this->lastError = 'cURL error: ' . $curlError;
+            error_log('[GPT-Image] ' . $this->lastError . ' | timeout=' . $timeout . 's');
             return null;
-        } catch (\OpenAI\Exceptions\TransporterException $e) {
-            $this->lastError = 'Network error: ' . $e->getMessage();
-            error_log('[GPT-Image] ' . $this->lastError);
+        }
+
+        if ($httpCode !== 200) {
+            $errData = json_decode($response, true);
+            $errMsg = $errData['error']['message'] ?? $errData['error']['code'] ?? substr((string)$response, 0, 500);
+            $this->lastError = 'HTTP ' . $httpCode . ': ' . $errMsg;
+            error_log('[GPT-Image] API error: ' . $this->lastError);
             return null;
-        } catch (\Throwable $e) {
-            $this->lastError = 'Unexpected error: ' . $e->getMessage();
+        }
+
+        $this->lastError = null;
+        $data = json_decode($response, true);
+
+        $b64Json = $data['data'][0]['b64_json'] ?? null;
+        if ($b64Json === null || $b64Json === '') {
+            $this->lastError = 'Invalid response: no b64_json in image data';
             error_log('[GPT-Image] ' . $this->lastError);
             return null;
         }
+
+        $imgBinary = base64_decode($b64Json, true);
+        if ($imgBinary === false || strlen($imgBinary) === 0) {
+            $this->lastError = 'Failed to decode base64 image data';
+            error_log('[GPT-Image] ' . $this->lastError);
+            return null;
+        }
+
+        $storagePath = $imgConfig['storage_path'] ?? dirname(__DIR__, 3) . '/storage/thumbnails';
+
+        if (!is_dir($storagePath)) {
+            $mkResult = @mkdir($storagePath, 0755, true);
+            if (!$mkResult) {
+                $this->lastError = 'Cannot create storage dir: ' . $storagePath;
+                error_log('[GPT-Image] ' . $this->lastError);
+                return null;
+            }
+        }
+        if (!is_writable($storagePath)) {
+            $this->lastError = 'Storage dir not writable: ' . $storagePath;
+            error_log('[GPT-Image] ' . $this->lastError);
+            return null;
+        }
+
+        $ext = $outputFormat === 'jpeg' ? 'jpg' : $outputFormat;
+        $filename = 'gptimg_' . uniqid() . '.' . $ext;
+        $filePath = $storagePath . '/' . $filename;
+
+        if (@file_put_contents($filePath, $imgBinary) === false) {
+            $this->lastError = 'file_put_contents failed: ' . $filePath;
+            error_log('[GPT-Image] ' . $this->lastError);
+            return null;
+        }
+
+        $root = dirname(__DIR__, 3);
+        $logPath = file_exists($root . '/public/api/lib/usage_log.php')
+            ? $root . '/public/api/lib/usage_log.php'
+            : $root . '/api/lib/usage_log.php';
+        if (file_exists($logPath)) {
+            require_once $logPath;
+            log_api_usage([
+                'provider' => 'openai',
+                'endpoint' => 'images',
+                'model' => $model,
+                'images' => 1,
+            ]);
+        }
+
+        return '/storage/thumbnails/' . $filename;
     }
 }
