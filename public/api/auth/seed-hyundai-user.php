@@ -64,7 +64,7 @@ $nickname = 'Hyundai Test';
 $role = 'user';
 $profileImage = '/images/partners/hyundai-logo.svg';
 $isSubscribed = 1;
-$subscriptionExpiresAt = '2099-12-31 23:59:59';
+$subscriptionExpiresAt = '2037-12-31 23:59:59';
 $subscriptionPlan = '12m';
 $subscriptionStartDate = date('Y-m-d H:i:s');
 
