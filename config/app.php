@@ -70,6 +70,7 @@ return [
         // 이메일 로그인 시 OTP 생략 (프로모/데모 계정). AuthService에서 소문자로 비교.
         'login_otp_skip_emails' => [
             'promo@thegist.co.kr',
+            'test@hyundai.com',
         ],
     ],
     
