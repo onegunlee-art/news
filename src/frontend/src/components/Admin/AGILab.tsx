@@ -57,6 +57,11 @@ interface PlaygroundResult {
       similarity: number;
     }[];
   };
+  source_info?: {
+    content_source: 'manual' | 'url_crawled' | string;
+    input_content_length: number;
+    input_title: string;
+  };
 }
 
 const AGILab: React.FC = () => {
@@ -70,6 +75,9 @@ const AGILab: React.FC = () => {
   
   // Playground state
   const [playgroundUrl, setPlaygroundUrl] = useState('');
+  const [manualTitle, setManualTitle] = useState('');
+  const [manualContent, setManualContent] = useState('');
+  const [inputMode, setInputMode] = useState<'url' | 'manual'>('url');
   const [playgroundLoading, setPlaygroundLoading] = useState(false);
   const [playgroundResult, setPlaygroundResult] = useState<PlaygroundResult | null>(null);
   const [playgroundError, setPlaygroundError] = useState<string | null>(null);
@@ -108,8 +116,14 @@ const AGILab: React.FC = () => {
 
   // Run playground test
   const runPlayground = async () => {
-    if (!playgroundUrl.trim()) return;
-    
+    const trimmedUrl = playgroundUrl.trim();
+    const trimmedManual = manualContent.trim();
+    if (inputMode === 'url' && !trimmedUrl) return;
+    if (inputMode === 'manual' && trimmedManual.length < 50) {
+      setPlaygroundError('본문을 50자 이상 붙여넣어 주세요.');
+      return;
+    }
+
     setPlaygroundLoading(true);
     setPlaygroundError(null);
     setPlaygroundResult(null);
@@ -118,14 +132,20 @@ const AGILab: React.FC = () => {
     setLearningStatus({ loading: false, message: null });
     
     try {
+      const body: Record<string, unknown> = {
+        action: 'generate',
+        compare_with_published: compareWithPublished,
+      };
+      if (trimmedUrl) body.url = trimmedUrl;
+      if (inputMode === 'manual') {
+        body.manual_content = trimmedManual;
+        if (manualTitle.trim()) body.manual_title = manualTitle.trim();
+      }
+
       const res = await adminFetch('/api/admin/agi-playground.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'generate',
-          url: playgroundUrl.trim(),
-          compare_with_published: compareWithPublished,
-        }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
       if (data.success) {
@@ -347,38 +367,95 @@ const AGILab: React.FC = () => {
         <div className="space-y-6">
           {/* Input Area */}
           <div className="bg-slate-800/50 rounded-xl p-6 border border-slate-700/50 space-y-4">
-            <h3 className="text-lg font-semibold text-white">테스트 URL 입력</h3>
+            <h3 className="text-lg font-semibold text-white">테스트 입력</h3>
             <p className="text-slate-400 text-sm">
-              URL을 입력하면 Judgment RAG가 적용된 AI가 The Gist 스타일로 글을 생성합니다.
+              URL을 입력하거나, 본문을 직접 붙여넣으면 Judgment RAG가 적용된 AI가 The Gist 스타일로 글을 생성합니다.
               <br />
               AI 결과를 직접 수정하고 "학습시키기"를 누르면 수정 패턴이 저장됩니다.
             </p>
-            
-            <div className="flex flex-col sm:flex-row gap-3">
+
+            {/* Input mode tabs */}
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setInputMode('url')}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  inputMode === 'url'
+                    ? 'bg-cyan-500 text-white'
+                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                }`}
+              >
+                URL로
+              </button>
+              <button
+                type="button"
+                onClick={() => setInputMode('manual')}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  inputMode === 'manual'
+                    ? 'bg-cyan-500 text-white'
+                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                }`}
+              >
+                본문 직접 붙여넣기 (권장)
+              </button>
+            </div>
+
+            {inputMode === 'url' ? (
               <input
                 type="text"
                 value={playgroundUrl}
                 onChange={(e) => setPlaygroundUrl(e.target.value)}
                 placeholder="https://example.com/news/article..."
-                className="flex-1 px-4 py-3 rounded-lg bg-slate-900/50 border border-slate-700 text-white placeholder-slate-500"
+                className="w-full px-4 py-3 rounded-lg bg-slate-900/50 border border-slate-700 text-white placeholder-slate-500"
                 onKeyDown={(e) => e.key === 'Enter' && runPlayground()}
               />
-              <button
-                onClick={runPlayground}
-                disabled={playgroundLoading || !playgroundUrl.trim()}
-                className="px-6 py-3 rounded-lg bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium"
-              >
-                {playgroundLoading ? (
-                  <span className="flex items-center gap-2">
-                    <span className="animate-spin">⏳</span> 생성 중...
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-2">
-                    <MaterialIcon name="play_arrow" /> 테스트 실행
-                  </span>
-                )}
-              </button>
-            </div>
+            ) : (
+              <div className="space-y-2">
+                <input
+                  type="text"
+                  value={manualTitle}
+                  onChange={(e) => setManualTitle(e.target.value)}
+                  placeholder="원문 제목 (선택)"
+                  className="w-full px-4 py-2 rounded-lg bg-slate-900/50 border border-slate-700 text-white placeholder-slate-500 text-sm"
+                />
+                <input
+                  type="text"
+                  value={playgroundUrl}
+                  onChange={(e) => setPlaygroundUrl(e.target.value)}
+                  placeholder="원문 URL (선택, 정합률 비교에 사용)"
+                  className="w-full px-4 py-2 rounded-lg bg-slate-900/50 border border-slate-700 text-white placeholder-slate-500 text-sm"
+                />
+                <textarea
+                  value={manualContent}
+                  onChange={(e) => setManualContent(e.target.value)}
+                  placeholder="여기에 기사 본문을 통째로 붙여넣으세요. (URL 크롤링이 짧게 가져오는 사이트의 경우 이 방법을 권장합니다.)"
+                  rows={10}
+                  className="w-full px-4 py-3 rounded-lg bg-slate-900/50 border border-slate-700 text-white placeholder-slate-500 text-sm font-mono"
+                />
+                <div className="text-xs text-slate-500 text-right">
+                  현재 입력: {manualContent.length.toLocaleString()}자 (최소 50자)
+                </div>
+              </div>
+            )}
+
+            <button
+              onClick={runPlayground}
+              disabled={
+                playgroundLoading ||
+                (inputMode === 'url' ? !playgroundUrl.trim() : manualContent.trim().length < 50)
+              }
+              className="w-full px-6 py-3 rounded-lg bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium"
+            >
+              {playgroundLoading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="animate-spin">⏳</span> 생성 중...
+                </span>
+              ) : (
+                <span className="flex items-center justify-center gap-2">
+                  <MaterialIcon name="play_arrow" /> 테스트 실행
+                </span>
+              )}
+            </button>
 
             <label className="flex items-center gap-2 text-sm text-slate-400">
               <input
@@ -476,7 +553,16 @@ const AGILab: React.FC = () => {
               )}
 
               {/* Context Info */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
+                  <div className="text-slate-400 text-sm mb-1">입력 본문</div>
+                  <div className="text-xl font-bold text-amber-400">
+                    {(playgroundResult.source_info?.input_content_length ?? 0).toLocaleString()}자
+                  </div>
+                  <div className="text-xs text-slate-500 mt-1">
+                    {playgroundResult.source_info?.content_source === 'manual' ? '수동 입력' : 'URL 크롤링'}
+                  </div>
+                </div>
                 <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
                   <div className="text-slate-400 text-sm mb-1">적용된 패턴</div>
                   <div className="text-xl font-bold text-cyan-400">{playgroundResult.applied_patterns.length}개</div>

@@ -550,23 +550,48 @@ try {
         exit;
     }
 
-    // 생성 모드 (기본)
+    // 생성 모드 (기본) - URL 또는 수동 본문(manual_content) 둘 중 하나
     $url = trim($input['url'] ?? '');
-    if ($url === '') {
+    $manualContent = trim((string) ($input['manual_content'] ?? ''));
+    $manualTitle = trim((string) ($input['manual_title'] ?? ''));
+    $compareWithPublished = (bool) ($input['compare_with_published'] ?? true);
+
+    if ($url === '' && $manualContent === '') {
         ob_clean();
         http_response_code(400);
-        echo json_encode(['success' => false, 'error' => 'url is required']);
+        echo json_encode(['success' => false, 'error' => 'url 또는 manual_content 중 하나는 필수입니다']);
         exit;
     }
 
-    $compareWithPublished = (bool) ($input['compare_with_published'] ?? true);
-
-    // 1. Fetch article
-    $article = fetchArticleContent($url);
-    if (!$article) {
-        ob_clean();
-        echo json_encode(['success' => false, 'error' => '기사를 가져올 수 없습니다. URL을 확인해주세요.']);
-        exit;
+    // 1. 본문 확보 - 수동 입력 우선, 없으면 URL 크롤링
+    $article = null;
+    $contentSource = '';
+    if ($manualContent !== '') {
+        // 사용자가 직접 붙여넣은 본문 사용 (URL 크롤링이 짧게 가져오는 문제 우회)
+        $cleanContent = preg_replace('/\s+/', ' ', $manualContent);
+        $cleanContent = trim((string) $cleanContent);
+        if (mb_strlen($cleanContent) < 50) {
+            ob_clean();
+            echo json_encode(['success' => false, 'error' => '본문이 너무 짧습니다 (최소 50자)']);
+            exit;
+        }
+        $article = [
+            'title' => $manualTitle !== '' ? $manualTitle : '(제목 미입력)',
+            'content' => mb_substr($cleanContent, 0, 30000),
+            'url' => $url,
+        ];
+        $contentSource = 'manual';
+    } else {
+        $article = fetchArticleContent($url);
+        if (!$article) {
+            ob_clean();
+            echo json_encode([
+                'success' => false,
+                'error' => 'URL에서 기사를 가져올 수 없습니다. 본문을 직접 붙여넣어 주세요.',
+            ]);
+            exit;
+        }
+        $contentSource = 'url_crawled';
     }
 
     // 2. Load few-shot examples
@@ -620,10 +645,10 @@ USER;
         exit;
     }
 
-    // 7. Compare with published article if requested
+    // 7. Compare with published article if requested (URL이 있을 때만)
     $comparison = null;
     $publishedArticle = null;
-    if ($compareWithPublished && $db) {
+    if ($compareWithPublished && $db && $url !== '') {
         $stmt = $db->prepare('SELECT id, title, narration, why_important, content FROM news WHERE source_url = ? AND status = ? LIMIT 1');
         $stmt->execute([$url, 'published']);
         $published = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -698,6 +723,11 @@ USER;
             'few_shot_count' => count($examples),
             'rag_context' => $ragCounts,
             'comparison' => $comparison,
+            'source_info' => [
+                'content_source' => $contentSource,
+                'input_content_length' => mb_strlen($article['content'] ?? ''),
+                'input_title' => $article['title'] ?? '',
+            ],
         ],
     ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
 
