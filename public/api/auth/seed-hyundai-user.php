@@ -1,7 +1,7 @@
 <?php
 /**
  * 현대자동차 임원 테스트 계정 생성 (1회 실행용)
- * GET /api/auth/seed-hyundai-user.php?secret=YOUR_SEED_SECRET
+ * GET /api/auth/seed-hyundai-user.php
  *
  * 계정 정보:
  * - 이메일: test@hyundai.com
@@ -9,13 +9,29 @@
  * - 역할: user (admin 페이지 접근 불가)
  * - 구독: 활성화 (2099년까지)
  * - 프로필: 현대 로고
- *
- * 완료 후 보안을 위해 이 파일 삭제 권장
  */
+
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
 
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, OPTIONS');
+
+set_exception_handler(function($e) {
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'error' => $e->getMessage(),
+        'file' => $e->getFile(),
+        'line' => $e->getLine()
+    ], JSON_UNESCAPED_UNICODE);
+    exit;
+});
+
+set_error_handler(function($errno, $errstr, $errfile, $errline) {
+    throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
+});
 
 $__envFile = dirname(__DIR__, 3) . '/.env';
 if (is_file($__envFile) && is_readable($__envFile)) {
