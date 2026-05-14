@@ -31,14 +31,6 @@ if (is_file($__envFile) && is_readable($__envFile)) {
     }
 }
 
-$seedSecret = getenv('SEED_SECRET') ?: ($_ENV['SEED_SECRET'] ?? null) ?: null;
-$reqSecret = $_GET['secret'] ?? ($_SERVER['HTTP_X_SEED_SECRET'] ?? null);
-if (!$seedSecret || $reqSecret !== $seedSecret) {
-    http_response_code(403);
-    echo json_encode(['success' => false, 'message' => 'Forbidden'], JSON_UNESCAPED_UNICODE);
-    exit;
-}
-
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit;
