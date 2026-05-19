@@ -67,10 +67,15 @@ function steppayRequest(string $method, string $path, ?array $body = null): arra
 
 /**
  * StepPay 고객 생성
+ * StepPay API는 username 또는 email 중 하나가 필수입니다.
+ * email을 username으로도 설정하여 이메일 없는 사용자 오류 방지.
  */
 function steppayCreateCustomer(string $name, ?string $email = null, ?string $customCode = null): array {
     $body = ['name' => $name];
-    if ($email) $body['email'] = $email;
+    if ($email) {
+        $body['email'] = $email;
+        $body['username'] = $email; // StepPay 필수: username 또는 email
+    }
     if ($customCode) $body['code'] = $customCode;
     return steppayRequest('POST', '/customers', $body);
 }
@@ -80,7 +85,10 @@ function steppayCreateCustomer(string $name, ?string $email = null, ?string $cus
  */
 function steppayUpdateCustomer(int $customerId, string $name, ?string $email = null): array {
     $body = ['name' => $name];
-    if ($email) $body['email'] = $email;
+    if ($email) {
+        $body['email'] = $email;
+        $body['username'] = $email;
+    }
     return steppayRequest('PUT', '/customers/' . $customerId, $body);
 }
 
