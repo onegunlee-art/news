@@ -229,8 +229,9 @@ try {
 
     if ($row) {
         $dbUserId = (int)$row['id'];
-        $pdo->prepare("UPDATE users SET nickname = ?, profile_image = ?, last_login_at = NOW() WHERE id = ?")
-            ->execute([$nickname, $profileImage, $dbUserId]);
+        // 기존 사용자: 이메일도 갱신 (새 이메일이 있으면 업데이트, 없으면 기존 값 유지)
+        $pdo->prepare("UPDATE users SET nickname = ?, profile_image = ?, email = COALESCE(?, email), last_login_at = NOW() WHERE id = ?")
+            ->execute([$nickname, $profileImage, $email, $dbUserId]);
     } else {
         $isNewUser = true;
         $pdo->prepare("INSERT INTO users (kakao_id, nickname, profile_image, email, role, status, created_at, last_login_at) VALUES (?, ?, ?, ?, 'user', 'active', NOW(), NOW())")
