@@ -97,6 +97,17 @@ if (!$user) {
     exit;
 }
 
+// StepPay 고객 생성에는 이메일이 필수 (카카오 로그인 시 이메일 동의 거부한 경우 대응)
+if (empty($user['email'])) {
+    http_response_code(400);
+    echo json_encode([
+        'success' => false,
+        'source' => '이메일 필요',
+        'message' => '결제를 위해 이메일 정보가 필요합니다. 마이페이지에서 이메일을 등록해 주세요.',
+    ], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
 payment_log('주문 시작', [
     'userId' => $userId,
     'planId' => $planId ?: $onetimeId,
