@@ -242,9 +242,49 @@ $orderId = $orderResult['data']['orderId'] ?? null;
 $pendingPlan = ($planId && isset($plans[$planId])) ? $planId : null;
 $pendingPromo = $promotionIdForOrder;
 
-$pdo->prepare(
-    "UPDATE users SET steppay_order_code = ?, pending_checkout_plan_id = ?, pending_promotion_code_id = ? WHERE id = ?"
-)->execute([$orderCode, $pendingPlan, $pendingPromo, $userId]);
+// DB UPDATE: pending_checkout_plan_id, pending_promotion_code_id 컬럼이 없으면
+// 마이그레이션 미적용 상태 — 명확한 에러 메시지 반환
+try {
+    $pdo->prepare(
+        "UPDATE users SET steppay_order_code = ?, pending_checkout_plan_id = ?, pending_promotion_code_id = ? WHERE id = ?"
+    )->execute([$orderCode, $pendingPlan, $pendingPromo, $userId]);
+} catch (PDOException $e) {
+    $isMissingColumn = strpos($e->getMessage(), 'Unknown column') !== false;
+    payment_log('DB UPDATE 실패', [
+        'error' => $e->getMessage(),
+        'code' => $e->getCode(),
+        'is_missing_column' => $isMissingColumn,
+        'userId' => $userId,
+    ], $userId);
+    
+    if ($isMissingColumn) {
+        // pending_* 컬럼 없음 → 기본 컬럼만 업데이트하고 계속 진행
+        // (프로모션 기능은 사용 불가하지만 결제는 가능)
+        try {
+            $pdo->prepare("UPDATE users SET steppay_order_code = ? WHERE id = ?")
+                ->execute([$orderCode, $userId]);
+            payment_log('fallback: steppay_order_code만 저장', ['orderCode' => $orderCode, 'userId' => $userId], $userId);
+        } catch (PDOException $e2) {
+            payment_log('DB UPDATE fallback도 실패', ['error' => $e2->getMessage(), 'userId' => $userId], $userId);
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'source' => 'DB 오류',
+                'message' => '주문 정보 저장에 실패했습니다. 관리자에게 문의해 주세요.',
+                'detail' => 'DB 마이그레이션이 필요할 수 있습니다.',
+            ], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+    } else {
+        http_response_code(500);
+        echo json_encode([
+            'success' => false,
+            'source' => 'DB 오류',
+            'message' => '주문 정보 저장에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+        ], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+}
 
 if ($promotionIdForOrder !== null && $pendingPlan !== null && $originalAmountForLog !== null && $discountedAmountForLog !== null) {
     try {
@@ -262,6 +302,7 @@ if ($promotionIdForOrder !== null && $pendingPlan !== null && $originalAmountFor
         http_response_code(500);
         echo json_encode([
             'success' => false,
+            'source' => 'DB 오류',
             'message' => '주문 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.',
         ], JSON_UNESCAPED_UNICODE);
         exit;

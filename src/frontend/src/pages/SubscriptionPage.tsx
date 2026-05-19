@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuthStore } from '../store/authStore'
-import { apiErrorMessage } from '../utils/apiErrorMessage'
+import { apiErrorMessage, apiErrorDetail } from '../utils/apiErrorMessage'
 import { api, siteSettingsApi, subscriptionApi } from '../services/api'
 import MaterialIcon from '../components/Common/MaterialIcon'
 import GistLogo from '../components/Common/GistLogo'
@@ -186,7 +186,7 @@ export default function SubscriptionPage() {
         })
       }
     } catch (err: unknown) {
-      setError({ source: '일시적 오류', message: apiErrorMessage(err, '일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.') })
+      setError(apiErrorDetail(err, '일시적 오류', '일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.'))
     } finally {
       setLoading(false)
     }
@@ -213,7 +213,7 @@ export default function SubscriptionPage() {
         })
       }
     } catch (err: unknown) {
-      setError({ source: '일시적 오류', message: apiErrorMessage(err, '일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.') })
+      setError(apiErrorDetail(err, '일시적 오류', '일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.'))
     } finally {
       setLoadingOnetime(null)
     }
