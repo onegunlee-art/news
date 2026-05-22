@@ -168,6 +168,8 @@ if ($method === 'POST') {
         }
         $raw = json_decode((string) ($existing['scqa_raw_json'] ?? '{}'), true) ?: [];
         $diff = computeJsonDiff($raw, $edited);
+        $editReason = (string) ($input['edit_reason'] ?? '');
+        $judgmentFeedbacks = $input['judgment_feedbacks'] ?? [];
         $upd = $pdo->prepare(
             'UPDATE weekly_strategic_reports SET
                scqa_edited_json = :edited,
@@ -181,14 +183,25 @@ if ($method === 'POST') {
         $upd->execute([
             'edited' => json_encode($edited, JSON_UNESCAPED_UNICODE),
             'diff' => json_encode($diff, JSON_UNESCAPED_UNICODE),
-            'reason' => (string) ($input['edit_reason'] ?? ''),
-            'judgments' => json_encode($input['judgment_feedbacks'] ?? [], JSON_UNESCAPED_UNICODE),
+            'reason' => $editReason,
+            'judgments' => json_encode($judgmentFeedbacks, JSON_UNESCAPED_UNICODE),
             'status' => in_array(($input['status'] ?? 'reviewed'), ['draft', 'reviewed', 'approved'], true)
                 ? $input['status'] : 'reviewed',
             'notes' => (string) ($input['editor_notes'] ?? ''),
             'id' => $id,
         ]);
-        srJson(['success' => true, 'id' => $id, 'diff' => $diff]);
+
+        $judgmentResult = ['stored' => 0, 'errors' => []];
+        if ($diff !== [] || $judgmentFeedbacks !== [] || $editReason !== '') {
+            try {
+                $service = new StrategicReportService($pdo);
+                $judgmentResult = $service->storeJudgmentFeedback($id, $diff, $judgmentFeedbacks, $editReason);
+            } catch (Throwable $e) {
+                $judgmentResult['errors'][] = $e->getMessage();
+            }
+        }
+
+        srJson(['success' => true, 'id' => $id, 'diff' => $diff, 'judgment_stored' => $judgmentResult]);
     }
 
     if ($action === 'update_status') {
