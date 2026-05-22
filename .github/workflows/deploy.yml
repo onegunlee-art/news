@@ -147,6 +147,7 @@ jobs:
                      /var/www/thegist/src/agents \
                      /var/www/thegist/config \
                      /var/www/thegist/database \
+                     /var/www/thegist/cron \
                      /var/www/thegist/aws; do
               sudo mkdir -p "$d"
               sudo chown -R "$U:$U" "$d"
@@ -190,6 +191,10 @@ jobs:
           rsync -avz \
             -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
             database/ "$REMOTE:$DEST/database/"
+
+          rsync -avz \
+            -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
+            cron/ "$REMOTE:$DEST/cron/"
 
           rsync -avz \
             -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
