@@ -80,7 +80,12 @@ class IntelligenceCollectorService
     private function collectGuardian(array &$errors): int
     {
         if (!$this->guardian->isConfigured()) {
-            $errors['guardian'][] = ['error' => 'api_key_missing'];
+            $raw = trim((string) ($_ENV['GUARDIAN_API_KEY'] ?? getenv('GUARDIAN_API_KEY') ?: ''));
+            if ($raw !== '' && ($raw[0] === '{' || str_starts_with($raw, '{"response"'))) {
+                $errors['guardian'][] = ['error' => 'invalid_api_key_json_pasted_use_key_from_developer_portal'];
+            } else {
+                $errors['guardian'][] = ['error' => 'api_key_missing'];
+            }
             return 0;
         }
         $count = 0;
