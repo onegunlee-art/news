@@ -39,6 +39,38 @@ function intelligenceLoadEnv(string $projectRoot): void
     }
 }
 
+/** @return array<string, mixed> */
+function intelligenceEnvDiagnostics(string $projectRoot): array
+{
+    $files = [];
+    foreach ([$projectRoot . 'env.txt', $projectRoot . '.env', $projectRoot . '.env.production'] as $file) {
+        $files[] = [
+            'file' => basename($file),
+            'exists' => is_file($file),
+            'readable' => is_file($file) && is_readable($file),
+        ];
+    }
+
+    $readKey = static function (string $name): array {
+        $raw = $_ENV[$name] ?? getenv($name);
+        $value = is_string($raw) ? trim($raw) : '';
+        if ($name === 'GUARDIAN_API_KEY' && $value !== '' && ($value[0] === '{' || str_starts_with($value, '{"response"'))) {
+            return ['set' => false, 'len' => 0, 'invalid' => 'json_response_not_key'];
+        }
+        return ['set' => $value !== '', 'len' => strlen($value)];
+    };
+
+    return [
+        'user' => get_current_user(),
+        'files' => $files,
+        'keys' => [
+            'NYT_API_KEY' => $readKey('NYT_API_KEY'),
+            'GUARDIAN_API_KEY' => $readKey('GUARDIAN_API_KEY'),
+            'OPENAI_API_KEY' => $readKey('OPENAI_API_KEY'),
+        ],
+    ];
+}
+
 function intelligenceGetDb(string $projectRoot): PDO
 {
     $dbConfig = require $projectRoot . 'config/database.php';

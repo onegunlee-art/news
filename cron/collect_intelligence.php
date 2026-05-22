@@ -14,7 +14,11 @@ try {
     intelligenceEnsureTables($pdo);
     $collector = new IntelligenceCollectorService($pdo);
     $result = $collector->runDaily();
-    echo json_encode(['success' => true, 'result' => $result], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) . PHP_EOL;
+    echo json_encode([
+        'success' => true,
+        'env' => intelligenceEnvDiagnostics($root),
+        'result' => $result,
+    ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) . PHP_EOL;
 } catch (Throwable $e) {
     fwrite(STDERR, $e->getMessage() . PHP_EOL);
     exit(1);

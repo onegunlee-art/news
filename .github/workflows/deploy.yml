@@ -314,6 +314,7 @@ jobs:
             ensure_env "STEPPAY_WEBHOOK_SECRET" "${V_STEPPAY_WH:-ws_nzwk99oqjj121exh}"
             ensure_env "NYT_API_KEY"            "${V_NYT:-esBGryyMeUL7hVbEHc45wO27jOStaudfaKYC6akW7RALg0P4}"
             ensure_env "GUARDIAN_API_KEY"       "${V_GUARDIAN:-}"
+            sudo chmod 644 "\$ENV_FILE" 2>/dev/null || true
           ENVEOF
 
       - name: Post-deploy tasks
@@ -329,7 +330,7 @@ jobs:
             echo 'Deploy complete: PHP-FPM restarted'
             if [ -f /var/www/thegist/cron/collect_intelligence.php ]; then
               echo 'Running intelligence collector (smoke test)...'
-              cd /var/www/thegist && php cron/collect_intelligence.php 2>&1 | tail -30
+              cd /var/www/thegist && sudo -u www-data php cron/collect_intelligence.php 2>&1 | tail -40
             fi
           "
 
