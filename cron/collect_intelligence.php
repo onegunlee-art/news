@@ -17,6 +17,7 @@ try {
     echo json_encode([
         'success' => true,
         'env' => intelligenceEnvDiagnostics($root),
+        'db' => intelligenceDbSnapshot($pdo),
         'result' => $result,
     ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) . PHP_EOL;
 } catch (Throwable $e) {

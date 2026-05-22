@@ -47,15 +47,23 @@ class IntelligenceCollectorService
 
     public function collect(): array
     {
-        $stats = ['inserted' => 0, 'skipped' => 0, 'sources' => [], 'errors' => []];
-        $stats['sources']['nyt'] = $this->collectNyt($stats['errors']);
-        $stats['sources']['guardian'] = $this->collectGuardian($stats['errors']);
-        $stats['sources']['rss'] = $this->collectRss($stats['errors']);
+        $stats = [
+            'inserted' => 0,
+            'skipped' => 0,
+            'sources' => [],
+            'errors' => [],
+            'api_articles' => ['nyt' => 0, 'guardian' => 0, 'rss' => 0],
+            'duplicates' => ['nyt' => 0, 'guardian' => 0, 'rss' => 0],
+        ];
+        $stats['sources']['nyt'] = $this->collectNyt($stats['errors'], $stats);
+        $stats['sources']['guardian'] = $this->collectGuardian($stats['errors'], $stats);
+        $stats['sources']['rss'] = $this->collectRss($stats['errors'], $stats);
         $stats['inserted'] = array_sum($stats['sources']);
+        $stats['skipped'] = array_sum($stats['duplicates']);
         return $stats;
     }
 
-    private function collectNyt(array &$errors): int
+    private function collectNyt(array &$errors, array &$stats): int
     {
         $count = 0;
         foreach ((array) ($this->config['nyt_sections'] ?? ['world']) as $section) {
@@ -68,16 +76,19 @@ class IntelligenceCollectorService
                 continue;
             }
             $articles = $this->nyt->normalizeNews($result['data'], 'top_stories');
+            $stats['api_articles']['nyt'] += count($articles);
             foreach ($articles as $article) {
                 if ($this->insertArticle('nyt', $article, (string) ($this->config['trust_tier']['nyt'] ?? 'A'))) {
                     $count++;
+                } else {
+                    $stats['duplicates']['nyt']++;
                 }
             }
         }
         return $count;
     }
 
-    private function collectGuardian(array &$errors): int
+    private function collectGuardian(array &$errors, array &$stats): int
     {
         if (!$this->guardian->isConfigured()) {
             $raw = trim((string) ($_ENV['GUARDIAN_API_KEY'] ?? getenv('GUARDIAN_API_KEY') ?: ''));
@@ -98,16 +109,19 @@ class IntelligenceCollectorService
                 ];
                 continue;
             }
+            $stats['api_articles']['guardian'] += count($result['articles']);
             foreach ($result['articles'] as $article) {
                 if ($this->insertArticle('guardian', $article, (string) ($this->config['trust_tier']['guardian'] ?? 'A'))) {
                     $count++;
+                } else {
+                    $stats['duplicates']['guardian']++;
                 }
             }
         }
         return $count;
     }
 
-    private function collectRss(array &$errors): int
+    private function collectRss(array &$errors, array &$stats): int
     {
         $count = 0;
         foreach ((array) ($this->config['rss_feeds'] ?? []) as $feed) {
@@ -125,6 +139,7 @@ class IntelligenceCollectorService
                 continue;
             }
             $items = $rss->channel->item ?? $rss->entry ?? [];
+            $stats['api_articles']['rss'] += count($items);
             foreach ($items as $item) {
                 $article = [
                     'id' => md5((string) ($item->link ?? $item->guid ?? '')),
@@ -136,6 +151,8 @@ class IntelligenceCollectorService
                 ];
                 if ($this->insertArticle('rss', $article, (string) ($feed['trust_tier'] ?? 'B'))) {
                     $count++;
+                } else {
+                    $stats['duplicates']['rss']++;
                 }
             }
         }

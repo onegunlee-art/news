@@ -98,3 +98,29 @@ function intelligenceEnsureTables(PDO $pdo): void
         }
     }
 }
+
+/** @return array<string, mixed> */
+function intelligenceDbSnapshot(PDO $pdo): array
+{
+    try {
+        $total = (int) $pdo->query('SELECT COUNT(*) FROM intelligence_source_items')->fetchColumn();
+        $bySource = $pdo->query(
+            'SELECT source_api, COUNT(*) AS cnt FROM intelligence_source_items GROUP BY source_api'
+        )->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        $byEmbed = $pdo->query(
+            'SELECT embed_status, COUNT(*) AS cnt FROM intelligence_source_items GROUP BY embed_status'
+        )->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        $pending = (int) $pdo->query(
+            "SELECT COUNT(*) FROM intelligence_source_items
+             WHERE embed_status IN ('pending', 'failed') AND duplicate_of IS NULL"
+        )->fetchColumn();
+        return [
+            'total' => $total,
+            'by_source' => $bySource,
+            'by_embed_status' => $byEmbed,
+            'pipeline_pending' => $pending,
+        ];
+    } catch (Throwable $e) {
+        return ['error' => $e->getMessage()];
+    }
+}
