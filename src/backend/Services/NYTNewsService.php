@@ -192,17 +192,24 @@ class NYTNewsService
         }
         
         try {
-            $response = HttpClient::get($url);
-            
-            if (!$response['success']) {
+            $response = (new HttpClient())->get($url);
+
+            if (!$response->isSuccess()) {
                 return [
                     'success' => false,
-                    'error' => $response['error'] ?? 'API request failed',
+                    'error' => 'HTTP ' . $response->getStatusCode(),
                     'data' => []
                 ];
             }
-            
-            $data = $response['data'];
+
+            $data = $response->json();
+            if ($data === null) {
+                return [
+                    'success' => false,
+                    'error' => 'Invalid JSON response',
+                    'data' => []
+                ];
+            }
             
             // 캐시 저장
             if ($this->config['cache']['enabled']) {
