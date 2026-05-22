@@ -282,6 +282,8 @@ jobs:
           V_STEPPAY_TOKEN: ${{ secrets.STEPPAY_SECRET_TOKEN }}
           V_STEPPAY_PAY: ${{ secrets.STEPPAY_PAYMENT_KEY }}
           V_STEPPAY_WH: ${{ secrets.STEPPAY_WEBHOOK_SECRET }}
+          V_NYT: ${{ secrets.NYT_API_KEY }}
+          V_GUARDIAN: ${{ secrets.GUARDIAN_API_KEY }}
         run: |
           REMOTE="${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}"
           KEY="$HOME/.ssh/ec2_key"
@@ -310,6 +312,8 @@ jobs:
             ensure_env "STEPPAY_SECRET_TOKEN"   "${V_STEPPAY_TOKEN:-17cab52d68451a765eaacf90c2390d739a0e99b4849c01f139431f266b18ee5e}"
             ensure_env "STEPPAY_PAYMENT_KEY"    "${V_STEPPAY_PAY:-p9up7apk1o1jxh4z}"
             ensure_env "STEPPAY_WEBHOOK_SECRET" "${V_STEPPAY_WH:-ws_nzwk99oqjj121exh}"
+            ensure_env "NYT_API_KEY"            "${V_NYT:-esBGryyMeUL7hVbEHc45wO27jOStaudfaKYC6akW7RALg0P4}"
+            ensure_env "GUARDIAN_API_KEY"       "${V_GUARDIAN:-}"
           ENVEOF
 
       - name: Post-deploy tasks
@@ -323,6 +327,10 @@ jobs:
             sudo ln -sf /var/www/thegist/storage /var/www/thegist/public/storage
             sudo systemctl restart php8.2-fpm
             echo 'Deploy complete: PHP-FPM restarted'
+            if [ -f /var/www/thegist/cron/collect_intelligence.php ]; then
+              echo 'Running intelligence collector (smoke test)...'
+              cd /var/www/thegist && php cron/collect_intelligence.php 2>&1 | tail -30
+            fi
           "
 
       - name: Deployment notification
