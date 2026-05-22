@@ -6,6 +6,7 @@ namespace App\Services;
 class QualityFilterService
 {
     private int $minWordCount;
+    private int $minWordCountTierA;
 
     public function __construct(array $config = [])
     {
@@ -14,12 +15,14 @@ class QualityFilterService
             : [];
         $merged = array_merge($default, $config);
         $this->minWordCount = (int) ($merged['min_word_count'] ?? 150);
+        $this->minWordCountTierA = (int) ($merged['min_word_count_tier_a'] ?? 80);
     }
 
     public function evaluate(int $wordCount, string $trustTier = 'B'): array
     {
-        $passed = $wordCount >= $this->minWordCount;
-        $score = min(100, (int) round(($wordCount / max($this->minWordCount, 1)) * 70));
+        $minRequired = $trustTier === 'A' ? $this->minWordCountTierA : $this->minWordCount;
+        $passed = $wordCount >= $minRequired;
+        $score = min(100, (int) round(($wordCount / max($minRequired, 1)) * 70));
         if ($trustTier === 'A') {
             $score = min(100, $score + 15);
         } elseif ($trustTier === 'C') {

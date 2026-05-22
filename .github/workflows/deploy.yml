@@ -334,6 +334,19 @@ jobs:
             fi
           "
 
+      - name: Install intelligence cron (cron.d)
+        run: |
+          REMOTE="${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}"
+          KEY="$HOME/.ssh/ec2_key"
+          scp -i "$KEY" -o StrictHostKeyChecking=no cron/thegist-intelligence.cron "$REMOTE:/tmp/thegist-intelligence.cron"
+          ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" "
+            sudo cp /tmp/thegist-intelligence.cron /etc/cron.d/thegist-intelligence
+            sudo chmod 644 /etc/cron.d/thegist-intelligence
+            sudo touch /var/log/thegist-intelligence-collect.log /var/log/thegist-intelligence-report.log
+            sudo chown www-data:www-data /var/log/thegist-intelligence-collect.log /var/log/thegist-intelligence-report.log
+            echo 'Intelligence cron installed'
+          "
+
       - name: Deployment notification
         run: |
           echo "Deployment completed successfully!"

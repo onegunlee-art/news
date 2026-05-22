@@ -168,6 +168,11 @@ class IntelligenceCollectorService
             return false;
         }
         $publishedAt = $this->normalizeDate((string) ($article['published_at'] ?? ''));
+        $description = (string) ($article['description'] ?? '');
+        $content = (string) ($article['content'] ?? '');
+        if (mb_strlen($content) > mb_strlen($description)) {
+            $description = mb_substr($content, 0, 8000);
+        }
         $stmt = $this->pdo->prepare(
             'INSERT IGNORE INTO intelligence_source_items
              (source_api, external_id, url, published_at, title, description, trust_tier)
@@ -179,7 +184,7 @@ class IntelligenceCollectorService
             'url' => mb_substr($url, 0, 1000),
             'published_at' => $publishedAt,
             'title' => mb_substr($title, 0, 500),
-            'description' => (string) ($article['description'] ?? ''),
+            'description' => $description,
             'trust_tier' => in_array($trustTier, ['A', 'B', 'C'], true) ? $trustTier : 'B',
         ]);
         return $stmt->rowCount() > 0;
@@ -212,13 +217,35 @@ class IntelligenceCollectorService
         return $stats;
     }
 
+    /** NYT/Guardian skipped 기사 재처리 (API 요약 fallback + tier A 완화 적용) */
+    public function reprocessSkippedPremium(int $limit = 80): array
+    {
+        $stmt = $this->pdo->prepare(
+            "UPDATE intelligence_source_items
+             SET fetch_status = CASE WHEN fetch_status = 'failed' THEN 'pending' ELSE fetch_status END,
+                 clean_status = 'pending',
+                 categorize_status = 'pending',
+                 embed_status = 'pending',
+                 pipeline_errors = NULL
+             WHERE source_api IN ('nyt', 'guardian')
+               AND embed_status = 'skipped'
+               AND duplicate_of IS NULL
+             LIMIT :lim"
+        );
+        $stmt->bindValue(':lim', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+        $reset = $stmt->rowCount();
+        $processed = $this->processPipeline($limit);
+        return ['reset' => $reset, 'processed' => $processed];
+    }
+
     private function fetchPendingRows(int $limit): array
     {
         $stmt = $this->pdo->prepare(
             "SELECT * FROM intelligence_source_items
              WHERE embed_status IN ('pending', 'failed')
                AND duplicate_of IS NULL
-             ORDER BY published_at DESC
+             ORDER BY FIELD(source_api, 'nyt', 'guardian', 'rss'), relevance_score DESC, published_at DESC
              LIMIT :lim"
         );
         $stmt->bindValue(':lim', $limit, PDO::PARAM_INT);
@@ -242,6 +269,14 @@ class IntelligenceCollectorService
         $url = (string) ($row['url'] ?? '');
         $fetched = $this->jina->fetchContent($url);
         if ($fetched === null) {
+            $fallback = trim(strip_tags((string) ($row['description'] ?? '')));
+            if ($fallback !== '' && mb_strlen($fallback) >= 40) {
+                $this->updateRow((int) $row['id'], [
+                    'raw_content' => $fallback,
+                    'fetch_status' => 'fetched',
+                ]);
+                return true;
+            }
             $this->updateRow((int) $row['id'], [
                 'fetch_status' => 'failed',
                 'pipeline_errors' => $this->mergeError($row, 'fetch', 'jina_fetch_failed'),
@@ -299,6 +334,9 @@ class IntelligenceCollectorService
         }
         $lead = mb_substr((string) ($row['clean_text'] ?? $row['description'] ?? ''), 0, 800);
         $result = $this->categorizer->categorize((string) ($row['title'] ?? ''), $lead);
+        if (in_array((string) ($row['source_api'] ?? ''), ['nyt', 'guardian'], true)) {
+            $result['relevance_score'] = max((int) ($result['relevance_score'] ?? 0), 65);
+        }
         $this->updateRow((int) $row['id'], [
             'region' => json_encode($result['region'], JSON_UNESCAPED_UNICODE),
             'topic' => json_encode($result['topic'], JSON_UNESCAPED_UNICODE),
@@ -315,7 +353,7 @@ class IntelligenceCollectorService
         if (($row['embed_status'] ?? '') === 'done') {
             return true;
         }
-        if ((int) ($row['relevance_score'] ?? 0) < (int) ($this->config['min_relevance_score'] ?? 60)) {
+        if ((int) ($row['relevance_score'] ?? 0) < $this->minRelevanceForRow($row)) {
             $this->updateRow((int) $row['id'], ['embed_status' => 'skipped']);
             return false;
         }
@@ -388,6 +426,16 @@ class IntelligenceCollectorService
             return date('Y-m-d H:i:s');
         }
         return date('Y-m-d H:i:s', $ts);
+    }
+
+    private function minRelevanceForRow(array $row): int
+    {
+        $tier = (string) ($row['trust_tier'] ?? 'B');
+        $source = (string) ($row['source_api'] ?? '');
+        if ($tier === 'A' || in_array($source, ['nyt', 'guardian'], true)) {
+            return (int) ($this->config['min_relevance_score_tier_a'] ?? 50);
+        }
+        return (int) ($this->config['min_relevance_score'] ?? 60);
     }
 
     private function fetchUrl(string $url): ?string

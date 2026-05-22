@@ -186,12 +186,17 @@ PROMPT;
         $uniqueSources = count($sourceCount);
         $total = max(1, count($articles));
         $diversity = round($uniqueSources / $total, 2);
+        $premium = ($sourceCount['nyt'] ?? 0) + ($sourceCount['guardian'] ?? 0);
+        $premiumRatio = $premium / $total;
         $perspectives = count($scqa['complication']['perspectives'] ?? []);
         $confidence = 'medium';
         if ($diversity >= 0.5 && $perspectives >= 2) {
             $confidence = 'high';
         } elseif ($diversity < 0.3 || $perspectives < 2) {
             $confidence = 'low';
+        }
+        if ($premiumRatio >= 0.4 && $perspectives >= 2) {
+            $confidence = $confidence === 'low' ? 'medium' : $confidence;
         }
         return [
             'source_count' => $sourceCount,

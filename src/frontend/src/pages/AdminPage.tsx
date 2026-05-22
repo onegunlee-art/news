@@ -14,6 +14,7 @@ import { api, adminFetch, adminSettingsApi, adminTtsApi, ttsApi } from '../servi
 import { PRIVACY_POLICY_CONTENT } from '../components/Common/PrivacyPolicyContent';
 import AdminDraftPreviewEdit from '../components/Admin/AdminDraftPreviewEdit';
 import WeeklyGist from '../components/Admin/WeeklyGist';
+import StrategicReports from '../components/Admin/StrategicReports';
 import AGILab from '../components/Admin/AGILab';
 import GistLogo from '../components/Common/GistLogo';
 import { DEFAULT_VISION } from '../constants/site';
@@ -489,7 +490,7 @@ const AdminPage: React.FC = () => {
       navigate('/', { replace: true });
     }
   }, [user, isAuthenticated, isLoading, isInitialized, navigate]);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'news' | 'drafts' | 'ai' | 'workspace' | 'persona' | 'knowledge' | 'agi' | 'usage' | 'settings' | 'promotions' | 'cancel' | 'weekly'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'news' | 'drafts' | 'ai' | 'workspace' | 'persona' | 'knowledge' | 'agi' | 'usage' | 'settings' | 'promotions' | 'cancel' | 'weekly' | 'strategic'>('dashboard');
 
   const { subCategoryToLabel } = useMenuConfig();
   const subCategoryOptions = useMemo(
@@ -1456,6 +1457,7 @@ const AdminPage: React.FC = () => {
     { id: 'promotions', name: '프로모션 코드', iconName: 'local_offer' },
     { id: 'cancel', name: '취소 요청', iconName: 'cancel' },
     { id: 'weekly', name: '위클리 Gist', iconName: 'summarize' },
+    { id: 'strategic', name: '전략 레포트', iconName: 'analytics' },
   ] as const;
 
   // 인증 초기화/검증 중 또는 권한 없음(리다이렉트 예정)에는 로딩 표시 (새로고침 시 어드민 유지)
@@ -5770,6 +5772,8 @@ const AdminPage: React.FC = () => {
               }}
             />
           )}
+
+          {activeTab === 'strategic' && <StrategicReports />}
         </div>
       </div>
     </div>

@@ -1,0 +1,7 @@
+# Intelligence pipeline — thegist → /etc/cron.d/thegist-intelligence
+# Server TZ=UTC 기준 (KST Mon–Wed 06:00 = UTC Sun–Tue 21:00, KST Thu 09:00 = UTC Thu 00:00)
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+0 21 * * 0-2 www-data cd /var/www/thegist && /usr/bin/php cron/collect_intelligence.php >> /var/log/thegist-intelligence-collect.log 2>&1
+0 0 * * 4 www-data cd /var/www/thegist && /usr/bin/php cron/generate_strategic_report.php >> /var/log/thegist-intelligence-report.log 2>&1

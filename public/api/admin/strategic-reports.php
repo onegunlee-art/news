@@ -86,6 +86,18 @@ if ($method === 'GET') {
         srJson(['success' => true, 'report' => $row]);
     }
 
+    if ($action === 'stats') {
+        $bySource = $pdo->query(
+            "SELECT source_api, embed_status, COUNT(*) AS cnt
+             FROM intelligence_source_items GROUP BY source_api, embed_status"
+        )->fetchAll() ?: [];
+        $pending = (int) $pdo->query(
+            "SELECT COUNT(*) FROM intelligence_source_items
+             WHERE embed_status IN ('pending','failed') AND duplicate_of IS NULL"
+        )->fetchColumn();
+        srJson(['success' => true, 'pipeline' => ['by_source_embed' => $bySource, 'pending' => $pending]]);
+    }
+
     if ($action === 'articles') {
         $start = $_GET['start'] ?? date('Y-m-d', strtotime('-7 days'));
         $end = $_GET['end'] ?? date('Y-m-d');
@@ -122,6 +134,13 @@ if ($method === 'POST') {
     if ($action === 'collect') {
         $collector = new IntelligenceCollectorService($pdo);
         $result = $collector->runDaily();
+        srJson(['success' => true, 'result' => $result]);
+    }
+
+    if ($action === 'reprocess') {
+        $limit = max(1, min(200, (int) ($input['limit'] ?? 80)));
+        $collector = new IntelligenceCollectorService($pdo);
+        $result = $collector->reprocessSkippedPremium($limit);
         srJson(['success' => true, 'result' => $result]);
     }
 
@@ -170,6 +189,31 @@ if ($method === 'POST') {
             'id' => $id,
         ]);
         srJson(['success' => true, 'id' => $id, 'diff' => $diff]);
+    }
+
+    if ($action === 'update_status') {
+        $id = (int) ($input['id'] ?? 0);
+        if ($id <= 0) {
+            srError('id required');
+        }
+        $status = (string) ($input['status'] ?? 'reviewed');
+        if (!in_array($status, ['draft', 'reviewed', 'approved'], true)) {
+            srError('invalid status');
+        }
+        $check = $pdo->prepare('SELECT id FROM weekly_strategic_reports WHERE id = :id');
+        $check->execute(['id' => $id]);
+        if (!$check->fetch()) {
+            srError('Report not found', 404);
+        }
+        $stmt = $pdo->prepare(
+            'UPDATE weekly_strategic_reports SET status = :status, editor_notes = :notes WHERE id = :id'
+        );
+        $stmt->execute([
+            'status' => $status,
+            'notes' => (string) ($input['editor_notes'] ?? ''),
+            'id' => $id,
+        ]);
+        srJson(['success' => true, 'id' => $id, 'status' => $status]);
     }
 
     srError('Unknown action');
