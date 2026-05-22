@@ -15,8 +15,9 @@ function intelligenceFindProjectRoot(): string
 
 function intelligenceLoadEnv(string $projectRoot): void
 {
+    // FPM(auto_prepend)은 .env만 읽음. CLI는 env.txt → .env 순으로 병합(뒤쪽이 우선).
     foreach ([$projectRoot . 'env.txt', $projectRoot . '.env', $projectRoot . '.env.production'] as $file) {
-        if (!is_file($file)) {
+        if (!is_file($file) || !is_readable($file)) {
             continue;
         }
         foreach (file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [] as $line) {
@@ -35,7 +36,6 @@ function intelligenceLoadEnv(string $projectRoot): void
                 $_ENV[$name] = $value;
             }
         }
-        break;
     }
 }
 

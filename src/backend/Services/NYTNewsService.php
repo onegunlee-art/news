@@ -187,7 +187,7 @@ class NYTNewsService
         if ($this->config['cache']['enabled'] && isset($this->cache[$cacheKey])) {
             $cached = $this->cache[$cacheKey];
             if (time() - $cached['time'] < $this->config['cache']['ttl']) {
-                return $cached['data'];
+                return $cached['response'];
             }
         }
         
@@ -214,8 +214,11 @@ class NYTNewsService
             // 캐시 저장
             if ($this->config['cache']['enabled']) {
                 $this->cache[$cacheKey] = [
-                    'data' => $data,
-                    'time' => time()
+                    'response' => [
+                        'success' => true,
+                        'data' => $data,
+                    ],
+                    'time' => time(),
                 ];
             }
             

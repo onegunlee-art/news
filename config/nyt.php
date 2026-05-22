@@ -20,7 +20,10 @@ return [
     |
     */
     
-    'api_key' => getenv('NYT_API_KEY') ?: 'YOUR_NYT_API_KEY_HERE',
+    'api_key' => (static function (): string {
+        $key = $_ENV['NYT_API_KEY'] ?? getenv('NYT_API_KEY');
+        return is_string($key) && $key !== '' ? $key : 'YOUR_NYT_API_KEY_HERE';
+    })(),
     
     /*
     |--------------------------------------------------------------------------

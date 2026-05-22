@@ -47,20 +47,24 @@ class IntelligenceCollectorService
 
     public function collect(): array
     {
-        $stats = ['inserted' => 0, 'skipped' => 0, 'sources' => []];
-        $stats['sources']['nyt'] = $this->collectNyt();
-        $stats['sources']['guardian'] = $this->collectGuardian();
-        $stats['sources']['rss'] = $this->collectRss();
+        $stats = ['inserted' => 0, 'skipped' => 0, 'sources' => [], 'errors' => []];
+        $stats['sources']['nyt'] = $this->collectNyt($stats['errors']);
+        $stats['sources']['guardian'] = $this->collectGuardian($stats['errors']);
+        $stats['sources']['rss'] = $this->collectRss($stats['errors']);
         $stats['inserted'] = array_sum($stats['sources']);
         return $stats;
     }
 
-    private function collectNyt(): int
+    private function collectNyt(array &$errors): int
     {
         $count = 0;
         foreach ((array) ($this->config['nyt_sections'] ?? ['world']) as $section) {
             $result = $this->nyt->getTopStories((string) $section);
             if (!($result['success'] ?? false)) {
+                $errors['nyt'][] = [
+                    'section' => (string) $section,
+                    'error' => (string) ($result['error'] ?? 'request_failed'),
+                ];
                 continue;
             }
             $articles = $this->nyt->normalizeNews($result['data'], 'top_stories');
@@ -73,15 +77,20 @@ class IntelligenceCollectorService
         return $count;
     }
 
-    private function collectGuardian(): int
+    private function collectGuardian(array &$errors): int
     {
         if (!$this->guardian->isConfigured()) {
+            $errors['guardian'][] = ['error' => 'api_key_missing'];
             return 0;
         }
         $count = 0;
         foreach ((array) ($this->config['guardian_sections'] ?? ['world']) as $section) {
             $result = $this->guardian->searchArticles((string) $section, 15);
             if (!($result['success'] ?? false)) {
+                $errors['guardian'][] = [
+                    'section' => (string) $section,
+                    'error' => (string) ($result['error'] ?? 'request_failed'),
+                ];
                 continue;
             }
             foreach ($result['articles'] as $article) {
@@ -93,12 +102,17 @@ class IntelligenceCollectorService
         return $count;
     }
 
-    private function collectRss(): int
+    private function collectRss(array &$errors): int
     {
         $count = 0;
         foreach ((array) ($this->config['rss_feeds'] ?? []) as $feed) {
-            $xml = @file_get_contents((string) ($feed['url'] ?? ''));
-            if ($xml === false) {
+            $url = (string) ($feed['url'] ?? '');
+            $xml = $this->fetchUrl($url);
+            if ($xml === null) {
+                $errors['rss'][] = [
+                    'name' => (string) ($feed['name'] ?? $url),
+                    'error' => 'fetch_failed',
+                ];
                 continue;
             }
             $rss = @simplexml_load_string($xml);
@@ -352,6 +366,31 @@ class IntelligenceCollectorService
             return date('Y-m-d H:i:s');
         }
         return date('Y-m-d H:i:s', $ts);
+    }
+
+    private function fetchUrl(string $url): ?string
+    {
+        if ($url === '') {
+            return null;
+        }
+        $ch = curl_init($url);
+        if ($ch === false) {
+            return null;
+        }
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_CONNECTTIMEOUT => 10,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_USERAGENT => 'thegist-intelligence/1.0',
+        ]);
+        $body = curl_exec($ch);
+        $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        if ($body === false || $code < 200 || $code >= 300) {
+            return null;
+        }
+        return (string) $body;
     }
 }
 
