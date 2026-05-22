@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use Agents\Services\OpenAIService;
+use App\Config\StrategicReportSchema;
 use PDO;
 
 class StrategicReportService
@@ -11,12 +12,15 @@ class StrategicReportService
     private PDO $pdo;
     private OpenAIService $openai;
     private IntelligenceEmbeddingService $embedder;
+    private array $config;
 
     public function __construct(PDO $pdo, ?OpenAIService $openai = null, ?IntelligenceEmbeddingService $embedder = null)
     {
         $this->pdo = $pdo;
         $this->openai = $openai ?? new OpenAIService([]);
         $this->embedder = $embedder ?? new IntelligenceEmbeddingService();
+        $configPath = dirname(__DIR__, 3) . '/config/strategic_report.php';
+        $this->config = is_file($configPath) ? require $configPath : [];
     }
 
     public function generateForWeek(?string $reportWeek = null): array
@@ -25,7 +29,6 @@ class StrategicReportService
         $articles = $this->fetchWeekArticles($start, $end);
         $usedFallback = false;
         if ($articles === []) {
-            // 첫 실행·목요일 이전 수집 등: 이번 주에 없으면 최근 14일 embedded 기사 사용
             $articles = $this->fetchRecentArticles(14);
             $usedFallback = $articles !== [];
         }
@@ -34,7 +37,6 @@ class StrategicReportService
                 'success' => false,
                 'error' => 'No intelligence articles for period',
                 'period' => ['report_week' => $week, 'start' => $start, 'end' => $end],
-                'hint' => 'embed_status=done 기사가 기간 밖일 수 있습니다. MySQL: SELECT MIN(published_at), MAX(published_at) FROM intelligence_source_items WHERE embed_status=\'done\';',
             ];
         }
         $context = $this->buildContext($articles);
@@ -42,6 +44,7 @@ class StrategicReportService
         if ($scqa === null) {
             return ['success' => false, 'error' => 'SCQA generation failed'];
         }
+        $scqa = $this->normalizeScqa($scqa);
         $meta = $this->buildMeta($articles, $scqa);
         if ($usedFallback) {
             $meta['period_fallback'] = 'last_14_days';
@@ -61,7 +64,6 @@ class StrategicReportService
             $end = (clone $dto)->modify('sunday this week')->format('Y-m-d');
             return [$reportWeek, $start, $end];
         }
-        // 기본: 이번 ISO 주(월~일). 월~수 수집 → 목 레포트 cadence와 일치
         $dto = new \DateTime('today');
         $start = (clone $dto)->modify('monday this week')->format('Y-m-d');
         $end = (clone $dto)->modify('sunday this week')->format('Y-m-d');
@@ -76,7 +78,7 @@ class StrategicReportService
              WHERE embed_status = 'done'
                AND duplicate_of IS NULL
                AND published_at BETWEEN :start AND :end
-             ORDER BY relevance_score DESC, published_at DESC
+             ORDER BY FIELD(source_api, 'nyt', 'guardian', 'rss'), relevance_score DESC, published_at DESC
              LIMIT 40"
         );
         $stmt->execute(['start' => $start . ' 00:00:00', 'end' => $end . ' 23:59:59']);
@@ -90,7 +92,7 @@ class StrategicReportService
              WHERE embed_status = 'done'
                AND duplicate_of IS NULL
                AND published_at >= DATE_SUB(NOW(), INTERVAL :days DAY)
-             ORDER BY relevance_score DESC, published_at DESC
+             ORDER BY FIELD(source_api, 'nyt', 'guardian', 'rss'), relevance_score DESC, published_at DESC
              LIMIT :lim"
         );
         $stmt->bindValue(':days', $days, PDO::PARAM_INT);
@@ -101,11 +103,11 @@ class StrategicReportService
 
     private function buildContext(array $articles): string
     {
-        $ragHits = $this->embedder->search('geopolitical structural shifts trade security diplomacy', [
+        $ragHits = $this->embedder->search('지정학 구조적 변화 무역 안보 외교 narrative', [
             'match_count' => 12,
             'min_relevance' => 55,
         ]);
-        $blocks = ["=== RAG Intelligence Chunks ==="];
+        $blocks = ["=== Intelligence RAG (참고) ==="];
         foreach ($ragHits as $hit) {
             $blocks[] = sprintf('[article_id:%s score:%.3f] %s',
                 (string) ($hit['article_id'] ?? ''),
@@ -113,12 +115,19 @@ class StrategicReportService
                 mb_substr((string) ($hit['chunk_text'] ?? ''), 0, 600)
             );
         }
-        $blocks[] = "\n=== Source Articles ===";
+        $gistSamples = $this->loadGistStyleSamples();
+        if ($gistSamples !== '') {
+            $blocks[] = "\n=== the gist 기사 문체 참고 (출력 톤만 참고, 사실은 intelligence만 사용) ===";
+            $blocks[] = $gistSamples;
+        }
+        $blocks[] = "\n=== Source Articles (intelligence_source_items) ===";
         foreach ($articles as $article) {
-            $blocks[] = sprintf('[id:%d source:%s relevance:%d] %s\n%s',
+            $blocks[] = sprintf('[id:%d source:%s relevance:%d region:%s topic:%s] %s\n%s',
                 (int) $article['id'],
                 (string) $article['source_api'],
                 (int) $article['relevance_score'],
+                (string) ($article['region'] ?? ''),
+                (string) ($article['topic'] ?? ''),
                 (string) $article['title'],
                 mb_substr((string) ($article['clean_text'] ?? $article['description'] ?? ''), 0, 900)
             );
@@ -126,47 +135,64 @@ class StrategicReportService
         return implode("\n\n", $blocks);
     }
 
+    private function loadGistStyleSamples(): string
+    {
+        try {
+            $stmt = $this->pdo->query(
+                "SELECT title, narration FROM news
+                 WHERE status = 'published' AND narration IS NOT NULL AND CHAR_LENGTH(narration) > 200
+                 ORDER BY published_at DESC LIMIT 2"
+            );
+            $rows = $stmt->fetchAll() ?: [];
+            if ($rows === []) {
+                return '';
+            }
+            $parts = [];
+            foreach ($rows as $row) {
+                $parts[] = '【' . mb_substr((string) $row['title'], 0, 60) . "】\n"
+                    . mb_substr(strip_tags((string) $row['narration']), 0, 800);
+            }
+            return implode("\n\n---\n\n", $parts);
+        } catch (\Throwable $e) {
+            return '';
+        }
+    }
+
     private function generateScqa(string $context, string $start, string $end, int $count): ?array
     {
         if (!$this->openai->isConfigured()) {
             return null;
         }
-        $system = 'You are a McKinsey-style geopolitical strategist. Output valid JSON only.';
+        $system = (string) ($this->config['system_prompt'] ?? 'Output valid JSON in Korean.');
+        $schema = StrategicReportSchema::jsonSchemaDescription();
         $user = <<<PROMPT
-Create a weekly strategic SCQA report for {$start} to {$end} using ONLY the provided intelligence context.
+{$start}부터 {$end}까지의 주간 지정학·국제정세 전략 레포트를 작성하라.
+아래 intelligence context만 근거로 사용한다.
 
-Rules:
-1. Every timeline item and perspective MUST include source_id (intelligence_source_items.id)
-2. why_it_matters_chain must be an array with at least 3 steps
-3. No markdown outside JSON
-4. Do not invent facts not supported by context
+【Phase 1 필수】
+1. structural_shift: 사건이 아닌 '질서·패턴'의 변화
+2. narrative_collisions: 최소 2개 — 서로 다른 현실을 믿는 관점의 충돌 (actor_a/view_a vs actor_b/view_b)
+3. why_it_matters_chain: 인과 3단계 이상
+4. 모든 텍스트 필드: 한국어, the gist 독자용
 
-JSON schema:
-{
-  "core_question": "",
-  "executive_summary": "",
-  "situation": {"narrative":"","timeline":[{"date":"","event":"","source_id":0}],"anchor_entities":[]},
-  "complication": {"trigger":"","perspectives":[{"viewpoint":"","source_id":0,"quote":""}]},
-  "question": "",
-  "answer": {
-    "implication": "",
-    "why_it_matters_chain": ["", "", ""],
-    "scenarios": [{"type":"base","probability":60,"outcome":"","prediction_signal":""}],
-    "action_matrix": {"watch":[],"consider":[],"act":[]}
-  },
-  "meta": {"source_count":{},"confidence":"medium"}
-}
+【규칙】
+- timeline·perspectives·collisions에 source_id/source_ids 필수
+- meta.language = "ko"
+- JSON만 출력
+
+스키마:
+{$schema}
 
 Context ({$count} articles):
 {$context}
 PROMPT;
         try {
             $raw = $this->openai->chat($system, $user, [
-                'model' => 'gpt-4o',
-                'temperature' => 0.4,
-                'max_tokens' => 3500,
+                'model' => (string) ($this->config['model'] ?? 'gpt-4o'),
+                'temperature' => (float) ($this->config['temperature'] ?? 0.45),
+                'max_tokens' => (int) ($this->config['max_tokens'] ?? 5000),
                 'json_mode' => true,
-                'timeout' => 120,
+                'timeout' => 180,
             ]);
             $data = json_decode($raw, true);
             return is_array($data) ? $data : null;
@@ -174,6 +200,28 @@ PROMPT;
             error_log('StrategicReportService: ' . $e->getMessage());
             return null;
         }
+    }
+
+    /** @param array<string, mixed> $scqa */
+    private function normalizeScqa(array $scqa): array
+    {
+        $scqa['meta'] = is_array($scqa['meta'] ?? null) ? $scqa['meta'] : [];
+        $scqa['meta']['language'] = 'ko';
+        if (!isset($scqa['structural_shift']) || !is_array($scqa['structural_shift'])) {
+            $scqa['structural_shift'] = [
+                'headline' => '',
+                'from_pattern' => '',
+                'to_pattern' => '',
+                'why_now' => '',
+                'evidence_source_ids' => [],
+            ];
+        }
+        $comp = is_array($scqa['complication'] ?? null) ? $scqa['complication'] : [];
+        if (!isset($comp['narrative_collisions']) || !is_array($comp['narrative_collisions'])) {
+            $comp['narrative_collisions'] = [];
+        }
+        $scqa['complication'] = $comp;
+        return $scqa;
     }
 
     private function buildMeta(array $articles, array $scqa): array
@@ -189,21 +237,26 @@ PROMPT;
         $premium = ($sourceCount['nyt'] ?? 0) + ($sourceCount['guardian'] ?? 0);
         $premiumRatio = $premium / $total;
         $perspectives = count($scqa['complication']['perspectives'] ?? []);
+        $collisions = count($scqa['complication']['narrative_collisions'] ?? []);
+        $hasShift = trim((string) ($scqa['structural_shift']['headline'] ?? '')) !== '';
         $confidence = 'medium';
-        if ($diversity >= 0.5 && $perspectives >= 2) {
+        if ($diversity >= 0.5 && $perspectives >= 2 && $collisions >= 2 && $hasShift) {
             $confidence = 'high';
         } elseif ($diversity < 0.3 || $perspectives < 2) {
             $confidence = 'low';
         }
-        if ($premiumRatio >= 0.4 && $perspectives >= 2) {
+        if ($premiumRatio >= 0.4 && $collisions >= 2) {
             $confidence = $confidence === 'low' ? 'medium' : $confidence;
         }
         return [
             'source_count' => $sourceCount,
             'source_diversity' => $diversity,
             'perspective_count' => $perspectives,
+            'narrative_collision_count' => $collisions,
+            'has_structural_shift' => $hasShift,
             'confidence' => $confidence,
             'article_total' => count($articles),
+            'language' => 'ko',
         ];
     }
 
@@ -221,7 +274,7 @@ PROMPT;
                source_articles_json = VALUES(source_articles_json),
                meta_json = VALUES(meta_json),
                confidence = VALUES(confidence),
-               status = VALUES(status),
+               status = :status_on_update,
                updated_at = CURRENT_TIMESTAMP'
         );
         $stmt->execute([
@@ -239,6 +292,7 @@ PROMPT;
             'meta_json' => json_encode($meta, JSON_UNESCAPED_UNICODE),
             'confidence' => (string) ($meta['confidence'] ?? 'medium'),
             'status' => 'draft',
+            'status_on_update' => 'draft',
         ]);
         $id = (int) $this->pdo->lastInsertId();
         if ($id === 0) {
