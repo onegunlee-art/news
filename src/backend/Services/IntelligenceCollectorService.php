@@ -222,7 +222,10 @@ class IntelligenceCollectorService
     {
         $stmt = $this->pdo->prepare(
             "UPDATE intelligence_source_items
-             SET fetch_status = CASE WHEN fetch_status = 'failed' THEN 'pending' ELSE fetch_status END,
+             SET fetch_status = 'pending',
+                 raw_content = NULL,
+                 clean_text = NULL,
+                 word_count = 0,
                  clean_status = 'pending',
                  categorize_status = 'pending',
                  embed_status = 'pending',
@@ -263,9 +266,29 @@ class IntelligenceCollectorService
 
     private function processFetch(array $row): bool
     {
-        if (($row['fetch_status'] ?? '') === 'fetched' && !empty($row['raw_content'])) {
-            return true;
+        $existingRaw = trim((string) ($row['raw_content'] ?? ''));
+        if (($row['fetch_status'] ?? '') === 'fetched' && $existingRaw !== '') {
+            $wc = $this->cleaner->wordCount($this->cleaner->clean($existingRaw, (string) ($row['title'] ?? '')));
+            $tier = (string) ($row['trust_tier'] ?? 'B');
+            $minWords = $tier === 'A' ? (int) ($this->config['min_word_count_tier_a'] ?? 80) : (int) ($this->config['min_word_count'] ?? 150);
+            if ($wc >= $minWords) {
+                return true;
+            }
         }
+
+        $source = (string) ($row['source_api'] ?? '');
+        if ($source === 'guardian') {
+            $guardianBody = $this->guardian->fetchArticleBody((string) ($row['external_id'] ?? ''));
+            if ($guardianBody !== null && mb_strlen($guardianBody['content']) >= 40) {
+                $this->updateRow((int) $row['id'], [
+                    'raw_content' => $guardianBody['content'],
+                    'description' => $guardianBody['description'],
+                    'fetch_status' => 'fetched',
+                ]);
+                return true;
+            }
+        }
+
         $url = (string) ($row['url'] ?? '');
         $fetched = $this->jina->fetchContent($url);
         if ($fetched === null) {

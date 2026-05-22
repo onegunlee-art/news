@@ -96,4 +96,32 @@ class GuardianNewsService
         }
         return ['success' => true, 'data' => $data, 'articles' => $this->normalizeNews($data)];
     }
+
+    /** @return array{content: string, description: string}|null */
+    public function fetchArticleBody(string $externalId): ?array
+    {
+        if (!$this->isConfigured() || trim($externalId) === '') {
+            return null;
+        }
+        $base = rtrim((string) ($this->config['base_url'] ?? 'https://content.guardianapis.com'), '/');
+        $url = $base . '/' . ltrim($externalId, '/') . '?' . http_build_query([
+            'show-fields' => 'body,trailText,headline',
+            'api-key' => $this->apiKey(),
+        ]);
+        $result = $this->request($url);
+        if (!($result['success'] ?? false)) {
+            return null;
+        }
+        $fields = $result['data']['response']['content']['fields'] ?? [];
+        $body = trim(strip_tags((string) ($fields['body'] ?? '')));
+        $trail = trim(strip_tags((string) ($fields['trailText'] ?? '')));
+        $content = mb_strlen($body) >= mb_strlen($trail) ? $body : $trail;
+        if ($content === '') {
+            return null;
+        }
+        return [
+            'content' => $content,
+            'description' => $trail !== '' ? $trail : mb_substr($content, 0, 500),
+        ];
+    }
 }
