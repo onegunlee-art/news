@@ -23,8 +23,19 @@ class StrategicReportService
     {
         [$week, $start, $end] = $this->resolveWeek($reportWeek);
         $articles = $this->fetchWeekArticles($start, $end);
+        $usedFallback = false;
         if ($articles === []) {
-            return ['success' => false, 'error' => 'No intelligence articles for period'];
+            // 첫 실행·목요일 이전 수집 등: 이번 주에 없으면 최근 14일 embedded 기사 사용
+            $articles = $this->fetchRecentArticles(14);
+            $usedFallback = $articles !== [];
+        }
+        if ($articles === []) {
+            return [
+                'success' => false,
+                'error' => 'No intelligence articles for period',
+                'period' => ['report_week' => $week, 'start' => $start, 'end' => $end],
+                'hint' => 'embed_status=done 기사가 기간 밖일 수 있습니다. MySQL: SELECT MIN(published_at), MAX(published_at) FROM intelligence_source_items WHERE embed_status=\'done\';',
+            ];
         }
         $context = $this->buildContext($articles);
         $scqa = $this->generateScqa($context, $start, $end, count($articles));
@@ -32,6 +43,9 @@ class StrategicReportService
             return ['success' => false, 'error' => 'SCQA generation failed'];
         }
         $meta = $this->buildMeta($articles, $scqa);
+        if ($usedFallback) {
+            $meta['period_fallback'] = 'last_14_days';
+        }
         $reportId = $this->saveReport($week, $start, $end, $scqa, $articles, $meta);
         return ['success' => true, 'report_id' => $reportId, 'report_week' => $week, 'scqa' => $scqa, 'meta' => $meta];
     }
@@ -47,9 +61,11 @@ class StrategicReportService
             $end = (clone $dto)->modify('sunday this week')->format('Y-m-d');
             return [$reportWeek, $start, $end];
         }
-        $end = date('Y-m-d', strtotime('last sunday'));
-        $start = date('Y-m-d', strtotime('last monday', strtotime($end)));
-        $week = date('o\\WW', strtotime($end));
+        // 기본: 이번 ISO 주(월~일). 월~수 수집 → 목 레포트 cadence와 일치
+        $dto = new \DateTime('today');
+        $start = (clone $dto)->modify('monday this week')->format('Y-m-d');
+        $end = (clone $dto)->modify('sunday this week')->format('Y-m-d');
+        $week = (clone $dto)->format('o-\WW');
         return [$week, $start, $end];
     }
 
@@ -64,6 +80,22 @@ class StrategicReportService
              LIMIT 40"
         );
         $stmt->execute(['start' => $start . ' 00:00:00', 'end' => $end . ' 23:59:59']);
+        return $stmt->fetchAll() ?: [];
+    }
+
+    private function fetchRecentArticles(int $days, int $limit = 40): array
+    {
+        $stmt = $this->pdo->prepare(
+            "SELECT * FROM intelligence_source_items
+             WHERE embed_status = 'done'
+               AND duplicate_of IS NULL
+               AND published_at >= DATE_SUB(NOW(), INTERVAL :days DAY)
+             ORDER BY relevance_score DESC, published_at DESC
+             LIMIT :lim"
+        );
+        $stmt->bindValue(':days', $days, PDO::PARAM_INT);
+        $stmt->bindValue(':lim', $limit, PDO::PARAM_INT);
+        $stmt->execute();
         return $stmt->fetchAll() ?: [];
     }
 
