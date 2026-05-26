@@ -142,6 +142,9 @@ jobs:
           ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" bash -c '
             set -e
             U=$(whoami)
+            # 루트 디렉토리도 포함 (composer.json 등 루트 파일용)
+            sudo mkdir -p /var/www/thegist
+            sudo chown "$U:$U" /var/www/thegist
             for d in /var/www/thegist/public \
                      /var/www/thegist/src/backend \
                      /var/www/thegist/src/agents \
