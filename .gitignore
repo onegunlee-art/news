@@ -48,7 +48,8 @@ coverage/
 # package-lock.json
 
 # PHP specific
-composer.lock
+# composer.lock — 커밋하여 배포 시 동일 버전 보장
+composer.phar
 
 # Uploads
 uploads/*

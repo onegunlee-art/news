@@ -332,30 +332,41 @@ jobs:
         run: |
           REMOTE="${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}"
           KEY="$HOME/.ssh/ec2_key"
-          ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" "
+          SSH_OPTS="-o StrictHostKeyChecking=no -o ServerAliveInterval=60 -o ServerAliveCountMax=10"
+          ssh -i "$KEY" $SSH_OPTS "$REMOTE" bash -s << 'REMOTEEOF'
             cd /var/www/thegist
-            
-            # Composer 의존성 설치 (dompdf 등)
+
+            COMPOSER_BIN="/usr/local/bin/composer"
             if [ -f composer.json ]; then
               echo 'Installing Composer dependencies...'
-              if command -v composer &> /dev/null; then
-                sudo composer install --no-dev --optimize-autoloader --no-interaction 2>&1 || echo 'Composer install had issues, continuing...'
-              else
-                echo 'Composer not found, skipping dependency install'
+              if [ ! -x "$COMPOSER_BIN" ]; then
+                echo 'Composer not found at /usr/local/bin/composer, installing...'
+                curl -sS https://getcomposer.org/installer | php
+                sudo mv composer.phar "$COMPOSER_BIN"
+                sudo chmod +x "$COMPOSER_BIN"
               fi
+              sudo -u www-data "$COMPOSER_BIN" install --no-dev --optimize-autoloader --no-interaction 2>&1 \
+                || echo 'Composer install had issues, continuing...'
             fi
-            
+
             sudo chown -R www-data:www-data /var/www/thegist/
             sudo chmod -R 755 /var/www/thegist/
             sudo chmod -R 775 /var/www/thegist/storage/
             sudo ln -sf /var/www/thegist/storage /var/www/thegist/public/storage
             sudo systemctl restart php8.2-fpm
             echo 'Deploy complete: PHP-FPM restarted'
-            if [ -f /var/www/thegist/cron/collect_intelligence.php ]; then
-              echo 'Running intelligence collector (smoke test)...'
-              cd /var/www/thegist && sudo -u www-data php cron/collect_intelligence.php 2>&1 | tail -40
-            fi
-          "
+          REMOTEEOF
+
+      - name: Post-deploy smoke check (dompdf)
+        run: |
+          REMOTE="${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}"
+          KEY="$HOME/.ssh/ec2_key"
+          SSH_OPTS="-o StrictHostKeyChecking=no -o ServerAliveInterval=60 -o ServerAliveCountMax=10"
+          ssh -i "$KEY" $SSH_OPTS "$REMOTE" bash -s << 'REMOTEEOF'
+            cd /var/www/thegist
+            echo 'Checking dompdf autoload...'
+            sudo -u www-data php -r "require 'vendor/autoload.php'; new Dompdf\Dompdf(); echo 'dompdf ok' . PHP_EOL;"
+          REMOTEEOF
 
       - name: Install intelligence cron (cron.d)
         run: |
