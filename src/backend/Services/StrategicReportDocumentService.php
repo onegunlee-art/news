@@ -643,12 +643,20 @@ HTML;
 
         $collisions = $complication['narrative_collisions'] ?? [];
         foreach ($collisions as $idx => $collision) {
-            $title = htmlspecialchars((string) ($collision['collision_point'] ?? '충돌 ' . ($idx + 1)), ENT_QUOTES, 'UTF-8');
+            $title = htmlspecialchars(
+                (string) ($collision['label'] ?? $collision['collision_point'] ?? '충돌 ' . ($idx + 1)),
+                ENT_QUOTES,
+                'UTF-8'
+            );
             $actorA = htmlspecialchars((string) ($collision['actor_a'] ?? '관점 A'), ENT_QUOTES, 'UTF-8');
             $viewA = htmlspecialchars((string) ($collision['view_a'] ?? ''), ENT_QUOTES, 'UTF-8');
             $actorB = htmlspecialchars((string) ($collision['actor_b'] ?? '관점 B'), ENT_QUOTES, 'UTF-8');
             $viewB = htmlspecialchars((string) ($collision['view_b'] ?? ''), ENT_QUOTES, 'UTF-8');
-            $implication = htmlspecialchars((string) ($collision['implication'] ?? ''), ENT_QUOTES, 'UTF-8');
+            $collisionNote = htmlspecialchars(
+                (string) ($collision['collision'] ?? $collision['implication'] ?? ''),
+                ENT_QUOTES,
+                'UTF-8'
+            );
             
             $html .= <<<HTML
             <div class="collision">
@@ -664,8 +672,8 @@ HTML;
                     </div>
                 </div>
 HTML;
-            if ($implication !== '') {
-                $html .= '<p style="margin-top: 10px; font-style: italic; color: #555;">→ ' . $implication . '</p>';
+            if ($collisionNote !== '') {
+                $html .= '<p style="margin-top: 10px; color: #555;">→ ' . $collisionNote . '</p>';
             }
             $html .= '</div>';
         }
@@ -674,17 +682,21 @@ HTML;
         if ($perspectives !== []) {
             $html .= '<h3 style="font-size: 11pt; margin: 15px 0 10px;">주요 관점</h3>';
             foreach ($perspectives as $idx => $perspective) {
-                $actor = htmlspecialchars((string) ($perspective['actor'] ?? ''), ENT_QUOTES, 'UTF-8');
-                $stance = htmlspecialchars((string) ($perspective['stance'] ?? ''), ENT_QUOTES, 'UTF-8');
-                $rationale = htmlspecialchars((string) ($perspective['rationale'] ?? ''), ENT_QUOTES, 'UTF-8');
+                $viewpoint = htmlspecialchars(
+                    (string) ($perspective['viewpoint'] ?? $perspective['stance'] ?? ''),
+                    ENT_QUOTES,
+                    'UTF-8'
+                );
+                $quote = htmlspecialchars(
+                    (string) ($perspective['quote'] ?? $perspective['rationale'] ?? ''),
+                    ENT_QUOTES,
+                    'UTF-8'
+                );
                 
                 $html .= '<div class="numbered-para"><span class="para-number">(' . chr(97 + $idx) . ')</span>';
-                if ($actor !== '') {
-                    $html .= '<strong>' . $actor . ':</strong> ';
-                }
-                $html .= $stance;
-                if ($rationale !== '') {
-                    $html .= ' — <em>' . $rationale . '</em>';
+                $html .= $viewpoint;
+                if ($quote !== '') {
+                    $html .= ' — <span style="color: #555;">' . $quote . '</span>';
                 }
                 $html .= '</div>';
             }
@@ -702,6 +714,11 @@ HTML;
         <div class="section">
             <h2 class="section-title"><span class="section-number">{$sectionNum}.</span> {$label}</h2>
 HTML;
+
+        $implication = trim((string) ($answer['implication'] ?? ''));
+        if ($implication !== '') {
+            $html .= '<p class="numbered-para">' . nl2br(htmlspecialchars($implication, ENT_QUOTES, 'UTF-8')) . '</p>';
+        }
 
         $implications = $answer['implications'] ?? [];
         if ($implications !== []) {
@@ -730,43 +747,80 @@ HTML;
             $html .= '<h3 style="font-size: 11pt; margin: 20px 0 10px;">' . $scenarioLabel . '</h3>';
             
             foreach ($scenarios as $scenario) {
-                $name = htmlspecialchars((string) ($scenario['name'] ?? ''), ENT_QUOTES, 'UTF-8');
-                $prob = htmlspecialchars((string) ($scenario['probability'] ?? ''), ENT_QUOTES, 'UTF-8');
-                $desc = htmlspecialchars((string) ($scenario['description'] ?? ''), ENT_QUOTES, 'UTF-8');
-                $outcome = htmlspecialchars((string) ($scenario['outcome'] ?? ''), ENT_QUOTES, 'UTF-8');
+                $typeRaw = (string) ($scenario['type'] ?? $scenario['name'] ?? '');
+                $name = htmlspecialchars($this->formatScenarioTypeLabel($typeRaw), ENT_QUOTES, 'UTF-8');
+                $prob = $this->formatProbability($scenario['probability'] ?? null);
+                $outcome = htmlspecialchars((string) ($scenario['outcome'] ?? $scenario['description'] ?? ''), ENT_QUOTES, 'UTF-8');
+                $signal = htmlspecialchars((string) ($scenario['prediction_signal'] ?? ''), ENT_QUOTES, 'UTF-8');
                 
                 $html .= <<<HTML
                 <div class="scenario">
                     <div class="scenario-name">{$name}</div>
 HTML;
                 if ($prob !== '') {
-                    $html .= '<div class="scenario-prob">확률: ' . $prob . '</div>';
-                }
-                if ($desc !== '') {
-                    $html .= '<p>' . $desc . '</p>';
+                    $html .= '<div class="scenario-prob">확률: ' . htmlspecialchars($prob, ENT_QUOTES, 'UTF-8') . '</div>';
                 }
                 if ($outcome !== '') {
-                    $html .= '<p style="margin-top: 5px; font-style: italic;">예상 결과: ' . $outcome . '</p>';
+                    $html .= '<p><strong>예상 결과:</strong> ' . $outcome . '</p>';
+                }
+                if ($signal !== '') {
+                    $html .= '<p style="margin-top: 5px; color: #555;"><strong>관측 신호:</strong> ' . $signal . '</p>';
                 }
                 $html .= '</div>';
             }
         }
 
         $actionMatrix = $answer['action_matrix'] ?? [];
-        if ($actionMatrix !== []) {
+        if (is_array($actionMatrix) && $actionMatrix !== []) {
             $matrixLabel = htmlspecialchars($this->config['section_labels']['action_matrix'] ?? '핵심 행동 지표', ENT_QUOTES, 'UTF-8');
             $html .= '<h3 style="font-size: 11pt; margin: 20px 0 10px;">' . $matrixLabel . '</h3>';
-            $html .= '<table class="action-matrix"><thead><tr><th>행위자</th><th>주시해야 할 행동</th><th>의미</th></tr></thead><tbody>';
-            
-            foreach ($actionMatrix as $action) {
-                $actor = htmlspecialchars((string) ($action['actor'] ?? ''), ENT_QUOTES, 'UTF-8');
-                $watch = htmlspecialchars((string) ($action['action_to_watch'] ?? ''), ENT_QUOTES, 'UTF-8');
-                $signal = htmlspecialchars((string) ($action['signal'] ?? ''), ENT_QUOTES, 'UTF-8');
-                
-                $html .= "<tr><td>{$actor}</td><td>{$watch}</td><td>{$signal}</td></tr>";
+
+            $isObjectMatrix = isset($actionMatrix['watch']) || isset($actionMatrix['consider']) || isset($actionMatrix['act']);
+            if ($isObjectMatrix) {
+                $columns = [
+                    'watch' => '주시',
+                    'consider' => '검토',
+                    'act' => '대응',
+                ];
+                $html .= '<table class="action-matrix"><thead><tr>';
+                foreach ($columns as $colLabel) {
+                    $html .= '<th>' . htmlspecialchars($colLabel, ENT_QUOTES, 'UTF-8') . '</th>';
+                }
+                $html .= '</tr></thead><tbody><tr>';
+                foreach (array_keys($columns) as $key) {
+                    $items = $actionMatrix[$key] ?? [];
+                    if (!is_array($items)) {
+                        $items = [];
+                    }
+                    $html .= '<td style="vertical-align: top;">';
+                    if ($items === []) {
+                        $html .= '—';
+                    } else {
+                        $html .= '<ul style="margin: 0; padding-left: 16px;">';
+                        foreach ($items as $item) {
+                            $text = htmlspecialchars((string) $item, ENT_QUOTES, 'UTF-8');
+                            if ($text !== '') {
+                                $html .= '<li>' . $text . '</li>';
+                            }
+                        }
+                        $html .= '</ul>';
+                    }
+                    $html .= '</td>';
+                }
+                $html .= '</tr></tbody></table>';
+            } else {
+                $html .= '<table class="action-matrix"><thead><tr><th>행위자</th><th>주시해야 할 행동</th><th>의미</th></tr></thead><tbody>';
+                foreach ($actionMatrix as $action) {
+                    if (!is_array($action)) {
+                        continue;
+                    }
+                    $actor = htmlspecialchars((string) ($action['actor'] ?? ''), ENT_QUOTES, 'UTF-8');
+                    $watch = htmlspecialchars((string) ($action['action_to_watch'] ?? ''), ENT_QUOTES, 'UTF-8');
+                    $signal = htmlspecialchars((string) ($action['signal'] ?? ''), ENT_QUOTES, 'UTF-8');
+                    $html .= "<tr><td>{$actor}</td><td>{$watch}</td><td>{$signal}</td></tr>";
+                }
+                $html .= '</tbody></table>';
             }
-            
-            $html .= '</tbody></table>';
         }
 
         $html .= '</div>';
@@ -785,16 +839,45 @@ HTML;
         $gistAnchors = (int) ($meta['gist_anchor_count'] ?? 0);
         $externalMatched = (int) ($meta['matched_external_count'] ?? 0);
         $total = (int) ($meta['article_total'] ?? ($gistAnchors + $externalMatched));
+        $isFallback = !empty($meta['period_fallback']);
+
+        if ($externalMatched === 0 && $total > $gistAnchors) {
+            $externalMatched = $total - $gistAnchors;
+        }
+
+        $externalLabel = $isFallback ? "외부(폴백) {$externalMatched}건" : "외부 {$externalMatched}건";
 
         $html = <<<HTML
         <div class="section" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ccc;">
             <p style="font-size: 9pt; color: #666; text-align: right;">
-                신뢰도: {$confidenceKo} | 출처: the gist {$gistAnchors}건, 외부 {$externalMatched}건 (총 {$total}건)
+                신뢰도: {$confidenceKo} | 출처: the gist {$gistAnchors}건, {$externalLabel} (총 {$total}건)
             </p>
         </div>
 HTML;
 
         return $html;
+    }
+
+    private function formatScenarioTypeLabel(string $type): string
+    {
+        return match (strtolower(trim($type))) {
+            'base' => '기본 시나리오',
+            'upside' => '상향 시나리오',
+            'downside' => '하향 시나리오',
+            default => $type !== '' ? $type : '시나리오',
+        };
+    }
+
+    private function formatProbability(mixed $probability): string
+    {
+        if ($probability === null || $probability === '') {
+            return '';
+        }
+        if (is_numeric($probability)) {
+            return rtrim(rtrim(number_format((float) $probability, 1, '.', ''), '0'), '.') . '%';
+        }
+        $text = trim((string) $probability);
+        return str_contains($text, '%') ? $text : $text . '%';
     }
 
     private function getDocumentFooter(string $documentNumber): string

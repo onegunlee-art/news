@@ -40,12 +40,15 @@ class StrategicReportService
 
         $articles = $matchResult['matched'];
         $usedFallback = false;
+        $noGistAnchorsMode = false;
 
         if ($articles === [] && $gistAnchors === []) {
             $articles = $this->fetchWeekArticles($start, $end);
             if ($articles === []) {
                 $articles = $this->fetchRecentArticles(14);
                 $usedFallback = $articles !== [];
+            } else {
+                $noGistAnchorsMode = true;
             }
             $matchResult = ['matched' => $articles, 'dropped' => 0, 'total_external' => count($articles)];
         }
@@ -87,6 +90,8 @@ class StrategicReportService
         $meta['verification'] = $verification;
         if ($usedFallback) {
             $meta['period_fallback'] = 'last_14_days';
+        } elseif ($noGistAnchorsMode) {
+            $meta['period_fallback'] = 'week_articles_only';
         }
 
         if ($verification['confidence_score'] < self::CONFIDENCE_THRESHOLD) {

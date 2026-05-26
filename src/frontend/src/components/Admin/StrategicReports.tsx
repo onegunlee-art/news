@@ -467,6 +467,27 @@ export default function StrategicReports() {
                   {scqa.answer.why_it_matters_chain?.map((step, i) => (
                     <p key={i} className="text-sm text-slate-400">{i + 1}. {step}</p>
                   ))}
+                  {scqa.answer.scenarios && scqa.answer.scenarios.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                      <p className="text-xs text-slate-500 uppercase tracking-wide">시나리오</p>
+                      {scqa.answer.scenarios.map((s, i) => (
+                        <div key={i} className="p-3 rounded-lg bg-slate-900/50 text-sm">
+                          <div className="flex items-baseline justify-between gap-2 mb-1">
+                            <p className="text-slate-200 font-medium">
+                              {s.type === 'base' ? '기본 시나리오' : s.type === 'upside' ? '상향 시나리오' : s.type === 'downside' ? '하향 시나리오' : s.type}
+                            </p>
+                            {s.probability != null && (
+                              <span className="text-xs text-cyan-400/80 shrink-0">{s.probability}%</span>
+                            )}
+                          </div>
+                          {s.outcome && <p className="text-slate-300">{s.outcome}</p>}
+                          {s.prediction_signal && (
+                            <p className="text-slate-500 mt-1 text-xs">관측 신호: {s.prediction_signal}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   {scqa.answer.action_matrix && (
                     <div className="grid grid-cols-3 gap-2 mt-3 text-xs">
                       {([['watch', '주시'], ['consider', '검토'], ['act', '대응']] as const).map(([k, label]) => (
