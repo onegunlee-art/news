@@ -1,6 +1,12 @@
 <?php
 declare(strict_types=1);
 
+// Composer autoload (dompdf 등 외부 라이브러리용)
+$composerAutoload = __DIR__ . '/../../vendor/autoload.php';
+if (file_exists($composerAutoload)) {
+    require_once $composerAutoload;
+}
+
 function intelligenceFindProjectRoot(): string
 {
     $candidates = [__DIR__ . '/../../', __DIR__ . '/../../../'];
