@@ -29,6 +29,8 @@ require_once __DIR__ . '/../../../src/backend/autoload.php';
 
 use App\Services\IntelligenceCollectorService;
 use App\Services\StrategicReportService;
+use App\Services\StrategicReportPdfService;
+use App\Services\MailService;
 
 function srJson(array $data, int $code = 200): never
 {
@@ -119,6 +121,34 @@ if ($method === 'GET') {
         }
         unset($row);
         srJson(['success' => true, 'articles' => $rows]);
+    }
+
+    if ($action === 'export_pdf' || $action === 'preview_pdf') {
+        $id = (int) ($_GET['id'] ?? 0);
+        if ($id <= 0) {
+            srError('id required');
+        }
+        $stmt = $pdo->prepare('SELECT * FROM weekly_strategic_reports WHERE id = :id');
+        $stmt->execute(['id' => $id]);
+        $report = $stmt->fetch();
+        if (!$report) {
+            srError('Report not found', 404);
+        }
+
+        try {
+            $pdfService = new StrategicReportPdfService();
+            
+            header_remove('Content-Type');
+            
+            if ($action === 'preview_pdf') {
+                $pdfService->outputInline($report);
+            } else {
+                $pdfService->outputAttachment($report);
+            }
+            exit;
+        } catch (Throwable $e) {
+            srError('PDF 생성 실패: ' . $e->getMessage(), 500);
+        }
     }
 
     srError('Unknown action');
@@ -227,6 +257,110 @@ if ($method === 'POST') {
             'id' => $id,
         ]);
         srJson(['success' => true, 'id' => $id, 'status' => $status]);
+    }
+
+    if ($action === 'send_email') {
+        $id = (int) ($input['id'] ?? 0);
+        if ($id <= 0) {
+            srError('id required');
+        }
+
+        $to = trim((string) ($input['to'] ?? ''));
+        if ($to === '' || !filter_var($to, FILTER_VALIDATE_EMAIL)) {
+            srError('유효한 이메일 주소가 필요합니다');
+        }
+
+        $stmt = $pdo->prepare('SELECT * FROM weekly_strategic_reports WHERE id = :id');
+        $stmt->execute(['id' => $id]);
+        $report = $stmt->fetch();
+        if (!$report) {
+            srError('Report not found', 404);
+        }
+
+        if (($report['status'] ?? 'draft') !== 'approved') {
+            srError('승인된(approved) 레포트만 이메일 발송이 가능합니다', 403);
+        }
+
+        $mailService = new MailService();
+        if (!$mailService->isResendConfigured()) {
+            srError('RESEND_API_KEY가 설정되지 않았습니다', 500);
+        }
+
+        try {
+            $pdfService = new StrategicReportPdfService();
+            $pdfBase64 = $pdfService->generateBase64($report);
+            $filename = $pdfService->generateFilename($report);
+
+            $docConfig = require dirname(__DIR__, 3) . '/config/strategic_report_document.php';
+            $reportWeek = (string) ($report['report_week'] ?? date('Y-\WW'));
+            
+            $scqa = $report['scqa_edited_json'] ?? $report['scqa_raw_json'] ?? '{}';
+            if (is_string($scqa)) {
+                $scqa = json_decode($scqa, true) ?: [];
+            }
+            $coreQuestion = trim((string) ($scqa['core_question'] ?? $scqa['structural_shift']['headline'] ?? '주간 전략 레포트'));
+
+            $subjectTemplate = $docConfig['email']['subject_template'] ?? '[the gist] 주간 지정학 전략 레포트 {report_week}';
+            $subject = isset($input['subject']) && trim((string) $input['subject']) !== ''
+                ? (string) $input['subject']
+                : str_replace('{report_week}', $reportWeek, $subjectTemplate);
+
+            $message = isset($input['message']) && trim((string) $input['message']) !== ''
+                ? (string) $input['message']
+                : '';
+
+            $textBody = "the gist 주간 지정학 전략 레포트 ({$reportWeek})\n\n"
+                . "핵심 질문: {$coreQuestion}\n\n"
+                . ($message !== '' ? $message . "\n\n" : '')
+                . "첨부된 PDF를 확인해 주세요.";
+
+            $htmlBody = <<<HTML
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body style="font-family: 'Noto Sans KR', sans-serif; line-height: 1.6; color: #333;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2 style="border-bottom: 2px solid #333; padding-bottom: 10px;">the gist. 주간 지정학 전략 레포트</h2>
+        <p style="font-size: 14px; color: #666;">{$reportWeek}</p>
+        <div style="background: #f5f5f5; padding: 15px; border-left: 4px solid #333; margin: 20px 0;">
+            <strong>핵심 질문:</strong> {$coreQuestion}
+        </div>
+HTML;
+            if ($message !== '') {
+                $htmlBody .= '<p>' . nl2br(htmlspecialchars($message, ENT_QUOTES, 'UTF-8')) . '</p>';
+            }
+            $htmlBody .= <<<HTML
+        <p style="margin-top: 20px;">첨부된 PDF를 확인해 주세요.</p>
+        <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
+        <p style="font-size: 12px; color: #999;">
+            이 이메일은 the gist 전략 인텔리전스 시스템에서 자동 발송되었습니다.
+        </p>
+    </div>
+</body>
+</html>
+HTML;
+
+            $result = $mailService->sendWithAttachment(
+                $to,
+                $subject,
+                $textBody,
+                $htmlBody,
+                [['filename' => $filename, 'content' => $pdfBase64]]
+            );
+
+            if ($result['success']) {
+                srJson([
+                    'success' => true,
+                    'message_id' => $result['message_id'] ?? null,
+                    'filename' => $filename,
+                    'to' => $to,
+                ]);
+            } else {
+                srError($result['error'] ?? '이메일 발송 실패', 500);
+            }
+        } catch (Throwable $e) {
+            srError('이메일 발송 실패: ' . $e->getMessage(), 500);
+        }
     }
 
     srError('Unknown action');

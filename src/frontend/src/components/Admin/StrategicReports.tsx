@@ -1,8 +1,18 @@
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useState, type ReactNode, type FormEvent } from 'react';
 import MaterialIcon from '../Common/MaterialIcon';
 import { adminFetch } from '../../services/api';
 
 const API = `${import.meta.env.VITE_API_URL || '/api'}/admin/strategic-reports.php`;
+
+interface EmailModalState {
+  open: boolean;
+  to: string;
+  subject: string;
+  message: string;
+  sending: boolean;
+  error: string;
+  success: string;
+}
 
 type ReportStatus = 'draft' | 'reviewed' | 'approved';
 
@@ -99,6 +109,15 @@ export default function StrategicReports() {
   const [loading, setLoading] = useState(false);
   const [actionMsg, setActionMsg] = useState('');
   const [pipelineStats, setPipelineStats] = useState('');
+  const [emailModal, setEmailModal] = useState<EmailModalState>({
+    open: false,
+    to: '',
+    subject: '',
+    message: '',
+    sending: false,
+    error: '',
+    success: '',
+  });
 
   const loadList = useCallback(async () => {
     const res = await adminFetch(`${API}?action=list&limit=30`);
@@ -192,6 +211,85 @@ export default function StrategicReports() {
     await postAction({ action: 'update_status', id: detail.id, status, editor_notes: editorNotes });
   };
 
+  const openPdfPreview = () => {
+    if (!detail) return;
+    window.open(`${API}?action=preview_pdf&id=${detail.id}`, '_blank');
+  };
+
+  const downloadPdf = () => {
+    if (!detail) return;
+    window.location.href = `${API}?action=export_pdf&id=${detail.id}`;
+  };
+
+  const openEmailModal = () => {
+    if (!detail) return;
+    const reportWeek = detail.report_week || '';
+    const scqaData = (detail.scqa_edited_json ?? detail.scqa_raw_json) as ScqaReport | undefined;
+    const coreQuestion = scqaData?.core_question || scqaData?.structural_shift?.headline || '주간 전략 레포트';
+    
+    setEmailModal({
+      open: true,
+      to: '',
+      subject: `[the gist] 주간 지정학 전략 레포트 ${reportWeek}`,
+      message: `핵심 질문: ${coreQuestion}\n\n첨부된 PDF를 확인해 주세요.`,
+      sending: false,
+      error: '',
+      success: '',
+    });
+  };
+
+  const closeEmailModal = () => {
+    setEmailModal((prev) => ({ ...prev, open: false, error: '', success: '' }));
+  };
+
+  const sendEmail = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!detail || emailModal.sending) return;
+
+    if (!emailModal.to.trim() || !emailModal.to.includes('@')) {
+      setEmailModal((prev) => ({ ...prev, error: '유효한 이메일 주소를 입력해주세요' }));
+      return;
+    }
+
+    setEmailModal((prev) => ({ ...prev, sending: true, error: '', success: '' }));
+
+    try {
+      const res = await adminFetch(API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'send_email',
+          id: detail.id,
+          to: emailModal.to.trim(),
+          subject: emailModal.subject.trim() || undefined,
+          message: emailModal.message.trim() || undefined,
+        }),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        setEmailModal((prev) => ({
+          ...prev,
+          sending: false,
+          success: `이메일이 발송되었습니다 (${data.to})`,
+        }));
+        setTimeout(() => closeEmailModal(), 2000);
+      } else {
+        setEmailModal((prev) => ({
+          ...prev,
+          sending: false,
+          error: data.error || '발송에 실패했습니다',
+        }));
+      }
+    } catch {
+      setEmailModal((prev) => ({
+        ...prev,
+        sending: false,
+        error: '요청 중 오류가 발생했습니다',
+      }));
+    }
+  };
+
   const scqa = detail ? ((detail.scqa_edited_json ?? detail.scqa_raw_json) as ScqaReport | undefined) : undefined;
   const diffs = Array.isArray(detail?.edit_diff_json) ? detail!.edit_diff_json! : [];
 
@@ -240,7 +338,7 @@ export default function StrategicReports() {
                 <span className={`text-xs px-2 py-1 rounded-full ${statusStyle[detail.status]}`}>{statusLabel[detail.status]}</span>
                 <span className="text-xs text-slate-500">신뢰도: {detail.confidence}</span>
                 {scqa.meta?.language === 'ko' && <span className="text-xs text-emerald-500/80">한국어</span>}
-                <div className="ml-auto flex gap-2">
+                <div className="ml-auto flex flex-wrap gap-2">
                   {detail.status === 'draft' && (
                     <button type="button" onClick={() => saveReviewed()} disabled={loading}
                       className="px-3 py-1.5 text-xs rounded-lg bg-amber-600 text-white hover:bg-amber-500">검토 저장</button>
@@ -254,6 +352,43 @@ export default function StrategicReports() {
                       className="px-3 py-1.5 text-xs rounded-lg bg-slate-600 text-white hover:bg-slate-500">초안으로</button>
                   )}
                 </div>
+              </div>
+
+              {/* PDF 및 이메일 버튼 */}
+              <div className="flex flex-wrap gap-2 items-center pt-2 border-t border-slate-700/50">
+                <button
+                  type="button"
+                  onClick={openPdfPreview}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg bg-slate-700 text-white hover:bg-slate-600"
+                >
+                  <MaterialIcon name="visibility" size={14} className="w-3.5 h-3.5" />
+                  PDF 미리보기
+                </button>
+                <button
+                  type="button"
+                  onClick={downloadPdf}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg bg-slate-700 text-white hover:bg-slate-600"
+                >
+                  <MaterialIcon name="download" size={14} className="w-3.5 h-3.5" />
+                  PDF 다운로드
+                </button>
+                <button
+                  type="button"
+                  onClick={openEmailModal}
+                  disabled={detail.status !== 'approved'}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg ${
+                    detail.status === 'approved'
+                      ? 'bg-cyan-600 text-white hover:bg-cyan-500'
+                      : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                  }`}
+                  title={detail.status !== 'approved' ? '승인된 레포트만 이메일 발송 가능' : ''}
+                >
+                  <MaterialIcon name="mail" size={14} className="w-3.5 h-3.5" />
+                  이메일 발송
+                </button>
+                {detail.status !== 'approved' && (
+                  <span className="text-[10px] text-slate-500">승인 후 이메일 발송 가능</span>
+                )}
               </div>
 
               <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-4 space-y-3">
@@ -362,6 +497,113 @@ export default function StrategicReports() {
           )}
         </div>
       </div>
+
+      {/* 이메일 발송 모달 */}
+      {emailModal.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-700">
+              <h3 className="text-white font-semibold flex items-center gap-2">
+                <MaterialIcon name="mail" size={20} className="text-cyan-400" />
+                전략 레포트 이메일 발송
+              </h3>
+              <button
+                type="button"
+                onClick={closeEmailModal}
+                className="text-slate-400 hover:text-white transition-colors"
+              >
+                <MaterialIcon name="close" size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={sendEmail} className="p-5 space-y-4">
+              <div>
+                <label className="block text-xs text-slate-400 mb-1.5">
+                  수신자 이메일 <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="email"
+                  value={emailModal.to}
+                  onChange={(e) => setEmailModal((prev) => ({ ...prev, to: e.target.value, error: '' }))}
+                  placeholder="recipient@example.com"
+                  className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2.5 text-sm text-white placeholder-slate-500 focus:border-cyan-500 focus:outline-none"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs text-slate-400 mb-1.5">제목</label>
+                <input
+                  type="text"
+                  value={emailModal.subject}
+                  onChange={(e) => setEmailModal((prev) => ({ ...prev, subject: e.target.value }))}
+                  className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2.5 text-sm text-white placeholder-slate-500 focus:border-cyan-500 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs text-slate-400 mb-1.5">메시지 (선택)</label>
+                <textarea
+                  value={emailModal.message}
+                  onChange={(e) => setEmailModal((prev) => ({ ...prev, message: e.target.value }))}
+                  rows={3}
+                  className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2.5 text-sm text-white placeholder-slate-500 focus:border-cyan-500 focus:outline-none resize-none"
+                />
+              </div>
+
+              <div className="bg-slate-800/50 rounded-lg p-3 text-xs text-slate-400">
+                <p className="flex items-center gap-1.5 mb-1">
+                  <MaterialIcon name="attach_file" size={14} />
+                  PDF 파일이 자동 첨부됩니다
+                </p>
+                <p className="text-slate-500">
+                  {detail?.report_week && `strategic-report-TG-SR-${detail.report_week}.pdf`}
+                </p>
+              </div>
+
+              {emailModal.error && (
+                <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-sm text-red-400">
+                  {emailModal.error}
+                </div>
+              )}
+
+              {emailModal.success && (
+                <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-3 text-sm text-emerald-400 flex items-center gap-2">
+                  <MaterialIcon name="check_circle" size={16} />
+                  {emailModal.success}
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={closeEmailModal}
+                  className="flex-1 px-4 py-2.5 text-sm rounded-lg border border-slate-600 text-slate-300 hover:bg-slate-800 transition-colors"
+                >
+                  취소
+                </button>
+                <button
+                  type="submit"
+                  disabled={emailModal.sending}
+                  className="flex-1 px-4 py-2.5 text-sm rounded-lg bg-cyan-600 text-white hover:bg-cyan-500 disabled:bg-cyan-600/50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                >
+                  {emailModal.sending ? (
+                    <>
+                      <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      발송 중...
+                    </>
+                  ) : (
+                    <>
+                      <MaterialIcon name="send" size={16} />
+                      발송
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

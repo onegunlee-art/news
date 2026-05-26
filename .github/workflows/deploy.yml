@@ -200,6 +200,14 @@ jobs:
             -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
             aws/thegist-server-locations.inc "$REMOTE:$DEST/aws/"
 
+          # Composer 관련 파일 (dompdf 등 의존성 설치용)
+          rsync -avz \
+            -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
+            composer.json composer.lock "$REMOTE:$DEST/" 2>/dev/null || \
+          rsync -avz \
+            -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
+            composer.json "$REMOTE:$DEST/"
+
       # Nginx config는 서버에서 직접 관리 (certbot SSL 블록 포함).
       # sw.js/registerSW.js no-cache 블록만 없으면 추가한다.
       - name: Ensure sw.js no-cache in Nginx config
@@ -322,6 +330,18 @@ jobs:
           REMOTE="${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}"
           KEY="$HOME/.ssh/ec2_key"
           ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" "
+            cd /var/www/thegist
+            
+            # Composer 의존성 설치 (dompdf 등)
+            if [ -f composer.json ]; then
+              echo 'Installing Composer dependencies...'
+              if command -v composer &> /dev/null; then
+                sudo composer install --no-dev --optimize-autoloader --no-interaction 2>&1 || echo 'Composer install had issues, continuing...'
+              else
+                echo 'Composer not found, skipping dependency install'
+              fi
+            fi
+            
             sudo chown -R www-data:www-data /var/www/thegist/
             sudo chmod -R 755 /var/www/thegist/
             sudo chmod -R 775 /var/www/thegist/storage/
