@@ -12,8 +12,9 @@ try {
     intelligenceLoadEnv($root);
     $pdo = intelligenceGetDb($root);
     intelligenceEnsureTables($pdo);
+    intelligenceEnsureMoatTables($pdo);
     $week = $argv[1] ?? null;
-    $service = new StrategicReportService($pdo);
+    $service = intelligenceCreateStrategicReportService($pdo);
     $result = $service->generateForWeek($week);
     echo json_encode($result, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) . PHP_EOL;
     if (!($result['success'] ?? false)) {

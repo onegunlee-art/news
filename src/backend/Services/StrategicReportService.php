@@ -14,6 +14,8 @@ class StrategicReportService
     private OpenAIService $openai;
     private IntelligenceEmbeddingService $embedder;
     private ?RAGService $rag;
+    private JudgmentLessonService $lessons;
+    private PredictionCalibrationService $calibration;
     private array $config;
 
     private const SIMILARITY_THRESHOLD = 0.55;
@@ -21,12 +23,20 @@ class StrategicReportService
     private const CONFIDENCE_THRESHOLD = 0.6;
     private const MAX_SELF_CORRECTION = 1;
 
-    public function __construct(PDO $pdo, ?OpenAIService $openai = null, ?IntelligenceEmbeddingService $embedder = null, ?RAGService $rag = null)
-    {
+    public function __construct(
+        PDO $pdo,
+        ?OpenAIService $openai = null,
+        ?IntelligenceEmbeddingService $embedder = null,
+        ?RAGService $rag = null,
+        ?JudgmentLessonService $lessons = null,
+        ?PredictionCalibrationService $calibration = null
+    ) {
         $this->pdo = $pdo;
         $this->openai = $openai ?? new OpenAIService([]);
         $this->embedder = $embedder ?? new IntelligenceEmbeddingService();
         $this->rag = $rag;
+        $this->lessons = $lessons ?? new JudgmentLessonService($pdo, $this->openai, $this->rag);
+        $this->calibration = $calibration ?? new PredictionCalibrationService($pdo);
         $configPath = dirname(__DIR__, 3) . '/config/strategic_report.php';
         $this->config = is_file($configPath) ? require $configPath : [];
     }
@@ -73,9 +83,14 @@ class StrategicReportService
         $verification = $this->verifyScqa($scqa, $gistAnchors, $articles, $matchResult);
         $correctionAttempts = 0;
 
-        if ($verification['confidence_score'] < self::CONFIDENCE_THRESHOLD && $correctionAttempts < self::MAX_SELF_CORRECTION) {
+        if (($verification['confidence_score'] < self::CONFIDENCE_THRESHOLD
+                || ($verification['lesson_violations'] ?? []) !== [])
+            && $correctionAttempts < self::MAX_SELF_CORRECTION) {
             $correctionAttempts++;
-            $correctionHints = $this->buildCorrectionHints($verification);
+            $correctionHints = array_merge(
+                $this->buildCorrectionHints($verification),
+                $verification['lesson_violations'] ?? []
+            );
             $correctedScqa = $this->generateScqaWithCorrection($context, $start, $end, $totalSources, $scqa, $correctionHints);
             if ($correctedScqa !== null) {
                 $scqa = $this->normalizeScqa($correctedScqa);
@@ -142,6 +157,12 @@ class StrategicReportService
             $totalMatched
         );
 
+        $lessons = $this->lessons->collectLessonsForScqa($scqa);
+        $lessonViolations = $this->lessons->buildViolationHints($scqa, $lessons);
+        if ($lessonViolations !== [] && $confidenceScore >= self::CONFIDENCE_THRESHOLD) {
+            $confidenceScore = max(0.0, $confidenceScore - 0.08);
+        }
+
         return [
             'source_diversity' => $sourceDiversity,
             'avg_similarity' => $avgSimilarity,
@@ -152,6 +173,8 @@ class StrategicReportService
             'has_structural_shift' => $hasShift,
             'confidence_score' => $confidenceScore,
             'confidence_label' => $confidenceScore >= 0.7 ? 'high' : ($confidenceScore >= self::CONFIDENCE_THRESHOLD ? 'medium' : 'low'),
+            'lesson_count' => count($lessons),
+            'lesson_violations' => $lessonViolations,
             'self_correction_applied' => false,
             'correction_hints_used' => [],
         ];
@@ -787,6 +810,9 @@ PROMPT;
             $row = $fetch->fetch();
             $id = (int) ($row['id'] ?? 0);
         }
+        if ($id > 0) {
+            $this->calibration->syncFromReport($id, $week, $scqa);
+        }
         return $id;
     }
 
@@ -846,73 +872,76 @@ PROMPT;
      */
     public function storeJudgmentFeedback(int $reportId, array $editDiff, array $judgmentFeedbacks, string $editReason): array
     {
-        if ($this->rag === null || !$this->rag->isConfigured()) {
-            return ['stored' => 0, 'errors' => ['RAGService not configured']];
+        $lessonResult = ['lessons_stored' => 0, 'skipped' => 0, 'errors' => []];
+        if ($editDiff !== []) {
+            $lessonResult = $this->lessons->processEditDiffs($reportId, $editDiff);
         }
 
-        $stmt = $this->pdo->prepare('SELECT report_week, executive_summary FROM weekly_strategic_reports WHERE id = :id');
+        $stmt = $this->pdo->prepare('SELECT report_week FROM weekly_strategic_reports WHERE id = :id');
         $stmt->execute(['id' => $reportId]);
         $report = $stmt->fetch();
         if (!$report) {
-            return ['stored' => 0, 'errors' => ['Report not found']];
+            return ['stored' => 0, 'errors' => ['Report not found'], 'lessons' => $lessonResult];
         }
 
         $stored = 0;
-        $errors = [];
-
-        $feedbackTexts = [];
-
-        if ($editReason !== '') {
-            $feedbackTexts[] = "【편집 이유】 " . $editReason;
-        }
-
-        foreach ($editDiff as $diff) {
-            $path = (string) ($diff['path'] ?? '');
-            $before = $diff['before'] ?? null;
-            $after = $diff['after'] ?? null;
-            if ($before === $after) {
-                continue;
-            }
-            $beforeStr = is_array($before) ? json_encode($before, JSON_UNESCAPED_UNICODE) : (string) $before;
-            $afterStr = is_array($after) ? json_encode($after, JSON_UNESCAPED_UNICODE) : (string) $after;
-            if (mb_strlen($beforeStr) > 20 || mb_strlen($afterStr) > 20) {
-                $feedbackTexts[] = "【{$path}】\n변경 전: {$beforeStr}\n변경 후: {$afterStr}";
-            }
-        }
+        $errors = $lessonResult['errors'];
 
         foreach ($judgmentFeedbacks as $feedback) {
+            $comment = trim((string) ($feedback['comment'] ?? ''));
+            if ($comment === '') {
+                continue;
+            }
             $category = (string) ($feedback['category'] ?? 'general');
-            $comment = (string) ($feedback['comment'] ?? '');
-            if ($comment !== '') {
-                $feedbackTexts[] = "【{$category}】 {$comment}";
+            $principle = [
+                'rule' => $comment,
+                'error_type' => $category,
+                'scqa_section' => '*',
+                'polarity' => 'tighten',
+            ];
+            $evidence = ['source' => 'admin_feedback', 'report_id' => $reportId];
+            $lessonId = $this->lessons->upsertLesson($principle, $evidence, $reportId);
+            if ($lessonId !== null) {
+                $stored++;
             }
         }
 
-        if ($feedbackTexts === []) {
-            return ['stored' => 0, 'errors' => []];
+        if ($editReason !== '' && mb_strlen($editReason) > 15) {
+            $principle = $this->lessons->extractPrinciple('edit_reason', '', $editReason);
+            if ($principle !== null) {
+                $id = $this->lessons->upsertLesson($principle, [
+                    'source' => 'edit_reason',
+                    'report_id' => $reportId,
+                    'reason' => $editReason,
+                ], $reportId);
+                if ($id !== null) {
+                    $stored++;
+                }
+            }
         }
 
-        $combinedText = "Strategic Report #{$reportId} ({$report['report_week']}) 편집 피드백\n\n"
-            . implode("\n\n---\n\n", $feedbackTexts);
-
-        $metadata = [
-            'type' => 'strategic_report_feedback',
-            'report_id' => $reportId,
-            'report_week' => (string) $report['report_week'],
-            'feedback_count' => count($feedbackTexts),
-            'has_edit_diff' => count($editDiff) > 0,
-            'created_at' => date('c'),
+        return [
+            'stored' => $stored,
+            'errors' => $errors,
+            'lessons' => $lessonResult,
         ];
+    }
 
-        try {
-            $critiqueId = 'sr_' . $reportId . '_' . time();
-            $count = $this->rag->storeCritiqueEmbedding($critiqueId, $combinedText, $metadata);
-            $stored = $count;
-        } catch (\Throwable $e) {
-            $errors[] = $e->getMessage();
-        }
+    public function getCalibrationSummary(): array
+    {
+        return $this->calibration->getCalibrationSummary();
+    }
 
-        return ['stored' => $stored, 'errors' => $errors];
+    /** @return list<array<string, mixed>> */
+    public function getPredictionOutcomes(int $reportId): array
+    {
+        return $this->calibration->listForReport($reportId);
+    }
+
+    /** @param list<array<string, mixed>> $scores */
+    public function scorePredictionOutcomes(array $scores, string $scoredBy = 'admin'): int
+    {
+        return $this->calibration->scoreOutcomes($scores, $scoredBy);
     }
 
     /**

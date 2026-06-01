@@ -49,6 +49,7 @@ try {
     intelligenceLoadEnv($root);
     $pdo = intelligenceGetDb($root);
     intelligenceEnsureTables($pdo);
+    intelligenceEnsureMoatTables($pdo);
 } catch (Throwable $e) {
     srError($e->getMessage(), 500);
 }
@@ -85,7 +86,38 @@ if ($method === 'GET') {
                 $row[$col] = json_decode($row[$col], true);
             }
         }
+        $service = intelligenceCreateStrategicReportService($pdo);
+        $row['prediction_outcomes'] = $service->getPredictionOutcomes($id);
         srJson(['success' => true, 'report' => $row]);
+    }
+
+    if ($action === 'calibration_summary') {
+        $service = intelligenceCreateStrategicReportService($pdo);
+        srJson(['success' => true, 'calibration' => $service->getCalibrationSummary()]);
+    }
+
+    if ($action === 'prediction_outcomes') {
+        $id = (int) ($_GET['report_id'] ?? $_GET['id'] ?? 0);
+        if ($id <= 0) {
+            srError('report_id required');
+        }
+        $service = intelligenceCreateStrategicReportService($pdo);
+        srJson(['success' => true, 'outcomes' => $service->getPredictionOutcomes($id)]);
+    }
+
+    if ($action === 'lessons') {
+        $limit = max(1, min(100, (int) ($_GET['limit'] ?? 30)));
+        try {
+            $stmt = $pdo->prepare(
+                'SELECT id, rule, error_type, scqa_section, topic_category, polarity, frequency, status, updated_at
+                 FROM judgment_lessons ORDER BY frequency DESC, id DESC LIMIT :lim'
+            );
+            $stmt->bindValue(':lim', $limit, PDO::PARAM_INT);
+            $stmt->execute();
+            srJson(['success' => true, 'lessons' => $stmt->fetchAll() ?: []]);
+        } catch (Throwable $e) {
+            srJson(['success' => true, 'lessons' => [], 'note' => 'judgment_lessons table not ready']);
+        }
     }
 
     if ($action === 'stats') {
@@ -175,10 +207,26 @@ if ($method === 'POST') {
     }
 
     if ($action === 'generate') {
-        $service = new StrategicReportService($pdo);
+        $service = intelligenceCreateStrategicReportService($pdo);
         $week = isset($input['report_week']) ? (string) $input['report_week'] : null;
         $result = $service->generateForWeek($week);
         srJson($result, ($result['success'] ?? false) ? 200 : 500);
+    }
+
+    if ($action === 'score_predictions') {
+        $reportId = (int) ($input['report_id'] ?? 0);
+        $scores = $input['scores'] ?? [];
+        if ($reportId <= 0 || !is_array($scores)) {
+            srError('report_id and scores[] required');
+        }
+        $service = intelligenceCreateStrategicReportService($pdo);
+        $updated = $service->scorePredictionOutcomes($scores, (string) ($input['scored_by'] ?? 'admin'));
+        srJson([
+            'success' => true,
+            'updated' => $updated,
+            'calibration' => $service->getCalibrationSummary(),
+            'outcomes' => $service->getPredictionOutcomes($reportId),
+        ]);
     }
 
     if ($action === 'update') {
@@ -224,7 +272,7 @@ if ($method === 'POST') {
         $judgmentResult = ['stored' => 0, 'errors' => []];
         if ($diff !== [] || $judgmentFeedbacks !== [] || $editReason !== '') {
             try {
-                $service = new StrategicReportService($pdo);
+                $service = intelligenceCreateStrategicReportService($pdo);
                 $judgmentResult = $service->storeJudgmentFeedback($id, $diff, $judgmentFeedbacks, $editReason);
             } catch (Throwable $e) {
                 $judgmentResult['errors'][] = $e->getMessage();

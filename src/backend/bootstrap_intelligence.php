@@ -130,3 +130,45 @@ function intelligenceDbSnapshot(PDO $pdo): array
         return ['error' => $e->getMessage()];
     }
 }
+
+/**
+ * StrategicReportService with RAGService wired (verifyScqa critique_grounding, judgment feedback).
+ * Requires src/agents/autoload.php loaded first.
+ */
+function intelligenceCreateStrategicReportService(PDO $pdo): \App\Services\StrategicReportService
+{
+    if (!class_exists(\Agents\Services\OpenAIService::class)) {
+        throw new RuntimeException('Agents autoload required before intelligenceCreateStrategicReportService');
+    }
+    $projectRoot = intelligenceFindProjectRoot();
+    $openaiConfig = require $projectRoot . 'config/openai.php';
+    $openai = new \Agents\Services\OpenAIService($openaiConfig);
+    $supabase = new \Agents\Services\SupabaseService([]);
+    $rag = null;
+    if ($openai->isConfigured() && $supabase->isConfigured()) {
+        $rag = new \Agents\Services\RAGService($openai, $supabase);
+    }
+    $lessons = new \App\Services\JudgmentLessonService($pdo, $openai, $rag);
+    return new \App\Services\StrategicReportService($pdo, $openai, null, $rag, $lessons);
+}
+
+function intelligenceEnsureMoatTables(PDO $pdo): void
+{
+    $sqlFile = intelligenceFindProjectRoot() . 'database/migrations/add_judgment_moat.sql';
+    if (!is_file($sqlFile)) {
+        return;
+    }
+    $sql = file_get_contents($sqlFile);
+    if ($sql === false) {
+        return;
+    }
+    foreach (array_filter(array_map('trim', preg_split('/;\s*\n/', $sql) ?: [])) as $statement) {
+        if ($statement !== '' && stripos($statement, 'CREATE TABLE') !== false) {
+            try {
+                $pdo->exec($statement);
+            } catch (Throwable $e) {
+                error_log('intelligenceEnsureMoatTables: ' . $e->getMessage());
+            }
+        }
+    }
+}

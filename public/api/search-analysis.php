@@ -64,8 +64,13 @@ try {
 }
 
 require_once $projectRoot . 'src/agents/autoload.php';
+require_once $projectRoot . 'src/backend/autoload.php';
+require_once __DIR__ . '/lib/searchAnalysisExternalIntel.php';
 
 $openaiCfg = require $projectRoot . 'config/openai.php';
+$searchCfg = is_file($projectRoot . 'config/search_analysis.php')
+    ? require $projectRoot . 'config/search_analysis.php'
+    : [];
 $openai = new OpenAIService($openaiCfg);
 $supabase = new SupabaseService([]);
 
@@ -161,22 +166,42 @@ foreach ($newsIds as $nid) {
 $articleText = implode("\n\n", $articleBlocks);
 $topicLine = $clusterName !== '' ? "주제: \"{$clusterName}\"\n\n" : '';
 
-$systemPrompt = '당신은 뉴스 분석 전문 AI입니다. 여러 기사를 종합하여 깊이 있는 분석을 제공합니다.';
+$externalQuery = $clusterName;
+foreach ($newsIds as $nid) {
+    $wi = trim((string) ($articles[$nid]['why_important'] ?? ''));
+    if ($wi !== '') {
+        $externalQuery .= ' ' . $wi;
+    }
+}
+$externalSources = searchAnalysisFetchExternalIntel($externalQuery, $searchCfg);
+
+$useGistTone = !empty($searchCfg['use_gist_tone']);
+$systemPrompt = $useGistTone && !empty($searchCfg['system_prompt'])
+    ? (string) $searchCfg['system_prompt']
+    : '당신은 뉴스 분석 전문 AI입니다. 여러 기사를 종합하여 깊이 있는 분석을 제공합니다.';
+
 $userPrompt = <<<PROMPT
 {$topicLine}다음 기사 자료들을 종합 분석하라:
 
 {$articleText}
 
-분석 구조:
-1. 핵심 결론을 첫 문장에 구체적으로 제시
-2. 기사들의 관점을 비교 분석 (일치하는 점 vs 충돌하는 점)
-3. 이 흐름이 향후 미칠 영향과 종합 판단
+【합의점】
+(기사들이 공통으로 보는 핵심 — 1문단, 1~2문장)
+
+【충돌점】
+(관점 A — 1문단, 1~2문장)
+(관점 B — 1문단, 1~2문장)
+(왜 다른지 — 1문단, 1~2문장)
+
+【함의】
+(향후 영향 + 종합 판단 — 1문단, 1~2문장)
 
 규칙:
 - "기사1", "기사2" 등 기사 번호로 언급하지 말 것. 내용 자체로 자연스럽게 녹여서 서술
 - 한국어 존댓말(~이에요, ~거든요, ~있어요)로 답변
-- 마크다운 문법 사용 금지 (번호와 하이픈만 허용)
+- 마크다운 문법 사용 금지 (【】섹션 헤더만 허용)
 - 근거 없는 추측 금지
+- 각 【】섹션 헤더를 반드시 포함하고, 섹션 사이 빈 줄 1개
 PROMPT;
 
 // 4. SSE streaming
@@ -188,7 +213,20 @@ while (ob_get_level()) {
     ob_end_flush();
 }
 
-sendSSE('start', ['cluster_name' => $clusterName, 'article_count' => count($articleBlocks)]);
+sendSSE('start', [
+    'cluster_name' => $clusterName,
+    'article_count' => count($articleBlocks),
+    'external_sources' => $externalSources,
+]);
+
+if ($externalSources !== []) {
+    sendSSE('external', ['sources' => $externalSources]);
+}
+
+$analysisModel = (string) ($searchCfg['analysis_model'] ?? $openaiCfg['model'] ?? 'gpt-4o-mini');
+if (str_contains($analysisModel, 'gpt-5')) {
+    $analysisModel = 'gpt-4o-mini';
+}
 
 $openai->chatStream(
     $systemPrompt,
@@ -200,10 +238,10 @@ $openai->chatStream(
         sendSSE('done', ['full_text' => $full]);
     },
     [
-        'max_tokens' => 2000,
+        'max_tokens' => (int) ($searchCfg['analysis_max_tokens'] ?? 2200),
         'timeout' => 120,
-        'temperature' => 0.5,
-        'model' => $openaiCfg['model'] ?? 'gpt-4o-mini',
+        'temperature' => (float) ($searchCfg['analysis_temperature'] ?? 0.5),
+        'model' => $analysisModel,
     ]
 );
 
