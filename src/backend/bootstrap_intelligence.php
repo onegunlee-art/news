@@ -164,6 +164,28 @@ function intelligenceCreateNarrativeDepthService(): \App\Services\NarrativeDepth
     return new \App\Services\NarrativeDepthService($openai);
 }
 
+function intelligenceCreateWeeklyGistService(PDO $pdo): \App\Services\WeeklyGistService
+{
+    if (!class_exists(\Agents\Services\OpenAIService::class)) {
+        throw new RuntimeException('Agents autoload required before intelligenceCreateWeeklyGistService');
+    }
+    $depth = intelligenceCreateNarrativeDepthService();
+    $projectRoot = intelligenceFindProjectRoot();
+    $openaiConfig = require $projectRoot . 'config/openai.php';
+    $openai = new \Agents\Services\OpenAIService($openaiConfig);
+    return new \App\Services\WeeklyGistService($pdo, $openai, $depth);
+}
+
+function intelligenceEnsureWeeklyGistTable(PDO $pdo): void
+{
+    try {
+        $service = new \App\Services\WeeklyGistService($pdo);
+        $service->ensureTable();
+    } catch (Throwable $e) {
+        error_log('intelligenceEnsureWeeklyGistTable: ' . $e->getMessage());
+    }
+}
+
 function intelligenceEnsureMoatTables(PDO $pdo): void
 {
     $sqlFile = intelligenceFindProjectRoot() . 'database/migrations/add_judgment_moat.sql';
