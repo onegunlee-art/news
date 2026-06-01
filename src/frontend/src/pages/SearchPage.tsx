@@ -228,17 +228,9 @@ function ClusterSection({ clusters, results }: { clusters: SearchCluster[]; resu
   )
 }
 
-interface ExternalSource {
-  source_api: string
-  snippet: string
-  similarity: number
-  article_id: number
-}
-
 function ClusterCard({ cluster, results }: { cluster: SearchCluster; results: SemanticResult[] }) {
   const [expanded, setExpanded] = useState(false)
   const [analysisText, setAnalysisText] = useState('')
-  const [externalSources, setExternalSources] = useState<ExternalSource[]>([])
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [analysisError, setAnalysisError] = useState('')
 
@@ -253,7 +245,6 @@ function ClusterCard({ cluster, results }: { cluster: SearchCluster; results: Se
     setIsAnalyzing(true)
     setAnalysisError('')
     setAnalysisText('')
-    setExternalSources([])
 
     const newsIds = cluster.article_indices
       .map((i) => results[i]?.news_id)
@@ -269,7 +260,6 @@ function ClusterCard({ cluster, results }: { cluster: SearchCluster; results: Se
 
       const decoder = new TextDecoder()
       let buffer = ''
-      let currentEvent = ''
 
       let readResult = await reader.read()
       while (!readResult.done) {
@@ -281,16 +271,10 @@ function ClusterCard({ cluster, results }: { cluster: SearchCluster; results: Se
         buffer = lines.pop() || ''
 
         for (const line of lines) {
-          if (line.startsWith('event: ')) {
-            currentEvent = line.slice(7).trim()
-            continue
-          }
           if (line.startsWith('data: ')) {
             try {
               const parsed = JSON.parse(line.slice(6))
-              if (currentEvent === 'external' && Array.isArray(parsed.sources)) {
-                setExternalSources(parsed.sources as ExternalSource[])
-              } else if (parsed.text) {
+              if (parsed.text) {
                 setAnalysisText((prev) => prev + parsed.text)
               }
             } catch {
@@ -347,27 +331,7 @@ function ClusterCard({ cluster, results }: { cluster: SearchCluster; results: Se
           {analysisError ? (
             <p className="text-xs text-red-500 text-center py-2">{analysisError}</p>
           ) : analysisText ? (
-            <div className="space-y-4">
-              <p className="text-sm text-page leading-relaxed whitespace-pre-wrap">{analysisText}</p>
-              {externalSources.length > 0 && (
-                <div className="pt-3 border-t border-page">
-                  <p className="text-xs font-semibold text-page-secondary mb-2">다른 시각</p>
-                  <div className="space-y-2">
-                    {externalSources.map((src) => (
-                      <div
-                        key={`${src.article_id}-${src.source_api}`}
-                        className="rounded-lg bg-page p-3 border border-page text-xs"
-                      >
-                        <span className="font-medium text-primary-600 dark:text-primary-400 uppercase">
-                          {src.source_api}
-                        </span>
-                        <p className="text-page-muted mt-1 leading-relaxed">{src.snippet}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+            <p className="text-sm text-page leading-relaxed whitespace-pre-wrap">{analysisText}</p>
           ) : isAnalyzing ? (
             <p className="text-xs text-page-muted text-center py-4">AI가 종합 분석하고 있습니다...</p>
           ) : null}
