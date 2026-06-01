@@ -33,6 +33,7 @@ interface SemanticSearchResponse {
   success: boolean
   results: SemanticResult[]
   clusters: SearchCluster[]
+  insight?: string | null
   meta: {
     query: string
     total: number
@@ -64,6 +65,7 @@ export default function SearchPage() {
   const semanticData = semanticQuery.data
   const semanticResults = semanticData?.results ?? EMPTY_SEMANTIC_RESULTS
   const clusters = semanticData?.clusters ?? []
+  const insight = semanticData?.insight?.trim() || null
 
   const resultCount = semanticResults.length
 
@@ -89,7 +91,7 @@ export default function SearchPage() {
             <p className="text-sm text-page-secondary">AI가 검색어를 분석 중...</p>
           </div>
         ) : (
-          <AISearchResults results={semanticResults} clusters={clusters} />
+          <AISearchResults results={semanticResults} clusters={clusters} insight={insight} />
         )}
       </div>
     </div>
@@ -101,9 +103,11 @@ export default function SearchPage() {
 function AISearchResults({
   results,
   clusters,
+  insight,
 }: {
   results: SemanticResult[]
   clusters: SearchCluster[]
+  insight: string | null
 }) {
   if (results.length === 0) {
     return <NoResultsState />
@@ -111,6 +115,8 @@ function AISearchResults({
 
   return (
     <div className="space-y-6">
+      {insight && <SearchInsightBanner insight={insight} />}
+
       {clusters.length > 0 && (
         <ClusterSection clusters={clusters} results={results} />
       )}
@@ -342,6 +348,26 @@ function ClusterCard({ cluster, results }: { cluster: SearchCluster; results: Se
 }
 
 // ── Shared UI ──────────────────────────────────────────
+
+function SearchInsightBanner({ insight }: { insight: string }) {
+  return (
+    <div className="rounded-2xl border border-primary-200 dark:border-primary-800 bg-primary-50/60 dark:bg-primary-900/15 px-4 py-3.5">
+      <div className="flex gap-3 items-start">
+        <MaterialIcon
+          name="lightbulb"
+          size={20}
+          className="text-primary-600 dark:text-primary-400 flex-shrink-0 mt-0.5"
+        />
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold text-primary-700 dark:text-primary-300 mb-1">
+            AI 인사이트
+          </p>
+          <p className="text-sm text-page leading-relaxed break-keep-ko-mobile">{insight}</p>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function EmptySearchState() {
   return (
