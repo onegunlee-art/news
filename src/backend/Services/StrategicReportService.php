@@ -345,10 +345,12 @@ class StrategicReportService
         $schema = StrategicReportSchema::jsonSchemaDescription();
         $hintsText = implode("\n- ", $hints);
         $previousJson = json_encode($previousScqa, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        $judgmentBlock = $this->buildJudgmentContextBlock($start, $end);
 
         $user = <<<PROMPT
 {$start}부터 {$end}까지의 주간 지정학·국제정세 전략 레포트를 **수정**하라.
 아래 이전 초안과 개선 지침을 참고하여 품질을 높여라.
+{$judgmentBlock}
 
 【개선 지침】
 - {$hintsText}
@@ -642,9 +644,11 @@ PROMPT;
         }
         $system = (string) ($this->config['system_prompt'] ?? 'Output valid JSON in Korean.');
         $schema = StrategicReportSchema::jsonSchemaDescription();
+        $judgmentBlock = $this->buildJudgmentContextBlock($start, $end);
         $user = <<<PROMPT
 {$start}부터 {$end}까지의 주간 지정학·국제정세 전략 레포트를 작성하라.
 아래 intelligence context만 근거로 사용한다.
+{$judgmentBlock}
 
 【Phase 1 필수】
 1. synthesis_narrative: 검색 클러스터 분석과 동일한 3단 평문 (결론→관점 비교→향후 영향), 최소 1200자·3문단
@@ -680,6 +684,26 @@ PROMPT;
             error_log('StrategicReportService: ' . $e->getMessage());
             return null;
         }
+    }
+
+    private function buildJudgmentContextBlock(string $start, string $end): string
+    {
+        $topic = "{$start} ~ {$end} 지정학 국제정세 structural shift narrative";
+        $items = $this->getJudgmentContext($topic, 5);
+        if ($items === []) {
+            return '';
+        }
+        $lines = ["\n【과거 편집·판단 피드백 — 톤·구조 참고, 사실 근거는 context만 사용】"];
+        foreach ($items as $item) {
+            $text = trim((string) ($item['text'] ?? ''));
+            if ($text === '') {
+                continue;
+            }
+            $week = (string) ($item['report_week'] ?? '');
+            $prefix = $week !== '' ? "[{$week}] " : '';
+            $lines[] = '- ' . $prefix . mb_substr($text, 0, 400);
+        }
+        return count($lines) > 1 ? implode("\n", $lines) : '';
     }
 
     /** @param array<string, mixed> $scqa */

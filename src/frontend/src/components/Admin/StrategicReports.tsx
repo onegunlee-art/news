@@ -74,6 +74,46 @@ interface ReportDetail extends ReportListItem {
   judgment_feedbacks?: unknown;
   meta_json?: Record<string, unknown> | null;
   source_articles_json?: Array<{ id: number; title: string; source_api: string; url: string }>;
+  prediction_outcomes?: PredictionOutcome[];
+}
+
+interface PredictionOutcome {
+  id: number;
+  scenario_type: string;
+  scenario_index: number;
+  prediction_signal: string;
+  probability: number | null;
+  outcome_status: 'pending' | 'hit' | 'miss' | 'partial';
+  outcome_notes?: string | null;
+}
+
+interface JudgmentLesson {
+  id: number;
+  rule: string;
+  error_type: string;
+  scqa_section: string;
+  frequency: number;
+  status: string;
+}
+
+interface CalibrationSummary {
+  total: number;
+  hit: number;
+  miss: number;
+  partial: number;
+  pending: number;
+  hit_rate: number | null;
+}
+
+interface VerificationMeta {
+  confidence_score?: number;
+  confidence_label?: string;
+  depth_score?: number;
+  depth_passed?: boolean;
+  depth_violations?: string[];
+  perspective_count?: number;
+  collision_count?: number;
+  self_correction_applied?: boolean;
 }
 
 interface ReportListItem {
@@ -119,6 +159,10 @@ export default function StrategicReports() {
     error: '',
     success: '',
   });
+  const [lessons, setLessons] = useState<JudgmentLesson[]>([]);
+  const [calibration, setCalibration] = useState<CalibrationSummary | null>(null);
+  const [predictionDrafts, setPredictionDrafts] = useState<Record<number, { status: string; notes: string }>>({});
+  const [showMoatPanel, setShowMoatPanel] = useState(true);
 
   const loadList = useCallback(async () => {
     const res = await adminFetch(`${API}?action=list&limit=30`);
@@ -150,16 +194,38 @@ export default function StrategicReports() {
         setEditSummary(scqa?.executive_summary ?? r.executive_summary ?? '');
         setEditCoreQuestion(scqa?.core_question ?? '');
         setEditShiftHeadline(scqa?.structural_shift?.headline ?? '');
+        const outcomes = (r.prediction_outcomes ?? []) as PredictionOutcome[];
+        const drafts: Record<number, { status: string; notes: string }> = {};
+        outcomes.forEach((o) => {
+          drafts[o.id] = { status: o.outcome_status || 'pending', notes: o.outcome_notes ?? '' };
+        });
+        setPredictionDrafts(drafts);
       }
     } finally {
       setLoading(false);
     }
   }, []);
 
+  const loadMoatData = useCallback(async () => {
+    try {
+      const [lessonsRes, calRes] = await Promise.all([
+        adminFetch(`${API}?action=lessons&limit=20`),
+        adminFetch(`${API}?action=calibration_summary`),
+      ]);
+      const lessonsData = await lessonsRes.json();
+      const calData = await calRes.json();
+      if (lessonsData.success) setLessons(lessonsData.lessons ?? []);
+      if (calData.success) setCalibration(calData.calibration ?? null);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
   useEffect(() => {
     loadList();
     loadStats();
-  }, [loadList, loadStats]);
+    loadMoatData();
+  }, [loadList, loadStats, loadMoatData]);
 
   const postAction = async (body: Record<string, unknown>) => {
     setActionMsg('');
@@ -293,6 +359,19 @@ export default function StrategicReports() {
 
   const scqa = detail ? ((detail.scqa_edited_json ?? detail.scqa_raw_json) as ScqaReport | undefined) : undefined;
   const diffs = Array.isArray(detail?.edit_diff_json) ? detail!.edit_diff_json! : [];
+  const verification = (detail?.meta_json?.verification ?? null) as VerificationMeta | null;
+
+  const savePredictionScores = async () => {
+    if (!detail) return;
+    const scores = (detail.prediction_outcomes ?? []).map((o) => ({
+      id: o.id,
+      outcome_status: predictionDrafts[o.id]?.status ?? o.outcome_status,
+      outcome_notes: predictionDrafts[o.id]?.notes ?? '',
+    }));
+    if (scores.length === 0) return;
+    await postAction({ action: 'score_predictions', report_id: detail.id, scores });
+    await loadMoatData();
+  };
 
   return (
     <div className="space-y-6">
@@ -354,6 +433,27 @@ export default function StrategicReports() {
                   )}
                 </div>
               </div>
+
+              {verification && (
+                <Section title="검증 · 서사 깊이" icon="verified">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                    <Metric label="신뢰도" value={verification.confidence_score != null ? `${Math.round(verification.confidence_score * 100)}%` : '—'} />
+                    <Metric label="depth_score" value={verification.depth_score != null ? `${Math.round(verification.depth_score * 100)}%` : '—'} highlight={verification.depth_passed === false} />
+                    <Metric label="관점" value={String(verification.perspective_count ?? '—')} />
+                    <Metric label="충돌" value={String(verification.collision_count ?? '—')} />
+                  </div>
+                  {verification.depth_passed === false && (verification.depth_violations?.length ?? 0) > 0 && (
+                    <ul className="mt-3 text-xs text-amber-400/90 space-y-1">
+                      {verification.depth_violations!.map((v, i) => (
+                        <li key={i}>• {v}</li>
+                      ))}
+                    </ul>
+                  )}
+                  {verification.self_correction_applied && (
+                    <p className="text-xs text-slate-500 mt-2">Self-correction 1회 적용됨</p>
+                  )}
+                </Section>
+              )}
 
               {/* PDF 및 이메일 버튼 */}
               <div className="flex flex-wrap gap-2 items-center pt-2 border-t border-slate-700/50">
@@ -521,9 +621,102 @@ export default function StrategicReports() {
                   </ul>
                 </Section>
               )}
+
+              {(detail.prediction_outcomes?.length ?? 0) > 0 && (
+                <Section title="예측 채점 (Prediction Calibration)" icon="track_changes">
+                  <div className="space-y-3">
+                    {detail.prediction_outcomes!.map((o) => (
+                      <div key={o.id} className="p-3 rounded-lg bg-slate-900/50 text-sm space-y-2">
+                        <div className="flex flex-wrap gap-2 items-center">
+                          <span className="text-cyan-400/80 text-xs uppercase">{o.scenario_type}</span>
+                          {o.probability != null && <span className="text-slate-500 text-xs">{o.probability}%</span>}
+                        </div>
+                        <p className="text-slate-300 text-xs">{o.prediction_signal || '(신호 없음)'}</p>
+                        <div className="flex flex-wrap gap-2 items-center">
+                          <select
+                            value={predictionDrafts[o.id]?.status ?? o.outcome_status}
+                            onChange={(e) => setPredictionDrafts((prev) => ({
+                              ...prev,
+                              [o.id]: { status: e.target.value, notes: prev[o.id]?.notes ?? '' },
+                            }))}
+                            className="bg-slate-800 border border-slate-600 rounded px-2 py-1 text-xs text-white"
+                          >
+                            <option value="pending">pending</option>
+                            <option value="hit">hit</option>
+                            <option value="miss">miss</option>
+                            <option value="partial">partial</option>
+                          </select>
+                          <input
+                            type="text"
+                            placeholder="메모"
+                            value={predictionDrafts[o.id]?.notes ?? ''}
+                            onChange={(e) => setPredictionDrafts((prev) => ({
+                              ...prev,
+                              [o.id]: { status: prev[o.id]?.status ?? o.outcome_status, notes: e.target.value },
+                            }))}
+                            className="flex-1 min-w-[120px] bg-slate-800 border border-slate-600 rounded px-2 py-1 text-xs text-white"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                    <button type="button" onClick={() => void savePredictionScores()} disabled={loading}
+                      className="px-3 py-1.5 text-xs rounded-lg bg-indigo-600 text-white hover:bg-indigo-500 disabled:opacity-50">
+                      채점 저장
+                    </button>
+                  </div>
+                </Section>
+              )}
             </div>
           )}
         </div>
+      </div>
+
+      <div className="rounded-xl border border-slate-700/50 bg-slate-800/20 overflow-hidden">
+        <button type="button" onClick={() => setShowMoatPanel((v) => !v)}
+          className="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-white hover:bg-slate-800/40">
+          <span className="flex items-center gap-2">
+            <MaterialIcon name="shield" className="w-4 h-4 text-cyan-400" size={16} />
+            Judgment Moat — Lesson Card · 캘리브레이션
+          </span>
+          <MaterialIcon name={showMoatPanel ? 'expand_less' : 'expand_more'} size={20} className="text-slate-500" />
+        </button>
+        {showMoatPanel && (
+          <div className="px-4 pb-4 grid grid-cols-1 lg:grid-cols-2 gap-4 border-t border-slate-700/50 pt-4">
+            {calibration && (
+              <div className="rounded-lg bg-slate-900/50 p-4 text-sm">
+                <p className="text-xs text-slate-500 uppercase mb-2">예측 캘리브레이션 요약</p>
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div><p className="text-emerald-400 font-bold">{calibration.hit}</p><p className="text-xs text-slate-500">hit</p></div>
+                  <div><p className="text-red-400 font-bold">{calibration.miss}</p><p className="text-xs text-slate-500">miss</p></div>
+                  <div><p className="text-amber-400 font-bold">{calibration.partial}</p><p className="text-xs text-slate-500">partial</p></div>
+                </div>
+                <p className="text-xs text-slate-400 mt-3">
+                  전체 {calibration.total} · pending {calibration.pending}
+                  {calibration.hit_rate != null && ` · hit rate ${Math.round(calibration.hit_rate * 100)}%`}
+                </p>
+              </div>
+            )}
+            <div className="rounded-lg bg-slate-900/50 p-4 max-h-64 overflow-y-auto">
+              <p className="text-xs text-slate-500 uppercase mb-2">Lesson Card ({lessons.length})</p>
+              {lessons.length === 0 ? (
+                <p className="text-xs text-slate-600">아직 등록된 레슨이 없습니다.</p>
+              ) : (
+                <ul className="space-y-2 text-xs">
+                  {lessons.map((l) => (
+                    <li key={l.id} className="border-l-2 border-cyan-500/30 pl-2">
+                      <span className={`text-[10px] px-1 rounded ${l.status === 'promoted' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-700 text-slate-400'}`}>
+                        {l.status}
+                      </span>
+                      <span className="text-slate-600 ml-1">×{l.frequency}</span>
+                      <p className="text-slate-300 mt-0.5">{l.rule}</p>
+                      <p className="text-slate-600">{l.error_type} · {l.scqa_section}</p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 이메일 발송 모달 */}
@@ -632,6 +825,15 @@ export default function StrategicReports() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function Metric({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+  return (
+    <div className={`rounded-lg p-2 ${highlight ? 'bg-amber-500/10 border border-amber-500/30' : 'bg-slate-900/50'}`}>
+      <p className="text-slate-500">{label}</p>
+      <p className={`font-medium ${highlight ? 'text-amber-400' : 'text-white'}`}>{value}</p>
     </div>
   );
 }

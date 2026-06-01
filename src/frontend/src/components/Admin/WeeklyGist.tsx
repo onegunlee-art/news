@@ -555,6 +555,18 @@ export default function WeeklyGist({ onEditNewsArticle }: WeeklyGistProps) {
               allReferenceIds={allReferenceIds}
               onRegenerate={() => setStep('select')}
               onEditNewsArticle={onEditNewsArticle}
+              onSave={async (gist) => {
+                if (!currentSavedId) throw new Error('저장 ID가 없습니다. 먼저 DB에 저장된 리포트만 편집할 수 있습니다.');
+                const res = await adminFetch(`${API_BASE}/admin/weekly-gist.php`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ action: 'update_gist', id: currentSavedId, gist }),
+                });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.error || '저장 실패');
+                setGistResult(gist);
+                loadSavedList();
+              }}
             />
           )}
         </>
@@ -570,6 +582,7 @@ function GistViewer({
   allReferenceIds,
   onRegenerate,
   onEditNewsArticle,
+  onSave,
 }: {
   data: GistData;
   getArticleTitle: (id: number) => string;
@@ -577,41 +590,130 @@ function GistViewer({
   allReferenceIds: number[];
   onRegenerate: () => void;
   onEditNewsArticle?: (id: number) => void | Promise<void>;
+  onSave?: (gist: GistData) => Promise<void>;
 }) {
   const [expandedCluster, setExpandedCluster] = useState<number | null>(
     data.clusters.length > 0 ? data.clusters[0].cluster_id : null
   );
   const [showRawJson, setShowRawJson] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [draft, setDraft] = useState<GistData>(data);
+  const [saving, setSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState('');
 
-  const sortedClusters = [...data.clusters].sort((a, b) => a.priority_rank - b.priority_rank);
+  const display = editMode ? draft : data;
+
+  const startEdit = () => {
+    setDraft(structuredClone(data));
+    setEditMode(true);
+    setSaveMsg('');
+  };
+
+  const cancelEdit = () => {
+    setDraft(data);
+    setEditMode(false);
+    setSaveMsg('');
+  };
+
+  const saveEdit = async () => {
+    if (!onSave) return;
+    setSaving(true);
+    setSaveMsg('');
+    try {
+      await onSave(draft);
+      setEditMode(false);
+      setSaveMsg('저장되었습니다.');
+    } catch (e) {
+      setSaveMsg((e as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const updateClusterNarrative = (clusterId: number, narrative: string) => {
+    setDraft((prev) => ({
+      ...prev,
+      clusters: prev.clusters.map((c) => (c.cluster_id === clusterId ? { ...c, narrative } : c)),
+    }));
+  };
+
+  const sortedClusters = [...display.clusters].sort((a, b) => a.priority_rank - b.priority_rank);
 
   return (
     <div className="space-y-6">
       {savedId !== null && (
-        <p className="text-slate-500 text-xs">
-          저장 ID: <span className="text-cyan-400 font-mono">{savedId}</span> — 「저장된 리포트」에서 다시 열 수 있습니다.
-        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-slate-500 text-xs">
+            저장 ID: <span className="text-cyan-400 font-mono">{savedId}</span>
+          </p>
+          {onSave && !editMode && (
+            <button type="button" onClick={startEdit}
+              className="text-xs px-2.5 py-1 rounded-lg bg-amber-600/80 text-white hover:bg-amber-600">
+              편집
+            </button>
+          )}
+          {editMode && (
+            <>
+              <button type="button" onClick={() => void saveEdit()} disabled={saving}
+                className="text-xs px-2.5 py-1 rounded-lg bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-50">
+                {saving ? '저장 중…' : '저장'}
+              </button>
+              <button type="button" onClick={cancelEdit} disabled={saving}
+                className="text-xs px-2.5 py-1 rounded-lg bg-slate-600 text-white hover:bg-slate-500">
+                취소
+              </button>
+            </>
+          )}
+          {saveMsg && <span className="text-xs text-cyan-400">{saveMsg}</span>}
+        </div>
       )}
 
-      {data.synthesis_narrative && (
+      {display.synthesis_narrative && (
         <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-emerald-500/30">
           <p className="text-emerald-400 text-xs font-medium uppercase tracking-wider mb-2">종합 분석</p>
-          <p className="text-slate-200 text-sm leading-relaxed whitespace-pre-wrap">{data.synthesis_narrative}</p>
+          {editMode ? (
+            <textarea
+              value={draft.synthesis_narrative ?? ''}
+              onChange={(e) => setDraft((p) => ({ ...p, synthesis_narrative: e.target.value }))}
+              rows={8}
+              className="w-full bg-slate-900/80 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white"
+            />
+          ) : (
+            <p className="text-slate-200 text-sm leading-relaxed whitespace-pre-wrap">{display.synthesis_narrative}</p>
+          )}
         </div>
       )}
 
       <div className="bg-gradient-to-br from-cyan-500/10 to-emerald-500/10 backdrop-blur-sm rounded-2xl p-6 border border-cyan-500/20">
         <p className="text-cyan-400 text-xs font-medium uppercase tracking-wider mb-2">
-          {data.meta.period}
+          {display.meta.period}
         </p>
-        <h2 className="text-2xl font-bold text-white mb-3">{data.headline}</h2>
-        <p className="text-slate-300 text-base leading-relaxed">{data.macro_so_what}</p>
+        {editMode ? (
+          <>
+            <input
+              value={draft.headline}
+              onChange={(e) => setDraft((p) => ({ ...p, headline: e.target.value }))}
+              className="w-full bg-slate-900/80 border border-slate-600 rounded-lg px-3 py-2 text-lg font-bold text-white mb-3"
+            />
+            <textarea
+              value={draft.macro_so_what}
+              onChange={(e) => setDraft((p) => ({ ...p, macro_so_what: e.target.value }))}
+              rows={4}
+              className="w-full bg-slate-900/80 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white"
+            />
+          </>
+        ) : (
+          <>
+            <h2 className="text-2xl font-bold text-white mb-3">{display.headline}</h2>
+            <p className="text-slate-300 text-base leading-relaxed">{display.macro_so_what}</p>
+          </>
+        )}
         <div className="mt-3 flex items-center gap-3 text-xs text-slate-500">
-          <span>기사 {data.meta.total_articles}개</span>
+          <span>기사 {display.meta.total_articles}개</span>
           <span>·</span>
-          <span>클러스터 {data.clusters.length}개</span>
+          <span>클러스터 {display.clusters.length}개</span>
           <span>·</span>
-          <span>{data.meta.model}</span>
+          <span>{display.meta.model}</span>
         </div>
       </div>
 
@@ -668,7 +770,16 @@ function GistViewer({
             {isExpanded && (
               <div className="px-5 pb-5 space-y-4 border-t border-slate-700/50 pt-4">
                 <div>
-                  <p className="text-slate-300 leading-relaxed">{cluster.narrative}</p>
+                  {editMode ? (
+                    <textarea
+                      value={draft.clusters.find((c) => c.cluster_id === cluster.cluster_id)?.narrative ?? cluster.narrative}
+                      onChange={(e) => updateClusterNarrative(cluster.cluster_id, e.target.value)}
+                      rows={6}
+                      className="w-full bg-slate-900/80 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white"
+                    />
+                  ) : (
+                    <p className="text-slate-300 leading-relaxed whitespace-pre-wrap">{cluster.narrative}</p>
+                  )}
                 </div>
 
                 <div className="space-y-3">

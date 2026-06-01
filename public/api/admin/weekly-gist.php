@@ -89,6 +89,18 @@ function getDb(): PDO {
     return $pdo;
 }
 
+require_once __DIR__ . '/../lib/admin_auth.php';
+
+try {
+    $pdo = getDb();
+    requireAdminApi($pdo);
+} catch (\Throwable $e) {
+    ob_clean();
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => $e->getMessage()], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
 /**
  * weekly_gist_reports 테이블 (없으면 생성 — 마이그레이션 미적용 서버 대비)
  */
