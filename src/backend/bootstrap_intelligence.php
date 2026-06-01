@@ -186,6 +186,40 @@ function intelligenceEnsureWeeklyGistTable(PDO $pdo): void
     }
 }
 
+function intelligenceCreateSearchReportService(PDO $pdo): \App\Services\SearchReportService
+{
+    if (!class_exists(\Agents\Services\OpenAIService::class)) {
+        throw new RuntimeException('Agents autoload required before intelligenceCreateSearchReportService');
+    }
+    $projectRoot = intelligenceFindProjectRoot();
+    $openaiConfig = require $projectRoot . 'config/openai.php';
+    $openai = new \Agents\Services\OpenAIService($openaiConfig);
+    $analysis = new \App\Services\SearchAnalysisService($pdo, $openai);
+    return new \App\Services\SearchReportService($pdo, $analysis);
+}
+
+function intelligenceCreateStrategicMemoryService(PDO $pdo): \App\Services\StrategicMemoryService
+{
+    if (!class_exists(\Agents\Services\OpenAIService::class)) {
+        throw new RuntimeException('Agents autoload required before intelligenceCreateStrategicMemoryService');
+    }
+    $projectRoot = intelligenceFindProjectRoot();
+    $openaiConfig = require $projectRoot . 'config/openai.php';
+    $openai = new \Agents\Services\OpenAIService($openaiConfig);
+    $analysis = new \App\Services\SearchAnalysisService($pdo, $openai);
+    return new \App\Services\StrategicMemoryService($pdo, $analysis);
+}
+
+function intelligenceEnsureSearchReportsTable(PDO $pdo): void
+{
+    try {
+        $service = intelligenceCreateSearchReportService($pdo);
+        $service->ensureTable();
+    } catch (Throwable $e) {
+        error_log('intelligenceEnsureSearchReportsTable: ' . $e->getMessage());
+    }
+}
+
 function intelligenceEnsureMoatTables(PDO $pdo): void
 {
     $sqlFile = intelligenceFindProjectRoot() . 'database/migrations/add_judgment_moat.sql';

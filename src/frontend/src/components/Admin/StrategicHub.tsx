@@ -2,8 +2,9 @@ import { useState } from 'react';
 import MaterialIcon from '../Common/MaterialIcon';
 import WeeklyGist from './WeeklyGist';
 import StrategicReports from './StrategicReports';
+import SearchMemory from './SearchMemory';
 
-type HubSection = 'strategic' | 'weekly';
+type HubSection = 'strategic' | 'weekly' | 'memory';
 
 type StrategicHubProps = {
   /** 참조 기사 ID로 뉴스 관리 탭에서 해당 기사 편집 열기 */
@@ -24,6 +25,12 @@ const sections: { id: HubSection; label: string; icon: string; description: stri
     label: '위클리 Gist',
     icon: 'summarize',
     description: 'the gist 기사 선별 · 주간 브리핑 · human-in-the-loop 편집',
+  },
+  {
+    id: 'memory',
+    label: '검색 메모리',
+    icon: 'history',
+    description: 'search_reports 저장 · Gist entity/topic Memory Diff (Admin 전용)',
   },
 ];
 
@@ -69,8 +76,10 @@ export default function StrategicHub({ onEditNewsArticle, initialSection = 'stra
 
       {section === 'strategic' ? (
         <StrategicReports />
-      ) : (
+      ) : section === 'weekly' ? (
         <WeeklyGist onEditNewsArticle={onEditNewsArticle} />
+      ) : (
+        <SearchMemory />
       )}
     </div>
   );

@@ -21,7 +21,7 @@ setCorsHeaders();
 require_once __DIR__ . '/lib/auth.php';
 
 use Agents\Services\OpenAIService;
-use Agents\Services\SupabaseService;
+use App\Services\SearchAnalysisService;
 
 function findProjectRootAnalysis(): string
 {
@@ -64,10 +64,10 @@ try {
 }
 
 require_once $projectRoot . 'src/agents/autoload.php';
+require_once $projectRoot . 'src/backend/autoload.php';
 
 $openaiCfg = require $projectRoot . 'config/openai.php';
 $openai = new OpenAIService($openaiCfg);
-$supabase = new SupabaseService([]);
 
 if (!$openai->isConfigured()) {
     sendAnalysisError('OpenAI not configured', 503);
@@ -86,98 +86,28 @@ if (!is_array($newsIds) || count($newsIds) < 1 || count($newsIds) > 10) {
     sendAnalysisError('news_ids must be an array of 1-10 IDs');
 }
 $newsIds = array_map('intval', $newsIds);
-$newsIds = array_filter($newsIds, fn ($id) => $id > 0);
+$newsIds = array_values(array_filter($newsIds, fn ($id) => $id > 0));
 if (empty($newsIds)) {
     sendAnalysisError('No valid news_ids');
 }
 
-// 1. Fetch article metadata from MySQL
-$articles = [];
 try {
     $pdo = getDb();
-    $placeholders = implode(',', array_fill(0, count($newsIds), '?'));
-    $st = $pdo->prepare(
-        "SELECT id, title, why_important, narration, description FROM news WHERE id IN ({$placeholders})"
-    );
-    $st->execute(array_values($newsIds));
-    foreach ($st->fetchAll(PDO::FETCH_ASSOC) as $row) {
-        $articles[(int) $row['id']] = $row;
-    }
+    $analysisService = new SearchAnalysisService($pdo, $openai);
+    $ctx = $analysisService->buildClusterContext($newsIds);
 } catch (PDOException $e) {
     error_log('[search-analysis] MySQL error: ' . $e->getMessage());
     sendAnalysisError('Database error', 500);
+} catch (Throwable $e) {
+    sendAnalysisError($e->getMessage(), 400);
 }
 
-if (empty($articles)) {
+if ($ctx['blocks'] === []) {
     sendAnalysisError('No articles found', 404);
 }
 
-// 2. Fetch chunk_text + metadata from Supabase for these news_ids
-$chunks = [];
-if ($supabase->isConfigured()) {
-    foreach ($newsIds as $nid) {
-        $rows = $supabase->select(
-            'analysis_embeddings',
-            'select=chunk_text,metadata&news_id=eq.' . $nid . '&order=created_at.asc',
-            5
-        );
-        if (is_array($rows)) {
-            foreach ($rows as $r) {
-                $chunks[$nid][] = $r;
-            }
-        }
-    }
-}
-
-// 3. Build structured prompt — no article numbering, content only
-$articleBlocks = [];
-foreach ($newsIds as $nid) {
-    $art = $articles[$nid] ?? null;
-    if (!$art) {
-        continue;
-    }
-    $whyImportant = trim((string) ($art['why_important'] ?? ''));
-    $narration = trim((string) ($art['narration'] ?? ''));
-
-    $chunkSummary = '';
-    if (!empty($chunks[$nid])) {
-        $topChunk = $chunks[$nid][0];
-        $chunkSummary = mb_substr(trim((string) ($topChunk['chunk_text'] ?? '')), 0, 800);
-    }
-
-    $block = '---';
-    if ($whyImportant !== '') {
-        $block .= "\n핵심: {$whyImportant}";
-    }
-    if ($chunkSummary !== '') {
-        $block .= "\n분석: {$chunkSummary}";
-    } elseif ($narration !== '') {
-        $block .= "\n분석: " . mb_substr($narration, 0, 800);
-    }
-
-    $articleBlocks[] = $block;
-}
-
-$articleText = implode("\n\n", $articleBlocks);
-$topicLine = $clusterName !== '' ? "주제: \"{$clusterName}\"\n\n" : '';
-
-$systemPrompt = '당신은 뉴스 분석 전문 AI입니다. 여러 기사를 종합하여 깊이 있는 분석을 제공합니다.';
-$userPrompt = <<<PROMPT
-{$topicLine}다음 기사 자료들을 종합 분석하라:
-
-{$articleText}
-
-분석 구조:
-1. 핵심 결론을 첫 문장에 구체적으로 제시
-2. 기사들의 관점을 비교 분석 (일치하는 점 vs 충돌하는 점)
-3. 이 흐름이 향후 미칠 영향과 종합 판단
-
-규칙:
-- "기사1", "기사2" 등 기사 번호로 언급하지 말 것. 내용 자체로 자연스럽게 녹여서 서술
-- 한국어 존댓말(~이에요, ~거든요, ~있어요)로 답변
-- 마크다운 문법 사용 금지 (번호와 하이픈만 허용)
-- 근거 없는 추측 금지
-PROMPT;
+$systemPrompt = $analysisService->systemPrompt();
+$userPrompt = $analysisService->buildPrompt($clusterName, $ctx['blocks']);
 
 // 4. SSE streaming
 header('Content-Type: text/event-stream; charset=utf-8');
@@ -188,7 +118,7 @@ while (ob_get_level()) {
     ob_end_flush();
 }
 
-sendSSE('start', ['cluster_name' => $clusterName, 'article_count' => count($articleBlocks)]);
+sendSSE('start', ['cluster_name' => $clusterName, 'article_count' => count($ctx['blocks'])]);
 
 $openai->chatStream(
     $systemPrompt,
