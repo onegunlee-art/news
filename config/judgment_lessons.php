@@ -11,6 +11,8 @@ return [
         '출처_누락',
         '인과_비약',
         '관점_편향',
+        '서사_과축약',
+        '충돌_피상적',
         '어투_이탈',
         '시점_혼동',
         'general',
@@ -23,6 +25,6 @@ return [
     'judgment_path_keywords' => [
         'scenario', 'collision', 'perspective', 'structural_shift',
         'implication', 'why_it_matters', 'probability', 'outcome',
-        'view_a', 'view_b', 'confidence',
+        'view_a', 'view_b', 'confidence', 'synthesis_narrative', 'narrative',
     ],
 ];

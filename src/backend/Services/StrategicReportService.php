@@ -16,6 +16,7 @@ class StrategicReportService
     private ?RAGService $rag;
     private JudgmentLessonService $lessons;
     private PredictionCalibrationService $calibration;
+    private NarrativeDepthService $depth;
     private array $config;
 
     private const SIMILARITY_THRESHOLD = 0.55;
@@ -29,7 +30,8 @@ class StrategicReportService
         ?IntelligenceEmbeddingService $embedder = null,
         ?RAGService $rag = null,
         ?JudgmentLessonService $lessons = null,
-        ?PredictionCalibrationService $calibration = null
+        ?PredictionCalibrationService $calibration = null,
+        ?NarrativeDepthService $depth = null
     ) {
         $this->pdo = $pdo;
         $this->openai = $openai ?? new OpenAIService([]);
@@ -37,6 +39,7 @@ class StrategicReportService
         $this->rag = $rag;
         $this->lessons = $lessons ?? new JudgmentLessonService($pdo, $this->openai, $this->rag);
         $this->calibration = $calibration ?? new PredictionCalibrationService($pdo);
+        $this->depth = $depth ?? new NarrativeDepthService($this->openai);
         $configPath = dirname(__DIR__, 3) . '/config/strategic_report.php';
         $this->config = is_file($configPath) ? require $configPath : [];
     }
@@ -79,21 +82,25 @@ class StrategicReportService
             return ['success' => false, 'error' => 'SCQA generation failed'];
         }
         $scqa = $this->normalizeScqa($scqa);
+        $scqa = $this->ensureSynthesisNarrative($scqa, $context, $start, $end);
 
         $verification = $this->verifyScqa($scqa, $gistAnchors, $articles, $matchResult);
         $correctionAttempts = 0;
 
         if (($verification['confidence_score'] < self::CONFIDENCE_THRESHOLD
-                || ($verification['lesson_violations'] ?? []) !== [])
+                || ($verification['lesson_violations'] ?? []) !== []
+                || !($verification['depth_passed'] ?? true))
             && $correctionAttempts < self::MAX_SELF_CORRECTION) {
             $correctionAttempts++;
             $correctionHints = array_merge(
                 $this->buildCorrectionHints($verification),
-                $verification['lesson_violations'] ?? []
+                $verification['lesson_violations'] ?? [],
+                $verification['depth_hints'] ?? []
             );
             $correctedScqa = $this->generateScqaWithCorrection($context, $start, $end, $totalSources, $scqa, $correctionHints);
             if ($correctedScqa !== null) {
                 $scqa = $this->normalizeScqa($correctedScqa);
+                $scqa = $this->ensureSynthesisNarrative($scqa, $context, $start, $end);
                 $verification = $this->verifyScqa($scqa, $gistAnchors, $articles, $matchResult);
                 $verification['self_correction_applied'] = true;
                 $verification['correction_hints_used'] = $correctionHints;
@@ -159,9 +166,18 @@ class StrategicReportService
 
         $lessons = $this->lessons->collectLessonsForScqa($scqa);
         $lessonViolations = $this->lessons->buildViolationHints($scqa, $lessons);
+        $depthResult = $this->depth->scoreScqaDepth($scqa);
+        $depthViolations = $this->lessons->buildDepthViolationHints($scqa, $depthResult);
+        $lessonViolations = array_values(array_unique(array_merge($lessonViolations, $depthViolations)));
+
         if ($lessonViolations !== [] && $confidenceScore >= self::CONFIDENCE_THRESHOLD) {
             $confidenceScore = max(0.0, $confidenceScore - 0.08);
         }
+        if (!($depthResult['passed'] ?? false)) {
+            $confidenceScore = max(0.0, $confidenceScore - 0.12);
+        }
+        $depthScore = (float) ($depthResult['depth_score'] ?? 0.0);
+        $confidenceScore = round(min(1.0, $confidenceScore * 0.85 + $depthScore * 0.15), 3);
 
         return [
             'source_diversity' => $sourceDiversity,
@@ -173,6 +189,10 @@ class StrategicReportService
             'has_structural_shift' => $hasShift,
             'confidence_score' => $confidenceScore,
             'confidence_label' => $confidenceScore >= 0.7 ? 'high' : ($confidenceScore >= self::CONFIDENCE_THRESHOLD ? 'medium' : 'low'),
+            'depth_score' => $depthScore,
+            'depth_passed' => (bool) ($depthResult['passed'] ?? false),
+            'depth_violations' => $depthResult['violations'] ?? [],
+            'depth_hints' => $depthResult['hints'] ?? [],
             'lesson_count' => count($lessons),
             'lesson_violations' => $lessonViolations,
             'self_correction_applied' => false,
@@ -290,8 +310,29 @@ class StrategicReportService
         if ($verification['avg_similarity'] < 0.5) {
             $hints[] = '제공된 context와 더 밀접하게 연결된 분석을 작성하라.';
         }
+        if (!($verification['depth_passed'] ?? true)) {
+            foreach ($verification['depth_hints'] ?? [] as $depthHint) {
+                $hints[] = $depthHint;
+            }
+        }
 
         return $hints;
+    }
+
+    /** @param array<string, mixed> $scqa */
+    private function ensureSynthesisNarrative(array $scqa, string $context, string $start, string $end): array
+    {
+        $existing = trim((string) ($scqa['synthesis_narrative'] ?? ''));
+        $minSyn = (int) (($this->depth->getConfig()['min_chars']['synthesis_narrative'] ?? 1200));
+        if ($existing !== '' && mb_strlen($existing) >= $minSyn) {
+            return $scqa;
+        }
+        $topicLine = "주제: \"{$start} ~ {$end} 주간 지정학·국제정세\"";
+        $synthesis = $this->depth->generateSynthesisNarrative($context, $topicLine);
+        if ($synthesis !== null && $synthesis !== '') {
+            $scqa['synthesis_narrative'] = $synthesis;
+        }
+        return $scqa;
     }
 
     private function generateScqaWithCorrection(string $context, string $start, string $end, int $count, array $previousScqa, array $hints): ?array
@@ -329,9 +370,9 @@ PROMPT;
 
         try {
             $raw = $this->openai->chat($system, $user, [
-                'model' => (string) ($this->config['model'] ?? 'gpt-4o'),
-                'temperature' => (float) ($this->config['temperature'] ?? 0.45),
-                'max_tokens' => (int) ($this->config['max_tokens'] ?? 5000),
+                'model' => (string) ($this->config['model'] ?? 'gpt-5.2'),
+                'temperature' => (float) ($this->config['temperature'] ?? 0.5),
+                'max_tokens' => (int) ($this->config['max_tokens'] ?? 8000),
                 'json_mode' => true,
                 'timeout' => 180,
             ]);
@@ -606,10 +647,13 @@ PROMPT;
 아래 intelligence context만 근거로 사용한다.
 
 【Phase 1 필수】
-1. structural_shift: 사건이 아닌 '질서·패턴'의 변화
-2. narrative_collisions: 최소 2개 — 서로 다른 현실을 믿는 관점의 충돌 (actor_a/view_a vs actor_b/view_b)
-3. why_it_matters_chain: 인과 3단계 이상
-4. 모든 텍스트 필드: 한국어, the gist 독자용
+1. synthesis_narrative: 검색 클러스터 분석과 동일한 3단 평문 (결론→관점 비교→향후 영향), 최소 1200자·3문단
+2. structural_shift: 사건이 아닌 '질서·패턴'의 변화
+3. narrative_collisions: 최소 2개 — view_a/view_b/collision 각 200자 이상
+4. why_it_matters_chain: 인과 3단계 이상
+5. situation.narrative: 4~6문단, 800자 이상
+6. executive_summary: 5~8문장, 400자 이상
+7. 모든 텍스트 필드: 한국어, the gist 독자용
 
 【규칙】
 - timeline·perspectives·collisions에 source_id/source_ids 필수
@@ -624,9 +668,9 @@ Context ({$count} articles):
 PROMPT;
         try {
             $raw = $this->openai->chat($system, $user, [
-                'model' => (string) ($this->config['model'] ?? 'gpt-4o'),
-                'temperature' => (float) ($this->config['temperature'] ?? 0.45),
-                'max_tokens' => (int) ($this->config['max_tokens'] ?? 5000),
+                'model' => (string) ($this->config['model'] ?? 'gpt-5.2'),
+                'temperature' => (float) ($this->config['temperature'] ?? 0.5),
+                'max_tokens' => (int) ($this->config['max_tokens'] ?? 8000),
                 'json_mode' => true,
                 'timeout' => 180,
             ]);

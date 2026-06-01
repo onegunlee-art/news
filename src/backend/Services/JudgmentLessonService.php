@@ -164,6 +164,40 @@ class JudgmentLessonService
         return array_values(array_unique($hints));
     }
 
+    /**
+     * Depth contract violations mapped to lesson-style hints.
+     *
+     * @param array{depth_score?: float, passed?: bool, violations?: list<string>, hints?: list<string>} $depthResult
+     * @return list<string>
+     */
+    public function buildDepthViolationHints(array $scqa, array $depthResult): array
+    {
+        if ($depthResult['passed'] ?? false) {
+            return [];
+        }
+        $hints = [];
+        foreach ($depthResult['violations'] ?? [] as $violation) {
+            if (str_contains($violation, 'synthesis_narrative')) {
+                $hints[] = '[서사_과축약] synthesis_narrative를 검색 분석 수준(1200자·3문단·3단 구조)으로 확장하라.';
+            } elseif (str_contains($violation, 'situation.narrative')) {
+                $hints[] = '[서사_과축약] situation.narrative를 4~6문단, 800자 이상으로 깊이 있게 전개하라.';
+            } elseif (str_contains($violation, 'view_a') || str_contains($violation, 'view_b') || str_contains($violation, 'collision')) {
+                $hints[] = '[충돌_피상적] narrative_collisions의 view_a/view_b/collision을 각 200자·2~3문장 이상으로 구체화하라.';
+            } elseif (str_contains($violation, 'executive_summary')) {
+                $hints[] = '[서사_과축약] executive_summary를 5~8문장, 400자 이상으로 확장하라.';
+            }
+        }
+        foreach ($depthResult['hints'] ?? [] as $hint) {
+            if (!in_array($hint, $hints, true)) {
+                $hints[] = $hint;
+            }
+        }
+        if ($hints === []) {
+            $hints[] = '[서사_과축약] 전체 서사 분량을 검색 클러스터 분석 수준으로 확장하라.';
+        }
+        return $hints;
+    }
+
     public function isJudgmentEdit(string $path, mixed $before, mixed $after): bool
     {
         $cosmeticPatterns = $this->config['cosmetic_path_patterns'] ?? [];

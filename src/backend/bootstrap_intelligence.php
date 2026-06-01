@@ -149,7 +149,19 @@ function intelligenceCreateStrategicReportService(PDO $pdo): \App\Services\Strat
         $rag = new \Agents\Services\RAGService($openai, $supabase);
     }
     $lessons = new \App\Services\JudgmentLessonService($pdo, $openai, $rag);
-    return new \App\Services\StrategicReportService($pdo, $openai, null, $rag, $lessons);
+    $depth = new \App\Services\NarrativeDepthService($openai);
+    return new \App\Services\StrategicReportService($pdo, $openai, null, $rag, $lessons, null, $depth);
+}
+
+function intelligenceCreateNarrativeDepthService(): \App\Services\NarrativeDepthService
+{
+    if (!class_exists(\Agents\Services\OpenAIService::class)) {
+        throw new RuntimeException('Agents autoload required before intelligenceCreateNarrativeDepthService');
+    }
+    $projectRoot = intelligenceFindProjectRoot();
+    $openaiConfig = require $projectRoot . 'config/openai.php';
+    $openai = new \Agents\Services\OpenAIService($openaiConfig);
+    return new \App\Services\NarrativeDepthService($openai);
 }
 
 function intelligenceEnsureMoatTables(PDO $pdo): void

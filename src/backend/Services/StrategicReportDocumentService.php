@@ -501,6 +501,11 @@ HTML;
         $html = '';
         $sectionNum = 1;
 
+        $synthesis = trim((string) ($scqa['synthesis_narrative'] ?? ''));
+        if ($synthesis !== '') {
+            $html .= $this->renderSynthesisNarrative($synthesis);
+        }
+
         $execSummary = trim((string) ($scqa['executive_summary'] ?? ''));
         if ($execSummary !== '') {
             $html .= $this->renderExecutiveSummary($execSummary);
@@ -540,6 +545,19 @@ HTML;
         }
 
         return $html;
+    }
+
+    private function renderSynthesisNarrative(string $narrative): string
+    {
+        $label = htmlspecialchars($this->config['section_labels']['synthesis_narrative'] ?? '종합 분석', ENT_QUOTES, 'UTF-8');
+        $content = nl2br(htmlspecialchars($narrative, ENT_QUOTES, 'UTF-8'));
+
+        return <<<HTML
+        <div class="section synthesis-narrative">
+            <h2 class="section-title">{$label}</h2>
+            <p class="numbered-para">{$content}</p>
+        </div>
+HTML;
     }
 
     private function renderExecutiveSummary(string $summary): string

@@ -43,6 +43,7 @@ interface CrossConnection {
 
 interface GistData {
   headline: string;
+  synthesis_narrative?: string;
   macro_so_what: string;
   clusters: Cluster[];
   cross_connections: CrossConnection[];
@@ -590,6 +591,13 @@ function GistViewer({
         <p className="text-slate-500 text-xs">
           저장 ID: <span className="text-cyan-400 font-mono">{savedId}</span> — 「저장된 리포트」에서 다시 열 수 있습니다.
         </p>
+      )}
+
+      {data.synthesis_narrative && (
+        <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-emerald-500/30">
+          <p className="text-emerald-400 text-xs font-medium uppercase tracking-wider mb-2">종합 분석</p>
+          <p className="text-slate-200 text-sm leading-relaxed whitespace-pre-wrap">{data.synthesis_narrative}</p>
+        </div>
       )}
 
       <div className="bg-gradient-to-br from-cyan-500/10 to-emerald-500/10 backdrop-blur-sm rounded-2xl p-6 border border-cyan-500/20">

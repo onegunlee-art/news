@@ -36,6 +36,7 @@ interface NarrativeCollision {
 
 interface ScqaReport {
   core_question?: string;
+  synthesis_narrative?: string;
   executive_summary?: string;
   structural_shift?: StructuralShift;
   situation?: {
@@ -390,6 +391,12 @@ export default function StrategicReports() {
                   <span className="text-[10px] text-slate-500">승인 후 이메일 발송 가능</span>
                 )}
               </div>
+
+              {scqa.synthesis_narrative && (
+                <Section title="종합 분석 (검색 수준 서사)" icon="article">
+                  <p className="text-slate-200 text-sm leading-relaxed whitespace-pre-wrap">{scqa.synthesis_narrative}</p>
+                </Section>
+              )}
 
               <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-4 space-y-3">
                 <Field label="핵심 질문" value={editCoreQuestion} onChange={setEditCoreQuestion} />

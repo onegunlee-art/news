@@ -37,6 +37,7 @@ return [
     
     // 섹션 라벨 (한국어)
     'section_labels' => [
+        'synthesis_narrative' => '종합 분석',
         'executive_summary' => '요약',
         'structural_shift' => '구조적 변화',
         'situation' => '상황 분석',

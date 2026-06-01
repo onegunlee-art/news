@@ -115,9 +115,11 @@ function ensureWeeklyGistTable(\PDO $pdo): void
 // ── Services ───────────────────────────────────────────
 
 require_once $projectRoot . 'src/agents/autoload.php';
+require_once $projectRoot . 'src/backend/autoload.php';
 
 use Agents\Services\OpenAIService;
 use Agents\Services\SupabaseService;
+use App\Services\NarrativeDepthService;
 
 // ── GET: 기간 내 기사 + RAG 메타 조회 ──────────────────
 
@@ -374,7 +376,7 @@ foreach ($articles as $i => $art) {
         'description'       => mb_substr($art['description'] ?? '', 0, 300),
         'why_important'     => mb_substr($art['why_important'] ?? '', 0, 400),
         'future_prediction' => mb_substr($art['future_prediction'] ?? '', 0, 300),
-        'narration'         => mb_substr($art['narration'] ?? '', 0, 500),
+        'narration'         => mb_substr($art['narration'] ?? '', 0, 800),
     ];
     if (!empty($art['rag_metadata'])) {
         $rag = $art['rag_metadata'];
@@ -468,8 +470,8 @@ Step 4 — So What:
 [so_what 품질 규칙]
 - implication: "증가하고 있다", "중요하다", "영향을 준다" 같은 모호한 표현 금지.
   반드시 구조적 변화의 방향을 명시하라.
-- why_it_matters: 반드시 "A → B → C" 인과 체인 형태로 작성.
-  1단계 인과("X가 Y에 영향") 금지. 최소 2단계("X → Y → Z").
+- why_it_matters: 반드시 "A → B → C → D" 인과 체인 형태로 작성.
+  1~2단계 인과 금지. 최소 3단계("X → Y → Z → W").
 - what_to_watch: 의견이 아닌 외부에서 추적 가능한 지표/사건만 기재.
   "상황 추이", "동향 변화" 같은 모호 표현 금지.
 
@@ -484,7 +486,8 @@ Step 4 — So What:
 [출력 JSON 스키마]
 {
   "headline": "이번 주 한 줄 (30자 이내)",
-  "macro_so_what": "이번 주 전체를 관통하는 전략적 의미 (1~2문장)",
+  "synthesis_narrative": "검색 클러스터 분석과 동일한 3단 평문 (한국어 존댓말, 최소 1200자·3문단, \\n\\n로 문단 구분). 1) 핵심 결론 2) 관점 비교 3) 향후 영향",
+  "macro_so_what": "이번 주 전체를 관통하는 전략적 의미 (3~5문장, 200자 이상)",
   "clusters": [
     {
       "cluster_id": 1,
@@ -495,7 +498,7 @@ Step 4 — So What:
       "confidence": "high|medium|low",
       "one_line_takeaway": "이 이슈의 핵심 한 줄",
       "source_article_ids": [12, 45, 67],
-      "narrative": "관점 통합 서술 (200~400자)",
+      "narrative": "관점 통합 서술 (600~1200자, 3~5문단, \\n\\n로 문단 구분)",
       "perspectives": [
         {
           "viewpoint": "관점 A 요약",
@@ -509,8 +512,8 @@ Step 4 — So What:
         }
       ],
       "so_what": {
-        "implication": "무슨 구조적 변화가 일어나고 있는가 (1문장, 방향성 명시)",
-        "why_it_matters": "인과 체인: A → B → C (최소 2단계)",
+        "implication": "무슨 구조적 변화가 일어나고 있는가 (2~3문장, 방향성 명시)",
+        "why_it_matters": "인과 체인: A → B → C → D (최소 3단계)",
         "what_to_watch": ["추적할 외부 신호/지표 1", "신호 2"]
       }
     }
@@ -559,70 +562,117 @@ PROMPT;
 
 try {
     $openaiConfig = require $projectRoot . 'config/openai.php';
+    $depthConfig = is_file($projectRoot . 'config/narrative_depth.php') ? require $projectRoot . 'config/narrative_depth.php' : [];
+    $depthService = new NarrativeDepthService(new OpenAIService($openaiConfig));
     $apiKey = $openaiConfig['api_key'] ?? '';
     $endpoint = $openaiConfig['endpoints']['chat'] ?? 'https://api.openai.com/v1/responses';
 
-    $requestBody = [
-        'model'       => 'gpt-5.2',
-        'input'       => $userPrompt,
-        'instructions' => $systemPrompt,
-        'temperature' => 0.6,
-        'max_output_tokens' => 12000,
-        'text' => ['format' => ['type' => 'json_object']],
-    ];
-
-    $ch = curl_init($endpoint);
-    curl_setopt_array($ch, [
-        CURLOPT_POST           => true,
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT        => 240,
-        CURLOPT_HTTPHEADER     => [
-            'Content-Type: application/json',
-            'Authorization: Bearer ' . $apiKey,
-        ],
-        CURLOPT_POSTFIELDS => json_encode($requestBody),
-    ]);
-
-    $raw = curl_exec($ch);
-    $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $curlError = curl_error($ch);
-    curl_close($ch);
-
-    if ($curlError) {
-        throw new \RuntimeException('cURL error: ' . $curlError);
+    $gistContextBlocks = [];
+    foreach ($articleInputs as $entry) {
+        $block = '【' . ($entry['title'] ?? '') . "】\n";
+        if (!empty($entry['why_important'])) {
+            $block .= '핵심: ' . $entry['why_important'] . "\n";
+        }
+        $block .= '분석: ' . ($entry['narration'] ?? $entry['description'] ?? '');
+        $gistContextBlocks[] = $block;
     }
-    if ($httpCode < 200 || $httpCode >= 300) {
-        throw new \RuntimeException("OpenAI HTTP {$httpCode}: " . mb_substr($raw, 0, 500));
-    }
+    $gistContext = implode("\n\n", $gistContextBlocks);
+    $topicLine = "주제: \"{$startDate} ~ {$endDate} 주간 인텔리전스 브리핑\"";
 
-    $response = json_decode($raw, true);
-    $outputText = '';
-    if (isset($response['output'])) {
-        foreach ($response['output'] as $block) {
-            if (($block['type'] ?? '') === 'message') {
-                foreach ($block['content'] ?? [] as $c) {
-                    if (($c['type'] ?? '') === 'output_text') {
-                        $outputText = $c['text'] ?? '';
+    $callGpt = static function (string $prompt) use ($apiKey, $endpoint, $systemPrompt, $depthConfig): string {
+        $requestBody = [
+            'model'       => (string) ($depthConfig['model'] ?? 'gpt-5.2'),
+            'input'       => $prompt,
+            'instructions' => $systemPrompt,
+            'temperature' => (float) ($depthConfig['temperature'] ?? 0.5),
+            'max_output_tokens' => (int) ($depthConfig['max_tokens']['weekly'] ?? 12000),
+            'text' => ['format' => ['type' => 'json_object']],
+        ];
+        $ch = curl_init($endpoint);
+        curl_setopt_array($ch, [
+            CURLOPT_POST           => true,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT        => 240,
+            CURLOPT_HTTPHEADER     => [
+                'Content-Type: application/json',
+                'Authorization: Bearer ' . $apiKey,
+            ],
+            CURLOPT_POSTFIELDS => json_encode($requestBody),
+        ]);
+        $raw = curl_exec($ch);
+        $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch);
+        curl_close($ch);
+        if ($curlError) {
+            throw new \RuntimeException('cURL error: ' . $curlError);
+        }
+        if ($httpCode < 200 || $httpCode >= 300) {
+            throw new \RuntimeException("OpenAI HTTP {$httpCode}: " . mb_substr((string) $raw, 0, 500));
+        }
+        $response = json_decode((string) $raw, true);
+        $outputText = '';
+        if (isset($response['output'])) {
+            foreach ($response['output'] as $block) {
+                if (($block['type'] ?? '') === 'message') {
+                    foreach ($block['content'] ?? [] as $c) {
+                        if (($c['type'] ?? '') === 'output_text') {
+                            $outputText = $c['text'] ?? '';
+                        }
                     }
                 }
             }
         }
+        if ($outputText === '') {
+            throw new \RuntimeException('GPT 응답에서 텍스트를 추출할 수 없습니다.');
+        }
+        return $outputText;
+    };
+
+    $gistData = null;
+    $depthMeta = ['attempts' => 0, 'depth_passed' => false];
+    $currentPrompt = $userPrompt;
+
+    for ($attempt = 1; $attempt <= 2; $attempt++) {
+        $depthMeta['attempts'] = $attempt;
+        $outputText = $callGpt($currentPrompt);
+        $parsed = json_decode($outputText, true);
+        if (!$parsed) {
+            throw new \RuntimeException('GPT 응답이 유효한 JSON이 아닙니다: ' . mb_substr($outputText, 0, 500));
+        }
+        $gistData = $parsed;
+
+        $syn = trim((string) ($gistData['synthesis_narrative'] ?? ''));
+        $minSyn = (int) (($depthConfig['min_chars']['synthesis_narrative'] ?? 1200));
+        if ($syn === '' || mb_strlen($syn) < $minSyn) {
+            $generated = $depthService->generateSynthesisNarrative($gistContext, $topicLine);
+            if ($generated !== null && $generated !== '') {
+                $gistData['synthesis_narrative'] = $generated;
+            }
+        }
+
+        $depthResult = $depthService->scoreGistDepth($gistData);
+        $depthMeta['depth_score'] = $depthResult['depth_score'] ?? 0;
+        $depthMeta['depth_passed'] = (bool) ($depthResult['passed'] ?? false);
+        $depthMeta['depth_violations'] = $depthResult['violations'] ?? [];
+
+        if ($depthMeta['depth_passed'] || $attempt >= 2) {
+            break;
+        }
+
+        $hintLines = implode("\n- ", $depthResult['hints'] ?? ['분량을 검색 분석 수준으로 확장하라.']);
+        $currentPrompt = $userPrompt . "\n\n【분량 미달 — 반드시 수정】\n- {$hintLines}\n- synthesis_narrative 1200자·3문단, cluster narrative 600자·3문단 이상";
     }
 
-    if ($outputText === '') {
-        throw new \RuntimeException('GPT 응답에서 텍스트를 추출할 수 없습니다. Raw: ' . mb_substr($raw, 0, 500));
-    }
-
-    $gistData = json_decode($outputText, true);
     if (!$gistData) {
-        throw new \RuntimeException('GPT 응답이 유효한 JSON이 아닙니다: ' . mb_substr($outputText, 0, 500));
+        throw new \RuntimeException('Weekly gist generation failed');
     }
 
     $gistData['meta'] = array_merge($gistData['meta'] ?? [], [
         'generated_at'   => date('c'),
         'total_articles' => $articleCount,
         'period'         => "{$startDate} ~ {$endDate}",
-        'model'          => 'gpt-5.2',
+        'model'          => (string) ($depthConfig['model'] ?? 'gpt-5.2'),
+        'depth'          => $depthMeta,
     ]);
 
     $savedId = null;
