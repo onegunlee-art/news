@@ -21,12 +21,22 @@ export default function SearchAskInput({
 
   useEffect(() => {
     if (!autoFocus || disabled) return
-    const el = inputRef.current
-    if (!el) return
-    try {
-      el.focus({ preventScroll: true })
-    } catch {
-      el.focus()
+    let outer = 0
+    let inner = 0
+    outer = requestAnimationFrame(() => {
+      inner = requestAnimationFrame(() => {
+        const el = inputRef.current
+        if (!el) return
+        try {
+          el.focus({ preventScroll: true })
+        } catch {
+          el.focus()
+        }
+      })
+    })
+    return () => {
+      cancelAnimationFrame(outer)
+      cancelAnimationFrame(inner)
     }
   }, [autoFocus, disabled])
 

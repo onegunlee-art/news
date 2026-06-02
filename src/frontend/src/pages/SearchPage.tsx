@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import MaterialIcon from '../components/Common/MaterialIcon'
 import SearchAskInput from '../components/Search/SearchAskInput'
+import SearchFullscreenShell from '../components/Search/SearchFullscreenShell'
 import SearchLanding from '../components/Search/SearchLanding'
 import { SEARCH_ENTRY_ICON } from '../constants/site'
 import { newsApi } from '../services/api'
@@ -77,19 +78,13 @@ export default function SearchPage() {
 
   const resultCount = semanticResults.length
 
-  useEffect(() => {
-    if (!q) {
-      window.scrollTo(0, 0)
-    }
-  }, [q])
-
   if (!q) {
     return (
-      <div className="flex flex-1 min-h-0 flex-col overflow-hidden overscroll-none bg-page min-h-[calc(100dvh-3.5rem)] max-h-[calc(100dvh-3.5rem)] md:min-h-[calc(100dvh-5rem)] md:max-h-[calc(100dvh-5rem)]">
-        <SearchLanding className="flex-1 min-h-0 overflow-hidden" logoSize="header">
+      <SearchFullscreenShell onClose={() => navigate(-1)}>
+        <SearchLanding className="flex-1 min-h-0 px-4">
           <SearchAskInput onSubmit={goSearch} autoFocus />
         </SearchLanding>
-      </div>
+      </SearchFullscreenShell>
     )
   }
 

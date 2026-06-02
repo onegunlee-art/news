@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock'
 
 const STORAGE_KEY = 'landing_seen'
 
@@ -28,47 +29,7 @@ export default function LandingOverlay() {
     return () => window.removeEventListener('keydown', onKey)
   }, [visible, dismiss])
 
-  /** 배경(홈 피드) 스크롤 방지 — 모바일 Safari 등에서도 뒤 페이지가 밀리지 않도록 */
-  useEffect(() => {
-    if (!visible) return
-
-    const html = document.documentElement
-    const body = document.body
-    const scrollY = window.scrollY
-
-    const prevHtmlOverflow = html.style.overflow
-    const prevHtmlOverscroll = html.style.overscrollBehavior
-    const prevBodyOverflow = body.style.overflow
-    const prevBodyOverscroll = body.style.overscrollBehavior
-    const prevBodyPosition = body.style.position
-    const prevBodyTop = body.style.top
-    const prevBodyLeft = body.style.left
-    const prevBodyRight = body.style.right
-    const prevBodyWidth = body.style.width
-
-    html.style.overflow = 'hidden'
-    html.style.overscrollBehavior = 'none'
-    body.style.overflow = 'hidden'
-    body.style.overscrollBehavior = 'none'
-    body.style.position = 'fixed'
-    body.style.top = `-${scrollY}px`
-    body.style.left = '0'
-    body.style.right = '0'
-    body.style.width = '100%'
-
-    return () => {
-      html.style.overflow = prevHtmlOverflow
-      html.style.overscrollBehavior = prevHtmlOverscroll
-      body.style.overflow = prevBodyOverflow
-      body.style.overscrollBehavior = prevBodyOverscroll
-      body.style.position = prevBodyPosition
-      body.style.top = prevBodyTop
-      body.style.left = prevBodyLeft
-      body.style.right = prevBodyRight
-      body.style.width = prevBodyWidth
-      window.scrollTo(0, scrollY)
-    }
-  }, [visible])
+  useBodyScrollLock(visible)
 
   return (
     <AnimatePresence>

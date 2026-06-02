@@ -6,6 +6,7 @@ import { useAuthStore } from '../../store/authStore'
 import MaterialIcon from '../Common/MaterialIcon'
 import GistLogo from '../Common/GistLogo'
 import SearchAskInput from '../Search/SearchAskInput'
+import SearchFullscreenShell from '../Search/SearchFullscreenShell'
 import SearchLanding from '../Search/SearchLanding'
 import { SEARCH_ENTRY_ICON } from '../../constants/site'
 
@@ -169,28 +170,15 @@ export default function Header() {
       createPortal(
         <AnimatePresence>
           {isSearchOpen && (
-            <motion.div
+            <SearchFullscreenShell
               key="search-overlay"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[100] flex min-h-[100dvh] flex-col overflow-hidden bg-[#e8eef2] dark:bg-page"
+              onClose={() => setIsSearchOpen(false)}
+              className="pl-[max(0px,env(safe-area-inset-left))] pr-[max(0px,env(safe-area-inset-right))]"
             >
-              <div className="shrink-0 flex items-center px-2 pt-[max(0.75rem,env(safe-area-inset-top))] pl-[max(0.5rem,env(safe-area-inset-left))] pr-[max(0.5rem,env(safe-area-inset-right))]">
-                <button
-                  type="button"
-                  onClick={() => setIsSearchOpen(false)}
-                  className="shrink-0 rounded-lg p-2.5 text-page hover:bg-page-secondary/80 transition-colors"
-                  aria-label="검색 닫기"
-                >
-                  <MaterialIcon name="arrow_back" className="w-6 h-6 text-page" size={24} />
-                </button>
-              </div>
-
-              <SearchLanding className="flex-1 min-h-0 px-4 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))]">
+              <SearchLanding className="flex-1 min-h-0 px-4">
                 <SearchAskInput onSubmit={goSearch} autoFocus />
               </SearchLanding>
-            </motion.div>
+            </SearchFullscreenShell>
           )}
         </AnimatePresence>,
         document.body
