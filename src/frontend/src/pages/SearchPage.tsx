@@ -398,7 +398,7 @@ function NoResultsState() {
         <span className="absolute inset-0 rounded-full bg-page-secondary opacity-90 dark:opacity-100" aria-hidden />
         <span className="absolute -bottom-1 left-1/2 h-14 w-20 -translate-x-1/2 rounded-full bg-page shadow-md border border-page dark:bg-page-secondary" aria-hidden />
         <span className="relative z-[1] flex h-16 w-16 items-center justify-center rounded-full bg-page-secondary shadow-inner border border-page">
-          <MaterialIcon name={SEARCH_ENTRY_ICON} className="text-page-muted" size={40} />
+          <MaterialIcon name={SEARCH_ENTRY_ICON} className="text-page" size={40} />
         </span>
       </div>
       <p className="max-w-sm text-base leading-relaxed text-page-secondary">

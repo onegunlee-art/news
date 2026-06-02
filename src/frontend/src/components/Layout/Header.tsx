@@ -94,10 +94,10 @@ export default function Header() {
           <div className="w-16 md:w-auto flex justify-end items-center">
             <button
               onClick={() => setIsSearchOpen(true)}
-              className="p-2 translate-y-1 text-page-secondary hover:text-page transition-colors"
+              className="p-2 translate-y-1 text-page hover:opacity-80 transition-opacity"
               aria-label="gister에게 질문하기"
             >
-              <MaterialIcon name={SEARCH_ENTRY_ICON} className="w-[25px] h-[25px]" size={25} />
+              <MaterialIcon name={SEARCH_ENTRY_ICON} className="w-[25px] h-[25px] text-page" size={25} />
             </button>
           </div>
         </div>
@@ -180,10 +180,10 @@ export default function Header() {
                 <button
                   type="button"
                   onClick={() => setIsSearchOpen(false)}
-                  className="shrink-0 rounded-lg p-2.5 text-page-secondary hover:bg-page-secondary/80 hover:text-page transition-colors"
+                  className="shrink-0 rounded-lg p-2.5 text-page hover:bg-page-secondary/80 transition-colors"
                   aria-label="검색 닫기"
                 >
-                  <MaterialIcon name="arrow_back" className="w-6 h-6" size={24} />
+                  <MaterialIcon name="arrow_back" className="w-6 h-6 text-page" size={24} />
                 </button>
               </div>
 
