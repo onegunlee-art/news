@@ -11,6 +11,6 @@ export const KOREAN_FONT_FAMILY = "'Noto Sans KR', sans-serif"
 export const GIST_MARK_SRC = '/favicon-G.svg'
 
 /** 헤더·검색 입력·빈 결과 장식 아이콘 (Material Symbols) */
-export const SEARCH_ENTRY_ICON = 'neurology'
+export const SEARCH_ENTRY_ICON = 'psychology'
 
 export const SEARCH_ASK_PLACEHOLDER = 'gister에게 무엇이든 물어보세요'

@@ -1,7 +1,7 @@
 import { FormEvent, useState } from 'react'
 import GistMarkIcon from '../Common/GistMarkIcon'
 import MaterialIcon from '../Common/MaterialIcon'
-import { SEARCH_ASK_PLACEHOLDER, SEARCH_ENTRY_ICON } from '../../constants/site'
+import { SEARCH_ASK_PLACEHOLDER } from '../../constants/site'
 
 type SearchAskInputProps = {
   onSubmit: (query: string) => void
@@ -31,13 +31,7 @@ export default function SearchAskInput({
       onSubmit={handleSubmit}
       className={`w-full ${className}`.trim()}
     >
-      <div className="flex min-w-0 items-center gap-2 rounded-2xl border border-page bg-page px-3 py-2.5 shadow-sm dark:border-page dark:bg-page dark:shadow-md">
-        <MaterialIcon
-          name={SEARCH_ENTRY_ICON}
-          className="shrink-0 text-page"
-          size={22}
-          aria-hidden
-        />
+      <div className="flex min-w-0 items-center gap-2 rounded-2xl border border-page bg-page px-4 py-2.5 shadow-sm dark:border-page dark:bg-page dark:shadow-md">
         <input
           type="text"
           value={query}
