@@ -1,7 +1,10 @@
 import { useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import MaterialIcon from '../components/Common/MaterialIcon'
+import SearchAskInput from '../components/Search/SearchAskInput'
+import SearchLanding from '../components/Search/SearchLanding'
+import { SEARCH_ENTRY_ICON } from '../constants/site'
 import { newsApi } from '../services/api'
 import LoadingSpinner from '../components/Common/LoadingSpinner'
 import { getPlaceholderImageUrl } from '../utils/imagePolicy'
@@ -45,8 +48,13 @@ interface SemanticSearchResponse {
 const EMPTY_SEMANTIC_RESULTS: SemanticResult[] = []
 
 export default function SearchPage() {
+  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const q = searchParams.get('q')?.trim() ?? ''
+
+  const goSearch = (query: string) => {
+    navigate(`/search?q=${encodeURIComponent(query)}`)
+  }
 
   const semanticQuery = useQuery({
     queryKey: ['semanticSearch', q],
@@ -69,30 +77,44 @@ export default function SearchPage() {
 
   const resultCount = semanticResults.length
 
+  if (!q) {
+    return (
+      <div className="min-h-[100dvh] flex flex-col bg-page">
+        <SearchLanding logoSize="header">
+          <SearchAskInput onSubmit={goSearch} autoFocus />
+        </SearchLanding>
+      </div>
+    )
+  }
+
   return (
-    <div className="min-h-screen bg-page pb-8">
-      <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 md:px-6 pt-6 md:pt-8">
-        {/* 헤더 */}
-        <div className="mb-4">
-          <h1 className="text-xl md:text-2xl font-semibold text-page">
-            {q ? `「${q}」에 대한 결과` : '검색'}
-          </h1>
-          {q && searched && !isLoading && (
-            <p className="text-sm text-page-secondary mt-1.5 font-medium">{resultCount}건</p>
+    <div className="min-h-[100dvh] flex flex-col bg-page">
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 md:px-6 pt-6 md:pt-8 pb-28">
+          <div className="mb-4">
+            <h1 className="text-xl md:text-2xl font-semibold text-page">
+              「{q}」에 대한 결과
+            </h1>
+            {searched && !isLoading && (
+              <p className="text-sm text-page-secondary mt-1.5 font-medium">{resultCount}건</p>
+            )}
+          </div>
+
+          {isLoading ? (
+            <div className="flex flex-col justify-center items-center py-20 gap-3">
+              <LoadingSpinner size="large" />
+              <p className="text-sm text-page-secondary">AI가 검색어를 분석 중...</p>
+            </div>
+          ) : (
+            <AISearchResults results={semanticResults} clusters={clusters} insight={insight} />
           )}
         </div>
+      </div>
 
-        {/* 메인 콘텐츠 */}
-        {!q ? (
-          <EmptySearchState />
-        ) : isLoading ? (
-          <div className="flex flex-col justify-center items-center py-20 gap-3">
-            <LoadingSpinner size="large" />
-            <p className="text-sm text-page-secondary">AI가 검색어를 분석 중...</p>
-          </div>
-        ) : (
-          <AISearchResults results={semanticResults} clusters={clusters} insight={insight} />
-        )}
+      <div className="sticky bottom-0 z-10 border-t border-page bg-page/95 backdrop-blur-sm px-4 md:px-6 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+        <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto">
+          <SearchAskInput onSubmit={goSearch} disabled={isLoading} />
+        </div>
       </div>
     </div>
   )
@@ -369,15 +391,6 @@ function SearchInsightBanner({ insight }: { insight: string }) {
   )
 }
 
-function EmptySearchState() {
-  return (
-    <div className="text-center py-16 text-page-secondary">
-      <p className="mb-2">상단 검색 아이콘을 눌러 검색어를 입력해 주세요.</p>
-      <p className="text-sm">의미 기반으로 관련 기사를 찾아 드립니다.</p>
-    </div>
-  )
-}
-
 function NoResultsState() {
   return (
     <div className="flex flex-col items-center px-4 py-16 text-center">
@@ -385,7 +398,7 @@ function NoResultsState() {
         <span className="absolute inset-0 rounded-full bg-page-secondary opacity-90 dark:opacity-100" aria-hidden />
         <span className="absolute -bottom-1 left-1/2 h-14 w-20 -translate-x-1/2 rounded-full bg-page shadow-md border border-page dark:bg-page-secondary" aria-hidden />
         <span className="relative z-[1] flex h-16 w-16 items-center justify-center rounded-full bg-page-secondary shadow-inner border border-page">
-          <MaterialIcon name="search" className="text-page-muted" size={40} />
+          <MaterialIcon name={SEARCH_ENTRY_ICON} className="text-page-muted" size={40} />
         </span>
       </div>
       <p className="max-w-sm text-base leading-relaxed text-page-secondary">

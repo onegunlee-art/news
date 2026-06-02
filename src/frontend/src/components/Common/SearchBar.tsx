@@ -1,5 +1,6 @@
 import { useState, FormEvent } from 'react'
 import MaterialIcon from './MaterialIcon'
+import { SEARCH_ENTRY_ICON } from '../../constants/site'
 
 interface SearchBarProps {
   onSearch: (query: string) => void
@@ -30,7 +31,7 @@ export default function SearchBar({
           className="w-full px-6 py-4 pl-14 bg-dark-600 border border-white/10 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:border-primary-500/50 focus:ring-2 focus:ring-primary-500/20 transition-all"
         />
         <div className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-500">
-          <MaterialIcon name="search" className="w-[25px] h-[25px]" size={25} />
+          <MaterialIcon name={SEARCH_ENTRY_ICON} className="w-[25px] h-[25px]" size={25} />
         </div>
         {query && (
           <button
