@@ -1,4 +1,4 @@
-import { FormEvent, useState } from 'react'
+import { FormEvent, useEffect, useRef, useState } from 'react'
 import GistMarkIcon from '../Common/GistMarkIcon'
 import MaterialIcon from '../Common/MaterialIcon'
 import { SEARCH_ASK_PLACEHOLDER } from '../../constants/site'
@@ -17,6 +17,18 @@ export default function SearchAskInput({
   className = '',
 }: SearchAskInputProps) {
   const [query, setQuery] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (!autoFocus || disabled) return
+    const el = inputRef.current
+    if (!el) return
+    try {
+      el.focus({ preventScroll: true })
+    } catch {
+      el.focus()
+    }
+  }, [autoFocus, disabled])
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
@@ -33,11 +45,11 @@ export default function SearchAskInput({
     >
       <div className="flex min-w-0 items-center gap-2 rounded-2xl border border-page bg-page px-4 py-2.5 shadow-sm dark:border-page dark:bg-page dark:shadow-md">
         <input
+          ref={inputRef}
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={SEARCH_ASK_PLACEHOLDER}
-          autoFocus={autoFocus}
           autoComplete="off"
           enterKeyHint="search"
           disabled={disabled}

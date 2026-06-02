@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import MaterialIcon from '../components/Common/MaterialIcon'
@@ -77,10 +77,16 @@ export default function SearchPage() {
 
   const resultCount = semanticResults.length
 
+  useEffect(() => {
+    if (!q) {
+      window.scrollTo(0, 0)
+    }
+  }, [q])
+
   if (!q) {
     return (
-      <div className="min-h-[100dvh] flex flex-col bg-page">
-        <SearchLanding logoSize="header">
+      <div className="flex flex-1 min-h-0 flex-col overflow-hidden overscroll-none bg-page min-h-[calc(100dvh-3.5rem)] max-h-[calc(100dvh-3.5rem)] md:min-h-[calc(100dvh-5rem)] md:max-h-[calc(100dvh-5rem)]">
+        <SearchLanding className="flex-1 min-h-0 overflow-hidden" logoSize="header">
           <SearchAskInput onSubmit={goSearch} autoFocus />
         </SearchLanding>
       </div>
