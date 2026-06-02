@@ -4,7 +4,7 @@ type GistMarkIconProps = {
   className?: string
 }
 
-export default function GistMarkIcon({ className = 'w-[18px] h-[18px]' }: GistMarkIconProps) {
+export default function GistMarkIcon({ className = 'w-9 h-9' }: GistMarkIconProps) {
   return (
     <img
       src={GIST_MARK_SRC}

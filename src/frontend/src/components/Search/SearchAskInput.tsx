@@ -63,10 +63,10 @@ export default function SearchAskInput({
         <button
           type="submit"
           disabled={!query.trim() || disabled}
-          className="shrink-0 flex h-9 w-9 items-center justify-center rounded-full border border-page bg-page hover:bg-page-secondary disabled:cursor-not-allowed disabled:opacity-40 transition-colors"
+          className="shrink-0 flex h-11 w-11 items-center justify-center rounded-full border border-page bg-page hover:bg-page-secondary disabled:cursor-not-allowed disabled:opacity-40 transition-colors"
           aria-label="검색"
         >
-          <GistMarkIcon className="w-[18px] h-[18px]" />
+          <GistMarkIcon />
         </button>
       </div>
     </form>
