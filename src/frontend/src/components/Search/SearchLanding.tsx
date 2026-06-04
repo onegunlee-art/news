@@ -1,17 +1,14 @@
 import type { ReactNode } from 'react'
-import GistLogo from '../Common/GistLogo'
 import SearchGisterTagline from './SearchGisterTagline'
 
 type SearchLandingProps = {
   children?: ReactNode
   className?: string
-  logoSize?: 'header' | 'default'
 }
 
 export default function SearchLanding({
   children,
   className = '',
-  logoSize = 'header',
 }: SearchLandingProps) {
   return (
     <div
@@ -20,8 +17,7 @@ export default function SearchLanding({
       <div
         className="flex w-full flex-col items-center px-4 max-md:flex-none max-md:justify-start max-md:pt-4 max-md:pb-2 md:flex-1 md:justify-center md:py-8 md:min-h-0"
       >
-        <GistLogo link={false} size={logoSize} as="span" className="mb-6 md:mb-10" />
-        <SearchGisterTagline />
+        <SearchGisterTagline className="mb-4 md:mb-6" />
         {children ? (
           <div className="mt-4 w-full max-md:block md:hidden">{children}</div>
         ) : null}

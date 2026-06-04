@@ -13,4 +13,5 @@ export const GIST_MARK_SRC = '/favicon-G.svg'
 /** 헤더·검색 입력·빈 결과 장식 아이콘 (Material Symbols) */
 export const SEARCH_ENTRY_ICON = 'psychology'
 
-export const SEARCH_ASK_PLACEHOLDER = 'gister에게 무엇이든 물어보세요'
+export const SEARCH_ASK_PLACEHOLDER =
+  '미중 무역 전쟁이 자동차 시장에 미치는 영향 알려줘'
