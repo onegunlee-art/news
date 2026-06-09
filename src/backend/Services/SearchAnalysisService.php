@@ -170,6 +170,141 @@ PROMPT;
         ]);
     }
 
+    /**
+     * Partner API v2 — 구조화 분석 + full_text 하위 호환
+     *
+     * @param list<int> $newsIds
+     * @return array{
+     *   full_text: string,
+     *   synthesis: string,
+     *   alignment_points: list<string>,
+     *   conflict_points: list<string>,
+     *   outlook: string
+     * }
+     */
+    public function generatePartnerAnalysis(string $clusterName, array $newsIds): array
+    {
+        if (!$this->openai->isConfigured()) {
+            throw new \RuntimeException('OpenAI not configured');
+        }
+        $ctx = $this->buildClusterContext($newsIds);
+        if ($ctx['blocks'] === []) {
+            throw new \RuntimeException('No articles found');
+        }
+
+        $projectRoot = dirname(__DIR__, 3) . '/';
+        $openaiCfg = require $projectRoot . 'config/openai.php';
+        $articleText = implode("\n\n", $ctx['blocks']);
+        $topicLine = $clusterName !== '' ? "주제: \"{$clusterName}\"\n\n" : '';
+
+        $structuredPrompt = <<<PROMPT
+{$topicLine}다음 기사 자료들을 종합 분석하라:
+
+{$articleText}
+
+JSON만 출력:
+{
+  "synthesis": "핵심 결론 한 문장",
+  "alignment_points": ["기사들이 공통으로 보는 관점 1", "관점 2"],
+  "conflict_points": ["기사들이 갈리는 관점 1", "관점 2"],
+  "outlook": "향후 영향과 종합 판단 (2~4문장)",
+  "full_text": "전체 분석 산문. synthesis → 일치/충돌 비교 → outlook 순서. 한국어 존댓말. 마크다운 금지."
+}
+
+규칙:
+- alignment_points: 2~4개, 기사들이 일치하거나 공유하는 관점
+- conflict_points: 2~4개, 기사들이 충돌하거나 대립하는 관점
+- "기사1" 등 번호 언급 금지, 근거 없는 추측 금지
+PROMPT;
+
+        try {
+            $raw = $this->openai->chat(
+                '당신은 뉴스 분석 전문 AI입니다. 반드시 JSON만 출력합니다.',
+                $structuredPrompt,
+                [
+                    'max_tokens' => 2200,
+                    'timeout' => 120,
+                    'temperature' => 0.5,
+                    'json_mode' => true,
+                    'model' => $openaiCfg['model'] ?? 'gpt-4o-mini',
+                ]
+            );
+            $data = json_decode($raw, true);
+            if (is_array($data)) {
+                $fullText = trim((string) ($data['full_text'] ?? ''));
+                $synthesis = trim((string) ($data['synthesis'] ?? ''));
+                $alignment = self::normalizeStringList($data['alignment_points'] ?? []);
+                $conflict = self::normalizeStringList($data['conflict_points'] ?? []);
+                $outlook = trim((string) ($data['outlook'] ?? ''));
+
+                if ($fullText === '' && ($synthesis !== '' || $alignment !== [] || $conflict !== [])) {
+                    $parts = [];
+                    if ($synthesis !== '') {
+                        $parts[] = $synthesis;
+                    }
+                    if ($alignment !== []) {
+                        $parts[] = '일치하는 점: ' . implode(' ', $alignment);
+                    }
+                    if ($conflict !== []) {
+                        $parts[] = '충돌하는 점: ' . implode(' ', $conflict);
+                    }
+                    if ($outlook !== '') {
+                        $parts[] = $outlook;
+                    }
+                    $fullText = implode("\n\n", $parts);
+                }
+
+                if ($fullText !== '') {
+                    return [
+                        'full_text' => $fullText,
+                        'synthesis' => $synthesis,
+                        'alignment_points' => $alignment,
+                        'conflict_points' => $conflict,
+                        'outlook' => $outlook,
+                    ];
+                }
+            }
+        } catch (\Throwable $e) {
+            error_log('[SearchAnalysisService] partner structured analysis failed: ' . $e->getMessage());
+        }
+
+        $systemPrompt = '당신은 뉴스 분석 전문 AI입니다. 여러 기사를 종합하여 깊이 있는 분석을 제공합니다.';
+        $userPrompt = $this->buildPrompt($clusterName, $ctx['blocks']);
+        $fullText = $this->openai->chat($systemPrompt, $userPrompt, [
+            'max_tokens' => 2000,
+            'timeout' => 120,
+            'temperature' => 0.5,
+            'model' => $openaiCfg['model'] ?? 'gpt-4o-mini',
+        ]);
+
+        return [
+            'full_text' => $fullText,
+            'synthesis' => '',
+            'alignment_points' => [],
+            'conflict_points' => [],
+            'outlook' => '',
+        ];
+    }
+
+    /**
+     * @param mixed $value
+     * @return list<string>
+     */
+    private static function normalizeStringList($value): array
+    {
+        if (!is_array($value)) {
+            return [];
+        }
+        $out = [];
+        foreach ($value as $item) {
+            $s = trim((string) $item);
+            if ($s !== '') {
+                $out[] = $s;
+            }
+        }
+        return $out;
+    }
+
     public function systemPrompt(): string
     {
         return '당신은 뉴스 분석 전문 AI입니다. 여러 기사를 종합하여 깊이 있는 분석을 제공합니다.';

@@ -4,6 +4,8 @@
  *
  * POST { query, limit?, include_analysis?, analysis_cluster_name? }
  *   → 벡터 검색 + 클러스터링 + (선택) 종합 분석
+ *   → published 기사만 반환, results[].source 포함
+ *   → analysis: full_text + synthesis/alignment_points/conflict_points/outlook (v2)
  *
  * 인증: X-Partner-Key 헤더
  * DB 영향: 없음 (SELECT only)
@@ -52,6 +54,19 @@ function sendJson(array $data, int $code = 200): void
 function sendError(string $msg, int $code = 400): void
 {
     sendJson(['success' => false, 'error' => $msg], $code);
+}
+
+/** @return list<string> */
+function partnerNewsColumns(PDO $pdo): array
+{
+    static $cols = null;
+    if ($cols === null) {
+        $cols = [];
+        foreach ($pdo->query('SHOW COLUMNS FROM news') as $row) {
+            $cols[] = (string) $row['Field'];
+        }
+    }
+    return $cols;
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -139,10 +154,24 @@ $articleMeta = [];
 if (!empty($newsIds)) {
     try {
         $pdo = getDb();
+        $newsColumns = partnerNewsColumns($pdo);
+        $hasStatus = in_array('status', $newsColumns, true);
+
+        $selectCols = 'id, title, description, image_url, published_at, category';
+        if (in_array('source', $newsColumns, true)) {
+            $selectCols .= ', source';
+        }
+        if ($hasStatus) {
+            $selectCols .= ', status';
+        }
+
         $placeholders = implode(',', array_fill(0, count($newsIds), '?'));
-        $st = $pdo->prepare(
-            "SELECT id, title, description, image_url, published_at, category FROM news WHERE id IN ({$placeholders})"
-        );
+        $where = "id IN ({$placeholders})";
+        if ($hasStatus) {
+            $where .= " AND (status = 'published' OR status IS NULL)";
+        }
+
+        $st = $pdo->prepare("SELECT {$selectCols} FROM news WHERE {$where}");
         $st->execute(array_values($newsIds));
         foreach ($st->fetchAll(PDO::FETCH_ASSOC) as $row) {
             $articleMeta[(int) $row['id']] = $row;
@@ -170,7 +199,7 @@ foreach ($vectorResults as $vr) {
     if (is_string($region)) {
         $region = json_decode($region, true) ?: [];
     }
-    $results[] = [
+    $item = [
         'news_id' => $nid,
         'similarity' => round((float) ($vr['max_similarity'] ?? 0), 4),
         'topic_label' => (string) ($vr['topic_label'] ?? ''),
@@ -183,6 +212,10 @@ foreach ($vectorResults as $vr) {
         'published_at' => (string) ($meta['published_at'] ?? ''),
         'category' => (string) ($meta['category'] ?? ''),
     ];
+    if (array_key_exists('source', $meta)) {
+        $item['source'] = (string) ($meta['source'] ?? '');
+    }
+    $results[] = $item;
 }
 
 // ============================================================
@@ -270,22 +303,22 @@ PROMPT;
 }
 
 // ============================================================
-// 6. (Optional) Full analysis
+// 6. (Optional) Full analysis (v2 structured + full_text)
 // ============================================================
-$analysisText = null;
+$analysisPayload = null;
 
 if ($includeAnalysis && !empty($results)) {
     $analysisNewsIds = array_column($results, 'news_id');
     $analysisNewsIds = array_slice($analysisNewsIds, 0, 10);
-    
+
     try {
         $pdo = $pdo ?? getDb();
         $analysisService = new SearchAnalysisService($pdo, $openai);
         $clusterNameForAnalysis = $analysisClusterName !== '' ? $analysisClusterName : $query;
-        $analysisText = $analysisService->generateAnalysis($clusterNameForAnalysis, $analysisNewsIds);
+        $analysisPayload = $analysisService->generatePartnerAnalysis($clusterNameForAnalysis, $analysisNewsIds);
     } catch (Throwable $e) {
         error_log('[partner/rag-query] analysis error: ' . $e->getMessage());
-        $analysisText = null;
+        $analysisPayload = null;
     }
 }
 
@@ -299,11 +332,12 @@ sendJson([
         'insight' => $insight,
         'clusters' => $clusters,
     ],
-    'analysis' => $analysisText !== null ? ['full_text' => $analysisText] : null,
+    'analysis' => $analysisPayload,
     'meta' => [
         'query' => $query,
         'total_results' => count($results),
-        'analysis_included' => $analysisText !== null,
+        'analysis_included' => $analysisPayload !== null,
+        'analysis_format' => $analysisPayload !== null ? 'structured_v2' : null,
         'timestamp' => date('c'),
     ],
 ]);
