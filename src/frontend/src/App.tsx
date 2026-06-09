@@ -19,6 +19,8 @@ import RegisterPage from './pages/RegisterPage'
 import AuthCallback from './pages/AuthCallback'
 import NotFoundPage from './pages/NotFoundPage'
 
+const EduHomePage = lazy(() => import('./pages/edu/EduHomePage'))
+const QuestFlowPage = lazy(() => import('./pages/edu/QuestFlowPage'))
 const AnalysisPage = lazy(() => import('./pages/AnalysisPage'))
 const AdminPage = lazy(() => import('./pages/AdminPage'))
 const SearchPage = lazy(() => import('./pages/SearchPage'))
@@ -102,6 +104,8 @@ function App() {
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/edu" element={<EduHomePage />} />
+          <Route path="/edu/quest" element={<QuestFlowPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Suspense>
