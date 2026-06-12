@@ -69,6 +69,12 @@ export const eduApi = {
       { method: 'POST', body: JSON.stringify({ invite_code }) }
     ),
 
+  createGuestSession: () =>
+    eduFetch<{ token: string; student: { id: string; display_name: string; grade_band: string } }>(
+      '/api/edu/guest/start.php',
+      { method: 'POST' }
+    ),
+
   todayQuest: () =>
     eduFetch<{
       quest: EduQuest | null

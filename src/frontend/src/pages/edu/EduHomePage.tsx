@@ -77,6 +77,22 @@ export default function EduHomePage() {
     }
   }
 
+  const handleGuestStart = async () => {
+    setLoading(true)
+    setError('')
+    try {
+      const res = await eduApi.createGuestSession()
+      setEduToken(res.token)
+      setStudentName('게스트')
+      setAuthed(true)
+      navigate('/edu/quest')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '게스트 시작 실패')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleLogout = () => {
     clearEduToken()
     setAuthed(false)
@@ -161,6 +177,15 @@ export default function EduHomePage() {
                   className="w-full py-3 bg-[#E8521C] text-white rounded font-medium disabled:opacity-50"
                 >
                   {loading ? '확인 중…' : '시작하기'}
+                </button>
+                <div className="text-center text-[#666] text-xs my-2">또는</div>
+                <button
+                  type="button"
+                  onClick={handleGuestStart}
+                  disabled={loading}
+                  className="w-full py-3 border border-[#E8521C] text-[#E8521C] rounded font-medium disabled:opacity-50"
+                >
+                  게스트로 체험하기
                 </button>
                 <button
                   type="button"
