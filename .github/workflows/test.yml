@@ -37,6 +37,9 @@ jobs:
           fi
           echo "All PHP files have valid syntax"
 
+      - name: EDU smoke test (news pipeline isolation)
+        run: php tests/edu_smoke_test.php
+
   # ========================================
   # TypeScript Type Check
   # ========================================

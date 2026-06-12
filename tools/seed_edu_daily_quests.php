@@ -87,14 +87,20 @@ function syncArticles(SupabaseService $supabase, string $questId, array $article
     $supabase->delete('edu_quest_articles', 'quest_id=eq.' . $questId);
     $sort = 0;
     foreach ($articles as $article) {
-        $supabase->insert('edu_quest_articles', [
+        $row = [
             'quest_id' => $questId,
             'news_id' => (int) $article['news_id'],
             'role' => $article['role'],
             'sort_order' => $sort++,
             'title' => $article['title'] ?? null,
             'gist_url' => $article['gist_url'] ?? null,
-        ]);
+        ];
+        foreach (['excerpt', 'why_important', 'source_outlet', 'published_at'] as $field) {
+            if (!empty($article[$field])) {
+                $row[$field] = $article[$field];
+            }
+        }
+        $supabase->insert('edu_quest_articles', $row);
     }
 }
 

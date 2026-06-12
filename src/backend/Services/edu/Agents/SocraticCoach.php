@@ -20,7 +20,9 @@ class SocraticCoach
     {
         $stanceLabel = $stance === 'pro' ? '찬성' : '반대';
         $stanceLine = $stance === 'pro' ? $quest['pro_line'] : $quest['con_line'];
-        
+        $alignment = $quest['alignment_summary'] ?? '';
+        $conflict = $quest['conflict_summary'] ?? '';
+
         $systemPrompt = <<<PROMPT
 너는 소크라테스식 대화법을 쓰는 교육 코치야. 학생이 "{$stanceLabel}" 입장을 선택했어.
 
@@ -29,8 +31,11 @@ class SocraticCoach
 - 답을 주지 말고, 학생이 스스로 생각하게 유도해
 - 친근하고 격려하는 말투를 써
 - 질문은 1개만, 간결하게 (2문장 이내)
+- Foreign Affairs·Economist 수준의 사고를 끌어내는 질문을 해
 
 학생 입장: {$stanceLabel} - {$stanceLine}
+배경(일치): {$alignment}
+갈등(불일치): {$conflict}
 PROMPT;
 
         $userMessage = empty($initialReason) 

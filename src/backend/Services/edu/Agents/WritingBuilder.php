@@ -133,8 +133,12 @@ MSG;
         ];
     }
 
-    public function evaluateWriting(string $fullText, array $quest): array
+    public function evaluateWriting(string $fullText, array $quest, string $judgmentPatterns = ''): array
     {
+        $patternBlock = $judgmentPatterns !== ''
+            ? "\n\n편집장이 중시하는 좋은 글 패턴:\n{$judgmentPatterns}"
+            : '';
+
         $systemPrompt = <<<PROMPT
 학생 글을 평가해줘. JSON으로:
 {
@@ -147,7 +151,7 @@ MSG;
 PROMPT;
 
         $response = $this->llm->haiku($systemPrompt, [
-            ['role' => 'user', 'content' => "퀘스트: {$quest['quest_title']}\n\n학생 글:\n{$fullText}"]
+            ['role' => 'user', 'content' => "퀘스트: {$quest['quest_title']}\n\n학생 글:\n{$fullText}{$patternBlock}"]
         ], 300);
 
         if (!empty($response['error'])) {

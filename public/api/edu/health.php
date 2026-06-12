@@ -6,13 +6,19 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/lib/bootstrap.php';
+require_once __DIR__ . '/lib/eduConfig.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
 $checks = [
     'status' => 'ok',
     'timestamp' => date('c'),
-    'version' => '1.0.0-pilot',
+    'version' => '1.1.0-pilot',
+    'feature_flags' => [
+        'edu_use_turn_fsm' => eduUseTurnFsm(),
+        'edu_mixup_rag' => eduMixupRagEnabled(),
+        'edu_judgment_writing' => eduJudgmentWritingEnabled(),
+    ],
     'services' => [],
 ];
 
@@ -27,6 +33,18 @@ $anthropicKey = getenv('EDU_ANTHROPIC_API_KEY') ?: getenv('ANTHROPIC_API_KEY');
 $checks['services']['anthropic'] = !empty($anthropicKey) ? 'configured' : 'missing_key';
 
 $checks['services']['llm_daily_cap'] = (int)(getenv('EDU_DAILY_LLM_CAP') ?: 1000);
+$checks['services']['admin_api_key'] = getenv('EDU_ADMIN_API_KEY') ? 'configured' : 'missing_key';
+
+$root = eduFindProjectRoot();
+$newsHotpath = [
+    'public/api/admin/news.php',
+    'public/api/admin/ai-analyze.php',
+    'src/agents/services/RAGService.php',
+];
+$checks['news_pipeline_frozen'] = [];
+foreach ($newsHotpath as $rel) {
+    $checks['news_pipeline_frozen'][$rel] = is_file($root . $rel) ? 'present' : 'missing';
+}
 
 if (in_array('error', $checks['services'], true) || in_array('not_configured', $checks['services'], true)) {
     $checks['status'] = 'degraded';

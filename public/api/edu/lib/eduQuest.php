@@ -46,6 +46,10 @@ function eduPublicQuestPayload(array $quest): array
             'role' => $a['role'],
             'title' => $a['title'] ?? '',
             'gist_url' => $a['gist_url'] ?? '',
+            'excerpt' => $a['excerpt'] ?? '',
+            'why_important' => $a['why_important'] ?? '',
+            'source_outlet' => $a['source_outlet'] ?? '',
+            'published_at' => $a['published_at'] ?? null,
         ];
     }
 

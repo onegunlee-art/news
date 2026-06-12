@@ -23,7 +23,8 @@ class Hammer
         string $studentReason,
         array $quest,
         string $intensity = 'medium',
-        ?array $scoreAnalysis = null
+        ?array $scoreAnalysis = null,
+        string $mixupContext = ''
     ): array {
         $stanceLabel = $stance === 'pro' ? '찬성' : '반대';
         $counterLabel = $stance === 'pro' ? '반대' : '찬성';
@@ -61,6 +62,9 @@ class Hammer
 반론 방향: {$counterLine}
 참고 힌트: {$hammerHint}
 {$weakPoints}
+
+다른 매체/시각 차이 (Mix-up, 사실 기반만 사용):
+{$mixupContext}
 
 강도: {$intensityGuide}
 PROMPT;
