@@ -1,0 +1,336 @@
+<?php
+/**
+ * POST /api/edu/session/chat — 가변 대화 harness (ConversationDirector)
+ */
+declare(strict_types=1);
+
+require_once __DIR__ . '/../lib/bootstrap.php';
+require_once __DIR__ . '/../lib/eduAuth.php';
+require_once __DIR__ . '/../lib/eduQuest.php';
+require_once __DIR__ . '/../lib/eduConfig.php';
+require_once __DIR__ . '/../lib/eduBlueprint.php';
+require_once __DIR__ . '/../lib/eduAgents.php';
+require_once __DIR__ . '/../lib/_llm.php';
+
+$root = eduFindProjectRoot();
+require_once $root . 'src/backend/autoload.php';
+eduLoadAgents();
+
+use Services\Edu\Agents\ConversationDirector;
+use Services\Edu\Agents\Hammer;
+use Services\Edu\Agents\Reflection;
+use Services\Edu\Agents\SocraticCoach;
+use Services\Edu\Agents\StanceScorer;
+use Services\Edu\EduRagService;
+
+handleOptionsRequest();
+setCorsHeaders();
+eduRequirePost();
+
+if (!eduUseChatEngine()) {
+    eduSendError('Chat engine disabled', 503);
+}
+
+$student = eduRequireStudent();
+$supabase = eduSupabase();
+$body = eduJsonBody();
+
+$sessionId = trim((string) ($body['session_id'] ?? ''));
+$message = trim((string) ($body['message'] ?? ''));
+$action = trim((string) ($body['action'] ?? 'continue'));
+$stanceInput = $body['stance'] ?? null;
+
+if ($sessionId === '') {
+    eduSendError('session_id required');
+}
+
+$sessions = $supabase->select('edu_quest_sessions', 'id=eq.' . $sessionId . '&student_id=eq.' . $student['id'], 1);
+if (empty($sessions[0])) {
+    eduSendError('Session not found', 404);
+}
+$session = $sessions[0];
+
+if (($session['stage'] ?? '') === 'completed') {
+    eduSendJson([
+        'success' => true,
+        'session_id' => $sessionId,
+        'stage' => 'completed',
+        'should_compose' => false,
+        'progress_pct' => 100,
+        'assistant_message' => '이미 완료된 세션이에요. 홈에서 결과를 확인해보세요!',
+    ]);
+}
+
+$quests = $supabase->select('edu_daily_quests', 'id=eq.' . $session['quest_id'], 1);
+$quest = $quests[0] ?? [];
+$quest['articles'] = $supabase->select(
+    'edu_quest_articles',
+    'quest_id=eq.' . $session['quest_id'] . '&order=sort_order.asc',
+    20
+) ?? [];
+
+$blueprint = eduLoadBlueprint($session);
+$dialogue = eduLoadDialogue($session);
+$llm = eduLlm();
+$rag = new EduRagService($supabase);
+$director = new ConversationDirector($llm);
+$coach = new SocraticCoach($llm);
+
+$response = [
+    'success' => true,
+    'session_id' => $sessionId,
+    'progress_pct' => eduBlueprintProgress($blueprint),
+    'phase' => $blueprint['phase'] ?? 'stance',
+    'should_compose' => false,
+];
+
+// --- Stance selection (no message required) ---
+if ($action === 'select_stance') {
+    if (!in_array($stanceInput, ['pro', 'con'], true)) {
+        eduSendError('stance (pro|con) required');
+    }
+
+    $blueprint = eduMergeBlueprint($blueprint, [
+        'stance' => $stanceInput,
+        'final_stance' => $stanceInput,
+        'phase' => 'reasoning',
+        'exchange_count' => (int) ($blueprint['exchange_count'] ?? 0) + 1,
+    ]);
+
+    $supabase->insert('edu_hypothesis_versions', [
+        'session_id' => $sessionId,
+        'student_id' => $student['id'],
+        'version' => 1,
+        'stance' => $stanceInput,
+        'confidence_level' => 3,
+    ]);
+
+    $question = $coach->askWhy($quest, $stanceInput);
+    $assistantMessage = $director->refinePrompt(
+        $question['question'] ?? '왜 그렇게 생각해요?',
+        $quest,
+        eduBlueprintProgress($blueprint)
+    );
+
+    $dialogue = eduAppendDialogue($dialogue, 'assistant', $assistantMessage, 'socratic');
+    eduSaveBlueprint($supabase, $sessionId, $blueprint, $dialogue);
+
+    eduSendJson(array_merge($response, [
+        'stage' => eduBlueprintStage($blueprint),
+        'phase' => 'reasoning',
+        'assistant_message' => $assistantMessage,
+        'progress_pct' => eduBlueprintProgress($blueprint),
+        'ui_hint' => '이유 말하기',
+    ]));
+}
+
+if ($message === '' && $action !== 'confirm_reflection') {
+    eduSendError('message required');
+}
+
+$eval = [];
+$assistantMessage = '';
+$decision = [];
+
+// --- Process student message by phase ---
+$phase = (string) ($blueprint['phase'] ?? 'reasoning');
+$dialogue = eduAppendDialogue($dialogue, 'student', $message);
+$blueprint['exchange_count'] = (int) ($blueprint['exchange_count'] ?? 0) + 1;
+
+if ($phase === 'reasoning') {
+    $eval = $coach->evaluateResponse((string) ($blueprint['stance'] ?? 'pro'), $message, $quest, 'reason');
+    $blueprint = eduMergeBlueprint($blueprint, [
+        'reason' => $message,
+        'reason_depth' => (int) ($eval['depth_score'] ?? 3),
+    ]);
+
+    $supabase->insert('edu_thinking_logs', [
+        'session_id' => $sessionId,
+        'student_id' => $student['id'],
+        'turn_number' => (int) ($blueprint['exchange_count'] ?? 1),
+        'agent_role' => 'socratic',
+        'student_response' => $message,
+        'ai_feedback' => $eval['feedback_hint'] ?? null,
+    ]);
+    $supabase->update('edu_hypothesis_versions', 'session_id=eq.' . $sessionId . '&version=eq.1', [
+        'reason' => $message,
+    ]);
+
+    $decision = $director->decide($blueprint, $quest, $eval);
+
+    if (($decision['action'] ?? '') === 'followup') {
+        $blueprint['reason_followup_count'] = (int) ($blueprint['reason_followup_count'] ?? 0) + 1;
+        $followup = $coach->askWhy($quest, (string) $blueprint['stance'], $message);
+        $assistantMessage = $director->refinePrompt($followup['question'] ?? '조금 더 말해줄래?', $quest, (int) ($decision['progress_pct'] ?? 25));
+    } else {
+        $blueprint['phase'] = 'evidence';
+        $publicArticles = [];
+        foreach ($quest['articles'] as $a) {
+            $publicArticles[] = [
+                'news_id' => (int) ($a['news_id'] ?? 0),
+                'role' => $a['role'] ?? 'context',
+                'title' => $a['title'] ?? '',
+                'gist_url' => $a['gist_url'] ?? '',
+                'excerpt' => $a['excerpt'] ?? '',
+                'why_important' => $a['why_important'] ?? '',
+                'source_outlet' => $a['source_outlet'] ?? '',
+            ];
+        }
+        $assistantMessage = $director->refinePrompt(
+            '기사들을 참고해서 네 주장을 뒷받침하는 근거를 찾아봐.',
+            $quest,
+            (int) ($decision['progress_pct'] ?? 35)
+        );
+        $response['articles'] = $publicArticles;
+    }
+} elseif ($phase === 'evidence') {
+    $eval = $coach->evaluateResponse((string) ($blueprint['stance'] ?? 'pro'), $message, $quest, 'evidence');
+    $blueprint = eduMergeBlueprint($blueprint, ['evidence' => $message]);
+
+    $supabase->insert('edu_evidence_logs', [
+        'session_id' => $sessionId,
+        'student_id' => $student['id'],
+        'evidence_text' => $message,
+        'source_type' => 'student',
+    ]);
+
+    $decision = $director->decide($blueprint, $quest, $eval);
+
+    if (($decision['action'] ?? '') === 'nudge_evidence') {
+        $blueprint['evidence_nudge_count'] = (int) ($blueprint['evidence_nudge_count'] ?? 0) + 1;
+        $assistantMessage = $director->refinePrompt(
+            '좋은 시작이야! 기사에서 본 구체적인 내용을 한 가지만 더 말해줄래?',
+            $quest,
+            (int) ($decision['progress_pct'] ?? 45)
+        );
+    } else {
+        $blueprint['phase'] = 'hammer';
+        $stance = (string) ($blueprint['stance'] ?? 'pro');
+        $reason = (string) ($blueprint['reason'] ?? '');
+        $scorer = new StanceScorer($llm);
+        $analysis = $scorer->scoreStance($stance, $reason . ' ' . $message, $quest);
+
+        $mixupContext = '';
+        $mixupSources = [];
+        if (eduMixupRagEnabled()) {
+            $topic = (string) ($quest['conflict_summary'] ?? $quest['quest_title'] ?? '');
+            $pairs = $rag->findMixUpPairs($topic, '', 3);
+            $mixupContext = $rag->formatMixUpContext($pairs);
+            $mixupSources = $pairs;
+        }
+
+        $hammer = new Hammer($llm);
+        $strike = $hammer->strike(
+            $stance,
+            $reason . ' ' . $message,
+            $quest,
+            $analysis['recommended_hammer_intensity'] ?? 'medium',
+            $analysis,
+            $mixupContext
+        );
+
+        $counterRow = [
+            'session_id' => $sessionId,
+            'student_id' => $student['id'],
+            'counter_argument' => $strike['counter_argument'],
+        ];
+        if ($mixupSources !== []) {
+            $counterRow['mixup_sources'] = $mixupSources;
+        }
+        $supabase->insert('edu_counter_logs', $counterRow);
+
+        $blueprint['counter_argument'] = $strike['counter_argument'];
+        $assistantMessage = ($strike['counter_argument'] ?? '') . "\n\n이 반론에 대해 어떻게 생각해?";
+        $response['counter_argument'] = $strike['counter_argument'];
+        $response['mixup_sources'] = $mixupSources;
+    }
+} elseif ($phase === 'hammer') {
+    $eval = $coach->evaluateResponse((string) ($blueprint['stance'] ?? 'pro'), $message, $quest, 'rebuttal');
+    $stanceChanged = (bool) ($body['stance_changed'] ?? false);
+    $newStance = $body['new_stance'] ?? $blueprint['stance'];
+    $finalStance = $stanceChanged && in_array($newStance, ['pro', 'con'], true)
+        ? $newStance
+        : ($blueprint['stance'] ?? 'pro');
+
+    $blueprint = eduMergeBlueprint($blueprint, [
+        'rebuttal' => $message,
+        'counter_handled' => true,
+        'stance_changed' => $stanceChanged,
+        'final_stance' => $finalStance,
+        'phase' => 'reflection',
+    ]);
+
+    $supabase->update('edu_counter_logs', 'session_id=eq.' . $sessionId, [
+        'student_rebuttal' => $message,
+        'led_to_stance_change' => $stanceChanged,
+    ]);
+
+    $supabase->insert('edu_hypothesis_versions', [
+        'session_id' => $sessionId,
+        'student_id' => $student['id'],
+        'version' => 2,
+        'stance' => $finalStance,
+        'reason' => $message,
+        'confidence_level' => 3,
+    ]);
+
+    $v1 = $supabase->select('edu_hypothesis_versions', 'session_id=eq.' . $sessionId . '&version=eq.1', 1);
+    $counter = $supabase->select('edu_counter_logs', 'session_id=eq.' . $sessionId, 1);
+
+    $reflection = new Reflection($llm);
+    $summary = $reflection->summarize(
+        $v1[0]['stance'] ?? $blueprint['stance'],
+        $v1[0]['reason'] ?? $blueprint['reason'],
+        $counter[0]['counter_argument'] ?? $blueprint['counter_argument'],
+        $message,
+        $finalStance,
+        $quest
+    );
+
+    $blueprint['reflection_lines'] = $summary['summary_lines'] ?? [];
+    $supabase->insert('edu_reflections', [
+        'session_id' => $sessionId,
+        'student_id' => $student['id'],
+        'summary_lines' => $summary['summary_lines'],
+        'key_insight' => $summary['key_insight'] ?? '',
+        'stance_change_reason' => $stanceChanged ? $message : null,
+    ]);
+
+    $lines = implode("\n", $summary['summary_lines'] ?? []);
+    $assistantMessage = "지금까지 생각을 정리해볼게:\n{$lines}\n\n맞게 정리됐어? (맞아 / 조금 다르게 생각해)";
+    $response['summary_lines'] = $summary['summary_lines'] ?? [];
+    $response['stance_changed'] = $stanceChanged;
+    $decision = ['progress_pct' => 85];
+} elseif ($phase === 'reflection') {
+    $blueprint = eduMergeBlueprint($blueprint, [
+        'reflection_confirmed' => true,
+        'ready_for_compose' => true,
+        'phase' => 'compose',
+    ]);
+    $assistantMessage = '좋아! 이제 네 생각을 글로 정리해볼게. 잠시만 기다려줘.';
+    $decision = $director->decide($blueprint, $quest);
+    $response['should_compose'] = true;
+} else {
+    $decision = $director->decide($blueprint, $quest);
+    if (!empty($decision['should_compose'])) {
+        $blueprint['ready_for_compose'] = true;
+        $response['should_compose'] = true;
+        $assistantMessage = $decision['prompt_hint'] ?? '이제 글을 만들어볼게.';
+    }
+}
+
+if ($assistantMessage !== '') {
+    $dialogue = eduAppendDialogue($dialogue, 'assistant', $assistantMessage, $decision['next_agent'] ?? 'director');
+}
+
+eduSaveBlueprint($supabase, $sessionId, $blueprint, $dialogue);
+
+eduSendJson(array_merge($response, [
+    'stage' => eduBlueprintStage($blueprint),
+    'phase' => $blueprint['phase'] ?? $phase,
+    'assistant_message' => $assistantMessage,
+    'progress_pct' => (int) ($decision['progress_pct'] ?? eduBlueprintProgress($blueprint)),
+    'blueprint' => $blueprint,
+    'needs_followup' => !empty($eval['needs_followup']),
+    'feedback_hint' => $eval['feedback_hint'] ?? null,
+]));

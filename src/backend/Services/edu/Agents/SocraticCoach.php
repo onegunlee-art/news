@@ -63,6 +63,17 @@ PROMPT;
 
     public function evaluateReason(string $stance, string $reason, array $quest): array
     {
+        return $this->evaluateResponse($stance, $reason, $quest, 'reason');
+    }
+
+    public function evaluateResponse(string $stance, string $response, array $quest, string $phase = 'reason'): array
+    {
+        $phaseLabel = match ($phase) {
+            'evidence' => '근거',
+            'rebuttal' => '반론에 대한 재답변',
+            default => '이유',
+        };
+
         $systemPrompt = <<<PROMPT
 학생의 답변을 평가해. JSON으로 응답해:
 {
@@ -74,7 +85,7 @@ PROMPT;
 }
 PROMPT;
 
-        $userMessage = "학생 입장: {$stance}\n학생 답변: {$reason}";
+        $userMessage = "퀘스트: {$quest['quest_title']}\n학생 입장: {$stance}\n평가 대상({$phaseLabel}): {$response}";
 
         $response = $this->llm->haiku($systemPrompt, [
             ['role' => 'user', 'content' => $userMessage]

@@ -10,7 +10,9 @@ import {
   type EduTurnResponse,
 } from '../../services/eduApi'
 import QuestFlowLegacy from './QuestFlowLegacy'
+import QuestFlowChat from './QuestFlowChat'
 
+const USE_CHAT_ENGINE = import.meta.env.VITE_EDU_USE_CHAT_ENGINE !== 'false'
 const USE_TURN_FSM = import.meta.env.VITE_EDU_USE_TURN_FSM !== 'false'
 
 const UI_STEPS = ['찬반', '이유', '근거', '반론', '정리', '5문장', 'XP']
@@ -22,6 +24,9 @@ const ROLE_LABEL: Record<string, string> = {
 }
 
 export default function QuestFlowPage() {
+  if (USE_CHAT_ENGINE) {
+    return <QuestFlowChat />
+  }
   if (!USE_TURN_FSM) {
     return <QuestFlowLegacy />
   }
@@ -46,6 +51,8 @@ function QuestFlowTurnFsm() {
   const [outline, setOutline] = useState<Record<string, string>>({})
   const [sentences, setSentences] = useState<string[]>(['', '', '', '', ''])
   const [feedback, setFeedback] = useState<string | null>(null)
+  const [fullText, setFullText] = useState<string | null>(null)
+  const [scqaParts, setScqaParts] = useState<Record<string, string>>({})
   const [heroSentence, setHeroSentence] = useState<string | null>(null)
   const [tier, setTier] = useState<EduTierProgress | null>(null)
   const [xpGained, setXpGained] = useState(0)
@@ -74,9 +81,23 @@ function QuestFlowTurnFsm() {
         return
       }
 
-      if (today.active_session) {
-        setSessionId(today.active_session.session_id)
-        mapStageToStep(today.active_session.stage)
+      const existing = today.active_session || today.existing_session
+      if (existing) {
+        setSessionId(existing.session_id)
+        mapStageToStep(existing.stage)
+        if (existing.stage === 'completed') {
+          try {
+            const state = await eduApi.getSessionState(existing.session_id)
+            if (state.essay?.full_text) {
+              setFullText(state.essay.full_text)
+              setHeroSentence(state.essay.hero_sentence)
+              setFeedback(state.essay.feedback)
+              setScqaParts(state.essay.scqa_parts ?? {})
+            }
+          } catch {
+            // ignore restore errors
+          }
+        }
       } else {
         const started = await eduApi.startSession(today.quest.quest_id)
         setSessionId(started.session_id)
@@ -116,6 +137,8 @@ function QuestFlowTurnFsm() {
     if (res.summary_lines) setSummaryLines(res.summary_lines)
     if (res.outline) setOutline(res.outline)
     if (res.feedback) setFeedback(res.feedback)
+    if (res.full_text) setFullText(res.full_text)
+    if (res.scqa_parts) setScqaParts(res.scqa_parts)
     if (res.hero_sentence) setHeroSentence(res.hero_sentence)
     if (res.xp_gained) setXpGained(res.xp_gained)
     if (res.tier) setTier(res.tier)
@@ -438,6 +461,24 @@ function QuestFlowTurnFsm() {
 
         {step === 6 && (
           <section className="space-y-4">
+            {fullText && (
+              <div className="border-2 border-[#1a1a1a] rounded p-4">
+                <p className="text-xs text-[#666] mb-2">나만의 글</p>
+                <p className="text-sm leading-relaxed">{fullText}</p>
+              </div>
+            )}
+            {Object.keys(scqaParts).length > 0 && (
+              <div className="space-y-2 border border-[#ccc] rounded p-3">
+                {Object.entries(scqaParts).map(([key, val]) =>
+                  val ? (
+                    <div key={key}>
+                      <p className="text-[10px] text-[#999]">{key}</p>
+                      <p className="text-xs">{val}</p>
+                    </div>
+                  ) : null
+                )}
+              </div>
+            )}
             {heroSentence && (
               <div className="border-2 border-[#1a1a1a] rounded p-4">
                 <p className="text-xs text-[#666] mb-2">이번에 쓴 핵심 문장</p>
@@ -449,6 +490,12 @@ function QuestFlowTurnFsm() {
             )}
             <p className="text-sm">+{xpGained} XP 획득</p>
             {tier && <TierProgressCard tier={tier} />}
+            <Link
+              to={`/edu/share/${sessionId}`}
+              className="block w-full py-3 text-center bg-[#1a1a1a] text-white rounded font-medium"
+            >
+              공유 카드 만들기
+            </Link>
             <Link
               to="/edu"
               className="block w-full py-3 text-center border border-[#1a1a1a] rounded font-medium"

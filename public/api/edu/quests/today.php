@@ -105,6 +105,11 @@ eduSendJson([
         'stage' => $existingSession['stage'],
         'stance' => $existingSession['stance'] ?? null,
     ] : null,
+    'active_session' => $existingSession ? [
+        'session_id' => $existingSession['id'],
+        'stage' => $existingSession['stage'],
+        'stance' => $existingSession['stance'] ?? null,
+    ] : null,
 ]);
 
 function getNextDropTime(): string {

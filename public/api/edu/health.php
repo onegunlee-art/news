@@ -16,6 +16,7 @@ $checks = [
     'version' => '1.1.0-pilot',
     'feature_flags' => [
         'edu_use_turn_fsm' => eduUseTurnFsm(),
+        'edu_use_chat_engine' => eduUseChatEngine(),
         'edu_mixup_rag' => eduMixupRagEnabled(),
         'edu_judgment_writing' => eduJudgmentWritingEnabled(),
     ],

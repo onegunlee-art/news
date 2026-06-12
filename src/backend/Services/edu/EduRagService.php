@@ -184,7 +184,12 @@ class EduRagService
 
             foreach ($items as $item) {
                 $category = (string) ($item['category'] ?? '');
-                $editorFix = (string) ($item['editor_fix'] ?? $item['human_approach'] ?? '');
+                $editorFix = (string) (
+                    $item['editor_correction']
+                    ?? $item['editor_fix']
+                    ?? $item['human_approach']
+                    ?? ''
+                );
                 $blob = mb_strtolower($category . ' ' . $editorFix . ' ' . $direction);
                 if ($q !== '' && !str_contains($blob, $q) && count($patterns) > 0) {
                     continue;
@@ -192,11 +197,46 @@ class EduRagService
                 $patterns[] = [
                     'category' => $category,
                     'editor_fix' => mb_substr($editorFix, 0, 200),
+                    'editor_correction' => mb_substr($editorFix, 0, 200),
                     'direction' => mb_substr($direction, 0, 120),
                 ];
                 if (count($patterns) >= $topK) {
                     return $patterns;
                 }
+            }
+        }
+
+        return $patterns;
+    }
+
+    /**
+     * AGI judgement_patterns (weight/frequency) — READ only
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function getJudgementPatterns(int $topK = 3): array
+    {
+        if (!$this->supabase->isConfigured()) {
+            return [];
+        }
+
+        $rows = $this->supabase->select('judgement_patterns', 'order=weight.desc', min(30, $topK * 10)) ?? [];
+        $patterns = [];
+
+        foreach ($rows as $row) {
+            $category = (string) ($row['category'] ?? $row['pattern_type'] ?? 'pattern');
+            $correction = (string) ($row['editor_correction'] ?? $row['human_approach'] ?? $row['description'] ?? '');
+            if ($correction === '') {
+                continue;
+            }
+            $patterns[] = [
+                'category' => $category,
+                'editor_fix' => mb_substr($correction, 0, 200),
+                'editor_correction' => mb_substr($correction, 0, 200),
+                'weight' => (float) ($row['weight'] ?? $row['frequency'] ?? 0),
+            ];
+            if (count($patterns) >= $topK) {
+                break;
             }
         }
 
@@ -232,7 +272,7 @@ class EduRagService
             $lines[] = sprintf(
                 '- [%s] %s',
                 $p['category'] ?? 'pattern',
-                $p['editor_fix'] ?? ''
+                $p['editor_correction'] ?? $p['editor_fix'] ?? ''
             );
         }
         return mb_substr(implode("\n", $lines), 0, self::MAX_CONTEXT_CHARS);

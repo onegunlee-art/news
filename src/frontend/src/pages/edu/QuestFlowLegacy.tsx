@@ -58,9 +58,10 @@ export default function QuestFlowLegacy() {
         return
       }
 
-      if (today.active_session) {
-        setSessionId(today.active_session.session_id)
-        mapStageToStep(today.active_session.stage)
+      const existing = today.active_session || today.existing_session
+      if (existing) {
+        setSessionId(existing.session_id)
+        mapStageToStep(existing.stage)
       } else {
         const started = await eduApi.startSession(today.quest.quest_id)
         setSessionId(started.session_id)

@@ -30,3 +30,12 @@ function eduJudgmentWritingEnabled(): bool
     }
     return !in_array(strtolower((string) $v), ['0', 'false', 'no', 'off'], true);
 }
+
+function eduUseChatEngine(): bool
+{
+    $v = getenv('EDU_USE_CHAT_ENGINE');
+    if ($v === false || $v === '') {
+        return true;
+    }
+    return !in_array(strtolower((string) $v), ['0', 'false', 'no', 'off'], true);
+}

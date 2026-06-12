@@ -48,6 +48,7 @@ export interface EduTurnResponse {
   summary_lines?: string[]
   outline?: Record<string, string>
   full_text?: string
+  scqa_parts?: Record<string, string>
   feedback?: string
   hero_sentence?: string
   xp_gained?: number
@@ -58,6 +59,76 @@ export interface EduTurnResponse {
   mixup_sources?: Array<{ source: string; excerpt: string }>
   stance_changed?: boolean
   final_stance?: string
+}
+
+export interface EduDialogueTurn {
+  role: 'student' | 'assistant'
+  content: string
+  agent?: string | null
+  at?: string
+}
+
+export interface EduBlueprint {
+  stance?: 'pro' | 'con' | null
+  reason?: string
+  evidence?: string
+  phase?: string
+  progress_pct?: number
+  ready_for_compose?: boolean
+  reflection_lines?: string[]
+  stance_changed?: boolean
+}
+
+export interface EduChatResponse {
+  success: boolean
+  session_id: string
+  stage: string
+  phase?: string
+  assistant_message?: string
+  progress_pct?: number
+  should_compose?: boolean
+  articles?: EduQuestArticle[]
+  counter_argument?: string
+  mixup_sources?: Array<{ source: string; excerpt: string }>
+  summary_lines?: string[]
+  stance_changed?: boolean
+  blueprint?: EduBlueprint
+  needs_followup?: boolean
+  feedback_hint?: string | null
+}
+
+export interface EduComposeResponse {
+  success: boolean
+  session_id: string
+  stage: string
+  full_text?: string
+  scqa_parts?: Record<string, string>
+  hero_sentence?: string | null
+  quality_score?: number
+  structure_score?: number
+  feedback?: string
+  xp_gained?: number
+  tier?: EduTierProgress
+  progress_pct?: number
+  already_completed?: boolean
+}
+
+export interface EduSessionState {
+  success: boolean
+  session_id: string
+  stage: string
+  quest: EduQuest
+  blueprint: EduBlueprint
+  dialogue: EduDialogueTurn[]
+  progress_pct: number
+  essay: {
+    full_text: string
+    hero_sentence: string | null
+    feedback: string | null
+    quality_score: number
+    scqa_parts: Record<string, string> | null
+    stance_changed: boolean
+  } | null
 }
 
 export interface EduQuest {
@@ -233,5 +304,23 @@ export const eduApi = {
     eduFetch<EduTurnResponse>('/api/edu/session/turn.php', {
       method: 'POST',
       body: JSON.stringify({ session_id: sessionId, turn, input }),
+    }),
+
+  getSessionState: (sessionId: string) =>
+    eduFetch<EduSessionState>(`/api/edu/session/state.php?session_id=${encodeURIComponent(sessionId)}`),
+
+  sendChat: (
+    sessionId: string,
+    payload: { message?: string; action?: string; stance?: 'pro' | 'con'; stance_changed?: boolean; new_stance?: string }
+  ) =>
+    eduFetch<EduChatResponse>('/api/edu/session/chat.php', {
+      method: 'POST',
+      body: JSON.stringify({ session_id: sessionId, ...payload }),
+    }),
+
+  composeEssay: (sessionId: string, force = false) =>
+    eduFetch<EduComposeResponse>('/api/edu/session/compose.php', {
+      method: 'POST',
+      body: JSON.stringify({ session_id: sessionId, force }),
     }),
 }

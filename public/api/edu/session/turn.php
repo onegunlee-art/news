@@ -274,6 +274,20 @@ switch ($turn) {
         $v2 = $supabase->select('edu_hypothesis_versions', 'session_id=eq.' . $sessionId . '&version=eq.2', 1);
         $reflections = $supabase->select('edu_reflections', 'session_id=eq.' . $sessionId, 1);
 
+        $newsIds = [];
+        foreach ($quest['articles'] as $a) {
+            $nid = (int) ($a['news_id'] ?? 0);
+            if ($nid > 0) {
+                $newsIds[] = $nid;
+            }
+        }
+        $arcContext = $rag->findArcArticles($newsIds, (string) ($quest['conflict_summary'] ?? ''));
+        if (!empty($arcContext['alignment'])) {
+            $quest['alignment_summary'] = trim(
+                ($quest['alignment_summary'] ?? '') . ' / ' . $arcContext['alignment']
+            );
+        }
+
         $writer = new WritingBuilder($llm);
         $outline = $writer->buildOutline(
             $v2[0]['stance'] ?? $session['stance'],
@@ -367,6 +381,7 @@ switch ($turn) {
             'turn' => 'completed',
             'stage' => 'completed',
             'full_text' => $composed['full_text'],
+            'scqa_parts' => $composed['scqa_parts'] ?? [],
             'quality_score' => $evaluation['quality_score'] ?? 70,
             'feedback' => $evaluation['feedback'] ?? '잘 정리했어요!',
             'hero_sentence' => $hero,
