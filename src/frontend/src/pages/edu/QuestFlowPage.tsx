@@ -49,7 +49,12 @@ export default function QuestFlowPage() {
     try {
       const today = await eduApi.todayQuest()
       setQuest(today.quest)
-      setTier(today.tier)
+      setTier(today.tier || null)
+
+      if (!today.quest) {
+        setError('오늘의 퀘스트가 없습니다.')
+        return
+      }
 
       if (today.active_session) {
         setSessionId(today.active_session.session_id)

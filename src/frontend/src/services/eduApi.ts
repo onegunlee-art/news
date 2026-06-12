@@ -71,10 +71,13 @@ export const eduApi = {
 
   todayQuest: () =>
     eduFetch<{
-      quest: EduQuest
+      quest: EduQuest | null
       active_session: { session_id: string; stage: string; stance?: string } | null
-      tier: EduTierProgress
-      ui_steps: string[]
+      tier?: EduTierProgress
+      ui_steps?: string[]
+      participation?: { total: number; display: string }
+      curiosity_locked?: boolean
+      existing_session?: { session_id: string; stage: string; stance?: string } | null
     }>('/api/edu/quests/today.php'),
 
   startSession: (quest_id?: string) =>

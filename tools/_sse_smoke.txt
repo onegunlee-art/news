@@ -1,0 +1,3714 @@
+event: start
+data: {"cluster_name":"Ukraine cluster test","article_count":3}
+
+event: token
+data: {"text":"우"}
+
+event: token
+data: {"text":"크"}
+
+event: token
+data: {"text":"라"}
+
+event: token
+data: {"text":"이나"}
+
+event: token
+data: {"text":" 전"}
+
+event: token
+data: {"text":"쟁"}
+
+event: token
+data: {"text":"은"}
+
+event: token
+data: {"text":" ‘"}
+
+event: token
+data: {"text":"값"}
+
+event: token
+data: {"text":"싼"}
+
+event: token
+data: {"text":" 대"}
+
+event: token
+data: {"text":"량"}
+
+event: token
+data: {"text":" 공격"}
+
+event: token
+data: {"text":"("}
+
+event: token
+data: {"text":"드"}
+
+event: token
+data: {"text":"론"}
+
+event: token
+data: {"text":")"}
+
+event: token
+data: {"text":" 대"}
+
+event: token
+data: {"text":" 비"}
+
+event: token
+data: {"text":"싼"}
+
+event: token
+data: {"text":" 정"}
+
+event: token
+data: {"text":"밀"}
+
+event: token
+data: {"text":" 방"}
+
+event: token
+data: {"text":"어"}
+
+event: token
+data: {"text":"("}
+
+event: token
+data: {"text":"요"}
+
+event: token
+data: {"text":"격"}
+
+event: token
+data: {"text":"미"}
+
+event: token
+data: {"text":"사"}
+
+event: token
+data: {"text":"일"}
+
+event: token
+data: {"text":")’"}
+
+event: token
+data: {"text":"라는"}
+
+event: token
+data: {"text":" 경제"}
+
+event: token
+data: {"text":"성"}
+
+event: token
+data: {"text":"의"}
+
+event: token
+data: {"text":" 전"}
+
+event: token
+data: {"text":"쟁"}
+
+event: token
+data: {"text":"이"}
+
+event: token
+data: {"text":"자"}
+
+event: token
+data: {"text":","}
+
+event: token
+data: {"text":" 핵"}
+
+event: token
+data: {"text":" 보"}
+
+event: token
+data: {"text":"유"}
+
+event: token
+data: {"text":" 강"}
+
+event: token
+data: {"text":"대"}
+
+event: token
+data: {"text":"국"}
+
+event: token
+data: {"text":"이"}
+
+event: token
+data: {"text":" 얽"}
+
+event: token
+data: {"text":"힌"}
+
+event: token
+data: {"text":" 확"}
+
+event: token
+data: {"text":"전을"}
+
+event: token
+data: {"text":" 피"}
+
+event: token
+data: {"text":"하면서"}
+
+event: token
+data: {"text":" 제한"}
+
+event: token
+data: {"text":"전을"}
+
+event: token
+data: {"text":" “"}
+
+event: token
+data: {"text":"운"}
+
+event: token
+data: {"text":"전"}
+
+event: token
+data: {"text":"”"}
+
+event: token
+data: {"text":"하는"}
+
+event: token
+data: {"text":" 기술"}
+
+event: token
+data: {"text":"의"}
+
+event: token
+data: {"text":" 전"}
+
+event: token
+data: {"text":"쟁"}
+
+event: token
+data: {"text":"이며"}
+
+event: token
+data: {"text":","}
+
+event: token
+data: {"text":" 그"}
+
+event: token
+data: {"text":" 결과"}
+
+event: token
+data: {"text":" 유"}
+
+event: token
+data: {"text":"럽"}
+
+event: token
+data: {"text":" 안"}
+
+event: token
+data: {"text":"보"}
+
+event: token
+data: {"text":"의"}
+
+event: token
+data: {"text":" 무"}
+
+event: token
+data: {"text":"게"}
+
+event: token
+data: {"text":"중"}
+
+event: token
+data: {"text":"심"}
+
+event: token
+data: {"text":"이"}
+
+event: token
+data: {"text":" EU"}
+
+event: token
+data: {"text":"의"}
+
+event: token
+data: {"text":" 이상"}
+
+event: token
+data: {"text":"적"}
+
+event: token
+data: {"text":" 단"}
+
+event: token
+data: {"text":"일"}
+
+event: token
+data: {"text":"대"}
+
+event: token
+data: {"text":"오"}
+
+event: token
+data: {"text":"가"}
+
+event: token
+data: {"text":" 아니라"}
+
+event: token
+data: {"text":" 몇"}
+
+event: token
+data: {"text":"몇"}
+
+event: token
+data: {"text":" 핵"}
+
+event: token
+data: {"text":"심"}
+
+event: token
+data: {"text":"국"}
+
+event: token
+data: {"text":"의"}
+
+event: token
+data: {"text":" 현실"}
+
+event: token
+data: {"text":" 연"}
+
+event: token
+data: {"text":"합"}
+
+event: token
+data: {"text":"으로"}
+
+event: token
+data: {"text":" 이동"}
+
+event: token
+data: {"text":"하고"}
+
+event: token
+data: {"text":" 있어"}
+
+event: token
+data: {"text":"요"}
+
+event: token
+data: {"text":".\n\n"}
+
+event: token
+data: {"text":"1"}
+
+event: token
+data: {"text":"."}
+
+event: token
+data: {"text":" 관"}
+
+event: token
+data: {"text":"점"}
+
+event: token
+data: {"text":" 비교"}
+
+event: token
+data: {"text":" 분석"}
+
+event: token
+data: {"text":" ("}
+
+event: token
+data: {"text":"일"}
+
+event: token
+data: {"text":"치"}
+
+event: token
+data: {"text":"하는"}
+
+event: token
+data: {"text":" 점"}
+
+event: token
+data: {"text":" vs"}
+
+event: token
+data: {"text":" 충"}
+
+event: token
+data: {"text":"돌"}
+
+event: token
+data: {"text":"하는"}
+
+event: token
+data: {"text":" 점"}
+
+event: token
+data: {"text":")\n"}
+
+event: token
+data: {"text":"-"}
+
+event: token
+data: {"text":" 일"}
+
+event: token
+data: {"text":"치"}
+
+event: token
+data: {"text":"하는"}
+
+event: token
+data: {"text":" 점"}
+
+event: token
+data: {"text":"\n"}
+
+event: token
+data: {"text":"-"}
+
+event: token
+data: {"text":" 실"}
+
+event: token
+data: {"text":"전"}
+
+event: token
+data: {"text":"이"}
+
+event: token
+data: {"text":" 교"}
+
+event: token
+data: {"text":"리를"}
+
+event: token
+data: {"text":" 앞"}
+
+event: token
+data: {"text":"지"}
+
+event: token
+data: {"text":"른"}
+
+event: token
+data: {"text":"다는"}
+
+event: token
+data: {"text":" 문제"}
+
+event: token
+data: {"text":"의"}
+
+event: token
+data: {"text":"식"}
+
+event: token
+data: {"text":"이"}
+
+event: token
+data: {"text":" 공"}
+
+event: token
+data: {"text":"통"}
+
+event: token
+data: {"text":"이에"}
+
+event: token
+data: {"text":"요"}
+
+event: token
+data: {"text":"  \n"}
+
+event: token
+data: {"text":" "}
+
+event: token
+data: {"text":" 체"}
+
+event: token
+data: {"text":"계"}
+
+event: token
+data: {"text":"적"}
+
+event: token
+data: {"text":" 엘"}
+
+event: token
+data: {"text":"리"}
+
+event: token
+data: {"text":"트"}
+
+event: token
+data: {"text":" 교육"}
+
+event: token
+data: {"text":"을"}
+
+event: token
+data: {"text":" 받은"}
+
+event: token
+data: {"text":" ‘"}
+
+event: token
+data: {"text":"정"}
+
+event: token
+data: {"text":"규"}
+
+event: token
+data: {"text":"군"}
+
+event: token
+data: {"text":"식"}
+
+event: token
+data: {"text":"’"}
+
+event: token
+data: {"text":" 접근"}
+
+event: token
+data: {"text":"이"}
+
+event: token
+data: {"text":" 아니라"}
+
+event: token
+data: {"text":","}
+
+event: token
+data: {"text":" 전"}
+
+event: token
+data: {"text":"장에서"}
+
+event: token
+data: {"text":" 매"}
+
+event: token
+data: {"text":"일"}
+
+event: token
+data: {"text":" 부"}
+
+event: token
+data: {"text":"딪"}
+
+event: token
+data: {"text":"히"}
+
+event: token
+data: {"text":"며"}
+
+event: token
+data: {"text":" 축"}
+
+event: token
+data: {"text":"적"}
+
+event: token
+data: {"text":"한"}
+
+event: token
+data: {"text":" 우"}
+
+event: token
+data: {"text":"크"}
+
+event: token
+data: {"text":"라"}
+
+event: token
+data: {"text":"이나"}
+
+event: token
+data: {"text":"의"}
+
+event: token
+data: {"text":" 실"}
+
+event: token
+data: {"text":"전"}
+
+event: token
+data: {"text":" 경험"}
+
+event: token
+data: {"text":"이"}
+
+event: token
+data: {"text":" 새로운"}
+
+event: token
+data: {"text":" 표"}
+
+event: token
+data: {"text":"준"}
+
+event: token
+data: {"text":"으로"}
+
+event: token
+data: {"text":" 떠"}
+
+event: token
+data: {"text":"오"}
+
+event: token
+data: {"text":"른"}
+
+event: token
+data: {"text":"다는"}
+
+event: token
+data: {"text":" 서"}
+
+event: token
+data: {"text":"술"}
+
+event: token
+data: {"text":"이"}
+
+event: token
+data: {"text":" 반복"}
+
+event: token
+data: {"text":"됩니다"}
+
+event: token
+data: {"text":"."}
+
+event: token
+data: {"text":" "}
+
+event: token
+data: {"text":"202"}
+
+event: token
+data: {"text":"2"}
+
+event: token
+data: {"text":"년"}
+
+event: token
+data: {"text":"에는"}
+
+event: token
+data: {"text":" 우"}
+
+event: token
+data: {"text":"크"}
+
+event: token
+data: {"text":"라"}
+
+event: token
+data: {"text":"이나"}
+
+event: token
+data: {"text":"가"}
+
+event: token
+data: {"text":" 서"}
+
+event: token
+data: {"text":"방"}
+
+event: token
+data: {"text":"에"}
+
+event: token
+data: {"text":" 영"}
+
+event: token
+data: {"text":"공"}
+
+event: token
+data: {"text":" 방"}
+
+event: token
+data: {"text":"어"}
+
+event: token
+data: {"text":"를"}
+
+event: token
+data: {"text":" 호"}
+
+event: token
+data: {"text":"소"}
+
+event: token
+data: {"text":"했"}
+
+event: token
+data: {"text":"지만"}
+
+event: token
+data: {"text":","}
+
+event: token
+data: {"text":" 시간이"}
+
+event: token
+data: {"text":" 지나"}
+
+event: token
+data: {"text":" 중"}
+
+event: token
+data: {"text":"동"}
+
+event: token
+data: {"text":"에서"}
+
+event: token
+data: {"text":" 드"}
+
+event: token
+data: {"text":"론"}
+
+event: token
+data: {"text":"·"}
+
+event: token
+data: {"text":"미"}
+
+event: token
+data: {"text":"사"}
+
+event: token
+data: {"text":"일"}
+
+event: token
+data: {"text":" 위"}
+
+event: token
+data: {"text":"협"}
+
+event: token
+data: {"text":"이"}
+
+event: token
+data: {"text":" 커"}
+
+event: token
+data: {"text":"지"}
+
+event: token
+data: {"text":"자"}
+
+event: token
+data: {"text":" 오"}
+
+event: token
+data: {"text":"히"}
+
+event: token
+data: {"text":"려"}
+
+event: token
+data: {"text":" 미국"}
+
+event: token
+data: {"text":"과"}
+
+event: token
+data: {"text":" 걸"}
+
+event: token
+data: {"text":"프"}
+
+event: token
+data: {"text":" 파"}
+
+event: token
+data: {"text":"트"}
+
+event: token
+data: {"text":"너"}
+
+event: token
+data: {"text":"들이"}
+
+event: token
+data: {"text":" 우"}
+
+event: token
+data: {"text":"크"}
+
+event: token
+data: {"text":"라"}
+
+event: token
+data: {"text":"이나"}
+
+event: token
+data: {"text":"의"}
+
+event: token
+data: {"text":" 조"}
+
+event: token
+data: {"text":"언"}
+
+event: token
+data: {"text":"을"}
+
+event: token
+data: {"text":" 구"}
+
+event: token
+data: {"text":"하는"}
+
+event: token
+data: {"text":" 장"}
+
+event: token
+data: {"text":"면"}
+
+event: token
+data: {"text":"이"}
+
+event: token
+data: {"text":" 이를"}
+
+event: token
+data: {"text":" 상"}
+
+event: token
+data: {"text":"징"}
+
+event: token
+data: {"text":"해"}
+
+event: token
+data: {"text":"요"}
+
+event: token
+data: {"text":"."}
+
+event: token
+data: {"text":" ‘"}
+
+event: token
+data: {"text":"길"}
+
+event: token
+data: {"text":"거리"}
+
+event: token
+data: {"text":" 파"}
+
+event: token
+data: {"text":"이터"}
+
+event: token
+data: {"text":"’"}
+
+event: token
+data: {"text":" 비"}
+
+event: token
+data: {"text":"유"}
+
+event: token
+data: {"text":"는"}
+
+event: token
+data: {"text":" 바로"}
+
+event: token
+data: {"text":" 이"}
+
+event: token
+data: {"text":" 실"}
+
+event: token
+data: {"text":"전"}
+
+event: token
+data: {"text":" 학"}
+
+event: token
+data: {"text":"습"}
+
+event: token
+data: {"text":"의"}
+
+event: token
+data: {"text":" 우"}
+
+event: token
+data: {"text":"위"}
+
+event: token
+data: {"text":","}
+
+event: token
+data: {"text":" 그리고"}
+
+event: token
+data: {"text":" 전"}
+
+event: token
+data: {"text":"쟁"}
+
+event: token
+data: {"text":" 기술"}
+
+event: token
+data: {"text":"이"}
+
+event: token
+data: {"text":" 현"}
+
+event: token
+data: {"text":"장에서"}
+
+event: token
+data: {"text":" 갱"}
+
+event: token
+data: {"text":"신"}
+
+event: token
+data: {"text":"된"}
+
+event: token
+data: {"text":"다는"}
+
+event: token
+data: {"text":" 점"}
+
+event: token
+data: {"text":"을"}
+
+event: token
+data: {"text":" 강조"}
+
+event: token
+data: {"text":"합니다"}
+
+event: token
+data: {"text":".\n"}
+
+event: token
+data: {"text":"-"}
+
+event: token
+data: {"text":" 전"}
+
+event: token
+data: {"text":"쟁"}
+
+event: token
+data: {"text":"을"}
+
+event: token
+data: {"text":" 기술"}
+
+event: token
+data: {"text":" 쇼"}
+
+event: token
+data: {"text":"케"}
+
+event: token
+data: {"text":"이스"}
+
+event: token
+data: {"text":"로"}
+
+event: token
+data: {"text":"만"}
+
+event: token
+data: {"text":" 보면"}
+
+event: token
+data: {"text":" 본"}
+
+event: token
+data: {"text":"질"}
+
+event: token
+data: {"text":"을"}
+
+event: token
+data: {"text":" 놓"}
+
+event: token
+data: {"text":"친"}
+
+event: token
+data: {"text":"다는"}
+
+event: token
+data: {"text":" 경"}
+
+event: token
+data: {"text":"고"}
+
+event: token
+data: {"text":"가"}
+
+event: token
+data: {"text":" 맞"}
+
+event: token
+data: {"text":"물"}
+
+event: token
+data: {"text":"려"}
+
+event: token
+data: {"text":" 있어"}
+
+event: token
+data: {"text":"요"}
+
+event: token
+data: {"text":"  \n"}
+
+event: token
+data: {"text":" "}
+
+event: token
+data: {"text":" 드"}
+
+event: token
+data: {"text":"론"}
+
+event: token
+data: {"text":"과"}
+
+event: token
+data: {"text":" 정"}
+
+event: token
+data: {"text":"밀"}
+
+event: token
+data: {"text":"타"}
+
+event: token
+data: {"text":"격"}
+
+event: token
+data: {"text":"이"}
+
+event: token
+data: {"text":" 눈"}
+
+event: token
+data: {"text":"에"}
+
+event: token
+data: {"text":" 띄"}
+
+event: token
+data: {"text":"지만"}
+
+event: token
+data: {"text":","}
+
+event: token
+data: {"text":" 더"}
+
+event: token
+data: {"text":" 중요한"}
+
+event: token
+data: {"text":" 층"}
+
+event: token
+data: {"text":"위"}
+
+event: token
+data: {"text":"는"}
+
+event: token
+data: {"text":" 핵"}
+
+event: token
+data: {"text":"을"}
+
+event: token
+data: {"text":" 가진"}
+
+event: token
+data: {"text":" 강"}
+
+event: token
+data: {"text":"대"}
+
+event: token
+data: {"text":"국"}
+
+event: token
+data: {"text":"이"}
+
+event: token
+data: {"text":" 얽"}
+
+event: token
+data: {"text":"힌"}
+
+event: token
+data: {"text":" 상황"}
+
+event: token
+data: {"text":"에서"}
+
+event: token
+data: {"text":" 전"}
+
+event: token
+data: {"text":"쟁"}
+
+event: token
+data: {"text":"이"}
+
+event: token
+data: {"text":" 어떻게"}
+
+event: token
+data: {"text":" 확"}
+
+event: token
+data: {"text":"전"}
+
+event: token
+data: {"text":"되지"}
+
+event: token
+data: {"text":" 않"}
+
+event: token
+data: {"text":"도록"}
+
+event: token
+data: {"text":" 관리"}
+
+event: token
+data: {"text":"되는"}
+
+event: token
+data: {"text":"가"}
+
+event: token
+data: {"text":"라는"}
+
+event: token
+data: {"text":" 관"}
+
+event: token
+data: {"text":"점"}
+
+event: token
+data: {"text":"이에"}
+
+event: token
+data: {"text":"요"}
+
+event: token
+data: {"text":"."}
+
+event: token
+data: {"text":" 즉"}
+
+event: token
+data: {"text":" ‘"}
+
+event: token
+data: {"text":"무"}
+
+event: token
+data: {"text":"기"}
+
+event: token
+data: {"text":" 체"}
+
+event: token
+data: {"text":"계"}
+
+event: token
+data: {"text":"의"}
+
+event: token
+data: {"text":" 혁"}
+
+event: token
+data: {"text":"신"}
+
+event: token
+data: {"text":"’"}
+
+event: token
+data: {"text":"과"}
+
+event: token
+data: {"text":" ‘"}
+
+event: token
+data: {"text":"위"}
+
+event: token
+data: {"text":"기"}
+
+event: token
+data: {"text":"관리"}
+
+event: token
+data: {"text":"\/"}
+
+event: token
+data: {"text":"확"}
+
+event: token
+data: {"text":"전"}
+
+event: token
+data: {"text":"통"}
+
+event: token
+data: {"text":"제"}
+
+event: token
+data: {"text":"’"}
+
+event: token
+data: {"text":"가"}
+
+event: token
+data: {"text":" 동시에"}
+
+event: token
+data: {"text":" 전"}
+
+event: token
+data: {"text":"쟁"}
+
+event: token
+data: {"text":"의"}
+
+event: token
+data: {"text":" 성"}
+
+event: token
+data: {"text":"격"}
+
+event: token
+data: {"text":"을"}
+
+event: token
+data: {"text":" 규"}
+
+event: token
+data: {"text":"정"}
+
+event: token
+data: {"text":"한다"}
+
+event: token
+data: {"text":"는"}
+
+event: token
+data: {"text":" 점"}
+
+event: token
+data: {"text":"에서"}
+
+event: token
+data: {"text":" 서로"}
+
+event: token
+data: {"text":" 보"}
+
+event: token
+data: {"text":"완"}
+
+event: token
+data: {"text":"적"}
+
+event: token
+data: {"text":"입니다"}
+
+event: token
+data: {"text":".\n"}
+
+event: token
+data: {"text":"-"}
+
+event: token
+data: {"text":" 유"}
+
+event: token
+data: {"text":"럽"}
+
+event: token
+data: {"text":"이"}
+
+event: token
+data: {"text":" ‘"}
+
+event: token
+data: {"text":"속"}
+
+event: token
+data: {"text":"도"}
+
+event: token
+data: {"text":"’"}
+
+event: token
+data: {"text":" 때문에"}
+
+event: token
+data: {"text":" 현실"}
+
+event: token
+data: {"text":"적"}
+
+event: token
+data: {"text":" 축"}
+
+event: token
+data: {"text":"으로"}
+
+event: token
+data: {"text":" 재"}
+
+event: token
+data: {"text":"편"}
+
+event: token
+data: {"text":"된"}
+
+event: token
+data: {"text":"다는"}
+
+event: token
+data: {"text":" 진"}
+
+event: token
+data: {"text":"단"}
+
+event: token
+data: {"text":"이"}
+
+event: token
+data: {"text":" 경제"}
+
+event: token
+data: {"text":"성"}
+
+event: token
+data: {"text":"·"}
+
+event: token
+data: {"text":"확"}
+
+event: token
+data: {"text":"전"}
+
+event: token
+data: {"text":"관리"}
+
+event: token
+data: {"text":" 논"}
+
+event: token
+data: {"text":"리"}
+
+event: token
+data: {"text":"와"}
+
+event: token
+data: {"text":" 연결"}
+
+event: token
+data: {"text":"돼"}
+
+event: token
+data: {"text":"요"}
+
+event: token
+data: {"text":"  \n"}
+
+event: token
+data: {"text":" "}
+
+event: token
+data: {"text":" 러"}
+
+event: token
+data: {"text":"시아"}
+
+event: token
+data: {"text":"의"}
+
+event: token
+data: {"text":" 회"}
+
+event: token
+data: {"text":"색"}
+
+event: token
+data: {"text":"지"}
+
+event: token
+data: {"text":"대"}
+
+event: token
+data: {"text":" 도"}
+
+event: token
+data: {"text":"발"}
+
+event: token
+data: {"text":"("}
+
+event: token
+data: {"text":"해"}
+
+event: token
+data: {"text":"킹"}
+
+event: token
+data: {"text":","}
+
+event: token
+data: {"text":" 영"}
+
+event: token
+data: {"text":"공"}
+
+event: token
+data: {"text":" 침"}
+
+event: token
+data: {"text":"범"}
+
+event: token
+data: {"text":","}
+
+event: token
+data: {"text":" 드"}
+
+event: token
+data: {"text":"론"}
+
+event: token
+data: {"text":" 침"}
+
+event: token
+data: {"text":"투"}
+
+event: token
+data: {"text":" 등"}
+
+event: token
+data: {"text":")은"}
+
+event: token
+data: {"text":" 빠"}
+
+event: token
+data: {"text":"르고"}
+
+event: token
+data: {"text":" 반복"}
+
+event: token
+data: {"text":"적"}
+
+event: token
+data: {"text":"이라"}
+
+event: token
+data: {"text":"서"}
+
+event: token
+data: {"text":","}
+
+event: token
+data: {"text":" EU"}
+
+event: token
+data: {"text":" 전체"}
+
+event: token
+data: {"text":" 합"}
+
+event: token
+data: {"text":"의"}
+
+event: token
+data: {"text":" 같은"}
+
+event: token
+data: {"text":" 느"}
+
+event: token
+data: {"text":"린"}
+
+event: token
+data: {"text":" 메"}
+
+event: token
+data: {"text":"커"}
+
+event: token
+data: {"text":"니"}
+
+event: token
+data: {"text":"즘"}
+
+event: token
+data: {"text":"으로"}
+
+event: token
+data: {"text":"는"}
+
+event: token
+data: {"text":" 대응"}
+
+event: token
+data: {"text":"이"}
+
+event: token
+data: {"text":" 굼"}
+
+event: token
+data: {"text":"뜨"}
+
+event: token
+data: {"text":"기"}
+
+event: token
+data: {"text":" 쉽"}
+
+event: token
+data: {"text":"다는"}
+
+event: token
+data: {"text":" 문제"}
+
+event: token
+data: {"text":"의"}
+
+event: token
+data: {"text":"식"}
+
+event: token
+data: {"text":"이"}
+
+event: token
+data: {"text":" 제"}
+
+event: token
+data: {"text":"시"}
+
+event: token
+data: {"text":"됩니다"}
+
+event: token
+data: {"text":"."}
+
+event: token
+data: {"text":" 이는"}
+
+event: token
+data: {"text":" 드"}
+
+event: token
+data: {"text":"론"}
+
+event: token
+data: {"text":" 방"}
+
+event: token
+data: {"text":"공"}
+
+event: token
+data: {"text":"의"}
+
+event: token
+data: {"text":" 경제"}
+
+event: token
+data: {"text":"성"}
+
+event: token
+data: {"text":" 문제"}
+
+event: token
+data: {"text":"("}
+
+event: token
+data: {"text":"싼"}
+
+event: token
+data: {"text":" 공격"}
+
+event: token
+data: {"text":"을"}
+
+event: token
+data: {"text":" 비"}
+
+event: token
+data: {"text":"싼"}
+
+event: token
+data: {"text":" 방"}
+
+event: token
+data: {"text":"어"}
+
+event: token
+data: {"text":"로"}
+
+event: token
+data: {"text":" 막"}
+
+event: token
+data: {"text":"는"}
+
+event: token
+data: {"text":" 비"}
+
+event: token
+data: {"text":"대"}
+
+event: token
+data: {"text":"칭"}
+
+event: token
+data: {"text":")"}
+
+event: token
+data: {"text":"와"}
+
+event: token
+data: {"text":"도"}
+
+event: token
+data: {"text":" 결"}
+
+event: token
+data: {"text":"이"}
+
+event: token
+data: {"text":" 같"}
+
+event: token
+data: {"text":"아요"}
+
+event: token
+data: {"text":"."}
+
+event: token
+data: {"text":" 위"}
+
+event: token
+data: {"text":"협"}
+
+event: token
+data: {"text":"은"}
+
+event: token
+data: {"text":" 대"}
+
+event: token
+data: {"text":"량"}
+
+event: token
+data: {"text":"·"}
+
+event: token
+data: {"text":"저"}
+
+event: token
+data: {"text":"비"}
+
+event: token
+data: {"text":"용"}
+
+event: token
+data: {"text":"·"}
+
+event: token
+data: {"text":"고"}
+
+event: token
+data: {"text":"빈"}
+
+event: token
+data: {"text":"도로"}
+
+event: token
+data: {"text":" 오"}
+
+event: token
+data: {"text":"는데"}
+
+event: token
+data: {"text":","}
+
+event: token
+data: {"text":" 방"}
+
+event: token
+data: {"text":"어"}
+
+event: token
+data: {"text":"는"}
+
+event: token
+data: {"text":" 고"}
+
+event: token
+data: {"text":"가"}
+
+event: token
+data: {"text":"·"}
+
+event: token
+data: {"text":"저"}
+
+event: token
+data: {"text":"재"}
+
+event: token
+data: {"text":"고"}
+
+event: token
+data: {"text":"·"}
+
+event: token
+data: {"text":"느"}
+
+event: token
+data: {"text":"린"}
+
+event: token
+data: {"text":" 의"}
+
+event: token
+data: {"text":"사"}
+
+event: token
+data: {"text":"결"}
+
+event: token
+data: {"text":"정"}
+
+event: token
+data: {"text":"이면"}
+
+event: token
+data: {"text":" 지속"}
+
+event: token
+data: {"text":"이"}
+
+event: token
+data: {"text":" 어렵"}
+
+event: token
+data: {"text":"거"}
+
+event: token
+data: {"text":"든"}
+
+event: token
+data: {"text":"요"}
+
+event: token
+data: {"text":".\n"}
+
+event: token
+data: {"text":"-"}
+
+event: token
+data: {"text":" 충"}
+
+event: token
+data: {"text":"돌"}
+
+event: token
+data: {"text":"하거나"}
+
+event: token
+data: {"text":" 긴"}
+
+event: token
+data: {"text":"장"}
+
+event: token
+data: {"text":" 관계"}
+
+event: token
+data: {"text":"에"}
+
+event: token
+data: {"text":" 있는"}
+
+event: token
+data: {"text":" 점"}
+
+event: token
+data: {"text":"\n"}
+
+event: token
+data: {"text":"-"}
+
+event: token
+data: {"text":" ‘"}
+
+event: token
+data: {"text":"서"}
+
+event: token
+data: {"text":"방"}
+
+event: token
+data: {"text":"이"}
+
+event: token
+data: {"text":" 우"}
+
+event: token
+data: {"text":"크"}
+
+event: token
+data: {"text":"라"}
+
+event: token
+data: {"text":"이나"}
+
+event: token
+data: {"text":"로"}
+
+event: token
+data: {"text":"부터"}
+
+event: token
+data: {"text":" 배"}
+
+event: token
+data: {"text":"운"}
+
+event: token
+data: {"text":"다"}
+
+event: token
+data: {"text":"’"}
+
+event: token
+data: {"text":"는"}
+
+event: token
+data: {"text":" 흐"}
+
+event: token
+data: {"text":"름"}
+
+event: token
+data: {"text":"과"}
+
+event: token
+data: {"text":" ‘"}
+
+event: token
+data: {"text":"미"}
+
+event: token
+data: {"text":"국"}
+
+event: token
+data: {"text":"은"}
+
+event: token
+data: {"text":" 정말"}
+
+event: token
+data: {"text":" 우"}
+
+event: token
+data: {"text":"크"}
+
+event: token
+data: {"text":"라"}
+
+event: token
+data: {"text":"이나"}
+
+event: token
+data: {"text":" 편"}
+
+event: token
+data: {"text":"인가"}
+
+event: token
+data: {"text":"’"}
+
+event: token
+data: {"text":"라는"}
+
+event: token
+data: {"text":" 의"}
+
+event: token
+data: {"text":"문"}
+
+event: token
+data: {"text":"이"}
+
+event: token
+data: {"text":" 긴"}
+
+event: token
+data: {"text":"장"}
+
+event: token
+data: {"text":"감을"}
+
+event: token
+data: {"text":" 만들"}
+
+event: token
+data: {"text":"어요"}
+
+event: token
+data: {"text":"  \n"}
+
+event: token
+data: {"text":" "}
+
+event: token
+data: {"text":" 한"}
+
+event: token
+data: {"text":"쪽"}
+
+event: token
+data: {"text":"에서는"}
+
+event: token
+data: {"text":" 우"}
+
+event: token
+data: {"text":"크"}
+
+event: token
+data: {"text":"라"}
+
+event: token
+data: {"text":"이나"}
+
+event: token
+data: {"text":"의"}
+
+event: token
+data: {"text":" 방"}
+
+event: token
+data: {"text":"공"}
+
+event: token
+data: {"text":" 경험"}
+
+event: token
+data: {"text":"이"}
+
+event: token
+data: {"text":" 미국"}
+
+event: token
+data: {"text":"과"}
+
+event: token
+data: {"text":" 파"}
+
+event: token
+data: {"text":"트"}
+
+event: token
+data: {"text":"너"}
+
+event: token
+data: {"text":"들에게"}
+
+event: token
+data: {"text":" 교"}
+
+event: token
+data: {"text":"범"}
+
+event: token
+data: {"text":"이"}
+
+event: token
+data: {"text":" 되는"}
+
+event: token
+data: {"text":" 장"}
+
+event: token
+data: {"text":"면"}
+
+event: token
+data: {"text":"이"}
+
+event: token
+data: {"text":" 나오"}
+
+event: token
+data: {"text":"지만"}
+
+event: token
+data: {"text":","}
+
+event: token
+data: {"text":" 다른"}
+
+event: token
+data: {"text":" 한"}
+
+event: token
+data: {"text":"쪽"}
+
+event: token
+data: {"text":"에서는"}
+
+event: token
+data: {"text":" 백"}
+
+event: token
+data: {"text":"악"}
+
+event: token
+data: {"text":"관"}
+
+event: token
+data: {"text":"에서"}
+
+event: token
+data: {"text":"의"}
+
+event: token
+data: {"text":" 충"}
+
+event: token
+data: {"text":"돌"}
+
+event: token
+data: {"text":" 같은"}
+
+event: token
+data: {"text":" 사례"}
+
+event: token
+data: {"text":"를"}
+
+event: token
+data: {"text":" 통해"}
+
+event: token
+data: {"text":" 미국"}
+
+event: token
+data: {"text":"의"}
+
+event: token
+data: {"text":" 위험"}
+
+event: token
+data: {"text":"회"}
+
+event: token
+data: {"text":"피"}
+
+event: token
+data: {"text":" 성"}
+
+event: token
+data: {"text":"향"}
+
+event: token
+data: {"text":","}
+
+event: token
+data: {"text":" 의"}
+
+event: token
+data: {"text":"사"}
+
+event: token
+data: {"text":"결"}
+
+event: token
+data: {"text":"정"}
+
+event: token
+data: {"text":" 메"}
+
+event: token
+data: {"text":"커"}
+
+event: token
+data: {"text":"니"}
+
+event: token
+data: {"text":"즘"}
+
+event: token
+data: {"text":"의"}
+
+event: token
+data: {"text":" 차"}
+
+event: token
+data: {"text":"이"}
+
+event: token
+data: {"text":"로"}
+
+event: token
+data: {"text":" 인해"}
+
+event: token
+data: {"text":" 우"}
+
+event: token
+data: {"text":"크"}
+
+event: token
+data: {"text":"라"}
+
+event: token
+data: {"text":"이나"}
+
+event: token
+data: {"text":"가"}
+
+event: token
+data: {"text":" 기대"}
+
+event: token
+data: {"text":"하는"}
+
+event: token
+data: {"text":" 수준"}
+
+event: token
+data: {"text":"의"}
+
+event: token
+data: {"text":" 지원"}
+
+event: token
+data: {"text":"이"}
+
+event: token
+data: {"text":" 항상"}
+
+event: token
+data: {"text":" 나오"}
+
+event: token
+data: {"text":"지"}
+
+event: token
+data: {"text":" 않을"}
+
+event: token
+data: {"text":" 수"}
+
+event: token
+data: {"text":" 있다는"}
+
+event: token
+data: {"text":" 문제"}
+
+event: token
+data: {"text":"를"}
+
+event: token
+data: {"text":" 제"}
+
+event: token
+data: {"text":"기"}
+
+event: token
+data: {"text":"합니다"}
+
+event: token
+data: {"text":"."}
+
+event: token
+data: {"text":" 다"}
+
+event: token
+data: {"text":"만"}
+
+event: token
+data: {"text":" 이"}
+
+event: token
+data: {"text":" 둘"}
+
+event: token
+data: {"text":"은"}
+
+event: token
+data: {"text":" 완"}
+
+event: token
+data: {"text":"전"}
+
+event: token
+data: {"text":"한"}
+
+event: token
+data: {"text":" 모"}
+
+event: token
+data: {"text":"순"}
+
+event: token
+data: {"text":"이라"}
+
+event: token
+data: {"text":"기"}
+
+event: token
+data: {"text":"보다"}
+
+event: token
+data: {"text":","}
+
+event: token
+data: {"text":" ‘"}
+
+event: token
+data: {"text":"학"}
+
+event: token
+data: {"text":"습"}
+
+event: token
+data: {"text":"과"}
+
+event: token
+data: {"text":" 협"}
+
+event: token
+data: {"text":"력"}
+
+event: token
+data: {"text":"은"}
+
+event: token
+data: {"text":" 진행"}
+
+event: token
+data: {"text":"되"}
+
+event: token
+data: {"text":"지만"}
+
+event: token
+data: {"text":","}
+
+event: token
+data: {"text":" 개"}
+
+event: token
+data: {"text":"입"}
+
+event: token
+data: {"text":"의"}
+
+event: token
+data: {"text":" 수"}
+
+event: token
+data: {"text":"위"}
+
+event: token
+data: {"text":"는"}
+
+event: token
+data: {"text":" 핵"}
+
+event: token
+data: {"text":" 확"}
+
+event: token
+data: {"text":"전"}
+
+event: token
+data: {"text":" 위험"}
+
+event: token
+data: {"text":" 때문에"}
+
+event: token
+data: {"text":" 제한"}
+
+event: token
+data: {"text":"된다"}
+
+event: token
+data: {"text":"’"}
+
+event: token
+data: {"text":"는"}
+
+event: token
+data: {"text":" 현실"}
+
+event: token
+data: {"text":"을"}
+
+event: token
+data: {"text":" 서로"}
+
+event: token
+data: {"text":" 다른"}
+
+event: token
+data: {"text":" 각"}
+
+event: token
+data: {"text":"도"}
+
+event: token
+data: {"text":"에서"}
+
+event: token
+data: {"text":" 보여"}
+
+event: token
+data: {"text":"주는"}
+
+event: token
+data: {"text":" 것으로"}
+
+event: token
+data: {"text":" 정"}
+
+event: token
+data: {"text":"리"}
+
+event: token
+data: {"text":"돼"}
+
+event: token
+data: {"text":"요"}
+
+event: token
+data: {"text":".\n"}
+
+event: token
+data: {"text":"-"}
+
+event: token
+data: {"text":" ‘"}
+
+event: token
+data: {"text":"고"}
+
+event: token
+data: {"text":"가"}
+
+event: token
+data: {"text":" 방"}
+
+event: token
+data: {"text":"공"}
+
+event: token
+data: {"text":"’"}
+
+event: token
+data: {"text":" 중심"}
+
+event: token
+data: {"text":"의"}
+
+event: token
+data: {"text":" 기존"}
+
+event: token
+data: {"text":" 체"}
+
+event: token
+data: {"text":"계"}
+
+event: token
+data: {"text":"와"}
+
+event: token
+data: {"text":" ‘"}
+
+event: token
+data: {"text":"저"}
+
+event: token
+data: {"text":"가"}
+
+event: token
+data: {"text":" 대"}
+
+event: token
+data: {"text":"량"}
+
+event: token
+data: {"text":" 대응"}
+
+event: token
+data: {"text":"’"}
+
+event: token
+data: {"text":"의"}
+
+event: token
+data: {"text":" 필요"}
+
+event: token
+data: {"text":"가"}
+
+event: token
+data: {"text":" 충"}
+
+event: token
+data: {"text":"돌"}
+
+event: token
+data: {"text":"해"}
+
+event: token
+data: {"text":"요"}
+
+event: token
+data: {"text":"  \n"}
+
+event: token
+data: {"text":" "}
+
+event: token
+data: {"text":" 샤"}
+
+event: token
+data: {"text":"헤"}
+
+event: token
+data: {"text":"드"}
+
+event: token
+data: {"text":" 드"}
+
+event: token
+data: {"text":"론"}
+
+event: token
+data: {"text":" "}
+
+event: token
+data: {"text":"1"}
+
+event: token
+data: {"text":"대"}
+
+event: token
+data: {"text":"가"}
+
+event: token
+data: {"text":" 약"}
+
+event: token
+data: {"text":" "}
+
+event: token
+data: {"text":"3"}
+
+event: token
+data: {"text":"만"}
+
+event: token
+data: {"text":"5"}
+
+event: token
+data: {"text":"천"}
+
+event: token
+data: {"text":" 달"}
+
+event: token
+data: {"text":"러"}
+
+event: token
+data: {"text":"인데"}
+
+event: token
+data: {"text":" 패"}
+
+event: token
+data: {"text":"트"}
+
+event: token
+data: {"text":"리"}
+
+event: token
+data: {"text":"엇"}
+
+event: token
+data: {"text":" 계"}
+
+event: token
+data: {"text":"열"}
+
+event: token
+data: {"text":" 요"}
+
+event: token
+data: {"text":"격"}
+
+event: token
+data: {"text":"은"}
+
+event: token
+data: {"text":" 약"}
+
+event: token
+data: {"text":" "}
+
+event: token
+data: {"text":"370"}
+
+event: token
+data: {"text":"만"}
+
+event: token
+data: {"text":" 달"}
+
+event: token
+data: {"text":"러"}
+
+event: token
+data: {"text":"라는"}
+
+event: token
+data: {"text":" 비교"}
+
+event: token
+data: {"text":"는"}
+
+event: token
+data: {"text":","}
+
+event: token
+data: {"text":" 기존"}
+
+event: token
+data: {"text":" 방"}
+
+event: token
+data: {"text":"공"}
+
+event: token
+data: {"text":" 교"}
+
+event: token
+data: {"text":"리가"}
+
+event: token
+data: {"text":" 지속"}
+
+event: token
+data: {"text":"가능"}
+
+event: token
+data: {"text":"성"}
+
+event: token
+data: {"text":"에서"}
+
+event: token
+data: {"text":" 한"}
+
+event: token
+data: {"text":"계를"}
+
+event: token
+data: {"text":" 드"}
+
+event: token
+data: {"text":"러"}
+
+event: token
+data: {"text":"낸"}
+
+event: token
+data: {"text":"다는"}
+
+event: token
+data: {"text":" 뜻"}
+
+event: token
+data: {"text":"이에"}
+
+event: token
+data: {"text":"요"}
+
+event: token
+data: {"text":"."}
+
+event: token
+data: {"text":" 그래서"}
+
+event: token
+data: {"text":" 우"}
+
+event: token
+data: {"text":"크"}
+
+event: token
+data: {"text":"라"}
+
+event: token
+data: {"text":"이나"}
+
+event: token
+data: {"text":"가"}
+
+event: token
+data: {"text":" 요"}
+
+event: token
+data: {"text":"격"}
+
+event: token
+data: {"text":" 드"}
+
+event: token
+data: {"text":"론"}
+
+event: token
+data: {"text":" 같은"}
+
+event: token
+data: {"text":" 더"}
+
+event: token
+data: {"text":" 싸"}
+
+event: token
+data: {"text":"고"}
+
+event: token
+data: {"text":" 대"}
+
+event: token
+data: {"text":"량"}
+
+event: token
+data: {"text":" 운"}
+
+event: token
+data: {"text":"용"}
+
+event: token
+data: {"text":" 가능한"}
+
+event: token
+data: {"text":" 대"}
+
+event: token
+data: {"text":"안을"}
+
+event: token
+data: {"text":" 발전"}
+
+event: token
+data: {"text":"시"}
+
+event: token
+data: {"text":"켜"}
+
+event: token
+data: {"text":" 왔"}
+
+event: token
+data: {"text":"다는"}
+
+event: token
+data: {"text":" 흐"}
+
+event: token
+data: {"text":"름"}
+
+event: token
+data: {"text":"이"}
+
+event: token
+data: {"text":" 나오"}
+
+event: token
+data: {"text":"는데"}
+
+event: token
+data: {"text":","}
+
+event: token
+data: {"text":" 이는"}
+
+event: token
+data: {"text":" 전"}
+
+event: token
+data: {"text":"통"}
+
+event: token
+data: {"text":"적"}
+
+event: token
+data: {"text":" 방"}
+
+event: token
+data: {"text":"공"}
+
+event: token
+data: {"text":" 자"}
+
+event: token
+data: {"text":"산"}
+
+event: token
+data: {"text":" 운"}
+
+event: token
+data: {"text":"용"}
+
+event: token
+data: {"text":" 방식"}
+
+event: token
+data: {"text":"과"}
+
+event: token
+data: {"text":" 우"}
+
+event: token
+data: {"text":"선"}
+
+event: token
+data: {"text":"순"}
+
+event: token
+data: {"text":"위"}
+
+event: token
+data: {"text":" 재"}
+
+event: token
+data: {"text":"조"}
+
+event: token
+data: {"text":"정을"}
+
+event: token
+data: {"text":" 요구"}
+
+event: token
+data: {"text":"합니다"}
+
+event: token
+data: {"text":".\n\n"}
+
+event: token
+data: {"text":"2"}
+
+event: token
+data: {"text":"."}
+
+event: token
+data: {"text":" 향"}
+
+event: token
+data: {"text":"후"}
+
+event: token
+data: {"text":" 영향"}
+
+event: token
+data: {"text":"과"}
+
+event: token
+data: {"text":" 종"}
+
+event: token
+data: {"text":"합"}
+
+event: token
+data: {"text":" 판단"}
+
+event: token
+data: {"text":"\n"}
+
+event: token
+data: {"text":"-"}
+
+event: token
+data: {"text":" 방"}
+
+event: token
+data: {"text":"공"}
+
+event: token
+data: {"text":"의"}
+
+event: token
+data: {"text":" 중심"}
+
+event: token
+data: {"text":"이"}
+
+event: token
+data: {"text":" ‘"}
+
+event: token
+data: {"text":"성"}
+
+event: token
+data: {"text":"능"}
+
+event: token
+data: {"text":" 경쟁"}
+
+event: token
+data: {"text":"’"}
+
+event: token
+data: {"text":"에서"}
+
+event: token
+data: {"text":" ‘"}
+
+event: token
+data: {"text":"지"}
+
+event: token
+data: {"text":"속"}
+
+event: token
+data: {"text":"가능"}
+
+event: token
+data: {"text":"한"}
+
+event: token
+data: {"text":" 비용"}
+
+event: token
+data: {"text":" 구조"}
+
+event: token
+data: {"text":"’"}
+
+event: token
+data: {"text":"로"}
+
+event: token
+data: {"text":" 이동"}
+
+event: token
+data: {"text":"할"}
+
+event: token
+data: {"text":" 가능"}
+
+event: token
+data: {"text":"성이"}
+
+event: token
+data: {"text":" 커"}
+
+event: token
+data: {"text":"요"}
+
+event: token
+data: {"text":"  \n"}
+
+event: token
+data: {"text":" "}
+
+event: token
+data: {"text":" 값"}
+
+event: token
+data: {"text":"싼"}
+
+event: token
+data: {"text":" 드"}
+
+event: token
+data: {"text":"론"}
+
+event: token
+data: {"text":"이"}
+
+event: token
+data: {"text":" 대"}
+
+event: token
+data: {"text":"량"}
+
+event: token
+data: {"text":"으로"}
+
+event: token
+data: {"text":" 날"}
+
+event: token
+data: {"text":"아"}
+
+event: token
+data: {"text":"오는"}
+
+event: token
+data: {"text":" 조건"}
+
+event: token
+data: {"text":"에서는"}
+
+event: token
+data: {"text":","}
+
+event: token
+data: {"text":" 요"}
+
+event: token
+data: {"text":"격"}
+
+event: token
+data: {"text":" 성공"}
+
+event: token
+data: {"text":"률"}
+
+event: token
+data: {"text":"만"}
+
+event: token
+data: {"text":"이"}
+
+event: token
+data: {"text":" 아니라"}
+
+event: token
+data: {"text":" “"}
+
+event: token
+data: {"text":"얼"}
+
+event: token
+data: {"text":"마"}
+
+event: token
+data: {"text":"나"}
+
+event: token
+data: {"text":" 오래"}
+
+event: token
+data: {"text":" 버"}
+
+event: token
+data: {"text":"틸"}
+
+event: token
+data: {"text":" 수"}
+
+event: token
+data: {"text":" 있는"}
+
+event: token
+data: {"text":"가"}
+
+event: token
+data: {"text":"”"}
+
+event: token
+data: {"text":"가"}
+
+event: token
+data: {"text":" 핵"}
+
+event: token
+data: {"text":"심"}
+
+event: token
+data: {"text":" 지"}
+
+event: token
+data: {"text":"표"}
+
+event: token
+data: {"text":"가"}
+
+event: token
+data: {"text":" 됩니다"}
+
+event: token
+data: {"text":"."}
+
+event: token
+data: {"text":" 우"}
+
+event: token
+data: {"text":"크"}
+
+event: token
+data: {"text":"라"}
+
+event: token
+data: {"text":"이나"}
+
+event: token
+data: {"text":"가"}
+
+event: token
+data: {"text":" 축"}
+
+event: token
+data: {"text":"적"}
+
+event: token
+data: {"text":"한"}
+
+event: token
+data: {"text":" 경험"}
+
+event: token
+data: {"text":"이"}
+
+event: token
+data: {"text":" 주"}
+
+event: token
+data: {"text":"목"}
+
+event: token
+data: {"text":"받"}
+
+event: token
+data: {"text":"는"}
+
+event: token
+data: {"text":" 이유"}
+
+event: token
+data: {"text":"도"}
+
+event: token
+data: {"text":","}
+
+event: token
+data: {"text":" 비"}
+
+event: token
+data: {"text":"대"}
+
+event: token
+data: {"text":"칭"}
+
+event: token
+data: {"text":" 비용"}
+
+event: token
+data: {"text":" 압"}
+
+event: token
+data: {"text":"박"}
+
+event: token
+data: {"text":"을"}
+
+event: token
+data: {"text":" 실제"}
+
+event: token
+data: {"text":" 전"}
+
+event: token
+data: {"text":"장에서"}
+
+event: token
+data: {"text":" 겪"}
+
+event: token
+data: {"text":"으며"}
+
+event: token
+data: {"text":" 대"}
+
+event: token
+data: {"text":"안을"}
+
+event: token
+data: {"text":" 만들"}
+
+event: token
+data: {"text":"었"}
+
+event: token
+data: {"text":"기"}
+
+event: token
+data: {"text":" 때문"}
+
+event: token
+data: {"text":"이에"}
+
+event: token
+data: {"text":"요"}
+
+event: token
+data: {"text":"."}
+
+event: token
+data: {"text":" 이는"}
+
+event: token
+data: {"text":" 중"}
+
+event: token
+data: {"text":"동"}
+
+event: token
+data: {"text":"처럼"}
+
+event: token
+data: {"text":" 드"}
+
+event: token
+data: {"text":"론"}
+
+event: token
+data: {"text":" 위"}
+
+event: token
+data: {"text":"협"}
+
+event: token
+data: {"text":"이"}
+
+event: token
+data: {"text":" 상"}
+
+event: token
+data: {"text":"시"}
+
+event: token
+data: {"text":"화"}
+
+event: token
+data: {"text":"되는"}
+
+event: token
+data: {"text":" 지역"}
+
+event: token
+data: {"text":"에서도"}
+
+event: token
+data: {"text":" 방"}
+
+event: token
+data: {"text":"공"}
+
+event: token
+data: {"text":" 체"}
+
+event: token
+data: {"text":"계"}
+
+event: token
+data: {"text":" 설"}
+
+event: token
+data: {"text":"계"}
+
+event: token
+data: {"text":"의"}
+
+event: token
+data: {"text":" 기준"}
+
+event: token
+data: {"text":"을"}
+
+event: token
+data: {"text":" 바"}
+
+event: token
+data: {"text":"꿀"}
+
+event: token
+data: {"text":" 수"}
+
+event: token
+data: {"text":" 있어"}
+
+event: token
+data: {"text":"요"}
+
+event: token
+data: {"text":".\n"}
+
+event: token
+data: {"text":"-"}
+
+event: token
+data: {"text":" 제한"}
+
+event: token
+data: {"text":"전"}
+
+event: token
+data: {"text":" 관리"}
+
+event: token
+data: {"text":"("}
+
+event: token
+data: {"text":"확"}
+
+event: token
+data: {"text":"전"}
+
+event: token
+data: {"text":" 통"}
+
+event: token
+data: {"text":"제"}
+
+event: token
+data: {"text":")가"}
+
+event: token
+data: {"text":" ‘"}
+
+event: token
+data: {"text":"전"}
+
+event: token
+data: {"text":"쟁"}
+
+event: token
+data: {"text":" 기술"}
+
+event: token
+data: {"text":"’"}
+
+event: token
+data: {"text":"로"}
+
+event: token
+data: {"text":" 더"}
+
+event: token
+data: {"text":" 중요"}
+
+event: token
+data: {"text":"해"}
+
+event: token
+data: {"text":"질"}
+
+event: token
+data: {"text":" 거"}
+
+event: token
+data: {"text":"예"}
+
+event: token
+data: {"text":"요"}
+
+event: token
+data: {"text":"  \n"}
+
+event: token
+data: {"text":" "}
+
+event: token
+data: {"text":" 핵"}
+
+event: token
+data: {"text":" 사용"}
+
+event: token
+data: {"text":" 위"}
+
+event: token
+data: {"text":"협"}
+
+event: token
+data: {"text":"이"}
+
+event: token
+data: {"text":" 단"}
+
+event: token
+data: {"text":"순"}
+
+event: token
+data: {"text":"한"}
+
+event: token
+data: {"text":" 허"}
+
+event: token
+data: {"text":"풍"}
+
+event: token
+data: {"text":"이"}
+
+event: token
+data: {"text":" 아니라"}
+
+event: token
+data: {"text":"는"}
+
+event: token
+data: {"text":" 인"}
+
+event: token
+data: {"text":"식"}
+
+event: token
+data: {"text":"이"}
+
+event: token
+data: {"text":" 깔"}
+
+event: token
+data: {"text":"려"}
+
+event: token
+data: {"text":" 있는"}
+
+event: token
+data: {"text":" 한"}
+
+event: token
+data: {"text":","}
+
+event: token
+data: {"text":" 미국"}
+
+event: token
+data: {"text":"을"}
+
+event: token
+data: {"text":" 포함"}
+
+event: token
+data: {"text":"한"}
+
+event: token
+data: {"text":" 외"}
+
+event: token
+data: {"text":"부"}
+
+event: token
+data: {"text":" 지원"}
+
+event: token
+data: {"text":"국"}
+
+event: token
+data: {"text":"은"}
+
+event: token
+data: {"text":" “"}
+
+event: token
+data: {"text":"이"}
+
+event: token
+data: {"text":"기"}
+
+event: token
+data: {"text":"게"}
+
+event: token
+data: {"text":" 돕"}
+
+event: token
+data: {"text":"는"}
+
+event: token
+data: {"text":" 방식"}
+
+event: token
+data: {"text":"”"}
+
+event: token
+data: {"text":"과"}
+
+event: token
+data: {"text":" “"}
+
+event: token
+data: {"text":"확"}
+
+event: token
+data: {"text":"전을"}
+
+event: token
+data: {"text":" 막"}
+
+event: token
+data: {"text":"는"}
+
+event: token
+data: {"text":" 방식"}
+
+event: token
+data: {"text":"”"}
+
+event: token
+data: {"text":" 사이"}
+
+event: token
+data: {"text":"에서"}
+
+event: token
+data: {"text":" 계속"}
+
+event: token
+data: {"text":" 줄"}
+
+event: token
+data: {"text":"타"}
+
+event: token
+data: {"text":"기를"}
+
+event: token
+data: {"text":" 할"}
+
+event: token
+data: {"text":" 수"}
+
+event: token
+data: {"text":"밖"}
+
+event: token
+data: {"text":"에"}
+
+event: token
+data: {"text":" 없"}
+
+event: token
+data: {"text":"어요"}
+
+event: token
+data: {"text":"."}
+
+event: token
+data: {"text":" 그래서"}
+
+event: token
+data: {"text":" 전"}
+
+event: token
+data: {"text":"쟁"}
+
+event: token
+data: {"text":"은"}
+
+event: token
+data: {"text":" 전"}
+
+event: token
+data: {"text":"장"}
+
+event: token
+data: {"text":" 기술"}
+
+event: token
+data: {"text":"뿐"}
+
+event: token
+data: {"text":" 아니라"}
+
+event: token
+data: {"text":","}
+
+event: token
+data: {"text":" 위험"}
+
+event: token
+data: {"text":"을"}
+
+event: token
+data: {"text":" 관리"}
+
+event: token
+data: {"text":"하는"}
+
+event: token
+data: {"text":" 의"}
+
+event: token
+data: {"text":"사"}
+
+event: token
+data: {"text":"결"}
+
+event: token
+data: {"text":"정"}
+
+event: token
+data: {"text":" 구조"}
+
+event: token
+data: {"text":"와"}
+
+event: token
+data: {"text":" 신"}
+
+event: token
+data: {"text":"호"}
+
+event: token
+data: {"text":" 관리"}
+
+event: token
+data: {"text":"까지"}
+
+event: token
+data: {"text":" 포함"}
+
+event: token
+data: {"text":"한"}
+
+event: token
+data: {"text":" ‘"}
+
+event: token
+data: {"text":"운"}
+
+event: token
+data: {"text":"전"}
+
+event: token
+data: {"text":" 기술"}
+
+event: token
+data: {"text":"’"}
+
+event: token
+data: {"text":"의"}
+
+event: token
+data: {"text":" 성"}
+
+event: token
+data: {"text":"격"}
+
+event: token
+data: {"text":"이"}
+
+event: token
+data: {"text":" 더"}
+
+event: token
+data: {"text":" 강"}
+
+event: token
+data: {"text":"해"}
+
+event: token
+data: {"text":"질"}
+
+event: token
+data: {"text":" 가능"}
+
+event: token
+data: {"text":"성이"}
+
+event: token
+data: {"text":" 큽"}
+
+event: token
+data: {"text":"니다"}
+
+event: token
+data: {"text":".\n"}
+
+event: token
+data: {"text":"-"}
+
+event: token
+data: {"text":" 유"}
+
+event: token
+data: {"text":"럽"}
+
+event: token
+data: {"text":" 안"}
+
+event: token
+data: {"text":"보"}
+
+event: token
+data: {"text":"는"}
+
+event: token
+data: {"text":" 단"}
+
+event: token
+data: {"text":"일"}
+
+event: token
+data: {"text":"한"}
+
+event: token
+data: {"text":" ‘"}
+
+event: token
+data: {"text":"유"}
+
+event: token
+data: {"text":"럽"}
+
+event: token
+data: {"text":"’"}
+
+event: token
+data: {"text":"이"}
+
+event: token
+data: {"text":" 아니라"}
+
+event: token
+data: {"text":","}
+
+event: token
+data: {"text":" 핵"}
+
+event: token
+data: {"text":"심"}
+
+event: token
+data: {"text":"국"}
+
+event: token
+data: {"text":" 조"}
+
+event: token
+data: {"text":"합"}
+
+event: token
+data: {"text":"의"}
+
+event: token
+data: {"text":" 선택"}
+
+event: token
+data: {"text":"에"}
+
+event: token
+data: {"text":" 의해"}
+
+event: token
+data: {"text":" 좌"}
+
+event: token
+data: {"text":"우"}
+
+event: token
+data: {"text":"될"}
+
+event: token
+data: {"text":" 공"}
+
+event: token
+data: {"text":"산"}
+
+event: token
+data: {"text":"이"}
+
+event: token
+data: {"text":" 커"}
+
+event: token
+data: {"text":"요"}
+
+event: token
+data: {"text":"  \n"}
+
+event: token
+data: {"text":" "}
+
+event: token
+data: {"text":" 위"}
+
+event: token
+data: {"text":"협"}
+
+event: token
+data: {"text":"은"}
+
+event: token
+data: {"text":" 빠"}
+
+event: token
+data: {"text":"르고"}
+
+event: token
+data: {"text":","}
+
+event: token
+data: {"text":" 합"}
+
+event: token
+data: {"text":"의"}
+
+event: token
+data: {"text":"는"}
+
+event: token
+data: {"text":" 느"}
+
