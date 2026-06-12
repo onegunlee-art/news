@@ -37,6 +37,35 @@ function eduLoadQuestByCode(string $code): ?array
     return $quest;
 }
 
+/** today.php와 동일: 라이브 퀘스트 우선, 없으면 rotation fallback */
+function eduLoadTodayQuest(?array $student = null): ?array
+{
+    $supabase = eduSupabase();
+    $quests = $supabase->select(
+        'edu_daily_quests',
+        'status=eq.approved&live_at=not.is.null&live_at=lte.' . rawurlencode(date('c')) . '&order=live_at.desc',
+        1
+    );
+
+    if (empty($quests[0]) && $student !== null) {
+        $code = eduTodayQuestCode($student);
+        return eduLoadQuestByCode($code);
+    }
+
+    if (empty($quests[0])) {
+        return null;
+    }
+
+    $quest = $quests[0];
+    $articles = $supabase->select(
+        'edu_quest_articles',
+        'quest_id=eq.' . $quest['id'] . '&order=sort_order.asc',
+        20
+    ) ?? [];
+    $quest['articles'] = $articles;
+    return $quest;
+}
+
 function eduPublicQuestPayload(array $quest): array
 {
     $articles = [];

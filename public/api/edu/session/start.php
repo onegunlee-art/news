@@ -28,8 +28,7 @@ if ($existing !== null) {
 
 $questId = trim((string) ($body['quest_id'] ?? ''));
 if ($questId === '') {
-    $code = eduTodayQuestCode($student);
-    $quest = eduLoadQuestByCode($code);
+    $quest = eduLoadTodayQuest($student);
     if ($quest === null) {
         eduSendError('Quest not found', 404);
     }

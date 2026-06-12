@@ -66,9 +66,10 @@ export default function EduHomePage() {
   }
 
   const handleStart = async () => {
+    if (!quest?.quest_id) return
     setLoading(true)
     try {
-      await eduApi.startSession()
+      await eduApi.startSession(quest.quest_id)
       navigate('/edu/quest')
     } catch (e) {
       setError(e instanceof Error ? e.message : '시작 실패')
