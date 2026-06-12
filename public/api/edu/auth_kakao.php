@@ -32,7 +32,7 @@ if (empty($config['rest_api_key'])) {
 }
 
 $eduClientId = getenv('EDU_KAKAO_CLIENT_ID') ?: $config['rest_api_key'];
-$eduRedirectUri = getenv('EDU_KAKAO_REDIRECT_URI') ?: 'https://edu.thegist.co.kr/api/edu/auth/kakao/callback';
+$eduRedirectUri = getenv('EDU_KAKAO_REDIRECT_URI') ?: 'https://edu.thegist.co.kr/api/edu/auth_kakao_callback.php';
 
 $state = bin2hex(random_bytes(16));
 setcookie('edu_oauth_state', $state, [
