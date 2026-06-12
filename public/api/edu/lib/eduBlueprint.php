@@ -28,6 +28,8 @@ function eduBlueprintDefaults(): array
             'A' => '',
             'conclusion' => '',
         ],
+        'essay_structure' => [],
+        'essay_artifact' => [],
         'phase' => 'stance',
         'exchange_count' => 0,
         'ready_for_compose' => false,

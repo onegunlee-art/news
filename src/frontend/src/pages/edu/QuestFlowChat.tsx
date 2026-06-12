@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import EssayRevealCard, { type EssayArtifact } from '../../components/edu/EssayRevealCard'
 import TierProgressCard from '../../components/edu/TierProgressCard'
 import {
   eduApi,
@@ -16,14 +17,6 @@ const ROLE_LABEL: Record<string, string> = {
   counter: '다른 시각',
 }
 
-const SCQA_LABELS: Record<string, string> = {
-  situation: '상황 (S)',
-  complication: '갈등 (C)',
-  question: '질문 (Q)',
-  answer: '주장 (A)',
-  conclusion: '결론',
-}
-
 export default function QuestFlowChat() {
   const navigate = useNavigate()
   const bottomRef = useRef<HTMLDivElement>(null)
@@ -36,10 +29,7 @@ export default function QuestFlowChat() {
   const [phase, setPhase] = useState('stance')
   const [articles, setArticles] = useState<EduQuestArticle[]>([])
   const [completed, setCompleted] = useState(false)
-  const [fullText, setFullText] = useState('')
-  const [scqaParts, setScqaParts] = useState<Record<string, string>>({})
-  const [heroSentence, setHeroSentence] = useState<string | null>(null)
-  const [feedback, setFeedback] = useState<string | null>(null)
+  const [essay, setEssay] = useState<EssayArtifact | null>(null)
   const [xpGained, setXpGained] = useState(0)
   const [tier, setTier] = useState<EduTierProgress | null>(null)
   const [stanceChanged, setStanceChanged] = useState(false)
@@ -90,10 +80,16 @@ export default function QuestFlowChat() {
 
       if (state.stage === 'completed' && state.essay) {
         setCompleted(true)
-        setFullText(state.essay.full_text)
-        setHeroSentence(state.essay.hero_sentence)
-        setFeedback(state.essay.feedback)
-        setScqaParts(state.essay.scqa_parts ?? {})
+        setEssay({
+          title: state.essay.title,
+          subtitle: state.essay.subtitle,
+          sections: state.essay.sections,
+          conclusion_heading: state.essay.conclusion_heading,
+          conclusion_paragraphs: state.essay.conclusion_paragraphs,
+          full_text: state.essay.full_text,
+          hero_sentence: state.essay.hero_sentence,
+          feedback: state.essay.feedback,
+        })
         setStanceChanged(state.essay.stance_changed)
         setProgressPct(100)
       }
@@ -118,14 +114,25 @@ export default function QuestFlowChat() {
     try {
       const res = await eduApi.composeEssay(sid)
       setCompleted(true)
-      setFullText(res.full_text ?? '')
-      setScqaParts(res.scqa_parts ?? {})
-      setHeroSentence(res.hero_sentence ?? null)
-      setFeedback(res.feedback ?? null)
+      const artifact: EssayArtifact = {
+        title: res.title,
+        subtitle: res.subtitle,
+        sections: res.sections,
+        conclusion_heading: res.conclusion_heading,
+        conclusion_paragraphs: res.conclusion_paragraphs,
+        full_text: res.full_text ?? '',
+        hero_sentence: res.hero_sentence ?? null,
+        feedback: res.feedback ?? null,
+      }
+      setEssay(artifact)
       setXpGained(res.xp_gained ?? 0)
       if (res.tier) setTier(res.tier)
       setProgressPct(100)
-      appendAssistant(res.full_text ? `네 글이 완성됐어!\n\n${res.full_text}` : '글을 완성했어!')
+      appendAssistant(
+        res.title
+          ? `네 글이 완성됐어! 아래에서 제목·소제목·결론까지 확인해봐.`
+          : '글을 완성했어!'
+      )
     } catch (e) {
       setError(e instanceof Error ? e.message : '글 생성 실패')
     } finally {
@@ -264,7 +271,7 @@ export default function QuestFlowChat() {
           <p className="text-sm text-[#666] text-center py-4">네 글을 만들고 있어…</p>
         )}
 
-        {completed && fullText && (
+        {completed && essay && (
           <section className="space-y-4 border-2 border-[#1a1a1a] rounded-lg p-4 mt-4">
             <p className="text-xs font-bold text-[#666]">나만의 글</p>
             {stanceChanged && (
@@ -272,27 +279,15 @@ export default function QuestFlowChat() {
                 생각이 바뀌었다
               </span>
             )}
-            <p className="text-sm leading-relaxed">{fullText}</p>
-            {Object.keys(scqaParts).length > 0 && (
-              <div className="space-y-2 border-t border-[#eee] pt-3">
-                {Object.entries(scqaParts).map(([key, val]) =>
-                  val ? (
-                    <div key={key}>
-                      <p className="text-[10px] text-[#999]">{SCQA_LABELS[key] ?? key}</p>
-                      <p className="text-xs">{val}</p>
-                    </div>
-                  ) : null
-                )}
-              </div>
-            )}
-            {heroSentence && (
+            <EssayRevealCard essay={essay} />
+            {essay.hero_sentence && (
               <div className="border border-[#ccc] rounded p-3 bg-[#f8f8f8]">
                 <p className="text-[10px] text-[#666] mb-1">핵심 문장</p>
-                <p className="text-sm font-medium">&ldquo;{heroSentence}&rdquo;</p>
+                <p className="text-sm font-medium">&ldquo;{essay.hero_sentence}&rdquo;</p>
               </div>
             )}
-            {feedback && (
-              <p className="text-xs text-[#666] border border-[#eee] p-2 rounded">{feedback}</p>
+            {essay.feedback && (
+              <p className="text-xs text-[#666] border border-[#eee] p-2 rounded">{essay.feedback}</p>
             )}
             {xpGained > 0 && <p className="text-sm">+{xpGained} XP 획득</p>}
             {tier && <TierProgressCard tier={tier} />}

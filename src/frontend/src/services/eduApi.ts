@@ -97,10 +97,21 @@ export interface EduChatResponse {
   feedback_hint?: string | null
 }
 
+export interface EduEssaySection {
+  heading: string
+  paragraphs: string[]
+}
+
 export interface EduComposeResponse {
   success: boolean
   session_id: string
   stage: string
+  title?: string
+  subtitle?: string
+  sections?: EduEssaySection[]
+  conclusion_heading?: string
+  conclusion_paragraphs?: string[]
+  essay_structure?: Record<string, unknown>
   full_text?: string
   scqa_parts?: Record<string, string>
   hero_sentence?: string | null
@@ -122,6 +133,11 @@ export interface EduSessionState {
   dialogue: EduDialogueTurn[]
   progress_pct: number
   essay: {
+    title?: string | null
+    subtitle?: string | null
+    sections?: EduEssaySection[]
+    conclusion_heading?: string
+    conclusion_paragraphs?: string[]
     full_text: string
     hero_sentence: string | null
     feedback: string | null

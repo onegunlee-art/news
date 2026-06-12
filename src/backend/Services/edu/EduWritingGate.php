@@ -1,15 +1,17 @@
 <?php
 /**
- * GIST EDU — student essay verify + 1x polish (StrategicReport pattern, 축소판)
+ * GIST EDU — structured essay verify + 1x polish
  */
 declare(strict_types=1);
 
 namespace Services\Edu;
 
+use Services\Edu\Agents\GistStyleComposer;
+
 class EduWritingGate
 {
-    private const MIN_PART_CHARS = 15;
-    private const MIN_FULL_CHARS = 120;
+    private const MIN_SECTION_PARA_CHARS = 40;
+    private const MIN_FULL_CHARS = 350;
 
     /**
      * @param array<string, mixed> $draft
@@ -17,20 +19,35 @@ class EduWritingGate
      */
     public function verify(array $draft): array
     {
-        $parts = $draft['scqa_parts'] ?? [];
         $violations = [];
-        $filled = 0;
+        $title = trim((string) ($draft['title'] ?? ''));
+        if ($title === '') {
+            $violations[] = 'title_missing';
+        }
 
-        foreach (['situation', 'complication', 'question', 'answer', 'conclusion'] as $key) {
-            $text = trim((string) ($parts[$key] ?? ''));
-            if ($text === '') {
-                $violations[] = "scqa_{$key}_missing";
-                continue;
+        $sections = $draft['sections'] ?? [];
+        if (!is_array($sections) || count($sections) < 3) {
+            $violations[] = 'sections_insufficient';
+        } else {
+            foreach ($sections as $i => $sec) {
+                if (!is_array($sec)) {
+                    continue;
+                }
+                if (trim((string) ($sec['heading'] ?? '')) === '') {
+                    $violations[] = "section_{$i}_heading_missing";
+                }
+                $paragraphs = $sec['paragraphs'] ?? [];
+                $paraText = is_array($paragraphs) ? implode(' ', $paragraphs) : (string) $paragraphs;
+                if (mb_strlen(trim($paraText)) < self::MIN_SECTION_PARA_CHARS) {
+                    $violations[] = "section_{$i}_short";
+                }
             }
-            $filled++;
-            if (mb_strlen($text) < self::MIN_PART_CHARS) {
-                $violations[] = "scqa_{$key}_short";
-            }
+        }
+
+        $conclusion = $draft['conclusion_paragraphs'] ?? [];
+        $conclusionText = is_array($conclusion) ? implode(' ', $conclusion) : (string) $conclusion;
+        if (mb_strlen(trim($conclusionText)) < self::MIN_SECTION_PARA_CHARS) {
+            $violations[] = 'conclusion_short';
         }
 
         $fullText = trim((string) ($draft['full_text'] ?? ''));
@@ -39,10 +56,12 @@ class EduWritingGate
         }
 
         $hints = $this->buildRuleHints($fullText);
-        $structureScore = $filled >= 5 && empty(array_filter($violations, fn ($v) => str_contains($v, 'short') || str_contains($v, 'missing')))
-            ? 5
-            : max(1, min(4, $filled));
-
+        $structureScore = 5;
+        if (count($violations) > 2) {
+            $structureScore = 2;
+        } elseif ($violations !== []) {
+            $structureScore = 3;
+        }
         if ($hints !== []) {
             $structureScore = max(1, $structureScore - 1);
         }
@@ -63,13 +82,13 @@ class EduWritingGate
             return $hints;
         }
         if (preg_match('/(반드시|확실|틀림없|무조건)/u', $text)) {
-            $hints[] = '[확신_과잉] 단정적 표현 대신 "나는 ~라고 생각해"처럼 써보세요.';
+            $hints[] = '[확신_과잉] 단정적 표현을 완화하세요.';
         }
-        if (!preg_match('/(왜냐하면|때문에|그래서|따라서)/u', $text)) {
-            $hints[] = '[인과_비약] 이유와 결론을 연결하는 문장을 한 줄 넣어보세요.';
+        if (!preg_match('/(하지만|그런데|반면|다른 시각|한편)/u', $text)) {
+            $hints[] = '[관점_편향] 반론·다른 시각을 인정하는 문장을 넣으세요.';
         }
-        if (!preg_match('/(하지만|그런데|반면|다른 시각)/u', $text)) {
-            $hints[] = '[관점_편향] 반론을 인정하는 한 문장을 넣으면 더 설득력 있어요.';
+        if (!preg_match('/(~거든요|~있어요|~이에요|~해요)/u', $text)) {
+            $hints[] = '[톤] the gist 해설체(존댓말)로 통일하세요.';
         }
         return $hints;
     }
@@ -79,8 +98,8 @@ class EduWritingGate
     {
         $hints = [];
         foreach ($violations as $v) {
-            if (str_contains($v, 'short') || str_contains($v, 'missing')) {
-                $hints[] = 'SCQA 다섯 슬롯을 각각 한 문장 이상 채워주세요.';
+            if (str_contains($v, 'short') || str_contains($v, 'missing') || str_contains($v, 'insufficient')) {
+                $hints[] = '제목·소제목 3개 이상·각 섹션 2문단·결론을 충분히 채워주세요.';
                 break;
             }
         }
@@ -101,16 +120,16 @@ class EduWritingGate
 
         $hintBlock = implode("\n", array_slice($hints, 0, 5));
         $systemPrompt = <<<PROMPT
-학생 글을 SCQA 5문장 구조로 다듬어. 학생의 입장과 근거는 유지하고 표현만 개선해.
-새로운 사실을 추가하지 마.
+the gist 스타일 학생 해설 글을 다듬어. 구조(제목·소제목·결론)는 유지하고 표현만 개선해.
+학생 입장과 대화 내용은 유지, 새 사실 추가 금지.
 
-JSON으로 응답:
+JSON:
 {
-  "situation": "...",
-  "complication": "...",
-  "question": "...",
-  "answer": "...",
-  "conclusion": "...",
+  "title": "...",
+  "subtitle": "...",
+  "sections": [{"heading": "...", "paragraphs": ["...", "..."]}],
+  "conclusion_heading": "결론",
+  "conclusion_paragraphs": ["..."],
   "full_text": "...",
   "hero_sentence": "..."
 }
@@ -121,7 +140,7 @@ PROMPT;
 
         $response = $llm->haiku($systemPrompt, [
             ['role' => 'user', 'content' => $userMessage],
-        ], 600);
+        ], 1200);
 
         if (!empty($response['error'])) {
             return $draft;
@@ -136,19 +155,46 @@ PROMPT;
             return $draft;
         }
 
-        $parts = [
-            'situation' => trim((string) ($parsed['situation'] ?? $draft['scqa_parts']['situation'] ?? '')),
-            'complication' => trim((string) ($parsed['complication'] ?? $draft['scqa_parts']['complication'] ?? '')),
-            'question' => trim((string) ($parsed['question'] ?? $draft['scqa_parts']['question'] ?? '')),
-            'answer' => trim((string) ($parsed['answer'] ?? $draft['scqa_parts']['answer'] ?? '')),
-            'conclusion' => trim((string) ($parsed['conclusion'] ?? $draft['scqa_parts']['conclusion'] ?? '')),
-        ];
+        $composer = new GistStyleComposer($llm);
+        $sections = [];
+        foreach ($parsed['sections'] ?? $draft['sections'] ?? [] as $sec) {
+            if (!is_array($sec)) {
+                continue;
+            }
+            $paragraphs = $sec['paragraphs'] ?? [];
+            if (!is_array($paragraphs)) {
+                $paragraphs = [$paragraphs];
+            }
+            $sections[] = [
+                'heading' => trim((string) ($sec['heading'] ?? '')),
+                'paragraphs' => array_values(array_filter(array_map('trim', array_map('strval', $paragraphs)))),
+            ];
+        }
 
-        return [
-            'full_text' => trim((string) ($parsed['full_text'] ?? implode(' ', array_filter($parts)))),
-            'scqa_parts' => $parts,
+        $conclusionParagraphs = $parsed['conclusion_paragraphs'] ?? $draft['conclusion_paragraphs'] ?? [];
+        if (!is_array($conclusionParagraphs)) {
+            $conclusionParagraphs = [$conclusionParagraphs];
+        }
+
+        $title = trim((string) ($parsed['title'] ?? $draft['title'] ?? ''));
+        $subtitle = trim((string) ($parsed['subtitle'] ?? $draft['subtitle'] ?? ''));
+        $conclusionHeading = trim((string) ($parsed['conclusion_heading'] ?? $draft['conclusion_heading'] ?? '결론'));
+        $conclusionParagraphs = array_values(array_filter(array_map('trim', array_map('strval', $conclusionParagraphs))));
+
+        $fullText = trim((string) ($parsed['full_text'] ?? ''));
+        if ($fullText === '') {
+            $fullText = $composer->renderPlainText($title, $subtitle, $sections, $conclusionHeading, $conclusionParagraphs);
+        }
+
+        return array_merge($draft, [
+            'title' => $title,
+            'subtitle' => $subtitle,
+            'sections' => $sections,
+            'conclusion_heading' => $conclusionHeading,
+            'conclusion_paragraphs' => $conclusionParagraphs,
+            'full_text' => $fullText,
             'hero_sentence' => trim((string) ($parsed['hero_sentence'] ?? $draft['hero_sentence'] ?? '')),
             'polished' => true,
-        ];
+        ]);
     }
 }

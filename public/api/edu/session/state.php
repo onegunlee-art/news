@@ -45,13 +45,24 @@ if (($session['stage'] ?? '') === 'completed') {
         'session_id=eq.' . $sessionId . '&order=version.desc',
         1
     );
-    $v2 = $drafts[0]['v2_sentences'] ?? [];
-    if (is_string($v2)) {
-        $v2 = json_decode($v2, true) ?: [];
+    $draft = $drafts[0] ?? [];
+    $artifact = $draft['essay_structure'] ?? [];
+    if (is_string($artifact)) {
+        $artifact = json_decode($artifact, true) ?: [];
     }
-    $fullText = '';
-    if (is_array($v2) && $v2 !== []) {
-        $fullText = implode(' ', array_filter(array_map('strval', $v2)));
+    if (empty($artifact['sections']) && !empty($blueprint['essay_artifact'])) {
+        $artifact = $blueprint['essay_artifact'];
+    }
+
+    $fullText = trim((string) ($draft['full_text'] ?? ($artifact['full_text'] ?? '')));
+    if ($fullText === '') {
+        $v2 = $draft['v2_sentences'] ?? [];
+        if (is_string($v2)) {
+            $v2 = json_decode($v2, true) ?: [];
+        }
+        if (is_array($v2) && $v2 !== []) {
+            $fullText = implode("\n\n", array_filter(array_map('strval', $v2)));
+        }
     }
     if ($fullText === '' && !empty($versions[0])) {
         $parts = [
@@ -61,12 +72,18 @@ if (($session['stage'] ?? '') === 'completed') {
             $versions[0]['scqa_answer'] ?? '',
             $versions[0]['conclusion'] ?? '',
         ];
-        $fullText = implode(' ', array_filter($parts));
+        $fullText = implode("\n\n", array_filter($parts));
     }
+
     $essay = [
+        'title' => $artifact['title'] ?? ($blueprint['essay_artifact']['title'] ?? null),
+        'subtitle' => $artifact['subtitle'] ?? ($blueprint['essay_artifact']['subtitle'] ?? null),
+        'sections' => $artifact['sections'] ?? ($blueprint['essay_artifact']['sections'] ?? []),
+        'conclusion_heading' => $artifact['conclusion_heading'] ?? '결론',
+        'conclusion_paragraphs' => $artifact['conclusion_paragraphs'] ?? [],
         'full_text' => $fullText,
-        'hero_sentence' => $drafts[0]['hero_sentence'] ?? null,
-        'feedback' => $drafts[0]['teacher_feedback'] ?? ($versions[0]['ai_feedback'] ?? null),
+        'hero_sentence' => $draft['hero_sentence'] ?? null,
+        'feedback' => $draft['teacher_feedback'] ?? ($versions[0]['ai_feedback'] ?? null),
         'quality_score' => (int) ($versions[0]['quality_score'] ?? 0),
         'scqa_parts' => !empty($versions[0]) ? [
             'situation' => $versions[0]['scqa_situation'] ?? '',
@@ -75,8 +92,8 @@ if (($session['stage'] ?? '') === 'completed') {
             'answer' => $versions[0]['scqa_answer'] ?? '',
             'conclusion' => $versions[0]['conclusion'] ?? '',
         ] : null,
-        'stance_changed' => ($drafts[0]['stance_delta'] ?? '') === 'flipped'
-            || ($drafts[0]['stance_delta'] ?? '') === 'refined',
+        'stance_changed' => ($draft['stance_delta'] ?? '') === 'flipped'
+            || ($draft['stance_delta'] ?? '') === 'refined',
     ];
 }
 

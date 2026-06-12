@@ -43,16 +43,27 @@ $session = $sessions[0];
 
 if (($session['stage'] ?? '') === 'completed') {
     $drafts = $supabase->select('edu_writing_drafts', 'session_id=eq.' . $sessionId, 1);
-    $v2 = $drafts[0]['v2_sentences'] ?? [];
-    if (is_string($v2)) {
-        $v2 = json_decode($v2, true) ?: [];
+    $draft = $drafts[0] ?? [];
+    $essayStructure = $draft['essay_structure'] ?? [];
+    if (is_string($essayStructure)) {
+        $essayStructure = json_decode($essayStructure, true) ?: [];
+    }
+    $fullText = trim((string) ($draft['full_text'] ?? ''));
+    if ($fullText === '') {
+        $v2 = $draft['v2_sentences'] ?? [];
+        if (is_string($v2)) {
+            $v2 = json_decode($v2, true) ?: [];
+        }
+        $fullText = is_array($v2) ? implode("\n\n", array_filter(array_map('strval', $v2))) : '';
     }
     eduSendJson([
         'success' => true,
         'session_id' => $sessionId,
         'stage' => 'completed',
-        'full_text' => is_array($v2) ? implode(' ', $v2) : '',
-        'hero_sentence' => $drafts[0]['hero_sentence'] ?? null,
+        'full_text' => $fullText,
+        'essay_structure' => $essayStructure,
+        'title' => $essayStructure['title'] ?? null,
+        'hero_sentence' => $draft['hero_sentence'] ?? null,
         'already_completed' => true,
     ]);
 }
@@ -123,10 +134,39 @@ $supabase->insert('edu_writing_versions', [
     'ai_feedback' => $evaluation['feedback'] ?? '',
 ]);
 
+$essayStructure = $draft['essay_structure'] ?? [];
+$articleSections = $draft['sections'] ?? [];
+$sentenceExtract = [];
+foreach ($articleSections as $sec) {
+    if (!is_array($sec)) {
+        continue;
+    }
+    if (!empty($sec['heading'])) {
+        $sentenceExtract[] = (string) $sec['heading'];
+    }
+    foreach ($sec['paragraphs'] ?? [] as $p) {
+        if (trim((string) $p) !== '') {
+            $sentenceExtract[] = (string) $p;
+        }
+    }
+}
+if ($sentenceExtract === []) {
+    $sentenceExtract = array_values(array_filter($sentences));
+}
+
 $stanceDelta = !empty($blueprint['stance_changed']) ? 'refined' : 'unchanged';
 $draftPayload = [
-    'v1_sentences' => $sentences,
-    'v2_sentences' => $sentences,
+    'v1_sentences' => $sentenceExtract,
+    'v2_sentences' => $sentenceExtract,
+    'full_text' => (string) ($draft['full_text'] ?? ''),
+    'essay_structure' => [
+        'title' => $draft['title'] ?? ($essayStructure['title'] ?? ''),
+        'subtitle' => $draft['subtitle'] ?? ($essayStructure['subtitle'] ?? ''),
+        'structure' => $essayStructure,
+        'sections' => $articleSections,
+        'conclusion_heading' => $draft['conclusion_heading'] ?? '결론',
+        'conclusion_paragraphs' => $draft['conclusion_paragraphs'] ?? [],
+    ],
     'hero_sentence' => $hero,
     'stance_delta' => $stanceDelta,
     'teacher_feedback' => $evaluation['feedback'] ?? '',
@@ -134,12 +174,23 @@ $draftPayload = [
 ];
 $existingDrafts = $supabase->select('edu_writing_drafts', 'session_id=eq.' . $sessionId, 1);
 if (!empty($existingDrafts[0])) {
-    $supabase->update('edu_writing_drafts', 'session_id=eq.' . $sessionId, $draftPayload);
+    $saved = $supabase->update('edu_writing_drafts', 'session_id=eq.' . $sessionId, $draftPayload);
+    if ($saved === null) {
+        unset($draftPayload['full_text'], $draftPayload['essay_structure']);
+        $supabase->update('edu_writing_drafts', 'session_id=eq.' . $sessionId, $draftPayload);
+    }
 } else {
-    $supabase->insert('edu_writing_drafts', array_merge($draftPayload, [
+    $inserted = $supabase->insert('edu_writing_drafts', array_merge($draftPayload, [
         'session_id' => $sessionId,
         'student_id' => $student['id'],
     ]));
+    if ($inserted === null) {
+        unset($draftPayload['full_text'], $draftPayload['essay_structure']);
+        $supabase->insert('edu_writing_drafts', array_merge($draftPayload, [
+            'session_id' => $sessionId,
+            'student_id' => $student['id'],
+        ]));
+    }
 }
 
 $xpQuest = 80;
@@ -150,12 +201,21 @@ $tierRow = eduAwardXp($supabase, $student['id'], $xpWriting, 'writing_v2', $sess
 $blueprint = eduMergeBlueprint($blueprint, [
     'phase' => 'completed',
     'ready_for_compose' => true,
+    'essay_structure' => $essayStructure,
+    'essay_artifact' => [
+        'title' => $draft['title'] ?? '',
+        'subtitle' => $draft['subtitle'] ?? '',
+        'sections' => $articleSections,
+        'conclusion_heading' => $draft['conclusion_heading'] ?? '결론',
+        'conclusion_paragraphs' => $draft['conclusion_paragraphs'] ?? [],
+        'full_text' => $draft['full_text'] ?? '',
+    ],
     'scqa_slots' => [
-        'S' => $sentences[0],
-        'C' => $sentences[1],
-        'Q' => $sentences[2],
-        'A' => $sentences[3],
-        'conclusion' => $sentences[4],
+        'S' => $sentences[0] ?? '',
+        'C' => $sentences[1] ?? '',
+        'Q' => $sentences[2] ?? '',
+        'A' => $sentences[3] ?? '',
+        'conclusion' => $sentences[4] ?? '',
     ],
 ]);
 $dialogue = eduAppendDialogue($dialogue, 'assistant', $draft['full_text'] ?? '', 'composer');
@@ -172,6 +232,12 @@ eduSendJson([
     'success' => true,
     'session_id' => $sessionId,
     'stage' => 'completed',
+    'title' => $draft['title'] ?? '',
+    'subtitle' => $draft['subtitle'] ?? '',
+    'sections' => $articleSections,
+    'conclusion_heading' => $draft['conclusion_heading'] ?? '결론',
+    'conclusion_paragraphs' => $draft['conclusion_paragraphs'] ?? [],
+    'essay_structure' => $essayStructure,
     'full_text' => $draft['full_text'] ?? '',
     'scqa_parts' => $parts,
     'hero_sentence' => $hero,
