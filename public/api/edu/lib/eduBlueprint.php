@@ -176,6 +176,59 @@ function eduSaveBlueprint(\Agents\Services\SupabaseService $supabase, string $se
     }
 }
 
+/**
+ * @param list<array{heading?: string, paragraphs?: list<string>}> $sections
+ * @param list<string> $conclusionParagraphs
+ */
+function eduBuildEssayFullText(
+    string $title,
+    string $subtitle,
+    array $sections,
+    string $conclusionHeading,
+    array $conclusionParagraphs
+): string {
+    $lines = [];
+    if ($title !== '') {
+        $lines[] = $title;
+    }
+    if ($subtitle !== '') {
+        $lines[] = $subtitle;
+    }
+    if ($lines !== []) {
+        $lines[] = '';
+    }
+
+    foreach ($sections as $sec) {
+        if (!is_array($sec)) {
+            continue;
+        }
+        $heading = trim((string) ($sec['heading'] ?? ''));
+        if ($heading !== '') {
+            $lines[] = $heading;
+        }
+        foreach ($sec['paragraphs'] ?? [] as $p) {
+            $p = trim((string) $p);
+            if ($p !== '') {
+                $lines[] = $p;
+            }
+        }
+        $lines[] = '';
+    }
+
+    $conclusionHeading = trim($conclusionHeading);
+    if ($conclusionHeading !== '') {
+        $lines[] = $conclusionHeading;
+    }
+    foreach ($conclusionParagraphs as $p) {
+        $p = trim((string) $p);
+        if ($p !== '') {
+            $lines[] = $p;
+        }
+    }
+
+    return trim(implode("\n", $lines));
+}
+
 /** @param array<string, mixed> $session */
 function eduLoadDialogue(array $session): array
 {

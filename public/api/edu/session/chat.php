@@ -17,6 +17,7 @@ require_once $root . 'src/backend/autoload.php';
 eduLoadAgents();
 
 use Services\Edu\Agents\ConversationDirector;
+use Services\Edu\Agents\GistStyleComposer;
 use Services\Edu\Agents\Hammer;
 use Services\Edu\Agents\Reflection;
 use Services\Edu\Agents\SocraticCoach;
@@ -302,14 +303,19 @@ if ($phase === 'reasoning') {
     $response['stance_changed'] = $stanceChanged;
     $decision = ['progress_pct' => 85];
 } elseif ($phase === 'reflection') {
+    $composer = new GistStyleComposer($llm, $rag);
+    $structurePreview = $composer->previewStructure($blueprint, $quest, $dialogue);
+
     $blueprint = eduMergeBlueprint($blueprint, [
         'reflection_confirmed' => true,
         'ready_for_compose' => true,
         'phase' => 'compose',
+        'essay_structure' => $structurePreview,
     ]);
-    $assistantMessage = '좋아! 이제 네 생각을 글로 정리해볼게. 잠시만 기다려줘.';
+    $assistantMessage = '좋아! 아래 구조도대로 네 생각을 글로 정리해볼게. 잠시만 기다려줘.';
     $decision = $director->decide($blueprint, $quest);
     $response['should_compose'] = true;
+    $response['structure_preview'] = $structurePreview;
 } else {
     $decision = $director->decide($blueprint, $quest);
     if (!empty($decision['should_compose'])) {

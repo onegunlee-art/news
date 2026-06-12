@@ -6,6 +6,8 @@ declare(strict_types=1);
 
 namespace Services\Edu\Agents;
 
+use Services\Edu\EduLlmJson;
+
 use Services\Edu\EduRagService;
 use Services\Edu\GistNarrationReader;
 
@@ -28,10 +30,29 @@ class GistStyleComposer
      * @param list<array<string, mixed>> $dialogue
      * @return array<string, mixed>
      */
+    /**
+     * 대화 종료 직전 구조도만 생성 (compose Step1 단독)
+     *
+     * @param array<string, mixed> $blueprint
+     * @param array<string, mixed> $quest
+     * @param list<array<string, mixed>> $dialogue
+     * @return array<string, mixed>
+     */
+    public function previewStructure(array $blueprint, array $quest, array $dialogue = []): array
+    {
+        $context = $this->buildContext($blueprint, $quest, $dialogue);
+        return $this->buildStructureDiagram($context);
+    }
+
     public function compose(array $blueprint, array $quest, array $dialogue = []): array
     {
         $context = $this->buildContext($blueprint, $quest, $dialogue);
-        $structure = $this->buildStructureDiagram($context);
+        $existing = $blueprint['essay_structure'] ?? [];
+        if (is_array($existing) && !empty($existing['sections'])) {
+            $structure = $existing;
+        } else {
+            $structure = $this->buildStructureDiagram($context);
+        }
         $article = $this->composeArticleFromStructure($structure, $context);
 
         return array_merge($article, [
@@ -60,7 +81,7 @@ class GistStyleComposer
         }
 
         $arc = $this->rag->findArcArticles($newsIds, (string) ($quest['conflict_summary'] ?? ''));
-        $narrationBlock = $this->narration->formatFewShot($this->narration->readExcerpts($newsIds, 600));
+        $narrationBlock = $this->narration->formatFewShot($this->narration->readExcerpts($newsIds, 1200));
 
         $patterns = array_merge(
             $this->rag->getWritingPatterns((string) ($quest['quest_title'] ?? ''), 3),
@@ -348,6 +369,21 @@ MSG;
         return trim(implode("\n", $lines));
     }
 
+    private function extractHeroFromText(string $fullText): string
+    {
+        $fullText = trim($fullText);
+        if ($fullText === '') {
+            return '';
+        }
+        $parts = preg_split('/[.!?…]\s+/u', $fullText, 2);
+        $first = trim((string) ($parts[0] ?? ''));
+        if ($first !== '' && mb_strlen($first) >= 12) {
+            return $first;
+        }
+
+        return mb_substr($fullText, 0, 80);
+    }
+
     /** @param array<string, mixed> $structure */
     private function structureToScqa(array $structure): array
     {
@@ -435,21 +471,13 @@ MSG;
             'conclusion_heading' => (string) ($structure['conclusion_heading'] ?? '결론'),
             'conclusion_paragraphs' => $conclusionParagraphs,
             'full_text' => $fullText,
-            'hero_sentence' => $ctx['reason'] !== '' ? (string) $ctx['reason'] : mb_substr($fullText, 0, 80),
+            'hero_sentence' => $this->extractHeroFromText($fullText),
         ];
     }
 
     /** @return array<string, mixed>|null */
     private function parseJsonResponse(array $response): ?array
     {
-        if (!empty($response['error'])) {
-            return null;
-        }
-        $content = $response['content'] ?? '';
-        if (!preg_match('/\{[\s\S]*\}/', $content, $match)) {
-            return null;
-        }
-        $parsed = json_decode($match[0], true);
-        return is_array($parsed) ? $parsed : null;
+        return EduLlmJson::parse($response);
     }
 }

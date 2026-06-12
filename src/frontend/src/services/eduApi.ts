@@ -68,6 +68,21 @@ export interface EduDialogueTurn {
   at?: string
 }
 
+export interface EduStructureSection {
+  heading: string
+  role?: string
+  bullets?: string[]
+}
+
+export interface EduStructurePreview {
+  title?: string
+  subtitle?: string
+  sections?: EduStructureSection[]
+  conclusion_heading?: string
+  conclusion_bullets?: string[]
+  student_stance?: string
+}
+
 export interface EduBlueprint {
   stance?: 'pro' | 'con' | null
   reason?: string
@@ -77,6 +92,7 @@ export interface EduBlueprint {
   ready_for_compose?: boolean
   reflection_lines?: string[]
   stance_changed?: boolean
+  essay_structure?: EduStructurePreview
 }
 
 export interface EduChatResponse {
@@ -95,6 +111,7 @@ export interface EduChatResponse {
   blueprint?: EduBlueprint
   needs_followup?: boolean
   feedback_hint?: string | null
+  structure_preview?: EduStructurePreview
 }
 
 export interface EduEssaySection {
@@ -105,6 +122,8 @@ export interface EduEssaySection {
 export interface EduComposeResponse {
   success: boolean
   session_id: string
+  saved?: boolean
+  saved_at?: string
   stage: string
   title?: string
   subtitle?: string
@@ -338,5 +357,34 @@ export const eduApi = {
     eduFetch<EduComposeResponse>('/api/edu/session/compose.php', {
       method: 'POST',
       body: JSON.stringify({ session_id: sessionId, force }),
+    }),
+
+  saveEssay: (
+    sessionId: string,
+    essay: {
+      title?: string | null
+      subtitle?: string | null
+      sections?: EduEssaySection[]
+      conclusion_heading?: string
+      conclusion_paragraphs?: string[]
+      hero_sentence?: string | null
+      full_text?: string
+    }
+  ) =>
+    eduFetch<{
+      success: boolean
+      session_id: string
+      saved: boolean
+      saved_at: string
+      title?: string
+      subtitle?: string
+      sections?: EduEssaySection[]
+      conclusion_heading?: string
+      conclusion_paragraphs?: string[]
+      full_text?: string
+      hero_sentence?: string | null
+    }>('/api/edu/session/save_essay.php', {
+      method: 'POST',
+      body: JSON.stringify({ session_id: sessionId, ...essay }),
     }),
 }

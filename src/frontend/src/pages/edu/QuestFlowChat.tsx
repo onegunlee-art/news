@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import EssayRevealCard, { type EssayArtifact } from '../../components/edu/EssayRevealCard'
+import EssayEditor from '../../components/edu/EssayEditor'
+import { type EssayArtifact } from '../../components/edu/EssayRevealCard'
+import StructurePreviewCard, { type EssayStructurePreview } from '../../components/edu/StructurePreviewCard'
 import TierProgressCard from '../../components/edu/TierProgressCard'
 import {
   eduApi,
@@ -37,6 +39,9 @@ export default function QuestFlowChat() {
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [composing, setComposing] = useState(false)
+  const [structurePreview, setStructurePreview] = useState<EssayStructurePreview | null>(null)
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     if (!getEduToken()) {
@@ -49,6 +54,12 @@ export default function QuestFlowChat() {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [dialogue, completed, composing])
+
+  useEffect(() => {
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+    }
+  }, [])
 
   const init = async () => {
     setLoading(true)
@@ -77,9 +88,14 @@ export default function QuestFlowChat() {
       setProgressPct(state.progress_pct)
       setPhase(state.blueprint?.phase ?? 'stance')
       setDialogue(state.dialogue ?? [])
+      const preview = state.blueprint?.essay_structure
+      if (preview?.sections?.length) {
+        setStructurePreview(preview as EssayStructurePreview)
+      }
 
       if (state.stage === 'completed' && state.essay) {
         setCompleted(true)
+        setSaveStatus('saved')
         setEssay({
           title: state.essay.title,
           subtitle: state.essay.subtitle,
@@ -108,6 +124,50 @@ export default function QuestFlowChat() {
     setDialogue((prev) => [...prev, { role: 'student', content }])
   }
 
+  const persistEssay = async (data: EssayArtifact) => {
+    if (!sessionId) return
+    setSaveStatus('saving')
+    setError('')
+    try {
+      const res = await eduApi.saveEssay(sessionId, {
+        title: data.title,
+        subtitle: data.subtitle,
+        sections: data.sections,
+        conclusion_heading: data.conclusion_heading,
+        conclusion_paragraphs: data.conclusion_paragraphs,
+        hero_sentence: data.hero_sentence,
+        full_text: data.full_text,
+      })
+      setEssay({
+        title: res.title,
+        subtitle: res.subtitle,
+        sections: res.sections,
+        conclusion_heading: res.conclusion_heading,
+        conclusion_paragraphs: res.conclusion_paragraphs,
+        full_text: res.full_text ?? data.full_text,
+        hero_sentence: res.hero_sentence ?? data.hero_sentence,
+        feedback: data.feedback,
+      })
+      setSaveStatus('saved')
+    } catch (e) {
+      setSaveStatus('error')
+      setError(e instanceof Error ? e.message : '저장 실패')
+    }
+  }
+
+  const scheduleAutoSave = (data: EssayArtifact) => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+    setSaveStatus('idle')
+    saveTimerRef.current = setTimeout(() => {
+      void persistEssay(data)
+    }, 1500)
+  }
+
+  const handleEssayChange = (updated: EssayArtifact) => {
+    setEssay(updated)
+    scheduleAutoSave(updated)
+  }
+
   const handleCompose = async (sid: string) => {
     setComposing(true)
     setError('')
@@ -128,10 +188,11 @@ export default function QuestFlowChat() {
       setXpGained(res.xp_gained ?? 0)
       if (res.tier) setTier(res.tier)
       setProgressPct(100)
+      setSaveStatus(res.saved ? 'saved' : 'idle')
       appendAssistant(
         res.title
-          ? `네 글이 완성됐어! 아래에서 제목·소제목·결론까지 확인해봐.`
-          : '글을 완성했어!'
+          ? `네 글이 완성됐고 자동으로 저장됐어! 아래에서 읽고 필요하면 고쳐봐.`
+          : '글을 완성하고 저장했어! 필요하면 아래에서 고쳐봐.'
       )
     } catch (e) {
       setError(e instanceof Error ? e.message : '글 생성 실패')
@@ -146,6 +207,11 @@ export default function QuestFlowChat() {
     if (res.articles) setArticles(res.articles)
     if (res.stance_changed) setStanceChanged(true)
     if (res.assistant_message) appendAssistant(res.assistant_message)
+    if (res.structure_preview?.sections?.length) {
+      setStructurePreview(res.structure_preview as EssayStructurePreview)
+    } else if (res.blueprint?.essay_structure?.sections?.length) {
+      setStructurePreview(res.blueprint.essay_structure as EssayStructurePreview)
+    }
     if (res.should_compose) {
       await handleCompose(res.session_id)
     }
@@ -267,30 +333,44 @@ export default function QuestFlowChat() {
           </section>
         )}
 
+        {structurePreview && !completed && (
+          <StructurePreviewCard structure={structurePreview} />
+        )}
+
         {composing && (
           <p className="text-sm text-[#666] text-center py-4">네 글을 만들고 있어…</p>
         )}
 
         {completed && essay && (
           <section className="space-y-4 border-2 border-[#1a1a1a] rounded-lg p-4 mt-4">
-            <p className="text-xs font-bold text-[#666]">나만의 글</p>
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs font-bold text-[#666]">나만의 글</p>
+              <span className="text-[10px] text-[#666]">
+                {saveStatus === 'saving' && '저장 중…'}
+                {saveStatus === 'saved' && '✓ 자동 저장됨'}
+                {saveStatus === 'error' && '저장 실패 — 다시 시도해줘'}
+              </span>
+            </div>
             {stanceChanged && (
               <span className="inline-block text-[10px] font-bold border border-[#1a1a1a] px-2 py-0.5">
                 생각이 바뀌었다
               </span>
             )}
-            <EssayRevealCard essay={essay} />
-            {essay.hero_sentence && (
-              <div className="border border-[#ccc] rounded p-3 bg-[#f8f8f8]">
-                <p className="text-[10px] text-[#666] mb-1">핵심 문장</p>
-                <p className="text-sm font-medium">&ldquo;{essay.hero_sentence}&rdquo;</p>
-              </div>
-            )}
+            <p className="text-[10px] text-[#999]">제목·본문·핵심 문장을 고치면 1.5초 후 자동 저장돼.</p>
+            <EssayEditor essay={essay} onChange={handleEssayChange} disabled={saveStatus === 'saving'} />
             {essay.feedback && (
               <p className="text-xs text-[#666] border border-[#eee] p-2 rounded">{essay.feedback}</p>
             )}
             {xpGained > 0 && <p className="text-sm">+{xpGained} XP 획득</p>}
             {tier && <TierProgressCard tier={tier} />}
+            <button
+              type="button"
+              onClick={() => essay && void persistEssay(essay)}
+              disabled={saveStatus === 'saving'}
+              className="w-full py-2 text-sm border border-[#1a1a1a] rounded font-medium disabled:opacity-40"
+            >
+              지금 저장
+            </button>
             <Link
               to={`/edu/share/${sessionId}`}
               className="block w-full py-3 text-center bg-[#1a1a1a] text-white rounded font-medium"

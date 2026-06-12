@@ -100,13 +100,13 @@ if (eduJudgmentWritingEnabled()) {
     $judgmentPatterns = $rag->formatWritingPatterns($patterns);
 }
 
-$evaluation = $writer->evaluateWriting($draft['full_text'] ?? '', $quest, $judgmentPatterns);
+$evaluation = $writer->evaluateStructuredEssay($draft, $quest, $judgmentPatterns);
 $verification = $gate->verify($draft);
 
 if (!$verification['passed']) {
     $draft = $gate->polish($llm, $draft, $verification['hints'], $quest);
     $verification = $gate->verify($draft);
-    $evaluation = $writer->evaluateWriting($draft['full_text'] ?? '', $quest, $judgmentPatterns);
+    $evaluation = $writer->evaluateStructuredEssay($draft, $quest, $judgmentPatterns);
 }
 
 $parts = $draft['scqa_parts'] ?? [];
@@ -118,7 +118,13 @@ $sentences = [
     $parts['conclusion'] ?? '',
 ];
 
-$hero = $evaluation['hero_sentence'] ?? ($draft['hero_sentence'] ?? eduExtractHeroSentence($sentences));
+$hero = trim((string) ($draft['hero_sentence'] ?? ''));
+if ($hero === '') {
+    $hero = trim((string) ($evaluation['hero_sentence'] ?? ''));
+}
+if ($hero === '') {
+    $hero = eduExtractHeroSentence($sentences);
+}
 
 $supabase->insert('edu_writing_versions', [
     'session_id' => $sessionId,
@@ -231,6 +237,8 @@ $supabase->update('edu_quest_sessions', 'id=eq.' . $sessionId, [
 eduSendJson([
     'success' => true,
     'session_id' => $sessionId,
+    'saved' => true,
+    'saved_at' => date('c'),
     'stage' => 'completed',
     'title' => $draft['title'] ?? '',
     'subtitle' => $draft['subtitle'] ?? '',

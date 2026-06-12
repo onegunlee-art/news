@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace Services\Edu\Agents;
 
+use Services\Edu\EduLlmJson;
+
 class WritingBuilder
 {
     private $llm;
@@ -130,6 +132,64 @@ MSG;
                 'answer' => $answer,
                 'conclusion' => $conclusion,
             ],
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $article
+     */
+    public function evaluateStructuredEssay(array $article, array $quest, string $judgmentPatterns = ''): array
+    {
+        $title = (string) ($article['title'] ?? '');
+        $fullText = (string) ($article['full_text'] ?? '');
+        $sectionCount = is_array($article['sections'] ?? null) ? count($article['sections']) : 0;
+
+        $patternBlock = $judgmentPatterns !== ''
+            ? "\n\n편집장 패턴:\n{$judgmentPatterns}"
+            : '';
+
+        $systemPrompt = <<<PROMPT
+the gist 스타일 구조화 학생 해설 글을 평가해. JSON만:
+{
+  "quality_score": 1-100,
+  "structure_score": 1-5 (제목·소제목·결론 구조),
+  "gist_tone_score": 1-5 (해설체·갈등 인정·명확성),
+  "feedback": "칭찬 위주 1-2문장",
+  "hero_sentence": "완성된 글 본문에서 가장 gist다운 문장 1개 (학생 원문 그대로 복붙 금지)"
+}
+PROMPT;
+
+        $response = $this->llm->haiku($systemPrompt, [
+            ['role' => 'user', 'content' => "퀘스트: {$quest['quest_title']}\n제목: {$title}\n섹션 수: {$sectionCount}\n\n본문:\n{$fullText}{$patternBlock}"],
+        ], 350);
+
+        $fallbackHero = (string) ($article['hero_sentence'] ?? '');
+        if ($fallbackHero === '' && $fullText !== '') {
+            $fallbackHero = mb_substr($fullText, 0, 80);
+        }
+
+        if (!empty($response['error'])) {
+            return [
+                'quality_score' => 75,
+                'structure_score' => 4,
+                'feedback' => '잘 정리했어요!',
+                'hero_sentence' => $fallbackHero,
+            ];
+        }
+
+        $parsed = EduLlmJson::parse($response);
+        if (is_array($parsed)) {
+            if (empty($parsed['hero_sentence'])) {
+                $parsed['hero_sentence'] = $fallbackHero;
+            }
+            return $parsed;
+        }
+
+        return [
+            'quality_score' => 75,
+            'structure_score' => 4,
+            'feedback' => '잘 정리했어요!',
+            'hero_sentence' => $fallbackHero,
         ];
     }
 
