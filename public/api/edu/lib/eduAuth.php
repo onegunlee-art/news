@@ -36,6 +36,36 @@ function eduRequireStudent(): array
     return $student;
 }
 
+function eduGetStudentOptional(): ?array
+{
+    $token = $_SERVER['HTTP_X_EDU_TOKEN'] ?? '';
+    if ($token === '') {
+        return null;
+    }
+
+    $hash = hash('sha256', $token);
+    $supabase = eduSupabase();
+    if (!$supabase->isConfigured()) {
+        return null;
+    }
+
+    $rows = $supabase->select(
+        'edu_students',
+        'access_token_hash=eq.' . rawurlencode($hash) . '&status=eq.active',
+        1
+    );
+    if (empty($rows[0]['id'])) {
+        return null;
+    }
+
+    $student = $rows[0];
+    $supabase->update('edu_students', 'id=eq.' . $student['id'], [
+        'last_active_at' => date('c'),
+    ]);
+
+    return $student;
+}
+
 function eduStudentTier(string $studentId): array
 {
     require_once __DIR__ . '/eduTier.php';

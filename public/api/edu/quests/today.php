@@ -12,7 +12,7 @@ require_once __DIR__ . '/../lib/eduQuest.php';
 handleOptionsRequest();
 setCorsHeaders();
 
-$student = eduRequireStudent();
+$student = eduGetStudentOptional();
 $supabase = eduSupabase();
 
 $quests = $supabase->select(
@@ -21,7 +21,7 @@ $quests = $supabase->select(
     1
 );
 
-if (empty($quests)) {
+if (empty($quests) && $student) {
     $code = eduTodayQuestCode($student);
     $fallback = eduLoadQuestByCode($code);
     if ($fallback) {
@@ -54,7 +54,7 @@ $stats = $supabase->select(
 
 $totalParticipants = $stats[0]['total_participants'] ?? 0;
 
-$existingSession = eduActiveSession($student['id']);
+$existingSession = $student ? eduActiveSession($student['id']) : null;
 $hasAnswered = false;
 if ($existingSession && $existingSession['quest_id'] === $quest['id'] && !empty($existingSession['stance'])) {
     $hasAnswered = true;
