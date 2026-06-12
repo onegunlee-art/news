@@ -1,0 +1,11 @@
+# GIST EDU cron jobs
+# crontab -e 로 추가
+
+# Quest Curator: 수, 토, 일 새벽 3시 (충돌점 2개+ 기사 발굴)
+0 3 * * 0,3,6 php /var/www/thegist/cron/edu_quest_curator.php >> /var/log/edu_curator.log 2>&1
+
+# Quest Drop: 매분 체크 (오후 4시에 퀘스트 live 전환)
+* * * * * php /var/www/thegist/cron/edu_quest_drop.php >> /var/log/edu_drop.log 2>&1
+
+# National Stats: 5분마다 (전국 찬반 % 갱신)
+*/5 * * * * php /var/www/thegist/cron/edu_national_stats.php >> /var/log/edu_stats.log 2>&1

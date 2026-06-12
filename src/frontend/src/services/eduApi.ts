@@ -130,4 +130,85 @@ export const eduApi = {
 
   tierProgress: () =>
     eduFetch<{ tier: EduTierProgress }>('/api/edu/tier/progress.php'),
+
+  getNationalStats: (questId: string) =>
+    eduFetch<{
+      stats: { pro_pct: number; con_pct: number; stance_changed_pct: number }
+      quest: { quest_id: string; quest_code: string; quest_title: string; pro_line: string; con_line: string }
+      student_stance: 'pro' | 'con' | null
+    }>(`/api/edu/stats/national.php?quest_id=${questId}`),
+
+  getShareCard: (sessionId: string) =>
+    eduFetch<{
+      card: {
+        quest_code: string
+        quest_title: string
+        initial_stance: 'pro' | 'con'
+        final_stance: 'pro' | 'con'
+        stance_changed: boolean
+        streak_days: number
+        tier_name: string
+        hero_sentence: string
+        national_changed_pct: number | null
+      }
+      share_url: string
+    }>(`/api/edu/share_card.php?session_id=${sessionId}`),
+
+  createShareCard: (sessionId: string) =>
+    eduFetch<{
+      card: {
+        quest_code: string
+        quest_title: string
+        initial_stance: 'pro' | 'con'
+        final_stance: 'pro' | 'con'
+        stance_changed: boolean
+        streak_days: number
+        tier_name: string
+        hero_sentence: string
+        national_changed_pct: number | null
+      }
+      share_url: string
+    }>('/api/edu/share_card.php', {
+      method: 'POST',
+      body: JSON.stringify({ session_id: sessionId }),
+    }),
+
+  getShareCardByHash: (hash: string) =>
+    fetch(`/api/edu/share_card.php?hash=${hash}`)
+      .then(res => res.json())
+      .then(data => {
+        if (!data.success) throw new Error(data.error || 'Not found')
+        return data as {
+          card: {
+            quest_code: string
+            quest_title: string
+            initial_stance: 'pro' | 'con'
+            final_stance: 'pro' | 'con'
+            stance_changed: boolean
+            streak_days: number
+            tier_name: string
+            hero_sentence: string
+            national_changed_pct: number | null
+          }
+        }
+      }),
+
+  submitTurn: (sessionId: string, turn: number, input: Record<string, unknown>) =>
+    eduFetch<{
+      success: boolean
+      session_id: string
+      turn: number | 'completed'
+      stage: string
+      prompt?: string
+      counter_argument?: string
+      summary_lines?: string[]
+      outline?: Record<string, string>
+      full_text?: string
+      feedback?: string
+      hero_sentence?: string
+      ui_label?: string
+    }>('/api/edu/session/turn.php', {
+      method: 'POST',
+      body: JSON.stringify({ session_id: sessionId, turn, input }),
+    }),
 }
