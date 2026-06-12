@@ -1,7 +1,7 @@
 <?php
 /**
  * GIST EDU — National Stats Refresh
- * 5분 주기 실행 (crontab: */5 * * * *)
+ * 5분 주기 실행 (crontab: 매 5분)
  * 
  * 전국 찬반 % 및 입장 변경률 갱신
  */
