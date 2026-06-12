@@ -11,6 +11,7 @@ require_once __DIR__ . '/../lib/eduConfig.php';
 require_once __DIR__ . '/../lib/eduBlueprint.php';
 require_once __DIR__ . '/../lib/eduTier.php';
 require_once __DIR__ . '/../lib/eduAgents.php';
+require_once __DIR__ . '/../lib/eduDraftStorage.php';
 require_once __DIR__ . '/../lib/_llm.php';
 
 $root = eduFindProjectRoot();
@@ -179,24 +180,16 @@ $draftPayload = [
     'updated_at' => date('c'),
 ];
 $existingDrafts = $supabase->select('edu_writing_drafts', 'session_id=eq.' . $sessionId, 1);
-if (!empty($existingDrafts[0])) {
-    $saved = $supabase->update('edu_writing_drafts', 'session_id=eq.' . $sessionId, $draftPayload);
-    if ($saved === null) {
-        unset($draftPayload['full_text'], $draftPayload['essay_structure']);
-        $supabase->update('edu_writing_drafts', 'session_id=eq.' . $sessionId, $draftPayload);
-    }
-} else {
-    $inserted = $supabase->insert('edu_writing_drafts', array_merge($draftPayload, [
-        'session_id' => $sessionId,
-        'student_id' => $student['id'],
-    ]));
-    if ($inserted === null) {
-        unset($draftPayload['full_text'], $draftPayload['essay_structure']);
-        $supabase->insert('edu_writing_drafts', array_merge($draftPayload, [
-            'session_id' => $sessionId,
-            'student_id' => $student['id'],
-        ]));
-    }
+$draftSave = eduSaveWritingDraft(
+    $supabase,
+    $sessionId,
+    $student['id'],
+    $draftPayload,
+    $existingDrafts[0] ?? null,
+    'compose'
+);
+if (!$draftSave['ok'] && eduStrictDraftStorage()) {
+    eduSendError('Failed to save essay draft: ' . ($draftSave['error'] ?: 'unknown'), 500);
 }
 
 $xpQuest = 80;

@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/lib/bootstrap.php';
 require_once __DIR__ . '/lib/eduConfig.php';
+require_once __DIR__ . '/lib/eduDraftStorage.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -19,6 +20,7 @@ $checks = [
         'edu_use_chat_engine' => eduUseChatEngine(),
         'edu_mixup_rag' => eduMixupRagEnabled(),
         'edu_judgment_writing' => eduJudgmentWritingEnabled(),
+        'edu_strict_draft_storage' => eduStrictDraftStorage(),
     ],
     'services' => [],
 ];
@@ -26,6 +28,12 @@ $checks = [
 try {
     $supabase = eduSupabase();
     $checks['services']['supabase'] = $supabase->isConfigured() ? 'ok' : 'not_configured';
+    if ($supabase->isConfigured()) {
+        $checks['schema'] = eduProbeDraftStorageSchema($supabase);
+        if (($checks['schema']['draft_storage'] ?? '') === 'blueprint_fallback_only') {
+            $checks['status'] = 'degraded';
+        }
+    }
 } catch (Throwable $e) {
     $checks['services']['supabase'] = 'error';
 }

@@ -10,6 +10,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../lib/bootstrap.php';
 require_once __DIR__ . '/../lib/eduAuth.php';
 require_once __DIR__ . '/../lib/eduBlueprint.php';
+require_once __DIR__ . '/../lib/eduDraftStorage.php';
 
 handleOptionsRequest();
 setCorsHeaders();
@@ -131,26 +132,16 @@ if ($sentenceExtract !== []) {
     $draftPayload['v2_sentences'] = $sentenceExtract;
 }
 
-if (!empty($existing['id'])) {
-    $saved = $supabase->update('edu_writing_drafts', 'session_id=eq.' . $sessionId, $draftPayload);
-    if ($saved === null) {
-        unset($draftPayload['full_text'], $draftPayload['essay_structure'], $draftPayload['student_edited']);
-        $supabase->update('edu_writing_drafts', 'session_id=eq.' . $sessionId, $draftPayload);
-    }
-} else {
-    $inserted = $supabase->insert('edu_writing_drafts', array_merge($draftPayload, [
-        'session_id' => $sessionId,
-        'student_id' => $student['id'],
-        'stance_delta' => 'unchanged',
-    ]));
-    if ($inserted === null) {
-        unset($draftPayload['full_text'], $draftPayload['essay_structure'], $draftPayload['student_edited']);
-        $supabase->insert('edu_writing_drafts', array_merge($draftPayload, [
-            'session_id' => $sessionId,
-            'student_id' => $student['id'],
-            'stance_delta' => 'unchanged',
-        ]));
-    }
+$draftSave = eduSaveWritingDraft(
+    $supabase,
+    $sessionId,
+    $student['id'],
+    $draftPayload,
+    !empty($existing['id']) ? $existing : null,
+    'save_essay'
+);
+if (!$draftSave['ok'] && eduStrictDraftStorage()) {
+    eduSendError('Failed to save essay: ' . ($draftSave['error'] ?: 'unknown'), 500);
 }
 
 $blueprint = eduLoadBlueprint($session);

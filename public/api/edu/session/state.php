@@ -50,6 +50,7 @@ if (($session['stage'] ?? '') === 'completed') {
     if (is_string($artifact)) {
         $artifact = json_decode($artifact, true) ?: [];
     }
+    // Legacy: blueprint essay_artifact fallback until backfill completes (see tools/edu_backfill_essay_drafts.php)
     if (empty($artifact['sections']) && !empty($blueprint['essay_artifact'])) {
         $artifact = $blueprint['essay_artifact'];
     }
