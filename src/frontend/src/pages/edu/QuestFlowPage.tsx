@@ -41,6 +41,7 @@ export default function QuestFlowPage() {
       return
     }
     init()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate])
 
   const init = async () => {

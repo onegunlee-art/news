@@ -26,6 +26,7 @@ export default function NationalStatsPage() {
 
   useEffect(() => {
     loadStats()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [questId])
 
   const loadStats = async () => {

@@ -30,6 +30,7 @@ export default function ShareCardPage() {
     } else if (sessionId) {
       loadOrCreateCard()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hash, sessionId])
 
   const loadPublicCard = async () => {
