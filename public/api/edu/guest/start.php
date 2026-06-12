@@ -33,11 +33,11 @@ $inserted = $supabase->insert('edu_students', [
     'status' => 'active',
 ]);
 
-if (empty($inserted['id'])) {
+if (empty($inserted[0]['id'])) {
     eduSendError('게스트 생성 실패', 500);
 }
 
-$studentId = $inserted['id'];
+$studentId = $inserted[0]['id'];
 
 eduFetchTierRow($studentId);
 
