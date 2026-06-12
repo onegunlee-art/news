@@ -12,7 +12,7 @@ function eduMysql(): PDO
     }
 
     require_once __DIR__ . '/../../lib/auth.php';
-    $pdo = getPdo();
+    $pdo = getDb();
     return $pdo;
 }
 
