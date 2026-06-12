@@ -30,7 +30,7 @@ function curatorLog(string $msg, $data = null): void
     if ($data !== null) {
         $line .= ' ' . json_encode($data, JSON_UNESCAPED_UNICODE);
     }
-    file_put_contents($logDir . '/edu_quest_curator.log', $line . "\n", FILE_APPEND | LOCK_EX);
+    @file_put_contents($logDir . '/edu_quest_curator.log', $line . "\n", FILE_APPEND | LOCK_EX);
     echo $line . "\n";
 }
 

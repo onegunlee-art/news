@@ -22,7 +22,7 @@ class EduLlmClient
         }
         $this->model = $model;
         $this->dailyCap = (int)(getenv('EDU_DAILY_LLM_CAP') ?: 1000);
-        $this->logDir = dirname(__DIR__, 3) . '/storage/logs';
+        $this->logDir = eduFindProjectRoot() . 'storage/logs';
         if (!is_dir($this->logDir)) @mkdir($this->logDir, 0755, true);
     }
 

@@ -205,24 +205,43 @@ class EduQuestFactory
 
         $sort = 0;
         foreach ($draft['articles'] as $article) {
-            $this->supabase->insert('edu_quest_articles', [
-                'quest_id' => $questId,
-                'news_id' => (int) $article['news_id'],
-                'role' => $article['role'],
-                'sort_order' => $sort++,
-                'title' => $article['title'] ?? null,
-                'gist_url' => $article['gist_url'] ?? ('https://www.thegist.co.kr/news/' . $article['news_id']),
-                'excerpt' => $article['excerpt'] ?? null,
-                'why_important' => $article['why_important'] ?? null,
-                'source_outlet' => $article['source_outlet'] ?? null,
-                'published_at' => $article['published_at'] ?? null,
-            ]);
+            $this->insertQuestArticle($questId, $article, $sort++);
         }
 
         return [
             'quest_id' => $questId,
             'quest_code' => (string) $draft['quest_code'],
         ];
+    }
+
+    /** @param array<string, mixed> $article */
+    private function insertQuestArticle(string $questId, array $article, int $sortOrder): void
+    {
+        $base = [
+            'quest_id' => $questId,
+            'news_id' => (int) $article['news_id'],
+            'role' => $article['role'],
+            'sort_order' => $sortOrder,
+            'title' => $article['title'] ?? null,
+            'gist_url' => $article['gist_url'] ?? ('https://www.thegist.co.kr/news/' . $article['news_id']),
+        ];
+
+        $extended = $base;
+        foreach (['excerpt', 'why_important', 'source_outlet', 'published_at'] as $field) {
+            if (!empty($article[$field])) {
+                $extended[$field] = $article[$field];
+            }
+        }
+
+        $result = $this->supabase->insert('edu_quest_articles', $extended);
+        if ($result !== null) {
+            return;
+        }
+
+        $err = $this->supabase->getLastError();
+        if (str_contains($err, 'excerpt') || str_contains($err, 'PGRST204')) {
+            $this->supabase->insert('edu_quest_articles', $base);
+        }
     }
 
     /** @return array<int, true> */
