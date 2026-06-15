@@ -13,7 +13,8 @@ use Services\Edu\GistNarrationReader;
 
 class GistStyleComposer
 {
-    private const STRUCTURE_MAX_TOKENS = 700;
+    private const STRUCTURE_MAX_TOKENS = 2000;
+    private const STRUCTURE_RETRY_MAX_TOKENS = 2000;
     private const ARTICLE_MAX_TOKENS = 6000;
 
     private $llm;
@@ -181,9 +182,7 @@ PROMPT;
 {$ctx['dialogue_text']}
 MSG;
 
-        $parsed = $this->parseJsonResponse(
-            $this->llm->haiku($systemPrompt, [['role' => 'user', 'content' => $userMessage]], self::STRUCTURE_MAX_TOKENS)
-        );
+        $parsed = $this->requestStructureParsed($systemPrompt, $userMessage);
 
         if ($parsed !== null) {
             return $this->normalizeStructure($parsed, $ctx);
@@ -193,6 +192,28 @@ MSG;
             'structure',
             '글 구조도를 만들지 못했어요. 잠시 후 다시 시도해 주세요.'
         );
+    }
+
+    /** @return array<string, mixed>|null */
+    private function requestStructureParsed(string $systemPrompt, string $userMessage): ?array
+    {
+        $response = $this->llm->haiku(
+            $systemPrompt,
+            [['role' => 'user', 'content' => $userMessage]],
+            self::STRUCTURE_MAX_TOKENS
+        );
+        $parsed = $this->parseJsonResponse($response);
+        if ($parsed !== null) {
+            return $parsed;
+        }
+
+        $retry = $this->llm->haiku(
+            $systemPrompt,
+            [['role' => 'user', 'content' => $userMessage]],
+            self::STRUCTURE_RETRY_MAX_TOKENS
+        );
+
+        return $this->parseJsonResponse($retry);
     }
 
     /**

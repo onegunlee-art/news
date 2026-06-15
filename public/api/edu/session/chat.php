@@ -155,23 +155,26 @@ function eduChatApplyReflectionCompose(
 
     $merge = [
         'reflection_confirmed' => true,
-        'ready_for_compose' => true,
-        'phase' => 'compose',
     ];
     if (!$structureFailed) {
+        $merge['ready_for_compose'] = true;
+        $merge['phase'] = 'compose';
         $merge['essay_structure'] = $structurePreview;
+    } else {
+        $merge['ready_for_compose'] = false;
+        $merge['phase'] = 'reflection';
     }
     $blueprint = eduMergeBlueprint($blueprint, $merge);
 
     if ($structureFailed) {
-        $assistantMessage = '생각 정리는 끝났어! 글을 만드는 중 잠깐 문제가 생겼어. 잠시 후 다시 시도할게.';
+        $assistantMessage = '생각 정리는 잘 됐어! 글 구조를 만드는 데 잠깐 문제가 생겼어. 잠시 후 「맞아」를 다시 눌러줘.';
     } else {
         $assistantMessage = '좋아! 아래 구조도대로 네 생각을 글로 정리해볼게. 잠시만 기다려줘.';
         $response['structure_preview'] = $structurePreview;
     }
     $decision = $director->decide($blueprint, $quest);
-    $response['should_compose'] = true;
-    $response['ui_hint'] = 'compose';
+    $response['should_compose'] = !$structureFailed;
+    $response['ui_hint'] = $structureFailed ? 'reflection_confirm' : 'compose';
     if ($structureFailed) {
         $response['compose_error'] = $structurePreview['error'] ?? 'compose_structure_failed';
     }
