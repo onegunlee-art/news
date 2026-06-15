@@ -10,6 +10,7 @@ declare(strict_types=1);
 $root = dirname(__DIR__);
 require_once $root . '/public/api/lib/env_bootstrap.php';
 require_once $root . '/public/api/edu/lib/bootstrap.php';
+require_once $root . '/public/api/edu/lib/eduQuest.php';
 require_once $root . '/public/api/edu/lib/_llm.php';
 require_once $root . '/public/api/edu/lib/eduAgents.php';
 
@@ -39,7 +40,7 @@ final class ComposeIsolationRag extends EduRagService
     public function getWritingPatterns(string $title, int $limit = 3): array
     {
         return [
-            ['pattern' => '갈등 인정 후 학생 시각으로 수렴', 'example' => '~거든요, ~있어요 해설체'],
+            ['pattern' => '갈등 인정 후 1인칭 수렴', 'example' => '나는 ~라고 생각한다. 물론 ~ 시각도 있지만'],
         ];
     }
 
@@ -47,7 +48,7 @@ final class ComposeIsolationRag extends EduRagService
     public function getJudgementPatterns(int $limit = 3): array
     {
         return [
-            ['pattern' => '다른 시각을 듣고도 입장 유지', 'example' => '물론 ~ 시각도 있어요. 하지만 저는 ~'],
+            ['pattern' => '다른 시각을 듣고도 입장 유지', 'example' => '물론 ~ 시각도 있어요. 하지만 나는 ~'],
         ];
     }
 
@@ -85,6 +86,15 @@ $quest = [
     'quest_title' => '이란 전쟁, 정말 끝낼 수 있을까?',
     'alignment_summary' => '세 명의 전문가 모두 "이란 전쟁은 미국이 원하는 대로 깔끔하게 끝나지 않는다"는 데 동의한다. 군사적 우위가 정치적 승리로 이어지지 않는다는 공통 인식.',
     'conflict_summary' => '공동 결론: 이란 전쟁은 깔끔하게 끝나지 않는다. 그러나 "왜" 안 끝나는지에 대한 이유가 다르다 — 기술의 한계인가, 국내정치의 함정인가, 전쟁 구조 자체의 문제인가.',
+    'hammer_hints' => [
+        'mode' => 'convergent',
+        'shared_conclusion' => '이란 전쟁은 깔끔하게 끝나지 않는다',
+        'axes' => [
+            ['axis_id' => 'tech', 'axis_label' => '기술적 한계'],
+            ['axis_id' => 'politics', 'axis_label' => '국내정치 함정'],
+            ['axis_id' => 'structure', 'axis_label' => '전쟁의 구조'],
+        ],
+    ],
     'articles' => [
         ['news_id' => 555, 'role' => 'primary', 'title' => '이란과 영원한 전쟁의 함정'],
         ['news_id' => 422, 'role' => 'context', 'title' => '끝나지 않는 전쟁의 높은 대가'],
@@ -99,14 +109,15 @@ HAMMER;
 $blueprint = [
     'stance' => 'pro',
     'final_stance' => 'pro',
+    'student_axis' => 'politics',
     'reason' => '결국 가장 중요한건 생각보다 이란 국민이 미국편에서 멀어지고 있다는 거지',
     'evidence' => '이란 전쟁의 베트남전쟁과 비교되는것도 바로 그점이야 국민들이 미국에 저항을 한다는거지. 기사에서 한국전은 열강의 세력 싸움이라면 베트남전쟁이 실패한 이유는 결국 미국의 정치적 계산이 베트남 국민들에게 반감을 가져서 오랫동안 전쟁을 했다는 점인거 같아',
     'rebuttal' => '전쟁은 원래 의도와 상관없이 얽히는거 같아',
     'counter_argument' => $counterArgument,
     'reflection_lines' => [
-        '너는 이란 민심 변화가 중요하다고 봤어',
+        '너는 국내정치 함정 관점으로 봤어',
         '너는 반론 뒤 전쟁의 복잡성을 더 생각했어',
-        '너는 pro를 지키며 신념을 더 단단히 했어',
+        '너는 국내정치 함정 관점을 더 단단히 했어',
     ],
     'reflection_confirmed' => true,
 ];
@@ -124,11 +135,12 @@ $dialogue = [
     ['role' => 'student', 'content' => '기사에서 한국전은 열강의 세력 싸움이라면 베트남전쟁이 실패한 이유는 결국 미국의 정치적 계산이 베트남 국민들에게 반감을 가져서 오랫동안 전쟁을 했다는 점인거 같아'],
     ['role' => 'assistant', 'content' => $counterArgument . "\n\n이 반론에 대해 어떻게 생각해?", 'agent' => 'hammer'],
     ['role' => 'student', 'content' => '전쟁은 원래 의도와 상관없이 얽히는거 같아'],
-    ['role' => 'assistant', 'content' => "지금까지 생각을 정리해볼게:\n너는 이란 민심 변화가 중요하다고 봤어\n너는 반론 뒤 전쟁의 복잡성을 더 생각했어\n너는 pro를 지키며 신념을 더 단단히 했어\n\n맞게 정리됐어?", 'agent' => 'reflection'],
+    ['role' => 'assistant', 'content' => "지금까지 생각을 정리해볼게:\n너는 국내정치 함정 관점으로 봤어\n너는 반론 뒤 전쟁의 복잡성을 더 생각했어\n너는 국내정치 함정 관점을 더 단단히 했어\n\n맞게 정리됐어?", 'agent' => 'reflection'],
     ['role' => 'student', 'content' => '맞아'],
 ];
 
-echo "=== Edu Compose 격리 E2E (이란 세션, ARTICLE_MAX_TOKENS=6000) ===\n\n";
+echo "=== Edu Compose 격리 E2E (이란 convergent, 1인칭 에세이) ===\n";
+echo 'perspective_label: ' . eduStudentPerspectiveLabel($blueprint, $quest) . "\n\n";
 
 $llm = eduLlm();
 $composer = new GistStyleComposer($llm, new ComposeIsolationRag(), new ComposeIsolationNarration());
@@ -173,12 +185,13 @@ echo "========== END ==========\n\n";
 // 자동 체크리스트
 $conflict = (string) ($quest['conflict_summary'] ?? '');
 $checks = [
-    '이란 민심' => str_contains($fullText, '민심') || str_contains($fullText, '국민'),
+    '이란 민심/국민' => str_contains($fullText, '민심') || str_contains($fullText, '국민'),
     '베트남 비유' => str_contains($fullText, '베트남'),
-    'conflict_summary 원문 복붙' => $conflict !== '' && str_contains($fullText, $conflict),
-    'Hammer 반론 전문 복붙' => str_contains($fullText, '한 번 더 구분해 보면 좋겠어요'),
-    '코치 질문 문구' => str_contains($fullText, '이 반론에 대해 어떻게 생각해'),
-    'reflection 2인칭' => str_contains($fullText, '너는 이란 민심'),
+    '1인칭(나/저)' => preg_match('/\b(나는|저는|내가|제가)\b/u', $fullText) === 1,
+    '3인칭 학생은 없음' => !preg_match('/학생(은|이|의|을|를|에게|한테)/u', $fullText),
+    'pro/con 없음' => !preg_match('/\b(pro|con)\b/ui', $fullText) && !str_contains($fullText, '찬성 입장') && !str_contains($fullText, '반대 입장'),
+    '너는 2인칭 없음' => !str_contains($fullText, '너는 '),
+    '칼럼니스트 어휘 없음' => !preg_match('/(결정타|본격적으로|정치적 정당성|수렴한다)/u', $fullText),
 ];
 
 echo "--- 체크리스트 ---\n";

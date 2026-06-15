@@ -176,3 +176,108 @@ function eduBuildMixupContext(array $quest, ?object $rag = null): array
         'mixup_sources' => $pairs,
     ];
 }
+
+/** @return array<string, mixed> */
+function eduQuestHammerHints(array $quest): array
+{
+    $hints = $quest['hammer_hints'] ?? [];
+    if (is_string($hints)) {
+        $hints = json_decode($hints, true) ?: [];
+    }
+
+    return is_array($hints) ? $hints : [];
+}
+
+function eduIsConvergentQuest(array $quest): bool
+{
+    return (eduQuestHammerHints($quest)['mode'] ?? '') === 'convergent';
+}
+
+/**
+ * @return ?array{axis_id: string, axis_label: string}
+ */
+function eduResolveStudentAxis(array $blueprint, array $quest): ?array
+{
+    if (!eduIsConvergentQuest($quest)) {
+        return null;
+    }
+
+    $axes = eduQuestHammerHints($quest)['axes'] ?? [];
+    if (!is_array($axes) || $axes === []) {
+        return null;
+    }
+
+    $axisId = trim((string) ($blueprint['student_axis'] ?? ''));
+    if ($axisId !== '') {
+        foreach ($axes as $axis) {
+            if (!is_array($axis)) {
+                continue;
+            }
+            if (($axis['axis_id'] ?? '') === $axisId) {
+                $label = trim((string) ($axis['axis_label'] ?? ''));
+                if ($label !== '') {
+                    return ['axis_id' => $axisId, 'axis_label' => $label];
+                }
+            }
+        }
+    }
+
+    $haystack = mb_strtolower(implode(' ', array_filter([
+        (string) ($blueprint['reason'] ?? ''),
+        (string) ($blueprint['evidence'] ?? ''),
+        (string) ($blueprint['rebuttal'] ?? ''),
+    ])));
+
+    $scores = [
+        'politics' => 0,
+        'tech' => 0,
+        'structure' => 0,
+    ];
+    $keywords = [
+        'politics' => ['민심', '국민', '여론', '정치', '반전', '히피', '국내', '사회'],
+        'tech' => ['폭격', '미사일', '무기', '기술', '정밀', '군사력', '타격'],
+        'structure' => ['구조', '봉합', '복잡', '얽히', '원래', '전쟁 자체', '불안정'],
+    ];
+    foreach ($keywords as $axisKey => $words) {
+        foreach ($words as $word) {
+            if ($word !== '' && str_contains($haystack, mb_strtolower($word))) {
+                $scores[$axisKey]++;
+            }
+        }
+    }
+
+    arsort($scores);
+    $topId = (string) array_key_first($scores);
+    if ($topId === '' || ($scores[$topId] ?? 0) === 0) {
+        return null;
+    }
+
+    foreach ($axes as $axis) {
+        if (!is_array($axis)) {
+            continue;
+        }
+        if (($axis['axis_id'] ?? '') === $topId) {
+            $label = trim((string) ($axis['axis_label'] ?? ''));
+            if ($label !== '') {
+                return ['axis_id' => $topId, 'axis_label' => $label];
+            }
+        }
+    }
+
+    return null;
+}
+
+/**
+ * convergent 퀘스트용 학생 관점 라벨 (찬성/반대 대신 axis_label)
+ */
+function eduStudentPerspectiveLabel(array $blueprint, array $quest): string
+{
+    $axis = eduResolveStudentAxis($blueprint, $quest);
+    if ($axis !== null) {
+        return $axis['axis_label'];
+    }
+
+    $stance = (string) ($blueprint['final_stance'] ?? $blueprint['stance'] ?? 'pro');
+
+    return $stance === 'pro' ? '찬성' : '반대';
+}

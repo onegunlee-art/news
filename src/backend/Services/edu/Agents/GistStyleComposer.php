@@ -116,9 +116,19 @@ class GistStyleComposer
             $reflection = [];
         }
 
+        $isConvergent = function_exists('eduIsConvergentQuest') && eduIsConvergentQuest($quest);
+        $perspectiveLabel = function_exists('eduStudentPerspectiveLabel')
+            ? eduStudentPerspectiveLabel($blueprint, $quest)
+            : ($stance === 'pro' ? '찬성' : '반대');
+        $studentAxis = function_exists('eduResolveStudentAxis') ? eduResolveStudentAxis($blueprint, $quest) : null;
+
         return [
             'stance' => $stance,
             'stance_label' => $stance === 'pro' ? '찬성' : '반대',
+            'perspective_label' => $perspectiveLabel,
+            'is_convergent' => $isConvergent,
+            'student_axis_id' => $studentAxis['axis_id'] ?? null,
+            'student_axis_label' => $studentAxis['axis_label'] ?? null,
             'reason' => (string) ($blueprint['reason'] ?? ''),
             'evidence' => (string) ($blueprint['evidence'] ?? ''),
             'rebuttal' => (string) ($blueprint['rebuttal'] ?? ''),
@@ -142,6 +152,10 @@ class GistStyleComposer
     {
         $quest = $ctx['quest'];
         $reflectionText = implode("\n", array_map('strval', $ctx['reflection_lines'] ?? []));
+        $perspectiveLabel = (string) ($ctx['perspective_label'] ?? $ctx['stance_label'] ?? '');
+        $perspectiveRule = !empty($ctx['is_convergent'])
+            ? "- 학생 관점: **{$perspectiveLabel}** (pro/con·찬성/반대 표기 금지)"
+            : "- 학생 입장: {$perspectiveLabel}";
 
         $systemPrompt = <<<PROMPT
 너는 the gist 편집장이다. 학생과의 대화를 바탕으로 **글 구조도**만 만든다.
@@ -149,10 +163,11 @@ class GistStyleComposer
 
 구조도 규칙:
 - title: 학생 시각이 드러나는 제목 (the gist 헤드라인 톤)
-- subtitle: 한 줄 핵심 요약
+- subtitle: 한 줄 핵심 요약 (pro/con·찬성/반대·axis_id 영문 금지)
 - sections: 3~4개, 각각 heading(소제목) + bullets(이 섹션에 넣을 핵심 생각 2~3개, 학생 발화 기반)
 - conclusion_heading: "결론" 또는 맥락에 맞는 마무리 제목
 - conclusion_bullets: 결론에 담을 핵심 2~3개
+- bullets/제목에 "학생은" 3인칭 관찰어 금지
 
 JSON만 응답:
 {
@@ -170,7 +185,7 @@ PROMPT;
 퀘스트: {$quest['quest_title']}
 배경: {$quest['alignment_summary']}
 갈등: {$quest['conflict_summary']}
-학생 입장: {$ctx['stance_label']}
+{$perspectiveRule}
 이유: {$ctx['reason']}
 근거: {$ctx['evidence']}
 들은 반론: {$ctx['counter_argument']}
@@ -227,16 +242,30 @@ MSG;
     {
         $structureJson = json_encode($structure, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
         $quest = $ctx['quest'];
+        $perspectiveLabel = (string) ($ctx['perspective_label'] ?? $ctx['stance_label'] ?? '');
+        $perspectiveBlock = !empty($ctx['is_convergent'])
+            ? "학생이 고른 관점(축): **{$perspectiveLabel}**\n- pro/con·찬성/반대·axis_id 영문 표기 **절대 금지**\n- 다른 전문가 축과의 차이는 관점 이름으로만 언급"
+            : "학생 최종 입장: {$perspectiveLabel}";
 
         $systemPrompt = <<<PROMPT
-너는 the gist 편집자다. **구조도를 뼈대로** 학생의 생각이 담긴 지정학 해설 글을 처음부터 쓴다.
+너는 the gist 편집자다. **구조도를 뼈대로** 학생이 **직접 쓴 1인칭 에세이**를 처음부터 쓴다.
 
-the gist 톤 (필수):
-- 명확한 제목·소제목, 각 섹션 2~3문단
-- "~거든요", "~있어요", "~이에요" 존댓말 해설체
-- 갈등·다른 시각 인정 후 학생 입장으로 수렴
+시점 (가장 중요):
+- **전편 1인칭** — 주어는 나/저. 학생이 직접 말하는 당사자 시선.
+- **절대 금지:** "학생은", "학생이", "학생의", "학생의 시선에서", "학생이 떠올린", "학생이 주목한" 등 **3인칭 관찰·평가 문체**
+- **주어만 치환 금지.** 문장 시선·종결어미까지 1인칭으로 **재서술** ("나는 ~않아요"처럼 어색한 관찰체 잔재 금지)
+- 관찰자 톤 금지: "~하고 있어요", "~라고 보고 있어요", "~에서 찾고 있어요"
+
+문체·톤 (1인칭과 동등하게 중요):
+- **목표:** "맞아 내가 이런 생각이었지" — 학생이 다듬으면 도달할 만한 글. 모범 답안·칼럼이 아님.
+- 학생 대화에 나온 **말투·거칠기를 살릴 것**. 매끄럽게 번역하지 말 것.
+  (예: "혼란해", "무기가 있잖아", "비슷할 거 같아", "그냥 복잡해서" → 그 느낌 유지)
+- 문장 길이를 **짧게·들쭉날쭉**하게. 매 문단 "주장→물론→하지만 나는" 같은 **똑같은 균형 구조 반복 금지**.
+- 어려운 어휘 자제: "결정타", "본격적으로 개입", "정치적 정당성", "변수", "수렴" 등 칼럼니스트 표현 대신 학생이 쓸 법한 쉬운 말.
+- 심한 비문·오타는 정리하되, **완벽한 글**로 만들지 말 것. 일부러 못 쓰게 하거나 오타를 넣지도 말 것 — 그것도 가짜.
+- gist **리듬**(갈등 인정 → 내 관점)은 유지하되, 문장은 중학생(14세)이 **노력해서 쓴** 수준.
+- 명확한 제목·소제목, 각 섹션 2~3문단 (문단마다 길이·리듬 다르게)
 - 학생 대화에 없는 새 사실·수치 추가 금지
-- 학생이 쓴 문장을 그대로 복붙하지 말고, gist 리듬으로 **새로 서술**
 
 JSON만 응답:
 {
@@ -248,7 +277,7 @@ JSON만 응답:
   "conclusion_heading": "결론",
   "conclusion_paragraphs": ["문단1", "문단2"],
   "full_text": "제목부터 결론까지 읽기 좋게 이어 붙인 전체 (소제목 포함)",
-  "hero_sentence": "공유카드용 핵심 문장 1개"
+  "hero_sentence": "공유카드용 핵심 문장 1개 (1인칭)"
 }
 PROMPT;
 
@@ -256,9 +285,17 @@ PROMPT;
 구조도:
 {$structureJson}
 
-학생 최종 입장: {$ctx['stance_label']}
+{$perspectiveBlock}
 
-the gist 원문 톤 참고:
+학생이 실제로 말한 것 (톤·표현 참고 — 이 말투를 살려 1인칭으로 정리):
+이유: {$ctx['reason']}
+근거: {$ctx['evidence']}
+반론 반응: {$ctx['rebuttal']}
+
+대화 발췌:
+{$ctx['dialogue_text']}
+
+the gist 원문 톤 참고 (리듬만, 3인칭·어려운 어휘는 따르지 말 것):
 {$ctx['narration_block']}
 
 arc 참고:
@@ -312,7 +349,7 @@ MSG;
             'sections' => $sections,
             'conclusion_heading' => trim((string) ($raw['conclusion_heading'] ?? '결론')),
             'conclusion_bullets' => array_values(array_filter(array_map('strval', $conclusionBullets))),
-            'student_stance' => $ctx['stance_label'],
+            'student_stance' => $ctx['perspective_label'] ?? $ctx['stance_label'],
             'generated_by' => 'llm',
         ];
     }
