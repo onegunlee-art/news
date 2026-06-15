@@ -92,6 +92,10 @@ $writer = new WritingBuilder($llm);
 
 $draft = $composer->compose($blueprint, $quest, $dialogue);
 
+if (isset($draft['success']) && $draft['success'] === false) {
+    eduSendError((string) ($draft['message'] ?? '글 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.'), 503);
+}
+
 $judgmentPatterns = '';
 if (eduJudgmentWritingEnabled()) {
     $patterns = array_merge(

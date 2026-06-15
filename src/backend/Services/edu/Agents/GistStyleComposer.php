@@ -13,6 +13,9 @@ use Services\Edu\GistNarrationReader;
 
 class GistStyleComposer
 {
+    private const STRUCTURE_MAX_TOKENS = 700;
+    private const ARTICLE_MAX_TOKENS = 6000;
+
     private $llm;
     private EduRagService $rag;
     private GistNarrationReader $narration;
@@ -48,12 +51,19 @@ class GistStyleComposer
     {
         $context = $this->buildContext($blueprint, $quest, $dialogue);
         $existing = $blueprint['essay_structure'] ?? [];
-        if (is_array($existing) && !empty($existing['sections'])) {
+        if ($this->isLlmGeneratedStructure($existing)) {
             $structure = $existing;
         } else {
             $structure = $this->buildStructureDiagram($context);
         }
+        if ($this->isComposeFailure($structure)) {
+            return $structure;
+        }
+
         $article = $this->composeArticleFromStructure($structure, $context);
+        if ($this->isComposeFailure($article)) {
+            return $article;
+        }
 
         return array_merge($article, [
             'success' => true,
@@ -90,8 +100,14 @@ class GistStyleComposer
 
         $dialogueText = '';
         foreach ($dialogue as $turn) {
-            $role = ($turn['role'] ?? '') === 'student' ? '학생' : '코치';
-            $dialogueText .= "{$role}: " . ($turn['content'] ?? '') . "\n";
+            if (($turn['role'] ?? '') !== 'student') {
+                continue;
+            }
+            $content = trim((string) ($turn['content'] ?? ''));
+            if ($content === '') {
+                continue;
+            }
+            $dialogueText .= "학생: {$content}\n";
         }
 
         $reflection = $blueprint['reflection_lines'] ?? [];
@@ -166,14 +182,17 @@ PROMPT;
 MSG;
 
         $parsed = $this->parseJsonResponse(
-            $this->llm->haiku($systemPrompt, [['role' => 'user', 'content' => $userMessage]], 700)
+            $this->llm->haiku($systemPrompt, [['role' => 'user', 'content' => $userMessage]], self::STRUCTURE_MAX_TOKENS)
         );
 
         if ($parsed !== null) {
             return $this->normalizeStructure($parsed, $ctx);
         }
 
-        return $this->fallbackStructure($ctx);
+        return $this->composeFailure(
+            'structure',
+            '글 구조도를 만들지 못했어요. 잠시 후 다시 시도해 주세요.'
+        );
     }
 
     /**
@@ -229,14 +248,17 @@ arc 참고:
 MSG;
 
         $parsed = $this->parseJsonResponse(
-            $this->llm->chat($systemPrompt, [['role' => 'user', 'content' => $userMessage]], 2200, 0.55)
+            $this->llm->chat($systemPrompt, [['role' => 'user', 'content' => $userMessage]], self::ARTICLE_MAX_TOKENS, 0.55)
         );
 
         if ($parsed !== null) {
             return $this->normalizeArticle($parsed, $structure, $ctx);
         }
 
-        return $this->fallbackArticle($structure, $ctx);
+        return $this->composeFailure(
+            'article',
+            '글을 완성하지 못했어요. 잠시 후 다시 시도해 주세요.'
+        );
     }
 
     /** @param array<string, mixed> $raw @param array<string, mixed> $ctx */
@@ -270,6 +292,7 @@ MSG;
             'conclusion_heading' => trim((string) ($raw['conclusion_heading'] ?? '결론')),
             'conclusion_bullets' => array_values(array_filter(array_map('strval', $conclusionBullets))),
             'student_stance' => $ctx['stance_label'],
+            'generated_by' => 'llm',
         ];
     }
 
@@ -403,75 +426,29 @@ MSG;
         ];
     }
 
-    /** @param array<string, mixed> $ctx */
-    private function fallbackStructure(array $ctx): array
+    /** @param array<string, mixed> $result */
+    private function isComposeFailure(array $result): bool
     {
-        $quest = $ctx['quest'];
-        return [
-            'title' => ($ctx['stance_label'] ?? '') . ' 입장에서 본 ' . ($quest['quest_title'] ?? '오늘의 논쟁'),
-            'subtitle' => (string) ($quest['conflict_summary'] ?? ''),
-            'sections' => [
-                [
-                    'heading' => '왜 이 주제가 중요한가',
-                    'role' => 'background',
-                    'bullets' => array_filter([(string) ($quest['alignment_summary'] ?? ''), (string) ($ctx['reason'] ?? '')]),
-                ],
-                [
-                    'heading' => '견해가 갈리는 지점',
-                    'role' => 'tension',
-                    'bullets' => [(string) ($quest['conflict_summary'] ?? '서로 다른 시각이 충돌한다')],
-                ],
-                [
-                    'heading' => '나의 입장',
-                    'role' => 'stance',
-                    'bullets' => array_filter([(string) ($ctx['reason'] ?? ''), (string) ($ctx['evidence'] ?? '')]),
-                ],
-                [
-                    'heading' => '다른 시각을 듣고',
-                    'role' => 'counter',
-                    'bullets' => array_filter([(string) ($ctx['counter_argument'] ?? ''), (string) ($ctx['rebuttal'] ?? '')]),
-                ],
-            ],
-            'conclusion_heading' => '결론',
-            'conclusion_bullets' => array_filter((array) ($ctx['reflection_lines'] ?? ['나의 생각이 더 분명해졌다'])),
-            'student_stance' => $ctx['stance_label'] ?? '',
-        ];
+        return array_key_exists('success', $result) && $result['success'] === false;
     }
 
-    /** @param array<string, mixed> $structure @param array<string, mixed> $ctx */
-    private function fallbackArticle(array $structure, array $ctx): array
+    /** @param mixed $structure */
+    private function isLlmGeneratedStructure($structure): bool
     {
-        $sections = [];
-        foreach ($structure['sections'] ?? [] as $sec) {
-            if (!is_array($sec)) {
-                continue;
-            }
-            $body = implode(' ', $sec['bullets'] ?? []);
-            $sections[] = [
-                'heading' => (string) ($sec['heading'] ?? ''),
-                'paragraphs' => $body !== '' ? [$body] : [],
-            ];
-        }
+        return is_array($structure)
+            && !empty($structure['sections'])
+            && ($structure['generated_by'] ?? '') === 'llm'
+            && !$this->isComposeFailure($structure);
+    }
 
-        $conclusionParagraphs = array_map('strval', $structure['conclusion_bullets'] ?? []);
-        $title = (string) ($structure['title'] ?? '');
-        $subtitle = (string) ($structure['subtitle'] ?? '');
-        $fullText = $this->renderPlainText(
-            $title,
-            $subtitle,
-            $sections,
-            (string) ($structure['conclusion_heading'] ?? '결론'),
-            $conclusionParagraphs
-        );
-
+    /** @return array{success: false, error: string, message: string, compose_step: string} */
+    private function composeFailure(string $step, string $message): array
+    {
         return [
-            'title' => $title,
-            'subtitle' => $subtitle,
-            'sections' => $sections,
-            'conclusion_heading' => (string) ($structure['conclusion_heading'] ?? '결론'),
-            'conclusion_paragraphs' => $conclusionParagraphs,
-            'full_text' => $fullText,
-            'hero_sentence' => $this->extractHeroFromText($fullText),
+            'success' => false,
+            'error' => 'compose_' . $step . '_failed',
+            'message' => $message,
+            'compose_step' => $step,
         ];
     }
 
