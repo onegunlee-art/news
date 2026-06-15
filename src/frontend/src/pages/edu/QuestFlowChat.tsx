@@ -234,6 +234,21 @@ export default function QuestFlowChat() {
     }
   }
 
+  const handleConfirmReflection = async () => {
+    if (!sessionId || sending || composing) return
+    setSending(true)
+    setError('')
+    appendStudent('맞아')
+    try {
+      const res = await eduApi.sendChat(sessionId, { action: 'confirm_reflection' })
+      await handleChatResponse(res)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '오류')
+    } finally {
+      setSending(false)
+    }
+  }
+
   const handleSend = async () => {
     if (!input.trim() || !sessionId || sending || completed) return
     const msg = input.trim()
@@ -394,6 +409,18 @@ export default function QuestFlowChat() {
 
       {!completed && phase !== 'stance' && (
         <footer className="border-t border-[#ddd] px-4 py-3 max-w-lg mx-auto w-full bg-white">
+          {phase === 'reflection' && (
+            <div className="flex gap-2 mb-2">
+              <button
+                type="button"
+                onClick={handleConfirmReflection}
+                disabled={sending || composing}
+                className="flex-1 py-2 bg-[#1a1a1a] text-white rounded text-sm font-medium disabled:opacity-40"
+              >
+                맞아 — 글 만들기
+              </button>
+            </div>
+          )}
           <div className="flex gap-2">
             <input
               type="text"

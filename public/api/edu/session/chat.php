@@ -133,8 +133,88 @@ $eval = [];
 $assistantMessage = '';
 $decision = [];
 
+/**
+ * @param array<string, mixed> $blueprint
+ * @param array<string, mixed> $quest
+ * @param list<array<string, mixed>> $dialogue
+ * @param array<string, mixed> $response
+ * @return array{blueprint: array<string, mixed>, assistantMessage: string, response: array<string, mixed>, decision: array<string, mixed>}
+ */
+function eduChatApplyReflectionCompose(
+    array $blueprint,
+    array $quest,
+    array $dialogue,
+    $llm,
+    EduRagService $rag,
+    ConversationDirector $director,
+    array $response = []
+): array {
+    $composer = new GistStyleComposer($llm, $rag);
+    $structurePreview = $composer->previewStructure($blueprint, $quest, $dialogue);
+    $structureFailed = isset($structurePreview['success']) && $structurePreview['success'] === false;
+
+    $merge = [
+        'reflection_confirmed' => true,
+        'ready_for_compose' => true,
+        'phase' => 'compose',
+    ];
+    if (!$structureFailed) {
+        $merge['essay_structure'] = $structurePreview;
+    }
+    $blueprint = eduMergeBlueprint($blueprint, $merge);
+
+    if ($structureFailed) {
+        $assistantMessage = '생각 정리는 끝났어! 글을 만드는 중 잠깐 문제가 생겼어. 잠시 후 다시 시도할게.';
+    } else {
+        $assistantMessage = '좋아! 아래 구조도대로 네 생각을 글로 정리해볼게. 잠시만 기다려줘.';
+        $response['structure_preview'] = $structurePreview;
+    }
+    $decision = $director->decide($blueprint, $quest);
+    $response['should_compose'] = true;
+    $response['ui_hint'] = 'compose';
+    if ($structureFailed) {
+        $response['compose_error'] = $structurePreview['error'] ?? 'compose_structure_failed';
+    }
+
+    return [
+        'blueprint' => $blueprint,
+        'assistantMessage' => $assistantMessage,
+        'response' => $response,
+        'decision' => $decision,
+    ];
+}
+
 // --- Process student message by phase ---
 $phase = (string) ($blueprint['phase'] ?? 'reasoning');
+
+// 정리 확인 버튼/액션 — reflection 단계에서만 compose 트리거
+if ($action === 'confirm_reflection') {
+    if ($phase !== 'reflection') {
+        eduSendError('아직 정리 확인 단계가 아니에요. 반론에 먼저 답해줘.', 400);
+    }
+    $confirmText = $message !== '' ? $message : '맞아';
+    $dialogue = eduAppendDialogue($dialogue, 'student', $confirmText);
+    $blueprint['exchange_count'] = (int) ($blueprint['exchange_count'] ?? 0) + 1;
+
+    $composed = eduChatApplyReflectionCompose($blueprint, $quest, $dialogue, $llm, $rag, $director, $response);
+    $blueprint = $composed['blueprint'];
+    $assistantMessage = $composed['assistantMessage'];
+    $response = $composed['response'];
+    $decision = $composed['decision'];
+
+    if ($assistantMessage !== '') {
+        $dialogue = eduAppendDialogue($dialogue, 'assistant', $assistantMessage, $decision['next_agent'] ?? 'composer');
+    }
+    eduSaveBlueprint($supabase, $sessionId, $blueprint, $dialogue);
+    eduSendJson(array_merge($response, [
+        'stage' => eduBlueprintStage($blueprint),
+        'phase' => $blueprint['phase'] ?? $phase,
+        'assistant_message' => $assistantMessage,
+        'progress_pct' => (int) ($decision['progress_pct'] ?? eduBlueprintProgress($blueprint)),
+        'blueprint' => $blueprint,
+    ]));
+}
+
 $dialogue = eduAppendDialogue($dialogue, 'student', $message);
 $blueprint['exchange_count'] = (int) ($blueprint['exchange_count'] ?? 0) + 1;
 
@@ -247,6 +327,12 @@ if ($phase === 'reasoning') {
         }
     }
 } elseif ($phase === 'hammer') {
+    // "맞아"를 반론 답변으로 삼으면 정리 확인 턴이 한 박자 밀려 compose가 안 걸림
+    if (eduIsReflectionConfirm($message)) {
+        $assistantMessage = '아직 반론에 답하지 않았어. 위 반론을 읽고 네 생각을 한두 문장으로 말해줘. "맞아"는 정리 확인할 때 눌러줘!';
+        $response['ui_hint'] = 'hammer_rebuttal';
+        $decision = ['progress_pct' => 72, 'next_agent' => 'hammer'];
+    } else {
     $eval = $coach->evaluateResponse((string) ($blueprint['stance'] ?? 'pro'), $message, $quest, 'rebuttal');
     $stanceChanged = (bool) ($body['stance_changed'] ?? false);
     $newStance = $body['new_stance'] ?? $blueprint['stance'];
@@ -302,32 +388,21 @@ if ($phase === 'reasoning') {
     $assistantMessage = "지금까지 생각을 정리해볼게:\n{$lines}\n\n맞게 정리됐어? (맞아 / 조금 다르게 생각해)";
     $response['summary_lines'] = $summary['summary_lines'] ?? [];
     $response['stance_changed'] = $stanceChanged;
+    $response['ui_hint'] = 'reflection_confirm';
     $decision = ['progress_pct' => 85];
+    }
 } elseif ($phase === 'reflection') {
-    $composer = new GistStyleComposer($llm, $rag);
-    $structurePreview = $composer->previewStructure($blueprint, $quest, $dialogue);
-    $structureFailed = isset($structurePreview['success']) && $structurePreview['success'] === false;
-
-    $merge = [
-        'reflection_confirmed' => true,
-        'ready_for_compose' => true,
-        'phase' => 'compose',
-    ];
-    if (!$structureFailed) {
-        $merge['essay_structure'] = $structurePreview;
-    }
-    $blueprint = eduMergeBlueprint($blueprint, $merge);
-
-    if ($structureFailed) {
-        $assistantMessage = '생각 정리는 끝났어! 글을 만드는 중 잠깐 문제가 생겼어. 잠시 후 다시 시도할게.';
+    $wantsCompose = eduIsReflectionConfirm($message) || mb_strlen(trim($message)) >= 28;
+    if (!$wantsCompose) {
+        $assistantMessage = '정리가 조금 다르다면 어떻게 생각하는지 말해줘. 맞다면 "맞아"를 눌러줘.';
+        $response['ui_hint'] = 'reflection_confirm';
+        $decision = ['progress_pct' => 85, 'next_agent' => 'reflection'];
     } else {
-        $assistantMessage = '좋아! 아래 구조도대로 네 생각을 글로 정리해볼게. 잠시만 기다려줘.';
-        $response['structure_preview'] = $structurePreview;
-    }
-    $decision = $director->decide($blueprint, $quest);
-    $response['should_compose'] = true;
-    if ($structureFailed) {
-        $response['compose_error'] = $structurePreview['error'] ?? 'compose_structure_failed';
+        $composed = eduChatApplyReflectionCompose($blueprint, $quest, $dialogue, $llm, $rag, $director, $response);
+        $blueprint = $composed['blueprint'];
+        $assistantMessage = $composed['assistantMessage'];
+        $response = $composed['response'];
+        $decision = $composed['decision'];
     }
 } else {
     $decision = $director->decide($blueprint, $quest);

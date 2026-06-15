@@ -246,3 +246,20 @@ function eduLoadDialogue(array $session): array
     $fallback = $hammer['dialogue'] ?? [];
     return is_array($fallback) ? $fallback : [];
 }
+
+/** reflection 정리 확인(맞아/네 등) — hammer 반론 답변과 구분 */
+function eduIsReflectionConfirm(string $message): bool
+{
+    $text = mb_strtolower(trim($message));
+    if ($text === '' || mb_strlen($text) > 24) {
+        return false;
+    }
+    if (preg_match('/다르게|아니|틀렸|수정|고쳐|다시/u', $text)) {
+        return false;
+    }
+
+    return (bool) preg_match(
+        '/^(맞아|맞아요|맞게|맞음|맞습니다|그래|응|네|예|ㅇㅇ|yes|ok|okay)[.!?\s~]*$/u',
+        $text
+    );
+}
