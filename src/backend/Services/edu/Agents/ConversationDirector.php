@@ -160,7 +160,8 @@ class ConversationDirector
 
         $systemPrompt = <<<PROMPT
 중학생 대화 코치. 주어진 문장을 친근하고 간결하게 다듬어 (2문장 이내).
-답을 주지 말고 질문/안내만. JSON: {"prompt": "..."}
+답을 주지 말고 질문/안내만. 질문은 1개만, 물음표 1개만. 전문용어·추상어는 쉬운 말로 바꿔. 물음표를 추가하지 마.
+JSON: {"prompt": "..."}
 PROMPT;
 
         $response = $this->llm->haiku($systemPrompt, [
