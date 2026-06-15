@@ -14,6 +14,16 @@ class EduQuestFactory
     private const MIN_ARTICLES = 3;
     private const MAX_ARTICLES_PER_QUEST = 5;
 
+    /** @var list<string> */
+    private const VALID_AXIS_IDS = ['tech', 'politics', 'structure'];
+
+    /** @var array<string, string> */
+    private const COUNTER_MAP = [
+        'tech' => 'structure',
+        'politics' => 'tech',
+        'structure' => 'politics',
+    ];
+
     /** @var array<string, array{0: string, 1: string}> */
     private const ARC_META = [
         'ARC-AI-JOBS' => [
@@ -397,6 +407,31 @@ class EduQuestFactory
             return null;
         }
 
+        $this->enrichJudgementTheses($articles);
+
+        if ($this->llm !== null) {
+            $convergentData = $this->extractConvergentAxes($articles);
+            if ($convergentData !== null && ($convergentData['mode'] ?? '') === 'convergent') {
+                $convergentQuest = $this->buildConvergentQuest($arcCode, $articles, $convergentData);
+                if ($convergentQuest !== null) {
+                    return $convergentQuest;
+                }
+            }
+        }
+
+        return $this->buildAdversarialQuest($arcCode, $articles);
+    }
+
+    /**
+     * @param list<array<string, mixed>> $articles
+     * @return array<string, mixed>|null
+     */
+    private function buildAdversarialQuest(string $arcCode, array $articles): ?array
+    {
+        if (count($articles) < self::MIN_ARTICLES) {
+            return null;
+        }
+
         [$alignment, $conflict] = self::ARC_META[$arcCode] ?? ['', ''];
         $llmFields = $this->generateQuestFields($arcCode, $articles, $alignment, $conflict);
 
@@ -420,6 +455,270 @@ class EduQuestFactory
             'pilot_priority' => 'C',
             'articles' => $articles,
         ];
+    }
+
+    /**
+     * @param list<array<string, mixed>> $articles
+     * @param array<string, mixed> $data
+     * @return array<string, mixed>|null
+     */
+    private function buildConvergentQuest(string $arcCode, array $articles, array $data): ?array
+    {
+        $axes = $this->normalizeConvergentAxes($data['axes'] ?? [], $articles);
+        if (count($axes) < 2) {
+            return null;
+        }
+
+        $sharedConclusion = trim((string) ($data['shared_conclusion'] ?? ''));
+        if ($sharedConclusion === '') {
+            return null;
+        }
+
+        $fallback = $data['fallback_adversarial'] ?? [];
+        $proLine = trim((string) ($fallback['pro'] ?? ''));
+        $conLine = trim((string) ($fallback['con'] ?? ''));
+        if ($proLine === '' || $conLine === '') {
+            $proLine = ($axes[0]['axis_label'] ?? '축 A') . ': ' . mb_substr((string) ($axes[0]['thesis'] ?? ''), 0, 80);
+            $conLine = ($axes[count($axes) - 1]['axis_label'] ?? '축 B') . ': ' . mb_substr((string) ($axes[count($axes) - 1]['thesis'] ?? ''), 0, 80);
+        }
+
+        $title = trim((string) ($data['quest_title'] ?? ''));
+        if ($title === '') {
+            $title = $sharedConclusion . '?';
+        }
+
+        return [
+            'quest_code' => 'Q-CONV-' . date('ymd') . '-' . strtoupper(substr(md5($arcCode . $sharedConclusion), 0, 4)),
+            'quest_title' => $title,
+            'grade_band' => $data['grade_band'] ?? 'high',
+            'manual_arc' => $arcCode,
+            'pro_line' => $proLine,
+            'con_line' => $conLine,
+            'alignment_summary' => trim((string) ($data['alignment_summary'] ?? ''))
+                ?: '전문가들이 공통 결론에 동의하지만, 그 이유는 서로 다르다.',
+            'conflict_summary' => trim((string) ($data['conflict_summary'] ?? ''))
+                ?: '공동 결론: ' . $sharedConclusion . '. 그러나 근거의 층위(기술·정치·구조)가 다르다.',
+            'hammer_hints' => [
+                'mode' => 'convergent',
+                'shared_conclusion' => $sharedConclusion,
+                'axes' => $axes,
+                'counter_map' => self::COUNTER_MAP,
+                'fallback_adversarial' => [
+                    'pro' => $proLine,
+                    'con' => $conLine,
+                ],
+            ],
+            'pilot_priority' => 'B',
+            'articles' => $articles,
+        ];
+    }
+
+    /**
+     * judgement_records에서 thesis 보강 (READ only)
+     * @param list<array<string, mixed>> $articles
+     */
+    private function enrichJudgementTheses(array &$articles): void
+    {
+        if (!$this->supabase->isConfigured() || $articles === []) {
+            return;
+        }
+
+        $ids = [];
+        foreach ($articles as $article) {
+            $ids[] = (int) ($article['news_id'] ?? 0);
+        }
+        $ids = array_values(array_filter(array_unique($ids)));
+
+        $theses = [];
+        foreach (array_chunk($ids, 50) as $chunk) {
+            $filter = 'news_id=in.(' . implode(',', $chunk) . ')&order=created_at.desc';
+            $rows = $this->supabase->select('judgement_records', $filter, 200) ?? [];
+            foreach ($rows as $row) {
+                $nid = (int) ($row['news_id'] ?? 0);
+                if ($nid < 1 || isset($theses[$nid])) {
+                    continue;
+                }
+                $human = $row['human_output'] ?? [];
+                if (is_string($human)) {
+                    $human = json_decode($human, true) ?: [];
+                }
+                $thesis = trim((string) ($human['why_important'] ?? ''));
+                if ($thesis === '') {
+                    $thesis = trim(mb_substr((string) ($human['narration'] ?? ''), 0, 400));
+                }
+                if ($thesis !== '') {
+                    $theses[$nid] = $thesis;
+                }
+            }
+        }
+
+        foreach ($articles as &$article) {
+            $nid = (int) ($article['news_id'] ?? 0);
+            if (isset($theses[$nid])) {
+                $article['judgement_thesis'] = $theses[$nid];
+            }
+        }
+        unset($article);
+    }
+
+    /**
+     * @param list<array<string, mixed>> $articles
+     * @return ?array<string, mixed>
+     */
+    private function extractConvergentAxes(array $articles): ?array
+    {
+        if ($this->llm === null) {
+            return null;
+        }
+
+        $lines = [];
+        foreach ($articles as $a) {
+            $thesis = trim((string) ($a['judgement_thesis'] ?? $a['why_important'] ?? $a['excerpt'] ?? ''));
+            $lines[] = sprintf(
+                "- news_id=%d | %s | thesis: %s",
+                (int) ($a['news_id'] ?? 0),
+                $a['title'] ?? '',
+                mb_substr($thesis, 0, 200)
+            );
+        }
+        $articleBlock = implode("\n", $lines);
+
+        $axisIds = implode('|', self::VALID_AXIS_IDS);
+        $system = <<<PROMPT
+너는 GIST EDU 퀘스트 설계자야. 기사 thesis를 분석해 수렴형(convergent) Mix-up 가능 여부를 판단해.
+
+분류 기준:
+1. 공통 결론(shared_conclusion)이 있는가?
+2. 같은 결론에 도달하는 "근거 층위"가 2개 이상 다른가?
+   - tech: 무기·군사수단·기술 한계
+   - politics: 정권·국내정치·정책 일관성
+   - structure: 전쟁 보편 패턴·역사·구조
+
+축이 뚜렷하지 않거나 억지로 만들면: {"mode": "unclear", "reason": "..."}
+명확한 찬반 대립만 있으면: {"mode": "adversarial"}
+수렴형이면 JSON만 (마크다운 금지):
+{
+  "mode": "convergent",
+  "shared_conclusion": "공동 결론 한 문장",
+  "quest_title": "물음표로 끝나는 질문형 제목",
+  "alignment_summary": "공통 인식 2문장",
+  "conflict_summary": "근거 층위가 어떻게 다른지 2문장",
+  "grade_band": "middle 또는 high",
+  "axes": [
+    {
+      "axis_id": "{$axisIds}",
+      "axis_label": "학생에게 보여줄 한글 라벨",
+      "thesis": "이 축의 핵심 논지",
+      "author": "기사 저자/매체",
+      "news_id": 0,
+      "contrast_prompt": {
+        "names_axis": "이 축이 보는 시각 한 문장",
+        "distinguishes_from": {
+          "tech": "다른 축과 구분 (이 축이 tech가 아닐 때만)",
+          "politics": "...",
+          "structure": "..."
+        },
+        "pivot_question": "학생 근거를 두 층위 중 어디인지 양자택일하는 질문"
+      }
+    }
+  ],
+  "fallback_adversarial": {"pro": "찬성형 한 줄", "con": "반대형 한 줄"}
+}
+
+규칙:
+- axes는 2~3개, axis_id는 tech/politics/structure 중 하나씩, news_id는 입력 기사 ID와 일치
+- distinguishes_from에는 자기 axis_id 키를 넣지 마
+- pivot_question은 학생이 자기 근거 층위를 의식하게 하는 양자택일 질문
+PROMPT;
+
+        $response = $this->llm->haiku($system, [['role' => 'user', 'content' => "기사:\n{$articleBlock}"]], 2048);
+        if (!empty($response['error'])) {
+            return null;
+        }
+
+        return $this->parseConvergentExtraction($response['content'] ?? '');
+    }
+
+    /**
+     * @return ?array<string, mixed>
+     */
+    private function parseConvergentExtraction(string $content): ?array
+    {
+        if (!preg_match('/\{[\s\S]*\}/', $content, $m)) {
+            return null;
+        }
+
+        $parsed = json_decode($m[0], true);
+        return is_array($parsed) ? $parsed : null;
+    }
+
+    /**
+     * @param list<array<string, mixed>> $rawAxes
+     * @param list<array<string, mixed>> $articles
+     * @return list<array<string, mixed>>
+     */
+    private function normalizeConvergentAxes(array $rawAxes, array $articles): array
+    {
+        $validNewsIds = [];
+        foreach ($articles as $article) {
+            $validNewsIds[(int) ($article['news_id'] ?? 0)] = true;
+        }
+
+        $normalized = [];
+        $usedAxisIds = [];
+
+        foreach ($rawAxes as $raw) {
+            if (!is_array($raw)) {
+                continue;
+            }
+
+            $axisId = (string) ($raw['axis_id'] ?? '');
+            if (!in_array($axisId, self::VALID_AXIS_IDS, true) || isset($usedAxisIds[$axisId])) {
+                continue;
+            }
+
+            $newsId = (int) ($raw['news_id'] ?? 0);
+            if ($newsId < 1 || !isset($validNewsIds[$newsId])) {
+                continue;
+            }
+
+            $contrast = $raw['contrast_prompt'] ?? [];
+            if (!is_array($contrast)) {
+                continue;
+            }
+
+            $pivot = trim((string) ($contrast['pivot_question'] ?? ''));
+            $namesAxis = trim((string) ($contrast['names_axis'] ?? ''));
+            if ($pivot === '' || $namesAxis === '') {
+                continue;
+            }
+
+            $distinguishes = [];
+            if (is_array($contrast['distinguishes_from'] ?? null)) {
+                foreach ($contrast['distinguishes_from'] as $key => $text) {
+                    if ($key === $axisId || !in_array((string) $key, self::VALID_AXIS_IDS, true)) {
+                        continue;
+                    }
+                    $distinguishes[(string) $key] = trim((string) $text);
+                }
+            }
+
+            $normalized[] = [
+                'axis_id' => $axisId,
+                'axis_label' => trim((string) ($raw['axis_label'] ?? $axisId)),
+                'thesis' => trim((string) ($raw['thesis'] ?? '')),
+                'author' => trim((string) ($raw['author'] ?? '전문가')),
+                'news_id' => $newsId,
+                'contrast_prompt' => [
+                    'names_axis' => $namesAxis,
+                    'distinguishes_from' => $distinguishes,
+                    'pivot_question' => $pivot,
+                ],
+            ];
+            $usedAxisIds[$axisId] = true;
+        }
+
+        return $normalized;
     }
 
     /**

@@ -39,3 +39,12 @@ function eduUseChatEngine(): bool
     }
     return !in_array(strtolower((string) $v), ['0', 'false', 'no', 'off'], true);
 }
+
+function eduLlmProvider(): string
+{
+    $v = getenv('EDU_LLM_PROVIDER');
+    if ($v === false || $v === '') {
+        return 'openai';
+    }
+    return strtolower((string) $v);
+}

@@ -200,9 +200,12 @@ class OpenAIService
             'model' => $model,
             'instructions' => $systemPrompt,
             'input' => $input,
-            'temperature' => $options['temperature'] ?? $this->config['temperature'],
             'max_output_tokens' => $options['max_tokens'] ?? $this->config['max_tokens']
         ];
+
+        if (!str_starts_with($model, 'gpt-5')) {
+            $payload['temperature'] = $options['temperature'] ?? $this->config['temperature'];
+        }
 
         if (!empty($options['json_mode'])) {
             $payload['text'] = ['format' => ['type' => 'json_object']];

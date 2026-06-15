@@ -1,13 +1,17 @@
 <?php
 /**
- * GIST EDU — Anthropic LLM 클라이언트
- * 코어 quota와 분리된 EDU 전용 API 키 사용
+ * GIST EDU — LLM 팩토리
+ *
+ * 기본: OpenAI (gpt-5.4 / gpt-5.4-mini)
+ * 롤백: EDU_LLM_PROVIDER=anthropic
  */
 declare(strict_types=1);
 
 require_once __DIR__ . '/bootstrap.php';
+require_once __DIR__ . '/_llm_openai.php';
 
-class EduLlmClient
+/** @deprecated 롤백용 — EDU_LLM_PROVIDER=anthropic 일 때만 사용 */
+class EduAnthropicLlmClient
 {
     private string $apiKey;
     private string $model;
@@ -21,9 +25,11 @@ class EduLlmClient
             throw new RuntimeException('EDU_ANTHROPIC_API_KEY or ANTHROPIC_API_KEY required');
         }
         $this->model = $model;
-        $this->dailyCap = (int)(getenv('EDU_DAILY_LLM_CAP') ?: 1000);
+        $this->dailyCap = (int) (getenv('EDU_DAILY_LLM_CAP') ?: 1000);
         $this->logDir = eduFindProjectRoot() . 'storage/logs';
-        if (!is_dir($this->logDir)) @mkdir($this->logDir, 0755, true);
+        if (!is_dir($this->logDir)) {
+            @mkdir($this->logDir, 0755, true);
+        }
     }
 
     public function chat(
@@ -64,11 +70,7 @@ class EduLlmClient
         curl_close($ch);
 
         $this->incrementDailyCount();
-        $this->log('chat', [
-            'model' => $this->model,
-            'http_code' => $httpCode,
-            'tokens_used' => $maxTokens,
-        ]);
+        $this->log('chat', ['model' => $this->model, 'http_code' => $httpCode]);
 
         if ($error) {
             return ['error' => 'curl_error', 'message' => $error];
@@ -99,29 +101,29 @@ class EduLlmClient
         return $result;
     }
 
+    public function getRemainingCalls(): int
+    {
+        return max(0, $this->dailyCap - $this->getDailyCount());
+    }
+
     private function checkDailyLimit(): bool
     {
-        $count = $this->getDailyCount();
-        return $count < $this->dailyCap;
+        return $this->getDailyCount() < $this->dailyCap;
     }
 
     private function getDailyCount(): int
     {
         $file = $this->logDir . '/edu_llm_count_' . date('Y-m-d') . '.txt';
-        if (!file_exists($file)) return 0;
-        return (int)file_get_contents($file);
+        if (!is_file($file)) {
+            return 0;
+        }
+        return (int) file_get_contents($file);
     }
 
     private function incrementDailyCount(): void
     {
         $file = $this->logDir . '/edu_llm_count_' . date('Y-m-d') . '.txt';
-        $count = $this->getDailyCount() + 1;
-        file_put_contents($file, (string)$count, LOCK_EX);
-    }
-
-    public function getRemainingCalls(): int
-    {
-        return max(0, $this->dailyCap - $this->getDailyCount());
+        file_put_contents($file, (string) ($this->getDailyCount() + 1), LOCK_EX);
     }
 
     private function log(string $action, array $data): void
@@ -130,16 +132,30 @@ class EduLlmClient
         $line = json_encode(array_merge([
             'ts' => date('Y-m-d H:i:s'),
             'action' => $action,
+            'provider' => 'anthropic',
         ], $data), JSON_UNESCAPED_UNICODE) . "\n";
         @file_put_contents($file, $line, FILE_APPEND | LOCK_EX);
     }
 }
 
-function eduLlm(): EduLlmClient
+/** @deprecated EduAnthropicLlmClient 별칭 */
+class EduLlmClient extends EduAnthropicLlmClient
+{
+}
+
+function eduLlm(): EduOpenAILlmClient|EduAnthropicLlmClient
 {
     static $client = null;
     if ($client === null) {
-        $client = new EduLlmClient();
+        $provider = function_exists('eduLlmProvider') ? eduLlmProvider() : 'openai';
+        $client = $provider === 'anthropic'
+            ? new EduAnthropicLlmClient()
+            : new EduOpenAILlmClient();
     }
     return $client;
+}
+
+function eduOpenAILlm(): EduOpenAILlmClient
+{
+    return eduLlm();
 }

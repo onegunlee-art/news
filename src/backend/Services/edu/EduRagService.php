@@ -62,6 +62,9 @@ class EduRagService
     }
 
     /**
+     * @deprecated 수렴형(convergent) 퀘스트에서는 미사용. hammer_hints.axes 기반 Hammer가 대체.
+     * 레거시 adversarial 퀘스트 폴백용으로만 유지.
+     *
      * @return list<array<string, mixed>>
      */
     public function findMixUpPairs(string $topic, string $region = '', int $topK = 3): array

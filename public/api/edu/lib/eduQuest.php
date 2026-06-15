@@ -112,6 +112,21 @@ function eduHammerPayload(array $quest, string $stance): array
     if (is_string($hints)) {
         $hints = json_decode($hints, true) ?: [];
     }
+
+    $mode = $hints['mode'] ?? 'adversarial';
+    if ($mode === 'convergent') {
+        $shared = (string) ($hints['shared_conclusion'] ?? '');
+        return [
+            'mode' => 'convergent',
+            'stance' => $stance,
+            'shared_conclusion' => $shared,
+            'axes' => $hints['axes'] ?? [],
+            'reflection_question' => $shared !== ''
+                ? "네가 고른 근거 층위를 한 줄로 정리해볼래? 그래도 \"{$shared}\"에 동의해?"
+                : '네 근거 층위를 한 줄로 정리해볼래?',
+        ];
+    }
+
     $counterKey = $stance === 'pro' ? 'con' : 'pro';
     $counterLine = $stance === 'pro' ? ($quest['con_line'] ?? '') : ($quest['pro_line'] ?? '');
     $hint = $hints[$counterKey] ?? '';
@@ -126,5 +141,38 @@ function eduHammerPayload(array $quest, string $stance): array
         'hammer_hint' => $hint,
         'conflict_summary' => $quest['conflict_summary'] ?? '',
         'reflection_question' => $reflectionQuestion,
+    ];
+}
+
+/**
+ * hammer_hints.mode에 따라 mixup 컨텍스트 결정
+ * convergent: Hammer가 hammer_hints.axes로 자체 처리 — RAG 스킵
+ *
+ * @param array<string, mixed> $quest
+ * @param object|null $rag EduRagService 인스턴스 (adversarial + RAG 활성 시)
+ * @return array{mixup_context: string, mixup_sources: list<mixed>}
+ */
+function eduBuildMixupContext(array $quest, ?object $rag = null): array
+{
+    $hints = $quest['hammer_hints'] ?? [];
+    if (is_string($hints)) {
+        $hints = json_decode($hints, true) ?: [];
+    }
+
+    $mode = $hints['mode'] ?? 'adversarial';
+    if ($mode === 'convergent') {
+        return ['mixup_context' => '', 'mixup_sources' => []];
+    }
+
+    if (!eduMixupRagEnabled() || $rag === null) {
+        return ['mixup_context' => '', 'mixup_sources' => []];
+    }
+
+    $topic = (string) ($quest['conflict_summary'] ?? $quest['quest_title'] ?? '');
+    $pairs = $rag->findMixUpPairs($topic, '', 3);
+
+    return [
+        'mixup_context' => $rag->formatMixUpContext($pairs),
+        'mixup_sources' => $pairs,
     ];
 }

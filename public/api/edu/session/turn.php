@@ -161,14 +161,9 @@ switch ($turn) {
         $scorer = new StanceScorer($llm);
         $analysis = $scorer->scoreStance($stance, $reason . ' ' . $evidence, $quest);
 
-        $mixupContext = '';
-        $mixupSources = [];
-        if (eduMixupRagEnabled()) {
-            $topic = (string) ($quest['conflict_summary'] ?? $quest['quest_title'] ?? '');
-            $pairs = $rag->findMixUpPairs($topic, '', 3);
-            $mixupContext = $rag->formatMixUpContext($pairs);
-            $mixupSources = $pairs;
-        }
+        $mixup = eduBuildMixupContext($quest, $rag);
+        $mixupContext = $mixup['mixup_context'];
+        $mixupSources = $mixup['mixup_sources'];
 
         $hammer = new Hammer($llm);
         $strike = $hammer->strike(
@@ -202,9 +197,15 @@ switch ($turn) {
             'counter_argument' => $strike['counter_argument'],
             'counter_stance' => $strike['counter_stance'] ?? ($stance === 'pro' ? 'con' : 'pro'),
             'mixup_sources' => $mixupSources,
+            'hammer_mode' => $strike['mode'] ?? 'adversarial',
             'prompt' => '이 반론에 대해 어떻게 생각해? 네 입장이 바뀌었어, 아니면 유지해?',
             'ui_label' => '반론 듣기',
         ];
+        if (($strike['mode'] ?? '') === 'convergent' || ($strike['mode'] ?? '') === 'convergent_meta_ask') {
+            $response['student_axis'] = $strike['student_axis'] ?? null;
+            $response['counter_axis'] = $strike['counter_axis'] ?? null;
+            $response['pivot_question'] = $strike['pivot_question'] ?? null;
+        }
         break;
 
     case 3:
