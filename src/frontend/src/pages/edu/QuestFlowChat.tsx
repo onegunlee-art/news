@@ -52,14 +52,97 @@ export default function QuestFlowChat() {
   const [playEssayReveal, setPlayEssayReveal] = useState(false)
   const [typingBubbleIndex, setTypingBubbleIndex] = useState<number | null>(null)
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const selectedQuestId = searchParams.get('quest_id')?.trim() || ''
 
   useEffect(() => {
     if (!getEduToken()) {
       navigate('/edu')
       return
     }
-    init()
-  }, [navigate])
+
+    let cancelled = false
+
+    const runInit = async () => {
+      setLoading(true)
+      setError('')
+      try {
+        let sid = ''
+        let tierData: EduTierProgress | null = null
+
+        if (selectedQuestId) {
+          const started = await eduApi.startSession(selectedQuestId)
+          sid = started.session_id
+          const today = await eduApi.todayQuest().catch(() => null)
+          tierData = today?.tier ?? null
+        } else {
+          const today = await eduApi.todayQuest()
+          if (cancelled) return
+          setQuest(today.quest)
+          tierData = today.tier ?? null
+
+          if (!today.quest) {
+            setError('오늘의 퀘스트가 없습니다.')
+            return
+          }
+
+          const existing = today.active_session || today.existing_session
+          sid = existing?.session_id ?? ''
+
+          if (!sid) {
+            const started = await eduApi.startSession(today.quest.quest_id)
+            sid = started.session_id
+          }
+        }
+
+        if (cancelled) return
+
+        setTier(tierData)
+        setSessionId(sid)
+
+        const state = await eduApi.getSessionState(sid)
+        if (cancelled) return
+
+        setQuest(state.quest)
+        setProgressPct(state.progress_pct)
+        setPhase(state.blueprint?.phase ?? 'stance')
+        setDialogue(state.dialogue ?? [])
+        const preview = state.blueprint?.essay_structure
+        if (preview?.sections?.length) {
+          setStructurePreview(preview as EssayStructurePreview)
+        }
+
+        if (state.stage === 'completed' && state.essay) {
+          setCompleted(true)
+          setSaveStatus('saved')
+          setEssay({
+            title: state.essay.title,
+            subtitle: state.essay.subtitle,
+            sections: state.essay.sections,
+            conclusion_heading: state.essay.conclusion_heading,
+            conclusion_paragraphs: state.essay.conclusion_paragraphs,
+            full_text: state.essay.full_text,
+            hero_sentence: state.essay.hero_sentence,
+            feedback: state.essay.feedback,
+          })
+          setStanceChanged(state.essay.stance_changed)
+          setProgressPct(100)
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setError(e instanceof Error ? e.message : '초기화 실패')
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false)
+        }
+      }
+    }
+
+    void runInit()
+    return () => {
+      cancelled = true
+    }
+  }, [navigate, selectedQuestId])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -70,74 +153,6 @@ export default function QuestFlowChat() {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
     }
   }, [])
-
-  const init = async () => {
-    setLoading(true)
-    setError('')
-    try {
-      const selectedQuestId = searchParams.get('quest_id')?.trim() || ''
-      let sid = ''
-      let tierData: EduTierProgress | null = null
-
-      if (selectedQuestId) {
-        const started = await eduApi.startSession(selectedQuestId)
-        sid = started.session_id
-        const today = await eduApi.todayQuest().catch(() => null)
-        tierData = today?.tier ?? null
-      } else {
-        const today = await eduApi.todayQuest()
-        setQuest(today.quest)
-        tierData = today.tier ?? null
-
-        if (!today.quest) {
-          setError('오늘의 퀘스트가 없습니다.')
-          return
-        }
-
-        const existing = today.active_session || today.existing_session
-        sid = existing?.session_id ?? ''
-
-        if (!sid) {
-          const started = await eduApi.startSession(today.quest.quest_id)
-          sid = started.session_id
-        }
-      }
-
-      setTier(tierData)
-      setSessionId(sid)
-
-      const state = await eduApi.getSessionState(sid)
-      setQuest(state.quest)
-      setProgressPct(state.progress_pct)
-      setPhase(state.blueprint?.phase ?? 'stance')
-      setDialogue(state.dialogue ?? [])
-      const preview = state.blueprint?.essay_structure
-      if (preview?.sections?.length) {
-        setStructurePreview(preview as EssayStructurePreview)
-      }
-
-      if (state.stage === 'completed' && state.essay) {
-        setCompleted(true)
-        setSaveStatus('saved')
-        setEssay({
-          title: state.essay.title,
-          subtitle: state.essay.subtitle,
-          sections: state.essay.sections,
-          conclusion_heading: state.essay.conclusion_heading,
-          conclusion_paragraphs: state.essay.conclusion_paragraphs,
-          full_text: state.essay.full_text,
-          hero_sentence: state.essay.hero_sentence,
-          feedback: state.essay.feedback,
-        })
-        setStanceChanged(state.essay.stance_changed)
-        setProgressPct(100)
-      }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : '초기화 실패')
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const appendAssistant = (content: string, animate = true) => {
     setDialogue((prev) => {
