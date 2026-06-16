@@ -184,6 +184,8 @@ export interface EduQuest {
   con_line: string
   alignment_summary: string
   conflict_summary: string
+  time_anchor?: string | null
+  quest_frame?: string | null
   articles: EduQuestArticle[]
 }
 

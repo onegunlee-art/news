@@ -68,6 +68,7 @@ function eduLoadTodayQuest(?array $student = null): ?array
 
 function eduPublicQuestPayload(array $quest): array
 {
+    $hints = eduQuestHammerHints($quest);
     $articles = [];
     foreach ($quest['articles'] ?? [] as $a) {
         $articles[] = [
@@ -90,6 +91,8 @@ function eduPublicQuestPayload(array $quest): array
         'con_line' => $quest['con_line'],
         'alignment_summary' => $quest['alignment_summary'] ?? '',
         'conflict_summary' => $quest['conflict_summary'],
+        'time_anchor' => $hints['time_anchor'] ?? null,
+        'quest_frame' => $hints['quest_frame'] ?? null,
         'articles' => $articles,
         'fsm_stages' => $quest['fsm_stages'] ?? ['commit', 'hammer', 'reflection', 'writing', 'growth'],
     ];
@@ -116,14 +119,20 @@ function eduHammerPayload(array $quest, string $stance): array
     $mode = $hints['mode'] ?? 'adversarial';
     if ($mode === 'convergent') {
         $shared = (string) ($hints['shared_conclusion'] ?? '');
+        $isDecisionInquiry = ($hints['quest_frame'] ?? '') === 'decision_inquiry';
+        if ($isDecisionInquiry) {
+            $reflectionQuestion = '네가 본 관점을 한 줄로 정리해볼래? 그 선택, 너는 어떻게 봐?';
+        } elseif ($shared !== '') {
+            $reflectionQuestion = "네가 고른 근거 층위를 한 줄로 정리해볼래? 그래도 \"{$shared}\"에 동의해?";
+        } else {
+            $reflectionQuestion = '네 근거 층위를 한 줄로 정리해볼래?';
+        }
         return [
             'mode' => 'convergent',
             'stance' => $stance,
             'shared_conclusion' => $shared,
             'axes' => $hints['axes'] ?? [],
-            'reflection_question' => $shared !== ''
-                ? "네가 고른 근거 층위를 한 줄로 정리해볼래? 그래도 \"{$shared}\"에 동의해?"
-                : '네 근거 층위를 한 줄로 정리해볼래?',
+            'reflection_question' => $reflectionQuestion,
         ];
     }
 
@@ -191,6 +200,11 @@ function eduQuestHammerHints(array $quest): array
 function eduIsConvergentQuest(array $quest): bool
 {
     return (eduQuestHammerHints($quest)['mode'] ?? '') === 'convergent';
+}
+
+function eduIsDecisionInquiryQuest(array $quest): bool
+{
+    return (eduQuestHammerHints($quest)['quest_frame'] ?? '') === 'decision_inquiry';
 }
 
 /**

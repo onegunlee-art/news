@@ -7,6 +7,7 @@
  *   php tools/edu_coach_isolation_test.php
  *   php tools/edu_coach_isolation_test.php --live
  *   php tools/edu_coach_isolation_test.php --live --extended
+ *   php tools/edu_coach_isolation_test.php --live --decision
  */
 declare(strict_types=1);
 
@@ -23,10 +24,11 @@ eduLoadAgents();
 
 $useLive = in_array('--live', $argv ?? [], true);
 $extended = in_array('--extended', $argv ?? [], true);
+$decisionSuite = in_array('--decision', $argv ?? [], true);
 
 echo "=== SocraticCoach 질문 난이도 격리 (이란 세션) ===\n";
 echo 'mode: ' . ($useLive ? 'LIVE OpenAI' : 'MOCK (실제 확인은 --live)') . "\n";
-echo 'suite: ' . ($extended ? 'extended (깊이·adversarial 포함)' : 'basic') . "\n\n";
+echo 'suite: ' . ($decisionSuite ? 'decision_inquiry (Phase 2-1)' : ($extended ? 'extended (깊이·adversarial 포함)' : 'basic')) . "\n\n";
 
 $iranQuest = [
     'quest_code' => 'Q-IRAN-FOREVER-001',
@@ -36,6 +38,21 @@ $iranQuest = [
     'alignment_summary' => '세 명의 전문가 모두 "이란 전쟁은 미국이 원하는 대로 깔끔하게 끝나지 않는다"는 데 동의한다. 군사적 우위가 정치적 승리로 이어지지 않는다는 공통 인식.',
     'conflict_summary' => '공동 결론: 이란 전쟁은 깔끔하게 끝나지 않는다. 그러나 "왜" 안 끝나는지에 대한 이유가 다르다 — 기술의 한계인가, 국내정치의 함정인가, 전쟁 구조 자체의 문제인가.',
     'hammer_hints' => ['mode' => 'convergent'],
+];
+
+$decisionQuest = [
+    'quest_code' => 'Q-IRAN-DEC-202606',
+    'quest_title' => '트럼프는 군대를 보내는 대신 미사일로만 공격했어. 왜 그랬을까? 너라면?',
+    'pro_line' => '미사일만 쓴 선택이 맞았다고 본다',
+    'con_line' => '군대를 보내거나, 다른 방법이 나았다고 본다',
+    'alignment_summary' => '2026년 6월, 미국은 이란을 군대 없이 미사일과 공습으로 공격했다. 뉴스와 전문가도 \'무엇을 했는지\'는 비슷하게 설명한다.',
+    'conflict_summary' => '같은 선택인데, \'왜 그랬는지·괜찮았는지\'는 다르게 본다. 무기·공격 방법 때문인지, 미국 사람들이나 다른 나라 반응 때문인지, 나중에 어떤 대가가 올지 때문인지?',
+    'hammer_hints' => [
+        'mode' => 'convergent',
+        'quest_frame' => 'decision_inquiry',
+        'time_anchor' => '2026년 6월 기준',
+        'shared_conclusion' => '2026년 6월, 트럼프는 이란에 군대를 보내지 않고 미사일과 공격으로 대응하기로 했다',
+    ],
 ];
 
 $adversarialQuest = [
@@ -153,6 +170,68 @@ if ($extended) {
     ]);
 }
 
+if ($decisionSuite) {
+    $cases = [
+        [
+            'label' => 'D1 pro 직후 — 첫 질문',
+            'quest' => $decisionQuest,
+            'quest_type' => 'decision_inquiry',
+            'stance' => 'pro',
+            'reason' => '',
+            'progress' => 10,
+        ],
+        [
+            'label' => 'D2 con 직후 — 첫 질문',
+            'quest' => $decisionQuest,
+            'quest_type' => 'decision_inquiry',
+            'stance' => 'con',
+            'reason' => '',
+            'progress' => 10,
+        ],
+        [
+            'label' => 'D3 pro 구체 답 후 — 후속',
+            'quest' => $decisionQuest,
+            'quest_type' => 'decision_inquiry',
+            'stance' => 'pro',
+            'reason' => '군대 보내면 미국 사람들이 더 반대할 것 같아서 미사일만 쓴 게 맞다고 봐요.',
+            'progress' => 25,
+        ],
+        [
+            'label' => 'D4 con 구체 답 후 — 후속',
+            'quest' => $decisionQuest,
+            'quest_type' => 'decision_inquiry',
+            'stance' => 'con',
+            'reason' => '미사일만으로는 이란을 못 이기니까 군대를 보내거나 더 세게 해야 했다고 봐요.',
+            'progress' => 25,
+        ],
+        [
+            'label' => 'D5 vague 답 후 — 후속',
+            'quest' => $decisionQuest,
+            'quest_type' => 'decision_inquiry',
+            'stance' => 'pro',
+            'reason' => '그냥 복잡해서 잘 모르겠어요.',
+            'progress' => 25,
+        ],
+        [
+            'label' => 'D6 너라면 답 후 — 후속',
+            'quest' => $decisionQuest,
+            'quest_type' => 'decision_inquiry',
+            'stance' => 'con',
+            'reason' => '나라면 군대는 안 보내고 협상부터 했을 것 같아요.',
+            'progress' => 25,
+        ],
+        [
+            'label' => 'R1 회귀 — result_prediction pro 직후',
+            'quest' => $iranQuest,
+            'quest_type' => 'result_prediction',
+            'stance' => 'pro',
+            'reason' => '',
+            'progress' => 10,
+            'expect_old_frame' => true,
+        ],
+    ];
+}
+
 $jargonPatterns = [
     '구조적', '봉합', '결말', '귀결', '반복적 충돌', '정치적 합의',
     '군사적 성공', '정치적 결정', '패턴', '메커니즘', '함의',
@@ -172,6 +251,23 @@ function coachCheckQuestion(string $text, array $patterns): array
     foreach ($patterns as $word) {
         if (mb_strpos($text, $word) !== false) {
             $issues[] = "전문/추상어: {$word}";
+        }
+    }
+    return $issues;
+}
+
+function coachCheckDecisionFrame(string $text, bool $expectOldFrame): array
+{
+    if ($expectOldFrame) {
+        return [];
+    }
+    $issues = [];
+    $oldFramePatterns = [
+        '안 끝나', '끝나지 않', '끝낼 수', '끝나나', '끝날까', '끝난 것 같은데 또',
+    ];
+    foreach ($oldFramePatterns as $word) {
+        if (mb_strpos($text, $word) !== false) {
+            $issues[] = "옛 프레임 잔재: {$word}";
         }
     }
     return $issues;
@@ -263,6 +359,10 @@ foreach ($cases as $i => $case) {
     echo "\n[학생에게 보이는 최종 질문]\n{$final}\n";
 
     $issues = coachCheckQuestion($final, $jargonPatterns);
+    $frameIssues = coachCheckDecisionFrame($final, !empty($case['expect_old_frame']));
+    if (!empty($frameIssues)) {
+        $issues = array_merge($issues, $frameIssues);
+    }
     if (empty($issues)) {
         echo "\n형식: PASS";
         $pass++;
@@ -271,7 +371,7 @@ foreach ($cases as $i => $case) {
         $fail++;
     }
 
-    if ($extended && $useLive) {
+    if (($extended || $decisionSuite) && $useLive) {
         $depth = coachEvaluateDepth($llm, $quest, $case['stance'], $case['reason'], $final);
         $verdict = (string) ($depth['verdict'] ?? 'unknown');
         $ease = (int) ($depth['ease_score'] ?? 0);
@@ -287,10 +387,15 @@ foreach ($cases as $i => $case) {
 }
 
 echo "=== 요약: 형식 PASS {$pass} / CHECK {$fail} ===\n";
-if ($extended && $useLive) {
+if (($extended || $decisionSuite) && $useLive) {
     echo "=== 깊이: easy_deep+ {$depthPass} / shallow- {$shallow} / total " . count($cases) . " ===\n";
-    echo "adversarial: SocraticCoach는 hammer_hints.mode 무관 공용 → 대립형도 동일 난이도 제약 적용 (의도: 14세 공통)\n";
+    if ($extended) {
+        echo "adversarial: SocraticCoach는 hammer_hints.mode 무관 공용 → 대립형도 동일 난이도 제약 적용 (의도: 14세 공통)\n";
+    }
 }
 if (!$useLive) {
-    echo "실제 LLM 출력은: php tools/edu_coach_isolation_test.php --live --extended\n";
+    $hint = $decisionSuite
+        ? 'php tools/edu_coach_isolation_test.php --live --decision'
+        : 'php tools/edu_coach_isolation_test.php --live --extended';
+    echo "실제 LLM 출력은: {$hint}\n";
 }

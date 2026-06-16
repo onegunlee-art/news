@@ -39,6 +39,7 @@ if (empty($quests)) {
 }
 
 $quest = $quests[0];
+$questHints = eduQuestHammerHints($quest);
 
 $articles = $supabase->select(
     'edu_quest_articles',
@@ -90,6 +91,8 @@ eduSendJson([
         'alignment_summary' => $quest['alignment_summary'] ?? '',
         'conflict_summary' => $quest['conflict_summary'],
         'grade_band' => $quest['grade_band'],
+        'time_anchor' => $questHints['time_anchor'] ?? null,
+        'quest_frame' => $questHints['quest_frame'] ?? null,
         'articles' => $articlePayload,
         'live_at' => $quest['live_at'] ?? null,
         'expires_at' => $quest['expires_at'] ?? null,

@@ -60,10 +60,11 @@ class Hammer
         }
 
         $sharedConclusion = $hints['shared_conclusion'] ?? '';
-        $detection = $this->detectStudentAxis($studentReason, $axes, $sharedConclusion);
+        $isDecisionInquiry = ($hints['quest_frame'] ?? '') === 'decision_inquiry';
+        $detection = $this->detectStudentAxis($studentReason, $axes, $sharedConclusion, $isDecisionInquiry);
 
         if ($detection['margin_gate'] || $detection['confidence'] === 'low' || $detection['axis'] === null) {
-            $meta = $this->buildMetaAskResponse($axes, $sharedConclusion);
+            $meta = $this->buildMetaAskResponse($axes, $sharedConclusion, $isDecisionInquiry);
             $meta['classification_scores'] = $detection['scores'] ?? [];
             $meta['classification_cue'] = $detection['cue'] ?? '';
             $meta['margin_gate'] = $detection['margin_gate'] ?? true;
@@ -75,7 +76,7 @@ class Hammer
         $counterAxis = $this->pickCounterAxis($axes, $studentAxis['axis_id'], $hints);
 
         if ($counterAxis === null) {
-            return $this->buildMetaAskResponse($axes, $sharedConclusion);
+            return $this->buildMetaAskResponse($axes, $sharedConclusion, $isDecisionInquiry);
         }
 
         $contrast = $counterAxis['contrast_prompt'] ?? [];
@@ -83,7 +84,31 @@ class Hammer
         $pivotQuestion = $contrast['pivot_question'] ?? '';
         $namesAxis = $contrast['names_axis'] ?? $counterAxis['axis_label'];
 
-        $systemPrompt = <<<PROMPT
+        if ($isDecisionInquiry) {
+            $systemPrompt = <<<PROMPT
+너는 토론 코치야. 대상은 만 14세 중학생이야.
+
+이미 벌어진 결정(사실): "{$sharedConclusion}"
+학생은 이 결정을 **{$studentAxis['axis_label']}** 관점에서 평가했어.
+{$counterAxis['author']}은 같은 결정을 완전히 다른 시각으로 봐:
+**{$namesAxis}**
+
+{$distinguishText}
+
+학생에게 물어봐:
+{$pivotQuestion}
+
+중요 원칙:
+- 학생의 실제 문장에서 핵심 표현을 따옴표로 인용해서 거울처럼 비춰줘
+- "학생이 ~라고 썼어", "우리 둘 다 ~에 동의" 같은 표현 금지 — 이미 벌어진 결정을 평가하는 대화야
+- "전쟁이 왜 안 끝나나" 같은 결과 예측 질문 금지
+- 축 라벨(tech/politics/structure)이나 "기술적 관점" 같은 메타 라벨은 직접 말하지 마
+- 중학생이 쓰는 쉬운 말만. 전문용어·추상어 금지
+- 존중하는 말투로, 2~3문장으로
+- 마지막 문장은 pivot_question을 자연스럽게 녹여서 학생이 자기 평가 관점을 의식하게 해
+PROMPT;
+        } else {
+            $systemPrompt = <<<PROMPT
 너는 토론 코치야. 학생이 "{$sharedConclusion}"라고 썼어.
 
 학생은 **{$studentAxis['axis_label']}** 관점에서 접근했어.
@@ -101,6 +126,7 @@ class Hammer
 - 존중하는 말투로, 2-3문장으로
 - 마지막 문장은 pivot_question을 자연스럽게 녹여서 학생이 자기 근거의 층위를 의식하게 해
 PROMPT;
+        }
 
         $userMessage = "학생의 근거: \"{$studentReason}\"";
 
@@ -109,7 +135,7 @@ PROMPT;
         ], 400, 0.7);
 
         if (!empty($response['error'])) {
-            return $this->buildMetaAskResponse($axes, $sharedConclusion);
+            return $this->buildMetaAskResponse($axes, $sharedConclusion, $isDecisionInquiry);
         }
 
         return [
@@ -138,7 +164,7 @@ PROMPT;
      *   margin_gate_reason: string
      * }
      */
-    private function detectStudentAxis(string $reason, array $axes, string $sharedConclusion = ''): array
+    private function detectStudentAxis(string $reason, array $axes, string $sharedConclusion = '', bool $isDecisionInquiry = false): array
     {
         $empty = [
             'axis' => null,
@@ -168,16 +194,18 @@ PROMPT;
         $axisIdsStr = implode('|', $axisIds);
 
         $sharedBlock = $sharedConclusion !== ''
-            ? "학생은 이미 \"{$sharedConclusion}\"에 동의했다. 분류 기준은 결론이 아니라 \"학생이 왜 그렇다고 했는지\"의 층위다.\n\n"
+            ? ($isDecisionInquiry
+                ? "이미 \"{$sharedConclusion}\"라는 결정이 있었다. 분류 기준은 사실 자체가 아니라 \"학생이 그 결정을 어떻게 평가했는지\"의 관점이다.\n\n"
+                : "학생은 이미 \"{$sharedConclusion}\"에 동의했다. 분류 기준은 결론이 아니라 \"학생이 왜 그렇다고 했는지\"의 층위다.\n\n")
             : '';
+
+        $layerDefinitions = $this->buildAxisLayerDefinitions($axes, $isDecisionInquiry);
 
         $systemPrompt = <<<PROMPT
 {$sharedBlock}학생 근거의 층위를 분류해. 전문가 축의 결론과 비슷한지는 보지 마.
 
 층위 정의:
-- tech: 무기·군사수단·공격/타격/폭격·상대 저항력·"때리/버티" (수단 관점)
-- politics: 정권·국내정치·정책 일관성·지도자·"시작/끝내/마음대로" (정치 관점)
-- structure: 전쟁 보편 패턴·역사·구조·"원래/역사적으로" (무기·정권 없이 일반화)
+{$layerDefinitions}
 
 JSON만 응답:
 {"axis_id": "{$axisIdsStr}", "scores": {"tech": 0.0, "politics": 0.0, "structure": 0.0}, "confidence": "high|medium|low", "cue": "학생 문장 단서 1개"}
@@ -190,12 +218,12 @@ PROMPT;
         ], 512);
 
         if (!empty($response['error'])) {
-            return $this->detectStudentAxisByKeyword($reason, $axes);
+            return $this->detectStudentAxisByKeyword($reason, $axes, $isDecisionInquiry);
         }
 
         $parsed = $this->parseClassificationJson($response['content'] ?? '', $axisIds);
         if ($parsed === null) {
-            return $this->detectStudentAxisByKeyword($reason, $axes);
+            return $this->detectStudentAxisByKeyword($reason, $axes, $isDecisionInquiry);
         }
 
         return $this->finalizeAxisDetection($parsed, $axes);
@@ -349,13 +377,19 @@ PROMPT;
      * 키워드 기반 축 감지 (fallback)
      * @return array{axis: ?array, confidence: string, scores: array<string,float>, cue: string, margin_gate: bool, margin_gate_reason: string}
      */
-    private function detectStudentAxisByKeyword(string $reason, array $axes): array
+    private function detectStudentAxisByKeyword(string $reason, array $axes, bool $isDecisionInquiry = false): array
     {
-        $keywords = [
-            'tech' => ['기술', '정밀', 'AI', '무기', '타격', '드론', '폭격', '미사일', '때리', '때려', '공격', '버티', '세게', '의지', '저항'],
-            'politics' => ['정치', '여론', '선거', '정권', '국내', '의회', '대통령', '정부', '행정부', '시작', '끝내', '마음대로', '일관', '트럼프', '바이든', '미국'],
-            'structure' => ['구조', '역사', '봉합', '패턴', '반복', '원래', '본질', '항상', '베트남'],
-        ];
+        $keywords = $isDecisionInquiry
+            ? [
+                'tech' => ['미사일', '무기', '공습', '공격', '폭격', '드론', '타격', '정밀', '때리', '버티', '군대'],
+                'politics' => ['정치', '여론', '반응', '사람들', '미국', '동맹', '트럼프', '정권', '대통령', '정부', '부담'],
+                'structure' => ['나중', '앞으로', '대가', '길어', '이어', '결국', '역사', '원래', '베트남', '패턴'],
+            ]
+            : [
+                'tech' => ['기술', '정밀', 'AI', '무기', '타격', '드론', '폭격', '미사일', '때리', '때려', '공격', '버티', '세게', '의지', '저항'],
+                'politics' => ['정치', '여론', '선거', '정권', '국내', '의회', '대통령', '정부', '행정부', '시작', '끝내', '마음대로', '일관', '트럼프', '바이든', '미국'],
+                'structure' => ['구조', '역사', '봉합', '패턴', '반복', '원래', '본질', '항상', '베트남'],
+            ];
 
         $reasonLower = mb_strtolower($reason);
         $rawScores = [];
@@ -475,12 +509,22 @@ PROMPT;
     /**
      * 안전장치: confidence low 시 메타 질문으로 학생이 직접 축 선택
      */
-    private function buildMetaAskResponse(array $axes, string $sharedConclusion): array
+    private function buildMetaAskResponse(array $axes, string $sharedConclusion, bool $isDecisionInquiry = false): array
     {
         $axisLabels = array_map(fn($ax) => $ax['axis_label'], $axes);
         $options = implode("\n- ", $axisLabels);
 
-        $message = <<<MSG
+        if ($isDecisionInquiry && $sharedConclusion !== '') {
+            $message = <<<MSG
+이미 "{$sharedConclusion}"라는 결정이 있었어. 같은 결정인데, 왜 그랬는지·괜찮았는지는 전문가마다 다르게 봐.
+
+네가 방금 쓴 근거는 다음 중 뭐에 가장 가까워?
+- {$options}
+
+하나만 골라봐. 고른 다음에 그 결정을 어떻게 평가하는지 더 얘기해보자.
+MSG;
+        } else {
+            $message = <<<MSG
 우리 둘 다 "{$sharedConclusion}"라고 봤어. 그런데 '왜' 그런지에 대해선 전문가들 사이에서도 이유가 달라.
 
 네가 방금 쓴 근거는 다음 중 뭐에 가장 가까워?
@@ -488,6 +532,7 @@ PROMPT;
 
 하나만 골라봐. 고른 다음에 그게 왜 그런지 더 얘기해보자.
 MSG;
+        }
 
         return [
             'success' => true,
@@ -495,6 +540,27 @@ MSG;
             'mode' => 'convergent_meta_ask',
             'agent' => 'hammer_convergent',
         ];
+    }
+
+    private function buildAxisLayerDefinitions(array $axes, bool $isDecisionInquiry): string
+    {
+        if ($isDecisionInquiry) {
+            $lines = [];
+            foreach ($axes as $ax) {
+                $id = $ax['axis_id'] ?? '';
+                $label = $ax['axis_label'] ?? $id;
+                $namesAxis = $ax['contrast_prompt']['names_axis'] ?? '';
+                $detail = $namesAxis !== '' ? " — {$namesAxis}" : '';
+                $lines[] = "- {$id}: {$label}{$detail}";
+            }
+            return implode("\n", $lines);
+        }
+
+        return <<<'DEFS'
+- tech: 무기·군사수단·공격/타격/폭격·상대 저항력·"때리/버티" (수단 관점)
+- politics: 정권·국내정치·정책 일관성·지도자·"시작/끝내/마음대로" (정치 관점)
+- structure: 전쟁 보편 패턴·역사·구조·"원래/역사적으로" (무기·정권 없이 일반화)
+DEFS;
     }
 
     /**

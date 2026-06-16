@@ -126,6 +126,9 @@ export default function EduHomePage() {
             {/* 오늘의 퀘스트 카드 */}
             <section className="border border-[#333] rounded-lg p-5 bg-[#1a1a1a]">
               <p className="text-xs text-[#E8521C] font-medium mb-2">오늘의 논쟁</p>
+              {quest.time_anchor && (
+                <p className="text-xs text-[#888] mb-1">{quest.time_anchor}</p>
+              )}
               <h1 className="text-xl font-bold leading-snug mb-3">{quest.quest_title}</h1>
               <p className="text-sm text-[#999] mb-4">{quest.conflict_summary}</p>
               

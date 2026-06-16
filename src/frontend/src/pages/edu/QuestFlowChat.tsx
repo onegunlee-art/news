@@ -306,6 +306,11 @@ export default function QuestFlowChat() {
         {quest && (
           <div className="mt-2">
             <p className="text-xs" style={{ color: EDU_BRAND.muted }}>{quest.quest_code}</p>
+            {quest.time_anchor && (
+              <p className="text-[11px] mt-0.5" style={{ color: EDU_BRAND.muted }}>
+                {quest.time_anchor}
+              </p>
+            )}
             <h1 className="text-base font-bold leading-snug">{quest.quest_title}</h1>
           </div>
         )}
