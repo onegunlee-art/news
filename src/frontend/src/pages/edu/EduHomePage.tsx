@@ -12,6 +12,7 @@ import {
   setEduToken,
   type EduTierProgress,
   type EduQuest,
+  type EduQuestListItem,
 } from '../../services/eduApi'
 
 export default function EduHomePage() {
@@ -20,23 +21,29 @@ export default function EduHomePage() {
   const [studentName, setStudentName] = useState(() => getEduStudent()?.display_name || getEduDisplayName() || '')
   const [tier, setTier] = useState<EduTierProgress | null>(null)
   const [quest, setQuest] = useState<EduQuest | null>(null)
+  const [otherQuests, setOtherQuests] = useState<EduQuestListItem[]>([])
   const [participation, setParticipation] = useState<string>('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
   const [authed, setAuthed] = useState(!!getEduToken())
   const [showLogin, setShowLogin] = useState(false)
 
-  const loadToday = async () => {
+  const loadHome = async () => {
     setLoading(true)
     setError('')
     try {
-      const res = await eduApi.todayQuest()
-      setQuest(res.quest)
-      setParticipation(res.participation?.display || '')
-      if (res.tier) {
-        setTier(res.tier)
+      const [todayRes, listRes] = await Promise.all([
+        eduApi.todayQuest(),
+        eduApi.listQuests(),
+      ])
+      setQuest(todayRes.quest)
+      setParticipation(todayRes.participation?.display || '')
+      if (todayRes.tier) {
+        setTier(todayRes.tier)
         setAuthed(true)
       }
+      const liveId = todayRes.quest?.quest_id
+      setOtherQuests(listRes.quests.filter((q) => !q.is_live && q.quest_id !== liveId))
     } catch (e) {
       setError(e instanceof Error ? e.message : '로드 실패')
       if ((e as Error).message?.includes('401')) {
@@ -49,7 +56,7 @@ export default function EduHomePage() {
   }
 
   useEffect(() => {
-    loadToday()
+    loadHome()
   }, [])
 
   const handleRedeem = async () => {
@@ -66,7 +73,7 @@ export default function EduHomePage() {
       })
       setStudentName(res.student.display_name)
       setAuthed(true)
-      await loadToday()
+      await loadHome()
     } catch (e) {
       setError(e instanceof Error ? e.message : '초대코드 오류')
     } finally {
@@ -74,12 +81,13 @@ export default function EduHomePage() {
     }
   }
 
-  const handleStart = async () => {
-    if (!quest?.quest_id) return
+  const handleStart = async (questId?: string) => {
+    const id = questId ?? quest?.quest_id
+    if (!id) return
     setLoading(true)
     try {
-      await eduApi.startSession(quest.quest_id)
-      navigate('/edu/quest')
+      await eduApi.startSession(id)
+      navigate(questId ? `/edu/quest?quest_id=${encodeURIComponent(id)}` : '/edu/quest')
     } catch (e) {
       setError(e instanceof Error ? e.message : '시작 실패')
     } finally {
@@ -179,11 +187,11 @@ export default function EduHomePage() {
                   <p className="text-sm text-[#666]">안녕하세요, {studentName}님</p>
                 )}
                 {tier && (
-                  <TierProgressCard tier={tier} onStartQuest={handleStart} loading={loading} />
+                  <TierProgressCard tier={tier} onStartQuest={() => handleStart()} loading={loading} />
                 )}
                 <button
                   type="button"
-                  onClick={handleStart}
+                  onClick={() => handleStart()}
                   disabled={loading}
                   className="w-full py-4 bg-[#E8521C] text-white rounded-lg font-bold text-lg disabled:opacity-50"
                 >
@@ -251,6 +259,34 @@ export default function EduHomePage() {
           <section className="text-center py-12">
             <p className="text-[#666]">오늘은 퀘스트가 없어요.</p>
             <p className="text-sm text-[#666] mt-2">수, 토, 일 오후 4시에 새 퀘스트가 드랍됩니다!</p>
+          </section>
+        )}
+
+        {otherQuests.length > 0 && (
+          <section className="space-y-3">
+            <h2 className="text-sm font-medium text-[#888]">다른 논쟁 고르기</h2>
+            {otherQuests.map((q) => (
+              <button
+                key={q.quest_id}
+                type="button"
+                onClick={() => authed && handleStart(q.quest_id)}
+                disabled={loading || !authed}
+                className="w-full text-left border border-[#333] rounded-lg p-4 bg-[#1a1a1a] hover:border-[#555] disabled:opacity-50 transition-colors"
+              >
+                <div className="flex items-start justify-between gap-2 mb-1">
+                  {q.time_anchor && (
+                    <span className="text-xs text-[#888]">{q.time_anchor}</span>
+                  )}
+                  {q.completed && (
+                    <span className="text-xs text-[#4CAF50] shrink-0">완료</span>
+                  )}
+                </div>
+                <p className="text-sm font-medium leading-snug">{q.quest_title}</p>
+                {!authed && (
+                  <p className="text-xs text-[#666] mt-2">참여하려면 로그인하세요</p>
+                )}
+              </button>
+            ))}
           </section>
         )}
 

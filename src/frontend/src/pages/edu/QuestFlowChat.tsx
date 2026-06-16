@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import EssayRevealWrapper from '../../components/edu/EssayRevealWrapper'
 import { type EssayArtifact } from '../../components/edu/EssayRevealCard'
 import StructurePreviewCard, { type EssayStructurePreview } from '../../components/edu/StructurePreviewCard'
@@ -27,6 +27,7 @@ const ROLE_LABEL: Record<string, string> = {
 
 export default function QuestFlowChat() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const bottomRef = useRef<HTMLDivElement>(null)
 
   const [quest, setQuest] = useState<EduQuest | null>(null)
@@ -74,26 +75,39 @@ export default function QuestFlowChat() {
     setLoading(true)
     setError('')
     try {
-      const today = await eduApi.todayQuest()
-      setQuest(today.quest)
-      setTier(today.tier || null)
+      const selectedQuestId = searchParams.get('quest_id')?.trim() || ''
+      let sid = ''
+      let tierData: EduTierProgress | null = null
 
-      if (!today.quest) {
-        setError('오늘의 퀘스트가 없습니다.')
-        return
-      }
-
-      const existing = today.active_session || today.existing_session
-      let sid = existing?.session_id ?? ''
-
-      if (!sid) {
-        const started = await eduApi.startSession(today.quest.quest_id)
+      if (selectedQuestId) {
+        const started = await eduApi.startSession(selectedQuestId)
         sid = started.session_id
+        const today = await eduApi.todayQuest().catch(() => null)
+        tierData = today?.tier ?? null
+      } else {
+        const today = await eduApi.todayQuest()
+        setQuest(today.quest)
+        tierData = today.tier ?? null
+
+        if (!today.quest) {
+          setError('오늘의 퀘스트가 없습니다.')
+          return
+        }
+
+        const existing = today.active_session || today.existing_session
+        sid = existing?.session_id ?? ''
+
+        if (!sid) {
+          const started = await eduApi.startSession(today.quest.quest_id)
+          sid = started.session_id
+        }
       }
 
+      setTier(tierData)
       setSessionId(sid)
 
       const state = await eduApi.getSessionState(sid)
+      setQuest(state.quest)
       setProgressPct(state.progress_pct)
       setPhase(state.blueprint?.phase ?? 'stance')
       setDialogue(state.dialogue ?? [])

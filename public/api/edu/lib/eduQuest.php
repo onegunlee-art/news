@@ -109,6 +109,17 @@ function eduActiveSession(string $studentId): ?array
     return $rows[0] ?? null;
 }
 
+function eduActiveSessionForQuest(string $studentId, string $questId): ?array
+{
+    $supabase = eduSupabase();
+    $rows = $supabase->select(
+        'edu_quest_sessions',
+        'student_id=eq.' . $studentId . '&quest_id=eq.' . $questId . '&stage=neq.completed&order=started_at.desc',
+        1
+    );
+    return $rows[0] ?? null;
+}
+
 function eduHammerPayload(array $quest, string $stance): array
 {
     $hints = $quest['hammer_hints'] ?? [];
