@@ -236,6 +236,21 @@ export interface EduQuest {
   articles: EduQuestArticle[]
 }
 
+export interface EduQuestListItem {
+  quest_id: string
+  quest_code: string
+  quest_title: string
+  pro_line: string
+  con_line: string
+  conflict_summary: string
+  grade_band: string
+  time_anchor?: string | null
+  quest_frame?: string | null
+  is_live: boolean
+  live_at?: string | null
+  completed: boolean
+}
+
 async function eduFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = getEduToken()
   const headers: Record<string, string> = {
@@ -277,6 +292,16 @@ export const eduApi = {
       curiosity_locked?: boolean
       existing_session?: { session_id: string; stage: string; stance?: string } | null
     }>('/api/edu/quests/today.php'),
+
+  listQuests: (params?: { limit?: number; frame?: string }) => {
+    const q = new URLSearchParams()
+    if (params?.limit) q.set('limit', String(params.limit))
+    if (params?.frame) q.set('frame', params.frame)
+    const qs = q.toString()
+    return eduFetch<{ quests: EduQuestListItem[]; count: number }>(
+      `/api/edu/quests/list.php${qs ? `?${qs}` : ''}`
+    )
+  },
 
   startSession: (quest_id?: string) =>
     eduFetch<{ session_id: string; stage: string; resumed: boolean }>(
