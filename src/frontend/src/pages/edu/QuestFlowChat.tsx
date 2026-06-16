@@ -4,6 +4,8 @@ import EssayRevealWrapper from '../../components/edu/EssayRevealWrapper'
 import { type EssayArtifact } from '../../components/edu/EssayRevealCard'
 import StructurePreviewCard, { type EssayStructurePreview } from '../../components/edu/StructurePreviewCard'
 import TierProgressCard from '../../components/edu/TierProgressCard'
+import TypingIndicator from '../../components/edu/TypingIndicator'
+import TypewriterText from '../../components/edu/TypewriterText'
 import { EDU_BRAND } from '../../constants/eduBrand'
 import {
   eduApi,
@@ -47,6 +49,7 @@ export default function QuestFlowChat() {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [thinkingExpanded, setThinkingExpanded] = useState(false)
   const [playEssayReveal, setPlayEssayReveal] = useState(false)
+  const [typingBubbleIndex, setTypingBubbleIndex] = useState<number | null>(null)
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
@@ -59,7 +62,7 @@ export default function QuestFlowChat() {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [dialogue, completed, composing])
+  }, [dialogue, completed, composing, sending, typingBubbleIndex])
 
   useEffect(() => {
     return () => {
@@ -122,8 +125,18 @@ export default function QuestFlowChat() {
     }
   }
 
-  const appendAssistant = (content: string) => {
-    setDialogue((prev) => [...prev, { role: 'assistant', content }])
+  const appendAssistant = (content: string, animate = true) => {
+    setDialogue((prev) => {
+      if (animate) {
+        const nextIndex = prev.length
+        requestAnimationFrame(() => setTypingBubbleIndex(nextIndex))
+      }
+      return [...prev, { role: 'assistant', content }]
+    })
+  }
+
+  const scrollToBottom = () => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
   const appendStudent = (content: string) => {
@@ -354,8 +367,19 @@ export default function QuestFlowChat() {
 
         {!completed &&
           dialogue.map((turn, i) => (
-            <DialogueBubble key={`${turn.at ?? i}-${i}`} turn={turn} />
+            <DialogueBubble
+              key={`${turn.at ?? i}-${i}`}
+              turn={turn}
+              typewriter={turn.role === 'assistant' && i === typingBubbleIndex}
+              onTypewriterComplete={() => setTypingBubbleIndex(null)}
+              onTypewriterProgress={scrollToBottom}
+            />
           ))}
+
+        {!completed && sending && <TypingIndicator />}
+        {!completed && composing && !sending && (
+          <TypingIndicator label="네 글을 만들고 있어…" />
+        )}
 
         {completed && dialogue.length > 0 && (
           <ThinkingProcessPanel
@@ -378,10 +402,6 @@ export default function QuestFlowChat() {
 
         {structurePreview && !completed && (
           <StructurePreviewCard structure={structurePreview} />
-        )}
-
-        {composing && (
-          <p className="text-sm text-[#666] text-center py-4">네 글을 만들고 있어…</p>
         )}
 
         {completed && essay && (
@@ -509,7 +529,19 @@ export default function QuestFlowChat() {
   )
 }
 
-function DialogueBubble({ turn, brandStudent = false }: { turn: EduDialogueTurn; brandStudent?: boolean }) {
+function DialogueBubble({
+  turn,
+  brandStudent = false,
+  typewriter = false,
+  onTypewriterComplete,
+  onTypewriterProgress,
+}: {
+  turn: EduDialogueTurn
+  brandStudent?: boolean
+  typewriter?: boolean
+  onTypewriterComplete?: () => void
+  onTypewriterProgress?: () => void
+}) {
   const isStudent = turn.role === 'student'
   return (
     <div className={`flex ${isStudent ? 'justify-end' : 'justify-start'}`}>
@@ -523,7 +555,16 @@ function DialogueBubble({ turn, brandStudent = false }: { turn: EduDialogueTurn;
             : { backgroundColor: EDU_BRAND.surface, color: EDU_BRAND.ink }
         }
       >
-        {turn.content}
+        {isStudent ? (
+          turn.content
+        ) : (
+          <TypewriterText
+            text={turn.content}
+            active={typewriter}
+            onComplete={onTypewriterComplete}
+            onProgress={onTypewriterProgress}
+          />
+        )}
       </div>
     </div>
   )
