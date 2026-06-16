@@ -20,6 +20,7 @@ import AuthCallback from './pages/AuthCallback'
 import NotFoundPage from './pages/NotFoundPage'
 
 const EduHomePage = lazy(() => import('./pages/edu/EduHomePage'))
+const EduProfilePage = lazy(() => import('./pages/edu/EduProfilePage'))
 const QuestFlowPage = lazy(() => import('./pages/edu/QuestFlowPage'))
 const NationalStatsPage = lazy(() => import('./pages/edu/NationalStatsPage'))
 const ShareCardPage = lazy(() => import('./pages/edu/ShareCardPage'))
@@ -107,6 +108,7 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/edu" element={<EduHomePage />} />
+          <Route path="/edu/profile" element={<EduProfilePage />} />
           <Route path="/edu/quest" element={<QuestFlowPage />} />
           <Route path="/edu/stats/:questId" element={<NationalStatsPage />} />
           <Route path="/edu/share/:sessionId" element={<ShareCardPage />} />

@@ -32,6 +32,7 @@ if (empty($config['rest_api_key'])) {
 }
 
 $eduClientId = getenv('EDU_KAKAO_CLIENT_ID') ?: $config['rest_api_key'];
+// auth_kakao_callback.php와 반드시 동일해야 함 (카카오 개발자 콘솔에도 등록 필요)
 $eduRedirectUri = getenv('EDU_KAKAO_REDIRECT_URI') ?: 'https://edu.thegist.co.kr/api/edu/auth_kakao_callback.php';
 
 $state = bin2hex(random_bytes(16));

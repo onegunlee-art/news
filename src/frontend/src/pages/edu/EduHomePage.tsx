@@ -4,8 +4,11 @@ import TierProgressCard from '../../components/edu/TierProgressCard'
 import {
   clearEduToken,
   eduApi,
+  getEduDisplayName,
+  getEduKakaoLoginUrl,
+  getEduStudent,
   getEduToken,
-  setEduDisplayName,
+  setEduStudent,
   setEduToken,
   type EduTierProgress,
   type EduQuest,
@@ -14,7 +17,7 @@ import {
 export default function EduHomePage() {
   const navigate = useNavigate()
   const [inviteCode, setInviteCode] = useState('')
-  const [studentName, setStudentName] = useState('')
+  const [studentName, setStudentName] = useState(() => getEduStudent()?.display_name || getEduDisplayName() || '')
   const [tier, setTier] = useState<EduTierProgress | null>(null)
   const [quest, setQuest] = useState<EduQuest | null>(null)
   const [participation, setParticipation] = useState<string>('')
@@ -56,7 +59,11 @@ export default function EduHomePage() {
     try {
       const res = await eduApi.redeemInvite(inviteCode.trim())
       setEduToken(res.token)
-      setEduDisplayName(res.student.display_name)
+      setEduStudent({
+        id: res.student.id,
+        display_name: res.student.display_name,
+        grade_band: res.student.grade_band,
+      })
       setStudentName(res.student.display_name)
       setAuthed(true)
       await loadToday()
@@ -86,7 +93,11 @@ export default function EduHomePage() {
     try {
       const res = await eduApi.createGuestSession()
       setEduToken(res.token)
-      setEduDisplayName(res.student.display_name)
+      setEduStudent({
+        id: res.student.id,
+        display_name: res.student.display_name,
+        grade_band: res.student.grade_band,
+      })
       setStudentName(res.student.display_name)
       setAuthed(true)
       navigate('/edu/quest')
@@ -95,6 +106,10 @@ export default function EduHomePage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleKakaoLogin = () => {
+    window.location.href = getEduKakaoLoginUrl()
   }
 
   const handleLogout = () => {
@@ -111,11 +126,20 @@ export default function EduHomePage() {
           <span className="font-bold text-xl" style={{ fontFamily: 'Lobster, cursive' }}>g.</span>
           <span className="text-sm tracking-wide text-[#999]">the gist · EDU</span>
         </div>
-        {authed && (
-          <button type="button" onClick={handleLogout} className="text-xs underline text-[#666]">
-            나가기
-          </button>
-        )}
+        {authed ? (
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => navigate('/edu/profile')}
+              className="text-xs text-[#E8521C] underline"
+            >
+              내 글함
+            </button>
+            <button type="button" onClick={handleLogout} className="text-xs underline text-[#666]">
+              나가기
+            </button>
+          </div>
+        ) : null}
       </header>
 
       <main className="max-w-lg mx-auto px-4 py-6 space-y-6">
@@ -169,6 +193,17 @@ export default function EduHomePage() {
             ) : showLogin ? (
               <section className="space-y-4 border border-[#333] rounded-lg p-5 bg-[#1a1a1a]">
                 <h2 className="text-lg font-bold">로그인</h2>
+                <button
+                  type="button"
+                  onClick={handleKakaoLogin}
+                  disabled={loading}
+                  className="w-full py-3 rounded font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+                  style={{ backgroundColor: '#FEE500', color: '#191919' }}
+                >
+                  <span className="font-bold">카카오</span>
+                  로그인
+                </button>
+                <div className="text-center text-[#666] text-xs my-2">또는</div>
                 <p className="text-sm text-[#666]">학원에서 받은 초대코드를 입력하세요.</p>
                 <input
                   type="text"

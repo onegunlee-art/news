@@ -472,6 +472,12 @@ export default function QuestFlowChat() {
                     공유 카드 만들기
                   </Link>
                   <Link
+                    to="/edu/profile"
+                    className="block w-full py-3 text-center rounded-lg font-medium border border-[#333] text-[#ccc]"
+                  >
+                    내 글함
+                  </Link>
+                  <Link
                     to="/edu"
                     className="block w-full py-3 text-center rounded-lg font-medium"
                     style={{ color: EDU_BRAND.muted }}

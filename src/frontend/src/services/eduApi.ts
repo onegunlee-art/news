@@ -1,5 +1,15 @@
 const EDU_TOKEN_KEY = 'edu_access_token'
 const EDU_DISPLAY_NAME_KEY = 'edu_display_name'
+const EDU_STUDENT_KEY = 'edu_student'
+
+export interface EduStudent {
+  id: string
+  display_name: string
+  grade_band?: string
+  profile_image?: string | null
+  email?: string | null
+  has_kakao?: boolean
+}
 
 export function getEduToken(): string | null {
   return localStorage.getItem(EDU_TOKEN_KEY)
@@ -12,6 +22,8 @@ export function setEduToken(token: string): void {
 export function clearEduToken(): void {
   localStorage.removeItem(EDU_TOKEN_KEY)
   localStorage.removeItem(EDU_DISPLAY_NAME_KEY)
+  localStorage.removeItem(EDU_STUDENT_KEY)
+  localStorage.removeItem('edu_refresh_token')
 }
 
 export function getEduDisplayName(): string | null {
@@ -20,6 +32,27 @@ export function getEduDisplayName(): string | null {
 
 export function setEduDisplayName(name: string): void {
   localStorage.setItem(EDU_DISPLAY_NAME_KEY, name)
+}
+
+export function getEduStudent(): EduStudent | null {
+  const raw = localStorage.getItem(EDU_STUDENT_KEY)
+  if (!raw) return null
+  try {
+    return JSON.parse(raw) as EduStudent
+  } catch {
+    return null
+  }
+}
+
+export function setEduStudent(student: EduStudent): void {
+  localStorage.setItem(EDU_STUDENT_KEY, JSON.stringify(student))
+  if (student.display_name) {
+    setEduDisplayName(student.display_name)
+  }
+}
+
+export function getEduKakaoLoginUrl(): string {
+  return '/api/edu/auth_kakao.php'
 }
 
 export interface EduTierProgress {
@@ -176,6 +209,20 @@ export interface EduSessionState {
   } | null
 }
 
+export interface EduCompletedSession {
+  session_id: string
+  quest_id: string
+  quest_code: string
+  quest_title: string
+  time_anchor?: string | null
+  stance?: 'pro' | 'con' | null
+  stage: string
+  started_at?: string | null
+  completed_at?: string | null
+  essay_title?: string | null
+  hero_sentence?: string | null
+}
+
 export interface EduQuest {
   quest_id: string
   quest_code: string
@@ -284,6 +331,18 @@ export const eduApi = {
 
   tierProgress: () =>
     eduFetch<{ tier: EduTierProgress }>('/api/edu/tier/progress.php'),
+
+  studentProfile: () =>
+    eduFetch<{
+      student: EduStudent
+      tier: EduTierProgress
+      completed_count: number
+    }>('/api/edu/student/profile.php'),
+
+  studentSessions: (status: 'completed' | 'in_progress' | 'all' = 'completed') =>
+    eduFetch<{ sessions: EduCompletedSession[] }>(
+      `/api/edu/student/sessions.php?status=${status}`
+    ),
 
   getNationalStats: (questId: string) =>
     eduFetch<{
