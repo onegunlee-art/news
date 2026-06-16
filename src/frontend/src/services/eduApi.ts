@@ -1,4 +1,5 @@
 const EDU_TOKEN_KEY = 'edu_access_token'
+const EDU_DISPLAY_NAME_KEY = 'edu_display_name'
 
 export function getEduToken(): string | null {
   return localStorage.getItem(EDU_TOKEN_KEY)
@@ -10,6 +11,15 @@ export function setEduToken(token: string): void {
 
 export function clearEduToken(): void {
   localStorage.removeItem(EDU_TOKEN_KEY)
+  localStorage.removeItem(EDU_DISPLAY_NAME_KEY)
+}
+
+export function getEduDisplayName(): string | null {
+  return localStorage.getItem(EDU_DISPLAY_NAME_KEY)
+}
+
+export function setEduDisplayName(name: string): void {
+  localStorage.setItem(EDU_DISPLAY_NAME_KEY, name)
 }
 
 export interface EduTierProgress {

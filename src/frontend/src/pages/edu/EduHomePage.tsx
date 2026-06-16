@@ -5,6 +5,7 @@ import {
   clearEduToken,
   eduApi,
   getEduToken,
+  setEduDisplayName,
   setEduToken,
   type EduTierProgress,
   type EduQuest,
@@ -55,6 +56,7 @@ export default function EduHomePage() {
     try {
       const res = await eduApi.redeemInvite(inviteCode.trim())
       setEduToken(res.token)
+      setEduDisplayName(res.student.display_name)
       setStudentName(res.student.display_name)
       setAuthed(true)
       await loadToday()
@@ -84,7 +86,8 @@ export default function EduHomePage() {
     try {
       const res = await eduApi.createGuestSession()
       setEduToken(res.token)
-      setStudentName('게스트')
+      setEduDisplayName(res.student.display_name)
+      setStudentName(res.student.display_name)
       setAuthed(true)
       navigate('/edu/quest')
     } catch (e) {

@@ -1,17 +1,21 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import EssayEditor from '../../components/edu/EssayEditor'
+import EssayRevealWrapper from '../../components/edu/EssayRevealWrapper'
 import { type EssayArtifact } from '../../components/edu/EssayRevealCard'
 import StructurePreviewCard, { type EssayStructurePreview } from '../../components/edu/StructurePreviewCard'
 import TierProgressCard from '../../components/edu/TierProgressCard'
+import { EDU_BRAND } from '../../constants/eduBrand'
 import {
   eduApi,
   getEduToken,
+  getEduDisplayName,
   type EduDialogueTurn,
   type EduQuest,
   type EduQuestArticle,
   type EduTierProgress,
 } from '../../services/eduApi'
+
+const PAGE_MAX = 'max-w-2xl'
 
 const ROLE_LABEL: Record<string, string> = {
   primary: '핵심',
@@ -41,6 +45,8 @@ export default function QuestFlowChat() {
   const [composing, setComposing] = useState(false)
   const [structurePreview, setStructurePreview] = useState<EssayStructurePreview | null>(null)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const [thinkingExpanded, setThinkingExpanded] = useState(false)
+  const [playEssayReveal, setPlayEssayReveal] = useState(false)
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
@@ -189,6 +195,7 @@ export default function QuestFlowChat() {
       if (res.tier) setTier(res.tier)
       setProgressPct(100)
       setSaveStatus(res.saved ? 'saved' : 'idle')
+      setPlayEssayReveal(true)
       appendAssistant(
         res.title
           ? `네 글이 완성됐고 자동으로 저장됐어! 아래에서 읽고 필요하면 고쳐봐.`
@@ -274,30 +281,48 @@ export default function QuestFlowChat() {
     )
   }
 
+  const studentTurnCount = dialogue.filter((t) => t.role === 'student').length
+  const lastTurn = dialogue[dialogue.length - 1]
+  const authorName = getEduDisplayName() ?? '나'
+
   return (
-    <div className="min-h-screen bg-white text-[#1a1a1a] flex flex-col">
-      <header className="border-b border-[#1a1a1a] px-4 py-3 max-w-lg mx-auto w-full">
-        <Link to="/edu" className="text-xs text-[#666] underline">
-          ← 홈
-        </Link>
+    <div
+      className="min-h-screen bg-white flex flex-col"
+      style={{ color: EDU_BRAND.ink, fontFamily: EDU_BRAND.fontBody }}
+    >
+      <header className={`border-b px-4 py-3 ${PAGE_MAX} mx-auto w-full`} style={{ borderColor: EDU_BRAND.border }}>
+        <div className="flex items-center justify-between gap-2">
+          <Link to="/edu" className="text-xs underline" style={{ color: EDU_BRAND.muted }}>
+            ← 홈
+          </Link>
+          <span
+            className="text-xl leading-none"
+            style={{ fontFamily: EDU_BRAND.fontLogo, color: EDU_BRAND.accent }}
+            aria-hidden
+          >
+            g.
+          </span>
+        </div>
         {quest && (
           <div className="mt-2">
-            <p className="text-xs text-[#666]">{quest.quest_code}</p>
+            <p className="text-xs" style={{ color: EDU_BRAND.muted }}>{quest.quest_code}</p>
             <h1 className="text-base font-bold leading-snug">{quest.quest_title}</h1>
           </div>
         )}
         <div className="mt-2 flex items-center gap-2">
-          <div className="flex-1 h-1.5 bg-[#eee] rounded overflow-hidden">
+          <div className="flex-1 h-1.5 rounded overflow-hidden" style={{ backgroundColor: EDU_BRAND.border }}>
             <div
-              className="h-full bg-[#1a1a1a] transition-all duration-500"
-              style={{ width: `${progressPct}%` }}
+              className="h-full transition-all duration-500"
+              style={{ width: `${progressPct}%`, backgroundColor: EDU_BRAND.accent }}
             />
           </div>
-          <span className="text-[10px] text-[#666] whitespace-nowrap">생각 정리 {progressPct}%</span>
+          <span className="text-[10px] whitespace-nowrap" style={{ color: EDU_BRAND.muted }}>
+            생각 정리 {progressPct}%
+          </span>
         </div>
       </header>
 
-      <main className="flex-1 max-w-lg mx-auto w-full px-4 py-4 overflow-y-auto space-y-3">
+      <main className={`flex-1 ${PAGE_MAX} mx-auto w-full px-4 py-4 overflow-y-auto space-y-3`}>
         {phase === 'stance' && dialogue.length === 0 && quest && !completed && (
           <section className="space-y-3 mb-4">
             <p className="text-sm text-[#666]">오늘의 입장을 선택하세요.</p>
@@ -322,22 +347,20 @@ export default function QuestFlowChat() {
           </section>
         )}
 
-        {dialogue.map((turn, i) => (
-          <div
-            key={`${turn.at ?? i}-${i}`}
-            className={`flex ${turn.role === 'student' ? 'justify-end' : 'justify-start'}`}
-          >
-            <div
-              className={`max-w-[85%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap ${
-                turn.role === 'student'
-                  ? 'bg-[#1a1a1a] text-white'
-                  : 'bg-[#f8f8f8] border border-[#ddd]'
-              }`}
-            >
-              {turn.content}
-            </div>
-          </div>
-        ))}
+        {!completed &&
+          dialogue.map((turn, i) => (
+            <DialogueBubble key={`${turn.at ?? i}-${i}`} turn={turn} />
+          ))}
+
+        {completed && dialogue.length > 0 && (
+          <ThinkingProcessPanel
+            dialogue={dialogue}
+            expanded={thinkingExpanded}
+            onToggle={() => setThinkingExpanded((v) => !v)}
+            turnCount={studentTurnCount}
+            preview={lastTurn?.content ?? ''}
+          />
+        )}
 
         {articles.length > 0 && !completed && phase === 'evidence' && (
           <section className="space-y-2 border border-[#ccc] rounded p-3 bg-[#fafafa]">
@@ -357,47 +380,82 @@ export default function QuestFlowChat() {
         )}
 
         {completed && essay && (
-          <section className="space-y-4 border-2 border-[#1a1a1a] rounded-lg p-4 mt-4">
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-xs font-bold text-[#666]">나만의 글</p>
-              <span className="text-[10px] text-[#666]">
-                {saveStatus === 'saving' && '저장 중…'}
-                {saveStatus === 'saved' && '✓ 자동 저장됨'}
-                {saveStatus === 'error' && '저장 실패 — 다시 시도해줘'}
-              </span>
+          <section className="space-y-6 pt-2 mt-2">
+            <div
+              className="border-t pt-8"
+              style={{ borderColor: EDU_BRAND.border }}
+            >
+              <div className="flex items-center justify-between gap-2 mb-6">
+                <p className="text-xs font-bold tracking-wide uppercase" style={{ color: EDU_BRAND.accent }}>
+                  나만의 글
+                </p>
+                <span className="text-xs" style={{ color: EDU_BRAND.muted }}>
+                  {saveStatus === 'saving' && '저장 중…'}
+                  {saveStatus === 'saved' && '✓ 자동 저장됨'}
+                  {saveStatus === 'error' && '저장 실패 — 다시 시도해줘'}
+                </span>
+              </div>
+              {stanceChanged && (
+                <span
+                  className="inline-block text-xs font-bold px-2 py-0.5 rounded mb-4"
+                  style={{ color: EDU_BRAND.accent, backgroundColor: EDU_BRAND.accentBg }}
+                >
+                  생각이 바뀌었다
+                </span>
+              )}
+              <EssayRevealWrapper
+                essay={essay}
+                onChange={handleEssayChange}
+                disabled={saveStatus === 'saving'}
+                authorName={authorName}
+                playReveal={playEssayReveal}
+                onRevealComplete={() => setPlayEssayReveal(false)}
+              />
+              {!playEssayReveal && (
+                <p className="text-xs mt-6 text-center" style={{ color: EDU_BRAND.muted }}>
+                  고치고 싶은 부분을 탭하면 편집할 수 있어
+                </p>
+              )}
             </div>
-            {stanceChanged && (
-              <span className="inline-block text-[10px] font-bold border border-[#1a1a1a] px-2 py-0.5">
-                생각이 바뀌었다
-              </span>
+            {!playEssayReveal && (
+              <>
+                {essay.feedback && (
+                  <p
+                    className="text-sm p-3 rounded-lg"
+                    style={{ color: EDU_BRAND.muted, backgroundColor: EDU_BRAND.surface }}
+                  >
+                    {essay.feedback}
+                  </p>
+                )}
+                {xpGained > 0 && <p className="text-sm">+{xpGained} XP 획득</p>}
+                {tier && <TierProgressCard tier={tier} />}
+                <div className="space-y-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => essay && void persistEssay(essay)}
+                    disabled={saveStatus === 'saving'}
+                    className="w-full py-2.5 text-sm rounded-lg font-medium disabled:opacity-40 border"
+                    style={{ borderColor: EDU_BRAND.border, color: EDU_BRAND.ink }}
+                  >
+                    지금 저장
+                  </button>
+                  <Link
+                    to={`/edu/share/${sessionId}`}
+                    className="block w-full py-3 text-center text-white rounded-lg font-medium"
+                    style={{ backgroundColor: EDU_BRAND.accent }}
+                  >
+                    공유 카드 만들기
+                  </Link>
+                  <Link
+                    to="/edu"
+                    className="block w-full py-3 text-center rounded-lg font-medium"
+                    style={{ color: EDU_BRAND.muted }}
+                  >
+                    홈으로
+                  </Link>
+                </div>
+              </>
             )}
-            <p className="text-[10px] text-[#999]">제목·본문·핵심 문장을 고치면 1.5초 후 자동 저장돼.</p>
-            <EssayEditor essay={essay} onChange={handleEssayChange} disabled={saveStatus === 'saving'} />
-            {essay.feedback && (
-              <p className="text-xs text-[#666] border border-[#eee] p-2 rounded">{essay.feedback}</p>
-            )}
-            {xpGained > 0 && <p className="text-sm">+{xpGained} XP 획득</p>}
-            {tier && <TierProgressCard tier={tier} />}
-            <button
-              type="button"
-              onClick={() => essay && void persistEssay(essay)}
-              disabled={saveStatus === 'saving'}
-              className="w-full py-2 text-sm border border-[#1a1a1a] rounded font-medium disabled:opacity-40"
-            >
-              지금 저장
-            </button>
-            <Link
-              to={`/edu/share/${sessionId}`}
-              className="block w-full py-3 text-center bg-[#1a1a1a] text-white rounded font-medium"
-            >
-              공유 카드 만들기
-            </Link>
-            <Link
-              to="/edu"
-              className="block w-full py-3 text-center border border-[#1a1a1a] rounded font-medium"
-            >
-              홈으로
-            </Link>
           </section>
         )}
 
@@ -408,7 +466,7 @@ export default function QuestFlowChat() {
       </main>
 
       {!completed && phase !== 'stance' && (
-        <footer className="border-t border-[#ddd] px-4 py-3 max-w-lg mx-auto w-full bg-white">
+        <footer className={`border-t px-4 py-3 ${PAGE_MAX} mx-auto w-full bg-white`} style={{ borderColor: EDU_BRAND.border }}>
           {phase === 'reflection' && (
             <div className="flex gap-2 mb-2">
               <button
@@ -443,6 +501,79 @@ export default function QuestFlowChat() {
         </footer>
       )}
     </div>
+  )
+}
+
+function DialogueBubble({ turn, brandStudent = false }: { turn: EduDialogueTurn; brandStudent?: boolean }) {
+  const isStudent = turn.role === 'student'
+  return (
+    <div className={`flex ${isStudent ? 'justify-end' : 'justify-start'}`}>
+      <div
+        className={`max-w-[85%] px-3 py-2 text-sm whitespace-pre-wrap ${
+          isStudent ? 'rounded-2xl rounded-br-md text-white' : 'rounded-2xl rounded-bl-md'
+        }`}
+        style={
+          isStudent
+            ? { backgroundColor: brandStudent ? EDU_BRAND.accent : EDU_BRAND.ink }
+            : { backgroundColor: EDU_BRAND.surface, color: EDU_BRAND.ink }
+        }
+      >
+        {turn.content}
+      </div>
+    </div>
+  )
+}
+
+function ThinkingProcessPanel({
+  dialogue,
+  expanded,
+  onToggle,
+  turnCount,
+  preview,
+}: {
+  dialogue: EduDialogueTurn[]
+  expanded: boolean
+  onToggle: () => void
+  turnCount: number
+  preview: string
+}) {
+  return (
+    <section
+      className="rounded-xl overflow-hidden"
+      style={{ backgroundColor: EDU_BRAND.surface }}
+    >
+      <button
+        type="button"
+        onClick={onToggle}
+        className="w-full flex items-center justify-between gap-2 px-4 py-3 text-left"
+        aria-expanded={expanded}
+      >
+        <span className="text-sm font-bold" style={{ color: EDU_BRAND.ink }}>
+          💭 내 생각 과정 보기
+          <span className="font-normal ml-1.5" style={{ color: EDU_BRAND.muted }}>
+            ({turnCount}턴)
+          </span>
+        </span>
+        <span className="text-xs shrink-0" style={{ color: EDU_BRAND.accent }}>
+          {expanded ? '접기 ▲' : '펼치기 ▼'}
+        </span>
+      </button>
+      {!expanded && preview && (
+        <p
+          className="px-4 pb-3 text-sm line-clamp-2"
+          style={{ color: EDU_BRAND.muted }}
+        >
+          {preview}
+        </p>
+      )}
+      {expanded && (
+        <div className="px-4 pb-4 space-y-3 border-t" style={{ borderColor: EDU_BRAND.border }}>
+          {dialogue.map((turn, i) => (
+            <DialogueBubble key={`think-${turn.at ?? i}-${i}`} turn={turn} brandStudent />
+          ))}
+        </div>
+      )}
+    </section>
   )
 }
 
