@@ -91,7 +91,7 @@ function eduNuke630QuestFixture(): array
 {
     $hammerHints = [
         'mode' => 'convergent',
-        'quest_frame' => 'decision_inquiry',
+        'quest_frame' => 'myth_bust',
         'time_anchor' => '2025~2026년 사례 기준',
         'shared_conclusion' => '핵무기가 있어도 드론·미사일 같은 값싼 공격은 막기 어렵다는 게 최근 사례에서 드러났다',
         'hook_short' => '핵 억지가 큰 전쟁은 막아도, 미사일·드론 같은 일반 공격은 왜 못 막고 있는 걸까?',

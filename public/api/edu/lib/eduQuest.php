@@ -196,6 +196,8 @@ function eduPublicQuestPayload(array $quest): array
         'conflict_summary' => $quest['conflict_summary'],
         'time_anchor' => $hints['time_anchor'] ?? null,
         'quest_frame' => $hints['quest_frame'] ?? null,
+        'hook_short' => $hints['hook_short'] ?? null,
+        'hook_full' => $hints['hook_full'] ?? null,
         'articles' => $articles,
         'fsm_stages' => $quest['fsm_stages'] ?? ['commit', 'hammer', 'reflection', 'writing', 'growth'],
     ];
@@ -319,6 +321,11 @@ function eduIsConvergentQuest(array $quest): bool
 function eduIsDecisionInquiryQuest(array $quest): bool
 {
     return (eduQuestHammerHints($quest)['quest_frame'] ?? '') === 'decision_inquiry';
+}
+
+function eduIsMythBustQuest(array $quest): bool
+{
+    return (eduQuestHammerHints($quest)['quest_frame'] ?? '') === 'myth_bust';
 }
 
 /**
