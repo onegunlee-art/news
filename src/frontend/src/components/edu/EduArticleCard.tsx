@@ -7,18 +7,39 @@ const ROLE_LABEL: Record<string, string> = {
   counter: '다른 시각',
 }
 
-export default function EduArticleCard({ article }: { article: EduQuestArticle }) {
+type Props = {
+  article: EduQuestArticle
+  disabled?: boolean
+  onInteract?: () => void
+}
+
+export default function EduArticleCard({ article, disabled = false, onInteract }: Props) {
   const [expanded, setExpanded] = useState(false)
   const outlet = article.source_outlet?.trim() || ''
   const perspective = article.media_perspective?.trim() || ''
   const excerptLines = article.excerpt?.split('\n').filter((line) => line.trim() !== '') ?? []
 
+  const handleToggle = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (disabled) return
+    onInteract?.()
+    setExpanded((v) => !v)
+  }
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    e.stopPropagation()
+    if (disabled) return
+    onInteract?.()
+  }
+
   return (
-    <div className="border border-[#ccc] rounded overflow-hidden bg-white">
+    <div className={`border border-[#ccc] rounded overflow-hidden bg-white ${disabled ? 'opacity-60 pointer-events-none' : ''}`}>
       <button
         type="button"
-        onClick={() => setExpanded((v) => !v)}
-        className="w-full text-left p-2 hover:bg-[#f5f5f5] transition-colors"
+        onClick={handleToggle}
+        onPointerDown={handlePointerDown}
+        disabled={disabled}
+        className="w-full text-left p-2 hover:bg-[#f5f5f5] transition-colors disabled:hover:bg-white"
         aria-expanded={expanded}
       >
         <div className="flex items-start justify-between gap-2">

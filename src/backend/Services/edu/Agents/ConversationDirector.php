@@ -72,12 +72,27 @@ class ConversationDirector
 
         if ($phase === 'evidence') {
             $nudges = (int) ($blueprint['evidence_nudge_count'] ?? 0);
-            $depth = (int) ($eval['depth_score'] ?? 3);
-            if ($depth < 3 && $nudges < self::MAX_EVIDENCE_NUDGES) {
+            $depth = (int) ($eval['depth_score'] ?? 2);
+            $evidenceText = trim((string) ($blueprint['evidence'] ?? ''));
+            $evidenceLen = mb_strlen($evidenceText);
+            $hasEvidence = !empty($eval['has_evidence']);
+            $meetsCriteria = $evidenceLen >= 20 && $hasEvidence && $depth >= 3;
+
+            if (!$meetsCriteria && $nudges < self::MAX_EVIDENCE_NUDGES) {
                 return [
                     'next_agent' => 'socratic',
                     'action' => 'nudge_evidence',
-                    'prompt_hint' => '근거를 조금 더 구체적으로',
+                    'prompt_hint' => '기사에서 본 구체적 사실을 더 적어달라고 안내',
+                    'should_compose' => false,
+                    'progress_pct' => 45,
+                ];
+            }
+
+            if (!$meetsCriteria) {
+                return [
+                    'next_agent' => 'socratic',
+                    'action' => 'nudge_evidence',
+                    'prompt_hint' => '기사 인용 근거가 아직 부족함 — 구체적 사실을 요청',
                     'should_compose' => false,
                     'progress_pct' => 45,
                 ];

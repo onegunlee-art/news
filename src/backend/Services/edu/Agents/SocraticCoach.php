@@ -159,9 +159,11 @@ PROMPT;
             ['role' => 'user', 'content' => $userMessage]
         ], 200);
 
+        $fallbackDepth = $phase === 'evidence' ? 2 : 3;
+
         if (!empty($response['error'])) {
             return [
-                'depth_score' => 3,
+                'depth_score' => $fallbackDepth,
                 'has_evidence' => false,
                 'clarity' => 3,
                 'needs_followup' => false,
@@ -171,7 +173,7 @@ PROMPT;
         $content = $response['content'] ?? '';
         if (preg_match('/\{[\s\S]*\}/', $content, $match)) {
             return json_decode($match[0], true) ?? [
-                'depth_score' => 3,
+                'depth_score' => $fallbackDepth,
                 'has_evidence' => false,
                 'clarity' => 3,
                 'needs_followup' => false,
@@ -179,7 +181,7 @@ PROMPT;
         }
 
         return [
-            'depth_score' => 3,
+            'depth_score' => $fallbackDepth,
             'has_evidence' => false,
             'clarity' => 3,
             'needs_followup' => false,

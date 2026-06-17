@@ -275,7 +275,7 @@ if ($phase === 'reasoning') {
     if (($decision['action'] ?? '') === 'nudge_evidence') {
         $blueprint['evidence_nudge_count'] = (int) ($blueprint['evidence_nudge_count'] ?? 0) + 1;
         $assistantMessage = $director->refinePrompt(
-            '좋은 시작이야! 기사에서 본 구체적인 내용을 한 가지만 더 말해줄래?',
+            '기사에서 본 구체적인 사실 하나를 더 적어줘. 예를 들면 드론 공격, 인도·파키스탄, 한국 핵무장 같은 내용이면 좋아.',
             $quest,
             (int) ($decision['progress_pct'] ?? 45)
         );

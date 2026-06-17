@@ -19,6 +19,8 @@ import {
 } from '../../services/eduApi'
 
 const PAGE_MAX = 'max-w-2xl'
+const EVIDENCE_MIN_LEN = 20
+const ARTICLE_PHASES = ['evidence', 'hammer', 'reflection']
 
 export default function QuestFlowChat() {
   const navigate = useNavigate()
@@ -29,6 +31,7 @@ export default function QuestFlowChat() {
   const [sessionId, setSessionId] = useState('')
   const [dialogue, setDialogue] = useState<EduDialogueTurn[]>([])
   const [input, setInput] = useState('')
+  const [evidenceInput, setEvidenceInput] = useState('')
   const [progressPct, setProgressPct] = useState(0)
   const [phase, setPhase] = useState('stance')
   const [articles, setArticles] = useState<EduQuestArticle[]>([])
@@ -48,6 +51,35 @@ export default function QuestFlowChat() {
   const [typingBubbleIndex, setTypingBubbleIndex] = useState<number | null>(null)
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const selectedQuestId = searchParams.get('quest_id')?.trim() || ''
+
+  const blurActiveInput = () => {
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur()
+    }
+  }
+
+  const applySessionState = useCallback((state: Awaited<ReturnType<typeof eduApi.getSessionState>>) => {
+    setQuest(state.quest)
+    setProgressPct(state.progress_pct)
+    setPhase(state.blueprint?.phase ?? 'stance')
+    setDialogue(state.dialogue ?? [])
+    if (state.quest?.articles?.length) {
+      setArticles(state.quest.articles)
+    }
+    const preview = state.blueprint?.essay_structure
+    if (preview?.sections?.length) {
+      setStructurePreview(preview as EssayStructurePreview)
+    }
+    if (state.blueprint?.evidence) {
+      setEvidenceInput(String(state.blueprint.evidence))
+    }
+  }, [])
+
+  const syncSessionState = useCallback(async (sid: string) => {
+    const state = await eduApi.getSessionState(sid)
+    applySessionState(state)
+    return state
+  }, [applySessionState])
 
   const init = useCallback(async () => {
     setLoading(true)
@@ -84,14 +116,7 @@ export default function QuestFlowChat() {
       setSessionId(sid)
 
       const state = await eduApi.getSessionState(sid)
-      setQuest(state.quest)
-      setProgressPct(state.progress_pct)
-      setPhase(state.blueprint?.phase ?? 'stance')
-      setDialogue(state.dialogue ?? [])
-      const preview = state.blueprint?.essay_structure
-      if (preview?.sections?.length) {
-        setStructurePreview(preview as EssayStructurePreview)
-      }
+      applySessionState(state)
 
       if (state.stage === 'completed' && state.essay) {
         setCompleted(true)
@@ -114,7 +139,7 @@ export default function QuestFlowChat() {
     } finally {
       setLoading(false)
     }
-  }, [selectedQuestId])
+  }, [selectedQuestId, applySessionState])
 
   useEffect(() => {
     if (!getEduToken()) {
@@ -230,19 +255,18 @@ export default function QuestFlowChat() {
     }
   }
 
-  const handleChatResponse = async (res: Awaited<ReturnType<typeof eduApi.sendChat>>) => {
-    setProgressPct(res.progress_pct ?? progressPct)
-    setPhase(res.phase ?? phase)
-    if (res.articles) setArticles(res.articles)
+  const handleChatResponse = async (
+    res: Awaited<ReturnType<typeof eduApi.sendChat>>,
+    sid: string
+  ) => {
     if (res.stance_changed) setStanceChanged(true)
-    if (res.assistant_message) appendAssistant(res.assistant_message)
+    if (res.articles?.length) setArticles(res.articles)
     if (res.structure_preview?.sections?.length) {
       setStructurePreview(res.structure_preview as EssayStructurePreview)
-    } else if (res.blueprint?.essay_structure?.sections?.length) {
-      setStructurePreview(res.blueprint.essay_structure as EssayStructurePreview)
     }
+    await syncSessionState(sid)
     if (res.should_compose) {
-      await handleCompose(res.session_id)
+      await handleCompose(sid)
     }
   }
 
@@ -255,7 +279,7 @@ export default function QuestFlowChat() {
     appendStudent(`${label}: ${line}`)
     try {
       const res = await eduApi.sendChat(sessionId, { action: 'select_stance', stance })
-      await handleChatResponse(res)
+      await handleChatResponse(res, sessionId)
     } catch (e) {
       setError(e instanceof Error ? e.message : '오류')
     } finally {
@@ -270,7 +294,7 @@ export default function QuestFlowChat() {
     appendStudent('맞아')
     try {
       const res = await eduApi.sendChat(sessionId, { action: 'confirm_reflection' })
-      await handleChatResponse(res)
+      await handleChatResponse(res, sessionId)
     } catch (e) {
       setError(e instanceof Error ? e.message : '오류')
     } finally {
@@ -279,7 +303,7 @@ export default function QuestFlowChat() {
   }
 
   const handleSend = async () => {
-    if (!input.trim() || !sessionId || sending || completed) return
+    if (!input.trim() || !sessionId || sending || completed || phase === 'evidence') return
     const msg = input.trim()
     setInput('')
     setSending(true)
@@ -287,7 +311,25 @@ export default function QuestFlowChat() {
     appendStudent(msg)
     try {
       const res = await eduApi.sendChat(sessionId, { message: msg })
-      await handleChatResponse(res)
+      await handleChatResponse(res, sessionId)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '오류')
+    } finally {
+      setSending(false)
+    }
+  }
+
+  const handleSubmitEvidence = async () => {
+    const msg = evidenceInput.trim()
+    if (!msg || msg.length < EVIDENCE_MIN_LEN || !sessionId || sending || completed || phase !== 'evidence') {
+      return
+    }
+    setSending(true)
+    setError('')
+    appendStudent(msg)
+    try {
+      const res = await eduApi.sendChat(sessionId, { message: msg })
+      await handleChatResponse(res, sessionId)
     } catch (e) {
       setError(e instanceof Error ? e.message : '오류')
     } finally {
@@ -306,6 +348,8 @@ export default function QuestFlowChat() {
   const studentTurnCount = dialogue.filter((t) => t.role === 'student').length
   const lastTurn = dialogue[dialogue.length - 1]
   const authorName = getEduDisplayName() ?? '나'
+  const showArticles = articles.length > 0 && !completed && ARTICLE_PHASES.includes(phase)
+  const evidenceReady = evidenceInput.trim().length >= EVIDENCE_MIN_LEN
 
   return (
     <div
@@ -400,11 +444,16 @@ export default function QuestFlowChat() {
           />
         )}
 
-        {articles.length > 0 && !completed && phase === 'evidence' && (
+        {showArticles && (
           <section className="space-y-2 border border-[#ccc] rounded p-3 bg-[#fafafa]">
             <p className="text-xs font-bold">참고 기사</p>
             {articles.map((a) => (
-              <EduArticleCard key={a.news_id} article={a} />
+              <EduArticleCard
+                key={a.news_id}
+                article={a}
+                disabled={sending || composing}
+                onInteract={blurActiveInput}
+              />
             ))}
           </section>
         )}
@@ -519,25 +568,60 @@ export default function QuestFlowChat() {
               </button>
             </div>
           )}
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-              placeholder="네 생각을 입력해…"
-              disabled={sending || composing}
-              className="flex-1 border border-[#1a1a1a] rounded px-3 py-2 text-sm"
-            />
-            <button
-              type="button"
-              onClick={handleSend}
-              disabled={sending || composing || !input.trim()}
-              className="px-4 py-2 bg-[#1a1a1a] text-white rounded text-sm font-medium disabled:opacity-40"
-            >
-              보내기
-            </button>
-          </div>
+          {phase === 'evidence' ? (
+            <div className="space-y-2">
+              <label className="block text-xs font-medium" style={{ color: EDU_BRAND.muted }}>
+                기사에서 찾은 근거 ({EVIDENCE_MIN_LEN}자 이상)
+              </label>
+              <textarea
+                value={evidenceInput}
+                onChange={(e) => setEvidenceInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                    e.preventDefault()
+                    void handleSubmitEvidence()
+                  }
+                }}
+                placeholder="기사에서 본 구체적인 사실을 적어줘…"
+                disabled={sending || composing}
+                rows={3}
+                className="w-full border border-[#1a1a1a] rounded px-3 py-2 text-sm resize-none"
+              />
+              <button
+                type="button"
+                onClick={() => void handleSubmitEvidence()}
+                disabled={sending || composing || !evidenceReady}
+                className="w-full py-2.5 bg-[#1a1a1a] text-white rounded text-sm font-medium disabled:opacity-40"
+              >
+                근거 제출
+              </button>
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    void handleSend()
+                  }
+                }}
+                placeholder="네 생각을 입력해…"
+                disabled={sending || composing}
+                className="flex-1 border border-[#1a1a1a] rounded px-3 py-2 text-sm"
+              />
+              <button
+                type="button"
+                onClick={() => void handleSend()}
+                disabled={sending || composing || !input.trim()}
+                className="px-4 py-2 bg-[#1a1a1a] text-white rounded text-sm font-medium disabled:opacity-40"
+              >
+                보내기
+              </button>
+            </div>
+          )}
         </footer>
       )}
     </div>

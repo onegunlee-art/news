@@ -28,6 +28,7 @@ foreach ($argv ?? [] as $arg) {
 $expectedByQuest = [
     'Q-IRAN-FOREVER-001' => [555, 422, 528],
     'Q-G09-DEC-2022' => [546, 452, 558],
+    'Q-NUKE-AXIS-630' => [630, 475, 449, 615],
 ];
 $expectedNewsIds = $expectedByQuest[$questCode] ?? [];
 
