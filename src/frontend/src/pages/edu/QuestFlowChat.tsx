@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import EssayRevealWrapper from '../../components/edu/EssayRevealWrapper'
 import { type EssayArtifact } from '../../components/edu/EssayRevealCard'
@@ -47,30 +47,12 @@ export default function QuestFlowChat() {
   const [playEssayReveal, setPlayEssayReveal] = useState(false)
   const [typingBubbleIndex, setTypingBubbleIndex] = useState<number | null>(null)
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const selectedQuestId = searchParams.get('quest_id')?.trim() || ''
 
-  useEffect(() => {
-    if (!getEduToken()) {
-      navigate('/edu')
-      return
-    }
-    init()
-  }, [navigate])
-
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [dialogue, completed, composing, sending, typingBubbleIndex])
-
-  useEffect(() => {
-    return () => {
-      if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
-    }
-  }, [])
-
-  const init = async () => {
+  const init = useCallback(async () => {
     setLoading(true)
     setError('')
     try {
-      const selectedQuestId = searchParams.get('quest_id')?.trim() || ''
       let sid = ''
       let tierData: EduTierProgress | null = null
 
@@ -132,7 +114,25 @@ export default function QuestFlowChat() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [selectedQuestId])
+
+  useEffect(() => {
+    if (!getEduToken()) {
+      navigate('/edu')
+      return
+    }
+    void init()
+  }, [navigate, init])
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [dialogue, completed, composing, sending, typingBubbleIndex])
+
+  useEffect(() => {
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+    }
+  }, [])
 
   const appendAssistant = (content: string, animate = true) => {
     setDialogue((prev) => {
