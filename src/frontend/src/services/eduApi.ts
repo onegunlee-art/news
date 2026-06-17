@@ -263,7 +263,14 @@ async function eduFetch<T>(path: string, options: RequestInit = {}): Promise<T> 
   }
 
   const res = await fetch(path, { ...options, headers })
-  const data = await res.json()
+  const raw = await res.text()
+  let data: { success?: boolean; error?: string }
+  try {
+    data = raw ? (JSON.parse(raw) as { success?: boolean; error?: string }) : {}
+  } catch {
+    const hint = raw.trimStart().startsWith('<') ? '서버가 HTML 오류 페이지를 반환했어요' : '응답 형식 오류'
+    throw new Error(`${hint} (${res.status}). 잠시 후 다시 시도해 주세요.`)
+  }
   if (!res.ok || data.success === false) {
     throw new Error(data.error || `Request failed (${res.status})`)
   }

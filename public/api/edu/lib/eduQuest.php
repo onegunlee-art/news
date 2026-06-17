@@ -324,6 +324,101 @@ function eduIsDecisionInquiryQuest(array $quest): bool
 /**
  * @return ?array{axis_id: string, axis_label: string}
  */
+function eduMatchStudentAxisFromText(string $text, array $quest): ?array
+{
+    if (!eduIsConvergentQuest($quest)) {
+        return null;
+    }
+
+    $axes = eduQuestHammerHints($quest)['axes'] ?? [];
+    if (!is_array($axes) || $axes === []) {
+        return null;
+    }
+
+    $haystack = mb_strtolower(trim($text));
+    if ($haystack === '') {
+        return null;
+    }
+
+    $keywordMap = [
+        'tech' => ['폭격', '미사일', '무기', '기술', '정밀', '군사력', '타격', '드론', '대만', '중국'],
+        'politics' => ['민심', '국민', '여론', '정치', '반전', '국내', '사회', '정권', '트럼프', '미국', '동맹', '바이든'],
+        'structure' => ['구조', '봉합', '복잡', '얽히', '원래', '불안정', '예전', '흐름', '역사', '패턴', '베트남'],
+        'military' => ['군사', '드론', '미사일', '억지', '협박', '핵무장', '멸망', '재래식'],
+        'norms' => ['약속', '규칙', '규범', '국제', '금지'],
+        'defense' => ['방어', '방공', '기지', '회복력', '방호'],
+    ];
+
+    $rawScores = [];
+    $labelsById = [];
+
+    foreach ($axes as $axis) {
+        if (!is_array($axis)) {
+            continue;
+        }
+        $axisId = (string) ($axis['axis_id'] ?? '');
+        $label = trim((string) ($axis['axis_label'] ?? ''));
+        if ($axisId === '' || $label === '') {
+            continue;
+        }
+        $labelsById[$axisId] = $label;
+
+        $score = 0;
+        $labelLower = mb_strtolower($label);
+        if ($haystack === $labelLower || str_contains($haystack, $labelLower)) {
+            $score += 10;
+        }
+
+        foreach (array_unique(preg_split('/[\s·\/]+/u', $labelLower) ?: []) as $token) {
+            $token = trim((string) $token);
+            if (mb_strlen($token) >= 2 && str_contains($haystack, $token)) {
+                $score += 2;
+            }
+        }
+
+        $needles = array_filter([
+            (string) ($axis['contrast_prompt']['names_axis'] ?? ''),
+            (string) ($axis['thesis'] ?? ''),
+        ]);
+        foreach ($needles as $needle) {
+            $n = mb_strtolower(trim($needle));
+            if ($n !== '' && mb_strlen($n) >= 4 && str_contains($haystack, mb_substr($n, 0, min(8, mb_strlen($n))))) {
+                $score += 1;
+            }
+        }
+
+        foreach ($keywordMap[$axisId] ?? [] as $kw) {
+            if (str_contains($haystack, mb_strtolower($kw))) {
+                $score += 1;
+            }
+        }
+
+        $rawScores[$axisId] = $score;
+    }
+
+    if ($rawScores === []) {
+        return null;
+    }
+
+    arsort($rawScores);
+    $ids = array_keys($rawScores);
+    $topId = $ids[0];
+    $topScore = $rawScores[$topId];
+    $secondScore = $rawScores[$ids[1] ?? ''] ?? 0;
+
+    if ($topScore === 0 || $topScore === $secondScore) {
+        return null;
+    }
+
+    return [
+        'axis_id' => $topId,
+        'axis_label' => $labelsById[$topId] ?? $topId,
+    ];
+}
+
+/**
+ * @return ?array{axis_id: string, axis_label: string}
+ */
 function eduResolveStudentAxis(array $blueprint, array $quest): ?array
 {
     if (!eduIsConvergentQuest($quest)) {
@@ -350,49 +445,18 @@ function eduResolveStudentAxis(array $blueprint, array $quest): ?array
         }
     }
 
-    $haystack = mb_strtolower(implode(' ', array_filter([
-        (string) ($blueprint['reason'] ?? ''),
-        (string) ($blueprint['evidence'] ?? ''),
-        (string) ($blueprint['rebuttal'] ?? ''),
-    ])));
-
-    $scores = [
-        'politics' => 0,
-        'tech' => 0,
-        'structure' => 0,
-    ];
-    $keywords = [
-        'politics' => ['민심', '국민', '여론', '정치', '반전', '히피', '국내', '사회'],
-        'tech' => ['폭격', '미사일', '무기', '기술', '정밀', '군사력', '타격'],
-        'structure' => ['구조', '봉합', '복잡', '얽히', '원래', '전쟁 자체', '불안정'],
-    ];
-    foreach ($keywords as $axisKey => $words) {
-        foreach ($words as $word) {
-            if ($word !== '' && str_contains($haystack, mb_strtolower($word))) {
-                $scores[$axisKey]++;
-            }
-        }
+    $fromRebuttal = eduMatchStudentAxisFromText((string) ($blueprint['rebuttal'] ?? ''), $quest);
+    if ($fromRebuttal !== null) {
+        return $fromRebuttal;
     }
 
-    arsort($scores);
-    $topId = (string) array_key_first($scores);
-    if ($topId === '' || ($scores[$topId] ?? 0) === 0) {
-        return null;
-    }
-
-    foreach ($axes as $axis) {
-        if (!is_array($axis)) {
-            continue;
-        }
-        if (($axis['axis_id'] ?? '') === $topId) {
-            $label = trim((string) ($axis['axis_label'] ?? ''));
-            if ($label !== '') {
-                return ['axis_id' => $topId, 'axis_label' => $label];
-            }
-        }
-    }
-
-    return null;
+    return eduMatchStudentAxisFromText(
+        implode(' ', array_filter([
+            (string) ($blueprint['reason'] ?? ''),
+            (string) ($blueprint['evidence'] ?? ''),
+        ])),
+        $quest
+    );
 }
 
 /**

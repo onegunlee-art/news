@@ -179,18 +179,22 @@ PROMPT;
             return $empty;
         }
 
+        $axisIds = array_map(fn($ax) => $ax['axis_id'], $axes);
+
         if ($this->isExplicitlyVagueReason($reason)) {
+            $vagueScores = [];
+            foreach ($axisIds as $id) {
+                $vagueScores[$id] = 0.2;
+            }
             return [
                 'axis' => null,
                 'confidence' => 'low',
-                'scores' => ['tech' => 0.2, 'politics' => 0.2, 'structure' => 0.2],
+                'scores' => $vagueScores,
                 'cue' => '모호한 표현',
                 'margin_gate' => true,
                 'margin_gate_reason' => 'vague_no_layer_cue',
             ];
         }
-
-        $axisIds = array_map(fn($ax) => $ax['axis_id'], $axes);
         $axisIdsStr = implode('|', $axisIds);
 
         $sharedBlock = $sharedConclusion !== ''
@@ -201,6 +205,12 @@ PROMPT;
 
         $layerDefinitions = $this->buildAxisLayerDefinitions($axes, $isDecisionInquiry);
 
+        $scorePairs = [];
+        foreach ($axisIds as $id) {
+            $scorePairs[] = "\"{$id}\": 0.0";
+        }
+        $scoresExample = '{' . implode(', ', $scorePairs) . '}';
+
         $systemPrompt = <<<PROMPT
 {$sharedBlock}학생 근거의 층위를 분류해. 전문가 축의 결론과 비슷한지는 보지 마.
 
@@ -208,7 +218,7 @@ PROMPT;
 {$layerDefinitions}
 
 JSON만 응답:
-{"axis_id": "{$axisIdsStr}", "scores": {"tech": 0.0, "politics": 0.0, "structure": 0.0}, "confidence": "high|medium|low", "cue": "학생 문장 단서 1개"}
+{"axis_id": "{$axisIdsStr}", "scores": {$scoresExample}, "confidence": "high|medium|low", "cue": "학생 문장 단서 1개"}
 PROMPT;
 
         $userMessage = "학생 근거: \"{$reason}\"";
@@ -381,9 +391,9 @@ PROMPT;
     {
         $keywords = $isDecisionInquiry
             ? [
-                'tech' => ['미사일', '무기', '공습', '공격', '폭격', '드론', '타격', '정밀', '때리', '버티', '군대'],
-                'politics' => ['정치', '여론', '반응', '사람들', '미국', '동맹', '트럼프', '정권', '대통령', '정부', '부담'],
-                'structure' => ['나중', '앞으로', '대가', '길어', '이어', '결국', '역사', '원래', '베트남', '패턴'],
+                'tech' => ['미사일', '무기', '공습', '공격', '폭격', '드론', '타격', '정밀', '때리', '버티', '군대', '중국', '대만', '주변', '위험'],
+                'politics' => ['정치', '여론', '반응', '사람들', '미국', '동맹', '트럼프', '정권', '대통령', '정부', '부담', '와줄'],
+                'structure' => ['나중', '앞으로', '대가', '길어', '이어', '결국', '역사', '원래', '베트남', '패턴', '예전', '바뀌', '10년', '흐름'],
             ]
             : [
                 'tech' => ['기술', '정밀', 'AI', '무기', '타격', '드론', '폭격', '미사일', '때리', '때려', '공격', '버티', '세게', '의지', '저항'],

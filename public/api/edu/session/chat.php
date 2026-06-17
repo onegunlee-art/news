@@ -343,6 +343,11 @@ if ($phase === 'reasoning') {
         'phase' => 'reflection',
     ]);
 
+    $matchedAxis = eduMatchStudentAxisFromText($message, $quest);
+    if ($matchedAxis !== null) {
+        $blueprint['student_axis'] = $matchedAxis['axis_id'];
+    }
+
     $supabase->update('edu_counter_logs', 'session_id=eq.' . $sessionId, [
         'student_rebuttal' => $message,
         'led_to_stance_change' => $stanceChanged,

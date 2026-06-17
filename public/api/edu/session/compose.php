@@ -27,6 +27,8 @@ handleOptionsRequest();
 setCorsHeaders();
 eduRequirePost();
 
+@set_time_limit(300);
+
 $student = eduRequireStudent();
 $supabase = eduSupabase();
 $body = eduJsonBody();
@@ -35,6 +37,8 @@ $sessionId = trim((string) ($body['session_id'] ?? ''));
 if ($sessionId === '') {
     eduSendError('session_id required');
 }
+
+try {
 
 $sessions = $supabase->select('edu_quest_sessions', 'id=eq.' . $sessionId . '&student_id=eq.' . $student['id'], 1);
 if (empty($sessions[0])) {
@@ -253,3 +257,8 @@ eduSendJson([
     'tier' => eduTierProgressPayload($tierRow),
     'progress_pct' => 100,
 ]);
+
+} catch (Throwable $e) {
+    error_log('edu compose fatal: ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
+    eduSendError('글 생성 중 오류가 났어요. 잠시 후 다시 시도해 주세요.', 503);
+}

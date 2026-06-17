@@ -174,6 +174,9 @@ class EduOpenAILlmClient
         if ($temperature !== null && !str_starts_with($model, 'gpt-5')) {
             $opts['temperature'] = $temperature;
         }
+        if ($maxTokens >= 3000) {
+            $opts['timeout'] = (int) (getenv('EDU_COMPOSE_TIMEOUT') ?: 180);
+        }
         return $opts;
     }
 }
