@@ -19,7 +19,7 @@ import {
 } from '../../services/eduApi'
 
 const PAGE_MAX = 'max-w-2xl'
-const EVIDENCE_MIN_LEN = 20
+const EVIDENCE_RECOMMENDED_LEN = 20
 const ARTICLE_PHASES = ['evidence', 'hammer', 'reflection']
 
 export default function QuestFlowChat() {
@@ -321,7 +321,10 @@ export default function QuestFlowChat() {
 
   const handleSubmitEvidence = async () => {
     const msg = evidenceInput.trim()
-    if (!msg || msg.length < EVIDENCE_MIN_LEN || !sessionId || sending || completed || phase !== 'evidence') {
+    if (!msg || !sessionId || sending || completed || phase !== 'evidence') {
+      if (!msg && phase === 'evidence') {
+        setError('기사에서 본 내용을 먼저 적어줘.')
+      }
       return
     }
     setSending(true)
@@ -349,7 +352,8 @@ export default function QuestFlowChat() {
   const lastTurn = dialogue[dialogue.length - 1]
   const authorName = getEduDisplayName() ?? '나'
   const showArticles = articles.length > 0 && !completed && ARTICLE_PHASES.includes(phase)
-  const evidenceReady = evidenceInput.trim().length >= EVIDENCE_MIN_LEN
+  const evidenceLen = evidenceInput.trim().length
+  const evidenceReady = evidenceLen > 0
 
   return (
     <div
@@ -555,7 +559,10 @@ export default function QuestFlowChat() {
       </main>
 
       {!completed && phase !== 'stance' && (
-        <footer className={`border-t px-4 py-3 ${PAGE_MAX} mx-auto w-full bg-white`} style={{ borderColor: EDU_BRAND.border }}>
+        <footer
+          className={`border-t px-4 py-3 ${PAGE_MAX} mx-auto w-full bg-white sticky bottom-0 z-10`}
+          style={{ borderColor: EDU_BRAND.border }}
+        >
           {phase === 'reflection' && (
             <div className="flex gap-2 mb-2">
               <button
@@ -570,12 +577,26 @@ export default function QuestFlowChat() {
           )}
           {phase === 'evidence' ? (
             <div className="space-y-2">
-              <label className="block text-xs font-medium" style={{ color: EDU_BRAND.muted }}>
-                기사에서 찾은 근거 ({EVIDENCE_MIN_LEN}자 이상)
-              </label>
+              <div className="flex items-center justify-between gap-2">
+                <label className="text-xs font-medium" style={{ color: EDU_BRAND.muted }}>
+                  기사에서 찾은 근거
+                </label>
+                <span
+                  className="text-[10px] tabular-nums"
+                  style={{ color: evidenceLen >= EVIDENCE_RECOMMENDED_LEN ? EDU_BRAND.accent : EDU_BRAND.muted }}
+                >
+                  {evidenceLen}자
+                  {evidenceLen > 0 && evidenceLen < EVIDENCE_RECOMMENDED_LEN
+                    ? ` · ${EVIDENCE_RECOMMENDED_LEN}자 이상이면 좋아요`
+                    : ''}
+                </span>
+              </div>
               <textarea
                 value={evidenceInput}
-                onChange={(e) => setEvidenceInput(e.target.value)}
+                onChange={(e) => {
+                  setEvidenceInput(e.target.value)
+                  if (error) setError('')
+                }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
                     e.preventDefault()
@@ -593,7 +614,7 @@ export default function QuestFlowChat() {
                 disabled={sending || composing || !evidenceReady}
                 className="w-full py-2.5 bg-[#1a1a1a] text-white rounded text-sm font-medium disabled:opacity-40"
               >
-                근거 제출
+                {sending ? '제출 중…' : '근거 제출'}
               </button>
             </div>
           ) : (
