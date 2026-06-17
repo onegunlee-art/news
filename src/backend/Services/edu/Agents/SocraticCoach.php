@@ -154,6 +154,9 @@ PROMPT;
 PROMPT;
 
         $userMessage = "퀘스트: {$quest['quest_title']}\n학생 입장: {$stance}\n평가 대상({$phaseLabel}): {$response}";
+        if ($stance === 'myth_bust') {
+            $userMessage = "퀘스트: {$quest['quest_title']}\n학생 생각(찬반 없음, myth_bust): {$response}\n평가 대상({$phaseLabel})";
+        }
 
         $response = $this->llm->haiku($systemPrompt, [
             ['role' => 'user', 'content' => $userMessage]
@@ -185,6 +188,280 @@ PROMPT;
             'has_evidence' => false,
             'clarity' => 3,
             'needs_followup' => false,
+        ];
+    }
+
+    /**
+     * @param list<array<string, mixed>> $dialogue
+     * @return list<string>
+     */
+    public function collectStudentTexts(array $dialogue): array
+    {
+        $texts = [];
+        foreach ($dialogue as $turn) {
+            if (($turn['role'] ?? '') === 'student') {
+                $content = trim((string) ($turn['content'] ?? ''));
+                if ($content !== '') {
+                    $texts[] = $content;
+                }
+            }
+        }
+
+        return array_values(array_unique($texts));
+    }
+
+    /**
+     * @param list<array<string, mixed>> $dialogue
+     * @return list<string>
+     */
+    public function collectCoachQuestions(array $dialogue): array
+    {
+        $questions = [];
+        foreach ($dialogue as $turn) {
+            if (($turn['role'] ?? '') !== 'assistant') {
+                continue;
+            }
+            $agent = (string) ($turn['agent'] ?? '');
+            if ($agent !== '' && !in_array($agent, ['socratic', 'hook'], true)) {
+                continue;
+            }
+            $content = trim((string) ($turn['content'] ?? ''));
+            if ($content !== '') {
+                $questions[] = $content;
+            }
+        }
+
+        return $questions;
+    }
+
+    public function isVagueStudentText(string $text): bool
+    {
+        $lower = mb_strtolower(trim($text));
+        if ($lower === '') {
+            return true;
+        }
+        if (mb_strlen($lower) < 12) {
+            return true;
+        }
+
+        $hasVague = str_contains($lower, '그냥')
+            || str_contains($lower, '복잡')
+            || str_contains($lower, '모르겠')
+            || str_contains($lower, '잘 모르');
+
+        if (!$hasVague) {
+            return false;
+        }
+
+        $layerCues = [
+            '핵', '드론', '미사일', '폭격', '러시아', '이스라엘', '인도', '파키스탄', '우크라',
+            '방공', '방어', '약속', '규범', '기지', '공격', '억지', '무기',
+        ];
+        foreach ($layerCues as $cue) {
+            if (str_contains($lower, mb_strtolower($cue))) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * myth_bust reasoning — 이미 충분히 답했으면 followup 없이 evidence로
+     *
+     * @param list<string> $studentTexts
+     */
+    public function shouldAdvanceReasoningMythBust(array $eval, string $message, array $studentTexts, int $followupCount): bool
+    {
+        $depth = (int) ($eval['depth_score'] ?? 3);
+        $text = trim($message);
+        $len = mb_strlen($text);
+        $vague = $this->isVagueStudentText($text);
+
+        if ($vague && $followupCount >= 1) {
+            return true;
+        }
+
+        if (!$vague && $depth >= 3) {
+            return true;
+        }
+
+        if (!$vague && $len >= 40 && $depth >= 2) {
+            return true;
+        }
+
+        $combinedLen = 0;
+        foreach ($studentTexts as $studentText) {
+            $combinedLen += mb_strlen(trim($studentText));
+        }
+        if ($combinedLen >= 65 && !$vague && $depth >= 2) {
+            return true;
+        }
+
+        if ($followupCount >= 1 && !$vague && $len >= 20) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * @param list<string> $studentTexts
+     */
+    public function questionOverlapsStudentText(string $question, array $studentTexts): bool
+    {
+        $question = mb_strtolower(trim($question));
+        if ($question === '') {
+            return false;
+        }
+
+        $studentBlob = mb_strtolower(implode("\n", $studentTexts));
+        if ($studentBlob === '') {
+            return false;
+        }
+
+        $genericPatterns = [
+            '왜 그렇게 생각',
+            '왜 그렇게 봐',
+            '왜 그래',
+            '조금 더 구체',
+            '더 자세히',
+            '방금 말한',
+            '방금 한 말',
+            '한 가지만',
+            '왜 그렇게 생각해',
+        ];
+        foreach ($genericPatterns as $pattern) {
+            if (str_contains($question, $pattern) && mb_strlen($studentBlob) >= 25) {
+                return true;
+            }
+        }
+
+        if (preg_match_all('/[\p{L}\p{N}]{3,}/u', $question, $qWords) === false) {
+            return false;
+        }
+        $words = array_unique($qWords[0] ?? []);
+        if ($words === []) {
+            return false;
+        }
+
+        $stop = ['그런데', '그래서', '하지만', '정말', '우리나라', '학생', '생각', '이유', '질문', '말해', '어떻게'];
+        $matched = 0;
+        $checked = 0;
+        foreach ($words as $word) {
+            if (in_array($word, $stop, true)) {
+                continue;
+            }
+            $checked++;
+            if (str_contains($studentBlob, $word)) {
+                $matched++;
+            }
+        }
+        if ($checked === 0) {
+            return false;
+        }
+
+        return ($matched / $checked) >= 0.55;
+    }
+
+    /** myth_bust opening 직후 — 학생 opening 맥락 반영, 찬반 금지 */
+    public function askOpeningFollowupMythBust(array $quest, string $opening): array
+    {
+        $hints = $this->hammerHints($quest);
+        $hookFull = trim((string) ($hints['hook_full'] ?? ''));
+        $questTitle = (string) ($quest['quest_title'] ?? '');
+
+        $systemPrompt = <<<PROMPT
+너는 myth_bust 퀘스트 소크라테스 코치야. 대상은 만 14세 중학생.
+학생은 찬성/반대가 아니라 자유롭게 생각을 말했어.
+
+역할:
+- 학생 opening에서 아직 안 다룬 구체적 각도 1가지만 짧게 물어봐
+- 학생이 이미 설명한 내용(이유·사례)을 다시 묻지 마
+- "왜 그렇게 생각해?"처럼 이미 답한 걸 되묻지 마
+
+금지: 찬성, 반대, pro, con, 입장 선택
+난이도: 중학생 일상어, 질문 1개, 물음표 1개, 2문장 이내
+
+퀘스트: {$questTitle}
+hook: {$hookFull}
+PROMPT;
+
+        $userMessage = "학생 opening:\n\"{$opening}\"\n\n위 내용에서 빠진 각도(예: 특정 사례, 우리나라에 적용하면?) 하나만 물어봐. 질문만 출력.";
+
+        return $this->mythBustFollowupResponse($systemPrompt, $userMessage, 'opening');
+    }
+
+    /**
+     * @param list<string> $studentTexts
+     * @param list<string> $coachQuestions
+     */
+    public function askReasonFollowupMythBust(
+        array $quest,
+        string $latestMessage,
+        array $studentTexts,
+        array $coachQuestions = []
+    ): array {
+        $hints = $this->hammerHints($quest);
+        $hookFull = trim((string) ($hints['hook_full'] ?? ''));
+        $questTitle = (string) ($quest['quest_title'] ?? '');
+        $priorStudent = implode("\n- ", $studentTexts);
+        $priorCoach = $coachQuestions === [] ? '(없음)' : implode("\n- ", $coachQuestions);
+
+        $systemPrompt = <<<PROMPT
+너는 myth_bust 퀘스트 소크라테스 코치야. 대상은 만 14세 중학생.
+
+학생이 이미 말한 것:
+- {$priorStudent}
+
+코치가 이미 물은 것:
+- {$priorCoach}
+
+역할:
+- 학생 답에서 아직 안 다룬 구체적 각도 1가지만 짧게 물어봐
+- 학생이 이미 말한 내용·이유·사례를 다시 묻지 마
+- "방금 말한 생각을 더 구체적으로" 같은 제자리 질문 금지
+
+금지: 찬성, 반대, pro, con
+난이도: 중학생 일상어, 질문 1개, 물음표 1개, 2문장 이내
+
+퀘스트: {$questTitle}
+hook: {$hookFull}
+PROMPT;
+
+        $userMessage = "학생 방금 답:\n\"{$latestMessage}\"\n\n새 각도 질문 1개만 출력.";
+
+        return $this->mythBustFollowupResponse($systemPrompt, $userMessage, 'reason');
+    }
+
+    /** @return array{success: bool, question: string, agent: string} */
+    private function mythBustFollowupResponse(string $systemPrompt, string $userMessage, string $kind): array
+    {
+        $fallback = $kind === 'opening'
+            ? '네가 말한 사례 중에서 가장 설득력 있다고 느낀 건 뭐야?'
+            : '그 생각이 우리나라 상황에도 그대로 적용된다고 보면 어떤 점이 달라질까?';
+
+        $response = $this->llm->chat($systemPrompt, [
+            ['role' => 'user', 'content' => $userMessage],
+        ], 256, 0.7);
+
+        if (!empty($response['error'])) {
+            return [
+                'success' => false,
+                'question' => $fallback,
+                'agent' => 'socratic_coach_myth_bust',
+            ];
+        }
+
+        $question = trim((string) ($response['content'] ?? ''));
+        if ($question === '') {
+            $question = $fallback;
+        }
+
+        return [
+            'success' => true,
+            'question' => $question,
+            'agent' => 'socratic_coach_myth_bust',
         ];
     }
 
