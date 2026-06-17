@@ -77,6 +77,7 @@ export interface EduQuestArticle {
   excerpt?: string
   why_important?: string
   source_outlet?: string
+  media_perspective?: string
   published_at?: string | null
 }
 

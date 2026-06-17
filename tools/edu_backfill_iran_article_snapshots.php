@@ -25,7 +25,11 @@ foreach ($argv ?? [] as $arg) {
     }
 }
 
-$expectedNewsIds = [555, 422, 528];
+$expectedByQuest = [
+    'Q-IRAN-FOREVER-001' => [555, 422, 528],
+    'Q-G09-DEC-2022' => [546, 452, 558],
+];
+$expectedNewsIds = $expectedByQuest[$questCode] ?? [];
 
 function stripPlain(string $html): string
 {
@@ -312,11 +316,13 @@ if (!$dryRun && $updated > 0) {
     echo "  (or Supabase select edu_quest_articles where quest_id=...)\n";
 }
 
-$foundIds = array_map(fn ($a) => (int) ($a['news_id'] ?? 0), $articles);
-$missing = array_diff($expectedNewsIds, $foundIds);
-if ($missing !== []) {
-    echo 'WARN: expected news_ids missing from quest: ' . implode(',', $missing) . "\n";
-    exit(1);
+if ($expectedNewsIds !== []) {
+    $foundIds = array_map(fn ($a) => (int) ($a['news_id'] ?? 0), $articles);
+    $missing = array_diff($expectedNewsIds, $foundIds);
+    if ($missing !== []) {
+        echo 'WARN: expected news_ids missing from quest: ' . implode(',', $missing) . "\n";
+        exit(1);
+    }
 }
 
 exit($skipped > 0 && $updated === 0 ? 1 : 0);

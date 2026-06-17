@@ -250,15 +250,7 @@ if ($phase === 'reasoning') {
         $blueprint['phase'] = 'evidence';
         $publicArticles = [];
         foreach ($quest['articles'] as $a) {
-            $publicArticles[] = [
-                'news_id' => (int) ($a['news_id'] ?? 0),
-                'role' => $a['role'] ?? 'context',
-                'title' => $a['title'] ?? '',
-                'gist_url' => $a['gist_url'] ?? '',
-                'excerpt' => $a['excerpt'] ?? '',
-                'why_important' => $a['why_important'] ?? '',
-                'source_outlet' => $a['source_outlet'] ?? '',
-            ];
+            $publicArticles[] = eduPublicArticleRow($quest, $a);
         }
         $assistantMessage = $director->refinePrompt(
             '기사들을 참고해서 네 주장을 뒷받침하는 근거를 찾아봐.',

@@ -6,6 +6,7 @@ import StructurePreviewCard, { type EssayStructurePreview } from '../../componen
 import TierProgressCard from '../../components/edu/TierProgressCard'
 import TypingIndicator from '../../components/edu/TypingIndicator'
 import TypewriterText from '../../components/edu/TypewriterText'
+import EduArticleCard from '../../components/edu/EduArticleCard'
 import { EDU_BRAND } from '../../constants/eduBrand'
 import {
   eduApi,
@@ -18,12 +19,6 @@ import {
 } from '../../services/eduApi'
 
 const PAGE_MAX = 'max-w-2xl'
-
-const ROLE_LABEL: Record<string, string> = {
-  primary: '핵심',
-  context: '배경',
-  counter: '다른 시각',
-}
 
 export default function QuestFlowChat() {
   const navigate = useNavigate()
@@ -409,7 +404,7 @@ export default function QuestFlowChat() {
           <section className="space-y-2 border border-[#ccc] rounded p-3 bg-[#fafafa]">
             <p className="text-xs font-bold">참고 기사</p>
             {articles.map((a) => (
-              <ArticleCard key={a.news_id} article={a} />
+              <EduArticleCard key={a.news_id} article={a} />
             ))}
           </section>
         )}
@@ -640,21 +635,5 @@ function ThinkingProcessPanel({
         </div>
       )}
     </section>
-  )
-}
-
-function ArticleCard({ article }: { article: EduQuestArticle }) {
-  return (
-    <div className="border border-[#ccc] rounded p-2">
-      <div className="flex items-center gap-2 mb-1">
-        <span className="text-[10px] font-bold border border-[#1a1a1a] px-1 py-0.5">
-          {ROLE_LABEL[article.role] ?? article.role}
-        </span>
-      </div>
-      <p className="text-xs font-medium">{article.title}</p>
-      {article.excerpt && (
-        <p className="text-[10px] text-[#999] mt-1 line-clamp-2">{article.excerpt}</p>
-      )}
-    </div>
   )
 }

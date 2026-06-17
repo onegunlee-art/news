@@ -66,21 +66,124 @@ function eduLoadTodayQuest(?array $student = null): ?array
     return $quest;
 }
 
+/** @return list<array<string, mixed>> */
+function eduArticleAxesForNews(array $quest, int $newsId): array
+{
+    $axes = eduQuestHammerHints($quest)['axes'] ?? [];
+    if (!is_array($axes)) {
+        return [];
+    }
+    $matches = [];
+    foreach ($axes as $axis) {
+        if (!is_array($axis)) {
+            continue;
+        }
+        if ((int) ($axis['news_id'] ?? 0) === $newsId) {
+            $matches[] = $axis;
+        }
+    }
+    return $matches;
+}
+
+function eduArticleMediaPerspective(array $quest, array $article): string
+{
+    $newsId = (int) ($article['news_id'] ?? 0);
+    $outlet = trim((string) ($article['source_outlet'] ?? ''));
+    $matches = eduArticleAxesForNews($quest, $newsId);
+
+    $axis = null;
+    if (count($matches) === 1) {
+        $axis = $matches[0];
+    } elseif ($matches !== []) {
+        if ($outlet !== '') {
+            foreach ($matches as $candidate) {
+                $author = trim((string) ($candidate['author'] ?? ''));
+                if ($author !== ''
+                    && (str_contains($outlet, $author) || str_contains($author, $outlet))) {
+                    $axis = $candidate;
+                    break;
+                }
+            }
+        }
+        $axis ??= $matches[0];
+    }
+
+    if ($axis !== null) {
+        $name = trim((string) ($axis['author'] ?? ''));
+        if ($name === '') {
+            $name = $outlet !== '' ? $outlet : '이 매체';
+        }
+        $label = trim((string) ($axis['axis_label'] ?? ''));
+        if ($label !== '') {
+            return "{$name} — {$label} 때문에 본다";
+        }
+        $thesis = trim((string) ($axis['thesis'] ?? ''));
+        if ($thesis !== '') {
+            $first = preg_split('/(?<=[.!?…])\s+/u', $thesis)[0] ?? $thesis;
+            return "{$name} — {$first}";
+        }
+    }
+
+    $displayName = $outlet !== '' ? $outlet : trim((string) ($article['title'] ?? ''));
+    $why = trim(strip_tags(html_entity_decode((string) ($article['why_important'] ?? ''), ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+    if ($displayName !== '' && $why !== '') {
+        $first = preg_split('/(?<=[.!?…])\s+/u', $why)[0] ?? $why;
+        $first = trim(preg_replace('/\s+/u', ' ', $first) ?? $first);
+        if (mb_strlen($first) > 80) {
+            $first = mb_substr($first, 0, 77) . '…';
+        }
+        return "{$displayName} — {$first}";
+    }
+
+    return $displayName;
+}
+
+function eduPublicArticleOutlet(array $quest, array $article): string
+{
+    $outlet = trim((string) ($article['source_outlet'] ?? ''));
+    if ($outlet !== '' && $outlet !== 'the gist') {
+        return $outlet;
+    }
+
+    $matches = eduArticleAxesForNews($quest, (int) ($article['news_id'] ?? 0));
+    foreach ($matches as $axis) {
+        $author = trim((string) ($axis['author'] ?? ''));
+        if ($author !== '' && $author !== '기사 종합') {
+            return $author;
+        }
+    }
+    if ($matches !== []) {
+        $author = trim((string) ($matches[0]['author'] ?? ''));
+        if ($author !== '') {
+            return $author;
+        }
+    }
+
+    return $outlet;
+}
+
+/** @return array<string, mixed> */
+function eduPublicArticleRow(array $quest, array $article): array
+{
+    return [
+        'news_id' => (int) ($article['news_id'] ?? 0),
+        'role' => $article['role'] ?? 'context',
+        'title' => $article['title'] ?? '',
+        'gist_url' => $article['gist_url'] ?? '',
+        'excerpt' => $article['excerpt'] ?? '',
+        'why_important' => $article['why_important'] ?? '',
+        'source_outlet' => eduPublicArticleOutlet($quest, $article),
+        'media_perspective' => eduArticleMediaPerspective($quest, $article),
+        'published_at' => $article['published_at'] ?? null,
+    ];
+}
+
 function eduPublicQuestPayload(array $quest): array
 {
     $hints = eduQuestHammerHints($quest);
     $articles = [];
     foreach ($quest['articles'] ?? [] as $a) {
-        $articles[] = [
-            'news_id' => (int) $a['news_id'],
-            'role' => $a['role'],
-            'title' => $a['title'] ?? '',
-            'gist_url' => $a['gist_url'] ?? '',
-            'excerpt' => $a['excerpt'] ?? '',
-            'why_important' => $a['why_important'] ?? '',
-            'source_outlet' => $a['source_outlet'] ?? '',
-            'published_at' => $a['published_at'] ?? null,
-        ];
+        $articles[] = eduPublicArticleRow($quest, $a);
     }
 
     return [

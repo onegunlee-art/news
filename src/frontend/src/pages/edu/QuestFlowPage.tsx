@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import TierProgressCard from '../../components/edu/TierProgressCard'
+import EduArticleCard from '../../components/edu/EduArticleCard'
 import {
   eduApi,
   getEduToken,
@@ -16,12 +17,6 @@ const USE_CHAT_ENGINE = import.meta.env.VITE_EDU_USE_CHAT_ENGINE !== 'false'
 const USE_TURN_FSM = import.meta.env.VITE_EDU_USE_TURN_FSM !== 'false'
 
 const UI_STEPS = ['찬반', '이유', '근거', '반론', '정리', '5문장', 'XP']
-
-const ROLE_LABEL: Record<string, string> = {
-  primary: '핵심',
-  context: '배경',
-  counter: '다른 시각',
-}
 
 export default function QuestFlowPage() {
   if (USE_CHAT_ENGINE) {
@@ -335,7 +330,7 @@ function QuestFlowTurnFsm() {
             <p className="text-sm text-[#666]">{prompt}</p>
             <div className="space-y-3">
               {articles.map((a) => (
-                <ArticleCard key={a.news_id} article={a} />
+                <EduArticleCard key={a.news_id} article={a} />
               ))}
             </div>
             <label className="block text-sm">
@@ -509,38 +504,6 @@ function QuestFlowTurnFsm() {
           <p className="text-sm text-red-600 border border-red-200 bg-red-50 p-3 rounded">{error}</p>
         )}
       </main>
-    </div>
-  )
-}
-
-function ArticleCard({ article }: { article: EduQuestArticle }) {
-  return (
-    <div className="border border-[#ccc] rounded p-3">
-      <div className="flex items-center gap-2 mb-1">
-        <span className="text-[10px] font-bold border border-[#1a1a1a] px-1.5 py-0.5">
-          {ROLE_LABEL[article.role] ?? article.role}
-        </span>
-        {article.source_outlet && (
-          <span className="text-[10px] text-[#666]">{article.source_outlet}</span>
-        )}
-      </div>
-      <p className="text-sm font-medium">{article.title}</p>
-      {article.why_important && (
-        <p className="text-xs text-[#666] mt-1">{article.why_important}</p>
-      )}
-      {article.excerpt && (
-        <p className="text-xs text-[#999] mt-1 line-clamp-3">{article.excerpt}</p>
-      )}
-      {article.gist_url && (
-        <a
-          href={article.gist_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-xs underline mt-2 inline-block"
-        >
-          the gist에서 읽기
-        </a>
-      )}
     </div>
   )
 }
