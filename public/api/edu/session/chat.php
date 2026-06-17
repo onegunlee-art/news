@@ -111,20 +111,35 @@ if ($action === 'submit_opening') {
     ]);
 
     $dialogue = eduAppendDialogue($dialogue, 'student', $message);
-    $assistantMessage = $director->refinePrompt(
-        '학생이 방금 한 말을 짚어서, 왜 그렇게 생각하는지 한 가지만 물어봐. 찬성, 반대, pro, con 같은 말은 쓰지 마.',
-        $quest,
-        eduBlueprintProgress($blueprint)
-    );
+    $openingEval = $coach->evaluateResponse('myth_bust', $message, $quest, 'reason');
+    $studentTexts = $coach->collectStudentTexts($dialogue);
+
+    if ($coach->shouldAdvanceReasoningMythBust($openingEval, $message, $studentTexts, 0)) {
+        $advanced = eduChatAdvanceToEvidence($blueprint, $quest, $director, $response);
+        $blueprint = $advanced['blueprint'];
+        $assistantMessage = $advanced['assistantMessage'];
+        $response = $advanced['response'];
+    } else {
+        $followup = $coach->askOpeningFollowupMythBust($quest, $message);
+        $question = trim((string) ($followup['question'] ?? ''));
+        if ($question === '' || $coach->questionOverlapsStudentText($question, $studentTexts)) {
+            $advanced = eduChatAdvanceToEvidence($blueprint, $quest, $director, $response);
+            $blueprint = $advanced['blueprint'];
+            $assistantMessage = $advanced['assistantMessage'];
+            $response = $advanced['response'];
+        } else {
+            $assistantMessage = $director->refinePrompt($question, $quest, eduBlueprintProgress($blueprint));
+        }
+    }
     $dialogue = eduAppendDialogue($dialogue, 'assistant', $assistantMessage, 'socratic');
     eduSaveBlueprint($supabase, $sessionId, $blueprint, $dialogue);
 
     eduSendJson(array_merge($response, [
         'stage' => eduBlueprintStage($blueprint),
-        'phase' => 'reasoning',
+        'phase' => $blueprint['phase'] ?? 'reasoning',
         'assistant_message' => $assistantMessage,
         'progress_pct' => eduBlueprintProgress($blueprint),
-        'ui_hint' => 'opening_done',
+        'ui_hint' => ($blueprint['phase'] ?? '') === 'evidence' ? 'ask_evidence' : 'opening_done',
         'blueprint' => $blueprint,
     ]));
 }
@@ -234,6 +249,38 @@ function eduChatApplyReflectionCompose(
     ];
 }
 
+/**
+ * @param array<string, mixed> $blueprint
+ * @param array<string, mixed> $quest
+ * @param array<string, mixed> $response
+ * @return array{blueprint: array<string, mixed>, assistantMessage: string, response: array<string, mixed>}
+ */
+function eduChatAdvanceToEvidence(
+    array $blueprint,
+    array $quest,
+    ConversationDirector $director,
+    array $response = []
+): array {
+    $blueprint = eduMergeBlueprint($blueprint, ['phase' => 'evidence']);
+    $publicArticles = [];
+    foreach ($quest['articles'] as $a) {
+        $publicArticles[] = eduPublicArticleRow($quest, $a);
+    }
+    $assistantMessage = $director->refinePrompt(
+        '기사들을 참고해서 네 생각을 뒷받침하는 근거를 찾아봐.',
+        $quest,
+        35
+    );
+    $response['articles'] = $publicArticles;
+    $response['ui_hint'] = 'ask_evidence';
+
+    return [
+        'blueprint' => $blueprint,
+        'assistantMessage' => $assistantMessage,
+        'response' => $response,
+    ];
+}
+
 // --- Process student message by phase ---
 $phase = (string) ($blueprint['phase'] ?? 'reasoning');
 
@@ -269,7 +316,8 @@ $dialogue = eduAppendDialogue($dialogue, 'student', $message);
 $blueprint['exchange_count'] = (int) ($blueprint['exchange_count'] ?? 0) + 1;
 
 if ($phase === 'reasoning') {
-    $eval = $coach->evaluateResponse((string) ($blueprint['stance'] ?? 'pro'), $message, $quest, 'reason');
+    $stanceForEval = eduIsMythBustQuest($quest) ? 'myth_bust' : (string) ($blueprint['stance'] ?? 'pro');
+    $eval = $coach->evaluateResponse($stanceForEval, $message, $quest, 'reason');
     $blueprint = eduMergeBlueprint($blueprint, [
         'reason' => $message,
         'reason_depth' => (int) ($eval['depth_score'] ?? 3),
@@ -290,28 +338,35 @@ if ($phase === 'reasoning') {
     }
 
     $decision = $director->decide($blueprint, $quest, $eval);
+    $studentTexts = $coach->collectStudentTexts($dialogue);
+    $coachQuestions = $coach->collectCoachQuestions($dialogue);
+    $followupCount = (int) ($blueprint['reason_followup_count'] ?? 0);
+    $mythBustAdvance = eduIsMythBustQuest($quest)
+        && $coach->shouldAdvanceReasoningMythBust($eval, $message, $studentTexts, $followupCount);
 
-    if (($decision['action'] ?? '') === 'followup') {
-        $blueprint['reason_followup_count'] = (int) ($blueprint['reason_followup_count'] ?? 0) + 1;
-        $stanceForCoach = (string) ($blueprint['stance'] ?? '');
-        if ($stanceForCoach === '' && eduIsMythBustQuest($quest)) {
-            $followup = ['question' => '방금 말한 생각을 조금 더 구체적으로 말해줄래?'];
+    if (($decision['action'] ?? '') === 'followup' && !$mythBustAdvance) {
+        $blueprint['reason_followup_count'] = $followupCount + 1;
+        if (eduIsMythBustQuest($quest)) {
+            $followup = $coach->askReasonFollowupMythBust($quest, $message, $studentTexts, $coachQuestions);
+            $question = trim((string) ($followup['question'] ?? ''));
+            if ($question === '' || $coach->questionOverlapsStudentText($question, $studentTexts)) {
+                $advanced = eduChatAdvanceToEvidence($blueprint, $quest, $director, $response);
+                $blueprint = $advanced['blueprint'];
+                $assistantMessage = $advanced['assistantMessage'];
+                $response = $advanced['response'];
+            } else {
+                $assistantMessage = $director->refinePrompt($question, $quest, (int) ($decision['progress_pct'] ?? 25));
+            }
         } else {
+            $stanceForCoach = (string) ($blueprint['stance'] ?? '');
             $followup = $coach->askWhy($quest, $stanceForCoach !== '' ? $stanceForCoach : 'pro', $message);
+            $assistantMessage = $director->refinePrompt($followup['question'] ?? '조금 더 말해줄래?', $quest, (int) ($decision['progress_pct'] ?? 25));
         }
-        $assistantMessage = $director->refinePrompt($followup['question'] ?? '조금 더 말해줄래?', $quest, (int) ($decision['progress_pct'] ?? 25));
     } else {
-        $blueprint['phase'] = 'evidence';
-        $publicArticles = [];
-        foreach ($quest['articles'] as $a) {
-            $publicArticles[] = eduPublicArticleRow($quest, $a);
-        }
-        $assistantMessage = $director->refinePrompt(
-            '기사들을 참고해서 네 주장을 뒷받침하는 근거를 찾아봐.',
-            $quest,
-            (int) ($decision['progress_pct'] ?? 35)
-        );
-        $response['articles'] = $publicArticles;
+        $advanced = eduChatAdvanceToEvidence($blueprint, $quest, $director, $response);
+        $blueprint = $advanced['blueprint'];
+        $assistantMessage = $advanced['assistantMessage'];
+        $response = $advanced['response'];
     }
 } elseif ($phase === 'evidence') {
     $eval = $coach->evaluateResponse((string) ($blueprint['stance'] ?? 'pro'), $message, $quest, 'evidence');
