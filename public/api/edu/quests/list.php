@@ -26,7 +26,13 @@ $limit = min(50, max(1, (int) ($_GET['limit'] ?? 20)));
 $frame = trim((string) ($_GET['frame'] ?? 'decision_inquiry'));
 
 $filter = 'status=eq.approved&order=live_at.desc.nullslast,created_at.desc';
-if ($frame !== 'all') {
+if ($frame === 'all') {
+    // no frame filter
+} elseif ($frame === 'myth_bust') {
+    $filter .= '&hammer_hints->>quest_frame=eq.' . rawurlencode('myth_bust');
+} elseif ($frame === 'decision_inquiry') {
+    $filter .= '&or=(hammer_hints->>quest_frame.eq.decision_inquiry,hammer_hints->>quest_frame.eq.myth_bust)';
+} else {
     $filter .= '&hammer_hints->>quest_frame=eq.' . rawurlencode($frame);
 }
 

@@ -85,8 +85,55 @@ $response = [
     'should_compose' => false,
 ];
 
+// --- myth_bust opening (free text, no pro/con) ---
+if ($action === 'submit_opening') {
+    if (!eduIsMythBustQuest($quest)) {
+        eduSendError('submit_opening is myth_bust only', 400);
+    }
+    if ($message === '') {
+        eduSendError('message required');
+    }
+    if ((string) ($blueprint['phase'] ?? 'stance') !== 'stance') {
+        eduSendError('opening already submitted', 400);
+    }
+
+    $hints = eduQuestHammerHints($quest);
+    $hookFull = trim((string) ($hints['hook_full'] ?? ''));
+    if ($hookFull !== '' && $dialogue === []) {
+        $dialogue = eduAppendDialogue($dialogue, 'assistant', $hookFull, 'hook');
+    }
+
+    $blueprint = eduMergeBlueprint($blueprint, [
+        'reason' => $message,
+        'opening_submitted' => true,
+        'phase' => 'reasoning',
+        'exchange_count' => (int) ($blueprint['exchange_count'] ?? 0) + 1,
+    ]);
+
+    $dialogue = eduAppendDialogue($dialogue, 'student', $message);
+    $assistantMessage = $director->refinePrompt(
+        '학생이 방금 한 말을 짚어서, 왜 그렇게 생각하는지 한 가지만 물어봐. 찬성, 반대, pro, con 같은 말은 쓰지 마.',
+        $quest,
+        eduBlueprintProgress($blueprint)
+    );
+    $dialogue = eduAppendDialogue($dialogue, 'assistant', $assistantMessage, 'socratic');
+    eduSaveBlueprint($supabase, $sessionId, $blueprint, $dialogue);
+
+    eduSendJson(array_merge($response, [
+        'stage' => eduBlueprintStage($blueprint),
+        'phase' => 'reasoning',
+        'assistant_message' => $assistantMessage,
+        'progress_pct' => eduBlueprintProgress($blueprint),
+        'ui_hint' => 'opening_done',
+        'blueprint' => $blueprint,
+    ]));
+}
+
 // --- Stance selection (no message required) ---
 if ($action === 'select_stance') {
+    if (eduIsMythBustQuest($quest)) {
+        eduSendError('myth_bust quests use submit_opening, not select_stance', 400);
+    }
     if (!in_array($stanceInput, ['pro', 'con'], true)) {
         eduSendError('stance (pro|con) required');
     }
@@ -236,15 +283,22 @@ if ($phase === 'reasoning') {
         'student_response' => $message,
         'ai_feedback' => $eval['feedback_hint'] ?? null,
     ]);
-    $supabase->update('edu_hypothesis_versions', 'session_id=eq.' . $sessionId . '&version=eq.1', [
-        'reason' => $message,
-    ]);
+    if (!eduIsMythBustQuest($quest)) {
+        $supabase->update('edu_hypothesis_versions', 'session_id=eq.' . $sessionId . '&version=eq.1', [
+            'reason' => $message,
+        ]);
+    }
 
     $decision = $director->decide($blueprint, $quest, $eval);
 
     if (($decision['action'] ?? '') === 'followup') {
         $blueprint['reason_followup_count'] = (int) ($blueprint['reason_followup_count'] ?? 0) + 1;
-        $followup = $coach->askWhy($quest, (string) $blueprint['stance'], $message);
+        $stanceForCoach = (string) ($blueprint['stance'] ?? '');
+        if ($stanceForCoach === '' && eduIsMythBustQuest($quest)) {
+            $followup = ['question' => '방금 말한 생각을 조금 더 구체적으로 말해줄래?'];
+        } else {
+            $followup = $coach->askWhy($quest, $stanceForCoach !== '' ? $stanceForCoach : 'pro', $message);
+        }
         $assistantMessage = $director->refinePrompt($followup['question'] ?? '조금 더 말해줄래?', $quest, (int) ($decision['progress_pct'] ?? 25));
     } else {
         $blueprint['phase'] = 'evidence';
@@ -366,8 +420,9 @@ if ($phase === 'reasoning') {
     $counter = $supabase->select('edu_counter_logs', 'session_id=eq.' . $sessionId, 1);
 
     $reflection = new Reflection($llm);
+    $initialStance = (string) ($v1[0]['stance'] ?? $blueprint['stance'] ?? '');
     $summary = $reflection->summarize(
-        $v1[0]['stance'] ?? $blueprint['stance'],
+        $initialStance,
         $v1[0]['reason'] ?? $blueprint['reason'],
         $counter[0]['counter_argument'] ?? $blueprint['counter_argument'],
         $message,

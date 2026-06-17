@@ -272,6 +272,23 @@ export default function QuestFlowChat() {
     }
   }
 
+  const handleSubmitOpening = async () => {
+    if (!input.trim() || !sessionId || sending || completed) return
+    const msg = input.trim()
+    setInput('')
+    setSending(true)
+    setError('')
+    appendStudent(msg)
+    try {
+      const res = await eduApi.sendChat(sessionId, { action: 'submit_opening', message: msg })
+      await handleChatResponse(res, sessionId)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '오류')
+    } finally {
+      setSending(false)
+    }
+  }
+
   const handleStance = async (stance: 'pro' | 'con') => {
     if (!sessionId || !quest) return
     setSending(true)
@@ -306,6 +323,7 @@ export default function QuestFlowChat() {
 
   const handleSend = async () => {
     if (!input.trim() || !sessionId || sending || completed || phase === 'evidence') return
+    if (phase === 'stance' && quest?.quest_frame === 'myth_bust') return
     const msg = input.trim()
     setInput('')
     setSending(true)
@@ -353,6 +371,7 @@ export default function QuestFlowChat() {
   const studentTurnCount = dialogue.filter((t) => t.role === 'student').length
   const lastTurn = dialogue[dialogue.length - 1]
   const authorName = getEduDisplayName() ?? '나'
+  const isMythBust = quest?.quest_frame === 'myth_bust'
   const showArticles = articles.length > 0 && !completed && ARTICLE_PHASES.includes(phase)
   const evidenceLen = evidenceInput.trim().length
   const evidenceReady = evidenceLen > 0
@@ -400,7 +419,7 @@ export default function QuestFlowChat() {
       </header>
 
       <main className={`flex-1 ${PAGE_MAX} mx-auto w-full px-4 py-4 overflow-y-auto space-y-3`}>
-        {phase === 'stance' && dialogue.length === 0 && quest && !completed && (
+        {phase === 'stance' && dialogue.length === 0 && quest && !completed && !isMythBust && (
           <section className="space-y-3 mb-4">
             <p className="text-sm text-[#666]">오늘의 입장을 선택하세요.</p>
             <button
@@ -421,6 +440,17 @@ export default function QuestFlowChat() {
               <span className="text-xs font-bold block mb-1">반대</span>
               {quest.con_line}
             </button>
+          </section>
+        )}
+
+        {phase === 'stance' && dialogue.length === 0 && quest && !completed && isMythBust && (
+          <section className="space-y-3 mb-4">
+            {quest.hook_full && (
+              <p className="text-sm leading-relaxed whitespace-pre-wrap">{quest.hook_full}</p>
+            )}
+            <p className="text-xs" style={{ color: EDU_BRAND.muted }}>
+              위 질문에 대해 네 생각을 자유롭게 적어줘.
+            </p>
           </section>
         )}
 
@@ -560,12 +590,37 @@ export default function QuestFlowChat() {
         <div ref={bottomRef} />
       </main>
 
-      {!completed && phase !== 'stance' && (
+      {!completed && (phase !== 'stance' || isMythBust) && (
         <footer
           className={`border-t px-4 py-3 ${PAGE_MAX} mx-auto w-full bg-white sticky bottom-0 z-10`}
           style={{ borderColor: EDU_BRAND.border }}
         >
-          {phase === 'reflection' && (
+          {phase === 'stance' && isMythBust ? (
+            <div className="space-y-2">
+              <textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                    e.preventDefault()
+                    void handleSubmitOpening()
+                  }
+                }}
+                placeholder="네 생각을 입력해…"
+                disabled={sending || composing}
+                rows={3}
+                className="w-full border border-[#1a1a1a] rounded px-3 py-2 text-sm resize-none"
+              />
+              <button
+                type="button"
+                onClick={() => void handleSubmitOpening()}
+                disabled={sending || composing || !input.trim()}
+                className="w-full py-2.5 bg-[#1a1a1a] text-white rounded text-sm font-medium disabled:opacity-40"
+              >
+                {sending ? '제출 중…' : '생각 보내기'}
+              </button>
+            </div>
+          ) : phase === 'reflection' && (
             <div className="flex gap-2 mb-2">
               <button
                 type="button"
