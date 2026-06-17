@@ -17,6 +17,20 @@ class Hammer
 {
     private $llm;
 
+    /** 탐구조 톤 — convergent/adversarial/meta 공통 */
+    private function warmExplorationToneBlock(): string
+    {
+        return <<<'TONE'
+탐구 톤 (반드시):
+- 1문장: 학생이 실제로 말한 구체적 이유·키워드를 짚어서 인정 (학생 말을 그대로 반영)
+  · 좋음: "적국 사이라 스스로 지킬 힘이 필요하다는 거구나" (학생이 말한 이유/사례를 구체적으로)
+  · 나쁨: "그렇게 보는구나", "~게 보는구나~" — 형식적·영혼 없는 인정 (금지)
+- 1~2문장: 다른 시각/층위 소개 — "~일 수도", "~게 보는 사람도 있어" (단정·공격 금지)
+- 학생 문장에서 핵심 표현·이유를 따옴표로 인용하거나 자연스럽게 재진술
+- 금지: "반론", "토론 상대", "받아쳐", "~가 아니야 ~야", "강력한 반론", "토론 상대방", "그렇게 보는구나"
+TONE;
+    }
+
     public function __construct($llmClient)
     {
         $this->llm = $llmClient;
@@ -83,10 +97,11 @@ class Hammer
         $distinguishText = $contrast['distinguishes_from'][$studentAxis['axis_id']] ?? '';
         $pivotQuestion = $contrast['pivot_question'] ?? '';
         $namesAxis = $contrast['names_axis'] ?? $counterAxis['axis_label'];
+        $toneBlock = $this->warmExplorationToneBlock();
 
         if ($isDecisionInquiry) {
             $systemPrompt = <<<PROMPT
-너는 토론 코치야. 대상은 만 14세 중학생이야.
+너는 탐구 코치야. 대상은 만 14세 중학생이야.
 
 이미 벌어진 결정(사실): "{$sharedConclusion}"
 학생은 이 결정을 **{$studentAxis['axis_label']}** 관점에서 평가했어.
@@ -98,8 +113,7 @@ class Hammer
 학생에게 물어봐:
 {$pivotQuestion}
 
-중요 원칙:
-- 학생의 실제 문장에서 핵심 표현을 따옴표로 인용해서 거울처럼 비춰줘
+{$toneBlock}
 - "학생이 ~라고 썼어", "우리 둘 다 ~에 동의" 같은 표현 금지 — 이미 벌어진 결정을 평가하는 대화야
 - "전쟁이 왜 안 끝나나" 같은 결과 예측 질문 금지
 - 축 라벨(tech/politics/structure)이나 "기술적 관점" 같은 메타 라벨은 직접 말하지 마
@@ -109,10 +123,10 @@ class Hammer
 PROMPT;
         } else {
             $systemPrompt = <<<PROMPT
-너는 토론 코치야. 학생이 "{$sharedConclusion}"라고 썼어.
+너는 탐구 코치야. 학생이 "{$sharedConclusion}"라고 썼어.
 
 학생은 **{$studentAxis['axis_label']}** 관점에서 접근했어.
-그런데 {$counterAxis['author']}은 같은 결론을 완전히 다른 시각으로 봐:
+{$counterAxis['author']}은 같은 결론을 완전히 다른 시각으로 봐:
 **{$namesAxis}**
 
 {$distinguishText}
@@ -120,15 +134,14 @@ PROMPT;
 학생에게 물어봐:
 {$pivotQuestion}
 
-중요 원칙:
-- 학생의 실제 문장에서 핵심 표현을 따옴표로 인용해서 거울처럼 비춰줘 (예: "네가 말한 '의지가 강하다'는...")
+{$toneBlock}
 - 축 라벨(tech/politics/structure)이나 "기술적 관점" 같은 메타 라벨은 직접 말하지 마
 - 존중하는 말투로, 2-3문장으로
 - 마지막 문장은 pivot_question을 자연스럽게 녹여서 학생이 자기 근거의 층위를 의식하게 해
 PROMPT;
         }
 
-        $userMessage = "학생의 근거: \"{$studentReason}\"";
+        $userMessage = "학생의 근거: \"{$studentReason}\"\n\n1문장 인정은 학생이 실제 말한 이유·키워드를 구체적으로 짚어서. \"그렇게 보는구나\" 같은 형식적 인정은 금지.";
 
         $response = $this->llm->chat($systemPrompt, [
             ['role' => 'user', 'content' => $userMessage]
@@ -526,21 +539,21 @@ PROMPT;
 
         if ($isDecisionInquiry && $sharedConclusion !== '') {
             $message = <<<MSG
-이미 "{$sharedConclusion}"라는 결정이 있었어. 같은 결정인데, 왜 그랬는지·괜찮았는지는 전문가마다 다르게 봐.
+네가 쓴 근거를 읽어봤어. "{$sharedConclusion}"라는 결정을 보면서 네 나름대로 생각을 정리한 것 같아.
 
-네가 방금 쓴 근거는 다음 중 뭐에 가장 가까워?
+같은 결정인데, 왜 그랬는지·괜찮았는지는 전문가마다 다르게 봐. 예를 들면:
 - {$options}
 
-하나만 골라봐. 고른 다음에 그 결정을 어떻게 평가하는지 더 얘기해보자.
+어느 쪽으로 본 것 같아? 너는 어느 쪽에 더 가깝다고 느껴?
 MSG;
         } else {
             $message = <<<MSG
-우리 둘 다 "{$sharedConclusion}"라고 봤어. 그런데 '왜' 그런지에 대해선 전문가들 사이에서도 이유가 달라.
+네가 쓴 근거를 읽어봤어. "{$sharedConclusion}" 쪽으로 본 것 같아.
 
-네가 방금 쓴 근거는 다음 중 뭐에 가장 가까워?
+같은 결론인데 '왜' 그런지는 전문가마다 다르게 봐. 예를 들면:
 - {$options}
 
-하나만 골라봐. 고른 다음에 그게 왜 그런지 더 얘기해보자.
+어느 쪽으로 본 것 같아? 너는 어느 쪽에 더 가깝다고 느껴?
 MSG;
         }
 
@@ -581,10 +594,14 @@ DEFS;
         $fallback = $hints['fallback_adversarial'] ?? [];
         $proLine = $fallback['pro'] ?? ($quest['pro_line'] ?? '');
         $conLine = $fallback['con'] ?? ($quest['con_line'] ?? '');
+        $altLine = trim($conLine !== '' ? $conLine : $proLine);
+        $wrapped = $altLine !== ''
+            ? "네가 말한 것도 일리 있어. 다만 이런 시각도 있어 — {$altLine}"
+            : '네가 말한 것도 일리 있어. 다만 다른 사람들은 다르게 보기도 해.';
 
         return [
             'success' => true,
-            'counter_argument' => $conLine,
+            'counter_argument' => $wrapped,
             'mode' => 'adversarial_fallback',
             'agent' => 'hammer',
         ];
@@ -616,22 +633,23 @@ DEFS;
 
         $intensityGuide = match($intensity) {
             'soft' => '부드럽게, 가능성을 제시하듯',
-            'hard' => '날카롭게, 핵심을 찌르듯',
-            default => '균형있게, 설득력있게',
+            'hard' => '핵심을 짚되 존중하는 말투로',
+            default => '균형있게, 탐구하듯',
         };
 
+        $toneBlock = $this->warmExplorationToneBlock();
+
         $systemPrompt = <<<PROMPT
-너는 토론 상대방이야. 학생이 "{$stanceLabel}" 입장을 취했어.
-너의 역할은 "{$counterLabel}" 관점에서 강력하고 설득력 있는 반론을 제시하는 거야.
+너는 탐구 코치야. 학생이 "{$stanceLabel}" 쪽으로 생각했어.
+다른 사람들은 "{$counterLabel}" 쪽으로 보기도 해 — 그 시각을 부드럽게 소개해.
 
-중요 원칙:
-- 학생을 공격하지 말고, 논리를 공격해
-- 사실과 근거에 기반해서 반론해
+{$toneBlock}
+- 학생을 공격하지 말고, 다른 관점을 탐구하게 해
+- 사실과 근거에 기반해서 다른 시각을 소개해
 - 학생이 "음, 그런 관점도 있네"라고 느끼게 해
-- 존중하는 말투를 유지해
-- 반론은 2-3문장으로 간결하게
+- 2-3문장으로 간결하게
 
-반론 방향: {$counterLine}
+다른 시각 방향: {$counterLine}
 참고 힌트: {$hammerHint}
 {$weakPoints}
 
@@ -641,7 +659,7 @@ DEFS;
 강도: {$intensityGuide}
 PROMPT;
 
-        $userMessage = "학생의 입장: {$stanceLabel}\n학생의 이유: {$studentReason}\n\n반론을 해줘.";
+        $userMessage = "학생의 입장: {$stanceLabel}\n학생의 이유: {$studentReason}\n\n1문장 인정은 학생이 실제 말한 이유·키워드를 구체적으로 짚어서. \"그렇게 보는구나\" 같은 형식적 인정은 금지. 그다음 다른 시각을 탐구조로 소개해줘.";
 
         $response = $this->llm->chat($systemPrompt, [
             ['role' => 'user', 'content' => $userMessage]
@@ -671,15 +689,15 @@ PROMPT;
     public function followUp(string $studentRebuttal, string $originalCounter, array $quest): array
     {
         $systemPrompt = <<<PROMPT
-학생이 네 반론에 재답변했어. 이제 두 가지 중 하나를 해:
+학생이 다른 시각에 대해 재답변했어. 이제 두 가지 중 하나를 해:
 
-1. 학생이 좋은 반박을 했다면: 인정하고, 생각이 깊어졌음을 칭찬해
-2. 학생이 회피하거나 약한 반박을 했다면: 한 번 더 핵심을 짚어줘 (마지막 기회)
+1. 학생이 좋은 생각을 했다면: 인정하고, 생각이 깊어졌음을 칭찬해
+2. 학생이 회피하거나 약한 답을 했다면: 한 번 더 핵심을 짚어줘 (마지막 기회, 탐구조로)
 
-응답은 2문장 이내로 간결하게.
+응답은 2문장 이내로 간결하게. "반론", "토론 상대" 같은 말은 쓰지 마.
 PROMPT;
 
-        $userMessage = "원래 반론: {$originalCounter}\n\n학생 재답변: {$studentRebuttal}";
+        $userMessage = "다른 시각: {$originalCounter}\n\n학생 재답변: {$studentRebuttal}";
 
         $response = $this->llm->chat($systemPrompt, [
             ['role' => 'user', 'content' => $userMessage]

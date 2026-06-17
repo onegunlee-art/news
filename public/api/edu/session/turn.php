@@ -9,6 +9,7 @@ require_once __DIR__ . '/../lib/eduAuth.php';
 require_once __DIR__ . '/../lib/eduQuest.php';
 require_once __DIR__ . '/../lib/eduTier.php';
 require_once __DIR__ . '/../lib/eduConfig.php';
+require_once __DIR__ . '/../lib/eduBlueprint.php';
 require_once __DIR__ . '/../lib/eduAgents.php';
 require_once __DIR__ . '/../lib/_llm.php';
 
@@ -190,7 +191,7 @@ switch ($turn) {
             'counter_stance' => $strike['counter_stance'] ?? ($stance === 'pro' ? 'con' : 'pro'),
             'mixup_sources' => $mixupSources,
             'hammer_mode' => $strike['mode'] ?? 'adversarial',
-            'prompt' => '이 반론에 대해 어떻게 생각해? 네 입장이 바뀌었어, 아니면 유지해?',
+            'prompt' => eduHammerInvitePrompt((string) ($strike['mode'] ?? '')),
             'ui_label' => '반론 듣기',
         ];
         if (($strike['mode'] ?? '') === 'convergent' || ($strike['mode'] ?? '') === 'convergent_meta_ask') {

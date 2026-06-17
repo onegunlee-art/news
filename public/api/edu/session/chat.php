@@ -420,7 +420,10 @@ if ($phase === 'reasoning') {
         $supabase->insert('edu_counter_logs', $counterRow);
 
         $blueprint['counter_argument'] = $strike['counter_argument'];
-        $assistantMessage = ($strike['counter_argument'] ?? '') . "\n\n이 반론에 대해 어떻게 생각해?";
+        $assistantMessage = eduFormatHammerDelivery(
+            (string) ($strike['counter_argument'] ?? ''),
+            (string) ($strike['mode'] ?? '')
+        );
         $response['counter_argument'] = $strike['counter_argument'];
         $response['mixup_sources'] = $mixupSources;
         $response['hammer_mode'] = $strike['mode'] ?? 'adversarial';
@@ -433,7 +436,7 @@ if ($phase === 'reasoning') {
 } elseif ($phase === 'hammer') {
     // "맞아"를 반론 답변으로 삼으면 정리 확인 턴이 한 박자 밀려 compose가 안 걸림
     if (eduIsReflectionConfirm($message)) {
-        $assistantMessage = '아직 반론에 답하지 않았어. 위 반론을 읽고 네 생각을 한두 문장으로 말해줘. "맞아"는 정리 확인할 때 눌러줘!';
+        $assistantMessage = '아직 다른 시각에 답하지 않았어. 위에서 말한 다른 시각, 네 생각을 한두 문장으로 말해줘. "맞아"는 정리 확인할 때 눌러줘!';
         $response['ui_hint'] = 'hammer_rebuttal';
         $decision = ['progress_pct' => 72, 'next_agent' => 'hammer'];
     } else {
