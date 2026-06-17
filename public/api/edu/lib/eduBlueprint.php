@@ -263,3 +263,34 @@ function eduIsReflectionConfirm(string $message): bool
         $text
     );
 }
+
+/** Hammer 본문 + 탐구조 초대 suffix (counter_argument 필드는 본문만 유지) */
+function eduFormatHammerDelivery(string $counterBody, string $mode = ''): string
+{
+    $body = trim($counterBody);
+    if ($body === '') {
+        return $mode === 'convergent_meta_ask'
+            ? '어느 쪽이 더 와닿아?'
+            : '이런 시각도 있는데, 너는 어때?';
+    }
+
+    if (preg_match('/[?？]/u', $body) || preg_match('/(어때|느껴|생각해|와닿)\??\s*$/u', $body)) {
+        return $body;
+    }
+
+    $suffix = $mode === 'convergent_meta_ask'
+        ? '어느 쪽이 더 와닿아?'
+        : '이런 시각도 있는데, 너는 어때?';
+
+    return $body . "\n\n" . $suffix;
+}
+
+/** turn.php 레거시 — Hammer 초대 문구 */
+function eduHammerInvitePrompt(string $mode = ''): string
+{
+    if ($mode === 'convergent_meta_ask') {
+        return '어느 쪽이 더 와닿아? 네 생각을 한두 문장으로 말해줘.';
+    }
+
+    return '이런 시각도 있는데, 너는 어때? 네 입장이 바뀌었어, 아니면 유지해?';
+}
