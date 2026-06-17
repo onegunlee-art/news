@@ -32,6 +32,7 @@ export default function QuestFlowChat() {
   const [dialogue, setDialogue] = useState<EduDialogueTurn[]>([])
   const [input, setInput] = useState('')
   const [evidenceInput, setEvidenceInput] = useState('')
+  const [evidenceNudgeCount, setEvidenceNudgeCount] = useState(0)
   const [progressPct, setProgressPct] = useState(0)
   const [phase, setPhase] = useState('stance')
   const [articles, setArticles] = useState<EduQuestArticle[]>([])
@@ -73,6 +74,7 @@ export default function QuestFlowChat() {
     if (state.blueprint?.evidence) {
       setEvidenceInput(String(state.blueprint.evidence))
     }
+    setEvidenceNudgeCount(Number(state.blueprint?.evidence_nudge_count ?? 0))
   }, [])
 
   const syncSessionState = useCallback(async (sid: string) => {
@@ -614,8 +616,13 @@ export default function QuestFlowChat() {
                 disabled={sending || composing || !evidenceReady}
                 className="w-full py-2.5 bg-[#1a1a1a] text-white rounded text-sm font-medium disabled:opacity-40"
               >
-                {sending ? '제출 중…' : '근거 제출'}
+                {sending ? '제출 중…' : evidenceNudgeCount > 0 ? '다시 제출 — 다음 단계로' : '근거 제출'}
               </button>
+              {evidenceNudgeCount > 0 && (
+                <p className="text-[10px] text-center" style={{ color: EDU_BRAND.muted }}>
+                  코치가 더 구체적으로 물어봤어요. 15자 이상으로 다시 제출하면 반론 단계로 넘어가요.
+                </p>
+              )}
             </div>
           ) : (
             <div className="flex gap-2">

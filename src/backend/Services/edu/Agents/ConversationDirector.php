@@ -76,35 +76,29 @@ class ConversationDirector
             $evidenceText = trim((string) ($blueprint['evidence'] ?? ''));
             $evidenceLen = mb_strlen($evidenceText);
             $hasEvidence = !empty($eval['has_evidence']);
-            $meetsCriteria = $evidenceLen >= 20 && $hasEvidence && $depth >= 3;
+            $longEnough = $evidenceLen >= 15;
+            $qualityOk = $hasEvidence && $depth >= 3;
 
-            if (!$meetsCriteria && $nudges < self::MAX_EVIDENCE_NUDGES) {
+            // LLM has_evidence is flaky — after one nudge + 15 chars, advance to hammer
+            if ($longEnough && ($qualityOk || $nudges >= self::MAX_EVIDENCE_NUDGES)) {
                 return [
-                    'next_agent' => 'socratic',
-                    'action' => 'nudge_evidence',
-                    'prompt_hint' => '기사에서 본 구체적 사실을 더 적어달라고 안내',
+                    'next_agent' => 'hammer',
+                    'action' => 'strike',
+                    'prompt_hint' => '반론 제시',
                     'should_compose' => false,
-                    'progress_pct' => 45,
-                ];
-            }
-
-            if (!$meetsCriteria) {
-                return [
-                    'next_agent' => 'socratic',
-                    'action' => 'nudge_evidence',
-                    'prompt_hint' => '기사 인용 근거가 아직 부족함 — 구체적 사실을 요청',
-                    'should_compose' => false,
-                    'progress_pct' => 45,
+                    'progress_pct' => 55,
+                    'advance_phase' => 'hammer',
                 ];
             }
 
             return [
-                'next_agent' => 'hammer',
-                'action' => 'strike',
-                'prompt_hint' => '반론 제시',
+                'next_agent' => 'socratic',
+                'action' => 'nudge_evidence',
+                'prompt_hint' => $longEnough
+                    ? '기사 인용 근거를 조금 더 구체적으로'
+                    : '기사에서 본 구체적 사실을 더 적어달라고 안내',
                 'should_compose' => false,
-                'progress_pct' => 55,
-                'advance_phase' => 'hammer',
+                'progress_pct' => 45,
             ];
         }
 

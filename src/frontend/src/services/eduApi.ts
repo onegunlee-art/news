@@ -131,6 +131,7 @@ export interface EduBlueprint {
   stance?: 'pro' | 'con' | null
   reason?: string
   evidence?: string
+  evidence_nudge_count?: number
   phase?: string
   progress_pct?: number
   ready_for_compose?: boolean

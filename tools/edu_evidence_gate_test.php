@@ -63,7 +63,12 @@ assertGate('ready', $director->decide($bp, $quest, $eval), 'strike');
 // Still weak after nudge → stay nudge (no hammer skip)
 $bp = ['phase' => 'evidence', 'evidence' => '짧아요', 'evidence_nudge_count' => 1];
 $eval = ['depth_score' => 2, 'has_evidence' => false];
-assertGate('still_weak_after_nudge', $director->decide($bp, $quest, $eval), 'nudge_evidence');
+assertGate('still_short_after_nudge', $director->decide($bp, $quest, $eval), 'nudge_evidence');
+
+// Retry after nudge with enough length → hammer even if LLM says no evidence
+$bp = ['phase' => 'evidence', 'evidence' => str_repeat('가', 20), 'evidence_nudge_count' => 1];
+$eval = ['depth_score' => 2, 'has_evidence' => false];
+assertGate('retry_after_nudge', $director->decide($bp, $quest, $eval), 'strike');
 
 echo "\n=== Summary: {$pass} pass, {$fail} fail ===\n";
 exit($fail > 0 ? 1 : 0);
