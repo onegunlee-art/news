@@ -244,7 +244,13 @@ switch ($turn) {
             $counter[0]['counter_argument'] ?? '',
             $rebuttal,
             $finalStance,
-            $quest
+            $quest,
+            [
+                'stance' => $session['stance'] ?? 'pro',
+                'final_stance' => $finalStance,
+                'reason' => $v1[0]['reason'] ?? '',
+                'rebuttal' => $rebuttal,
+            ]
         );
 
         $supabase->insert('edu_reflections', [

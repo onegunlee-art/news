@@ -375,7 +375,8 @@ if ($phase === 'reasoning') {
         $counter[0]['counter_argument'] ?? $blueprint['counter_argument'],
         $message,
         $finalStance,
-        $quest
+        $quest,
+        $blueprint
     );
 
     $blueprint['reflection_lines'] = $summary['summary_lines'] ?? [];

@@ -295,6 +295,40 @@ function eduResolveStudentAxis(array $blueprint, array $quest): ?array
 /**
  * convergent 퀘스트용 학생 관점 라벨 (찬성/반대 대신 axis_label)
  */
+function eduDecisionStanceLabel(string $stance, array $quest): string
+{
+    $line = trim($stance === 'pro'
+        ? (string) ($quest['pro_line'] ?? '')
+        : (string) ($quest['con_line'] ?? ''));
+
+    if ($line === '') {
+        return $stance === 'pro'
+            ? '그 결정이 필요하다고 본 입장'
+            : '그 결정이 과하다고 본 입장';
+    }
+
+    $normalized = preg_replace('/(?:다|했다)고 본다\.?$/u', '다고 본 입장', $line);
+    if ($normalized === null || $normalized === $line) {
+        if (!str_contains($line, '입장')) {
+            return rtrim($line, '.') . ' 입장';
+        }
+    }
+
+    return $normalized ?? $line;
+}
+
+/**
+ * UI·compose용 입장 라벨 — decision_inquiry만 pro_line/con_line, adversarial은 찬성/반대
+ */
+function eduStudentStanceLabel(string $stance, array $quest): string
+{
+    if (eduIsDecisionInquiryQuest($quest)) {
+        return eduDecisionStanceLabel($stance, $quest);
+    }
+
+    return $stance === 'pro' ? '찬성' : '반대';
+}
+
 function eduStudentPerspectiveLabel(array $blueprint, array $quest): string
 {
     $axis = eduResolveStudentAxis($blueprint, $quest);
@@ -304,5 +338,5 @@ function eduStudentPerspectiveLabel(array $blueprint, array $quest): string
 
     $stance = (string) ($blueprint['final_stance'] ?? $blueprint['stance'] ?? 'pro');
 
-    return $stance === 'pro' ? '찬성' : '반대';
+    return eduStudentStanceLabel($stance, $quest);
 }

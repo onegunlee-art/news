@@ -117,16 +117,21 @@ class GistStyleComposer
         }
 
         $isConvergent = function_exists('eduIsConvergentQuest') && eduIsConvergentQuest($quest);
+        $isDecisionInquiry = function_exists('eduIsDecisionInquiryQuest') && eduIsDecisionInquiryQuest($quest);
         $perspectiveLabel = function_exists('eduStudentPerspectiveLabel')
             ? eduStudentPerspectiveLabel($blueprint, $quest)
+            : ($stance === 'pro' ? '찬성' : '반대');
+        $stanceLabel = function_exists('eduStudentStanceLabel')
+            ? eduStudentStanceLabel($stance, $quest)
             : ($stance === 'pro' ? '찬성' : '반대');
         $studentAxis = function_exists('eduResolveStudentAxis') ? eduResolveStudentAxis($blueprint, $quest) : null;
 
         return [
             'stance' => $stance,
-            'stance_label' => $stance === 'pro' ? '찬성' : '반대',
+            'stance_label' => $stanceLabel,
             'perspective_label' => $perspectiveLabel,
             'is_convergent' => $isConvergent,
+            'is_decision_inquiry' => $isDecisionInquiry,
             'student_axis_id' => $studentAxis['axis_id'] ?? null,
             'student_axis_label' => $studentAxis['axis_label'] ?? null,
             'reason' => (string) ($blueprint['reason'] ?? ''),
@@ -153,9 +158,13 @@ class GistStyleComposer
         $quest = $ctx['quest'];
         $reflectionText = implode("\n", array_map('strval', $ctx['reflection_lines'] ?? []));
         $perspectiveLabel = (string) ($ctx['perspective_label'] ?? $ctx['stance_label'] ?? '');
-        $perspectiveRule = !empty($ctx['is_convergent'])
-            ? "- 학생 관점: **{$perspectiveLabel}** (pro/con·찬성/반대 표기 금지)"
-            : "- 학생 입장: {$perspectiveLabel}";
+        if (!empty($ctx['is_decision_inquiry'])) {
+            $perspectiveRule = "- 학생 입장: **{$perspectiveLabel}** (pro/con·찬성/반대 표기 금지)";
+        } elseif (!empty($ctx['is_convergent'])) {
+            $perspectiveRule = "- 학생 관점: **{$perspectiveLabel}** (pro/con·찬성/반대·axis_id 영문 금지)";
+        } else {
+            $perspectiveRule = "- 학생 입장: {$perspectiveLabel}";
+        }
 
         $systemPrompt = <<<PROMPT
 너는 the gist 편집장이다. 학생과의 대화를 바탕으로 **글 구조도**만 만든다.
@@ -243,9 +252,13 @@ MSG;
         $structureJson = json_encode($structure, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
         $quest = $ctx['quest'];
         $perspectiveLabel = (string) ($ctx['perspective_label'] ?? $ctx['stance_label'] ?? '');
-        $perspectiveBlock = !empty($ctx['is_convergent'])
-            ? "학생이 고른 관점(축): **{$perspectiveLabel}**\n- pro/con·찬성/반대·axis_id 영문 표기 **절대 금지**\n- 다른 전문가 축과의 차이는 관점 이름으로만 언급"
-            : "학생 최종 입장: {$perspectiveLabel}";
+        if (!empty($ctx['is_decision_inquiry'])) {
+            $perspectiveBlock = "학생이 고른 입장: **{$perspectiveLabel}**\n- pro/con·찬성/반대·axis_id 영문 표기 **절대 금지**";
+        } elseif (!empty($ctx['is_convergent'])) {
+            $perspectiveBlock = "학생이 고른 관점(축): **{$perspectiveLabel}**\n- pro/con·찬성/반대·axis_id 영문 표기 **절대 금지**\n- 다른 전문가 축과의 차이는 관점 이름으로만 언급";
+        } else {
+            $perspectiveBlock = "학생 최종 입장: {$perspectiveLabel}";
+        }
 
         $systemPrompt = <<<PROMPT
 너는 the gist 편집자다. **구조도를 뼈대로** 학생이 **직접 쓴 1인칭 에세이**를 처음부터 쓴다.
