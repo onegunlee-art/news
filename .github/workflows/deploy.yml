@@ -151,6 +151,8 @@ jobs:
                      /var/www/thegist/config \
                      /var/www/thegist/database \
                      /var/www/thegist/cron \
+                     /var/www/thegist/tools \
+                     /var/www/thegist/docs \
                      /var/www/thegist/aws; do
               sudo mkdir -p "$d"
               sudo chown -R "$U:$U" "$d"
@@ -202,6 +204,7 @@ jobs:
           # EDU catalog 운영 스크립트 (서버 tools/ 기존 _*.py 등은 건드리지 않음)
           rsync -avz \
             -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
+            --no-times \
             --include='edu_quest_*.php' \
             --include='edu_backfill_*.php' \
             --include='seed_lens_quests.php' \
@@ -210,7 +213,7 @@ jobs:
             --exclude='*' \
             tools/ "$REMOTE:$DEST/tools/"
 
-          ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" "mkdir -p $DEST/docs"
+          ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" "mkdir -p $DEST/docs && sudo chown \$(whoami):\$(whoami) $DEST/docs 2>/dev/null || true"
           rsync -avz \
             -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
             docs/GIST_EDU_LENSES.json "$REMOTE:$DEST/docs/"
