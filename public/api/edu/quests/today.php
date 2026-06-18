@@ -8,6 +8,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../lib/bootstrap.php';
 require_once __DIR__ . '/../lib/eduAuth.php';
 require_once __DIR__ . '/../lib/eduQuest.php';
+require_once __DIR__ . '/../lib/eduQuestConfig.php';
 
 handleOptionsRequest();
 setCorsHeaders();
@@ -93,6 +94,7 @@ eduSendJson([
         'grade_band' => $quest['grade_band'],
         'time_anchor' => $questHints['time_anchor'] ?? null,
         'quest_frame' => $questHints['quest_frame'] ?? null,
+        'entry_mode' => eduQuestEntryMode($quest),
         'articles' => $articlePayload,
         'live_at' => $quest['live_at'] ?? null,
         'expires_at' => $quest['expires_at'] ?? null,

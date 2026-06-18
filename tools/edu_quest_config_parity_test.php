@@ -12,6 +12,7 @@ require_once $root . '/public/api/edu/lib/eduQuest.php';
 require_once $root . '/public/api/edu/lib/eduQuestConfig.php';
 require_once $root . '/tools/edu_g09_decision_quest_fixture.php';
 require_once $root . '/tools/edu_nuclear_axis_quest_fixture.php';
+require_once $root . '/public/api/edu/lib/eduQuestCatalog.php';
 
 $pass = 0;
 $fail = 0;
@@ -87,6 +88,13 @@ ok('japan shared_conclusion passthrough', eduResolveQuestConfig($japan)['shared_
 ok('payload japan entry_mode', (eduPublicQuestPayload($japan)['entry_mode'] ?? '') === 'stance_pick');
 ok('payload nuke entry_mode', (eduPublicQuestPayload($nuke)['entry_mode'] ?? '') === 'open_response');
 ok('payload iran entry_mode', (eduPublicQuestPayload($iranFull)['entry_mode'] ?? '') === 'stance_pick');
+
+echo "\n--- entry_mode surfaces (state/list/today derive) ---\n";
+$nukeId = array_merge($nuke, ['id' => 'parity-nuke-id']);
+$japanId = array_merge($japan, ['id' => 'parity-japan-id']);
+ok('payload/list nuke entry_mode match', (eduPublicQuestPayload($nukeId)['entry_mode'] ?? '') === (eduQuestToListItem($nukeId)['entry_mode'] ?? ''));
+ok('payload/list japan entry_mode match', (eduPublicQuestPayload($japanId)['entry_mode'] ?? '') === (eduQuestToListItem($japanId)['entry_mode'] ?? ''));
+ok('today derive nuke matches payload', eduQuestEntryMode($nuke) === (eduPublicQuestPayload($nukeId)['entry_mode'] ?? ''));
 
 echo "\n=== Summary: {$pass} pass, {$fail} fail ===\n";
 exit($fail > 0 ? 1 : 0);
