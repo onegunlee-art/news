@@ -260,6 +260,7 @@ function eduQuestMatchesCategoryFilter(array $quest, array $categoryIds): bool
  */
 function eduQuestToListItem(array $quest, array $completedIds = []): array
 {
+    require_once __DIR__ . '/eduQuestConfig.php';
     $hints = eduQuestRawHammerHints($quest);
     $meta = eduQuestListCategoryMeta($quest);
     $questId = (string) ($quest['id'] ?? '');
@@ -278,6 +279,7 @@ function eduQuestToListItem(array $quest, array $completedIds = []): array
         'grade_band' => $quest['grade_band'] ?? 'middle',
         'time_anchor' => $hints['time_anchor'] ?? null,
         'quest_frame' => $resolvedFrame,
+        'entry_mode' => eduQuestEntryMode($quest),
         'category' => $meta['category'],
         'category_label' => $meta['category_label'],
         'shelf' => $meta['shelf'],

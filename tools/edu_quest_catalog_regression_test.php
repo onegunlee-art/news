@@ -75,6 +75,12 @@ assertTrue('frame filter all', eduQuestMatchesFrameFilter($mockQuest, 'all'));
 $item = eduQuestToListItem($mockQuest);
 assertTrue('list item category', ($item['category'] ?? '') === 'ai_tech');
 assertTrue('list item lens', ($item['lens'] ?? '') === 'ai_jobs_youth');
+assertTrue('list mock entry_mode stance_pick', ($item['entry_mode'] ?? '') === 'stance_pick');
+
+$japanList = eduQuestToListItem(array_merge($japan = eduG09DecQuestFixture(), ['id' => 'japan-id']));
+assertTrue('list japan entry_mode', ($japanList['entry_mode'] ?? '') === 'stance_pick');
+$nukeList = eduQuestToListItem(array_merge($nuke = eduNuke630QuestFixture(), ['id' => 'nuke-id']));
+assertTrue('list nuke entry_mode', ($nukeList['entry_mode'] ?? '') === 'open_response');
 
 /** @param array<string, mixed> $quest */
 function eduQuestMatchesFrameFilterLegacy(array $quest, string $frame): bool
