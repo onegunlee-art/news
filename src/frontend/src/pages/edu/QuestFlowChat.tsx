@@ -25,8 +25,17 @@ const ARTICLE_PHASES = ['evidence', 'hammer', 'reflection']
 /** Footer input mode — exactly one UI per phase (no overlapping blocks). */
 type QuestFooterMode = 'opening' | 'evidence' | 'reflection' | 'chat'
 
-function resolveQuestFooterMode(phase: string, isMythBust: boolean): QuestFooterMode | null {
-  if (phase === 'stance') return isMythBust ? 'opening' : null
+/** P1-2l: entry_mode derive first, quest_frame fallback (behavior 0 vs frame-only) */
+function isOpenResponseQuest(quest: EduQuest | null | undefined): boolean {
+  if (!quest) return false
+  const q = quest as EduQuest & { entry_mode?: string | null }
+  if (q.entry_mode === 'open_response') return true
+  if (q.entry_mode === 'stance_pick') return false
+  return quest.quest_frame === 'myth_bust'
+}
+
+function resolveQuestFooterMode(phase: string, isOpenResponse: boolean): QuestFooterMode | null {
+  if (phase === 'stance') return isOpenResponse ? 'opening' : null
   if (phase === 'evidence') return 'evidence'
   if (phase === 'reflection') return 'reflection'
   if (phase === 'reasoning' || phase === 'hammer') return 'chat'
@@ -334,7 +343,7 @@ export default function QuestFlowChat() {
 
   const handleSend = async () => {
     if (!input.trim() || !sessionId || sending || completed || phase === 'evidence') return
-    if (phase === 'stance' && quest?.quest_frame === 'myth_bust') return
+    if (phase === 'stance' && isOpenResponseQuest(quest)) return
     const msg = input.trim()
     setInput('')
     setSending(true)
@@ -382,8 +391,8 @@ export default function QuestFlowChat() {
   const studentTurnCount = dialogue.filter((t) => t.role === 'student').length
   const lastTurn = dialogue[dialogue.length - 1]
   const authorName = getEduDisplayName() ?? '나'
-  const isMythBust = quest?.quest_frame === 'myth_bust'
-  const footerMode = resolveQuestFooterMode(phase, isMythBust)
+  const isOpenResponse = isOpenResponseQuest(quest)
+  const footerMode = resolveQuestFooterMode(phase, isOpenResponse)
   const showArticles = articles.length > 0 && !completed && ARTICLE_PHASES.includes(phase)
   const evidenceLen = evidenceInput.trim().length
   const evidenceReady = evidenceLen > 0
@@ -431,7 +440,7 @@ export default function QuestFlowChat() {
       </header>
 
       <main className={`flex-1 ${PAGE_MAX} mx-auto w-full px-4 py-4 overflow-y-auto space-y-3`}>
-        {phase === 'stance' && dialogue.length === 0 && quest && !completed && !isMythBust && (
+        {phase === 'stance' && dialogue.length === 0 && quest && !completed && !isOpenResponse && (
           <section className="space-y-3 mb-4">
             <p className="text-sm text-[#666]">오늘의 입장을 선택하세요.</p>
             <button
@@ -455,7 +464,7 @@ export default function QuestFlowChat() {
           </section>
         )}
 
-        {phase === 'stance' && dialogue.length === 0 && quest && !completed && isMythBust && (
+        {phase === 'stance' && dialogue.length === 0 && quest && !completed && isOpenResponse && (
           <section className="space-y-3 mb-4">
             {quest.hook_full && (
               <p className="text-sm leading-relaxed whitespace-pre-wrap">{quest.hook_full}</p>
