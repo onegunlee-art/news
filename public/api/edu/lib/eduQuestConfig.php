@@ -2,7 +2,7 @@
 /**
  * GIST EDU — QuestConfig read layer (derived from hammer_hints, read-only)
  *
- * P1-1: parallel to eduIsMythBustQuest / eduIsDecisionInquiryQuest — no call-site changes yet.
+ * P1-1: parallel read layer. P1-2h: eduIsMythBustQuest delegates to entry_mode here.
  */
 declare(strict_types=1);
 

@@ -393,7 +393,11 @@ function eduIsDecisionInquiryQuest(array $quest): bool
 
 function eduIsMythBustQuest(array $quest): bool
 {
-    return (eduQuestHammerHints($quest)['quest_frame'] ?? '') === 'myth_bust';
+    if (!function_exists('eduQuestEntryMode')) {
+        require_once __DIR__ . '/eduQuestConfig.php';
+    }
+
+    return eduQuestEntryMode($quest) === 'open_response';
 }
 
 /**
