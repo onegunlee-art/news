@@ -7,6 +7,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../lib/bootstrap.php';
 require_once __DIR__ . '/../lib/eduAuth.php';
 require_once __DIR__ . '/../lib/eduQuest.php';
+require_once __DIR__ . '/../lib/eduQuestConfig.php';
 require_once __DIR__ . '/../lib/eduConfig.php';
 require_once __DIR__ . '/../lib/eduBlueprint.php';
 require_once __DIR__ . '/../lib/eduAgents.php';
@@ -313,7 +314,8 @@ $dialogue = eduAppendDialogue($dialogue, 'student', $message, null, $phase);
 $blueprint['exchange_count'] = (int) ($blueprint['exchange_count'] ?? 0) + 1;
 
 if ($phase === 'reasoning') {
-    $stanceForEval = eduIsMythBustQuest($quest) ? 'myth_bust' : (string) ($blueprint['stance'] ?? 'pro');
+    $isOpenResponse = eduQuestEntryMode($quest) === 'open_response';
+    $stanceForEval = $isOpenResponse ? 'myth_bust' : (string) ($blueprint['stance'] ?? 'pro');
     $eval = $coach->evaluateResponse($stanceForEval, $message, $quest, 'reason');
     $blueprint = eduMergeBlueprint($blueprint, [
         'reason' => $message,
@@ -328,7 +330,7 @@ if ($phase === 'reasoning') {
         'student_response' => $message,
         'ai_feedback' => $eval['feedback_hint'] ?? null,
     ]);
-    if (!eduIsMythBustQuest($quest)) {
+    if (!$isOpenResponse) {
         $supabase->update('edu_hypothesis_versions', 'session_id=eq.' . $sessionId . '&version=eq.1', [
             'reason' => $message,
         ]);
@@ -338,12 +340,12 @@ if ($phase === 'reasoning') {
     $studentTexts = $coach->collectStudentTexts($dialogue);
     $coachQuestions = $coach->collectCoachQuestions($dialogue);
     $followupCount = (int) ($blueprint['reason_followup_count'] ?? 0);
-    $mythBustAdvance = eduIsMythBustQuest($quest)
+    $mythBustAdvance = $isOpenResponse
         && $coach->shouldAdvanceReasoningMythBust($eval, $message, $studentTexts, $followupCount);
 
     if (($decision['action'] ?? '') === 'followup' && !$mythBustAdvance) {
         $blueprint['reason_followup_count'] = $followupCount + 1;
-        if (eduIsMythBustQuest($quest)) {
+        if ($isOpenResponse) {
             $followup = $coach->askReasonFollowupMythBust($quest, $message, $studentTexts, $coachQuestions);
             $question = trim((string) ($followup['question'] ?? ''));
             if ($question === '' || $coach->questionOverlapsStudentText($question, $studentTexts)) {
