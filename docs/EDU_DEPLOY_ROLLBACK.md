@@ -15,6 +15,7 @@
 | 2026-06-18 | `2b228af` | P1-2b eduQuestMatchesFrameFilter → QuestConfig derive (catalog frame filter) |
 | 2026-06-18 | `56533bd` | deploy: aws/thegist-server-locations.inc rsync chown fix |
 | 2026-06-18 | `4c3a6de` | R4–R6 live gates: quest_id 고정, evidence 턴 보강, today 의존 금지 (tools+docs only) |
+| 2026-06-18 | `13a8c8b` | R5 evidence reasoning/evidence 4-turn split + gate fail assert (tools only) |
 
 ## P1-2+ 라이브 완주 게이트 (R4–R6)
 
