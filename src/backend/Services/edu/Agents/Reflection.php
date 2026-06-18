@@ -28,7 +28,7 @@ class Reflection
         $stanceChanged = $initialStance !== $finalStance;
         $changeLabel = $stanceChanged ? '입장을 바꿨어' : '입장을 유지했어';
 
-        $isDecisionInquiry = function_exists('eduIsDecisionInquiryQuest') && eduIsDecisionInquiryQuest($quest);
+        $isDecisionInquiry = $this->usesDecisionReflectionProfile($quest);
         $isConvergent = function_exists('eduIsConvergentQuest') && eduIsConvergentQuest($quest);
         $axisLabel = null;
 
@@ -203,7 +203,7 @@ MSG;
         ?string $axisLabel,
         array $quest
     ): array {
-        $isDecisionInquiry = function_exists('eduIsDecisionInquiryQuest') && eduIsDecisionInquiryQuest($quest);
+        $isDecisionInquiry = $this->usesDecisionReflectionProfile($quest);
 
         if ($isDecisionInquiry) {
             $initialLabel = eduDecisionStanceLabel($initialStance, $quest);
@@ -249,6 +249,17 @@ MSG;
 
             return trim(preg_replace('/\s+/u', ' ', $line) ?? $line);
         }, $lines);
+    }
+
+    /** decision_inquiry reflection branch — QuestConfig coach_profile derive (P1-2f) */
+    private function usesDecisionReflectionProfile(array $quest): bool
+    {
+        if (!function_exists('eduQuestCoachProfile') && function_exists('eduFindProjectRoot')) {
+            require_once eduFindProjectRoot() . 'public/api/edu/lib/eduQuestConfig.php';
+        }
+
+        return function_exists('eduQuestCoachProfile')
+            && eduQuestCoachProfile($quest) === 'decision';
     }
 
     public function generateReflectionQuestion(string $stance, array $quest): string
