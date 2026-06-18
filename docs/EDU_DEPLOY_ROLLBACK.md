@@ -23,6 +23,7 @@
 | 2026-06-18 | `bf90d2b` | P1-2h eduIsMythBustQuest → entry_mode delegate (call site 0) |
 | 2026-06-18 | `6694ce7` | P1-2i eduHammerPayload / eduStudentStanceLabel coach_profile derive (call site 0) |
 | 2026-06-18 | `cf57d14` | P1-2j chat.php reasoning phase eduIsMythBustQuest → entry_mode (4 points) |
+| 2026-06-18 | `4e96a85` | P1-2k EduExplorePage badge entry_mode derive + quest_frame fallback |
 
 ## P1-2+ 라이브 완주 게이트 (R4–R6)
 
@@ -37,6 +38,20 @@
 세 게이트 모두 `list.php`에서 quest_id를 찾아 `start.php`에 전달한다. today 의존 금지.
 
 P1-0/1: R0 `--live` + 로컬 R0–R3 + parity로 충분.
+
+## P1 완료 후 다음 액션 (P2 / 지도1) — 2026-06-18 발견, 구현 보류
+
+> P1-2j 육안 확인(이란 reasoning followup 정상) 직후 세션 관찰에서 도출.  
+> **chat.php god-branch / evidence FSM 분기 재설계**가 수반되므로 P1(P1-2 k~n, P1-3) 완료 후 착수.
+
+1. **hook을 decision_inquiry / convergent로 확장할지 검토**  
+   myth_bust(핵억지)에만 hook(서사)이 있고 이란·일본(decision/convergent)에는 없음. 핵억지에서 본 서사의 힘을 다른 퀘스트에도 줄 가치가 있는지 검토. (지도1 정리(A) 후보)
+
+2. **evidence를 고정 의무 단계 → 코치가 필요 시 권하는 선택으로 재설계**  
+   이란 세션에서 학생이 evidence gate 없이도 자발적으로 기사를 인용함. evidence 등장이 개연성 없이 “의무 단계”로 느껴짐 → 흐름상 필요할 때 코치가 권하는 선택으로 바꿀 근거. (P2, FSM/evidence 진입 시점 재설계)
+
+3. **핵심 원칙 재확인: 장치는 보조, 문답법이 본질**  
+   hook / 기사 / 축 같은 장치는 문답법(좋은 질문이 학생 생각을 끌어내는 능력)을 보조할 뿐 대체하지 못함. P2(코치 깊이) 우선순위 판단에 반영.
 
 ## 참고
 
