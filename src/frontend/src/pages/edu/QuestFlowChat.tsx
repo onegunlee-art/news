@@ -22,6 +22,17 @@ const PAGE_MAX = 'max-w-2xl'
 const EVIDENCE_RECOMMENDED_LEN = 20
 const ARTICLE_PHASES = ['evidence', 'hammer', 'reflection']
 
+/** Footer input mode — exactly one UI per phase (no overlapping blocks). */
+type QuestFooterMode = 'opening' | 'evidence' | 'reflection' | 'chat'
+
+function resolveQuestFooterMode(phase: string, isMythBust: boolean): QuestFooterMode | null {
+  if (phase === 'stance') return isMythBust ? 'opening' : null
+  if (phase === 'evidence') return 'evidence'
+  if (phase === 'reflection') return 'reflection'
+  if (phase === 'reasoning' || phase === 'hammer') return 'chat'
+  return null
+}
+
 export default function QuestFlowChat() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -372,6 +383,7 @@ export default function QuestFlowChat() {
   const lastTurn = dialogue[dialogue.length - 1]
   const authorName = getEduDisplayName() ?? '나'
   const isMythBust = quest?.quest_frame === 'myth_bust'
+  const footerMode = resolveQuestFooterMode(phase, isMythBust)
   const showArticles = articles.length > 0 && !completed && ARTICLE_PHASES.includes(phase)
   const evidenceLen = evidenceInput.trim().length
   const evidenceReady = evidenceLen > 0
@@ -590,12 +602,12 @@ export default function QuestFlowChat() {
         <div ref={bottomRef} />
       </main>
 
-      {!completed && (phase !== 'stance' || isMythBust) && (
+      {!completed && footerMode !== null && (
         <footer
           className={`border-t px-4 py-3 ${PAGE_MAX} mx-auto w-full bg-white sticky bottom-0 z-10`}
           style={{ borderColor: EDU_BRAND.border }}
         >
-          {phase === 'stance' && isMythBust ? (
+          {footerMode === 'opening' && (
             <div className="space-y-2">
               <textarea
                 value={input}
@@ -620,19 +632,8 @@ export default function QuestFlowChat() {
                 {sending ? '제출 중…' : '생각 보내기'}
               </button>
             </div>
-          ) : phase === 'reflection' && (
-            <div className="flex gap-2 mb-2">
-              <button
-                type="button"
-                onClick={handleConfirmReflection}
-                disabled={sending || composing}
-                className="flex-1 py-2 bg-[#1a1a1a] text-white rounded text-sm font-medium disabled:opacity-40"
-              >
-                맞아 — 글 만들기
-              </button>
-            </div>
           )}
-          {phase === 'evidence' ? (
+          {footerMode === 'evidence' && (
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-2">
                 <label className="text-xs font-medium" style={{ color: EDU_BRAND.muted }}>
@@ -679,7 +680,20 @@ export default function QuestFlowChat() {
                 </p>
               )}
             </div>
-          ) : (
+          )}
+          {footerMode === 'reflection' && (
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={handleConfirmReflection}
+                disabled={sending || composing}
+                className="flex-1 py-2 bg-[#1a1a1a] text-white rounded text-sm font-medium disabled:opacity-40"
+              >
+                맞아 — 글 만들기
+              </button>
+            </div>
+          )}
+          {footerMode === 'chat' && (
             <div className="flex gap-2">
               <input
                 type="text"
