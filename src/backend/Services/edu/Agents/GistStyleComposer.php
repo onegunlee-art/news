@@ -116,8 +116,11 @@ class GistStyleComposer
             $reflection = [];
         }
 
+        if (!function_exists('eduQuestCoachProfile') && function_exists('eduFindProjectRoot')) {
+            require_once eduFindProjectRoot() . 'public/api/edu/lib/eduQuestConfig.php';
+        }
         $isConvergent = function_exists('eduIsConvergentQuest') && eduIsConvergentQuest($quest);
-        $isDecisionInquiry = function_exists('eduIsDecisionInquiryQuest') && eduIsDecisionInquiryQuest($quest);
+        $isDecisionInquiry = $this->usesDecisionComposeProfile($quest);
         $perspectiveLabel = function_exists('eduStudentPerspectiveLabel')
             ? eduStudentPerspectiveLabel($blueprint, $quest)
             : ($stance === 'pro' ? '찬성' : '반대');
@@ -527,5 +530,16 @@ MSG;
     private function parseJsonResponse(array $response): ?array
     {
         return EduLlmJson::parse($response);
+    }
+
+    /** decision_inquiry compose/reflection branch — QuestConfig coach_profile derive (P1-2g) */
+    private function usesDecisionComposeProfile(array $quest): bool
+    {
+        if (!function_exists('eduQuestCoachProfile') && function_exists('eduFindProjectRoot')) {
+            require_once eduFindProjectRoot() . 'public/api/edu/lib/eduQuestConfig.php';
+        }
+
+        return function_exists('eduQuestCoachProfile')
+            && eduQuestCoachProfile($quest) === 'decision';
     }
 }
