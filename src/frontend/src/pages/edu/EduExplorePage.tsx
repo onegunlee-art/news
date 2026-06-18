@@ -84,6 +84,24 @@ export default function EduExplorePage() {
     return null
   }
 
+  /** P1-2k: entry_mode derive first, quest_frame fallback (behavior 0 vs frame-only) */
+  const exploreQuestBadge = (
+    q: EduQuestListItem & { entry_mode?: string | null },
+  ): string | null => {
+    const entryMode = q.entry_mode
+    const frame = q.quest_frame ?? ''
+
+    if (entryMode === 'open_response') {
+      return 'Myth Bust'
+    }
+    if (entryMode === 'stance_pick') {
+      if (frame === 'decision_inquiry') return '결정 탐구'
+      return frameLabel(frame)
+    }
+
+    return frameLabel(frame)
+  }
+
   return (
     <div className="min-h-screen bg-[#0D0D0D] text-white">
       <header className="border-b border-[#333] px-4 py-4 max-w-2xl mx-auto flex items-center justify-between">
@@ -155,7 +173,7 @@ export default function EduExplorePage() {
         ) : (
           <ul className="space-y-3">
             {quests.map((q) => {
-              const badge = frameLabel(q.quest_frame)
+              const badge = exploreQuestBadge(q)
               return (
                 <li key={q.quest_id}>
                   <button
