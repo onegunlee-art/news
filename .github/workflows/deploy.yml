@@ -152,6 +152,9 @@ jobs:
                 sudo chown "$U:$U" "/var/www/thegist/$f"
               fi
             done
+            if [ -e "/var/www/thegist/aws/thegist-server-locations.inc" ]; then
+              sudo chown "$U:$U" "/var/www/thegist/aws/thegist-server-locations.inc"
+            fi
             for d in /var/www/thegist/public \
                      /var/www/thegist/src/backend \
                      /var/www/thegist/src/agents \
@@ -225,7 +228,9 @@ jobs:
             -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
             docs/GIST_EDU_LENSES.json "$REMOTE:$DEST/docs/"
 
-          rsync -avz \
+          ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" \
+            "sudo chown -R \$(whoami):\$(whoami) $DEST/aws 2>/dev/null || true"
+          rsync -avz --no-times \
             -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
             aws/thegist-server-locations.inc "$REMOTE:$DEST/aws/"
 
