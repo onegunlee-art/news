@@ -1,6 +1,10 @@
 <?php
 /**
- * myth_bust stance null → compose 완주 smoke (--live only)
+ * R6 — Q-NUKE-AXIS-630 myth_bust stance null → compose 완주 smoke (--live only)
+ *
+ * quest_id로 핵억지 퀘스트를 고정한다 (today 의존 없음).
+ * submit_opening 직후 phase=evidence — 이후 메시지는 evidence gate를 통과하는 턴이다.
+ * ConversationDirector: nudge 1회 + 15자 이상이면 hammer advance (운 1턴 통과 방지 위해 4턴).
  *
  * Usage:
  *   php tools/edu_myth_bust_e2e_smoke.php --live
@@ -87,47 +91,54 @@ $sid = (string) ($start['data']['session_id'] ?? '');
 if ($start['http'] !== 200 || $sid === '') {
     fail('session start', $start);
 }
+echo "quest=Q-NUKE-AXIS-630 quest_id={$nuke['quest_id']}\n";
 echo "session {$sid}\n";
+
+$state = api('GET', '/api/edu/session/state.php?session_id=' . rawurlencode($sid), null, $token);
+$startedCode = (string) ($state['data']['quest']['quest_code'] ?? '');
+echo "started quest={$startedCode}\n";
+if ($startedCode !== 'Q-NUKE-AXIS-630') {
+    fail("expected Q-NUKE-AXIS-630, got {$startedCode}", $state['data'] ?? []);
+}
 
 $opening = [
     'action' => 'submit_opening',
     'message' => '핵이 있어도 드론이나 미사일 같은 공격은 막기 어렵다고 봐. 러시아나 이스라엘 사례가 그렇잖아.',
 ];
 $r = chat($token, $sid, $opening);
-echo "opening HTTP {$r['http']} phase=" . ($r['data']['phase'] ?? '?') . "\n";
+$phase = (string) ($r['data']['phase'] ?? '?');
+echo "opening HTTP {$r['http']} phase={$phase} ui_hint=" . ($r['data']['ui_hint'] ?? '') . "\n";
 if ($r['http'] >= 400) {
     fail('submit_opening', $r);
 }
-
-$reasoning = [
-    '그래서 핵만 믿기보다는 방공이나 기지 방호를 더 키워야 한다고 생각해.',
-    '기사에서도 핵 억지가 약해졌다는 분석이 나왔고, 드론 공격은 막지 못했다고 했어.',
-];
-foreach ($reasoning as $i => $msg) {
-    $r = chat($token, $sid, ['message' => $msg]);
-    echo 'reasoning' . ($i + 1) . " HTTP {$r['http']} phase=" . ($r['data']['phase'] ?? '?') . "\n";
-    if ($r['http'] >= 400) {
-        fail('reasoning', $r);
-    }
+if ($phase !== 'evidence') {
+    fail("opening should land in evidence, got phase={$phase}", $r['data'] ?? []);
 }
 
-$evidence = [
+// submit_opening 이후 학생 메시지는 evidence gate 통과용 (최소 2턴, flake 방지 4턴)
+$evidenceTurns = [
+    '그래서 핵만 믿기보다는 방공이나 기지 방호를 더 키워야 한다고 생각해.',
+    '기사에서도 핵 억지가 약해졌다는 분석이 나왔고, 드론 공격은 막지 못했다고 했어.',
     '새로운 국제 약속이나 규범도 필요하다고 봐. 핵만으로는 부족하다는 게 최근 사례에서 드러났으니까.',
     '기사 630번에서 러시아 폭격기 기지가 드론에 맞았다는 내용이 핵 억지 한계를 보여준다고 생각해.',
 ];
-foreach ($evidence as $i => $msg) {
+foreach ($evidenceTurns as $i => $msg) {
     $r = chat($token, $sid, ['message' => $msg]);
-    echo 'evidence' . ($i + 1) . " HTTP {$r['http']} phase=" . ($r['data']['phase'] ?? '?');
+    $phase = (string) ($r['data']['phase'] ?? '?');
+    echo 'evidence' . ($i + 1) . " HTTP {$r['http']} phase={$phase} ui_hint=" . ($r['data']['ui_hint'] ?? '');
     if (!empty($r['data']['hammer_mode'])) {
         echo ' hammer=' . $r['data']['hammer_mode'];
     }
     echo "\n";
     if ($r['http'] >= 400) {
-        fail('evidence', $r);
+        fail('evidence turn', $r);
     }
 }
 
-$phase = (string) ($r['data']['phase'] ?? '');
+if ($phase === 'evidence' || $phase === 'reasoning') {
+    fail("evidence gate not passed after " . count($evidenceTurns) . " turns, phase={$phase}", $r['data'] ?? []);
+}
+
 if ($phase === 'hammer') {
     $r = chat($token, $sid, [
         'message' => '드론 같은 공격까지 막지 못한다는 점이 더 중요해. 그래도 핵이 큰 전쟁은 막을 수 있다는 반론은 이해하지만, 방어·규범 둘 다 필요하다고 본다.',
@@ -156,13 +167,18 @@ if ($phase === 'reflection') {
 
 if (!$shouldCompose && $phase === 'reflection') {
     $r = chat($token, $sid, ['message' => '맞아']);
-    echo "reflection-fallback HTTP {$r['http']} phase=" . ($r['data']['phase'] ?? '?') . "\n";
+    $phase = (string) ($r['data']['phase'] ?? '?');
+    echo "reflection-fallback HTTP {$r['http']} phase={$phase}\n";
     if (!empty($r['data']['should_compose'])) {
         $shouldCompose = true;
     }
     if ($r['http'] >= 400) {
         fail('reflection fallback', $r);
     }
+}
+
+if (!$shouldCompose && $phase !== 'compose') {
+    fail("compose path not reached, phase={$phase}", $r['data'] ?? []);
 }
 
 $compose = api('POST', '/api/edu/session/compose.php', ['session_id' => $sid], $token);

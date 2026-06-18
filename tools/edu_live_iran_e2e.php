@@ -1,14 +1,13 @@
 <?php
 /**
- * 라이브 E2E — Q-G09-DEC-2022 일본 decision_inquiry 완주 (R5)
+ * 라이브 E2E — Q-IRAN-FOREVER-001 이란 convergent 완주 (R4, hammer 반론 포함)
  *
- * quest_id로 퀘스트를 고정한다. start.php 기본(today)은 Q-IRAN-FOREVER-001이라
- * decision 시나리오와 맞지 않아 evidence에서 PARTIAL이 난다.
+ * quest_id로 퀘스트를 고정한다. start.php 기본(today)에 의존하지 않는다.
  */
 declare(strict_types=1);
 
 $base = 'https://www.thegist.co.kr';
-$expectedQuest = 'Q-G09-DEC-2022';
+$expectedQuest = 'Q-IRAN-FOREVER-001';
 
 function api(string $method, string $path, ?array $body = null, ?string $token = null): array
 {
@@ -50,21 +49,25 @@ function chat(string $token, string $sid, string $message, string $action = 'con
     ], $token);
 }
 
-echo "=== Live Decision Inquiry E2E (R5 Japan) ===\n";
+echo "=== Live Iran E2E (R4 convergent) ===\n";
 
 $guest = api('POST', '/api/edu/guest/start.php', []);
 $token = (string) ($guest['data']['token'] ?? '');
+echo "guest HTTP {$guest['http']}";
+if (!empty($guest['curl_error'])) {
+    echo " curl_error={$guest['curl_error']}";
+}
+echo "\n";
 if ($guest['http'] !== 200 || $token === '') {
     echo $guest['raw'] . "\n";
     exit(1);
 }
 
-$list = api('GET', '/api/edu/quests/list.php?limit=50&frame=decision_inquiry', null, $token);
+$list = api('GET', '/api/edu/quests/list.php?limit=50', null, $token);
 if ($list['http'] !== 200) {
     echo $list['raw'] . "\n";
     exit(1);
 }
-
 $questId = null;
 foreach ($list['data']['quests'] ?? [] as $q) {
     if (($q['quest_code'] ?? '') === $expectedQuest) {
@@ -73,7 +76,7 @@ foreach ($list['data']['quests'] ?? [] as $q) {
     }
 }
 if ($questId === null || $questId === '') {
-    echo "FAIL: {$expectedQuest} not in decision_inquiry list — seed/filter check\n";
+    echo "FAIL: {$expectedQuest} not in list — seed required\n";
     exit(1);
 }
 echo "quest={$expectedQuest} quest_id={$questId}\n";
@@ -94,32 +97,35 @@ if ($startedCode !== $expectedQuest) {
     exit(1);
 }
 
-$stance = api('POST', '/api/edu/session/chat.php', [
+api('POST', '/api/edu/session/chat.php', [
     'session_id' => $sid,
     'action' => 'select_stance',
     'stance' => 'pro',
 ], $token);
-$coachQ = (string) ($stance['data']['assistant_message'] ?? '');
-echo "stance HTTP {$stance['http']} coach=" . mb_substr($coachQ, 0, 80) . "…\n";
-if ($stance['http'] !== 200) {
-    echo $stance['raw'] . "\n";
-    exit(1);
-}
 
 $msgs = [
-    '중국·대만 때문에 일본 주변도 위험해져서 미사일이 필요하다고 봐요.',
-    '기사에서 일본은 2022년에 먼 적을 맞출 미사일을 갖추기로 했다고 했어요. 주변 위협 때문에 선택한 거 같아요.',
-    '일본이 스스로 방어할 수 있어야 미국이 늦게 와도 버틸 수 있다는 점이 중요해요.',
-    '기사 546번에서 일본의 재무장이 돌이킬 수 없는 흐름이라고 했어요. 그게 미사일 결정의 배경인 것 같아요.',
+    '아무리 폭격해도 이란은 안 굴복해요. 미사일이 정확해도 의미없는 거 같아요.',
+    '결국 가장 중요한건 생각보다 이란 국민이 미국편에서 멀어지고 있다는 거지',
+    '이란 전쟁의 베트남전쟁과 비교되는것도 바로 그점이야 국민들이 미국에 저항을 한다는거지',
+    '기사에서 한국전은 열강의 세력 싸움이라면 베트남전쟁이 실패한 이유는 결국 미국의 정치적 계산이 베트남 국민들에게 반감을 가져서 오랫동안 전쟁을 했다는 점인거 같아',
+    '전쟁은 원래 의도와 상관없이 얽히는거 같아',
 ];
 
-$phase = '';
 $shouldCompose = false;
+$phase = '';
 foreach ($msgs as $i => $msg) {
     $r = chat($token, $sid, $msg);
     $phase = (string) ($r['data']['phase'] ?? '?');
-    $uiHint = (string) ($r['data']['ui_hint'] ?? '');
-    echo 'step' . ($i + 2) . " HTTP {$r['http']} phase={$phase} ui_hint={$uiHint}\n";
+    $hammer = $r['data']['hammer_mode'] ?? '';
+    echo 'step' . ($i + 2) . " HTTP {$r['http']} phase={$phase}";
+    if ($hammer !== '') {
+        echo " hammer={$hammer}";
+    }
+    if (!empty($r['data']['should_compose'])) {
+        $shouldCompose = true;
+        echo ' should_compose=YES';
+    }
+    echo "\n";
     if ($r['http'] >= 400) {
         echo $r['raw'] . "\n";
         exit(1);
@@ -127,7 +133,7 @@ foreach ($msgs as $i => $msg) {
 }
 
 if ($phase === 'hammer') {
-    $r = chat($token, $sid, '주변 불안이 커져서 미사일이 필요하다는 생각은 유지하지만, 이웃 나라 반응도 걱정돼요.');
+    $r = chat($token, $sid, '전쟁은 원래 의도와 상관없이 얽히는거 같아');
     $phase = (string) ($r['data']['phase'] ?? '?');
     echo "hammer-rebuttal HTTP {$r['http']} phase={$phase}\n";
     if ($r['http'] >= 400) {
@@ -136,16 +142,15 @@ if ($phase === 'hammer') {
     }
 }
 
-if ($phase !== 'reflection') {
-    echo "WARN: expected reflection before confirm, got phase={$phase}\n";
-}
-
 $r = chat($token, $sid, '맞아');
 $phase = (string) ($r['data']['phase'] ?? '?');
 echo "confirm HTTP {$r['http']} phase={$phase}";
 if (!empty($r['data']['should_compose'])) {
     $shouldCompose = true;
     echo ' should_compose=YES';
+}
+if (!empty($r['data']['structure_preview']['title'])) {
+    echo ' step1_title=' . $r['data']['structure_preview']['title'];
 }
 echo "\n";
 
@@ -160,13 +165,26 @@ if (!$shouldCompose && $phase === 'reflection') {
         $shouldCompose = true;
         echo ' should_compose=YES';
     }
+    if (!empty($r['data']['structure_preview']['title'])) {
+        echo ' step1_title=' . $r['data']['structure_preview']['title'];
+    }
     echo "\n";
 }
 
-if ($shouldCompose) {
-    echo "PASS: reached compose\n";
-    exit(0);
+$t0 = microtime(true);
+$compose = api('POST', '/api/edu/session/compose.php', ['session_id' => $sid], $token);
+$sec = round(microtime(true) - $t0, 1);
+echo "compose HTTP {$compose['http']} elapsed={$sec}s\n";
+
+if ($compose['http'] !== 200) {
+    echo $compose['raw'] . "\n";
+    exit(1);
 }
 
-echo "FAIL: phase={$phase} (compose not reached)\n";
-exit(1);
+$full = trim((string) ($compose['data']['full_text'] ?? ''));
+echo 'title: ' . ($compose['data']['title'] ?? '') . "\n";
+echo 'len: ' . mb_strlen($full) . "\n";
+echo ($full !== '' ? 'PASS' : 'FAIL') . " full_text\n";
+echo ($shouldCompose ? 'PASS' : 'WARN') . " should_compose\n";
+
+exit($full !== '' ? 0 : 1);

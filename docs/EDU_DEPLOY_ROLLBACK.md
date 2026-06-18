@@ -13,16 +13,20 @@
 | 2026-06-18 | `9df0579` | P1-1 QuestConfig read layer (eduResolveQuestConfig, parity only, call-site 0) |
 | 2026-06-18 | `4997a0e` | P1-2a R0 fixture asserts → QuestConfig (test-only, behavior 0) |
 | 2026-06-18 | `2b228af` | P1-2b eduQuestMatchesFrameFilter → QuestConfig derive (catalog frame filter) |
+| 2026-06-18 | `56533bd` | deploy: aws/thegist-server-locations.inc rsync chown fix |
+| 2026-06-18 | `09d8c5a` | R4–R6 live gates: quest_id 고정, evidence 턴 보강, today 의존 금지 (tools+docs only) |
 
 ## P1-2+ 라이브 완주 게이트 (R4–R6)
 
 분기 이관 조각마다 `--live` 실행:
 
-| 게이트 | 스크립트 | 퀘스트 타입 |
-|--------|----------|-------------|
-| R4 | `php tools/edu_live_iran_e2e.php --live` | 이란 decision_inquiry |
-| R5 | `php tools/edu_live_decision_e2e.php --live` | 일본 decision_inquiry |
-| R6 | `php tools/edu_myth_bust_e2e_smoke.php --live` | 핵 myth_bust |
+| 게이트 | 스크립트 | 고정 quest_code |
+|--------|----------|-----------------|
+| R4 | `php tools/edu_live_iran_e2e.php` | `Q-IRAN-FOREVER-001` (convergent) |
+| R5 | `php tools/edu_live_decision_e2e.php` | `Q-G09-DEC-2022` (일본 decision) |
+| R6 | `php tools/edu_myth_bust_e2e_smoke.php --live` | `Q-NUKE-AXIS-630` (myth_bust) |
+
+세 게이트 모두 `list.php`에서 quest_id를 찾아 `start.php`에 전달한다. today 의존 금지.
 
 P1-0/1: R0 `--live` + 로컬 R0–R3 + parity로 충분.
 
