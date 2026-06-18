@@ -9,7 +9,7 @@ alter table edu_quest_sessions drop constraint if exists edu_quest_sessions_stag
 alter table edu_quest_sessions add constraint edu_quest_sessions_stage_check
   check (stage in (
     'commit', 'reasoning', 'evidence', 'hammer', 'reflection',
-    'writing', 'compose', 'growth', 'completed'
+    'writing', 'compose', 'growth', 'completed', 'abandoned'
   ));
 
 alter table edu_thinking_logs drop constraint if exists edu_thinking_logs_agent_role_check;

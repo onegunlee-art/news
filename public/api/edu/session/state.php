@@ -26,6 +26,8 @@ if (empty($sessions[0])) {
 }
 $session = $sessions[0];
 
+eduGuardSessionAbandoned($session, $sessionId);
+
 $quests = $supabase->select('edu_daily_quests', 'id=eq.' . $session['quest_id'], 1);
 $quest = $quests[0] ?? [];
 $quest['articles'] = $supabase->select(

@@ -6,6 +6,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../lib/bootstrap.php';
 require_once __DIR__ . '/../lib/eduAuth.php';
+require_once __DIR__ . '/../lib/eduQuest.php';
 require_once __DIR__ . '/../lib/eduTier.php';
 
 handleOptionsRequest();
@@ -22,7 +23,7 @@ $tier = eduTierProgressPayload(eduFetchTierRow($student['id']));
 
 $completedRows = $supabase->select(
     'edu_quest_sessions',
-    'student_id=eq.' . $student['id'] . '&stage=eq.completed',
+    'student_id=eq.' . $student['id'] . '&' . eduSessionStageFilterCompleted(),
     500
 ) ?? [];
 

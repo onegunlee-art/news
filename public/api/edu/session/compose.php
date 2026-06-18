@@ -46,6 +46,8 @@ if (empty($sessions[0])) {
 }
 $session = $sessions[0];
 
+eduGuardSessionAbandoned($session, $sessionId);
+
 if (($session['stage'] ?? '') === 'completed') {
     $drafts = $supabase->select('edu_writing_drafts', 'session_id=eq.' . $sessionId, 1);
     $draft = $drafts[0] ?? [];

@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../lib/bootstrap.php';
 require_once __DIR__ . '/../lib/eduAuth.php';
+require_once __DIR__ . '/../lib/eduQuest.php';
 
 handleOptionsRequest();
 setCorsHeaders();
@@ -22,9 +23,9 @@ $status = trim((string) ($_GET['status'] ?? 'completed'));
 $query = 'student_id=eq.' . $student['id'];
 
 if ($status === 'completed') {
-    $query .= '&stage=eq.completed&order=completed_at.desc';
+    $query .= '&' . eduSessionStageFilterCompleted() . '&order=completed_at.desc';
 } elseif ($status === 'in_progress') {
-    $query .= '&stage=neq.completed&order=started_at.desc';
+    $query .= '&' . eduSessionStageFilterResumable() . '&order=started_at.desc';
 } else {
     $query .= '&order=started_at.desc';
 }

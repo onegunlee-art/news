@@ -203,12 +203,78 @@ function eduPublicQuestPayload(array $quest): array
     ];
 }
 
+/** @return list<string> FSM stages that allow resume (excludes completed / abandoned). */
+function eduSessionStagesInProgress(): array
+{
+    return ['commit', 'reasoning', 'evidence', 'hammer', 'reflection', 'writing', 'compose', 'growth'];
+}
+
+/** PostgREST filter for start.php / today.php active session lookup. */
+function eduSessionStageFilterResumable(): string
+{
+    return 'stage=in.(' . implode(',', eduSessionStagesInProgress()) . ')';
+}
+
+/** PostgREST filter for true completions (excludes pseudo-completed abandon rows). */
+function eduSessionStageFilterCompleted(): string
+{
+    return 'stage=eq.completed&completed_at=not.is.null';
+}
+
+/** @param array<string, mixed> $session */
+function eduSessionBlueprintRaw(array $session): array
+{
+    $raw = $session['blueprint_json'] ?? [];
+    if (is_string($raw)) {
+        $raw = json_decode($raw, true) ?: [];
+    }
+
+    return is_array($raw) ? $raw : [];
+}
+
+/** @param array<string, mixed> $session */
+function eduIsSessionAbandoned(array $session): bool
+{
+    if (($session['stage'] ?? '') === 'abandoned') {
+        return true;
+    }
+    $bp = eduSessionBlueprintRaw($session);
+
+    return trim((string) ($bp['abandoned_at'] ?? '')) !== '';
+}
+
+/** @param array<string, mixed> $session */
+function eduIsSessionResumable(array $session): bool
+{
+    if (eduIsSessionAbandoned($session)) {
+        return false;
+    }
+
+    return in_array((string) ($session['stage'] ?? ''), eduSessionStagesInProgress(), true);
+}
+
+/** @param array<string, mixed> $session */
+function eduGuardSessionAbandoned(array $session, string $sessionId): void
+{
+    if (!eduIsSessionAbandoned($session)) {
+        return;
+    }
+    eduSendJson([
+        'success' => true,
+        'session_id' => $sessionId,
+        'stage' => 'abandoned',
+        'resumable' => false,
+        'should_compose' => false,
+        'assistant_message' => '이전 진행 내역은 저장 방식 변경으로 종료됐어요. 새 퀘스트를 시작해 주세요.',
+    ]);
+}
+
 function eduActiveSession(string $studentId): ?array
 {
     $supabase = eduSupabase();
     $rows = $supabase->select(
         'edu_quest_sessions',
-        'student_id=eq.' . $studentId . '&stage=neq.completed&order=started_at.desc',
+        'student_id=eq.' . $studentId . '&' . eduSessionStageFilterResumable() . '&order=started_at.desc',
         1
     );
     return $rows[0] ?? null;
@@ -219,7 +285,7 @@ function eduActiveSessionForQuest(string $studentId, string $questId): ?array
     $supabase = eduSupabase();
     $rows = $supabase->select(
         'edu_quest_sessions',
-        'student_id=eq.' . $studentId . '&quest_id=eq.' . $questId . '&stage=neq.completed&order=started_at.desc',
+        'student_id=eq.' . $studentId . '&quest_id=eq.' . $questId . '&' . eduSessionStageFilterResumable() . '&order=started_at.desc',
         1
     );
     return $rows[0] ?? null;

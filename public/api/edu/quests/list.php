@@ -48,7 +48,7 @@ $completedIds = [];
 if ($student !== null && $rows !== []) {
     $sessions = $supabase->select(
         'edu_quest_sessions',
-        'student_id=eq.' . $student['id'] . '&stage=eq.completed',
+        'student_id=eq.' . $student['id'] . '&' . eduSessionStageFilterCompleted(),
         200
     ) ?? [];
     foreach ($sessions as $s) {

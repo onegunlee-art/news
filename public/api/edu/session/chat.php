@@ -51,6 +51,8 @@ if (empty($sessions[0])) {
 }
 $session = $sessions[0];
 
+eduGuardSessionAbandoned($session, $sessionId);
+
 if (($session['stage'] ?? '') === 'completed') {
     eduSendJson([
         'success' => true,
