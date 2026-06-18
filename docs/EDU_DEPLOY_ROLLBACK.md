@@ -9,6 +9,7 @@
 | 2026-06-18 | `d3666d1` | deploy: composer.json rsync chown fix (a4601b0 배포 exit 23 후속) |
 | 2026-06-18 | `1f9b502` | deploy: composer 단일 rsync + pre-chown + --no-times (|| fallback 제거) |
 | 2026-06-18 | `a71b103` | P1-0 dialogue turn_id (append-only, state read-only normalize, R7 write-back guard) |
+| 2026-06-18 | `a435f30` | P1-0 legacy in-progress abandon (59 sessions, blueprint.abandoned_at, resumable stage filter) |
 
 ## 참고
 
