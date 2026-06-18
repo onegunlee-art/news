@@ -97,18 +97,42 @@ SELECT id, quest_code, quest_title, hammer_hints->>'mode' as mode
 FROM edu_daily_quests
 WHERE quest_code = 'Q-IRAN-FOREVER-001';
 
--- 3. (선택) edu_quest_articles에 기사 연결 (news_id 555, 422, 528이 실제로 있어야 함)
--- 먼저 퀘스트 ID를 변수로 저장
--- DO $$
--- DECLARE
---   v_quest_id uuid;
--- BEGIN
---   SELECT id INTO v_quest_id FROM edu_daily_quests WHERE quest_code = 'Q-IRAN-FOREVER-001';
---   
---   INSERT INTO edu_quest_articles (quest_id, news_id, role, sort_order, title)
---   VALUES
---     (v_quest_id, 555, 'primary', 1, '이란과 영원한 전쟁의 함정'),
---     (v_quest_id, 422, 'context', 2, '끝나지 않는 전쟁의 높은 대가'),
---     (v_quest_id, 528, 'context', 3, '이란은 베트남처럼, 우크라이나는 한국처럼')
---   ON CONFLICT (quest_id, news_id) DO NOTHING;
--- END $$;
+-- 3. 기사 연결 (approve 전 필수 — 최소 3개 + primary 1개)
+INSERT INTO edu_quest_articles (quest_id, news_id, role, sort_order, title, gist_url)
+SELECT q.id, v.news_id, v.role, v.sort_order, v.title, 'https://www.thegist.co.kr/news/' || v.news_id
+FROM edu_daily_quests q
+CROSS JOIN (VALUES
+  (555, 'primary', 1, '이란과 영원한 전쟁의 함정'),
+  (422, 'context', 2, '끝나지 않는 전쟁의 높은 대가'),
+  (528, 'context', 3, '이란은 베트남처럼, 우크라이나는 한국처럼')
+) AS v(news_id, role, sort_order, title)
+WHERE q.quest_code = 'Q-IRAN-FOREVER-001'
+ON CONFLICT (quest_id, news_id) DO NOTHING;
+
+-- 3-b. 스냅샷 backfill (§13-a — title만으로는 evidence 불가)
+-- INSERT 후 반드시 실행:
+--   php tools/edu_backfill_iran_article_snapshots.php --dry-run
+--   php tools/edu_backfill_iran_article_snapshots.php
+--   php tools/edu_verify_iran_article_snapshots.php
+-- judgement_records + MySQL news에서 excerpt/why_important READ → edu_quest_articles PATCH (LLM 0회)
+
+-- 4. 라이브 전환 (앱에 보이려면 approved + live_at 필수)
+UPDATE edu_daily_quests
+SET
+  status = 'approved',
+  pilot_priority = 'A',
+  live_at = now(),
+  expires_at = now() + interval '7 days',
+  updated_at = now()
+WHERE quest_code = 'Q-IRAN-FOREVER-001';
+
+-- 5. (테스트용) 기존 중국 AI 퀘스트를 today 피드에서 내리기
+-- today.php는 live_at 최신 1건만 표시 → 이란 퀘스트가 더 최신이면 자동 우선
+-- 확실히 하려면 아래 실행:
+-- UPDATE edu_daily_quests SET live_at = null WHERE quest_code = 'Q-AUTO-260612-29FD';
+
+-- 6. 확인
+SELECT quest_code, quest_title, status, live_at, hammer_hints->>'mode' AS mode
+FROM edu_daily_quests
+WHERE quest_code IN ('Q-IRAN-FOREVER-001', 'Q-AUTO-260612-29FD')
+ORDER BY live_at DESC NULLS LAST;

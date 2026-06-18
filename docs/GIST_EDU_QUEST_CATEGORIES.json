@@ -1,0 +1,57 @@
+{
+  "version": 1,
+  "convention": "scores.category in edu_daily_quests JSON",
+  "categories": {
+    "ai_tech": {
+      "label": "AI·기술",
+      "arcs": ["ARC-AI-JOBS", "ARC-AI-GEOPOL", "ARC-AI-SECURITY", "ARC-CHIP-SUPPLY", "ARC-AI-REGULATION", "ARC-ENERGY-AI"]
+    },
+    "us_china_trade": {
+      "label": "미중·무역",
+      "arcs": ["ARC-US-CN-TRADE", "ARC-TRUMP-TARIFF", "ARC-SUPPLY-CHAIN"]
+    },
+    "middle_east_iran": {
+      "label": "중동·이란",
+      "arcs": ["ARC-IRAN-NUKE", "ARC-IRAN-REGION", "ARC-MIDEAST-CEASEFIRE"]
+    },
+    "east_asia_security": {
+      "label": "동아시아 안보",
+      "arcs": ["ARC-JAPAN-DEFENSE", "ARC-TAIWAN-STRAIT", "ARC-DPRK-PENINSULA", "ARC-KOR-DEFENSE"]
+    },
+    "europe_war": {
+      "label": "유럽·전쟁",
+      "arcs": ["ARC-UKRAINE-WAR", "ARC-NATO-EUROPE"]
+    },
+    "energy_climate": {
+      "label": "에너지·기후",
+      "arcs": ["ARC-CLIMATE-ENERGY", "ARC-OIL-GAS", "ARC-ENERGY-AI"]
+    },
+    "global_economy": {
+      "label": "세계경제",
+      "arcs": ["ARC-INFLATION-FED", "ARC-SUPPLY-CHAIN"]
+    },
+    "china_industry": {
+      "label": "중국 산업",
+      "arcs": ["ARC-EV-CHINA"]
+    },
+    "us_politics": {
+      "label": "미국 정치",
+      "arcs": ["ARC-US-POLITICS", "ARC-TRUMP-TARIFF"]
+    },
+    "society_youth": {
+      "label": "사회·청소년",
+      "arcs": ["ARC-AI-JOBS", "ARC-SOCIETY-YOUTH"]
+    }
+  },
+  "new_arcs_v1": {
+    "ARC-DPRK-PENINSULA": { "label": "북한·한반도", "category": "east_asia_security" },
+    "ARC-KOR-DEFENSE": { "label": "한국 안보·동맹", "category": "east_asia_security" },
+    "ARC-MIDEAST-CEASEFIRE": { "label": "중동 휴전·외교", "category": "middle_east_iran" },
+    "ARC-NATO-EUROPE": { "label": "NATO·유럽 안보", "category": "europe_war" },
+    "ARC-US-POLITICS": { "label": "미국 정치·선거", "category": "us_politics" },
+    "ARC-AI-REGULATION": { "label": "AI 규제·거버넌스", "category": "ai_tech" },
+    "ARC-ENERGY-AI": { "label": "AI 전력·데이터센터", "category": "energy_climate" },
+    "ARC-SUPPLY-CHAIN": { "label": "글로벌 공급망", "category": "global_economy" },
+    "ARC-SOCIETY-YOUTH": { "label": "사회·청소년 이슈", "category": "society_youth" }
+  }
+}

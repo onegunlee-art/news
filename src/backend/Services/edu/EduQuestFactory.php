@@ -86,6 +86,70 @@ class EduQuestFactory
             '물가·금리·성장 트레이드오프가 정책 중심',
             '고금리 유지 vs 경기 방어',
         ],
+        'ARC-DPRK-PENINSULA' => [
+            '북한 핵·미사일이 한반도 안보의 핵심 변수',
+            '강경 제재·억제 vs 대화·점진적 완화',
+        ],
+        'ARC-KOR-DEFENSE' => [
+            '한미동맹·자주국방이 동시에 논쟁되는 안보 환경',
+            '동맹 강화·주한미군 vs 자주국방·균형 외교',
+        ],
+        'ARC-MIDEAST-CEASEFIRE' => [
+            '중동 휴전·외교가 지역 안정의 관건',
+            '강경 대응 지속 vs 휴전·협상 우선',
+        ],
+        'ARC-NATO-EUROPE' => [
+            'NATO·유럽 방위가 러시아 위협에 대응하는 축',
+            '군비 확대·동맹 결속 vs 외교·협상',
+        ],
+        'ARC-US-POLITICS' => [
+            '미국 정치·선거가 대외·경제 정책 방향을 좌우',
+            '정권 교체·정책 전환 vs 연속성·예측 가능성',
+        ],
+        'ARC-AI-REGULATION' => [
+            'AI 규제·거버넌스 필요성에 대한 공통 인식',
+            '강규제·투명성 vs 혁신·경쟁력',
+        ],
+        'ARC-ENERGY-AI' => [
+            'AI 데이터센터가 전력·에너지 수요를 재편',
+            '전력 확대·원전 vs 재생·효율 우선',
+        ],
+        'ARC-SUPPLY-CHAIN' => [
+            '글로벌 공급망·관세가 산업 안보 핵심',
+            '자국 생산·우회 vs 개방·효율',
+        ],
+        'ARC-SOCIETY-YOUTH' => [
+            '청소년·사회 이슈가 정책·교육 논의 중심',
+            '보호·규제 vs 자율·교육',
+        ],
+    ];
+
+    /** @var array<string, list<string>> */
+    private const ARC_TOPIC_KEYWORDS = [
+        'ARC-AI-JOBS' => ['ai 일자리', '고용', '사회계약', '청소년 ai', '자동화', '규제'],
+        'ARC-AI-GEOPOL' => ['ai 패권', 'ai 인재', '중국 ai', '칩 규제', 'ai 경쟁'],
+        'ARC-AI-SECURITY' => ['사이버', '자율 ai', 'ai 무기', 'ai 에이전트', 'ai 위협'],
+        'ARC-IRAN-NUKE' => ['이란 핵', '이란 제재', 'jcpoa', '핵 프로그램'],
+        'ARC-IRAN-REGION' => ['이란 전쟁', '호르무즈', '이스라엘', '중동'],
+        'ARC-US-CN-TRADE' => ['미중', '관세', '탈중국', '공급망', '무역'],
+        'ARC-TRUMP-TARIFF' => ['트럼프', '관세', '무역 질서', '보복'],
+        'ARC-CLIMATE-ENERGY' => ['기후', '재생', '탈탄소', '에너지 전환'],
+        'ARC-OIL-GAS' => ['유가', 'lng', '석유', '천연가스', '에너지'],
+        'ARC-EV-CHINA' => ['전기차', 'ev', '중국 ev', '완성차'],
+        'ARC-CHIP-SUPPLY' => ['반도체', '칩', 'tsmc', '삼성전자', 'hbm'],
+        'ARC-JAPAN-DEFENSE' => ['일본 방위', '일본 재무장', '일본 미사일', '일본 안보'],
+        'ARC-TAIWAN-STRAIT' => ['대만', '대만 해협', '台海'],
+        'ARC-UKRAINE-WAR' => ['우크라', 'ukraine', 'natо', '러시아'],
+        'ARC-INFLATION-FED' => ['인플레', '금리', 'fed', '물가', '전기세'],
+        'ARC-DPRK-PENINSULA' => ['북한', '한반도', '김정', '핵실험', 'dmz', '북핵'],
+        'ARC-KOR-DEFENSE' => ['한미동맹', '주한미군', '자주국방', '한국 안보', 'korea defense'],
+        'ARC-MIDEAST-CEASEFIRE' => ['휴전', 'ceasefire', '가자', '하마스', '중동 외교'],
+        'ARC-NATO-EUROPE' => ['nato', '나ato', '유럽 방위', '독일 군사'],
+        'ARC-US-POLITICS' => ['바이든', '공화당', '민주당', '미국 선거', '백악관'],
+        'ARC-AI-REGULATION' => ['ai 규제', 'ai 거버넌스', 'ai 법', 'ai 안전'],
+        'ARC-ENERGY-AI' => ['데이터센터', 'ai 전력', '전기세', 'ai 전력'],
+        'ARC-SUPPLY-CHAIN' => ['공급망', 'supply chain', '핵심 광물', '리쇼어링'],
+        'ARC-SOCIETY-YOUTH' => ['청소년', '학생', '교육', '사회'],
     ];
 
     /** @var array<string, list<int>> */
@@ -105,38 +169,89 @@ class EduQuestFactory
         'ARC-TAIWAN-STRAIT' => [514, 427, 521, 119, 452],
         'ARC-UKRAINE-WAR' => [87, 437, 384, 263, 152],
         'ARC-INFLATION-FED' => [150, 210, 338, 432, 375],
+        'ARC-DPRK-PENINSULA' => [],
+        'ARC-KOR-DEFENSE' => [],
+        'ARC-MIDEAST-CEASEFIRE' => [528, 384, 290],
+        'ARC-NATO-EUROPE' => [87, 437],
+        'ARC-US-POLITICS' => [237, 503, 497],
+        'ARC-AI-REGULATION' => [72, 371, 402],
+        'ARC-ENERGY-AI' => [150, 240, 291],
+        'ARC-SUPPLY-CHAIN' => [283, 220, 432, 392],
+        'ARC-SOCIETY-YOUTH' => [288, 507],
     ];
 
-    private PDO $pdo;
+    private ?PDO $pdo;
     private SupabaseService $supabase;
     private $llm;
 
-    public function __construct(PDO $pdo, SupabaseService $supabase, $llmClient = null)
+    public function __construct(?PDO $pdo, SupabaseService $supabase, $llmClient = null)
     {
         $this->pdo = $pdo;
         $this->supabase = $supabase;
         $this->llm = $llmClient;
     }
 
+    /** @return array<string, list<string>> */
+    public static function arcTopicKeywords(): array
+    {
+        return self::ARC_TOPIC_KEYWORDS;
+    }
+
+    /** @return list<string> */
+    public static function allArcCodes(): array
+    {
+        return array_keys(self::ARC_META);
+    }
+
+    /**
+     * Catalog inventory — public READ wrapper
+     * @return array<int, array<string, mixed>>
+     */
+    public function loadPublishedArticlesForCatalog(int $lookbackDays = 180, int $limit = 500): array
+    {
+        return $this->loadPublishedArticles($lookbackDays, $limit);
+    }
+
     /**
      * @return list<array<string, mixed>>
      */
-    public function discoverCandidates(int $maxCandidates = 5, int $lookbackDays = 90): array
-    {
+    public function discoverCandidates(
+        int $maxCandidates = 5,
+        int $lookbackDays = 90,
+        int $articleLimit = 200,
+        ?string $categoryFilter = null,
+        bool $skipRecentArcCheck = false
+    ): array {
         $usedNewsIds = $this->loadUsedNewsIds();
-        $published = $this->loadPublishedArticles($lookbackDays);
+        $published = $this->loadPublishedArticles($lookbackDays, $articleLimit);
         if ($published === []) {
             return [];
         }
 
         $topicGroups = $this->groupByTopicLabel($published);
         $candidates = [];
+        $arcCodes = array_keys(self::ARC_META);
 
-        foreach (self::ARC_SEED_IDS as $arcCode => $seedIds) {
+        if ($categoryFilter !== null && $categoryFilter !== '') {
+            $catalogPath = dirname(__DIR__, 4) . '/public/api/edu/lib/eduQuestCatalog.php';
+            if (is_file($catalogPath)) {
+                require_once $catalogPath;
+            }
+        }
+
+        foreach ($arcCodes as $arcCode) {
             if (count($candidates) >= $maxCandidates) {
                 break;
             }
 
+            if ($categoryFilter !== null && function_exists('eduQuestCategoryForArc')) {
+                $cat = eduQuestCategoryForArc($arcCode);
+                if ($cat !== $categoryFilter) {
+                    continue;
+                }
+            }
+
+            $seedIds = self::ARC_SEED_IDS[$arcCode] ?? [];
             $groupIds = [];
             foreach ($seedIds as $id) {
                 if (isset($published[$id]) && !isset($usedNewsIds[$id])) {
@@ -148,12 +263,8 @@ class EduQuestFactory
                 if (isset($usedNewsIds[$id])) {
                     continue;
                 }
-                $topic = strtolower(trim((string) ($article['topic_label'] ?? '')));
-                foreach ($topicGroups[$arcCode] ?? [] as $hint) {
-                    if ($topic !== '' && str_contains($topic, strtolower($hint))) {
-                        $groupIds[$id] = true;
-                        break;
-                    }
+                if ($this->articleMatchesArc($article, $arcCode, $topicGroups)) {
+                    $groupIds[$id] = true;
                 }
             }
 
@@ -162,7 +273,7 @@ class EduQuestFactory
                 continue;
             }
 
-            if ($this->arcHasRecentQuest($arcCode)) {
+            if (!$skipRecentArcCheck && $this->arcHasRecentQuest($arcCode)) {
                 continue;
             }
 
@@ -174,6 +285,204 @@ class EduQuestFactory
         }
 
         return $candidates;
+    }
+
+    /**
+     * Discover from preloaded article map (catalog batch / judgement fallback)
+     * @param array<int, array<string, mixed>> $published
+     * @return list<array<string, mixed>>
+     */
+    public function discoverFromPublished(
+        array $published,
+        int $maxCandidates = 50,
+        ?string $categoryFilter = null,
+        bool $skipRecentArcCheck = true,
+        bool $excludeUsedArticles = false
+    ): array {
+        if ($published === []) {
+            return [];
+        }
+
+        $usedNewsIds = $excludeUsedArticles ? $this->loadUsedNewsIds() : [];
+        $topicGroups = $this->groupByTopicLabel($published);
+        $candidates = [];
+        $arcCodes = array_keys(self::ARC_META);
+
+        if ($categoryFilter !== null && $categoryFilter !== '') {
+            $catalogPath = dirname(__DIR__, 4) . '/public/api/edu/lib/eduQuestCatalog.php';
+            if (is_file($catalogPath)) {
+                require_once $catalogPath;
+            }
+        }
+
+        foreach ($arcCodes as $arcCode) {
+            if (count($candidates) >= $maxCandidates) {
+                break;
+            }
+
+            if ($categoryFilter !== null && function_exists('eduQuestCategoryForArc')) {
+                if (eduQuestCategoryForArc($arcCode) !== $categoryFilter) {
+                    continue;
+                }
+            }
+
+            $seedIds = self::ARC_SEED_IDS[$arcCode] ?? [];
+            $groupIds = [];
+            foreach ($seedIds as $id) {
+                if (isset($published[$id]) && !isset($usedNewsIds[$id])) {
+                    $groupIds[$id] = true;
+                }
+            }
+
+            foreach ($published as $id => $article) {
+                if (isset($usedNewsIds[$id])) {
+                    continue;
+                }
+                if ($this->articleMatchesArc($article, $arcCode, $topicGroups)) {
+                    $groupIds[$id] = true;
+                }
+            }
+
+            if (count($groupIds) < self::MIN_ARTICLES) {
+                continue;
+            }
+
+            if (!$skipRecentArcCheck && $this->arcHasRecentQuest($arcCode)) {
+                continue;
+            }
+
+            $selected = $this->selectArticles(array_keys($groupIds), $published);
+            $draft = $this->buildDraftQuest($arcCode, $selected);
+            if ($draft !== null) {
+                $candidates[] = $draft;
+            }
+        }
+
+        return $candidates;
+    }
+
+    /**
+     * Catalog batch — multiple variants per arc (rotate primary article)
+     * @param array<int, array<string, mixed>> $published
+     * @return list<array<string, mixed>>
+     */
+    public function discoverCatalogVariants(
+        array $published,
+        int $maxTotal = 50,
+        int $variantsPerArc = 3,
+        ?string $categoryFilter = null
+    ): array {
+        if ($published === []) {
+            return [];
+        }
+
+        $topicGroups = $this->groupByTopicLabel($published);
+        $out = [];
+        $arcCodes = array_keys(self::ARC_META);
+
+        if ($categoryFilter !== null && $categoryFilter !== '') {
+            $catalogPath = dirname(__DIR__, 4) . '/public/api/edu/lib/eduQuestCatalog.php';
+            if (is_file($catalogPath)) {
+                require_once $catalogPath;
+            }
+        }
+
+        foreach ($arcCodes as $arcCode) {
+            if (count($out) >= $maxTotal) {
+                break;
+            }
+
+            if ($categoryFilter !== null && function_exists('eduQuestCategoryForArc')) {
+                if (eduQuestCategoryForArc($arcCode) !== $categoryFilter) {
+                    continue;
+                }
+            }
+
+            $groupIds = [];
+            foreach (self::ARC_SEED_IDS[$arcCode] ?? [] as $id) {
+                if (isset($published[$id])) {
+                    $groupIds[$id] = true;
+                }
+            }
+            foreach ($published as $id => $article) {
+                if ($this->articleMatchesArc($article, $arcCode, $topicGroups)) {
+                    $groupIds[$id] = true;
+                }
+            }
+
+            $articleIds = array_keys($groupIds);
+            if (count($articleIds) < self::MIN_ARTICLES) {
+                continue;
+            }
+
+            usort($articleIds, static function (int $a, int $b) use ($published): int {
+                $da = strtotime((string) ($published[$a]['published_at'] ?? '1970-01-01'));
+                $db = strtotime((string) ($published[$b]['published_at'] ?? '1970-01-01'));
+                return $db <=> $da;
+            });
+
+            $variants = min($variantsPerArc, max(1, count($articleIds) - 2));
+            for ($v = 0; $v < $variants && count($out) < $maxTotal; $v++) {
+                $rotated = array_merge(
+                    array_slice($articleIds, $v),
+                    array_slice($articleIds, 0, $v)
+                );
+                $rotated = array_slice($rotated, 0, self::MAX_ARTICLES_PER_QUEST);
+                $roles = ['primary', 'context', 'context', 'counter', 'counter'];
+                $selected = [];
+                foreach ($rotated as $i => $id) {
+                    if (!isset($published[$id])) {
+                        continue;
+                    }
+                    $selected[] = array_merge($published[$id], [
+                        'role' => $roles[$i] ?? 'context',
+                    ]);
+                }
+                if (count($selected) < self::MIN_ARTICLES) {
+                    continue;
+                }
+
+                $draft = $this->buildDraftQuest($arcCode, $selected);
+                if ($draft === null) {
+                    continue;
+                }
+                if ($v > 0) {
+                    $draft['quest_code'] = ($draft['quest_code'] ?? 'Q-CAT')
+                        . '-V' . ($v + 1);
+                }
+                $out[] = $draft;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param array<string, mixed> $article
+     * @param array<string, list<string>> $topicGroups
+     */
+    private function articleMatchesArc(array $article, string $arcCode, array $topicGroups): bool
+    {
+        $topic = strtolower(trim((string) ($article['topic_label'] ?? '')));
+        foreach ($topicGroups[$arcCode] ?? [] as $hint) {
+            if ($topic !== '' && str_contains($topic, strtolower($hint))) {
+                return true;
+            }
+        }
+
+        $haystack = mb_strtolower(implode(' ', [
+            (string) ($article['title'] ?? ''),
+            (string) ($article['topic_label'] ?? ''),
+            (string) ($article['category'] ?? ''),
+        ]));
+
+        foreach (self::ARC_TOPIC_KEYWORDS[$arcCode] ?? [] as $kw) {
+            if ($kw !== '' && str_contains($haystack, mb_strtolower($kw))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -193,6 +502,26 @@ class EduQuestFactory
             ];
         }
 
+        $categoryId = null;
+        if (function_exists('eduQuestCategoryForArc')) {
+            $categoryId = eduQuestCategoryForArc((string) ($draft['manual_arc'] ?? ''));
+        } else {
+            $catalogPath = dirname(__DIR__, 4) . '/public/api/edu/lib/eduQuestCatalog.php';
+            if (is_file($catalogPath)) {
+                require_once $catalogPath;
+                $categoryId = eduQuestCategoryForArc((string) ($draft['manual_arc'] ?? ''));
+            }
+        }
+
+        $scores = $draft['scores'] ?? [];
+        if (!is_array($scores)) {
+            $scores = [];
+        }
+        if ($categoryId !== null) {
+            $scores['category'] = $categoryId;
+        }
+        $scores['catalog_version'] = 1;
+
         $questRow = [
             'quest_code' => $draft['quest_code'],
             'quest_title' => $draft['quest_title'],
@@ -203,8 +532,12 @@ class EduQuestFactory
             'con_line' => $draft['con_line'],
             'alignment_summary' => $draft['alignment_summary'] ?? '',
             'conflict_summary' => $draft['conflict_summary'],
-            'hammer_hints' => json_encode($draft['hammer_hints'] ?? [], JSON_UNESCAPED_UNICODE),
+            'hammer_hints' => json_encode(array_merge(
+                $draft['hammer_hints'] ?? [],
+                ['quest_frame' => ($draft['hammer_hints']['quest_frame'] ?? null) ?: 'decision_inquiry']
+            ), JSON_UNESCAPED_UNICODE),
             'pilot_priority' => $draft['pilot_priority'] ?? 'C',
+            'scores' => json_encode($scores, JSON_UNESCAPED_UNICODE),
         ];
 
         $inserted = $this->supabase->insert('edu_daily_quests', $questRow);
@@ -268,8 +601,11 @@ class EduQuestFactory
     /**
      * @return array<int, array<string, mixed>>
      */
-    private function loadPublishedArticles(int $lookbackDays): array
+    private function loadPublishedArticles(int $lookbackDays, int $limit = 200): array
     {
+        if ($this->pdo === null) {
+            return [];
+        }
         $cols = $this->newsColumns();
         $select = ['id', 'title', 'status', 'category'];
         foreach (['narration', 'why_important', 'description', 'ai_summary', 'source', 'original_source', 'published_at'] as $c) {
@@ -280,7 +616,7 @@ class EduQuestFactory
 
         $since = date('Y-m-d', strtotime("-{$lookbackDays} days"));
         $sql = 'SELECT ' . implode(', ', $select)
-            . ' FROM news WHERE status = ? AND published_at >= ? ORDER BY published_at DESC LIMIT 200';
+            . ' FROM news WHERE status = ? AND published_at >= ? ORDER BY published_at DESC LIMIT ' . (int) $limit;
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute(['published', $since]);
@@ -341,6 +677,9 @@ class EduQuestFactory
     private function groupByTopicLabel(array $published): array
     {
         $hints = [];
+        foreach (array_keys(self::ARC_META) as $arc) {
+            $hints[$arc] = [];
+        }
         foreach (self::ARC_SEED_IDS as $arc => $ids) {
             $words = [];
             foreach ($ids as $id) {
@@ -451,6 +790,7 @@ class EduQuestFactory
             'hammer_hints' => [
                 'pro' => $llmFields['hammer_hint_pro'] ?? $conLine,
                 'con' => $llmFields['hammer_hint_con'] ?? $proLine,
+                'quest_frame' => 'decision_inquiry',
             ],
             'pilot_priority' => 'C',
             'articles' => $articles,
@@ -778,6 +1118,9 @@ PROMPT;
         static $cols = null;
         if ($cols !== null) {
             return $cols;
+        }
+        if ($this->pdo === null) {
+            return ['id', 'title', 'status', 'category', 'narration', 'why_important', 'published_at'];
         }
         $cols = [];
         foreach ($this->pdo->query('SHOW COLUMNS FROM news') as $row) {

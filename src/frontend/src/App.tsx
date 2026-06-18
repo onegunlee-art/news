@@ -20,6 +20,7 @@ import AuthCallback from './pages/AuthCallback'
 import NotFoundPage from './pages/NotFoundPage'
 
 const EduHomePage = lazy(() => import('./pages/edu/EduHomePage'))
+const EduExplorePage = lazy(() => import('./pages/edu/EduExplorePage'))
 const EduProfilePage = lazy(() => import('./pages/edu/EduProfilePage'))
 const QuestFlowPage = lazy(() => import('./pages/edu/QuestFlowPage'))
 const NationalStatsPage = lazy(() => import('./pages/edu/NationalStatsPage'))
@@ -108,6 +109,7 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/edu" element={<EduHomePage />} />
+          <Route path="/edu/explore" element={<EduExplorePage />} />
           <Route path="/edu/profile" element={<EduProfilePage />} />
           <Route path="/edu/quest" element={<QuestFlowPage />} />
           <Route path="/edu/stats/:questId" element={<NationalStatsPage />} />

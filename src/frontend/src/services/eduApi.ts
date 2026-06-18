@@ -250,9 +250,23 @@ export interface EduQuestListItem {
   grade_band: string
   time_anchor?: string | null
   quest_frame?: string | null
+  category?: string | null
+  category_label?: string | null
+  shelf?: string | null
+  shelf_label?: string | null
+  lens?: string | null
+  lens_label?: string | null
+  subtitle?: string | null
   is_live: boolean
   live_at?: string | null
   completed: boolean
+}
+
+export interface EduExploreShelf {
+  shelf_id: string
+  label: string
+  count: number
+  categories: string[]
 }
 
 async function eduFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
@@ -304,15 +318,22 @@ export const eduApi = {
       existing_session?: { session_id: string; stage: string; stance?: string } | null
     }>('/api/edu/quests/today.php'),
 
-  listQuests: (params?: { limit?: number; frame?: string }) => {
+  listQuests: (params?: { limit?: number; frame?: string; category?: string; shelf?: string }) => {
     const q = new URLSearchParams()
     if (params?.limit) q.set('limit', String(params.limit))
     if (params?.frame) q.set('frame', params.frame)
+    if (params?.category) q.set('category', params.category)
+    if (params?.shelf) q.set('shelf', params.shelf)
     const qs = q.toString()
     return eduFetch<{ quests: EduQuestListItem[]; count: number }>(
       `/api/edu/quests/list.php${qs ? `?${qs}` : ''}`
     )
   },
+
+  exploreCategories: (frame = 'all') =>
+    eduFetch<{ total: number; shelves: EduExploreShelf[] }>(
+      `/api/edu/quests/categories.php?frame=${encodeURIComponent(frame)}`
+    ),
 
   startSession: (quest_id?: string) =>
     eduFetch<{ session_id: string; stage: string; resumed: boolean }>(

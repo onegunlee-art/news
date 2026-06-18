@@ -16,6 +16,7 @@ require_once $projectRoot . '/src/agents/autoload.php';
 require_once $projectRoot . '/public/api/edu/lib/bootstrap.php';
 require_once $projectRoot . '/public/api/edu/lib/_llm.php';
 require_once $projectRoot . '/public/api/edu/lib/eduMysql.php';
+require_once $projectRoot . '/public/api/edu/lib/eduQuestCatalog.php';
 require_once $projectRoot . '/public/api/edu/lib/eduAgents.php';
 
 use Services\Edu\EduQuestFactory;
@@ -36,13 +37,35 @@ function curatorLog(string $msg, $data = null): void
 
 $dryRun = in_array('--dry-run', $argv ?? [], true);
 $maxCandidates = 5;
+$lookbackDays = 90;
+$articleLimit = 200;
+$categoryFilter = null;
+$skipRecentArc = false;
 foreach ($argv ?? [] as $arg) {
     if (str_starts_with($arg, '--limit=')) {
         $maxCandidates = max(1, (int) substr($arg, 8));
     }
+    if (str_starts_with($arg, '--lookback=')) {
+        $lookbackDays = max(30, (int) substr($arg, 11));
+    }
+    if (str_starts_with($arg, '--article-limit=')) {
+        $articleLimit = max(50, (int) substr($arg, 16));
+    }
+    if (str_starts_with($arg, '--category=')) {
+        $categoryFilter = substr($arg, 11);
+    }
+    if ($arg === '--skip-recent-arc') {
+        $skipRecentArc = true;
+    }
 }
 
-curatorLog('Quest Curator started', ['dry_run' => $dryRun, 'limit' => $maxCandidates]);
+curatorLog('Quest Curator started', [
+    'dry_run' => $dryRun,
+    'limit' => $maxCandidates,
+    'lookback' => $lookbackDays,
+    'article_limit' => $articleLimit,
+    'category' => $categoryFilter,
+]);
 
 eduLoadAgents();
 
@@ -67,7 +90,13 @@ try {
 }
 
 $factory = new EduQuestFactory($pdo, $supabase, $llm);
-$candidates = $factory->discoverCandidates($maxCandidates);
+$candidates = $factory->discoverCandidates(
+    $maxCandidates,
+    $lookbackDays,
+    $articleLimit,
+    $categoryFilter,
+    $skipRecentArc
+);
 
 curatorLog('Candidates discovered', ['count' => count($candidates)]);
 

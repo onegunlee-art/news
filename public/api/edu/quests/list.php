@@ -1,16 +1,19 @@
 <?php
 /**
- * GET /api/edu/quests/list.php — approved 결정탐구 퀘스트 목록 (live_at 무관)
+ * GET /api/edu/quests/list.php — approved 퀘스트 목록 (live_at 무관)
  *
  * Query:
  *   limit=20 (max 50)
- *   frame=decision_inquiry (default) | all
+ *   frame=all | decision_inquiry (default) | myth_bust
+ *   category=middle_east_iran  (scores.category)
+ *   shelf=war_security         (student shelf → multiple categories)
  */
 declare(strict_types=1);
 
 require_once __DIR__ . '/../lib/bootstrap.php';
 require_once __DIR__ . '/../lib/eduAuth.php';
 require_once __DIR__ . '/../lib/eduQuest.php';
+require_once __DIR__ . '/../lib/eduQuestCatalog.php';
 
 handleOptionsRequest();
 setCorsHeaders();
@@ -23,20 +26,23 @@ $student = eduGetStudentOptional();
 $supabase = eduSupabase();
 
 $limit = min(50, max(1, (int) ($_GET['limit'] ?? 20)));
-$frame = trim((string) ($_GET['frame'] ?? 'decision_inquiry'));
+$frame = trim((string) ($_GET['frame'] ?? 'all'));
+$category = trim((string) ($_GET['category'] ?? ''));
+$shelf = trim((string) ($_GET['shelf'] ?? ''));
 
-$filter = 'status=eq.approved&order=live_at.desc.nullslast,created_at.desc';
-if ($frame === 'all') {
-    // no frame filter
-} elseif ($frame === 'myth_bust') {
-    $filter .= '&hammer_hints->>quest_frame=eq.' . rawurlencode('myth_bust');
-} elseif ($frame === 'decision_inquiry') {
-    $filter .= '&or=(hammer_hints->>quest_frame.eq.decision_inquiry,hammer_hints->>quest_frame.eq.myth_bust)';
-} else {
-    $filter .= '&hammer_hints->>quest_frame=eq.' . rawurlencode($frame);
+$categoryFilter = [];
+if ($category !== '') {
+    $categoryFilter = [$category];
+} elseif ($shelf !== '') {
+    $categoryFilter = eduQuestCategoriesForShelf($shelf);
 }
 
-$rows = $supabase->select('edu_daily_quests', $filter, $limit) ?? [];
+$fetchLimit = min(200, max($limit * 3, 50));
+$rows = $supabase->select(
+    'edu_daily_quests',
+    'status=eq.approved&order=live_at.desc.nullslast,created_at.desc',
+    $fetchLimit
+) ?? [];
 
 $completedIds = [];
 if ($student !== null && $rows !== []) {
@@ -52,32 +58,27 @@ if ($student !== null && $rows !== []) {
     }
 }
 
-$now = time();
 $quests = [];
 foreach ($rows as $quest) {
-    $hints = eduQuestHammerHints($quest);
-    $questId = (string) ($quest['id'] ?? '');
-    $liveAt = $quest['live_at'] ?? null;
-    $isLive = $liveAt !== null && $liveAt !== '' && strtotime((string) $liveAt) <= $now;
-
-    $quests[] = [
-        'quest_id' => $questId,
-        'quest_code' => $quest['quest_code'] ?? '',
-        'quest_title' => $quest['quest_title'] ?? '',
-        'pro_line' => $quest['pro_line'] ?? '',
-        'con_line' => $quest['con_line'] ?? '',
-        'conflict_summary' => $quest['conflict_summary'] ?? '',
-        'grade_band' => $quest['grade_band'] ?? 'middle',
-        'time_anchor' => $hints['time_anchor'] ?? null,
-        'quest_frame' => $hints['quest_frame'] ?? null,
-        'is_live' => $isLive,
-        'live_at' => $liveAt,
-        'completed' => isset($completedIds[$questId]),
-    ];
+    if (!eduQuestMatchesFrameFilter($quest, $frame)) {
+        continue;
+    }
+    if (!eduQuestMatchesCategoryFilter($quest, $categoryFilter)) {
+        continue;
+    }
+    $quests[] = eduQuestToListItem($quest, $completedIds);
+    if (count($quests) >= $limit) {
+        break;
+    }
 }
 
 eduSendJson([
     'success' => true,
     'quests' => $quests,
     'count' => count($quests),
+    'filters' => [
+        'frame' => $frame,
+        'category' => $category !== '' ? $category : null,
+        'shelf' => $shelf !== '' ? $shelf : null,
+    ],
 ]);

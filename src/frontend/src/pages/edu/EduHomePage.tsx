@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import TierProgressCard from '../../components/edu/TierProgressCard'
 import {
   clearEduToken,
@@ -34,7 +34,7 @@ export default function EduHomePage() {
     try {
       const [todayRes, listRes] = await Promise.all([
         eduApi.todayQuest(),
-        eduApi.listQuests(),
+        eduApi.listQuests({ limit: 3, frame: 'all' }),
       ])
       setQuest(todayRes.quest)
       setParticipation(todayRes.participation?.display || '')
@@ -43,7 +43,11 @@ export default function EduHomePage() {
         setAuthed(true)
       }
       const liveId = todayRes.quest?.quest_id
-      setOtherQuests(listRes.quests.filter((q) => !q.is_live && q.quest_id !== liveId))
+      setOtherQuests(
+        listRes.quests
+          .filter((q) => !q.is_live && q.quest_id !== liveId)
+          .slice(0, 3)
+      )
     } catch (e) {
       setError(e instanceof Error ? e.message : '로드 실패')
       if ((e as Error).message?.includes('401')) {
@@ -264,7 +268,12 @@ export default function EduHomePage() {
 
         {otherQuests.length > 0 && (
           <section className="space-y-3">
-            <h2 className="text-sm font-medium text-[#888]">다른 논쟁 고르기</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-medium text-[#888]">다른 논쟁</h2>
+              <Link to="/edu/explore" className="text-xs text-[#E8521C] underline">
+                전체 보기 →
+              </Link>
+            </div>
             {otherQuests.map((q) => (
               <button
                 key={q.quest_id}
@@ -274,9 +283,11 @@ export default function EduHomePage() {
                 className="w-full text-left border border-[#333] rounded-lg p-4 bg-[#1a1a1a] hover:border-[#555] disabled:opacity-50 transition-colors"
               >
                 <div className="flex items-start justify-between gap-2 mb-1">
-                  {q.time_anchor && (
+                  {q.lens_label ? (
+                    <span className="text-xs text-[#E8521C]">쟁점: {q.lens_label}</span>
+                  ) : q.time_anchor ? (
                     <span className="text-xs text-[#888]">{q.time_anchor}</span>
-                  )}
+                  ) : null}
                   {q.completed && (
                     <span className="text-xs text-[#4CAF50] shrink-0">완료</span>
                   )}
@@ -287,6 +298,17 @@ export default function EduHomePage() {
                 )}
               </button>
             ))}
+          </section>
+        )}
+
+        {otherQuests.length === 0 && quest && (
+          <section className="text-center py-4">
+            <Link
+              to="/edu/explore"
+              className="inline-block px-5 py-3 border border-[#E8521C] text-[#E8521C] rounded-lg text-sm font-medium hover:bg-[#E8521C]/10 transition-colors"
+            >
+              더 많은 논쟁 탐색하기
+            </Link>
           </section>
         )}
 

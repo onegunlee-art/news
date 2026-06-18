@@ -1,0 +1,70 @@
+{
+  "version": 1,
+  "convention": "scores.lens in edu_daily_quests JSON — cross-cut debate angle (not surface arc)",
+  "lenses": {
+    "trump_consistency": {
+      "label": "트럼프 전략 일관성",
+      "question": "같은 대통령인데 왜 이번엔 이렇게 했을까?",
+      "keywords": ["트럼프", "trump", "일관", "전략", "비일관", "정책"],
+      "entities": ["Trump", "트럼프"],
+      "default_category": "us_politics",
+      "default_frame": "decision_inquiry"
+    },
+    "nuclear_deterrence": {
+      "label": "핵·억지력의 한계",
+      "question": "핵을 가지면 안전할까, 더 위험해질까?",
+      "keywords": ["핵", "핵무기", "억지", "핵실험", "핵 프로그램", "nuclear"],
+      "entities": ["Iran", "North Korea", "이란", "북한"],
+      "default_category": "east_asia_security",
+      "default_frame": "decision_inquiry"
+    },
+    "alliance_reliance": {
+      "label": "동맹·안보 의존",
+      "question": "혼자 vs 동맹 — 어느 쪽이 나을까?",
+      "keywords": ["동맹", "NATO", "미일", "안보", "방위", "alliance"],
+      "entities": ["Japan", "Korea", "일본", "한국"],
+      "default_category": "east_asia_security",
+      "default_frame": "decision_inquiry"
+    },
+    "economic_war": {
+      "label": "경제·전쟁의 연결",
+      "question": "전쟁이 경제에 어떤 영향을 줄까?",
+      "keywords": ["관세", "유가", "경제", "공급망", "무역", "tariff", "oil"],
+      "entities": [],
+      "default_category": "us_china_trade",
+      "default_frame": "decision_inquiry"
+    },
+    "ai_jobs_youth": {
+      "label": "AI와 청소년",
+      "question": "AI 시대, 청소년에게 뭐가 달라질까?",
+      "keywords": ["AI", "청소년", "일자리", "교육", "학생", "고용"],
+      "entities": [],
+      "default_category": "society_youth",
+      "default_frame": "decision_inquiry"
+    },
+    "ceasefire_diplomacy": {
+      "label": "휴전·외교의 한계",
+      "question": "휴전이면 전쟁이 끝난 걸까?",
+      "keywords": ["휴전", "협상", "외교", "ceasefire", "합의", "봉합"],
+      "entities": [],
+      "default_category": "middle_east_iran",
+      "default_frame": "decision_inquiry"
+    },
+    "supply_chain_security": {
+      "label": "공급망·안보",
+      "question": "물건이 끊기면 나라가 어떻게 될까?",
+      "keywords": ["반도체", "공급망", "수출", "제재", "chip", "supply"],
+      "entities": [],
+      "default_category": "ai_tech",
+      "default_frame": "decision_inquiry"
+    },
+    "war_endgame": {
+      "label": "전쟁은 어떻게 끝나나",
+      "question": "전쟁이 '끝'난다는 건 무슨 뜻일까?",
+      "keywords": ["전쟁", "종전", "끝", "exit", "withdraw", "peace"],
+      "entities": [],
+      "default_category": "europe_war",
+      "default_frame": "decision_inquiry"
+    }
+  }
+}
