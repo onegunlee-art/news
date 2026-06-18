@@ -2,8 +2,7 @@
 /**
  * 라이브 E2E — Q-G09-DEC-2022 일본 decision_inquiry 완주 (R5)
  *
- * quest_id로 퀘스트를 고정한다. start.php 기본(today)은 Q-IRAN-FOREVER-001이라
- * decision 시나리오와 맞지 않아 evidence에서 PARTIAL이 난다.
+ * quest_id로 퀘스트를 고정한다. evidence gate는 nudge 1회 후 advance — flake 방지 4턴.
  */
 declare(strict_types=1);
 
@@ -106,24 +105,49 @@ if ($stance['http'] !== 200) {
     exit(1);
 }
 
-$msgs = [
+$reasoningMsgs = [
     '중국·대만 때문에 일본 주변도 위험해져서 미사일이 필요하다고 봐요.',
     '기사에서 일본은 2022년에 먼 적을 맞출 미사일을 갖추기로 했다고 했어요. 주변 위협 때문에 선택한 거 같아요.',
+];
+$evidenceTurns = [
     '일본이 스스로 방어할 수 있어야 미국이 늦게 와도 버틸 수 있다는 점이 중요해요.',
     '기사 546번에서 일본의 재무장이 돌이킬 수 없는 흐름이라고 했어요. 그게 미사일 결정의 배경인 것 같아요.',
+    '452번 기사에서 일본 방산 산업이 다시 힘을 키우고 있다고 했어요. 미사일도 그 흐름의 일부인 것 같아요.',
+    '동북아 안보가 불안해지면서 일본이 먼저 맞대응할 수단이 필요하다는 분석이 기사에 나왔어요.',
 ];
 
 $phase = '';
 $shouldCompose = false;
-foreach ($msgs as $i => $msg) {
+$step = 2;
+foreach ($reasoningMsgs as $msg) {
     $r = chat($token, $sid, $msg);
     $phase = (string) ($r['data']['phase'] ?? '?');
     $uiHint = (string) ($r['data']['ui_hint'] ?? '');
-    echo 'step' . ($i + 2) . " HTTP {$r['http']} phase={$phase} ui_hint={$uiHint}\n";
+    echo "step{$step} HTTP {$r['http']} phase={$phase} ui_hint={$uiHint}\n";
+    $step++;
     if ($r['http'] >= 400) {
         echo $r['raw'] . "\n";
         exit(1);
     }
+}
+foreach ($evidenceTurns as $msg) {
+    $r = chat($token, $sid, $msg);
+    $phase = (string) ($r['data']['phase'] ?? '?');
+    $uiHint = (string) ($r['data']['ui_hint'] ?? '');
+    echo "step{$step} HTTP {$r['http']} phase={$phase} ui_hint={$uiHint}\n";
+    $step++;
+    if ($r['http'] >= 400) {
+        echo $r['raw'] . "\n";
+        exit(1);
+    }
+    if ($phase !== 'evidence') {
+        break;
+    }
+}
+
+if ($phase === 'evidence') {
+    echo "FAIL: evidence gate not passed after " . count($evidenceTurns) . " turns\n";
+    exit(1);
 }
 
 if ($phase === 'hammer') {
