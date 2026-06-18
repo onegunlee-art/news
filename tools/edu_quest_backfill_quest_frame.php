@@ -26,7 +26,10 @@ $rows = $supabase->select(
     300
 ) ?? [];
 
+$wouldUpdate = 0;
 $updated = 0;
+$failed = 0;
+
 foreach ($rows as $quest) {
     $hints = eduQuestRawHammerHints($quest);
     $frame = trim((string) ($hints['quest_frame'] ?? ''));
@@ -35,15 +38,29 @@ foreach ($rows as $quest) {
     }
 
     $code = (string) ($quest['quest_code'] ?? '');
+    $questId = (string) ($quest['id'] ?? '');
+    if ($questId === '') {
+        echo "  SKIP {$code} — missing id\n";
+        $failed++;
+        continue;
+    }
+
     $hints['quest_frame'] = $defaultFrame;
     echo "  {$code} → quest_frame={$defaultFrame}\n";
+    $wouldUpdate++;
 
     if ($apply) {
-        $supabase->update('edu_daily_quests', (string) $quest['id'], [
+        $result = $supabase->update('edu_daily_quests', 'id=eq.' . $questId, [
             'hammer_hints' => json_encode($hints, JSON_UNESCAPED_UNICODE),
         ]);
+        if ($result === null) {
+            echo "    FAIL: " . ($supabase->getLastError() ?: 'unknown') . "\n";
+            $failed++;
+        } else {
+            $updated++;
+        }
     }
-    $updated++;
 }
 
-echo "\nTotal: {$updated} quest(s) " . ($apply ? 'updated' : 'would update') . "\n";
+echo "\nTotal: {$wouldUpdate} quest(s) " . ($apply ? "updated {$updated}, failed {$failed}" : 'would update') . "\n";
+exit($apply && $failed > 0 ? 1 : 0);
