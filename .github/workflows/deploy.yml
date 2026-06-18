@@ -145,9 +145,10 @@ jobs:
             # 루트 디렉토리도 포함 (composer.json 등 루트 파일용)
             sudo mkdir -p /var/www/thegist
             sudo chown "$U:$U" /var/www/thegist
-            # post-deploy www-data chown 후 루트 파일(composer.json)만 rsync 실패 방지
+            # post-deploy www-data chown 후 루트·composer 파일 rsync 실패 방지
+            sudo chmod u+rwx /var/www/thegist
             for f in composer.json composer.lock; do
-              if [ -f "/var/www/thegist/$f" ]; then
+              if [ -e "/var/www/thegist/$f" ]; then
                 sudo chown "$U:$U" "/var/www/thegist/$f"
               fi
             done
@@ -229,12 +230,18 @@ jobs:
             aws/thegist-server-locations.inc "$REMOTE:$DEST/aws/"
 
           # Composer 관련 파일 (dompdf 등 의존성 설치용)
-          rsync -avz \
-            -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
-            composer.json composer.lock "$REMOTE:$DEST/" 2>/dev/null || \
-          rsync -avz \
-            -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
-            composer.json "$REMOTE:$DEST/"
+          # post-deploy www-data chown 직후 재확인 + 단일 rsync (--no-times로 exit 23 방지)
+          ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" \
+            "sudo chown \$(whoami):\$(whoami) $DEST $DEST/composer.json $DEST/composer.lock 2>/dev/null || sudo chown \$(whoami):\$(whoami) $DEST"
+          if [ -f composer.lock ]; then
+            rsync -avz --no-times \
+              -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
+              composer.json composer.lock "$REMOTE:$DEST/"
+          else
+            rsync -avz --no-times \
+              -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
+              composer.json "$REMOTE:$DEST/"
+          fi
 
       # Nginx config는 서버에서 직접 관리 (certbot SSL 블록 포함).
       # sw.js/registerSW.js no-cache 블록만 없으면 추가한다.
