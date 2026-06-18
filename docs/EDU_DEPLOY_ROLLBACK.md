@@ -11,6 +11,7 @@
 | 2026-06-18 | `a71b103` | P1-0 dialogue turn_id (append-only, state read-only normalize, R7 write-back guard) |
 | 2026-06-18 | `a435f30` | P1-0 legacy in-progress abandon (59 sessions, blueprint.abandoned_at, resumable stage filter) |
 | 2026-06-18 | `9df0579` | P1-1 QuestConfig read layer (eduResolveQuestConfig, parity only, call-site 0) |
+| 2026-06-18 | `4997a0e` | P1-2a R0 fixture asserts → QuestConfig (test-only, behavior 0) |
 
 ## P1-2+ 라이브 완주 게이트 (R4–R6)
 
