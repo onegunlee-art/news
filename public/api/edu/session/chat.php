@@ -115,7 +115,7 @@ if ($action === 'submit_opening') {
     $studentTexts = $coach->collectStudentTexts($dialogue);
 
     if ($coach->shouldAdvanceReasoningMythBust($openingEval, $message, $studentTexts, 0)) {
-        $advanced = eduChatAdvanceToEvidence($blueprint, $quest, $director, $response);
+        $advanced = eduChatAdvanceToEvidence($blueprint, $quest, $response);
         $blueprint = $advanced['blueprint'];
         $assistantMessage = $advanced['assistantMessage'];
         $response = $advanced['response'];
@@ -123,7 +123,7 @@ if ($action === 'submit_opening') {
         $followup = $coach->askOpeningFollowupMythBust($quest, $message);
         $question = trim((string) ($followup['question'] ?? ''));
         if ($question === '' || $coach->questionOverlapsStudentText($question, $studentTexts)) {
-            $advanced = eduChatAdvanceToEvidence($blueprint, $quest, $director, $response);
+            $advanced = eduChatAdvanceToEvidence($blueprint, $quest, $response);
             $blueprint = $advanced['blueprint'];
             $assistantMessage = $advanced['assistantMessage'];
             $response = $advanced['response'];
@@ -258,7 +258,6 @@ function eduChatApplyReflectionCompose(
 function eduChatAdvanceToEvidence(
     array $blueprint,
     array $quest,
-    ConversationDirector $director,
     array $response = []
 ): array {
     $blueprint = eduMergeBlueprint($blueprint, ['phase' => 'evidence']);
@@ -266,11 +265,7 @@ function eduChatAdvanceToEvidence(
     foreach ($quest['articles'] as $a) {
         $publicArticles[] = eduPublicArticleRow($quest, $a);
     }
-    $assistantMessage = $director->refinePrompt(
-        '기사들을 참고해서 네 생각을 뒷받침하는 근거를 찾아봐.',
-        $quest,
-        35
-    );
+    $assistantMessage = eduBuildEvidenceBridgeMessage($blueprint);
     $response['articles'] = $publicArticles;
     $response['ui_hint'] = 'ask_evidence';
 
@@ -350,7 +345,7 @@ if ($phase === 'reasoning') {
             $followup = $coach->askReasonFollowupMythBust($quest, $message, $studentTexts, $coachQuestions);
             $question = trim((string) ($followup['question'] ?? ''));
             if ($question === '' || $coach->questionOverlapsStudentText($question, $studentTexts)) {
-                $advanced = eduChatAdvanceToEvidence($blueprint, $quest, $director, $response);
+                $advanced = eduChatAdvanceToEvidence($blueprint, $quest, $response);
                 $blueprint = $advanced['blueprint'];
                 $assistantMessage = $advanced['assistantMessage'];
                 $response = $advanced['response'];
@@ -363,7 +358,7 @@ if ($phase === 'reasoning') {
             $assistantMessage = $director->refinePrompt($followup['question'] ?? '조금 더 말해줄래?', $quest, (int) ($decision['progress_pct'] ?? 25));
         }
     } else {
-        $advanced = eduChatAdvanceToEvidence($blueprint, $quest, $director, $response);
+        $advanced = eduChatAdvanceToEvidence($blueprint, $quest, $response);
         $blueprint = $advanced['blueprint'];
         $assistantMessage = $advanced['assistantMessage'];
         $response = $advanced['response'];

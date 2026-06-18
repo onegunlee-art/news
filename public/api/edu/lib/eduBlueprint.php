@@ -294,3 +294,47 @@ function eduHammerInvitePrompt(string $mode = ''): string
 
     return '이런 시각도 있는데, 너는 어때? 네 입장이 바뀌었어, 아니면 유지해?';
 }
+
+/**
+ * evidence bridge — 학생 reason에서 인용할 구절 (고정 템플릿용, LLM 미사용).
+ * 너무 짧으면 null → fallback 멘트.
+ */
+function eduEvidenceBridgeSnippet(string $reason, int $minLen = 8, int $maxLen = 80): ?string
+{
+    $text = trim(preg_replace('/\s+/u', ' ', str_replace(["\r\n", "\r", "\n"], ' ', $reason)));
+    if ($text === '' || mb_strlen($text) < $minLen) {
+        return null;
+    }
+
+    $snippet = $text;
+    if (mb_strlen($text) > $maxLen) {
+        if (preg_match('/^(.+?[.!?？])(?:\s|$)/u', $text, $match)) {
+            $snippet = trim($match[1]);
+        }
+        if (mb_strlen($snippet) > $maxLen) {
+            $snippet = rtrim(mb_substr($snippet, 0, $maxLen)) . '…';
+        }
+    }
+
+    if (mb_strlen($snippet) < $minLen) {
+        return null;
+    }
+
+    return $snippet;
+}
+
+/**
+ * reasoning → evidence 전환 bridge (고정 템플릿, LLM 미호출).
+ *
+ * @param array<string, mixed> $blueprint
+ */
+function eduBuildEvidenceBridgeMessage(array $blueprint): string
+{
+    $reason = (string) ($blueprint['reason'] ?? '');
+    $snippet = eduEvidenceBridgeSnippet($reason);
+    if ($snippet !== null) {
+        return "방금 '{$snippet}'이라고 했지? 그 생각을 기사에서 같이 찾아볼까?";
+    }
+
+    return '방금 말한 생각, 기사에서 같이 찾아볼까?';
+}
