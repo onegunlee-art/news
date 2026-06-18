@@ -24,6 +24,7 @@
 | 2026-06-18 | `6694ce7` | P1-2i eduHammerPayload / eduStudentStanceLabel coach_profile derive (call site 0) |
 | 2026-06-18 | `cf57d14` | P1-2j chat.php reasoning phase eduIsMythBustQuest → entry_mode (4 points) |
 | 2026-06-18 | `4e96a85` | P1-2k EduExplorePage badge entry_mode derive + quest_frame fallback |
+| 2026-06-18 | `a60f202` | P1-2l QuestFlowChat isOpenResponse entry_mode derive + quest_frame fallback |
 
 ## P1-2+ 라이브 완주 게이트 (R4–R6)
 
