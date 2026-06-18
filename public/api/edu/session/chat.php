@@ -100,7 +100,7 @@ if ($action === 'submit_opening') {
     $hints = eduQuestHammerHints($quest);
     $hookFull = trim((string) ($hints['hook_full'] ?? ''));
     if ($hookFull !== '' && $dialogue === []) {
-        $dialogue = eduAppendDialogue($dialogue, 'assistant', $hookFull, 'hook');
+        $dialogue = eduAppendDialogue($dialogue, 'assistant', $hookFull, 'hook', 'stance');
     }
 
     $blueprint = eduMergeBlueprint($blueprint, [
@@ -110,7 +110,7 @@ if ($action === 'submit_opening') {
         'exchange_count' => (int) ($blueprint['exchange_count'] ?? 0) + 1,
     ]);
 
-    $dialogue = eduAppendDialogue($dialogue, 'student', $message);
+    $dialogue = eduAppendDialogue($dialogue, 'student', $message, null, (string) ($blueprint['phase'] ?? 'reasoning'));
     $openingEval = $coach->evaluateResponse('myth_bust', $message, $quest, 'reason');
     $studentTexts = $coach->collectStudentTexts($dialogue);
 
@@ -131,7 +131,7 @@ if ($action === 'submit_opening') {
             $assistantMessage = $director->refinePrompt($question, $quest, eduBlueprintProgress($blueprint));
         }
     }
-    $dialogue = eduAppendDialogue($dialogue, 'assistant', $assistantMessage, 'socratic');
+    $dialogue = eduAppendDialogue($dialogue, 'assistant', $assistantMessage, 'socratic', (string) ($blueprint['phase'] ?? 'reasoning'));
     eduSaveBlueprint($supabase, $sessionId, $blueprint, $dialogue);
 
     eduSendJson(array_merge($response, [
@@ -175,7 +175,7 @@ if ($action === 'select_stance') {
         eduBlueprintProgress($blueprint)
     );
 
-    $dialogue = eduAppendDialogue($dialogue, 'assistant', $assistantMessage, 'socratic');
+    $dialogue = eduAppendDialogue($dialogue, 'assistant', $assistantMessage, 'socratic', 'reasoning');
     eduSaveBlueprint($supabase, $sessionId, $blueprint, $dialogue);
 
     eduSendJson(array_merge($response, [
@@ -285,7 +285,7 @@ if ($action === 'confirm_reflection') {
         eduSendError('아직 정리 확인 단계가 아니에요. 반론에 먼저 답해줘.', 400);
     }
     $confirmText = $message !== '' ? $message : '맞아';
-    $dialogue = eduAppendDialogue($dialogue, 'student', $confirmText);
+    $dialogue = eduAppendDialogue($dialogue, 'student', $confirmText, null, 'reflection');
     $blueprint['exchange_count'] = (int) ($blueprint['exchange_count'] ?? 0) + 1;
 
     $composed = eduChatApplyReflectionCompose($blueprint, $quest, $dialogue, $llm, $rag, $director, $response);
@@ -295,7 +295,7 @@ if ($action === 'confirm_reflection') {
     $decision = $composed['decision'];
 
     if ($assistantMessage !== '') {
-        $dialogue = eduAppendDialogue($dialogue, 'assistant', $assistantMessage, $decision['next_agent'] ?? 'composer');
+        $dialogue = eduAppendDialogue($dialogue, 'assistant', $assistantMessage, $decision['next_agent'] ?? 'composer', (string) ($blueprint['phase'] ?? 'reflection'));
     }
     eduSaveBlueprint($supabase, $sessionId, $blueprint, $dialogue);
     eduSendJson(array_merge($response, [
@@ -307,7 +307,7 @@ if ($action === 'confirm_reflection') {
     ]));
 }
 
-$dialogue = eduAppendDialogue($dialogue, 'student', $message);
+$dialogue = eduAppendDialogue($dialogue, 'student', $message, null, $phase);
 $blueprint['exchange_count'] = (int) ($blueprint['exchange_count'] ?? 0) + 1;
 
 if ($phase === 'reasoning') {
@@ -523,7 +523,7 @@ if ($phase === 'reasoning') {
 }
 
 if ($assistantMessage !== '') {
-    $dialogue = eduAppendDialogue($dialogue, 'assistant', $assistantMessage, $decision['next_agent'] ?? 'director');
+    $dialogue = eduAppendDialogue($dialogue, 'assistant', $assistantMessage, $decision['next_agent'] ?? 'director', (string) ($blueprint['phase'] ?? $phase));
 }
 
 eduSaveBlueprint($supabase, $sessionId, $blueprint, $dialogue);

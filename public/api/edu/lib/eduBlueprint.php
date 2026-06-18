@@ -136,15 +136,76 @@ function eduBlueprintStage(array $blueprint): string
     };
 }
 
-/** @param list<array<string, mixed>> $dialogue */
-function eduAppendDialogue(array $dialogue, string $role, string $content, ?string $agent = null): array
+/**
+ * Next turn_id for append (legacy turns without id use array length as floor).
+ *
+ * @param list<array<string, mixed>> $dialogue
+ */
+function eduDialogueNextTurnId(array $dialogue): string
 {
-    $dialogue[] = [
+    $max = 0;
+    foreach ($dialogue as $turn) {
+        if (!is_array($turn)) {
+            continue;
+        }
+        $id = (string) ($turn['turn_id'] ?? '');
+        if (preg_match('/^t-(\d+)$/', $id, $m)) {
+            $max = max($max, (int) $m[1]);
+        }
+    }
+    $max = max($max, count($dialogue));
+
+    return 't-' . ($max + 1);
+}
+
+/**
+ * Read-only: additive turn_id for API/display. Does not mutate input.
+ *
+ * @param list<array<string, mixed>> $dialogue
+ * @return list<array<string, mixed>>
+ */
+function eduNormalizeDialogueTurns(array $dialogue): array
+{
+    $out = [];
+    $index = 0;
+    foreach ($dialogue as $turn) {
+        if (!is_array($turn)) {
+            continue;
+        }
+        $index++;
+        $normalized = $turn;
+        if (!isset($normalized['turn_id']) || trim((string) $normalized['turn_id']) === '') {
+            $normalized['turn_id'] = 't-' . $index;
+        }
+        $out[] = $normalized;
+    }
+
+    return $out;
+}
+
+/**
+ * @param list<array<string, mixed>> $dialogue
+ * @param string|null $phase blueprint phase at append time (metadata only)
+ */
+function eduAppendDialogue(
+    array $dialogue,
+    string $role,
+    string $content,
+    ?string $agent = null,
+    ?string $phase = null
+): array {
+    $turn = [
         'role' => $role,
         'content' => $content,
         'agent' => $agent,
         'at' => date('c'),
+        'turn_id' => eduDialogueNextTurnId($dialogue),
     ];
+    if ($phase !== null && $phase !== '') {
+        $turn['phase'] = $phase;
+    }
+    $dialogue[] = $turn;
+
     return $dialogue;
 }
 
@@ -229,22 +290,33 @@ function eduBuildEssayFullText(
     return trim(implode("\n", $lines));
 }
 
-/** @param array<string, mixed> $session */
-function eduLoadDialogue(array $session): array
+/**
+ * Load dialogue from session storage.
+ *
+ * @param bool $withTurnIds When true, apply read-only normalize (state API only).
+ *                          chat/compose use default false to avoid legacy write-back.
+ * @return list<array<string, mixed>>
+ */
+function eduLoadDialogue(array $session, bool $withTurnIds = false): array
 {
     $raw = $session['dialogue_json'] ?? [];
     if (is_string($raw)) {
         $raw = json_decode($raw, true);
     }
-    if (is_array($raw) && $raw !== []) {
-        return $raw;
+    if (!is_array($raw) || $raw === []) {
+        $hammer = $session['hammer_payload'] ?? [];
+        if (is_string($hammer)) {
+            $hammer = json_decode($hammer, true) ?: [];
+        }
+        $fallback = $hammer['dialogue'] ?? [];
+        $raw = is_array($fallback) ? $fallback : [];
     }
-    $hammer = $session['hammer_payload'] ?? [];
-    if (is_string($hammer)) {
-        $hammer = json_decode($hammer, true) ?: [];
+
+    if ($withTurnIds) {
+        return eduNormalizeDialogueTurns($raw);
     }
-    $fallback = $hammer['dialogue'] ?? [];
-    return is_array($fallback) ? $fallback : [];
+
+    return $raw;
 }
 
 /** reflection 정리 확인(맞아/네 등) — hammer 반론 답변과 구분 */

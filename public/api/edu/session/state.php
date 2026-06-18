@@ -35,7 +35,7 @@ $quest['articles'] = $supabase->select(
 ) ?? [];
 
 $blueprint = eduLoadBlueprint($session);
-$dialogue = eduLoadDialogue($session);
+$dialogue = eduLoadDialogue($session, true);
 
 $essay = null;
 if (($session['stage'] ?? '') === 'completed') {
