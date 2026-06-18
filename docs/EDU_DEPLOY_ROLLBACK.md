@@ -24,6 +24,7 @@
 
 P1-0/1: R0 `--live` + 로컬 R0–R3 + parity로 충분.
 
+## 참고
 
 - Hammer 톤 완화: `95b533d` (PR #5, `e37c8f2` merge)
 - Hammer 톤만 되돌릴 때: `e37c8f2` 직전 `6b3b9c0`
