@@ -303,7 +303,10 @@ function eduHammerPayload(array $quest, string $stance): array
     $mode = $hints['mode'] ?? 'adversarial';
     if ($mode === 'convergent') {
         $shared = (string) ($hints['shared_conclusion'] ?? '');
-        $isDecisionInquiry = ($hints['quest_frame'] ?? '') === 'decision_inquiry';
+        if (!function_exists('eduQuestCoachProfile')) {
+            require_once __DIR__ . '/eduQuestConfig.php';
+        }
+        $isDecisionInquiry = eduQuestCoachProfile($quest) === 'decision';
         if ($isDecisionInquiry) {
             $reflectionQuestion = '네가 본 관점을 한 줄로 정리해볼래? 그 선택, 너는 어떻게 봐?';
         } elseif ($shared !== '') {
@@ -568,7 +571,10 @@ function eduDecisionStanceLabel(string $stance, array $quest): string
  */
 function eduStudentStanceLabel(string $stance, array $quest): string
 {
-    if (eduIsDecisionInquiryQuest($quest)) {
+    if (!function_exists('eduQuestCoachProfile')) {
+        require_once __DIR__ . '/eduQuestConfig.php';
+    }
+    if (eduQuestCoachProfile($quest) === 'decision') {
         return eduDecisionStanceLabel($stance, $quest);
     }
 
