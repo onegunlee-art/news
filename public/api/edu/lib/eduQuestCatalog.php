@@ -220,17 +220,22 @@ function eduQuestListCategoryMeta(array $quest): array
  */
 function eduQuestMatchesFrameFilter(array $quest, string $frame): bool
 {
-    $hints = eduQuestRawHammerHints($quest);
-    $resolved = eduQuestResolvedFrame($hints);
+    require_once __DIR__ . '/eduQuestConfig.php';
+    $cfg = eduResolveQuestConfig($quest);
+
     if ($frame === 'all') {
         return true;
     }
     if ($frame === 'myth_bust') {
-        return $resolved === 'myth_bust';
+        return $cfg['entry_mode'] === 'open_response';
     }
     if ($frame === 'decision_inquiry') {
-        return $resolved === 'decision_inquiry';
+        return $cfg['entry_mode'] === 'stance_pick'
+            && ($cfg['coach_profile'] === 'decision' || $cfg['quest_frame'] === '');
     }
+
+    $resolved = $cfg['quest_frame'] === '' ? 'decision_inquiry' : $cfg['quest_frame'];
+
     return $resolved === $frame;
 }
 

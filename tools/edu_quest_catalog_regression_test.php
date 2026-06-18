@@ -8,6 +8,8 @@ declare(strict_types=1);
 
 $root = dirname(__DIR__);
 require_once $root . '/public/api/edu/lib/eduQuestCatalog.php';
+require_once $root . '/tools/edu_g09_decision_quest_fixture.php';
+require_once $root . '/tools/edu_nuclear_axis_quest_fixture.php';
 require_once $root . '/src/backend/Services/edu/EduQuestFactory.php';
 
 use Services\Edu\EduQuestFactory;
@@ -73,6 +75,57 @@ assertTrue('frame filter all', eduQuestMatchesFrameFilter($mockQuest, 'all'));
 $item = eduQuestToListItem($mockQuest);
 assertTrue('list item category', ($item['category'] ?? '') === 'ai_tech');
 assertTrue('list item lens', ($item['lens'] ?? '') === 'ai_jobs_youth');
+
+/** @param array<string, mixed> $quest */
+function eduQuestMatchesFrameFilterLegacy(array $quest, string $frame): bool
+{
+    $hints = eduQuestRawHammerHints($quest);
+    $resolved = eduQuestResolvedFrame($hints);
+    if ($frame === 'all') {
+        return true;
+    }
+    if ($frame === 'myth_bust') {
+        return $resolved === 'myth_bust';
+    }
+    if ($frame === 'decision_inquiry') {
+        return $resolved === 'decision_inquiry';
+    }
+
+    return $resolved === $frame;
+}
+
+echo "\n--- frame filter (QuestConfig vs legacy) ---\n";
+
+$japan = eduG09DecQuestFixture();
+$nuke = eduNuke630QuestFixture();
+$iran = [
+    'quest_code' => 'Q-IRAN-FOREVER-001',
+    'hammer_hints' => ['quest_frame' => 'decision_inquiry'],
+];
+$autoFrame = [
+    'quest_code' => 'Q-AUTO',
+    'hammer_hints' => [],
+];
+
+$fixtures = ['japan' => $japan, 'nuke' => $nuke, 'iran' => $iran, 'auto' => $autoFrame];
+$filters = ['all', 'myth_bust', 'decision_inquiry'];
+
+foreach ($fixtures as $name => $quest) {
+    foreach ($filters as $filter) {
+        $legacy = eduQuestMatchesFrameFilterLegacy($quest, $filter);
+        $current = eduQuestMatchesFrameFilter($quest, $filter);
+        assertTrue("{$name}/{$filter} legacy parity", $legacy === $current);
+    }
+}
+
+assertTrue('myth_bust filter: nuke only', eduQuestMatchesFrameFilter($nuke, 'myth_bust'));
+assertTrue('myth_bust filter: not japan', !eduQuestMatchesFrameFilter($japan, 'myth_bust'));
+assertTrue('myth_bust filter: not iran', !eduQuestMatchesFrameFilter($iran, 'myth_bust'));
+assertTrue('decision filter: japan', eduQuestMatchesFrameFilter($japan, 'decision_inquiry'));
+assertTrue('decision filter: iran', eduQuestMatchesFrameFilter($iran, 'decision_inquiry'));
+assertTrue('decision filter: not nuke', !eduQuestMatchesFrameFilter($nuke, 'decision_inquiry'));
+assertTrue('decision filter: auto empty frame', eduQuestMatchesFrameFilter($autoFrame, 'decision_inquiry'));
+assertTrue('all filter: nuke', eduQuestMatchesFrameFilter($nuke, 'all'));
 
 echo "\n=== Result: {$pass} pass, {$fail} fail ===\n";
 exit($fail > 0 ? 1 : 0);
