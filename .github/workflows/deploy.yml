@@ -145,6 +145,12 @@ jobs:
             # 루트 디렉토리도 포함 (composer.json 등 루트 파일용)
             sudo mkdir -p /var/www/thegist
             sudo chown "$U:$U" /var/www/thegist
+            # post-deploy www-data chown 후 루트 파일(composer.json)만 rsync 실패 방지
+            for f in composer.json composer.lock; do
+              if [ -f "/var/www/thegist/$f" ]; then
+                sudo chown "$U:$U" "/var/www/thegist/$f"
+              fi
+            done
             for d in /var/www/thegist/public \
                      /var/www/thegist/src/backend \
                      /var/www/thegist/src/agents \
