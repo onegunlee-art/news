@@ -11,6 +11,7 @@ declare(strict_types=1);
 $root = dirname(__DIR__);
 require_once $root . '/public/api/edu/lib/bootstrap.php';
 require_once $root . '/public/api/edu/lib/eduQuest.php';
+require_once $root . '/public/api/edu/lib/eduQuestConfig.php';
 require_once $root . '/public/api/edu/lib/eduBlueprint.php';
 require_once $root . '/tools/edu_g09_decision_quest_fixture.php';
 require_once $root . '/tools/edu_nuclear_axis_quest_fixture.php';
@@ -45,11 +46,12 @@ $iran = [
     'hammer_hints' => ['quest_frame' => 'decision_inquiry'],
 ];
 
-assertTrue('japan not myth_bust', !eduIsMythBustQuest($japan));
-assertTrue('iran not myth_bust', !eduIsMythBustQuest($iran));
-assertTrue('nuke is myth_bust', eduIsMythBustQuest($nuke));
-assertTrue('japan is decision_inquiry', eduIsDecisionInquiryQuest($japan));
-assertTrue('nuke not decision_inquiry', !eduIsDecisionInquiryQuest($nuke));
+// P1-2a: fixture classification via QuestConfig (production still uses legacy booleans)
+assertTrue('japan entry_mode stance_pick', eduQuestEntryMode($japan) === 'stance_pick');
+assertTrue('iran entry_mode stance_pick', eduQuestEntryMode($iran) === 'stance_pick');
+assertTrue('nuke entry_mode open_response', eduQuestEntryMode($nuke) === 'open_response');
+assertTrue('japan coach_profile decision', eduQuestCoachProfile($japan) === 'decision');
+assertTrue('nuke coach_profile open', eduQuestCoachProfile($nuke) === 'open');
 
 $nuke['id'] = 'test-quest-id';
 $payload = eduPublicQuestPayload($nuke);
