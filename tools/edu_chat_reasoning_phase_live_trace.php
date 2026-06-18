@@ -161,10 +161,17 @@ if ($japan === null) {
         $r3 = chat($token, $sid, ['message' => '대만·중국 긴장이 커지면서 일본이 먼저 공격받을까 봐 무기를 키운 것 같아.']);
         $phase3 = logTurn('reasoning-2', $r3);
         gate('japan reasoning-2 HTTP 200', $r3['http'] === 200);
-        gate('japan reasoning-2 reaches evidence', $phase3 === 'evidence');
+        if ($phase3 === 'reasoning') {
+            $r4 = chat($token, $sid, ['message' => '미국이 늦게 오면 일본이 스스로 맞대응할 수단이 필요하다는 분석도 기사에 나왔어.']);
+            $phase4 = logTurn('reasoning-3', $r4);
+            gate('japan reasoning-3 HTTP 200', $r4['http'] === 200);
+            gate('japan reasoning reaches evidence', $phase4 === 'evidence');
+        } else {
+            gate('japan reasoning reaches evidence', $phase3 === 'evidence');
+        }
     } else {
         gate('japan reasoning-2 N/A (early evidence)', true);
-        gate('japan reasoning-2 reaches evidence', true);
+        gate('japan reasoning reaches evidence', true);
     }
 }
 
@@ -189,10 +196,17 @@ if ($iran === null) {
         $r3 = chat($token, $sid, ['message' => '결국 이란 국민이 미국 편에서 멀어지는 게 더 중요한 이유인 것 같아.']);
         $phase3 = logTurn('reasoning-2', $r3);
         gate('iran reasoning-2 HTTP 200', $r3['http'] === 200);
-        gate('iran reasoning-2 reaches evidence', $phase3 === 'evidence');
+        if ($phase3 === 'reasoning') {
+            $r4 = chat($token, $sid, ['message' => '베트남전처럼 현지 민심이 반감이면 전쟁이 더 길어진다는 점도 비슷하다고 봐.']);
+            $phase4 = logTurn('reasoning-3', $r4);
+            gate('iran reasoning-3 HTTP 200', $r4['http'] === 200);
+            gate('iran reasoning reaches evidence', $phase4 === 'evidence');
+        } else {
+            gate('iran reasoning reaches evidence', $phase3 === 'evidence');
+        }
     } else {
         gate('iran reasoning-2 N/A', true);
-        gate('iran reasoning-2 reaches evidence', true);
+        gate('iran reasoning reaches evidence', true);
     }
 }
 
