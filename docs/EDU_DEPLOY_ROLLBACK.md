@@ -19,6 +19,7 @@
 | 2026-06-18 | `8f0deff` | P1-2c eduPublicQuestPayload entry_mode additive (QuestConfig derive, FE/chat 0) |
 | 2026-06-18 | `4150588` | P1-2d eduQuestToListItem entry_mode additive (list.php, FE/chat 0) |
 | 2026-06-18 | `de5ca17` | P1-2f Reflection coach_profile derive + golden fallback parity test |
+| 2026-06-18 | `2d9dfc7` | P1-2g GistStyleComposer coach_profile derive + buildContext golden parity test |
 
 ## P1-2+ 라이브 완주 게이트 (R4–R6)
 
