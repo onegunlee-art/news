@@ -199,6 +199,22 @@ jobs:
             -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
             cron/ "$REMOTE:$DEST/cron/"
 
+          # EDU catalog 운영 스크립트 (서버 tools/ 기존 _*.py 등은 건드리지 않음)
+          rsync -avz \
+            -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
+            --include='edu_quest_*.php' \
+            --include='edu_backfill_*.php' \
+            --include='seed_lens_quests.php' \
+            --include='seed_japan_decision_quest.php' \
+            --include='seed_iran_decision_quest.php' \
+            --exclude='*' \
+            tools/ "$REMOTE:$DEST/tools/"
+
+          ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" "mkdir -p $DEST/docs"
+          rsync -avz \
+            -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
+            docs/GIST_EDU_LENSES.json "$REMOTE:$DEST/docs/"
+
           rsync -avz \
             -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
             aws/thegist-server-locations.inc "$REMOTE:$DEST/aws/"
