@@ -56,6 +56,7 @@ assertTrue('nuke coach_profile open', eduQuestCoachProfile($nuke) === 'open');
 $nuke['id'] = 'test-quest-id';
 $payload = eduPublicQuestPayload($nuke);
 assertEq('payload quest_frame', $payload['quest_frame'] ?? null, 'myth_bust');
+assertEq('payload entry_mode', $payload['entry_mode'] ?? null, 'open_response');
 assertTrue('payload hook_full non-empty', trim((string) ($payload['hook_full'] ?? '')) !== '');
 assertTrue('payload hook_short non-empty', trim((string) ($payload['hook_short'] ?? '')) !== '');
 

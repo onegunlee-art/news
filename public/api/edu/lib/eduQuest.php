@@ -180,6 +180,7 @@ function eduPublicArticleRow(array $quest, array $article): array
 
 function eduPublicQuestPayload(array $quest): array
 {
+    require_once __DIR__ . '/eduQuestConfig.php';
     $hints = eduQuestHammerHints($quest);
     $articles = [];
     foreach ($quest['articles'] ?? [] as $a) {
@@ -196,6 +197,7 @@ function eduPublicQuestPayload(array $quest): array
         'conflict_summary' => $quest['conflict_summary'],
         'time_anchor' => $hints['time_anchor'] ?? null,
         'quest_frame' => $hints['quest_frame'] ?? null,
+        'entry_mode' => eduQuestEntryMode($quest),
         'hook_short' => $hints['hook_short'] ?? null,
         'hook_full' => $hints['hook_full'] ?? null,
         'articles' => $articles,

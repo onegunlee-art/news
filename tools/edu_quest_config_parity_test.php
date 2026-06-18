@@ -84,5 +84,9 @@ ok('nuke hook_full passthrough', $nukeCfg['hook_full'] !== '');
 ok('nuke axes count', count($nukeCfg['axes']) === 3);
 ok('japan shared_conclusion passthrough', eduResolveQuestConfig($japan)['shared_conclusion'] !== '');
 
+ok('payload japan entry_mode', (eduPublicQuestPayload($japan)['entry_mode'] ?? '') === 'stance_pick');
+ok('payload nuke entry_mode', (eduPublicQuestPayload($nuke)['entry_mode'] ?? '') === 'open_response');
+ok('payload iran entry_mode', (eduPublicQuestPayload($iranFull)['entry_mode'] ?? '') === 'stance_pick');
+
 echo "\n=== Summary: {$pass} pass, {$fail} fail ===\n";
 exit($fail > 0 ? 1 : 0);
