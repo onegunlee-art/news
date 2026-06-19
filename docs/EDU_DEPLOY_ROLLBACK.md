@@ -32,7 +32,7 @@
 | 2026-06-19 | `310d6bd` | **P1-2n 배포 직전** — n QuestFlowChat entry action 배포 전 즉시 롤백 지점 (m 포함) |
 | 2026-06-19 | `772bcb1` | P1-2n QuestFlowChat stance entry action → entry_mode derive + guards |
 | 2026-06-19 | `3f0a5c4` | **P1-3 배포 직전** — P1-2(a~n) 완료; legacy turn/QuestFlow 제거 전 롤백 |
-| 2026-06-19 | *(P1-3)* | P1-3 legacy booleans removed; turn.php + QuestFlowLegacy removed; eduQuestHammerMode |
+| 2026-06-19 | `0f8ee8f` | P1-3 legacy booleans removed; turn.php + QuestFlowLegacy removed; eduQuestHammerMode |
 
 ## P1-2+ 라이브 완주 게이트 (R4–R6)
 
