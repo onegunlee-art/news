@@ -23,7 +23,7 @@ function smokeAssert(bool $ok, string $msg): void
 $requiredFiles = [
     'src/backend/Services/edu/EduQuestFactory.php',
     'src/backend/Services/edu/EduRagService.php',
-    'public/api/edu/session/turn.php',
+    'public/api/edu/session/chat.php',
     'public/api/edu/internal/quest-candidate.php',
     'public/api/edu/lib/eduConfig.php',
     'cron/edu_quest_curator.php',
@@ -41,7 +41,7 @@ require_once $root . '/public/api/edu/lib/eduAgents.php';
 eduLoadAgents();
 smokeAssert(class_exists('Services\\Edu\\EduQuestFactory'), 'EduQuestFactory autoload');
 smokeAssert(class_exists('Services\\Edu\\EduRagService'), 'EduRagService autoload');
-smokeAssert(eduUseTurnFsm() === true, 'EDU_USE_TURN_FSM default true');
+smokeAssert(eduUseChatEngine() === true, 'EDU_USE_CHAT_ENGINE default true');
 
 $newsFiles = [
     'public/api/admin/news.php',

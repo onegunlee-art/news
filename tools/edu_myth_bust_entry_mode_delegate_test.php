@@ -1,6 +1,6 @@
 <?php
 /**
- * P1-2h — eduIsMythBustQuest() delegates to eduQuestEntryMode (call site 0)
+ * P1-3 — quest_frame myth_bust ↔ eduQuestEntryMode (replaces P1-2h delegate test)
  *
  * Usage: php tools/edu_myth_bust_entry_mode_delegate_test.php
  */
@@ -29,12 +29,12 @@ function ok(string $label, bool $cond): void
 }
 
 /** @param array<string, mixed> $quest */
-function eduIsMythBustQuestLegacy(array $quest): bool
+function legacyMythBustFrame(array $quest): bool
 {
     return (eduQuestHammerHints($quest)['quest_frame'] ?? '') === 'myth_bust';
 }
 
-echo "=== eduIsMythBustQuest entry_mode delegate (P1-2h) ===\n\n";
+echo "=== quest_frame myth_bust ↔ entry_mode open_response (P1-3) ===\n\n";
 
 $fixtures = [
     'japan' => eduG09DecQuestFixture(),
@@ -47,19 +47,18 @@ $fixtures = [
     'empty_hints' => ['quest_code' => 'Q-EMPTY', 'hammer_hints' => []],
     'adversarial' => [
         'quest_code' => 'Q-ADV',
-        'hammer_hints' => ['mode' => 'adversarial', 'quest_frame' => ''],
+        'hammer_hints' => ['mode' => 'adversarial', 'quest_frame' => 'adversarial'],
     ],
     'unknown_frame' => [
         'quest_code' => 'Q-UNK',
-        'hammer_hints' => ['quest_frame' => 'future_frame', 'mode' => 'convergent'],
+        'hammer_hints' => ['quest_frame' => 'unknown_xyz'],
     ],
 ];
 
 foreach ($fixtures as $name => $quest) {
-    $legacy = eduIsMythBustQuestLegacy($quest);
-    $current = eduIsMythBustQuest($quest);
-    ok("{$name} legacy ↔ delegate", $legacy === $current);
-    ok("{$name} delegate ↔ open_response", $current === (eduQuestEntryMode($quest) === 'open_response'));
+    $frameOpen = legacyMythBustFrame($quest);
+    $entryOpen = eduQuestEntryMode($quest) === 'open_response';
+    ok("{$name} frame ↔ entry_mode open_response", $frameOpen === $entryOpen);
 }
 
 echo "\n=== Summary: {$pass} pass, {$fail} fail ===\n";

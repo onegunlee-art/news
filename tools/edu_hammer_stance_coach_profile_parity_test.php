@@ -39,7 +39,7 @@ function hammerDecisionBranchLegacy(array $quest): bool
 /** @param array<string, mixed> $quest */
 function stanceLabelLegacy(string $stance, array $quest): string
 {
-    if (eduIsDecisionInquiryQuest($quest)) {
+    if (hammerDecisionBranchLegacy($quest)) {
         return eduDecisionStanceLabel($stance, $quest);
     }
 

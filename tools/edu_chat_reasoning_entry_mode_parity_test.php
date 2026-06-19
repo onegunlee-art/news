@@ -1,6 +1,6 @@
 <?php
 /**
- * P1-2j — chat.php reasoning phase: eduIsMythBustQuest ↔ eduQuestEntryMode boolean parity
+ * P1-2j — chat.php reasoning phase: quest_frame myth_bust ↔ eduQuestEntryMode parity
  *
  * 4 decision points in reasoning block must remain byte-identical to legacy myth_bust check.
  *
@@ -33,7 +33,7 @@ function ok(string $label, bool $cond): void
 /** @param array<string, mixed> $quest */
 function reasoningBranchLegacy(array $quest): bool
 {
-    return eduIsMythBustQuest($quest);
+    return (eduQuestHammerHints($quest)['quest_frame'] ?? '') === 'myth_bust';
 }
 
 /** @param array<string, mixed> $quest */

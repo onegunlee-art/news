@@ -119,7 +119,7 @@ class GistStyleComposer
         if (!function_exists('eduQuestCoachProfile') && function_exists('eduFindProjectRoot')) {
             require_once eduFindProjectRoot() . 'public/api/edu/lib/eduQuestConfig.php';
         }
-        $isConvergent = function_exists('eduIsConvergentQuest') && eduIsConvergentQuest($quest);
+        $isConvergent = function_exists('eduQuestHammerMode') && eduQuestHammerMode($quest) === 'convergent';
         $isDecisionInquiry = $this->usesDecisionComposeProfile($quest);
         $perspectiveLabel = function_exists('eduStudentPerspectiveLabel')
             ? eduStudentPerspectiveLabel($blueprint, $quest)

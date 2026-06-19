@@ -81,29 +81,6 @@ export interface EduQuestArticle {
   published_at?: string | null
 }
 
-export interface EduTurnResponse {
-  success: boolean
-  session_id: string
-  turn: number | 'completed'
-  stage: string
-  prompt?: string
-  counter_argument?: string
-  counter_stance?: string
-  summary_lines?: string[]
-  outline?: Record<string, string>
-  full_text?: string
-  scqa_parts?: Record<string, string>
-  feedback?: string
-  hero_sentence?: string
-  xp_gained?: number
-  tier?: EduTierProgress
-  ui_label?: string
-  needs_followup?: boolean
-  articles?: EduQuestArticle[]
-  mixup_sources?: Array<{ source: string; excerpt: string }>
-  stance_changed?: boolean
-  final_stance?: string
-}
 
 export interface EduDialogueTurn {
   role: 'student' | 'assistant'
@@ -463,12 +440,6 @@ export const eduApi = {
           }
         }
       }),
-
-  submitTurn: (sessionId: string, turn: number, input: Record<string, unknown>) =>
-    eduFetch<EduTurnResponse>('/api/edu/session/turn.php', {
-      method: 'POST',
-      body: JSON.stringify({ session_id: sessionId, turn, input }),
-    }),
 
   getSessionState: (sessionId: string) =>
     eduFetch<EduSessionState>(`/api/edu/session/state.php?session_id=${encodeURIComponent(sessionId)}`),

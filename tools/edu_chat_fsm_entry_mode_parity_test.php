@@ -2,7 +2,7 @@
 /**
  * P1-2m — chat.php FSM entry: submit_opening / select_stance guards
  *
- * Legacy eduIsMythBustQuest ↔ eduQuestEntryMode must agree on allow/block matrix.
+ * Legacy quest_frame myth_bust ↔ eduQuestEntryMode must agree on allow/block matrix.
  *
  * Usage: php tools/edu_chat_fsm_entry_mode_parity_test.php
  */
@@ -31,9 +31,15 @@ function ok(string $label, bool $cond): void
 }
 
 /** @param array<string, mixed> $quest */
+function legacyMythBustFrame(array $quest): bool
+{
+    return (eduQuestHammerHints($quest)['quest_frame'] ?? '') === 'myth_bust';
+}
+
+/** @param array<string, mixed> $quest */
 function submitOpeningAllowedLegacy(array $quest): bool
 {
-    return eduIsMythBustQuest($quest);
+    return legacyMythBustFrame($quest);
 }
 
 /** @param array<string, mixed> $quest */
@@ -45,7 +51,7 @@ function submitOpeningAllowedDerived(array $quest): bool
 /** @param array<string, mixed> $quest */
 function selectStanceAllowedLegacy(array $quest): bool
 {
-    return !eduIsMythBustQuest($quest);
+    return !legacyMythBustFrame($quest);
 }
 
 /** @param array<string, mixed> $quest */

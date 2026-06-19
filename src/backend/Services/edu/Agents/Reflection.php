@@ -29,7 +29,7 @@ class Reflection
         $changeLabel = $stanceChanged ? '입장을 바꿨어' : '입장을 유지했어';
 
         $isDecisionInquiry = $this->usesDecisionReflectionProfile($quest);
-        $isConvergent = function_exists('eduIsConvergentQuest') && eduIsConvergentQuest($quest);
+        $isConvergent = function_exists('eduQuestHammerMode') && eduQuestHammerMode($quest) === 'convergent';
         $axisLabel = null;
 
         $axisContext = array_merge($blueprint, [

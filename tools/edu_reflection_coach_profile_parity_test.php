@@ -76,7 +76,7 @@ $fixtures = [
 ];
 
 foreach ($fixtures as $name => $quest) {
-    $legacy = eduIsDecisionInquiryQuest($quest);
+    $legacy = (eduQuestHammerHints($quest)['quest_frame'] ?? '') === 'decision_inquiry';
     $derived = eduQuestCoachProfile($quest) === 'decision';
     ok("{$name} legacy ↔ coach_profile decision", $legacy === $derived);
 }

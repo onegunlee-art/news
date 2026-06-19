@@ -2,7 +2,7 @@
 /**
  * GIST EDU — QuestConfig read layer (derived from hammer_hints, read-only)
  *
- * P1-1: parallel read layer. P1-2h: eduIsMythBustQuest delegates to entry_mode here.
+ * P1-1: parallel read layer. P1-3: legacy booleans removed — use entry_mode / coach_profile / hammer_mode.
  */
 declare(strict_types=1);
 
@@ -68,4 +68,10 @@ function eduQuestEntryMode(array $quest): string
 function eduQuestCoachProfile(array $quest): string
 {
     return eduResolveQuestConfig($quest)['coach_profile'];
+}
+
+/** @param array<string, mixed> $quest */
+function eduQuestHammerMode(array $quest): string
+{
+    return eduResolveQuestConfig($quest)['hammer_mode'];
 }

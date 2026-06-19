@@ -384,31 +384,12 @@ function eduQuestHammerHints(array $quest): array
     return is_array($hints) ? $hints : [];
 }
 
-function eduIsConvergentQuest(array $quest): bool
-{
-    return (eduQuestHammerHints($quest)['mode'] ?? '') === 'convergent';
-}
-
-function eduIsDecisionInquiryQuest(array $quest): bool
-{
-    return (eduQuestHammerHints($quest)['quest_frame'] ?? '') === 'decision_inquiry';
-}
-
-function eduIsMythBustQuest(array $quest): bool
-{
-    if (!function_exists('eduQuestEntryMode')) {
-        require_once __DIR__ . '/eduQuestConfig.php';
-    }
-
-    return eduQuestEntryMode($quest) === 'open_response';
-}
-
-/**
- * @return ?array{axis_id: string, axis_label: string}
- */
 function eduMatchStudentAxisFromText(string $text, array $quest): ?array
 {
-    if (!eduIsConvergentQuest($quest)) {
+    if (!function_exists('eduQuestHammerMode')) {
+        require_once __DIR__ . '/eduQuestConfig.php';
+    }
+    if (eduQuestHammerMode($quest) !== 'convergent') {
         return null;
     }
 
@@ -503,7 +484,10 @@ function eduMatchStudentAxisFromText(string $text, array $quest): ?array
  */
 function eduResolveStudentAxis(array $blueprint, array $quest): ?array
 {
-    if (!eduIsConvergentQuest($quest)) {
+    if (!function_exists('eduQuestHammerMode')) {
+        require_once __DIR__ . '/eduQuestConfig.php';
+    }
+    if (eduQuestHammerMode($quest) !== 'convergent') {
         return null;
     }
 

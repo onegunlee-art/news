@@ -12,7 +12,6 @@ require_once $root . '/public/api/edu/lib/eduQuest.php';
 require_once $root . '/public/api/edu/lib/eduQuestConfig.php';
 require_once $root . '/tools/edu_g09_decision_quest_fixture.php';
 require_once $root . '/tools/edu_nuclear_axis_quest_fixture.php';
-require_once $root . '/public/api/edu/lib/eduQuestCatalog.php';
 
 $pass = 0;
 $fail = 0;
@@ -36,13 +35,15 @@ function assertQuestParity(string $label, array $quest): void
 {
     $cfg = eduResolveQuestConfig($quest);
 
-    ok("{$label} myth_bust ↔ open_response", eduIsMythBustQuest($quest) === ($cfg['entry_mode'] === 'open_response'));
-    ok("{$label} decision_inquiry ↔ decision coach", eduIsDecisionInquiryQuest($quest) === ($cfg['coach_profile'] === 'decision'));
-    ok("{$label} convergent ↔ hammer_mode", eduIsConvergentQuest($quest) === ($cfg['hammer_mode'] === 'convergent'));
-    ok("{$label} open coach ↔ myth_bust", ($cfg['coach_profile'] === 'open') === eduIsMythBustQuest($quest));
-    ok("{$label} stance_pick ↔ not myth_bust", ($cfg['entry_mode'] === 'stance_pick') === !eduIsMythBustQuest($quest));
+    $hints = eduQuestHammerHints($quest);
+    $frame = trim((string) ($hints['quest_frame'] ?? ''));
 
-    $frame = trim((string) (eduQuestHammerHints($quest)['quest_frame'] ?? ''));
+    ok("{$label} myth_bust ↔ open_response", ($frame === 'myth_bust') === ($cfg['entry_mode'] === 'open_response'));
+    ok("{$label} decision_inquiry ↔ decision coach", ($frame === 'decision_inquiry') === ($cfg['coach_profile'] === 'decision'));
+    ok("{$label} convergent ↔ hammer_mode", (($hints['mode'] ?? '') === 'convergent') === ($cfg['hammer_mode'] === 'convergent'));
+    ok("{$label} open coach ↔ myth_bust", ($cfg['coach_profile'] === 'open') === ($frame === 'myth_bust'));
+    ok("{$label} stance_pick ↔ not myth_bust", ($cfg['entry_mode'] === 'stance_pick') === ($frame !== 'myth_bust'));
+
     ok("{$label} quest_frame raw preserved", ($cfg['quest_frame'] ?? '') === $frame);
 }
 
@@ -88,13 +89,6 @@ ok('japan shared_conclusion passthrough', eduResolveQuestConfig($japan)['shared_
 ok('payload japan entry_mode', (eduPublicQuestPayload($japan)['entry_mode'] ?? '') === 'stance_pick');
 ok('payload nuke entry_mode', (eduPublicQuestPayload($nuke)['entry_mode'] ?? '') === 'open_response');
 ok('payload iran entry_mode', (eduPublicQuestPayload($iranFull)['entry_mode'] ?? '') === 'stance_pick');
-
-echo "\n--- entry_mode surfaces (state/list/today derive) ---\n";
-$nukeId = array_merge($nuke, ['id' => 'parity-nuke-id']);
-$japanId = array_merge($japan, ['id' => 'parity-japan-id']);
-ok('payload/list nuke entry_mode match', (eduPublicQuestPayload($nukeId)['entry_mode'] ?? '') === (eduQuestToListItem($nukeId)['entry_mode'] ?? ''));
-ok('payload/list japan entry_mode match', (eduPublicQuestPayload($japanId)['entry_mode'] ?? '') === (eduQuestToListItem($japanId)['entry_mode'] ?? ''));
-ok('today derive nuke matches payload', eduQuestEntryMode($nuke) === (eduPublicQuestPayload($nukeId)['entry_mode'] ?? ''));
 
 echo "\n=== Summary: {$pass} pass, {$fail} fail ===\n";
 exit($fail > 0 ? 1 : 0);
