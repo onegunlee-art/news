@@ -19,14 +19,16 @@ export default function EduArticleCard({ article, disabled = false, onInteract }
   const perspective = article.media_perspective?.trim() || ''
   const excerptLines = article.excerpt?.split('\n').filter((line) => line.trim() !== '') ?? []
 
-  const handleToggle = (e: React.MouseEvent) => {
+  const handleToggle = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation()
     if (disabled) return
     onInteract?.()
     setExpanded((v) => !v)
   }
 
-  const handlePointerDown = (e: React.PointerEvent) => {
+  /** Desktop only: blur evidence textarea before click focus jump (0f58f15). Touch must not use pointerdown-only blur — iOS loses the click. */
+  const handlePointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (e.pointerType !== 'mouse') return
     e.stopPropagation()
     if (disabled) return
     onInteract?.()
