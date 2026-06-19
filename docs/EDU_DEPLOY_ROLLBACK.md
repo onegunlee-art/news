@@ -56,6 +56,13 @@ P1-0/1: R0 `--live` + 로컬 R0–R3 + parity로 충분.
 3. **핵심 원칙 재확인: 장치는 보조, 문답법이 본질**  
    hook / 기사 / 축 같은 장치는 문답법(좋은 질문이 학생 생각을 끌어내는 능력)을 보조할 뿐 대체하지 못함. P2(코치 깊이) 우선순위 판단에 반영.
 
+4. **퀘스트 기사 snapshot 정합성 (2026-06-18, Q-LENS-NUKE-001 vs Q-NUKE-AXIS-630)**  
+   펼치기 UI는 `excerpt`가 있어야 동작 (`EduArticleCard`: expanded && excerptLines.length > 0).  
+   630은 backfill 완료, LENS-001 등 lens 시드 퀘스트는 excerpt 0자 → 펼치기 불가.  
+   **구조적 공백:** 퀘스트 생성/시드와 snapshot backfill이 분리되어 누락 반복.  
+   **즉시:** `php tools/edu_scan_quest_article_excerpts.php` → `--apply` (EC2에서 MySQL 연결 시 no_source까지 처리).  
+   **P1 후:** 시드 스크립트에 backfill 자동 포함 또는 생성 파이프라인에 snapshot 단계 내장.
+
 ## 참고
 
 - Hammer 톤 완화: `95b533d` (PR #5, `e37c8f2` merge)

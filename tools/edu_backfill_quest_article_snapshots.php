@@ -42,9 +42,27 @@ $filter = 'order=created_at.desc';
 if ($questCode !== null) {
     $quests = $supabase->select('edu_daily_quests', 'quest_code=eq.' . rawurlencode($questCode), 5) ?? [];
 } elseif ($status !== null) {
-    $quests = $supabase->select('edu_daily_quests', 'status=eq.' . rawurlencode($status) . '&' . $filter, 50) ?? [];
+    $quests = $supabase->select('edu_daily_quests', 'status=eq.' . rawurlencode($status) . '&' . $filter, 200) ?? [];
 } else {
-    $quests = $supabase->select('edu_daily_quests', $filter, 50) ?? [];
+    $offset = 0;
+    $quests = [];
+    while (true) {
+        $batch = $supabase->select(
+            'edu_daily_quests',
+            'order=created_at.desc&limit=100&offset=' . $offset,
+            100
+        ) ?? [];
+        if ($batch === []) {
+            break;
+        }
+        foreach ($batch as $row) {
+            $quests[] = $row;
+        }
+        if (count($batch) < 100) {
+            break;
+        }
+        $offset += 100;
+    }
 }
 
 if ($quests === []) {
