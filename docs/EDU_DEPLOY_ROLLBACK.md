@@ -25,6 +25,8 @@
 | 2026-06-18 | `cf57d14` | P1-2j chat.php reasoning phase eduIsMythBustQuest → entry_mode (4 points) |
 | 2026-06-18 | `4e96a85` | P1-2k EduExplorePage badge entry_mode derive + quest_frame fallback |
 | 2026-06-18 | `a60f202` | P1-2l QuestFlowChat isOpenResponse entry_mode derive + quest_frame fallback |
+| 2026-06-18 | `6e7cd15` | fix: EduArticleCard mobile 펼치기 (touch pointerdown 회귀) |
+| 2026-06-18 | `4a09cfc` | fix: evidence nudge 예시 퀘스트 기사 derive (nuke 하드코드 제거) |
 
 ## P1-2+ 라이브 완주 게이트 (R4–R6)
 
