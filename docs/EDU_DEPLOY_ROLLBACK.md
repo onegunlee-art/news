@@ -27,6 +27,8 @@
 | 2026-06-18 | `a60f202` | P1-2l QuestFlowChat isOpenResponse entry_mode derive + quest_frame fallback |
 | 2026-06-18 | `6e7cd15` | fix: EduArticleCard mobile 펼치기 (touch pointerdown 회귀) |
 | 2026-06-18 | `4a09cfc` | fix: evidence nudge 예시 퀘스트 기사 derive (nuke 하드코드 제거) |
+| 2026-06-19 | `78abee3` | **P1-2m 배포 직전** — m FSM entry 백엔드 배포 전 즉시 롤백 지점 |
+| 2026-06-19 | `7add836` | P1-2m chat.php FSM entry submit_opening/select_stance → entry_mode guards (action alias 유지) |
 
 ## P1-2+ 라이브 완주 게이트 (R4–R6)
 

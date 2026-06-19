@@ -60,9 +60,13 @@ assertEq('payload entry_mode', $payload['entry_mode'] ?? null, 'open_response');
 assertTrue('payload hook_full non-empty', trim((string) ($payload['hook_full'] ?? '')) !== '');
 assertTrue('payload hook_short non-empty', trim((string) ($payload['hook_short'] ?? '')) !== '');
 
-// chat.php select_stance guard (same condition as chat.php)
-assertTrue('select_stance blocked for myth_bust', eduIsMythBustQuest($nuke));
-assertTrue('select_stance allowed for japan', !eduIsMythBustQuest($japan));
+// chat.php FSM entry guards (P1-2m: entry_mode; legacy myth_bust boolean parity)
+assertTrue('submit_opening allowed for nuke', eduQuestEntryMode($nuke) === 'open_response');
+assertTrue('submit_opening blocked for japan', eduQuestEntryMode($japan) !== 'open_response');
+assertTrue('select_stance blocked for myth_bust', eduQuestEntryMode($nuke) !== 'stance_pick');
+assertTrue('select_stance allowed for japan', eduQuestEntryMode($japan) === 'stance_pick');
+assertTrue('entry_mode parity nuke', eduIsMythBustQuest($nuke) === (eduQuestEntryMode($nuke) === 'open_response'));
+assertTrue('entry_mode parity japan', !eduIsMythBustQuest($japan) === (eduQuestEntryMode($japan) === 'stance_pick'));
 
 // submit_opening blueprint shape (no stance / no hypothesis)
 $openingBp = eduMergeBlueprint([], [

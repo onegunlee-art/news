@@ -88,9 +88,9 @@ $response = [
     'should_compose' => false,
 ];
 
-// --- myth_bust opening (free text, no pro/con) ---
+// --- open_response entry (free text opening; action alias: submit_opening) ---
 if ($action === 'submit_opening') {
-    if (!eduIsMythBustQuest($quest)) {
+    if (eduQuestEntryMode($quest) !== 'open_response') {
         eduSendError('submit_opening is myth_bust only', 400);
     }
     if ($message === '') {
@@ -147,9 +147,9 @@ if ($action === 'submit_opening') {
     ]));
 }
 
-// --- Stance selection (no message required) ---
+// --- stance_pick entry (pro/con; action alias: select_stance) ---
 if ($action === 'select_stance') {
-    if (eduIsMythBustQuest($quest)) {
+    if (eduQuestEntryMode($quest) !== 'stance_pick') {
         eduSendError('myth_bust quests use submit_opening, not select_stance', 400);
     }
     if (!in_array($stanceInput, ['pro', 'con'], true)) {
