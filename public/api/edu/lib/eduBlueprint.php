@@ -410,3 +410,67 @@ function eduBuildEvidenceBridgeMessage(array $blueprint): string
 
     return '방금 말한 생각, 기사에서 같이 찾아볼까?';
 }
+
+/**
+ * evidence nudge follow-up — quest-aware examples from articles/axes (no global nuke hardcode).
+ *
+ * @param array<string, mixed> $quest
+ * @param array<string, mixed> $blueprint
+ */
+function eduBuildEvidenceNudgeMessage(array $quest, array $blueprint = []): string
+{
+    $examples = eduEvidenceNudgeExamples($quest);
+    $base = '기사에서 본 구체적인 사실 하나를 더 적어줘.';
+    if ($examples !== '') {
+        return "{$base} 예를 들면 {$examples} 같은 내용이면 좋아.";
+    }
+
+    return $base . ' 기사 제목이나 본문에 나온 구체적 표현을 넣어보면 좋아.';
+}
+
+/**
+ * @param array<string, mixed> $quest
+ */
+function eduEvidenceNudgeExamples(array $quest): string
+{
+    if (!function_exists('eduQuestHammerHints')) {
+        require_once __DIR__ . '/eduQuest.php';
+    }
+
+    $parts = [];
+    foreach ($quest['articles'] ?? [] as $article) {
+        if (!is_array($article)) {
+            continue;
+        }
+        $title = trim((string) ($article['title'] ?? ''));
+        if ($title === '') {
+            continue;
+        }
+        if (mb_strlen($title) > 22) {
+            $title = mb_substr($title, 0, 20) . '…';
+        }
+        $parts[] = $title;
+        if (count($parts) >= 3) {
+            break;
+        }
+    }
+
+    if ($parts === []) {
+        $hints = eduQuestHammerHints($quest);
+        foreach ($hints['axes'] ?? [] as $axis) {
+            if (!is_array($axis)) {
+                continue;
+            }
+            $label = trim((string) ($axis['axis_label'] ?? ''));
+            if ($label === '') {
+                continue;
+            }
+            $parts[] = $label;
+            if (count($parts) >= 3) {
+                break;
+            }
+        }
+    }
+
+    return implode(', ', $parts);
+}
