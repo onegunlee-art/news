@@ -34,7 +34,7 @@
 | 2026-06-19 | `3f0a5c4` | **P1-3 배포 직전** — P1-2(a~n) 완료; legacy turn/QuestFlow 제거 전 롤백 |
 | 2026-06-19 | `0f8ee8f` | P1-3 legacy booleans removed; turn.php + QuestFlowLegacy removed; eduQuestHammerMode |
 | 2026-06-19 | `fe2ff4a` | **evidence 1턴 완화 배포 직전** — P1-3 완료 후 즉시 롤백 |
-| 2026-06-19 | *(evidence-1turn)* | ConversationDirector evidence single-turn → hammer (nudge loop 제거) |
+| 2026-06-19 | `29a699d` | ConversationDirector evidence single-turn → hammer (nudge loop 제거) |
 
 ## P1-2+ 라이브 완주 게이트 (R4–R6)
 
