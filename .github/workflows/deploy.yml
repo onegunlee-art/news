@@ -217,6 +217,8 @@ jobs:
             --no-times \
             --include='edu_quest_*.php' \
             --include='edu_backfill_*.php' \
+            --include='edu_gist_hinge_*.php' \
+            --include='edu_hinge_*.php' \
             --include='seed_lens_quests.php' \
             --include='seed_japan_decision_quest.php' \
             --include='seed_iran_decision_quest.php' \
