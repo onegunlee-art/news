@@ -1,6 +1,6 @@
 <?php
 /**
- * GIST EDU — evidence phase gate 회귀 (ConversationDirector)
+ * GIST EDU — evidence phase gate (ConversationDirector, single-turn)
  *
  * Usage: php tools/edu_evidence_gate_test.php
  */
@@ -40,35 +40,30 @@ function assertGate(string $label, array $decision, string $expectAction): void
     $fail++;
 }
 
-// Short evidence → nudge
+// Too short → nudge (only retry path)
 $bp = ['phase' => 'evidence', 'evidence' => '짧아요', 'evidence_nudge_count' => 0];
 $eval = ['depth_score' => 4, 'has_evidence' => true];
 assertGate('short_len', $director->decide($bp, $quest, $eval), 'nudge_evidence');
 
-// No has_evidence → nudge
-$bp = ['phase' => 'evidence', 'evidence' => str_repeat('가', 25), 'evidence_nudge_count' => 0];
-$eval = ['depth_score' => 4, 'has_evidence' => false];
-assertGate('no_has_evidence', $director->decide($bp, $quest, $eval), 'nudge_evidence');
-
-// Low depth → nudge
-$bp = ['phase' => 'evidence', 'evidence' => str_repeat('가', 25), 'evidence_nudge_count' => 0];
-$eval = ['depth_score' => 2, 'has_evidence' => true];
-assertGate('low_depth', $director->decide($bp, $quest, $eval), 'nudge_evidence');
-
-// All criteria met → hammer
+// 15+ chars + has_evidence → hammer (single turn, no second nudge)
 $bp = ['phase' => 'evidence', 'evidence' => str_repeat('가', 25), 'evidence_nudge_count' => 0];
 $eval = ['depth_score' => 4, 'has_evidence' => true];
-assertGate('ready', $director->decide($bp, $quest, $eval), 'strike');
+assertGate('has_evidence_once', $director->decide($bp, $quest, $eval), 'strike');
 
-// Still weak after nudge → stay nudge (no hammer skip)
-$bp = ['phase' => 'evidence', 'evidence' => '짧아요', 'evidence_nudge_count' => 1];
+// 15+ chars, LLM flaky has_evidence but depth ≥ 2 → hammer
+$bp = ['phase' => 'evidence', 'evidence' => str_repeat('가', 25), 'evidence_nudge_count' => 0];
 $eval = ['depth_score' => 2, 'has_evidence' => false];
-assertGate('still_short_after_nudge', $director->decide($bp, $quest, $eval), 'nudge_evidence');
+assertGate('depth2_no_has_evidence', $director->decide($bp, $quest, $eval), 'strike');
 
-// Retry after nudge with enough length → hammer even if LLM says no evidence
+// 15+ chars but depth 1 and no evidence → one nudge only (too thin)
+$bp = ['phase' => 'evidence', 'evidence' => str_repeat('가', 25), 'evidence_nudge_count' => 0];
+$eval = ['depth_score' => 1, 'has_evidence' => false];
+assertGate('thin_once', $director->decide($bp, $quest, $eval), 'nudge_evidence');
+
+// After nudge, substantive retry → hammer (no third-turn loop)
 $bp = ['phase' => 'evidence', 'evidence' => str_repeat('가', 20), 'evidence_nudge_count' => 1];
 $eval = ['depth_score' => 2, 'has_evidence' => false];
-assertGate('retry_after_nudge', $director->decide($bp, $quest, $eval), 'strike');
+assertGate('retry_substantive', $director->decide($bp, $quest, $eval), 'strike');
 
 echo "\n=== Summary: {$pass} pass, {$fail} fail ===\n";
 exit($fail > 0 ? 1 : 0);

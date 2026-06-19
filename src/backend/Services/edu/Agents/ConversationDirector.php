@@ -10,8 +10,9 @@ namespace Services\Edu\Agents;
 class ConversationDirector
 {
     private const MAX_REASON_FOLLOWUPS = 2;
-    private const MAX_EVIDENCE_NUDGES = 1;
     private const MAX_EXCHANGES = 12;
+    /** evidence phase: min chars for a substantive turn (article mention + opinion) */
+    private const EVIDENCE_MIN_LEN = 15;
 
     private $llm;
 
@@ -71,16 +72,15 @@ class ConversationDirector
         }
 
         if ($phase === 'evidence') {
-            $nudges = (int) ($blueprint['evidence_nudge_count'] ?? 0);
             $depth = (int) ($eval['depth_score'] ?? 2);
             $evidenceText = trim((string) ($blueprint['evidence'] ?? ''));
             $evidenceLen = mb_strlen($evidenceText);
             $hasEvidence = !empty($eval['has_evidence']);
-            $longEnough = $evidenceLen >= 15;
-            $qualityOk = $hasEvidence && $depth >= 3;
+            $longEnough = $evidenceLen >= self::EVIDENCE_MIN_LEN;
 
-            // LLM has_evidence is flaky — after one nudge + 15 chars, advance to hammer
-            if ($longEnough && ($qualityOk || $nudges >= self::MAX_EVIDENCE_NUDGES)) {
+            // Single substantive turn → hammer (no "근거 하나 더" nudge loop).
+            // Substantive = min length + (LLM saw article/evidence OR depth ≥ 2).
+            if ($longEnough && ($hasEvidence || $depth >= 2)) {
                 return [
                     'next_agent' => 'hammer',
                     'action' => 'strike',
@@ -95,7 +95,7 @@ class ConversationDirector
                 'next_agent' => 'socratic',
                 'action' => 'nudge_evidence',
                 'prompt_hint' => $longEnough
-                    ? '기사 인용 근거를 조금 더 구체적으로'
+                    ? '기사에서 본 구체적 사실과 네 생각을 함께 적어달라고 안내'
                     : '기사에서 본 구체적 사실을 더 적어달라고 안내',
                 'should_compose' => false,
                 'progress_pct' => 45,

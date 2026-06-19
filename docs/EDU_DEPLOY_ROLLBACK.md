@@ -33,6 +33,8 @@
 | 2026-06-19 | `772bcb1` | P1-2n QuestFlowChat stance entry action → entry_mode derive + guards |
 | 2026-06-19 | `3f0a5c4` | **P1-3 배포 직전** — P1-2(a~n) 완료; legacy turn/QuestFlow 제거 전 롤백 |
 | 2026-06-19 | `0f8ee8f` | P1-3 legacy booleans removed; turn.php + QuestFlowLegacy removed; eduQuestHammerMode |
+| 2026-06-19 | `fe2ff4a` | **evidence 1턴 완화 배포 직전** — P1-3 완료 후 즉시 롤백 |
+| 2026-06-19 | *(evidence-1turn)* | ConversationDirector evidence single-turn → hammer (nudge loop 제거) |
 
 ## P1-2+ 라이브 완주 게이트 (R4–R6)
 
@@ -68,6 +70,15 @@ P1-0/1: R0 `--live` + 로컬 R0–R3 + parity로 충분.
    **구조적 공백:** 퀘스트 생성/시드와 snapshot backfill이 분리되어 누락 반복.  
    **즉시:** `php tools/edu_scan_quest_article_excerpts.php` → `--apply` (EC2에서 MySQL 연결 시 no_source까지 처리).  
    **P1 후:** 시드 스크립트에 backfill 자동 포함 또는 생성 파이프라인에 snapshot 단계 내장.
+
+5. **기사 체크박스 선택 evidence (P2 — 설계부터, P1처럼 단계 분리)**  
+   카드 체크 UI → `blueprint`에 `article_id` 저장 → 코치 1질문("왜 이 시각?") → Hammer/Reflection이 텍스트 추론 대신 선택 기사 직접 참조.  
+   **선행:** 1단계 evidence 1턴 완화(ConversationDirector) 체감 후 착수.
+
+## P2-prelude (2026-06-19) — evidence 1턴 완화
+
+- `ConversationDirector` evidence: "근거 하나 더" nudge 루프 제거. 15자+ & (`has_evidence` OR `depth≥2`) → 즉시 hammer.
+- 롤백: `fe2ff4a`. 게이트: `php tools/edu_evidence_gate_test.php` + R4~R6.
 
 ## 참고
 
