@@ -219,6 +219,7 @@ jobs:
             --include='edu_backfill_*.php' \
             --include='edu_gist_hinge_*.php' \
             --include='edu_hinge_*.php' \
+            --include='edu_check_*.php' \
             --include='seed_lens_quests.php' \
             --include='seed_japan_decision_quest.php' \
             --include='seed_iran_decision_quest.php' \
@@ -392,6 +393,11 @@ jobs:
             sudo chmod -R 755 /var/www/thegist/
             sudo chmod -R 775 /var/www/thegist/storage/
             sudo ln -sf /var/www/thegist/storage /var/www/thegist/public/storage
+            # P2-A1 hinge CLI (ubuntu SSH) — writable dirs under www-data-owned tree
+            sudo mkdir -p docs/hinge_extractions docs/hinge_reviews storage/logs
+            sudo chown -R ubuntu:ubuntu docs/hinge_extractions docs/hinge_reviews
+            sudo chown ubuntu:www-data storage/logs
+            sudo chmod 775 storage/logs
             sudo systemctl restart php8.2-fpm
             echo 'Deploy complete: PHP-FPM restarted'
           REMOTEEOF
