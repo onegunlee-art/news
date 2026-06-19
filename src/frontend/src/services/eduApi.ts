@@ -235,6 +235,7 @@ export interface EduQuest {
   conflict_summary: string
   time_anchor?: string | null
   quest_frame?: string | null
+  entry_mode?: 'open_response' | 'stance_pick' | null
   hook_short?: string | null
   hook_full?: string | null
   articles: EduQuestArticle[]

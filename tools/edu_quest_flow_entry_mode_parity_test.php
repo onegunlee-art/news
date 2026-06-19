@@ -1,8 +1,8 @@
 <?php
 /**
- * P1-2l — QuestFlowChat isOpenResponse: entry_mode derive vs quest_frame legacy parity
+ * P1-2l/n — QuestFlowChat entry_mode + stance entry action parity
  *
- * Mirrors QuestFlowChat isOpenResponseQuest + resolveQuestFooterMode (behavior 0).
+ * Mirrors resolveQuestEntryMode, resolveQuestFooterMode, resolveStanceEntryChatAction.
  *
  * Usage: php tools/edu_quest_flow_entry_mode_parity_test.php
  */
@@ -31,32 +31,40 @@ function ok(string $label, bool $cond): void
 }
 
 /** @param array<string, mixed> $payload */
-function isMythBustLegacy(array $payload): bool
+function resolveQuestEntryMode(array $payload): string
 {
-    return ($payload['quest_frame'] ?? '') === 'myth_bust';
+    $entryMode = (string) ($payload['entry_mode'] ?? '');
+    if ($entryMode === 'open_response' || $entryMode === 'stance_pick') {
+        return $entryMode;
+    }
+
+    return ($payload['quest_frame'] ?? '') === 'myth_bust' ? 'open_response' : 'stance_pick';
 }
 
 /** @param array<string, mixed> $payload */
 function isOpenResponseDerived(array $payload): bool
 {
-    $entryMode = (string) ($payload['entry_mode'] ?? '');
-    if ($entryMode === 'open_response') {
-        return true;
-    }
-    if ($entryMode === 'stance_pick') {
-        return false;
-    }
+    return resolveQuestEntryMode($payload) === 'open_response';
+}
 
+function resolveStanceEntryChatAction(string $entryMode): string
+{
+    return $entryMode === 'open_response' ? 'submit_opening' : 'select_stance';
+}
+
+/** Mirrors resolveQuestFooterMode(phase, entryMode) for stance */
+function stanceFooterMode(string $entryMode): ?string
+{
+    return $entryMode === 'open_response' ? 'opening' : null;
+}
+
+/** Legacy myth_bust frame → open_response boolean */
+function isMythBustLegacy(array $payload): bool
+{
     return ($payload['quest_frame'] ?? '') === 'myth_bust';
 }
 
-/** Mirrors resolveQuestFooterMode(phase, isOpenResponse) for stance */
-function stanceFooterMode(bool $isOpenResponse): ?string
-{
-    return $isOpenResponse ? 'opening' : null;
-}
-
-echo "=== QuestFlowChat entry_mode parity (P1-2l) ===\n\n";
+echo "=== QuestFlowChat entry_mode parity (P1-2l/n) ===\n\n";
 
 $fixtures = [
     'japan' => eduG09DecQuestFixture(),
@@ -79,11 +87,16 @@ $japanPayload = eduPublicQuestPayload($fixtures['japan']);
 $iranPayload = eduPublicQuestPayload($fixtures['iran']);
 
 ok('nuke open_response true', isOpenResponseDerived($nukePayload) === true);
-ok('nuke stance footer opening', stanceFooterMode(isOpenResponseDerived($nukePayload)) === 'opening');
+ok('nuke entry_mode open_response', resolveQuestEntryMode($nukePayload) === 'open_response');
+ok('nuke stance action submit_opening', resolveStanceEntryChatAction(resolveQuestEntryMode($nukePayload)) === 'submit_opening');
+ok('nuke stance footer opening', stanceFooterMode(resolveQuestEntryMode($nukePayload)) === 'opening');
 ok('japan open_response false', isOpenResponseDerived($japanPayload) === false);
-ok('japan stance footer null (stance buttons)', stanceFooterMode(isOpenResponseDerived($japanPayload)) === null);
+ok('japan entry_mode stance_pick', resolveQuestEntryMode($japanPayload) === 'stance_pick');
+ok('japan stance action select_stance', resolveStanceEntryChatAction(resolveQuestEntryMode($japanPayload)) === 'select_stance');
+ok('japan stance footer null (stance buttons)', stanceFooterMode(resolveQuestEntryMode($japanPayload)) === null);
 ok('iran open_response false', isOpenResponseDerived($iranPayload) === false);
-ok('iran stance footer null', stanceFooterMode(isOpenResponseDerived($iranPayload)) === null);
+ok('iran stance action select_stance', resolveStanceEntryChatAction(resolveQuestEntryMode($iranPayload)) === 'select_stance');
+ok('iran stance footer null', stanceFooterMode(resolveQuestEntryMode($iranPayload)) === null);
 
 echo "\n--- entry_mode absent fallback ---\n";
 
