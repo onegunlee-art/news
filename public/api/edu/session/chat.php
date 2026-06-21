@@ -10,6 +10,7 @@ require_once __DIR__ . '/../lib/eduQuest.php';
 require_once __DIR__ . '/../lib/eduQuestConfig.php';
 require_once __DIR__ . '/../lib/eduConfig.php';
 require_once __DIR__ . '/../lib/eduBlueprint.php';
+require_once __DIR__ . '/../lib/eduCoachGuide.php';
 require_once __DIR__ . '/../lib/eduAgents.php';
 require_once __DIR__ . '/../lib/_llm.php';
 
@@ -104,6 +105,24 @@ if ($action === 'submit_opening') {
     $hookFull = trim((string) ($hints['hook_full'] ?? ''));
     if ($hookFull !== '' && $dialogue === []) {
         $dialogue = eduAppendDialogue($dialogue, 'assistant', $hookFull, 'hook', 'stance');
+    }
+
+    if (eduQuestUsesAxisGuide($quest)) {
+        $dialogue = eduAppendDialogue($dialogue, 'student', $message, null, 'guide_axis');
+        $guideResult = eduCoachGuideHandleOpening($blueprint, $quest, $message);
+        $blueprint = $guideResult['blueprint'];
+        $assistantMessage = $guideResult['message'];
+        $dialogue = eduAppendDialogue($dialogue, 'assistant', $assistantMessage, 'axis_guide', (string) ($blueprint['phase'] ?? 'guide_axis'));
+        eduSaveBlueprint($supabase, $sessionId, $blueprint, $dialogue);
+
+        eduSendJson(array_merge($response, [
+            'stage' => eduBlueprintStage($blueprint),
+            'phase' => $blueprint['phase'] ?? 'guide_axis',
+            'assistant_message' => $assistantMessage,
+            'progress_pct' => eduCoachGuideProgress($blueprint),
+            'ui_hint' => $guideResult['ui_hint'],
+            'blueprint' => $blueprint,
+        ]));
     }
 
     $blueprint = eduMergeBlueprint($blueprint, [
@@ -279,6 +298,77 @@ function eduChatAdvanceToEvidence(
     ];
 }
 
+/**
+ * @param array<string, mixed> $blueprint
+ * @param array<string, mixed> $quest
+ * @param array<string, mixed> $student
+ * @return array{blueprint: array<string, mixed>, assistantMessage: string, response: array<string, mixed>}
+ */
+function eduChatRunHammerStrike(
+    array $blueprint,
+    array $quest,
+    array $student,
+    string $sessionId,
+    $llm,
+    EduRagService $rag,
+    $supabase,
+    string $studentReason
+): array {
+    $response = [];
+    $stance = (string) ($blueprint['stance'] ?? 'pro');
+    $scorer = new StanceScorer($llm);
+    $analysis = $scorer->scoreStance($stance, $studentReason, $quest);
+
+    $mixup = eduBuildMixupContext($quest, $rag);
+    $mixupContext = $mixup['mixup_context'];
+    $mixupSources = $mixup['mixup_sources'];
+
+    $hammer = new Hammer($llm);
+    $strike = $hammer->strike(
+        $stance,
+        $studentReason,
+        $quest,
+        $analysis['recommended_hammer_intensity'] ?? 'medium',
+        $analysis,
+        $mixupContext
+    );
+
+    $counterRow = [
+        'session_id' => $sessionId,
+        'student_id' => $student['id'],
+        'counter_argument' => $strike['counter_argument'],
+    ];
+    if ($mixupSources !== []) {
+        $counterRow['mixup_sources'] = $mixupSources;
+    }
+    $supabase->insert('edu_counter_logs', $counterRow);
+
+    $blueprint = eduMergeBlueprint($blueprint, [
+        'counter_argument' => $strike['counter_argument'],
+        'phase' => 'hammer',
+    ]);
+
+    $assistantMessage = eduFormatHammerDelivery(
+        (string) ($strike['counter_argument'] ?? ''),
+        (string) ($strike['mode'] ?? '')
+    );
+    $response['counter_argument'] = $strike['counter_argument'];
+    $response['mixup_sources'] = $mixupSources;
+    $response['hammer_mode'] = $strike['mode'] ?? 'adversarial';
+    if (($strike['mode'] ?? '') === 'convergent' || ($strike['mode'] ?? '') === 'convergent_meta_ask') {
+        $response['student_axis'] = $strike['student_axis'] ?? null;
+        $response['counter_axis'] = $strike['counter_axis'] ?? null;
+        $response['pivot_question'] = $strike['pivot_question'] ?? null;
+    }
+    $response['ui_hint'] = 'hammer_rebuttal';
+
+    return [
+        'blueprint' => $blueprint,
+        'assistantMessage' => $assistantMessage,
+        'response' => $response,
+    ];
+}
+
 // --- Process student message by phase ---
 $phase = (string) ($blueprint['phase'] ?? 'reasoning');
 
@@ -312,6 +402,49 @@ if ($action === 'confirm_reflection') {
 
 $dialogue = eduAppendDialogue($dialogue, 'student', $message, null, $phase);
 $blueprint['exchange_count'] = (int) ($blueprint['exchange_count'] ?? 0) + 1;
+
+if (eduQuestUsesAxisGuide($quest) && in_array($phase, ['guide_axis', 'guide_conclusion'], true)) {
+    $guideResult = eduCoachGuideHandleTurn($blueprint, $quest, $message);
+    $blueprint = $guideResult['blueprint'];
+    $assistantMessage = $guideResult['message'];
+    $response['ui_hint'] = $guideResult['ui_hint'];
+    $decision = ['progress_pct' => eduCoachGuideProgress($blueprint), 'next_agent' => 'axis_guide'];
+
+    if (!empty($guideResult['advance_hammer'])) {
+        $studentReason = eduCoachGuideBuildStudentReason($blueprint);
+        $blueprint = eduMergeBlueprint($blueprint, [
+            'reason' => $studentReason,
+            'evidence' => $studentReason,
+        ]);
+        $hammered = eduChatRunHammerStrike(
+            $blueprint,
+            $quest,
+            $student,
+            $sessionId,
+            $llm,
+            $rag,
+            $supabase,
+            $studentReason
+        );
+        $blueprint = $hammered['blueprint'];
+        $assistantMessage = trim($guideResult['message'] . "\n\n" . $hammered['assistantMessage']);
+        $response = array_merge($response, $hammered['response']);
+        $decision = ['progress_pct' => eduCoachGuideProgress($blueprint), 'next_agent' => 'hammer'];
+    }
+
+    if ($assistantMessage !== '') {
+        $dialogue = eduAppendDialogue($dialogue, 'assistant', $assistantMessage, $decision['next_agent'] ?? 'axis_guide', (string) ($blueprint['phase'] ?? $phase));
+    }
+    eduSaveBlueprint($supabase, $sessionId, $blueprint, $dialogue);
+
+    eduSendJson(array_merge($response, [
+        'stage' => eduBlueprintStage($blueprint),
+        'phase' => $blueprint['phase'] ?? $phase,
+        'assistant_message' => $assistantMessage,
+        'progress_pct' => (int) ($decision['progress_pct'] ?? eduCoachGuideProgress($blueprint)),
+        'blueprint' => $blueprint,
+    ]));
+}
 
 if ($phase === 'reasoning') {
     $isOpenResponse = eduQuestEntryMode($quest) === 'open_response';
@@ -476,17 +609,24 @@ if ($phase === 'reasoning') {
     $v1 = $supabase->select('edu_hypothesis_versions', 'session_id=eq.' . $sessionId . '&version=eq.1', 1);
     $counter = $supabase->select('edu_counter_logs', 'session_id=eq.' . $sessionId, 1);
 
-    $reflection = new Reflection($llm);
-    $initialStance = (string) ($v1[0]['stance'] ?? $blueprint['stance'] ?? '');
-    $summary = $reflection->summarize(
-        $initialStance,
-        $v1[0]['reason'] ?? $blueprint['reason'],
-        $counter[0]['counter_argument'] ?? $blueprint['counter_argument'],
-        $message,
-        $finalStance,
-        $quest,
-        $blueprint
-    );
+    if (eduQuestUsesAxisGuide($quest)) {
+        $summary = [
+            'summary_lines' => eduCoachGuideReflectionLines($blueprint),
+            'key_insight' => '',
+        ];
+    } else {
+        $reflection = new Reflection($llm);
+        $initialStance = (string) ($v1[0]['stance'] ?? $blueprint['stance'] ?? '');
+        $summary = $reflection->summarize(
+            $initialStance,
+            $v1[0]['reason'] ?? $blueprint['reason'],
+            $counter[0]['counter_argument'] ?? $blueprint['counter_argument'],
+            $message,
+            $finalStance,
+            $quest,
+            $blueprint
+        );
+    }
 
     $blueprint['reflection_lines'] = $summary['summary_lines'] ?? [];
     $supabase->insert('edu_reflections', [

@@ -16,6 +16,7 @@ $root = dirname(__DIR__);
 require_once $root . '/public/api/lib/env_bootstrap.php';
 require_once $root . '/src/agents/autoload.php';
 require_once $root . '/public/api/edu/lib/eduHingeQuestMap.php';
+require_once $root . '/public/api/edu/lib/eduCoachGuide.php';
 
 use Agents\Services\SupabaseService;
 
@@ -53,6 +54,7 @@ if (!is_array($draft)) {
 
 $draft['quest_code'] = EDU_HINGE_AUTO_QUEST_CODE;
 $hints = is_array($draft['hammer_hints'] ?? null) ? $draft['hammer_hints'] : [];
+$hints = eduCoachGuideAttachHints($hints);
 $shared = trim((string) ($hints['shared_conclusion'] ?? ''));
 
 $row = [
