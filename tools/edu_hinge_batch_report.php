@@ -174,7 +174,7 @@ if ($writeMd) {
         $md .= "- [ ] {$nid}: \n";
     }
 
-    $path = eduHingeProjectRoot() . '/docs/P2_HINGE_A1_FRESH_RESULT.md';
+    $path = dirname(eduHingeReviewsFile()) . '/P2_HINGE_A1_FRESH_RESULT.md';
     file_put_contents($path, $md);
     echo "\nWrote {$path}\n";
 }
