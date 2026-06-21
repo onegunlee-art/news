@@ -223,6 +223,7 @@ jobs:
             --include='seed_lens_quests.php' \
             --include='seed_japan_decision_quest.php' \
             --include='seed_iran_decision_quest.php' \
+            --include='seed_hinge_auto_quest.php' \
             --exclude='*' \
             tools/ "$REMOTE:$DEST/tools/"
 
@@ -394,8 +395,8 @@ jobs:
             sudo chmod -R 775 /var/www/thegist/storage/
             sudo ln -sf /var/www/thegist/storage /var/www/thegist/public/storage
             # P2-A1 hinge CLI (ubuntu SSH) — writable dirs under www-data-owned tree
-            sudo mkdir -p docs/hinge_extractions docs/hinge_reviews storage/logs
-            sudo chown -R ubuntu:ubuntu docs/hinge_extractions docs/hinge_reviews
+            sudo mkdir -p docs/hinge_extractions docs/hinge_reviews docs/hinge_quest_drafts storage/logs
+            sudo chown -R ubuntu:ubuntu docs/hinge_extractions docs/hinge_reviews docs/hinge_quest_drafts
             sudo chown ubuntu:www-data storage/logs
             sudo chmod 775 storage/logs
             sudo systemctl restart php8.2-fpm

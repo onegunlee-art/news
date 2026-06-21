@@ -592,11 +592,15 @@ DEFS;
     private function fallbackToAdversarial(array $quest, array $hints): array
     {
         $fallback = $hints['fallback_adversarial'] ?? [];
+        $hingeMeta = is_array($hints['_hinge'] ?? null) ? $hints['_hinge'] : [];
+        $shakePrompt = trim((string) ($hingeMeta['shake_prompt'] ?? ''));
         $proLine = $fallback['pro'] ?? ($quest['pro_line'] ?? '');
         $conLine = $fallback['con'] ?? ($quest['con_line'] ?? '');
-        $altLine = trim($conLine !== '' ? $conLine : $proLine);
+        $altLine = trim($shakePrompt !== '' ? $shakePrompt : ($conLine !== '' ? $conLine : $proLine));
         $wrapped = $altLine !== ''
-            ? "네가 말한 것도 일리 있어. 다만 이런 시각도 있어 — {$altLine}"
+            ? ($shakePrompt !== ''
+                ? "네가 말한 것도 일리 있어. 다만 — {$altLine}"
+                : "네가 말한 것도 일리 있어. 다만 이런 시각도 있어 — {$altLine}")
             : '네가 말한 것도 일리 있어. 다만 다른 사람들은 다르게 보기도 해.';
 
         return [
@@ -624,7 +628,11 @@ DEFS;
         $counterLine = $stance === 'pro' ? ($quest['con_line'] ?? '') : ($quest['pro_line'] ?? '');
 
         $hintKey = $stance === 'pro' ? 'con' : 'pro';
-        $hammerHint = $hints[$hintKey] ?? '';
+        $hingeMeta = is_array($hints['_hinge'] ?? null) ? $hints['_hinge'] : [];
+        $shakePrompt = trim((string) ($hingeMeta['shake_prompt'] ?? ''));
+        $hammerHint = $shakePrompt !== ''
+            ? $shakePrompt
+            : (string) ($hints[$hintKey] ?? '');
 
         $weakPoints = '';
         if (!empty($scoreAnalysis['weak_points'])) {
