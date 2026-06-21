@@ -76,5 +76,12 @@ $guarded = eduCoachSpoonfeedGuard('정리하면 방어 투자가 핵심이네. ~
 assertNotContains('guard strips 정리하면', $guarded, '정리하면');
 assertNotContains('guard strips 유도어', $guarded, '중요하지');
 
+assertNotContains('intro hides axis index', $open['message'], '(1/3)');
+
+$hook630 = '핵무기가 있으면 재래식 공격과 전쟁 확대를 정말 막을 수 있을까?';
+$sideA630 = '핵무기가 있으면 재래식 공격과 전쟁 확대를 막을 수 있는가';
+require_once $root . '/public/api/edu/lib/eduHingeQuestMap.php';
+assertTrue('630 hook_full dedup', eduHingeBuildHookFull($hook630, $sideA630, '') === $hook630);
+
 echo "\n=== {$pass} passed, {$fail} failed ===\n";
 exit($fail > 0 ? 1 : 0);

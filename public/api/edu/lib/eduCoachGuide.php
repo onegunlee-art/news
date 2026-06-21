@@ -336,12 +336,13 @@ function eduCoachGuideHandleConclusion(array $blueprint, array $quest, string $m
 /** @param array<string, string> $axis */
 function eduCoachGuideIntroAxis(array $axis, int $index, int $total): string
 {
-    $n = $index + 1;
+    unset($total);
     $point = $axis['point'] ?? '';
     $fact = $axis['article_fact'] ?? '';
     $q = $axis['core_question'] ?? '';
+    $lead = $index === 0 ? '한 가지부터 따져보자.' : '이번엔 이걸 생각해보자.';
 
-    return "({$n}/{$total}) **{$point}**\n\n기사 fact: {$fact}\n\n{$q}";
+    return "{$lead} **{$point}**\n\n기사 fact: {$fact}\n\n{$q}";
 }
 
 /**
@@ -364,8 +365,8 @@ function eduCoachGuideEvasionReply(?string $evasion, array $axis, int $index, ar
             . ($axis['article_fact'] ?? '')
             . ' 이게 네 생각을 **강하게** 해주나 **약하게** 해주나?',
         'defer_article' => '기사 **어느 문장**을 말하는 거야? fact 하나만 짚고, **그게 네 생각이랑** 같은지 다른지만 말해.',
-        'ask_conclusion' => '결론은 **내가 안 줘**. 지금은 (' . ($index + 1) . '번째) '
-            . ($axis['point'] ?? '이 축') . ' — ' . ($axis['core_question'] ?? ''),
+        'ask_conclusion' => '결론은 **내가 안 줘**. 지금은 '
+            . ($axis['point'] ?? '이 주제') . ' — ' . ($axis['core_question'] ?? ''),
         default => ($axis['core_question'] ?? '네 생각을 한 줄로 말해줘.'),
     };
 }

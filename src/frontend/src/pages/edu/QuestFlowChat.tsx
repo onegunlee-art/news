@@ -47,6 +47,7 @@ function resolveQuestFooterMode(phase: string, entryMode: QuestEntryMode): Quest
   if (phase === 'evidence') return 'evidence'
   if (phase === 'reflection') return 'reflection'
   if (phase === 'reasoning' || phase === 'hammer') return 'chat'
+  if (phase === 'guide_axis' || phase === 'guide_conclusion') return 'chat'
   return null
 }
 
@@ -476,8 +477,10 @@ export default function QuestFlowChat() {
 
         {phase === 'stance' && dialogue.length === 0 && quest && !completed && entryMode === 'open_response' && (
           <section className="space-y-3 mb-4">
-            {quest.hook_full && (
-              <p className="text-sm leading-relaxed whitespace-pre-wrap">{quest.hook_full}</p>
+            {(quest.hook_short || quest.hook_full) && (
+              <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                {quest.hook_short || quest.hook_full}
+              </p>
             )}
             <p className="text-xs" style={{ color: EDU_BRAND.muted }}>
               위 질문에 대해 네 생각을 자유롭게 적어줘.

@@ -82,13 +82,49 @@ function eduHingeInferQuestFrame(array $hinge): string
     return 'myth_bust';
 }
 
+function eduHingeNormalizeHookCompareKey(string $text): string
+{
+    $t = mb_strtolower(trim($text));
+    $t = preg_replace('/[?？!！。．\.…,，、\s]+/u', '', $t) ?? $t;
+    $t = preg_replace('/(을까|일까|할까|될까|는가|인가|겠어|거야|정말|진짜)$/u', '', $t) ?? $t;
+
+    return $t;
+}
+
+function eduHingeSideARepeatsHookStudent(string $hookShort, string $sideA): bool
+{
+    if ($hookShort === '' || $sideA === '') {
+        return false;
+    }
+
+    $hookKey = eduHingeNormalizeHookCompareKey($hookShort);
+    $sideKey = eduHingeNormalizeHookCompareKey($sideA);
+    if ($hookKey === '' || $sideKey === '') {
+        return false;
+    }
+    if ($hookKey === $sideKey) {
+        return true;
+    }
+    if (str_contains($hookKey, $sideKey) || str_contains($sideKey, $hookKey)) {
+        return true;
+    }
+
+    similar_text($hookKey, $sideKey, $pct);
+
+    return $pct >= 72.0;
+}
+
 function eduHingeBuildHookFull(string $hookShort, string $sideA, string $sideB): string
 {
     if ($hookShort === '') {
         return $sideA;
     }
 
-    // 1단계: hook_short + side_a 한 줄 (수동 630 hook_full 확장은 2단계/수동)
+    if (eduHingeSideARepeatsHookStudent($hookShort, $sideA)) {
+        return $hookShort;
+    }
+
+    // hook_short + side_a 한 줄 (side_a가 새 각도일 때만)
     if ($sideA !== '' && mb_strlen($hookShort) < 120) {
         return $hookShort . ' ' . $sideA;
     }
