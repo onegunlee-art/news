@@ -10,6 +10,8 @@ require_once __DIR__ . '/eduBlueprint.php';
 
 const EDU_COACH_GUIDE_QUEST_CODE = 'Q-AUTO-NUKE-630';
 const EDU_COACH_GUIDE_STALL_ESCAPE = 3;
+/** P2-B hook: per-student fact length (summary → medium → full) */
+const EDU_COACH_GUIDE_FACT_DISPLAY = 'summary';
 
 /** @param array<string, mixed> $quest */
 function eduQuestUsesAxisGuide(array $quest): bool
@@ -122,6 +124,9 @@ function eduCoachSpoonfeedGuard(string $text): string
         '/정리하면\s*[^.!?]+[.!?]/u' => '',
         '/많은\s*분석가/u' => '기사에는',
         '/방어\s*투자\s*쪽으로\s*정리/u' => '네 말로 한 문장 정리',
+        '/the\s*gist[^\s]*/iu' => '',
+        '/gist랑\s*[^\s.]*/iu' => '',
+        '/기사는\s*[^.!?—]+(?:쪽|방향)으로\s*갔[^.!?]*[.!?]?/u' => '',
     ];
     foreach ($patterns as $pat => $rep) {
         $out = preg_replace($pat, $rep, $out) ?? $out;
@@ -205,8 +210,8 @@ function eduCoachGuideHandleTurn(array $blueprint, array $quest, string $message
                 'guide_axis_stall' => 0,
                 'phase' => 'guide_conclusion',
             ]);
-            $msg = "세 가지를 다 따져봤어. 기사는 방어·규범 쪽으로 갔지만 — **네 결론**은 한 문장으로? "
-                . "('나는 ~라고 본다'로. the gist랑 같아도 다르더라도 **네 말**이어야 해.)";
+            $msg = '지금까지 따져본 걸로 **네 결론**은 한 문장으로? '
+                . "'나는 ~라고 본다'로만 — **네 말**이어야 해.";
 
             return [
                 'blueprint' => $blueprint,
@@ -311,7 +316,7 @@ function eduCoachGuideHandleConclusion(array $blueprint, array $quest, string $m
             'blueprint' => $blueprint,
             'message' => eduCoachSpoonfeedGuard(
                 '결론은 **내가 안 줘**. 지금까지 **네가** 말한 걸 바탕으로 — '
-                . '**나는 ~라고 본다** 한 문장만. the gist랑 달라도 돼.'
+                . '**나는 ~라고 본다** 한 문장만. **네 생각**만 말해줘.'
             ),
             'ui_hint' => 'guide_conclusion',
             'done_guide' => false,
@@ -333,16 +338,39 @@ function eduCoachGuideHandleConclusion(array $blueprint, array $quest, string $m
     ];
 }
 
+/** @param array<string, string> $axis P2-B: article_fact_full for longer tiers */
+function eduCoachGuideFactForDisplay(array $axis, string $displayMode = EDU_COACH_GUIDE_FACT_DISPLAY): string
+{
+    if ($displayMode === 'full' && !empty($axis['article_fact_full'])) {
+        return trim((string) $axis['article_fact_full']);
+    }
+    if ($displayMode === 'medium' && !empty($axis['article_fact_medium'])) {
+        return trim((string) $axis['article_fact_medium']);
+    }
+
+    return trim((string) ($axis['article_fact'] ?? ''));
+}
+
+function eduCoachGuideWrapArticleSnippet(string $text, string $displayMode = EDU_COACH_GUIDE_FACT_DISPLAY): string
+{
+    if ($text === '') {
+        return '';
+    }
+
+    return "{{snippet|{$displayMode}}}\n{$text}\n{{/snippet}}";
+}
+
 /** @param array<string, string> $axis */
 function eduCoachGuideIntroAxis(array $axis, int $index, int $total): string
 {
     unset($total);
     $point = $axis['point'] ?? '';
-    $fact = $axis['article_fact'] ?? '';
+    $fact = eduCoachGuideFactForDisplay($axis);
     $q = $axis['core_question'] ?? '';
     $lead = $index === 0 ? '한 가지부터 따져보자.' : '이번엔 이걸 생각해보자.';
+    $snippet = eduCoachGuideWrapArticleSnippet($fact);
 
-    return "{$lead} **{$point}**\n\n기사 fact: {$fact}\n\n{$q}";
+    return "{$lead} **{$point}**" . ($snippet !== '' ? "\n\n{$snippet}" : '') . "\n\n{$q}";
 }
 
 /**
@@ -361,10 +389,10 @@ function eduCoachGuideEvasionReply(?string $evasion, array $axis, int $index, ar
         'unknown' => '모르겠다는 건 아직 이 축을 안 따진 거야. '
             . ($axis['core_question'] ?? '')
             . ' **맞다 / 틀리다 / 잘 모르겠다** 셋 중 하나만?',
-        'deflect' => '나라마다 다를 수 있어. **이 기사 fact 하나**만 — '
-            . ($axis['article_fact'] ?? '')
+        'deflect' => '나라마다 다를 수 있어. 이 조각만 보고 — '
+            . eduCoachGuideWrapArticleSnippet(eduCoachGuideFactForDisplay($axis))
             . ' 이게 네 생각을 **강하게** 해주나 **약하게** 해주나?',
-        'defer_article' => '기사 **어느 문장**을 말하는 거야? fact 하나만 짚고, **그게 네 생각이랑** 같은지 다른지만 말해.',
+        'defer_article' => '아까 **기사 조각** 중 어느 부분을 말하는 거야? 하나만 짚고, **그게 네 생각이랑** 같은지 다른지만 말해.',
         'ask_conclusion' => '결론은 **내가 안 줘**. 지금은 '
             . ($axis['point'] ?? '이 주제') . ' — ' . ($axis['core_question'] ?? ''),
         default => ($axis['core_question'] ?? '네 생각을 한 줄로 말해줘.'),

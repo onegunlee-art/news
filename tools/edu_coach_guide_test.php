@@ -77,6 +77,18 @@ assertNotContains('guard strips 정리하면', $guarded, '정리하면');
 assertNotContains('guard strips 유도어', $guarded, '중요하지');
 
 assertNotContains('intro hides axis index', $open['message'], '(1/3)');
+assertContains('intro uses article snippet', $open['message'], '{{snippet|summary}}');
+assertNotContains('intro no raw fact label', $open['message'], '기사 fact:');
+
+$passDefense = eduCoachGuideHandleTurn(
+    ['phase' => 'guide_axis', 'guide_axis_index' => 2, 'guide_axis_stall' => 0, 'guide_axis_answers' => ['military' => 'a', 'norms' => 'b']],
+    $quest,
+    '방공에 먼저 쓸 것 같아요 예산이 한정돼서'
+);
+assertTrue('conclusion phase', ($passDefense['blueprint']['phase'] ?? '') === 'guide_conclusion');
+assertNotContains('conclusion no gist', $passDefense['message'], 'the gist');
+assertNotContains('conclusion no gist ko', $passDefense['message'], 'gist');
+assertNotContains('conclusion no article direction', $passDefense['message'], '방어·규범');
 
 $hook630 = '핵무기가 있으면 재래식 공격과 전쟁 확대를 정말 막을 수 있을까?';
 $sideA630 = '핵무기가 있으면 재래식 공격과 전쟁 확대를 막을 수 있는가';

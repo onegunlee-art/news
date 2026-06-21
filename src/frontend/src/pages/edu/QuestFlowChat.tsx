@@ -7,7 +7,11 @@ import TierProgressCard from '../../components/edu/TierProgressCard'
 import TypingIndicator from '../../components/edu/TypingIndicator'
 import TypewriterText from '../../components/edu/TypewriterText'
 import EduArticleCard from '../../components/edu/EduArticleCard'
-import { EDU_BRAND } from '../../constants/eduBrand'
+import EduArticleSnippetCard from '../../components/edu/EduArticleSnippetCard'
+import {
+  coachMessageHasSnippet,
+  parseCoachAssistantMessage,
+} from '../../utils/eduCoachMessageParse'
 import {
   eduApi,
   getEduToken,
@@ -17,6 +21,7 @@ import {
   type EduQuestArticle,
   type EduTierProgress,
 } from '../../services/eduApi'
+import { EDU_BRAND } from '../../constants/eduBrand'
 
 const PAGE_MAX = 'max-w-2xl'
 const EVIDENCE_RECOMMENDED_LEN = 20
@@ -761,6 +766,9 @@ function DialogueBubble({
   onTypewriterProgress?: () => void
 }) {
   const isStudent = turn.role === 'student'
+  const useSnippetLayout = !isStudent && coachMessageHasSnippet(turn.content)
+  const segments = useSnippetLayout ? parseCoachAssistantMessage(turn.content) : null
+
   return (
     <div className={`flex ${isStudent ? 'justify-end' : 'justify-start'}`}>
       <div
@@ -775,6 +783,18 @@ function DialogueBubble({
       >
         {isStudent ? (
           turn.content
+        ) : useSnippetLayout && segments ? (
+          <div className="space-y-1">
+            {segments.map((seg, i) =>
+              seg.type === 'snippet' ? (
+                <EduArticleSnippetCard key={`snip-${i}`} text={seg.value} display={seg.display} />
+              ) : (
+                <p key={`txt-${i}`} className="whitespace-pre-wrap">
+                  {seg.value}
+                </p>
+              ),
+            )}
+          </div>
         ) : (
           <TypewriterText
             text={turn.content}
