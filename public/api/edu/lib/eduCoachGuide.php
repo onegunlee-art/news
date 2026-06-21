@@ -118,7 +118,18 @@ function eduCoachAxisStudentPass(string $message, ?string $evasion): bool
 
 function eduCoachSpoonfeedGuard(string $text): string
 {
-    $out = $text;
+    $snippets = [];
+    $out = preg_replace_callback(
+        '/\{\{snippet\|\w+\}\}\s*[\s\S]*?\s*\{\{\/snippet\}\}/u',
+        static function (array $m) use (&$snippets): string {
+            $key = '___SNIP_' . count($snippets) . '___';
+            $snippets[$key] = $m[0];
+
+            return $key;
+        },
+        $text
+    ) ?? $text;
+
     $patterns = [
         '/~?(중요하지|가\s*답이지|가\s*맞지)\??/u' => '?',
         '/정리하면\s*[^.!?]+[.!?]/u' => '',
@@ -132,7 +143,39 @@ function eduCoachSpoonfeedGuard(string $text): string
         $out = preg_replace($pat, $rep, $out) ?? $out;
     }
 
-    return trim(preg_replace('/\s+/u', ' ', $out) ?? $out);
+    $out = trim(preg_replace('/\s+/u', ' ', $out) ?? $out);
+    foreach ($snippets as $key => $snippet) {
+        $out = str_replace($key, trim($snippet), $out);
+    }
+
+    return $out;
+}
+
+function eduCoachGuideNormalizeCompareKey(string $text): string
+{
+    $t = mb_strtolower(trim($text));
+    $t = preg_replace('/[?？!！。．\.…,，、\s]+/u', '', $t) ?? $t;
+    $t = preg_replace('/(을까|일까|할까|될까|는가|인가|겠어|거야|정말|진짜|것|거)$/u', '', $t) ?? $t;
+
+    return $t;
+}
+
+function eduCoachGuideTextsOverlap(string $a, string $b): bool
+{
+    if ($a === '' || $b === '') {
+        return false;
+    }
+    $ak = eduCoachGuideNormalizeCompareKey($a);
+    $bk = eduCoachGuideNormalizeCompareKey($b);
+    if ($ak === '' || $bk === '') {
+        return false;
+    }
+    if ($ak === $bk || str_contains($ak, $bk) || str_contains($bk, $ak)) {
+        return true;
+    }
+    similar_text($ak, $bk, $pct);
+
+    return $pct >= 68.0;
 }
 
 /**
@@ -155,10 +198,12 @@ function eduCoachGuideHandleOpening(array $blueprint, array $quest, string $open
     ]);
 
     $evasion = eduCoachDetectEvasion($opening);
+    $hints = eduQuestHammerHints($quest);
+    $hookShort = trim((string) ($hints['hook_short'] ?? ''));
     if ($evasion !== null) {
         $msg = eduCoachGuideEvasionReply($evasion, $axes[0], 0, $axes, false);
     } else {
-        $msg = eduCoachGuideIntroAxis($axes[0], 0, count($axes));
+        $msg = eduCoachGuideIntroAxis($axes[0], 0, count($axes), $opening, $hookShort);
     }
 
     return [
@@ -361,16 +406,33 @@ function eduCoachGuideWrapArticleSnippet(string $text, string $displayMode = EDU
 }
 
 /** @param array<string, string> $axis */
-function eduCoachGuideIntroAxis(array $axis, int $index, int $total): string
-{
+function eduCoachGuideIntroAxis(
+    array $axis,
+    int $index,
+    int $total,
+    string $openingContext = '',
+    string $hookShort = ''
+): string {
     unset($total);
     $point = $axis['point'] ?? '';
     $fact = eduCoachGuideFactForDisplay($axis);
     $q = $axis['core_question'] ?? '';
-    $lead = $index === 0 ? '한 가지부터 따져보자.' : '이번엔 이걸 생각해보자.';
     $snippet = eduCoachGuideWrapArticleSnippet($fact);
+    $snippetBlock = $snippet !== '' ? "\n\n{$snippet}" : '';
 
-    return "{$lead} **{$point}**" . ($snippet !== '' ? "\n\n{$snippet}" : '') . "\n\n{$q}";
+    $hookOverlap = $index === 0 && (
+        ($hookShort !== '' && eduCoachGuideTextsOverlap($hookShort, $q))
+        || ($openingContext !== '' && eduCoachGuideTextsOverlap($openingContext, $q))
+    );
+
+    if ($hookOverlap) {
+        return '방금 말한 걸 더 따져보자. **' . $point . '**' . $snippetBlock
+            . "\n\n위 기사 조각만 놓고 — 네 말을 **강하게** 해주나 **약하게** 해주나?";
+    }
+
+    $lead = $index === 0 ? '한 가지부터 따져보자.' : '이번엔 이걸 생각해보자.';
+
+    return "{$lead} **{$point}**{$snippetBlock}\n\n{$q}";
 }
 
 /**

@@ -37,7 +37,9 @@ function assertNotContains(string $label, string $haystack, string $needle): voi
 
 $quest = [
     'quest_code' => EDU_COACH_GUIDE_QUEST_CODE,
-    'hammer_hints' => eduCoachGuideAttachHints([]),
+    'hammer_hints' => array_merge(eduCoachGuideAttachHints([]), [
+        'hook_short' => '핵무기가 있으면 재래식 공격과 전쟁 확대를 정말 막을 수 있을까?',
+    ]),
 ];
 
 assertTrue('630 uses axis guide', eduQuestUsesAxisGuide($quest));
@@ -55,6 +57,14 @@ $bp = ['phase' => 'stance', 'exchange_count' => 0];
 $open = eduCoachGuideHandleOpening($bp, $quest, '핵이 있으면 재래식 공격은 막힐 것 같아요');
 assertTrue('opening -> guide_axis', ($open['blueprint']['phase'] ?? '') === 'guide_axis');
 assertContains('opening intro military', $open['message'], '거미줄');
+assertContains('opening overlap deepens', $open['message'], '더 따져보자');
+assertNotContains('opening no repeat core q', $open['message'], '정말 막을 수 있을까');
+
+$guardedSnippet = eduCoachSpoonfeedGuard(
+    "lead\n\n{{snippet|summary}}\n2025년 6월 우크라이나\n{{/snippet}}\n\nquestion?"
+);
+assertContains('guard keeps snippet markers', $guardedSnippet, '{{snippet|summary}}');
+assertContains('guard keeps snippet body', $guardedSnippet, '우크라이나');
 
 $bp = $open['blueprint'];
 $both = eduCoachGuideHandleTurn($bp, $quest, '둘 다 필요해');
