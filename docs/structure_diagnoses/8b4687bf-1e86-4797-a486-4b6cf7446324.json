@@ -1,0 +1,41 @@
+{
+    "diagnose_version": "p2-b-v1-rough",
+    "quest_code": "Q-AUTO-NUKE-630",
+    "session_id": "8b4687bf-1e86-4797-a486-4b6cf7446324",
+    "internal_only": true,
+    "axes_covered": [
+        {
+            "axis_id": "military",
+            "point": "핵·억지가 재래식·드론 공격을 실제로 막는지",
+            "covered": true,
+            "status": "engaged",
+            "student_quote": "핵이 있다고 재래식 공격과 전쟁 확대를 못 막는다고"
+        },
+        {
+            "axis_id": "norms",
+            "point": "나라들끼리 약속·규범으로 공격을 막을 수 있는지",
+            "covered": true,
+            "status": "engaged",
+            "student_quote": "새로 만들수 있는게 아니라 이제는 서로 스스로를 지키려는 거 같아"
+        },
+        {
+            "axis_id": "defense",
+            "point": "핵을 더 늘리기 vs 기지·방공·회복력에 쓸지",
+            "covered": true,
+            "status": "engaged",
+            "student_quote": "핵 현대화에 쓸수 밖에 없지 다들 가지고 있으니"
+        }
+    ],
+    "tension_engaged": "양면",
+    "tension_note": "핵억지의 약화와 그에 따른 현대화·새 규범 필요를 함께 만졌다.",
+    "conclusion_clarity": "명확",
+    "conclusion_quote": "핵억지는 지금 시대에 무너지고 있는 거 같다",
+    "evidence_linked": "yes",
+    "evidence_note": "러시아 전쟁, 재래식 보복, 핵시설 비공격 규범, 기지 방호를 결론과 연결했다.",
+    "structure_note": "축은 핵억지의 효용과 그 대안(방어·규범)으로 잡혀 있고, 긴장은 '핵이 여전히 의미 있는가'와 '값싼 공격 앞에서 약해졌는가'로 드러난다. 결론은 핵억지 약화와 재구성이 필요하다는 방향으로 분명히 닫혔고, 근거는 우크라이나 사례·인도-파키스탄 사례·기지 방호 논리로 연결되어 있다. 다만 결론에서 '실패한 협상' 표현은 강하지만, 어떤 협상 구조를 뜻하는지는 다소 비어 있다.",
+    "diagnose_mode": "llm",
+    "hinge_ref": {
+        "side_a": "핵무기가 있으면 재래식 공격과 전쟁 확대를 막을 수 있는가",
+        "side_b": "우크라이나의 러시아 전략폭격기 기지 타격, 2025년 인도-파키스탄 충돌처럼 핵보유국도 재래식 충돌을 막지 못했으며, 실제로는 기지 방호·회복탄력성과 핵시설 비공격 규범이 더 중요해지고 있다"
+    }
+}

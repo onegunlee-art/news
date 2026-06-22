@@ -222,6 +222,7 @@ jobs:
             --include='edu_hinge_*.php' \
             --include='edu_check_*.php' \
             --include='edu_coach_*.php' \
+            --include='edu_structure_*.php' \
             --include='edu_nuclear_axis_quest_fixture.php' \
             --include='edu_myth_bust_coach_regression_test.php' \
             --include='edu_hammer_tone_regression_test.php' \
@@ -407,8 +408,8 @@ jobs:
             sudo chmod -R 775 /var/www/thegist/storage/
             sudo ln -sf /var/www/thegist/storage /var/www/thegist/public/storage
             # P2-A1 hinge CLI (ubuntu SSH) — writable dirs under www-data-owned tree
-            sudo mkdir -p docs/hinge_extractions docs/hinge_reviews docs/hinge_quest_drafts docs/axis_extractions storage/logs
-            sudo chown -R ubuntu:ubuntu docs/hinge_extractions docs/hinge_reviews docs/hinge_quest_drafts docs/axis_extractions
+            sudo mkdir -p docs/hinge_extractions docs/hinge_reviews docs/hinge_quest_drafts docs/axis_extractions docs/structure_diagnoses storage/logs
+            sudo chown -R ubuntu:ubuntu docs/hinge_extractions docs/hinge_reviews docs/hinge_quest_drafts docs/axis_extractions docs/structure_diagnoses
             sudo chown ubuntu:www-data storage/logs
             sudo chmod 775 storage/logs
             sudo systemctl restart php8.2-fpm
