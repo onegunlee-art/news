@@ -2,8 +2,8 @@
 /**
  * GIST EDU — OpenAI LLM 클라이언트 (EduLlmClient 호환 인터페이스)
  *
- * chat()  → EDU_OPENAI_MODEL (기본 gpt-5.4)
- * haiku() → EDU_OPENAI_FAST_MODEL (기본 gpt-5.4-mini) — 경량 호출 별칭
+ * chat()  → EDU_OPENAI_MODEL (기본 gpt-5.4-2026-03-05)
+ * haiku() → EDU_OPENAI_FAST_MODEL (기본 gpt-5.4-mini-2026-03-17) — 경량 호출 별칭
  */
 declare(strict_types=1);
 
@@ -28,8 +28,8 @@ class EduOpenAILlmClient
         if (!$this->openai->isConfigured()) {
             throw new RuntimeException('OPENAI_API_KEY required');
         }
-        $this->model = getenv('EDU_OPENAI_MODEL') ?: 'gpt-5.4';
-        $this->fastModel = getenv('EDU_OPENAI_FAST_MODEL') ?: 'gpt-5.4-mini';
+        $this->model = getenv('EDU_OPENAI_MODEL') ?: 'gpt-5.4-2026-03-05';
+        $this->fastModel = getenv('EDU_OPENAI_FAST_MODEL') ?: 'gpt-5.4-mini-2026-03-17';
         $this->dailyCap = (int) (getenv('EDU_DAILY_LLM_CAP') ?: 1000);
         $this->logDir = eduFindProjectRoot() . 'storage/logs';
         if (!is_dir($this->logDir)) {

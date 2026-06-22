@@ -17,8 +17,8 @@ return [
     'api_key' => $openaiKey,
     
     // 기본 모델 설정
-    'model' => 'gpt-5.2',
-    'fallback_model' => 'gpt-5',
+    'model' => 'gpt-5.2-2025-12-11',
+    'fallback_model' => 'gpt-5.2-2025-12-11',
     
     // 요청 제한
     'max_tokens' => 8000,
@@ -52,7 +52,7 @@ return [
     // GPT Image는 b64_json 기본 응답, response_format/style 미지원
     // quality: low|medium|high|auto (DALL·E의 standard→medium, hd→high 대응)
     'images' => [
-        'model' => 'gpt-image-1.5',
+        'model' => 'gpt-image-1.5-2025-12-16',
         'size' => '1024x1024',
         'quality' => 'medium',
         'output_format' => 'png',
