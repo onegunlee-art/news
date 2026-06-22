@@ -24,10 +24,29 @@ function ok(string $label, bool $cond): void
     }
 }
 
-$fixture = json_decode(
-    (string) file_get_contents($root . '/docs/structure_diagnoses/fixture-630-sample.json'),
-    true
-);
+$fixturePath = $root . '/docs/structure_diagnoses/fixture-630-sample.json';
+$fixture = is_file($fixturePath)
+    ? json_decode((string) file_get_contents($fixturePath), true)
+    : null;
+if (!is_array($fixture)) {
+    $fixture = [
+        'session_id' => 'fixture-630-inline',
+        'quest' => [
+            'quest_code' => 'Q-AUTO-NUKE-630',
+            'hammer_hints' => eduCoachGuideAttachHints([]),
+        ],
+        'blueprint' => [
+            'guide_axis_answers' => [
+                'military' => '우크라이나 사례 보면 재래식 보복만 했다',
+                'norms' => '인도 파키스탄 규범 약속 이야기',
+                'defense' => '방공과 기지 방호에 먼저 쓸 것 같다',
+            ],
+            'guide_student_conclusion' => '나는 핵 억지는 크게는 되지만 재래식까지는 약하다고 본다',
+        ],
+        'dialogue' => [],
+        'essay_text' => '',
+    ];
+}
 $diag = eduStructureDiagnoseSession(
     (string) ($fixture['session_id'] ?? 'fixture'),
     $fixture['quest'],

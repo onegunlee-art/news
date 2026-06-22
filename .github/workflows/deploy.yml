@@ -235,10 +235,13 @@ jobs:
             tools/ "$REMOTE:$DEST/tools/"
 
           ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" \
-            "mkdir -p $DEST/docs/hinge_quest_drafts $DEST/docs/axis_extractions && sudo chown -R \$(whoami):\$(whoami) $DEST/docs/hinge_quest_drafts $DEST/docs/axis_extractions 2>/dev/null || true"
+            "mkdir -p $DEST/docs/hinge_quest_drafts $DEST/docs/axis_extractions $DEST/docs/structure_diagnoses && sudo chown -R \$(whoami):\$(whoami) $DEST/docs/hinge_quest_drafts $DEST/docs/axis_extractions $DEST/docs/structure_diagnoses 2>/dev/null || true"
           rsync -avz \
             -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
             docs/hinge_quest_drafts/ "$REMOTE:$DEST/docs/hinge_quest_drafts/"
+          rsync -avz \
+            -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
+            docs/structure_diagnoses/ "$REMOTE:$DEST/docs/structure_diagnoses/"
 
           ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" "mkdir -p $DEST/docs && sudo chown \$(whoami):\$(whoami) $DEST/docs 2>/dev/null || true"
           rsync -avz \
