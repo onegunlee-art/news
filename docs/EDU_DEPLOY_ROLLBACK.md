@@ -36,6 +36,7 @@
 | 2026-06-19 | `fe2ff4a` | **evidence 1턴 완화 배포 직전** — P1-3 완료 후 즉시 롤백 |
 | 2026-06-19 | `29a699d` | ConversationDirector evidence single-turn → hammer (nudge loop 제거) |
 | 2026-06-21 | `03e48cf` | **P2-A2/A3 배포** — hinge quest map, Q-AUTO-NUKE-630 seed tools, Hammer _hinge.shake_prompt |
+| 2026-06-22 | `7c6ae93` | **Q-AUTO-DC-150** axis_guide (150 AI 전기), seed generalize; Supabase seed live_at=null |
 
 ## P1-2+ 라이브 완주 게이트 (R4–R6)
 
