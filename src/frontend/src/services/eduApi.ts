@@ -115,6 +115,9 @@ export interface EduBlueprint {
   reflection_lines?: string[]
   stance_changed?: boolean
   essay_structure?: EduStructurePreview
+  /** axis_guide 코치 — UI 탐구 체크용 (표시만, 로직 무관) */
+  guide_axis_index?: number
+  guide_axis_answers?: Record<string, string>
 }
 
 export interface EduChatResponse {

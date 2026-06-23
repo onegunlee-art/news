@@ -1,4 +1,4 @@
-import { EDU_BRAND } from '../../constants/eduBrand'
+import { eduGame } from '../../constants/eduGameTheme'
 
 type Props = {
   text: string
@@ -12,27 +12,30 @@ const DISPLAY_LABEL: Record<string, string> = {
   full: '원문',
 }
 
-/** Mid-quest article excerpt — same family as EduArticleCard (full card at quest end). */
+/** Mid-quest article excerpt — eduGame accent (코치 말풍선 안). */
 export default function EduArticleSnippetCard({ text, display = 'summary' }: Props) {
   const tierLabel = DISPLAY_LABEL[display] ?? display
 
   return (
     <div
-      className="my-2 border rounded overflow-hidden bg-white text-left"
-      style={{ borderColor: EDU_BRAND.border }}
+      className="my-2 rounded-xl overflow-hidden bg-white text-left border-2 shadow-sm"
+      style={{ borderColor: eduGame.primaryLight }}
     >
       <div
-        className="px-2 py-1.5 flex items-center gap-2 border-b"
-        style={{ borderColor: EDU_BRAND.border, backgroundColor: EDU_BRAND.accentBg }}
+        className="px-3 py-2 flex items-center gap-2 border-b-2"
+        style={{ borderColor: eduGame.primaryLight, backgroundColor: eduGame.primaryLight }}
       >
-        <span className="text-[10px] font-bold shrink-0" style={{ color: EDU_BRAND.accent }}>
+        <span className="text-[11px] font-bold shrink-0" style={{ color: eduGame.primaryDark }}>
           📰 기사에서
         </span>
-        <span className="text-[10px] shrink-0 border px-1 py-0.5" style={{ color: EDU_BRAND.muted }}>
+        <span
+          className="text-[10px] shrink-0 rounded-full px-2 py-0.5 font-medium"
+          style={{ color: eduGame.muted, backgroundColor: eduGame.bg }}
+        >
           조각 · {tierLabel}
         </span>
       </div>
-      <p className="px-2 py-2 text-xs leading-relaxed" style={{ color: EDU_BRAND.ink }}>
+      <p className="px-3 py-2.5 text-xs leading-relaxed border-l-4" style={{ color: eduGame.ink, borderColor: eduGame.primary }}>
         {text}
       </p>
     </div>

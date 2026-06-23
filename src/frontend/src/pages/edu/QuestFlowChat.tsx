@@ -22,8 +22,10 @@ import {
   type EduTierProgress,
 } from '../../services/eduApi'
 import { EDU_BRAND } from '../../constants/eduBrand'
+import { eduGame, eduGameClasses } from '../../constants/eduGameTheme'
 
 const PAGE_MAX = 'max-w-2xl'
+const GUIDE_AXIS_SLOTS = 3
 const EVIDENCE_RECOMMENDED_LEN = 20
 const ARTICLE_PHASES = ['evidence', 'hammer', 'reflection']
 
@@ -84,6 +86,9 @@ export default function QuestFlowChat() {
   const [thinkingExpanded, setThinkingExpanded] = useState(false)
   const [playEssayReveal, setPlayEssayReveal] = useState(false)
   const [typingBubbleIndex, setTypingBubbleIndex] = useState<number | null>(null)
+  const [guideAxisIndex, setGuideAxisIndex] = useState(0)
+  const [explorePulse, setExplorePulse] = useState(false)
+  const prevGuideAxisIndex = useRef(0)
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const selectedQuestId = searchParams.get('quest_id')?.trim() || ''
 
@@ -109,6 +114,7 @@ export default function QuestFlowChat() {
       setEvidenceInput(String(state.blueprint.evidence))
     }
     setEvidenceNudgeCount(Number(state.blueprint?.evidence_nudge_count ?? 0))
+    setGuideAxisIndex(Number(state.blueprint?.guide_axis_index ?? 0))
   }, [])
 
   const syncSessionState = useCallback(async (sid: string) => {
@@ -194,6 +200,16 @@ export default function QuestFlowChat() {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
     }
   }, [])
+
+  useEffect(() => {
+    if (guideAxisIndex > prevGuideAxisIndex.current && guideAxisIndex > 0) {
+      setExplorePulse(true)
+      const t = setTimeout(() => setExplorePulse(false), 1400)
+      prevGuideAxisIndex.current = guideAxisIndex
+      return () => clearTimeout(t)
+    }
+    prevGuideAxisIndex.current = guideAxisIndex
+  }, [guideAxisIndex])
 
   const appendAssistant = (content: string, animate = true) => {
     setDialogue((prev) => {
@@ -409,16 +425,20 @@ export default function QuestFlowChat() {
   const authorName = getEduDisplayName() ?? '나'
   const entryMode = resolveQuestEntryMode(quest)
   const footerMode = resolveQuestFooterMode(phase, entryMode)
+  const showGuideAxisBar =
+    !completed && (phase === 'guide_axis' || phase === 'guide_conclusion')
+  const guideAxisCompleted =
+    phase === 'guide_conclusion' ? GUIDE_AXIS_SLOTS : Math.min(GUIDE_AXIS_SLOTS, guideAxisIndex)
   const showArticles = articles.length > 0 && !completed && ARTICLE_PHASES.includes(phase)
   const evidenceLen = evidenceInput.trim().length
   const evidenceReady = evidenceLen > 0
 
   return (
     <div
-      className="min-h-screen bg-white flex flex-col"
-      style={{ color: EDU_BRAND.ink, fontFamily: EDU_BRAND.fontBody }}
+      className="min-h-screen flex flex-col"
+      style={{ color: eduGame.ink, fontFamily: eduGame.fontBody, backgroundColor: eduGame.bg }}
     >
-      <header className={`border-b px-4 py-3 ${PAGE_MAX} mx-auto w-full`} style={{ borderColor: EDU_BRAND.border }}>
+      <header className={`border-b px-4 py-3 ${PAGE_MAX} mx-auto w-full`} style={{ borderColor: eduGame.border }}>
         <div className="flex items-center justify-between gap-2">
           <Link to="/edu" className="text-xs underline" style={{ color: EDU_BRAND.muted }}>
             ← 홈
@@ -443,17 +463,23 @@ export default function QuestFlowChat() {
           </div>
         )}
         <div className="mt-2 flex items-center gap-2">
-          <div className="flex-1 h-1.5 rounded overflow-hidden" style={{ backgroundColor: EDU_BRAND.border }}>
+          <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ backgroundColor: eduGame.border }}>
             <div
-              className="h-full transition-all duration-500"
-              style={{ width: `${progressPct}%`, backgroundColor: EDU_BRAND.accent }}
+              className="h-full transition-all duration-500 rounded-full"
+              style={{ width: `${progressPct}%`, backgroundColor: eduGame.primary }}
             />
           </div>
-          <span className="text-[10px] whitespace-nowrap" style={{ color: EDU_BRAND.muted }}>
+          <span className="text-[10px] whitespace-nowrap font-medium" style={{ color: eduGame.muted }}>
             생각 정리 {progressPct}%
           </span>
         </div>
       </header>
+
+      {showGuideAxisBar && (
+        <div className={`${PAGE_MAX} mx-auto w-full px-4 pt-3`}>
+          <AxisExploreBar completed={guideAxisCompleted} pulse={explorePulse} />
+        </div>
+      )}
 
       <main className={`flex-1 ${PAGE_MAX} mx-auto w-full px-4 py-4 overflow-y-auto space-y-3`}>
         {phase === 'stance' && dialogue.length === 0 && quest && !completed && entryMode === 'stance_pick' && (
@@ -631,8 +657,8 @@ export default function QuestFlowChat() {
 
       {!completed && footerMode !== null && (
         <footer
-          className={`border-t px-4 py-3 ${PAGE_MAX} mx-auto w-full bg-white sticky bottom-0 z-10`}
-          style={{ borderColor: EDU_BRAND.border }}
+          className={`border-t px-4 py-3 ${PAGE_MAX} mx-auto w-full sticky bottom-0 z-10`}
+          style={{ borderColor: eduGame.border, backgroundColor: eduGame.bg }}
         >
           {footerMode === 'opening' && (
             <div className="space-y-2">
@@ -648,13 +674,15 @@ export default function QuestFlowChat() {
                 placeholder="네 생각을 입력해…"
                 disabled={sending || composing}
                 rows={3}
-                className="w-full border border-[#1a1a1a] rounded px-3 py-2 text-sm resize-none"
+                className={`w-full resize-none ${eduGameClasses.input}`}
+                style={{ borderColor: eduGame.border, color: eduGame.ink }}
               />
               <button
                 type="button"
                 onClick={() => void handleSubmitOpening()}
                 disabled={sending || composing || !input.trim()}
-                className="w-full py-2.5 bg-[#1a1a1a] text-white rounded text-sm font-medium disabled:opacity-40"
+                className={`w-full py-3.5 text-sm ${eduGameClasses.btnPrimary}`}
+                style={{ backgroundColor: eduGame.primary }}
               >
                 {sending ? '제출 중…' : '생각 보내기'}
               </button>
@@ -663,12 +691,12 @@ export default function QuestFlowChat() {
           {footerMode === 'evidence' && (
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-2">
-                <label className="text-xs font-medium" style={{ color: EDU_BRAND.muted }}>
+                <label className="text-xs font-bold" style={{ color: eduGame.muted }}>
                   기사에서 찾은 근거
                 </label>
                 <span
                   className="text-[10px] tabular-nums"
-                  style={{ color: evidenceLen >= EVIDENCE_RECOMMENDED_LEN ? EDU_BRAND.accent : EDU_BRAND.muted }}
+                  style={{ color: evidenceLen >= EVIDENCE_RECOMMENDED_LEN ? eduGame.primary : eduGame.muted }}
                 >
                   {evidenceLen}자
                   {evidenceLen > 0 && evidenceLen < EVIDENCE_RECOMMENDED_LEN
@@ -691,18 +719,20 @@ export default function QuestFlowChat() {
                 placeholder="기사에서 본 구체적인 사실을 적어줘…"
                 disabled={sending || composing}
                 rows={3}
-                className="w-full border border-[#1a1a1a] rounded px-3 py-2 text-sm resize-none"
+                className={`w-full resize-none ${eduGameClasses.input}`}
+                style={{ borderColor: eduGame.border, color: eduGame.ink }}
               />
               <button
                 type="button"
                 onClick={() => void handleSubmitEvidence()}
                 disabled={sending || composing || !evidenceReady}
-                className="w-full py-2.5 bg-[#1a1a1a] text-white rounded text-sm font-medium disabled:opacity-40"
+                className={`w-full py-3.5 text-sm ${eduGameClasses.btnPrimary}`}
+                style={{ backgroundColor: eduGame.primary }}
               >
                 {sending ? '제출 중…' : evidenceNudgeCount > 0 ? '다시 제출 — 다음 단계로' : '근거 제출'}
               </button>
               {evidenceNudgeCount > 0 && (
-                <p className="text-[10px] text-center" style={{ color: EDU_BRAND.muted }}>
+                <p className="text-[10px] text-center" style={{ color: eduGame.muted }}>
                   코치가 더 구체적으로 물어봤어요. 15자 이상으로 다시 제출하면 반론 단계로 넘어가요.
                 </p>
               )}
@@ -714,14 +744,15 @@ export default function QuestFlowChat() {
                 type="button"
                 onClick={handleConfirmReflection}
                 disabled={sending || composing}
-                className="flex-1 py-2 bg-[#1a1a1a] text-white rounded text-sm font-medium disabled:opacity-40"
+                className={`flex-1 py-3.5 text-sm ${eduGameClasses.btnPrimary}`}
+                style={{ backgroundColor: eduGame.primary }}
               >
                 맞아 — 글 만들기
               </button>
             </div>
           )}
           {footerMode === 'chat' && (
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-stretch">
               <input
                 type="text"
                 value={input}
@@ -734,13 +765,15 @@ export default function QuestFlowChat() {
                 }}
                 placeholder="네 생각을 입력해…"
                 disabled={sending || composing}
-                className="flex-1 border border-[#1a1a1a] rounded px-3 py-2 text-sm"
+                className={`flex-1 min-w-0 ${eduGameClasses.input}`}
+                style={{ borderColor: eduGame.border, color: eduGame.ink }}
               />
               <button
                 type="button"
                 onClick={() => void handleSend()}
                 disabled={sending || composing || !input.trim()}
-                className="px-4 py-2 bg-[#1a1a1a] text-white rounded text-sm font-medium disabled:opacity-40"
+                className={`px-5 py-3 text-sm shrink-0 ${eduGameClasses.btnPrimary}`}
+                style={{ backgroundColor: eduGame.primary }}
               >
                 보내기
               </button>
@@ -748,6 +781,51 @@ export default function QuestFlowChat() {
           )}
         </footer>
       )}
+    </div>
+  )
+}
+
+function AxisExploreBar({ completed, pulse }: { completed: number; pulse: boolean }) {
+  return (
+    <div className="relative">
+      {pulse && (
+        <div
+          className="absolute -top-1 left-1/2 -translate-x-1/2 z-10 px-3 py-1 rounded-full text-xs font-bold shadow-md animate-bounce"
+          style={{ backgroundColor: eduGame.primaryLight, color: eduGame.primaryDark }}
+          aria-live="polite"
+        >
+          ✓ 탐구
+        </div>
+      )}
+      <div className="flex gap-2" role="list" aria-label="탐구 진행">
+        {Array.from({ length: GUIDE_AXIS_SLOTS }, (_, i) => {
+          const done = i < completed
+          return (
+            <div
+              key={i}
+              role="listitem"
+              className="flex-1 flex flex-col items-center gap-1 py-2 rounded-xl border-2 transition-colors duration-300"
+              style={{
+                borderColor: done ? eduGame.primary : eduGame.border,
+                backgroundColor: done ? eduGame.primaryLight : eduGame.bg,
+              }}
+            >
+              <span
+                className="text-sm font-bold leading-none"
+                style={{ color: done ? eduGame.primary : eduGame.border }}
+                aria-hidden
+              >
+                {done ? '✓' : '·'}
+              </span>
+              {done && (
+                <span className="text-[10px] font-bold" style={{ color: eduGame.primaryDark }}>
+                  탐구
+                </span>
+              )}
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -772,13 +850,17 @@ function DialogueBubble({
   return (
     <div className={`flex ${isStudent ? 'justify-end' : 'justify-start'}`}>
       <div
-        className={`max-w-[85%] px-3 py-2 text-sm whitespace-pre-wrap ${
-          isStudent ? 'rounded-2xl rounded-br-md text-white' : 'rounded-2xl rounded-bl-md'
+        className={`max-w-[85%] px-4 py-2.5 text-sm whitespace-pre-wrap ${
+          isStudent ? eduGameClasses.studentBubble : eduGameClasses.coachBubble
         }`}
         style={
           isStudent
-            ? { backgroundColor: brandStudent ? EDU_BRAND.accent : EDU_BRAND.ink }
-            : { backgroundColor: EDU_BRAND.surface, color: EDU_BRAND.ink }
+            ? { backgroundColor: brandStudent ? eduGame.bubbleStudent : eduGame.ink }
+            : {
+                backgroundColor: eduGame.bubbleCoach,
+                color: eduGame.ink,
+                borderColor: eduGame.bubbleCoachBorder,
+              }
         }
       >
         {isStudent ? (
