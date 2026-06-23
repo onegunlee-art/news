@@ -105,5 +105,24 @@ $sideA630 = '핵무기가 있으면 재래식 공격과 전쟁 확대를 막을 
 require_once $root . '/public/api/edu/lib/eduHingeQuestMap.php';
 assertTrue('630 hook_full dedup', eduHingeBuildHookFull($hook630, $sideA630, '') === $hook630);
 
+$quest150 = [
+    'quest_code' => EDU_COACH_GUIDE_QUEST_CODE_DC_150,
+    'hammer_hints' => array_merge(eduCoachGuideAttachHints([], 150), [
+        'hook_short' => 'AI 데이터센터가 전기세 폭등의 진짜 범인일까?',
+    ]),
+];
+assertTrue('150 uses axis guide', eduQuestUsesAxisGuide($quest150));
+assertTrue('150 has 3 axes', count(eduCoachGuideAxes($quest150)) === 3);
+$axes150 = eduCoachGuide150Axes();
+assertTrue('150 merge grid+investment', str_contains($axes150[2]['article_fact'] ?? '', '송전망'));
+assertNotContains('150 axis3 no meta fact', $axes150[2]['article_fact'] ?? '', '기사는');
+$open150 = eduCoachGuideHandleOpening(
+    ['phase' => 'stance', 'exchange_count' => 0],
+    $quest150,
+    'AI 데이터센터가 전기세를 올리는 것 같아요'
+);
+assertContains('150 intro scale fact', $open150['message'], '애슈번');
+assertNotContains('150 hook not repeated as axis q', $open150['message'], '진짜 범인일까');
+
 echo "\n=== {$pass} passed, {$fail} failed ===\n";
 exit($fail > 0 ? 1 : 0);

@@ -1,6 +1,6 @@
 <?php
 /**
- * P2 — 축 순서 인도 코치 (안 떠먹임, Q-AUTO-NUKE-630 1차)
+ * P2 — 축 순서 인도 코치 (안 떠먹임)
  * 기준: docs/P2_COACH_NO_SPOONFEED.md
  */
 declare(strict_types=1);
@@ -9,6 +9,7 @@ require_once __DIR__ . '/eduQuest.php';
 require_once __DIR__ . '/eduBlueprint.php';
 
 const EDU_COACH_GUIDE_QUEST_CODE = 'Q-AUTO-NUKE-630';
+const EDU_COACH_GUIDE_QUEST_CODE_DC_150 = 'Q-AUTO-DC-150';
 const EDU_COACH_GUIDE_STALL_ESCAPE = 3;
 /** P2-B hook: per-student fact length (summary → medium → full) */
 const EDU_COACH_GUIDE_FACT_DISPLAY = 'summary';
@@ -52,6 +53,43 @@ function eduCoachGuide630Axes(): array
     ];
 }
 
+/** 150 정규화 3축 — 규모 / 정책(§2) / 송전망·투자(§3+§4 merge) */
+function eduCoachGuide150Axes(): array
+{
+    return [
+        [
+            'axis_id' => 'scale',
+            'point' => '데이터센터가 실제로 얼마나 큰 전력을 쓰는가',
+            'core_question' => '애슈번 데이터센터 전력 규모가 얼마나 큰가?',
+            'article_fact' => '버지니아 애슈번에는 데이터센터가 약 150개 있고, 이들이 쓰는 전력은 필라델피아 전체와 비슷한 수준이다.',
+            'weak_scaffold' => '애슈번만 봐 — DC **150개**, 전력은 **필라델피아급**이야. \'AI=범인\' 말을 **강하게** 해주나 **약하게**?',
+        ],
+        [
+            'axis_id' => 'policy',
+            'point' => '정치·기업은 전기요금 문제에 어떻게 대응하려 하는가',
+            'core_question' => '트럼프·빅테크의 전력 공급 서약이 뭘 의미하는가?',
+            'article_fact' => '도널드 트럼프는 3월 4일 빅테크 리더들을 불러 자체 전력 공급을 구축·조달해 전기요금을 올리지 않겠다는 서약에 서명하게 했다.',
+            'weak_scaffold' => '트럼프가 빅테크에 **자체 전력 공급·요금 동결** 서약 받았어. 이게 \'DC=범인\' 프레임을 **키워** 아니면 **줄여**?',
+        ],
+        [
+            'axis_id' => 'grid_investment',
+            'point' => '요금 상승 원인이 AI만인가, 데이터센터가 발전·망 투자에 기여할 수 있는가',
+            'core_question' => '요금이 올랐다면 — **주로 AI·데이터센터 탓**인가, **송전망·시장 제약**인가? (한쪽만)',
+            'article_fact' => '전기요금 상승은 AI 수요뿐 아니라 송전망·에너지시장 전반의 제약과 연결된다고 본다. 데이터센터 수요는 신규 발전·전력망 투자를 뒷받침해 다른 소비자 요금 압력을 낮출 여지도 있다.',
+            'weak_scaffold' => 'AI 탓만이면 **송전망·시장**은 어디에 끼워? 반대로 DC가 **새 발전·망 투자**를 부를 수 있다면 — 범인 프레임과 **맞나 안 맞나**?',
+        ],
+    ];
+}
+
+/** @return list<array<string, string>> */
+function eduCoachGuideAxesForNewsId(int $newsId): array
+{
+    return match ($newsId) {
+        150 => eduCoachGuide150Axes(),
+        default => eduCoachGuide630Axes(),
+    };
+}
+
 /** @param array<string, mixed> $quest @return list<array<string, string>> */
 function eduCoachGuideAxes(array $quest): array
 {
@@ -64,10 +102,10 @@ function eduCoachGuideAxes(array $quest): array
     return eduCoachGuide630Axes();
 }
 
-function eduCoachGuideAttachHints(array $hints): array
+function eduCoachGuideAttachHints(array $hints, int $newsId = 630): array
 {
     $hints['coach_mode'] = 'axis_guide_v1';
-    $hints['_guide_axes'] = eduCoachGuide630Axes();
+    $hints['_guide_axes'] = eduCoachGuideAxesForNewsId($newsId);
     $hints['mode'] = 'adversarial';
 
     return $hints;

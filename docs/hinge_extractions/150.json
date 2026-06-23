@@ -1,0 +1,16 @@
+{
+  "news_id": 150,
+  "title": "전기세 폭등의 주범, AI데이터센터!?",
+  "hinge": "AI 데이터센터가 전기요금 폭등의 주범처럼 보이지만, 그러나 실제로는 전력망·에너지시장 전반의 제약이 더 큰 원인이며 데이터센터가 오히려 신규 투자로 요금 압력을 낮출 수도 있다",
+  "side_a": "AI 데이터센터가 전기요금을 올리는가",
+  "side_b": "전기요금 상승의 주된 원인은 AI 수요만이 아니라 전력망·에너지시장 전반의 제약에 있고, 데이터센터는 신규 발전·전력망 투자를 떠받치는 수요가 되어 다른 소비자 요금 압력을 낮출 여지도 있다",
+  "hook_student": "AI 데이터센터가 전기세 폭등의 진짜 범인일까?",
+  "shake_prompt": "애슈번의 데이터센터 약 150개가 필라델피아 전체와 비슷한 전력을 쓰더라도, 본문은 요금 상승의 주된 원인을 AI보다 전력망·에너지시장 제약으로 짚고 데이터센터가 신규 투자 수요가 될 수 있다고 말해.",
+  "article_form": "economist",
+  "confidence": "high",
+  "notes": "EC2 A1 approved extraction",
+  "needs_review": false,
+  "extracted_at": "2026-06-21T06:09:12+00:00",
+  "source": "mysql.news.content",
+  "prompt_version": "p2-h-side_a_question_frame_v1"
+}
