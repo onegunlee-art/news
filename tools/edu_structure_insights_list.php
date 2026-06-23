@@ -41,7 +41,7 @@ if ($studentId === '' && $displayName !== '') {
     $pattern = '*'. rawurlencode($displayName) . '*';
     $students = $supabase->select(
         'edu_students',
-        'display_name=ilike.' . $pattern . '&select=id,display_name&order=updated_at.desc',
+        'display_name=ilike.' . $pattern . '&select=id,display_name&order=last_active_at.desc',
         5
     ) ?? [];
     if ($students === []) {
