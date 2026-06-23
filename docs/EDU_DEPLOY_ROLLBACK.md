@@ -36,8 +36,8 @@
 | 2026-06-19 | `fe2ff4a` | **evidence 1턴 완화 배포 직전** — P1-3 완료 후 즉시 롤백 |
 | 2026-06-19 | `29a699d` | ConversationDirector evidence single-turn → hammer (nudge loop 제거) |
 | 2026-06-21 | `03e48cf` | **P2-A2/A3 배포** — hinge quest map, Q-AUTO-NUKE-630 seed tools, Hammer _hinge.shake_prompt |
-| 2026-06-22 | `301f666` | Q-AUTO-DC-150 seed + list_students fix |
-| *(pending)* | `feat/gamification-piece-2` | 진단 XP 5~65, streak freeze, compose 훅 교체 — **Supabase `edu_gamification_xp.sql` 선행** |
+| 2026-06-22 | `7c6ae93` | **Q-AUTO-DC-150** axis_guide seed (live_at=null) |
+| 2026-06-23 | `34f55f3` | **게임화 조각 2** — 진단 XP 5~65, streak freeze, compose 훅 (Supabase `edu_gamification_xp.sql`) |
 
 ## P1-2+ 라이브 완주 게이트 (R4–R6)
 
