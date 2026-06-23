@@ -8,6 +8,7 @@ declare(strict_types=1);
 $root = dirname(__DIR__);
 require_once $root . '/public/api/edu/lib/eduCoachGuide.php';
 require_once $root . '/public/api/edu/lib/eduStructureDiagnose.php';
+require_once $root . '/public/api/edu/lib/eduStudentInsights.php';
 
 $pass = 0;
 $fail = 0;
@@ -67,6 +68,11 @@ ok('clarity enum', in_array($diag['conclusion_clarity'] ?? '', ['명확', '모�
 ok('evidence enum', in_array($diag['evidence_linked'] ?? '', ['yes', 'no'], true));
 $note = (string) ($diag['structure_note'] ?? '');
 ok('structure_note no grade smell', !preg_match('/\d+\s*\/\s*\d|등급|점수|잘함|못함/u', $note));
+
+$row = eduStructureInsightRowFromDiagnose('00000000-0000-0000-0000-000000000001', $diag);
+ok('insight row no score column', !array_key_exists('score', $row));
+ok('insight row axes 3/3', ($row['axes_engaged_count'] ?? 0) === 3 && ($row['axes_total'] ?? 0) === 3);
+ok('insight row internal_only', ($row['internal_only'] ?? false) === true);
 
 echo "\n=== {$pass} passed, {$fail} failed ===\n";
 exit($fail > 0 ? 1 : 0);

@@ -229,13 +229,33 @@ $blueprint = eduMergeBlueprint($blueprint, [
 ]);
 $dialogue = eduAppendDialogue($dialogue, 'assistant', $draft['full_text'] ?? '', 'composer');
 
+$completedAt = date('c');
 $supabase->update('edu_quest_sessions', 'id=eq.' . $sessionId, [
     'blueprint_json' => $blueprint,
     'dialogue_json' => $dialogue,
     'stage' => 'completed',
-    'completed_at' => date('c'),
-    'updated_at' => date('c'),
+    'completed_at' => $completedAt,
+    'updated_at' => $completedAt,
 ]);
+
+require_once __DIR__ . '/../lib/eduStudentInsights.php';
+try {
+    $sessionForInsight = array_merge($session, [
+        'blueprint_json' => $blueprint,
+        'dialogue_json' => $dialogue,
+        'stage' => 'completed',
+        'completed_at' => $completedAt,
+    ]);
+    eduSaveStructureInsight(
+        $supabase,
+        $sessionForInsight,
+        $quest,
+        eduStructureDiagnoseOptionalLlm(),
+        trim((string) ($draft['full_text'] ?? ''))
+    );
+} catch (Throwable $insightErr) {
+    error_log('edu insight save: ' . $insightErr->getMessage());
+}
 
 eduSendJson([
     'success' => true,

@@ -4,7 +4,7 @@
  *
  * Usage:
  *   php tools/edu_structure_diagnose.php --session=UUID
- *   php tools/edu_structure_diagnose.php --session=UUID --live --write
+ *   php tools/edu_structure_diagnose.php --session=UUID --live --write --save-insights
  *   php tools/edu_structure_diagnose.php --quest-code=Q-AUTO-NUKE-630 --latest=3
  *   php tools/edu_structure_diagnose.php --fixture=docs/structure_diagnoses/fixture-630-sample.json
  *   php tools/edu_structure_diagnose_test.php
@@ -23,6 +23,7 @@ $questCode = 'Q-AUTO-NUKE-630';
 $fixturePath = '';
 $useLive = in_array('--live', $argv ?? [], true);
 $write = in_array('--write', $argv ?? [], true);
+$saveInsights = in_array('--save-insights', $argv ?? [], true);
 $latest = 1;
 
 foreach ($argv ?? [] as $arg) {
@@ -135,5 +136,17 @@ foreach ($targets as $session) {
         $path = $outDir . '/' . $sid . '.json';
         file_put_contents($path, json_encode($diag, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
         echo "Wrote {$path}\n";
+    }
+
+    if ($saveInsights) {
+        require_once $root . '/public/api/edu/lib/eduStudentInsights.php';
+        $saved = eduSaveStructureInsight($supabase, $session, $quest, $llm, $essayText);
+        if ($saved !== null) {
+            echo "Saved edu_student_insights id=" . ($saved['id'] ?? '') . "\n";
+        } elseif (eduStructureInsightExists($supabase, $sid)) {
+            echo "Insight already exists for session {$sid}\n";
+        } else {
+            echo "Insight save failed: " . $supabase->getLastError() . "\n";
+        }
     }
 }
