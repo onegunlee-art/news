@@ -202,10 +202,8 @@ if (!$draftSave['ok'] && eduStrictDraftStorage()) {
     eduSendError('Failed to save essay draft: ' . ($draftSave['error'] ?: 'unknown'), 500);
 }
 
-$xpQuest = 80;
-$xpWriting = 40;
-eduAwardXp($supabase, $student['id'], $xpQuest, 'quest_complete', $sessionId, ['quest_complete' => true]);
-$tierRow = eduAwardXp($supabase, $student['id'], $xpWriting, 'writing_v2', $sessionId, ['writing_v2' => true]);
+$sessionXp = 5;
+$tierRow = eduFetchTierRow($student['id']);
 
 $blueprint = eduMergeBlueprint($blueprint, [
     'phase' => 'completed',
@@ -246,16 +244,25 @@ try {
         'stage' => 'completed',
         'completed_at' => $completedAt,
     ]);
-    eduSaveStructureInsight(
+    $insightRow = eduSaveStructureInsight(
         $supabase,
         $sessionForInsight,
         $quest,
         eduStructureDiagnoseOptionalLlm(),
         trim((string) ($draft['full_text'] ?? ''))
     );
+    if (is_array($insightRow) && isset($insightRow['xp_earned'])) {
+        $sessionXp = max(5, (int) $insightRow['xp_earned']);
+    }
 } catch (Throwable $insightErr) {
     error_log('edu insight save: ' . $insightErr->getMessage());
 }
+
+$tierRow = eduAwardXp($supabase, $student['id'], $sessionXp, 'structure_quest', $sessionId, [
+    'structure_xp' => $sessionXp,
+    'quest_code' => $quest['quest_code'] ?? '',
+]);
+$tierRow = eduStreakOnCompletion($supabase, $student['id']);
 
 eduSendJson([
     'success' => true,
@@ -275,7 +282,7 @@ eduSendJson([
     'quality_score' => $evaluation['quality_score'] ?? 70,
     'structure_score' => $verification['structure_score'] ?? 3,
     'feedback' => $evaluation['feedback'] ?? '잘 정리했어요!',
-    'xp_gained' => $xpQuest + $xpWriting,
+    'xp_gained' => $sessionXp,
     'tier' => eduTierProgressPayload($tierRow),
     'progress_pct' => 100,
 ]);

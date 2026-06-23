@@ -74,12 +74,14 @@ function eduFetchTierRow(string $studentId): array
         'tier_id' => 'observer',
         'xp_current' => 0,
         'streak_days' => 0,
+        'streak_freeze_available' => 1,
     ]);
     return $inserted[0] ?? [
         'student_id' => $studentId,
         'tier_id' => 'observer',
         'xp_current' => 0,
         'streak_days' => 0,
+        'streak_freeze_available' => 1,
         'status' => 'active',
     ];
 }
@@ -109,6 +111,7 @@ function eduTierProgressPayload(array $tierRow): array
         'xp_next_tier' => $nextXp,
         'progress_pct' => $progressPct,
         'streak_days' => (int) ($tierRow['streak_days'] ?? 0),
+        'streak_freeze_available' => (int) ($tierRow['streak_freeze_available'] ?? 1),
         'show_quest_cta' => ($tierRow['status'] ?? 'active') === 'active',
     ];
 }
@@ -124,24 +127,9 @@ function eduAwardXp(\Agents\Services\SupabaseService $supabase, string $studentI
         $newTier = $oldTier;
     }
 
-    $today = date('Y-m-d');
-    $lastDate = $tierRow['last_quest_date'] ?? null;
-    $streak = (int) ($tierRow['streak_days'] ?? 0);
-    if ($lastDate === null) {
-        $streak = 1;
-    } elseif ($lastDate === $today) {
-        // keep
-    } elseif ($lastDate === date('Y-m-d', strtotime('-1 day'))) {
-        $streak++;
-    } else {
-        $streak = 1;
-    }
-
     $supabase->update('edu_user_tier', 'student_id=eq.' . $studentId, [
         'xp_current' => $newXp,
         'tier_id' => $newTier,
-        'streak_days' => $streak,
-        'last_quest_date' => $today,
         'status' => 'active',
         'updated_at' => date('c'),
     ]);
@@ -152,6 +140,45 @@ function eduAwardXp(\Agents\Services\SupabaseService $supabase, string $studentI
         'event_type' => $eventType,
         'xp_delta' => $delta,
         'meta' => $meta,
+    ]);
+
+    return eduFetchTierRow($studentId);
+}
+
+/**
+ * 완주(세션 종료) 시 스트릭 — XP와 분리. 하루 1회 +1, freeze 1회 후 리셋.
+ */
+function eduStreakOnCompletion(\Agents\Services\SupabaseService $supabase, string $studentId): array
+{
+    $tierRow = eduFetchTierRow($studentId);
+    $today = date('Y-m-d');
+    $lastDate = $tierRow['last_quest_date'] ?? null;
+    $streak = (int) ($tierRow['streak_days'] ?? 0);
+    $freeze = (int) ($tierRow['streak_freeze_available'] ?? 1);
+
+    if ($lastDate === $today) {
+        return $tierRow;
+    }
+
+    if ($lastDate === null) {
+        $streak = 1;
+    } elseif ($lastDate === date('Y-m-d', strtotime('-1 day'))) {
+        $streak++;
+    } else {
+        $gapDays = (int) floor((strtotime($today) - strtotime((string) $lastDate)) / 86400);
+        if ($gapDays >= 2 && $freeze > 0) {
+            $freeze--;
+            $streak++;
+        } else {
+            $streak = 1;
+        }
+    }
+
+    $supabase->update('edu_user_tier', 'student_id=eq.' . $studentId, [
+        'streak_days' => $streak,
+        'streak_freeze_available' => $freeze,
+        'last_quest_date' => $today,
+        'updated_at' => date('c'),
     ]);
 
     return eduFetchTierRow($studentId);

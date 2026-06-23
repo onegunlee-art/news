@@ -6,6 +6,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/eduBlueprint.php';
 require_once __DIR__ . '/eduStructureDiagnose.php';
+require_once __DIR__ . '/eduGamification.php';
 
 /**
  * compose/백필에서 LLM 보강 여부 (기본 OFF — rule_fallback, 속도 우선)
@@ -124,6 +125,7 @@ function eduSaveStructureInsight(
 
     $diag = eduStructureDiagnoseSession($sessionId, $quest, $blueprint, $dialogue, $llm, $essayText);
     $row = eduStructureInsightRowFromDiagnose($studentId, $diag);
+    $row['xp_earned'] = eduXpFromStructureDiagnose($diag);
 
     $completedAt = trim((string) ($session['completed_at'] ?? ''));
     if ($completedAt !== '') {

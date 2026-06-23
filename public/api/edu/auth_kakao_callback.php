@@ -188,6 +188,7 @@ if (!empty($existing[0]['id'])) {
             'tier_id' => 'bronze',
             'xp_current' => 0,
             'streak_days' => 0,
+            'streak_freeze_available' => 1,
         ]);
     }
 }
