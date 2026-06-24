@@ -88,6 +88,7 @@ export default function QuestFlowChat() {
   const [typingBubbleIndex, setTypingBubbleIndex] = useState<number | null>(null)
   const [guideAxisIndex, setGuideAxisIndex] = useState(0)
   const [explorePulse, setExplorePulse] = useState(false)
+  const [explorePulseSlot, setExplorePulseSlot] = useState<number | null>(null)
   const prevGuideAxisIndex = useRef(0)
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const selectedQuestId = searchParams.get('quest_id')?.trim() || ''
@@ -204,7 +205,11 @@ export default function QuestFlowChat() {
   useEffect(() => {
     if (guideAxisIndex > prevGuideAxisIndex.current && guideAxisIndex > 0) {
       setExplorePulse(true)
-      const t = setTimeout(() => setExplorePulse(false), 1400)
+      setExplorePulseSlot(guideAxisIndex - 1)
+      const t = setTimeout(() => {
+        setExplorePulse(false)
+        setExplorePulseSlot(null)
+      }, 1200)
       prevGuideAxisIndex.current = guideAxisIndex
       return () => clearTimeout(t)
     }
@@ -477,7 +482,11 @@ export default function QuestFlowChat() {
 
       {showGuideAxisBar && (
         <div className={`${PAGE_MAX} mx-auto w-full px-4 pt-3`}>
-          <AxisExploreBar completed={guideAxisCompleted} pulse={explorePulse} />
+          <AxisExploreBar
+            completed={guideAxisCompleted}
+            pulse={explorePulse}
+            pulseSlot={explorePulseSlot}
+          />
         </div>
       )}
 
@@ -536,6 +545,7 @@ export default function QuestFlowChat() {
               key={`${turn.at ?? i}-${i}`}
               turn={turn}
               typewriter={turn.role === 'assistant' && i === typingBubbleIndex}
+              coachEnter={turn.role === 'assistant' && i === typingBubbleIndex}
               onTypewriterComplete={() => setTypingBubbleIndex(null)}
               onTypewriterProgress={scrollToBottom}
             />
@@ -814,12 +824,20 @@ export default function QuestFlowChat() {
   )
 }
 
-function AxisExploreBar({ completed, pulse }: { completed: number; pulse: boolean }) {
+function AxisExploreBar({
+  completed,
+  pulse,
+  pulseSlot,
+}: {
+  completed: number
+  pulse: boolean
+  pulseSlot: number | null
+}) {
   return (
     <div className="relative">
       {pulse && (
         <div
-          className="absolute -top-1 left-1/2 -translate-x-1/2 z-10 px-3 py-1 rounded-full font-bold shadow-md animate-bounce"
+          className={`absolute -top-1 left-1/2 z-10 px-3 py-1 rounded-full font-bold shadow-md ${eduGameClasses.animExploreToast}`}
           style={{
             backgroundColor: eduGame.primaryLight,
             color: eduGame.primaryDark,
@@ -833,11 +851,14 @@ function AxisExploreBar({ completed, pulse }: { completed: number; pulse: boolea
       <div className="flex gap-2" role="list" aria-label="탐구 진행">
         {Array.from({ length: GUIDE_AXIS_SLOTS }, (_, i) => {
           const done = i < completed
+          const justFilled = pulse && pulseSlot === i
           return (
             <div
               key={i}
               role="listitem"
-              className="flex-1 flex flex-col items-center gap-1 py-2 rounded-xl border-2 transition-colors duration-300"
+              className={`flex-1 flex flex-col items-center gap-1 py-2 rounded-xl border-2 transition-colors duration-300 ${
+                justFilled ? eduGameClasses.animAxisPop : ''
+              }`}
               style={{
                 borderColor: done ? eduGame.primary : eduGame.border,
                 backgroundColor: done ? eduGame.primaryLight : eduGame.bg,
@@ -870,25 +891,28 @@ function DialogueBubble({
   turn,
   brandStudent = false,
   typewriter = false,
+  coachEnter = false,
   onTypewriterComplete,
   onTypewriterProgress,
 }: {
   turn: EduDialogueTurn
   brandStudent?: boolean
   typewriter?: boolean
+  coachEnter?: boolean
   onTypewriterComplete?: () => void
   onTypewriterProgress?: () => void
 }) {
   const isStudent = turn.role === 'student'
   const useSnippetLayout = !isStudent && coachMessageHasSnippet(turn.content)
   const segments = useSnippetLayout ? parseCoachAssistantMessage(turn.content) : null
+  const showCoachEnter = coachEnter && !isStudent && !brandStudent
 
   return (
     <div className={`flex ${isStudent ? 'justify-end' : 'justify-start'}`}>
       <div
         className={`max-w-[85%] px-4 py-2.5 ${
           isStudent ? eduGameClasses.studentBubble : eduGameClasses.coachBubble
-        }`}
+        }${showCoachEnter ? ` ${eduGameClasses.animCoachIn}` : ''}`}
         style={
           isStudent
             ? {

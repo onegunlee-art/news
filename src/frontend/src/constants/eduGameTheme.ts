@@ -58,4 +58,8 @@ export const eduGameClasses = {
     'rounded-2xl rounded-br-md text-white shadow-sm edu-game-text-ko whitespace-pre-wrap',
   textKo: 'edu-game-text-ko',
   textKoPre: 'edu-game-text-ko whitespace-pre-wrap',
+  /** 성취 순간 애니메이션 (1-3) — prefers-reduced-motion 대응 */
+  animAxisPop: 'edu-game-axis-pop',
+  animCoachIn: 'edu-game-coach-in',
+  animExploreToast: 'edu-game-explore-toast',
 } as const
