@@ -60,6 +60,9 @@ export const eduGameClasses = {
   textKoPre: 'edu-game-text-ko whitespace-pre-wrap',
   /** 성취 순간 애니메이션 (1-3) — prefers-reduced-motion 대응 */
   animAxisPop: 'edu-game-axis-pop',
+  animAxisCheckPop: 'edu-game-axis-check-pop',
+  animAxisCurrent: 'edu-game-axis-current',
   animCoachIn: 'edu-game-coach-in',
+  animExploreNudge: 'edu-game-explore-nudge',
   animExploreToast: 'edu-game-explore-toast',
 } as const

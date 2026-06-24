@@ -27,6 +27,8 @@ import { eduGame, eduGameClasses } from '../../constants/eduGameTheme'
 
 const PAGE_MAX = 'max-w-2xl'
 const GUIDE_AXIS_SLOTS = 3
+/** 축 통과 순간 — 행동 격려만 (평가·정답 금지) */
+const EXPLORE_PASS_NUDGES = ['한 갈래 따졌어!', '한 갈래 더 따졌어!', '다음 갈래로!'] as const
 const EVIDENCE_RECOMMENDED_LEN = 20
 const ARTICLE_PHASES: readonly string[] = ['evidence']
 /** axis_guide·hammer·reflection: 기사는 코치 snippet으로만. 하단 참고 기사(펼치기) 제거 — 미팅 안정 */
@@ -91,6 +93,7 @@ export default function QuestFlowChat() {
   const [guideAxisIndex, setGuideAxisIndex] = useState(0)
   const [explorePulse, setExplorePulse] = useState(false)
   const [explorePulseSlot, setExplorePulseSlot] = useState<number | null>(null)
+  const [exploreNudgeText, setExploreNudgeText] = useState('')
   const prevGuideAxisIndex = useRef(0)
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const selectedQuestId = searchParams.get('quest_id')?.trim() || ''
@@ -206,12 +209,15 @@ export default function QuestFlowChat() {
 
   useEffect(() => {
     if (guideAxisIndex > prevGuideAxisIndex.current && guideAxisIndex > 0) {
+      const filledSlot = guideAxisIndex - 1
       setExplorePulse(true)
-      setExplorePulseSlot(guideAxisIndex - 1)
+      setExplorePulseSlot(filledSlot)
+      setExploreNudgeText(EXPLORE_PASS_NUDGES[Math.min(filledSlot, EXPLORE_PASS_NUDGES.length - 1)])
       const t = setTimeout(() => {
         setExplorePulse(false)
         setExplorePulseSlot(null)
-      }, 1200)
+        setExploreNudgeText('')
+      }, 900)
       prevGuideAxisIndex.current = guideAxisIndex
       return () => clearTimeout(t)
     }
@@ -436,6 +442,8 @@ export default function QuestFlowChat() {
     !completed && (phase === 'guide_axis' || phase === 'guide_conclusion')
   const guideAxisCompleted =
     phase === 'guide_conclusion' ? GUIDE_AXIS_SLOTS : Math.min(GUIDE_AXIS_SLOTS, guideAxisIndex)
+  const guideAxisCurrentSlot =
+    phase === 'guide_conclusion' || guideAxisIndex >= GUIDE_AXIS_SLOTS ? -1 : guideAxisIndex
   const showArticles = articles.length > 0 && !completed && ARTICLE_PHASES.includes(phase)
   const evidenceLen = evidenceInput.trim().length
   const evidenceReady = evidenceLen > 0
@@ -486,8 +494,10 @@ export default function QuestFlowChat() {
         <div className={`${PAGE_MAX} mx-auto w-full px-4 pt-3`}>
           <AxisExploreBar
             completed={guideAxisCompleted}
+            currentSlot={guideAxisCurrentSlot}
             pulse={explorePulse}
             pulseSlot={explorePulseSlot}
+            nudgeText={exploreNudgeText}
           />
         </div>
       )}
@@ -840,57 +850,78 @@ export default function QuestFlowChat() {
 
 function AxisExploreBar({
   completed,
+  currentSlot,
   pulse,
   pulseSlot,
+  nudgeText,
 }: {
   completed: number
+  currentSlot: number
   pulse: boolean
   pulseSlot: number | null
+  nudgeText: string
 }) {
   return (
     <div className="relative">
-      {pulse && (
-        <div
-          className={`absolute -top-1 left-1/2 z-10 px-3 py-1 rounded-full font-bold shadow-md ${eduGameClasses.animExploreToast}`}
-          style={{
-            backgroundColor: eduGame.primaryLight,
-            color: eduGame.primaryDark,
-            fontSize: eduGame.fontSize.label,
-          }}
-          aria-live="polite"
-        >
-          ✓ 탐구
-        </div>
-      )}
       <div className="flex gap-2" role="list" aria-label="탐구 진행">
         {Array.from({ length: GUIDE_AXIS_SLOTS }, (_, i) => {
-          const done = i < completed
+          const isDone = i < completed
+          const isCurrent = !isDone && i === currentSlot && currentSlot >= 0
+          const isPending = !isDone && !isCurrent
           const justFilled = pulse && pulseSlot === i
+
+          const slotStyle: {
+            borderColor: string
+            backgroundColor: string
+          } = isDone
+            ? { borderColor: eduGame.primary, backgroundColor: eduGame.primaryLight }
+            : isCurrent
+              ? { borderColor: eduGame.primary, backgroundColor: eduGame.bg }
+              : { borderColor: eduGame.border, backgroundColor: isPending ? eduGame.bg : eduGame.surface }
+
+          let slotClass = ''
+          if (isCurrent) slotClass = eduGameClasses.animAxisCurrent
+          if (justFilled) slotClass = `${slotClass} ${eduGameClasses.animAxisPop}`.trim()
+
           return (
             <div
               key={i}
               role="listitem"
-              className={`flex-1 flex flex-col items-center gap-1 py-2 rounded-xl border-2 transition-colors duration-300 ${
-                justFilled ? eduGameClasses.animAxisPop : ''
-              }`}
-              style={{
-                borderColor: done ? eduGame.primary : eduGame.border,
-                backgroundColor: done ? eduGame.primaryLight : eduGame.bg,
-              }}
+              aria-current={isCurrent ? 'step' : undefined}
+              className={`relative flex-1 flex flex-col items-center gap-1 py-2.5 rounded-xl border-2 transition-colors duration-300 ${slotClass}`}
+              style={slotStyle}
             >
+              {justFilled && nudgeText && (
+                <span
+                  className={`absolute -top-9 left-1/2 z-10 whitespace-nowrap px-2.5 py-1 rounded-full font-bold shadow-sm ${eduGameClasses.animExploreNudge}`}
+                  style={{
+                    backgroundColor: eduGame.primary,
+                    color: eduGame.bg,
+                    fontSize: eduGame.fontSize.caption,
+                  }}
+                  aria-live="polite"
+                >
+                  {nudgeText}
+                </span>
+              )}
               <span
-                className="font-bold leading-none"
+                className={`font-bold leading-none ${justFilled ? eduGameClasses.animAxisCheckPop : ''}`}
                 style={{
-                  color: done ? eduGame.primary : eduGame.border,
+                  color: isDone ? eduGame.primary : isCurrent ? eduGame.primary : eduGame.muted,
                   fontSize: eduGame.fontSize.body,
                 }}
                 aria-hidden
               >
-                {done ? '✓' : '·'}
+                {isDone ? '✓' : isCurrent ? '●' : '·'}
               </span>
-              {done && (
+              {isDone && (
                 <span className="font-bold" style={{ color: eduGame.primaryDark, fontSize: eduGame.fontSize.caption }}>
                   탐구
+                </span>
+              )}
+              {isCurrent && (
+                <span className="font-bold" style={{ color: eduGame.primary, fontSize: eduGame.fontSize.caption }}>
+                  여기
                 </span>
               )}
             </div>
