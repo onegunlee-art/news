@@ -28,7 +28,8 @@ import { eduGame, eduGameClasses } from '../../constants/eduGameTheme'
 const PAGE_MAX = 'max-w-2xl'
 const GUIDE_AXIS_SLOTS = 3
 const EVIDENCE_RECOMMENDED_LEN = 20
-const ARTICLE_PHASES = ['evidence', 'hammer', 'reflection']
+const ARTICLE_PHASES: readonly string[] = ['evidence']
+/** axis_guide·hammer·reflection: 기사는 코치 snippet으로만. 하단 참고 기사(펼치기) 제거 — 미팅 안정 */
 
 /** Footer input mode — exactly one UI per phase (no overlapping blocks). */
 type QuestFooterMode = 'opening' | 'evidence' | 'reflection' | 'chat'
