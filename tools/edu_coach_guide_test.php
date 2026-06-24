@@ -51,7 +51,27 @@ assertNotContains('defense core_question no 유도어', $axes[2]['core_question'
 
 assertTrue('both evasion', eduCoachDetectEvasion('둘 다 필요해') === 'both');
 assertTrue('unknown evasion', eduCoachDetectEvasion('모르겠어') === 'unknown');
+assertTrue('unknown 몰라', eduCoachDetectEvasion('몰라') === 'unknown');
 assertTrue('ask conclusion', eduCoachDetectEvasion('결론은 뭐야?') === 'ask_conclusion');
+assertTrue('short substantive pass', eduCoachAxisStudentPass('새로 만들어야 함', null));
+assertTrue('short defense pass', eduCoachAxisStudentPass('기지 방공', null));
+assertTrue('unknown blocks pass', !eduCoachAxisStudentPass('모르겠어', eduCoachDetectEvasion('모르겠어')));
+assertTrue('substantive not evasion', eduCoachDetectEvasion('새로 만들어야 함') === null);
+
+$shortPass = eduCoachGuideHandleTurn(
+    ['phase' => 'guide_axis', 'guide_axis_index' => 0, 'guide_axis_stall' => 0, 'guide_axis_answers' => []],
+    $quest,
+    '새로 만들어야 함'
+);
+assertTrue('short clear answer advances axis', (int) ($shortPass['blueprint']['guide_axis_index'] ?? 0) === 1);
+assertNotContains('short answer not misread as unknown', $shortPass['message'], '모르겠다는');
+
+$weakTurn = eduCoachGuideHandleTurn(
+    ['phase' => 'guide_axis', 'guide_axis_index' => 0, 'guide_axis_stall' => 0, 'guide_axis_answers' => []],
+    $quest,
+    '음'
+);
+assertNotContains('filler not unknown evasion reply', $weakTurn['message'], '모르겠다는');
 
 $bp = ['phase' => 'stance', 'exchange_count' => 0];
 $open = eduCoachGuideHandleOpening($bp, $quest, '핵이 있으면 재래식 공격은 막힐 것 같아요');

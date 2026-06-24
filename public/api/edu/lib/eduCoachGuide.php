@@ -117,10 +117,10 @@ function eduCoachDetectEvasion(string $message): ?string
     if ($m === '') {
         return 'empty';
     }
-    if (preg_match('/(둘\s*다|모두|전부|균형|병행|함께|같이)/u', $m)) {
+    if (preg_match('/(둘\s*다|둘다|모두\s*다?|전부|균형\s*(이)?\s*중|병행\s*(해야|이)?)/u', $m)) {
         return 'both';
     }
-    if (preg_match('/(모르겠|잘\s*모르|글쎄|아\s*모르)/u', $m)) {
+    if (preg_match('/(모르겠|잘\s*모르|글쎄|아\s*모르|(?<![가-힣])몰라(?![가-힣]))/u', $m)) {
         return 'unknown';
     }
     if (preg_match('/(나라마다|경우마다|상황마다|케이스\s*바이)/u', $m)) {
@@ -132,11 +132,29 @@ function eduCoachDetectEvasion(string $message): ?string
     if (preg_match('/(기사\s*(가|는)|the\s*gist|본문\s*(이|가))\s*(그렇|말하|쓰)/u', $m)) {
         return 'defer_article';
     }
-    if (preg_match('/(중요하고.*중요|필요하고.*필요)/u', $m)) {
+    if (preg_match('/^(중요하고.*중요|필요하고.*필요)$/u', $m)) {
         return 'list';
     }
 
     return null;
+}
+
+/** 짧아도 내용 있는 답 — 회피 표현 없을 때 통과 (길이만으로 탈락 금지) */
+function eduCoachHasSubstantiveAnswer(string $message): bool
+{
+    $m = trim($message);
+    if ($m === '') {
+        return false;
+    }
+    if (preg_match('/^(음+|아+|그래|맞아|네+|응+)\.?$/u', $m)) {
+        return false;
+    }
+    $hangul = preg_replace('/[^가-힣]/u', '', $m) ?? '';
+    if (mb_strlen($hangul) >= 3) {
+        return true;
+    }
+
+    return mb_strlen($m) >= 10;
 }
 
 function eduCoachAxisStudentPass(string $message, ?string $evasion): bool
@@ -144,14 +162,8 @@ function eduCoachAxisStudentPass(string $message, ?string $evasion): bool
     if ($evasion !== null) {
         return false;
     }
-    if (mb_strlen(trim($message)) < 10) {
-        return false;
-    }
-    if (preg_match('/^(음+|아+|그래|맞아|네+|응+)\.?$/u', trim($message))) {
-        return false;
-    }
 
-    return true;
+    return eduCoachHasSubstantiveAnswer($message);
 }
 
 function eduCoachSpoonfeedGuard(string $text): string
@@ -359,7 +371,7 @@ function eduCoachGuideHandleTurn(array $blueprint, array $quest, string $message
 
     $blueprint = eduMergeBlueprint($blueprint, ['guide_axis_stall' => $stall]);
     $useScaffold = $stall >= 2;
-    $msg = eduCoachGuideEvasionReply($evasion ?? 'unknown', $axis, $idx, $axes, $useScaffold);
+    $msg = eduCoachGuideEvasionReply($evasion, $axis, $idx, $axes, $useScaffold);
 
     return [
         'blueprint' => $blueprint,
@@ -481,6 +493,10 @@ function eduCoachGuideEvasionReply(?string $evasion, array $axis, int $index, ar
 {
     if ($weakScaffold && !empty($axis['weak_scaffold'])) {
         return $axis['weak_scaffold'];
+    }
+
+    if ($evasion === null || $evasion === 'empty') {
+        return $axis['core_question'] ?? '네 생각을 한 줄로 말해줘.';
     }
 
     return match ($evasion) {
