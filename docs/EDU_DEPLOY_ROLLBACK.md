@@ -45,6 +45,7 @@
 | 2026-06-24 | `96cea1c` | fix(ci): deploy verify PWA curl 000000 concat + retries |
 | 2026-06-24 | `e6dddf7` | **단계 2** — 완주 성취 화면 (스트릭·XP 카운트업·구조 요약) |
 | 2026-06-24 | `7f60a36` | **긴급** — axis_guide 회피 오인식 (짧은 명확 답 통과) |
+| 2026-06-24 | `a66501c` | fix(edu): reflection/hammer 참고 기사 펼치기 제거 |
 
 ## P1-2+ 라이브 완주 게이트 (R4–R6)
 
