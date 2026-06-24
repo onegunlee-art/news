@@ -226,6 +226,8 @@ jobs:
             --include='edu_student_*.php' \
             --include='edu_xp_*.php' \
             --include='edu_session_gaps_verify.php' \
+            --include='edu_multiuser_separation_test.php' \
+            --include='edu_seed_axis_guide_196_288.php' \
             --include='edu_list_students.php' \
             --include='edu_nuclear_axis_quest_fixture.php' \
             --include='edu_myth_bust_coach_regression_test.php' \

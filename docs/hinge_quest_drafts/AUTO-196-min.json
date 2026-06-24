@@ -1,0 +1,43 @@
+{
+    "quest_code": "Q-AUTO-IRAN-196",
+    "quest_title": "이란 핵 프로그램에 대한 어중간한 솔루션 3가지",
+    "pro_line": "군사·외교 수단으로 이란 핵 위협을 제거·억제할 수 있다",
+    "con_line": "세 가지 해법 모두 실행 비용·우라늄·지도부 문제로 어중간하다",
+    "alignment_summary": "새 지도부·우라늄·실행 비용 때문에 특수부대·폭격·협상 모두 어중간한 해법이다",
+    "conflict_summary": "이란 핵 위협을 없애야 하지만, 본문이 제시한 세 가지 선택지 모두 심각한 한계를 안고 있다",
+    "hammer_hints": {
+        "mode": "adversarial",
+        "quest_frame": "myth_bust",
+        "time_anchor": "",
+        "hook_short": "이란 핵, 군사·외교 수단 중 하나면 해결될까?",
+        "hook_full": "이란 핵, 군사·외교 수단 중 하나면 해결될까?",
+        "shared_conclusion": "새 지도부·우라늄·실행 비용 때문에 특수부대·폭격·협상 모두 어중간한 해법이다",
+        "axes": [],
+        "counter_map": {},
+        "fallback_adversarial": {
+            "pro": "이란 핵 위협은 군사적·외교적 수단으로 제거하거나 억제할 수 있다",
+            "con": "새 지도부·우라늄·실행 비용 때문에 특수부대·폭격·협상 모두 어중간한 해법이다"
+        },
+        "_hinge": {
+            "hinge": "이란 핵 위협을 없애야 하지만, 본문이 제시한 세 가지 선택지 모두 심각한 한계를 안고 있다",
+            "side_a": "이란 핵 위협은 군사적·외교적 수단으로 제거하거나 억제할 수 있다",
+            "side_b": "새 지도부·우라늄·실행 비용 때문에 특수부대·폭격·협상 모두 어중간한 해법이다",
+            "hook_student": "이란 핵, 군사·외교 수단 중 하나면 해결될까?",
+            "shake_prompt": "모즈타바 하메네이가 선친보다 핵무기에 더 적극적이고 고농축 우라늄 400kg이 남아 있다는 점을 보면, 깔끔한 해법 하나만 고르기 어렵다는 본문 주장과 맞닿아."
+        },
+        "_meta": {
+            "article_form": "economist",
+            "confidence": "high",
+            "mapper_version": "p2-a2-v1",
+            "mapped_at": "2026-06-24T18:30:58+09:00"
+        }
+    },
+    "articles": [
+        {
+            "news_id": 196,
+            "role": "primary",
+            "title": "이란 핵 프로그램에 대한 어중간한 솔루션 3가지",
+            "gist_url": "https:\/\/www.thegist.co.kr\/news\/196"
+        }
+    ]
+}

@@ -10,6 +10,8 @@ require_once __DIR__ . '/eduBlueprint.php';
 
 const EDU_COACH_GUIDE_QUEST_CODE = 'Q-AUTO-NUKE-630';
 const EDU_COACH_GUIDE_QUEST_CODE_DC_150 = 'Q-AUTO-DC-150';
+const EDU_COACH_GUIDE_QUEST_CODE_IRAN_196 = 'Q-AUTO-IRAN-196';
+const EDU_COACH_GUIDE_QUEST_CODE_YOUTH_288 = 'Q-AUTO-YOUTH-288';
 const EDU_COACH_GUIDE_STALL_ESCAPE = 3;
 /** P2-B hook: per-student fact length (summary → medium → full) */
 const EDU_COACH_GUIDE_FACT_DISPLAY = 'summary';
@@ -81,11 +83,69 @@ function eduCoachGuide150Axes(): array
     ];
 }
 
+/** 196 정규화 3축 — 정권 의지 / 우라늄 / 해법(§3+§4 merge) */
+function eduCoachGuide196Axes(): array
+{
+    return [
+        [
+            'axis_id' => 'regime',
+            'point' => '전쟁 이후 이란 지도부가 핵 프로그램을 얼마나 밀어붙이는가',
+            'core_question' => '모즈타바 체제가 핵 의지를 **강하게** 키웠다 / **약해졌다** — 네 말로 한쪽만.',
+            'article_fact' => '새 최고지도자 모즈타바 하메네이는 선친보다 핵무기 획득에 더 적극적인 것으로 알려져 있으며 가족을 잃은 뒤 복수심까지 더해졌다고 본문은 전한다.',
+            'weak_scaffold' => '지도부 교체·복수심만 봐 — 핵 의지가 **커졌다/작아졌다** 중 **하나**만 골라봐.',
+        ],
+        [
+            'axis_id' => 'uranium',
+            'point' => '이란 내부에 남은 고농축 우라늄 400kg',
+            'core_question' => '400kg 우라늄이 남아 있다면 — **새 위협**이 커진다 / **통제 가능**하다 중 하나만.',
+            'article_fact' => '약 400kg의 고농축 우라늄이 이란 내부에 매장돼 있으며 이는 핵폭탄 약 10개를 만들기에 충분한 양이라고 본문은 설명한다.',
+            'weak_scaffold' => '**400kg**, **10개분** — 이게 **위협 키운다/아니다** 중 어디에 더 가깝다고 봐?',
+        ],
+        [
+            'axis_id' => 'options',
+            'point' => '특수부대·반복 폭격·협상 — 세 해법의 실행 가능성',
+            'core_question' => '특수부대·폭격·협상 중 — **실행 가능성**이 가장 낮은 쪽은 어디라고 봐?',
+            'article_fact' => '특수부대 투입은 1,000명 이상의 병력과 지속적인 공중 지원이 필요한 대규모 작전이며, 2015년 합의는 트럼프가 2018년 파기했다고 본문은 적는다.',
+            'weak_scaffold' => '**대규모 특수부대** vs **협상 파기** — 세 해법 중 **가장 어중간한** 하나만 골라봐.',
+        ],
+    ];
+}
+
+/** 288 정규화 3축 — 질문틀(§1) / 기회(§2) / 대체재·정책(§3+§5 merge) */
+function eduCoachGuide288Axes(): array
+{
+    return [
+        [
+            'axis_id' => 'framing',
+            'point' => '위험을 사용 시간으로 볼지, 정서·사회 맥락으로 볼지',
+            'core_question' => '청소년 AI 위험 — **시간**이 먼저냐, **삶의 조건·정서**가 먼저냐? (한쪽만)',
+            'article_fact' => '2025년 11월 미국 대규모 조사에서 AI의 효과는 사용 시간보다 개인의 삶의 조건과 정서적 환경에 따라 크게 달라지는 것으로 나타났다.',
+            'weak_scaffold' => '조사는 **시간**보다 **맥락**을 강조해. 네 말은 **시간파**야 **맥락파**야?',
+        ],
+        [
+            'axis_id' => 'mobility',
+            'point' => '일부 청소년에게 AI가 기회·진로 도구가 되는가',
+            'core_question' => '파워 유저 집단 — AI가 **기회를 연다** / **별 차이 없다** 중 하나만.',
+            'article_fact' => '전체의 약 10%인 낙관적 파워 유저 집단 가운데 3분의 2 이상은 AI가 새로운 기회를 열어준다고 답했고, 절반 이상은 문제 해결 자신감과 희망을 높여준다고 응답했다.',
+            'weak_scaffold' => '**10%** 파워 유저, **3분의 2**가 기회 — 이게 **시간 제한** 논쟁을 **강하게/약하게** 해줘?',
+        ],
+        [
+            'axis_id' => 'substitute_policy',
+            'point' => '정서적 대체재 vs 안전장치·인간 연결 정책',
+            'core_question' => '정책은 **일괄 금지** / **안전장치+인간 연결** 중 어디에 더 무게를 둬야 할까?',
+            'article_fact' => '괴롭힘·차별·경제적 압박을 겪을 가능성이 더 높은 집단은 AI 사용 빈도도 높았고, 본문은 유해 상호작용을 줄이는 안전장치와 정신건강 서비스로 연결되는 경로를 제시한다.',
+            'weak_scaffold' => '오프라인 지지 부족 + AI **대체재** — **금지**가 맞아, **안전장치+연결**이 맞아? **하나**만.',
+        ],
+    ];
+}
+
 /** @return list<array<string, string>> */
 function eduCoachGuideAxesForNewsId(int $newsId): array
 {
     return match ($newsId) {
         150 => eduCoachGuide150Axes(),
+        196 => eduCoachGuide196Axes(),
+        288 => eduCoachGuide288Axes(),
         default => eduCoachGuide630Axes(),
     };
 }

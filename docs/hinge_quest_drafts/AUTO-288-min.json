@@ -1,0 +1,43 @@
+{
+    "quest_code": "Q-AUTO-YOUTH-288",
+    "quest_title": "청소년 AI 사용에 대한 바람직한 관리 방안",
+    "pro_line": "사용 방식·비판적 사고 교육이 전면 금지보다 효과적이다",
+    "con_line": "미성년자는 전면 금지·엄격한 시간 제한이 필요하다",
+    "alignment_summary": "같은 AI라도 정서적·사회적 맥락에 따라 기회가 되기도 하고 정서적 대체재가 되기도 한다",
+    "conflict_summary": "청소년의 AI 위험은 사용 시간이 아니라, 각자의 사회적·정서적 환경 속에서 AI가 어떤 역할을 하느냐에 따라 달라진다",
+    "hammer_hints": {
+        "mode": "adversarial",
+        "quest_frame": "myth_bust",
+        "time_anchor": "",
+        "hook_short": "청소년 AI 위험, 사용 시간만 보면 될까?",
+        "hook_full": "청소년 AI 위험, 사용 시간만 보면 될까?",
+        "shared_conclusion": "같은 AI라도 정서적·사회적 맥락에 따라 기회가 되기도 하고 정서적 대체재가 되기도 한다",
+        "axes": [],
+        "counter_map": {},
+        "fallback_adversarial": {
+            "pro": "청소년 AI 사용은 시간 제한이나 금지로 관리해야 한다",
+            "con": "같은 AI라도 정서적·사회적 맥락에 따라 기회가 되기도 하고 정서적 대체재가 되기도 한다"
+        },
+        "_hinge": {
+            "hinge": "청소년의 AI 위험은 사용 시간이 아니라, 각자의 사회적·정서적 환경 속에서 AI가 어떤 역할을 하느냐에 따라 달라진다",
+            "side_a": "청소년 AI 사용은 시간 제한이나 금지로 관리해야 한다",
+            "side_b": "같은 AI라도 정서적·사회적 맥락에 따라 기회가 되기도 하고 정서적 대체재가 되기도 한다",
+            "hook_student": "청소년 AI 위험, 사용 시간만 보면 될까?",
+            "shake_prompt": "2025년 미국 대규모 조사에서 AI 효과는 사용 시간보다 개인의 삶의 조건과 정서적 환경에 따라 크게 달라졌다고 본문은 적는다."
+        },
+        "_meta": {
+            "article_form": "economist",
+            "confidence": "high",
+            "mapper_version": "p2-a2-v1",
+            "mapped_at": "2026-06-24T18:30:58+09:00"
+        }
+    },
+    "articles": [
+        {
+            "news_id": 288,
+            "role": "primary",
+            "title": "청소년 AI 사용에 대한 바람직한 관리 방안",
+            "gist_url": "https:\/\/www.thegist.co.kr\/news\/288"
+        }
+    ]
+}

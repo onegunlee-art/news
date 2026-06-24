@@ -144,5 +144,39 @@ $open150 = eduCoachGuideHandleOpening(
 assertContains('150 intro scale fact', $open150['message'], '애슈번');
 assertNotContains('150 hook not repeated as axis q', $open150['message'], '진짜 범인일까');
 
+$quest196 = [
+    'quest_code' => EDU_COACH_GUIDE_QUEST_CODE_IRAN_196,
+    'hammer_hints' => array_merge(eduCoachGuideAttachHints([], 196), [
+        'hook_short' => '이란 핵, 군사·외교 수단 중 하나면 해결될까?',
+    ]),
+];
+assertTrue('196 uses axis guide', eduQuestUsesAxisGuide($quest196));
+assertTrue('196 has 3 axes', count(eduCoachGuideAxes($quest196)) === 3);
+$axes196 = eduCoachGuide196Axes();
+assertContains('196 uranium fact', $axes196[1]['article_fact'] ?? '', '400kg');
+$open196 = eduCoachGuideHandleOpening(
+    ['phase' => 'stance', 'exchange_count' => 0],
+    $quest196,
+    '특수부대로 우라늄을 빼낼 수 있을 것 같아요'
+);
+assertContains('196 intro regime', $open196['message'], '모즈타바');
+assertNotContains('196 hook not repeated', $open196['message'], '군사·외교 수단 중');
+
+$quest288 = [
+    'quest_code' => EDU_COACH_GUIDE_QUEST_CODE_YOUTH_288,
+    'hammer_hints' => array_merge(eduCoachGuideAttachHints([], 288), [
+        'hook_short' => '청소년 AI 위험, 사용 시간만 보면 될까?',
+    ]),
+];
+assertTrue('288 uses axis guide', eduQuestUsesAxisGuide($quest288));
+assertTrue('288 has 3 axes', count(eduCoachGuideAxes($quest288)) === 3);
+$open288 = eduCoachGuideHandleOpening(
+    ['phase' => 'stance', 'exchange_count' => 0],
+    $quest288,
+    '청소년은 AI 사용 시간을 줄여야 해요'
+);
+assertContains('288 intro framing survey', $open288['message'], '2025');
+assertNotContains('288 hook not repeated', $open288['message'], '사용 시간만');
+
 echo "\n=== {$pass} passed, {$fail} failed ===\n";
 exit($fail > 0 ? 1 : 0);

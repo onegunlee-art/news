@@ -99,11 +99,17 @@ $row = [
     'pilot_priority' => null,
     'live_at' => null,
     'expires_at' => null,
-    'scores' => [
+    'scores' => array_filter([
         'source' => 'p2-a3-hinge-auto',
         'hinge_news_id' => $newsId,
         'mapper_version' => $hints['_meta']['mapper_version'] ?? 'p2-a2-v1',
-    ],
+        'category' => match ($newsId) {
+            196 => 'middle_east_iran',
+            288 => 'society_youth',
+            150 => 'ai_tech',
+            default => null,
+        },
+    ], static fn ($v) => $v !== null),
 ];
 
 if ($setLive) {
@@ -226,6 +232,16 @@ function eduHingeSeedDefaults(int $newsId, string $shared, array $hints): array
             $sideA !== '' ? $sideA : 'AI 데이터센터가 전기요금을 올린다',
             $shared !== '' ? $shared : '전력망·시장 제약이 더 크고 DC는 투자 수요가 될 수 있다',
             'ARC-DC-POWER-AUTO',
+        ],
+        196 => [
+            $sideA !== '' ? $sideA : '군사·외교 수단으로 이란 핵 위협을 제거·억제할 수 있다',
+            $shared !== '' ? $shared : '세 가지 해법 모두 실행 비용·우라늄·지도부 문제로 어중간하다',
+            'ARC-IRAN-NUKE-AUTO',
+        ],
+        288 => [
+            $sideA !== '' ? $sideA : '청소년 AI 사용은 시간 제한이나 금지로 관리해야 한다',
+            $shared !== '' ? $shared : '맥락에 따라 기회가 되기도 정서적 대체재가 되기도 한다',
+            'ARC-SOCIETY-YOUTH',
         ],
         default => [
             $sideA !== '' ? $sideA : '핵무기가 있으면 재래식 공격과 전쟁 확대를 막을 수 있다',

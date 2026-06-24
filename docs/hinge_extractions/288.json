@@ -1,0 +1,16 @@
+{
+  "news_id": 288,
+  "title": "청소년 AI 사용에 대한 바람직한 관리 방안",
+  "hinge": "청소년의 AI 위험은 사용 시간이 아니라, 각자의 사회적·정서적 환경 속에서 AI가 어떤 역할을 하느냐에 따라 달라진다",
+  "side_a": "청소년 AI 사용은 시간 제한이나 금지로 관리해야 한다",
+  "side_b": "같은 AI라도 정서적·사회적 맥락에 따라 기회가 되기도 하고 정서적 대체재가 되기도 한다",
+  "hook_student": "청소년 AI 위험, 사용 시간만 보면 될까?",
+  "shake_prompt": "2025년 미국 대규모 조사에서 AI 효과는 사용 시간보다 개인의 삶의 조건과 정서적 환경에 따라 크게 달라졌다고 본문은 적는다.",
+  "article_form": "economist",
+  "confidence": "high",
+  "notes": "axis_extractions/288.json 기반 수동 hinge (side_a=질문프레임)",
+  "needs_review": false,
+  "extracted_at": "2026-06-24T00:00:00+00:00",
+  "source": "mysql.news.content",
+  "prompt_version": "p2-h-side_a_question_frame_v1"
+}

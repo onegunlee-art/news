@@ -1,0 +1,16 @@
+{
+  "news_id": 196,
+  "title": "이란 핵 프로그램에 대한 어중간한 솔루션 3가지",
+  "hinge": "이란 핵 위협을 없애야 하지만, 본문이 제시한 세 가지 선택지 모두 심각한 한계를 안고 있다",
+  "side_a": "이란 핵 위협은 군사적·외교적 수단으로 제거하거나 억제할 수 있다",
+  "side_b": "새 지도부·우라늄·실행 비용 때문에 특수부대·폭격·협상 모두 어중간한 해법이다",
+  "hook_student": "이란 핵, 군사·외교 수단 중 하나면 해결될까?",
+  "shake_prompt": "모즈타바 하메네이가 선친보다 핵무기에 더 적극적이고 고농축 우라늄 400kg이 남아 있다는 점을 보면, 깔끔한 해법 하나만 고르기 어렵다는 본문 주장과 맞닿아.",
+  "article_form": "economist",
+  "confidence": "high",
+  "notes": "axis_extractions/196.json 기반 수동 hinge (A1 승인 대체)",
+  "needs_review": false,
+  "extracted_at": "2026-06-24T00:00:00+00:00",
+  "source": "mysql.news.content",
+  "prompt_version": "p2-h-side_a_question_frame_v1"
+}
