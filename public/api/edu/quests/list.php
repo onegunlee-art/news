@@ -59,6 +59,7 @@ if ($student !== null && $rows !== []) {
 }
 
 $quests = [];
+$filteredRows = [];
 foreach ($rows as $quest) {
     if (!eduQuestMatchesFrameFilter($quest, $frame)) {
         continue;
@@ -66,10 +67,20 @@ foreach ($rows as $quest) {
     if (!eduQuestMatchesCategoryFilter($quest, $categoryFilter)) {
         continue;
     }
-    $quests[] = eduQuestToListItem($quest, $completedIds);
-    if (count($quests) >= $limit) {
+    $filteredRows[] = $quest;
+    if (count($filteredRows) >= $limit) {
         break;
     }
+}
+
+$primaryNewsIds = eduBatchPrimaryNewsIdsForQuests($supabase, array_map(static fn (array $q) => (string) ($q['id'] ?? ''), $filteredRows));
+$imageMap = eduNewsImageUrlsByIds(array_values($primaryNewsIds));
+
+foreach ($filteredRows as $quest) {
+    $questId = (string) ($quest['id'] ?? '');
+    $newsId = $primaryNewsIds[$questId] ?? 0;
+    $coverUrl = $newsId > 0 ? ($imageMap[$newsId] ?? null) : null;
+    $quests[] = eduQuestToListItem($quest, $completedIds, $coverUrl);
 }
 
 eduSendJson([

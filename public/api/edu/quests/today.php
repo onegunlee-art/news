@@ -40,7 +40,6 @@ if (empty($quests)) {
 }
 
 $quest = $quests[0];
-$questHints = eduQuestHammerHints($quest);
 
 $articles = $supabase->select(
     'edu_quest_articles',
@@ -71,34 +70,16 @@ if ($hasAnswered && !empty($stats[0])) {
     ];
 }
 
-$articlePayload = [];
-foreach ($articles as $a) {
-    $articlePayload[] = [
-        'news_id' => (int)($a['news_id'] ?? 0),
-        'role' => $a['role'] ?? 'primary',
-        'title' => $a['title'] ?? '',
-        'gist_url' => $a['gist_url'] ?? '',
-    ];
-}
+$questRow = $quest;
+$questRow['articles'] = $articles;
+$questPayload = eduPublicQuestPayload($questRow);
+$questPayload['grade_band'] = $quest['grade_band'];
+$questPayload['live_at'] = $quest['live_at'] ?? null;
+$questPayload['expires_at'] = $quest['expires_at'] ?? null;
 
 eduSendJson([
     'success' => true,
-    'quest' => [
-        'quest_id' => $quest['id'],
-        'quest_code' => $quest['quest_code'],
-        'quest_title' => $quest['quest_title'],
-        'pro_line' => $quest['pro_line'],
-        'con_line' => $quest['con_line'],
-        'alignment_summary' => $quest['alignment_summary'] ?? '',
-        'conflict_summary' => $quest['conflict_summary'],
-        'grade_band' => $quest['grade_band'],
-        'time_anchor' => $questHints['time_anchor'] ?? null,
-        'quest_frame' => $questHints['quest_frame'] ?? null,
-        'entry_mode' => eduQuestEntryMode($quest),
-        'articles' => $articlePayload,
-        'live_at' => $quest['live_at'] ?? null,
-        'expires_at' => $quest['expires_at'] ?? null,
-    ],
+    'quest' => $questPayload,
     'participation' => [
         'total' => $totalParticipants,
         'display' => $totalParticipants > 0 ? "지금 {$totalParticipants}명이 참여 중" : "첫 번째 참여자가 되어보세요!",

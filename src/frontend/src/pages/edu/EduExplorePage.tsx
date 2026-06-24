@@ -6,6 +6,7 @@ import {
   type EduExploreShelf,
   type EduQuestListItem,
 } from '../../services/eduApi'
+import EduQuestCoverHero from '../../components/edu/EduQuestCoverHero'
 
 const FRAME_TABS = [
   { id: 'all', label: '전체' },
@@ -180,8 +181,17 @@ export default function EduExplorePage() {
                     type="button"
                     onClick={() => void handleStart(q.quest_id)}
                     disabled={!authed}
-                    className="w-full text-left border border-[#333] rounded-lg p-4 bg-[#1a1a1a] hover:border-[#555] disabled:opacity-60 transition-colors"
+                    className="w-full text-left border border-[#333] rounded-lg overflow-hidden bg-[#1a1a1a] hover:border-[#555] disabled:opacity-60 transition-colors"
                   >
+                    <EduQuestCoverHero
+                      coverImageUrl={q.cover_image_url}
+                      questTitle={q.quest_title}
+                      hookShort={q.hook_short}
+                      timeAnchor={q.time_anchor}
+                      variant="card"
+                      topicLabel="따질 주제"
+                    />
+                    <div className="p-4 pt-3">
                     <div className="flex flex-wrap items-center gap-2 mb-2">
                       {q.shelf_label && (
                         <span className="text-[10px] px-2 py-0.5 rounded bg-[#2a2a2a] text-[#aaa]">
@@ -215,6 +225,7 @@ export default function EduExplorePage() {
                     {!authed && (
                       <p className="text-xs text-[#666] mt-2">시작하려면 홈에서 로그인하세요</p>
                     )}
+                    </div>
                   </button>
                 </li>
               )

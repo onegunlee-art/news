@@ -258,7 +258,7 @@ function eduQuestMatchesCategoryFilter(array $quest, array $categoryIds): bool
  * @param array<int, true> $completedIds
  * @return array<string, mixed>
  */
-function eduQuestToListItem(array $quest, array $completedIds = []): array
+function eduQuestToListItem(array $quest, array $completedIds = [], ?string $coverImageUrl = null): array
 {
     require_once __DIR__ . '/eduQuestConfig.php';
     $hints = eduQuestRawHammerHints($quest);
@@ -287,6 +287,8 @@ function eduQuestToListItem(array $quest, array $completedIds = []): array
         'lens' => $meta['lens'],
         'lens_label' => $meta['lens_label'],
         'subtitle' => $meta['lens_label'] ?? ($hints['shared_conclusion'] ?? null),
+        'hook_short' => $hints['hook_short'] ?? null,
+        'cover_image_url' => $coverImageUrl,
         'is_live' => $isLive,
         'live_at' => $liveAt,
         'completed' => isset($completedIds[$questId]),

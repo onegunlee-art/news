@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import TierProgressCard from '../../components/edu/TierProgressCard'
+import EduQuestCoverHero from '../../components/edu/EduQuestCoverHero'
 import {
   clearEduToken,
   eduApi,
@@ -131,6 +132,9 @@ export default function EduHomePage() {
     setStudentName('')
   }
 
+  const coverArticle =
+    quest?.articles.find((a) => a.role === 'primary') ?? quest?.articles[0] ?? null
+
   return (
     <div className="min-h-screen bg-[#0D0D0D] text-white">
       <header className="border-b border-[#333] px-4 py-4 flex items-center justify-between max-w-lg mx-auto">
@@ -159,23 +163,28 @@ export default function EduHomePage() {
           <div className="text-center py-12 text-[#666]">불러오는 중…</div>
         ) : quest ? (
           <>
-            {/* 오늘의 퀘스트 카드 */}
-            <section className="border border-[#333] rounded-lg p-5 bg-[#1a1a1a]">
-              <p className="text-xs text-[#E8521C] font-medium mb-2">오늘의 논쟁</p>
-              {quest.time_anchor && (
-                <p className="text-xs text-[#888] mb-1">{quest.time_anchor}</p>
-              )}
-              <h1 className="text-xl font-bold leading-snug mb-3">{quest.quest_title}</h1>
-              <p className="text-sm text-[#999] mb-4">{quest.conflict_summary}</p>
+            {/* 오늘의 퀘스트 표지 */}
+            <EduQuestCoverHero
+              coverImageUrl={quest.cover_image_url}
+              questTitle={quest.quest_title}
+              hookShort={quest.hook_short}
+              timeAnchor={quest.time_anchor}
+              conflictSummary={quest.conflict_summary}
+              coverArticle={coverArticle}
+              variant="hero"
+            />
+
+            <section className="border border-[#333] rounded-lg p-5 bg-[#1a1a1a] space-y-4">
+              <h1 className="text-lg font-bold leading-snug edu-game-text-ko">{quest.quest_title}</h1>
               
-              <div className="grid grid-cols-2 gap-3 mb-4">
+              <div className="grid grid-cols-2 gap-3">
                 <div className="border border-[#333] rounded p-3">
                   <span className="text-xs text-[#4CAF50] font-bold block mb-1">찬성</span>
-                  <p className="text-sm text-[#ccc]">{quest.pro_line}</p>
+                  <p className="text-sm text-[#ccc] edu-game-text-ko">{quest.pro_line}</p>
                 </div>
                 <div className="border border-[#333] rounded p-3">
                   <span className="text-xs text-[#F44336] font-bold block mb-1">반대</span>
-                  <p className="text-sm text-[#ccc]">{quest.con_line}</p>
+                  <p className="text-sm text-[#ccc] edu-game-text-ko">{quest.con_line}</p>
                 </div>
               </div>
 
@@ -280,11 +289,20 @@ export default function EduHomePage() {
                 type="button"
                 onClick={() => authed && handleStart(q.quest_id)}
                 disabled={loading || !authed}
-                className="w-full text-left border border-[#333] rounded-lg p-4 bg-[#1a1a1a] hover:border-[#555] disabled:opacity-50 transition-colors"
+                className="w-full text-left border border-[#333] rounded-lg overflow-hidden bg-[#1a1a1a] hover:border-[#555] disabled:opacity-50 transition-colors"
               >
+                <EduQuestCoverHero
+                  coverImageUrl={q.cover_image_url}
+                  questTitle={q.quest_title}
+                  hookShort={q.hook_short}
+                  timeAnchor={q.time_anchor}
+                  variant="card"
+                  topicLabel="따질 주제"
+                />
+                <div className="p-3 pt-2">
                 <div className="flex items-start justify-between gap-2 mb-1">
                   {q.lens_label ? (
-                    <span className="text-xs text-[#E8521C]">쟁점: {q.lens_label}</span>
+                    <span className="text-xs text-[#E8521C] edu-game-text-ko">쟁점: {q.lens_label}</span>
                   ) : q.time_anchor ? (
                     <span className="text-xs text-[#888]">{q.time_anchor}</span>
                   ) : null}
@@ -292,10 +310,11 @@ export default function EduHomePage() {
                     <span className="text-xs text-[#4CAF50] shrink-0">완료</span>
                   )}
                 </div>
-                <p className="text-sm font-medium leading-snug">{q.quest_title}</p>
+                <p className="text-sm font-medium leading-snug edu-game-text-ko">{q.quest_title}</p>
                 {!authed && (
                   <p className="text-xs text-[#666] mt-2">참여하려면 로그인하세요</p>
                 )}
+                </div>
               </button>
             ))}
           </section>

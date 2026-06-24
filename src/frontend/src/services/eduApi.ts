@@ -79,6 +79,7 @@ export interface EduQuestArticle {
   source_outlet?: string
   media_perspective?: string
   published_at?: string | null
+  image_url?: string | null
 }
 
 
@@ -203,6 +204,7 @@ export interface EduCompletedSession {
   completed_at?: string | null
   essay_title?: string | null
   hero_sentence?: string | null
+  image_url?: string | null
 }
 
 export interface EduQuest {
@@ -218,6 +220,7 @@ export interface EduQuest {
   entry_mode?: 'open_response' | 'stance_pick' | null
   hook_short?: string | null
   hook_full?: string | null
+  cover_image_url?: string | null
   articles: EduQuestArticle[]
 }
 
@@ -238,6 +241,8 @@ export interface EduQuestListItem {
   lens?: string | null
   lens_label?: string | null
   subtitle?: string | null
+  hook_short?: string | null
+  cover_image_url?: string | null
   is_live: boolean
   live_at?: string | null
   completed: boolean

@@ -162,8 +162,99 @@ function eduPublicArticleOutlet(array $quest, array $article): string
     return $outlet;
 }
 
+/** @param list<int> $newsIds @return array<int, string|null> */
+function eduNewsImageUrlsByIds(array $newsIds): array
+{
+    $ids = array_values(array_unique(array_filter(array_map('intval', $newsIds), static fn (int $id) => $id > 0)));
+    if ($ids === []) {
+        return [];
+    }
+
+    require_once __DIR__ . '/eduMysql.php';
+    $pdo = eduMysql();
+    if (!in_array('image_url', eduNewsColumns($pdo), true)) {
+        return [];
+    }
+
+    $placeholders = implode(',', array_fill(0, count($ids), '?'));
+    $stmt = $pdo->prepare("SELECT id, image_url FROM news WHERE id IN ({$placeholders})");
+    $stmt->execute($ids);
+    $out = [];
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        $url = trim((string) ($row['image_url'] ?? ''));
+        $out[(int) ($row['id'] ?? 0)] = $url !== '' ? $url : null;
+    }
+
+    return $out;
+}
+
+/** @param list<array<string, mixed>> $articles */
+function eduPickCoverArticle(array $articles): ?array
+{
+    foreach ($articles as $article) {
+        if (($article['role'] ?? '') === 'primary') {
+            return $article;
+        }
+    }
+
+    return $articles[0] ?? null;
+}
+
+/**
+ * @param list<array<string, mixed>> $articles
+ * @param array<int, string|null> $imageMap
+ */
+function eduResolveCoverImageUrl(array $articles, array $imageMap = []): ?string
+{
+    $coverArticle = eduPickCoverArticle($articles);
+    if ($coverArticle === null) {
+        return null;
+    }
+    $newsId = (int) ($coverArticle['news_id'] ?? 0);
+    if ($newsId <= 0) {
+        return null;
+    }
+    if ($imageMap !== []) {
+        return $imageMap[$newsId] ?? null;
+    }
+    $resolved = eduNewsImageUrlsByIds([$newsId]);
+
+    return $resolved[$newsId] ?? null;
+}
+
+/**
+ * @param list<string> $questIds
+ * @return array<string, int> quest_id => primary news_id
+ */
+function eduBatchPrimaryNewsIdsForQuests($supabase, array $questIds): array
+{
+    $questIds = array_values(array_filter(array_map('strval', $questIds)));
+    if ($questIds === []) {
+        return [];
+    }
+
+    $filter = 'quest_id=in.(' . implode(',', array_map('rawurlencode', $questIds)) . ')';
+    $rows = $supabase->select('edu_quest_articles', $filter . '&order=sort_order.asc', 500) ?? [];
+    $byQuest = [];
+    foreach ($rows as $row) {
+        $qid = (string) ($row['quest_id'] ?? '');
+        $newsId = (int) ($row['news_id'] ?? 0);
+        if ($qid === '' || $newsId <= 0) {
+            continue;
+        }
+        if (!isset($byQuest[$qid])) {
+            $byQuest[$qid] = $newsId;
+        }
+        if (($row['role'] ?? '') === 'primary') {
+            $byQuest[$qid] = $newsId;
+        }
+    }
+
+    return $byQuest;
+}
+
 /** @return array<string, mixed> */
-function eduPublicArticleRow(array $quest, array $article): array
+function eduPublicArticleRow(array $quest, array $article, ?string $imageUrl = null): array
 {
     return [
         'news_id' => (int) ($article['news_id'] ?? 0),
@@ -175,6 +266,7 @@ function eduPublicArticleRow(array $quest, array $article): array
         'source_outlet' => eduPublicArticleOutlet($quest, $article),
         'media_perspective' => eduArticleMediaPerspective($quest, $article),
         'published_at' => $article['published_at'] ?? null,
+        'image_url' => $imageUrl,
     ];
 }
 
@@ -182,9 +274,13 @@ function eduPublicQuestPayload(array $quest): array
 {
     require_once __DIR__ . '/eduQuestConfig.php';
     $hints = eduQuestHammerHints($quest);
+    $rawArticles = $quest['articles'] ?? [];
+    $newsIds = array_map(static fn (array $a) => (int) ($a['news_id'] ?? 0), $rawArticles);
+    $imageMap = eduNewsImageUrlsByIds($newsIds);
     $articles = [];
-    foreach ($quest['articles'] ?? [] as $a) {
-        $articles[] = eduPublicArticleRow($quest, $a);
+    foreach ($rawArticles as $a) {
+        $newsId = (int) ($a['news_id'] ?? 0);
+        $articles[] = eduPublicArticleRow($quest, $a, $imageMap[$newsId] ?? null);
     }
 
     return [
@@ -200,6 +296,7 @@ function eduPublicQuestPayload(array $quest): array
         'entry_mode' => eduQuestEntryMode($quest),
         'hook_short' => $hints['hook_short'] ?? null,
         'hook_full' => $hints['hook_full'] ?? null,
+        'cover_image_url' => eduResolveCoverImageUrl($rawArticles, $imageMap),
         'articles' => $articles,
         'fsm_stages' => $quest['fsm_stages'] ?? ['commit', 'hammer', 'reflection', 'writing', 'growth'],
     ];

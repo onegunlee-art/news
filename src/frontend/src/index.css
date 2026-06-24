@@ -391,6 +391,11 @@ input, textarea, select {
   background-color: #d4d4d4;
 }
 
+/* EDU 퀘스트 표지 — 썸네일 선명도 (blur 필터 금지, 한글 오버레이) */
+.edu-quest-cover-img {
+  image-rendering: auto;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .edu-game-axis-pop,
   .edu-game-axis-check-pop,
