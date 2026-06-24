@@ -27,6 +27,8 @@ import { eduGame, eduGameClasses } from '../../constants/eduGameTheme'
 
 const PAGE_MAX = 'max-w-2xl'
 const GUIDE_AXIS_SLOTS = 3
+/** 탐구 바 3칸 — 글 구조 (축 이름 노출 대신 단계만) */
+const EXPLORE_BAR_SLOT_LABELS = ['서론', '본론', '결론'] as const
 /** 축 통과 순간 — 행동 격려만 (평가·정답 금지) */
 const EXPLORE_PASS_NUDGES = ['한 갈래 따졌어!', '한 갈래 더 따졌어!', '다음 갈래로!'] as const
 const EVIDENCE_RECOMMENDED_LEN = 20
@@ -62,10 +64,51 @@ function resolveQuestFooterMode(phase: string, entryMode: QuestEntryMode): Quest
   return null
 }
 
+/** 마지막 코치(assistant) 턴 — 상단 고정 질문 패널용 (로직 변경 없음) */
+function lastAssistantDialogueIndex(dialogue: EduDialogueTurn[]): number {
+  for (let i = dialogue.length - 1; i >= 0; i--) {
+    if (dialogue[i].role === 'assistant') return i
+  }
+  return -1
+}
+
+/** visualViewport — 모바일 키보드 높이·가시 영역 (iOS Safari) */
+function useVisualViewportLayout(): { viewportHeight: number | null; keyboardInset: number } {
+  const [layout, setLayout] = useState<{ viewportHeight: number | null; keyboardInset: number }>({
+    viewportHeight: null,
+    keyboardInset: 0,
+  })
+
+  useEffect(() => {
+    const vv = window.visualViewport
+    if (!vv) return
+
+    const update = () => {
+      setLayout({
+        viewportHeight: vv.height,
+        keyboardInset: Math.max(0, window.innerHeight - vv.height - vv.offsetTop),
+      })
+    }
+
+    vv.addEventListener('resize', update)
+    vv.addEventListener('scroll', update)
+    update()
+
+    return () => {
+      vv.removeEventListener('resize', update)
+      vv.removeEventListener('scroll', update)
+    }
+  }, [])
+
+  return layout
+}
+
 export default function QuestFlowChat() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const bottomRef = useRef<HTMLDivElement>(null)
+  const mainScrollRef = useRef<HTMLDivElement>(null)
+  const { viewportHeight, keyboardInset } = useVisualViewportLayout()
 
   const [quest, setQuest] = useState<EduQuest | null>(null)
   const [sessionId, setSessionId] = useState('')
@@ -198,8 +241,16 @@ export default function QuestFlowChat() {
   }, [navigate, init])
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    const el = mainScrollRef.current
+    if (!el) return
+    el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
   }, [dialogue, completed, composing, sending, typingBubbleIndex])
+
+  const scrollToBottom = () => {
+    const el = mainScrollRef.current
+    if (!el) return
+    el.scrollTo({ top: el.scrollHeight, behavior: 'auto' })
+  }
 
   useEffect(() => {
     return () => {
@@ -232,10 +283,6 @@ export default function QuestFlowChat() {
       }
       return [...prev, { role: 'assistant', content }]
     })
-  }
-
-  const scrollToBottom = () => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
   const appendStudent = (content: string) => {
@@ -448,12 +495,26 @@ export default function QuestFlowChat() {
   const evidenceLen = evidenceInput.trim().length
   const evidenceReady = evidenceLen > 0
 
+  const pinCoachUi = !completed && footerMode !== null
+  const pinnedCoachIndex = pinCoachUi ? lastAssistantDialogueIndex(dialogue) : -1
+  const pinnedCoachTurn = pinnedCoachIndex >= 0 ? dialogue[pinnedCoachIndex] : null
+  const showPinnedCoach = pinnedCoachTurn !== null
+  const historyDialogue = dialogue
+    .map((turn, i) => ({ turn, i }))
+    .filter(({ i }) => !showPinnedCoach || i !== pinnedCoachIndex)
+
   return (
     <div
-      className="min-h-screen flex flex-col"
-      style={{ color: eduGame.ink, fontFamily: eduGame.fontBody, backgroundColor: eduGame.bg }}
+      className={`${eduGameClasses.chatShell} fixed inset-0 flex flex-col`}
+      style={{
+        color: eduGame.ink,
+        fontFamily: eduGame.fontBody,
+        backgroundColor: eduGame.bg,
+        height: viewportHeight ?? undefined,
+        maxHeight: viewportHeight ?? undefined,
+      }}
     >
-      <header className={`border-b px-4 py-3 ${PAGE_MAX} mx-auto w-full`} style={{ borderColor: eduGame.border }}>
+      <header className={`shrink-0 border-b px-4 py-3 ${PAGE_MAX} mx-auto w-full`} style={{ borderColor: eduGame.border }}>
         <div className="flex items-center justify-between gap-2">
           <Link to="/edu" className="text-xs underline" style={{ color: EDU_BRAND.muted }}>
             ← 홈
@@ -490,19 +551,42 @@ export default function QuestFlowChat() {
         </div>
       </header>
 
-      {showGuideAxisBar && (
-        <div className={`${PAGE_MAX} mx-auto w-full px-4 pt-3`}>
-          <AxisExploreBar
-            completed={guideAxisCompleted}
-            currentSlot={guideAxisCurrentSlot}
-            pulse={explorePulse}
-            pulseSlot={explorePulseSlot}
-            nudgeText={exploreNudgeText}
-          />
+      {!completed && (showGuideAxisBar || showPinnedCoach) && (
+        <div
+          className="shrink-0 z-20 border-b"
+          style={{ borderColor: eduGame.border, backgroundColor: eduGame.bg }}
+        >
+          <div className={`${PAGE_MAX} mx-auto w-full px-4`}>
+            {showGuideAxisBar && (
+              <div className="pt-2 pb-1">
+                <AxisExploreBar
+                  completed={guideAxisCompleted}
+                  currentSlot={guideAxisCurrentSlot}
+                  pulse={explorePulse}
+                  pulseSlot={explorePulseSlot}
+                  nudgeText={exploreNudgeText}
+                />
+              </div>
+            )}
+            {showPinnedCoach && pinnedCoachTurn && (
+              <div className={`${showGuideAxisBar ? 'pb-2' : 'py-2'}`}>
+                <DialogueBubble
+                  turn={pinnedCoachTurn}
+                  typewriter={pinnedCoachIndex === typingBubbleIndex}
+                  coachEnter={pinnedCoachIndex === typingBubbleIndex}
+                  onTypewriterComplete={() => setTypingBubbleIndex(null)}
+                  onTypewriterProgress={scrollToBottom}
+                />
+              </div>
+            )}
+          </div>
         </div>
       )}
 
-      <main className={`flex-1 ${PAGE_MAX} mx-auto w-full px-4 py-4 overflow-y-auto space-y-3`}>
+      <main
+        ref={mainScrollRef}
+        className={`flex-1 min-h-0 ${eduGameClasses.chatScroll} ${PAGE_MAX} mx-auto w-full px-4 py-4 overflow-y-auto space-y-3`}
+      >
         {phase === 'stance' && dialogue.length === 0 && quest && !completed && entryMode === 'stance_pick' && (
           <section className="space-y-3 mb-4">
             <p className={eduGameClasses.textKo} style={{ fontSize: eduGame.fontSize.body, lineHeight: eduGame.lineHeight.body, color: eduGame.muted }}>
@@ -552,7 +636,7 @@ export default function QuestFlowChat() {
         )}
 
         {!completed &&
-          dialogue.map((turn, i) => (
+          historyDialogue.map(({ turn, i }) => (
             <DialogueBubble
               key={`${turn.at ?? i}-${i}`}
               turn={turn}
@@ -702,8 +786,12 @@ export default function QuestFlowChat() {
 
       {!completed && footerMode !== null && (
         <footer
-          className={`border-t px-4 py-3 ${PAGE_MAX} mx-auto w-full sticky bottom-0 z-10`}
-          style={{ borderColor: eduGame.border, backgroundColor: eduGame.bg }}
+          className={`shrink-0 border-t px-4 py-3 ${PAGE_MAX} mx-auto w-full z-30`}
+          style={{
+            borderColor: eduGame.border,
+            backgroundColor: eduGame.bg,
+            paddingBottom: `calc(0.75rem + ${keyboardInset}px + env(safe-area-inset-bottom, 0px))`,
+          }}
         >
           {footerMode === 'opening' && (
             <div className="space-y-2">
@@ -863,8 +951,9 @@ function AxisExploreBar({
 }) {
   return (
     <div className="relative">
-      <div className="flex gap-2" role="list" aria-label="탐구 진행">
+      <div className="flex gap-2" role="list" aria-label="서론·본론·결론 진행">
         {Array.from({ length: GUIDE_AXIS_SLOTS }, (_, i) => {
+          const slotLabel = EXPLORE_BAR_SLOT_LABELS[i]
           const isDone = i < completed
           const isCurrent = !isDone && i === currentSlot && currentSlot >= 0
           const isPending = !isDone && !isCurrent
@@ -888,6 +977,13 @@ function AxisExploreBar({
               key={i}
               role="listitem"
               aria-current={isCurrent ? 'step' : undefined}
+              aria-label={
+                isDone
+                  ? `${slotLabel} 완료`
+                  : isCurrent
+                    ? `${slotLabel} 진행 중`
+                    : `${slotLabel} 대기`
+              }
               className={`relative flex-1 flex flex-col items-center gap-1 py-2.5 rounded-xl border-2 transition-colors duration-300 ${slotClass}`}
               style={slotStyle}
             >
@@ -914,16 +1010,15 @@ function AxisExploreBar({
               >
                 {isDone ? '✓' : isCurrent ? '●' : '·'}
               </span>
-              {isDone && (
-                <span className="font-bold" style={{ color: eduGame.primaryDark, fontSize: eduGame.fontSize.caption }}>
-                  탐구
-                </span>
-              )}
-              {isCurrent && (
-                <span className="font-bold" style={{ color: eduGame.primary, fontSize: eduGame.fontSize.caption }}>
-                  여기
-                </span>
-              )}
+              <span
+                className="font-bold"
+                style={{
+                  color: isDone ? eduGame.primaryDark : isCurrent ? eduGame.primary : eduGame.muted,
+                  fontSize: eduGame.fontSize.caption,
+                }}
+              >
+                {slotLabel}
+              </span>
             </div>
           )
         })}

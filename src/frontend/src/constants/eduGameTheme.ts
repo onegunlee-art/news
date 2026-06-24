@@ -65,4 +65,6 @@ export const eduGameClasses = {
   animCoachIn: 'edu-game-coach-in',
   animExploreNudge: 'edu-game-explore-nudge',
   animExploreToast: 'edu-game-explore-toast',
+  chatShell: 'edu-game-chat-shell',
+  chatScroll: 'edu-game-chat-scroll',
 } as const

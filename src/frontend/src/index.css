@@ -363,6 +363,18 @@ input, textarea, select {
   animation: edu-game-explore-toast 1.2s ease-out forwards;
 }
 
+/* 코치 채팅 — 모바일 키보드: 문서 스크롤 대신 내부 영역만 스크롤 */
+.edu-game-chat-shell {
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+
+.edu-game-chat-scroll {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .edu-game-axis-pop,
   .edu-game-axis-check-pop,
