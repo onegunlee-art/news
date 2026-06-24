@@ -1,4 +1,4 @@
-import { eduGame } from '../../constants/eduGameTheme'
+import { eduGame, eduGameClasses } from '../../constants/eduGameTheme'
 
 type Props = {
   text: string
@@ -36,7 +36,7 @@ export default function EduArticleSnippetCard({ text, display = 'summary' }: Pro
         </span>
       </div>
       <p
-        className="px-4 py-3 border-l-4"
+        className={`px-4 py-3 border-l-4 ${eduGameClasses.textKo}`}
         style={{
           color: eduGame.ink,
           borderColor: eduGame.primary,

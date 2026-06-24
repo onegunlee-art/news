@@ -484,14 +484,14 @@ export default function QuestFlowChat() {
       <main className={`flex-1 ${PAGE_MAX} mx-auto w-full px-4 py-4 overflow-y-auto space-y-3`}>
         {phase === 'stance' && dialogue.length === 0 && quest && !completed && entryMode === 'stance_pick' && (
           <section className="space-y-3 mb-4">
-            <p style={{ fontSize: eduGame.fontSize.body, lineHeight: eduGame.lineHeight.body, color: eduGame.muted }}>
+            <p className={eduGameClasses.textKo} style={{ fontSize: eduGame.fontSize.body, lineHeight: eduGame.lineHeight.body, color: eduGame.muted }}>
               오늘의 입장을 선택하세요.
             </p>
             <button
               type="button"
               disabled={sending}
               onClick={() => handleStance('pro')}
-              className="w-full text-left border-2 rounded-xl p-4 hover:bg-[#f8f8f8]"
+              className={`w-full text-left border-2 rounded-xl p-4 hover:bg-[#f8f8f8] ${eduGameClasses.textKo}`}
               style={{ borderColor: eduGame.ink, fontSize: eduGame.fontSize.body, lineHeight: eduGame.lineHeight.body }}
             >
               <span className="font-bold block mb-1" style={{ fontSize: eduGame.fontSize.label }}>
@@ -503,7 +503,7 @@ export default function QuestFlowChat() {
               type="button"
               disabled={sending}
               onClick={() => handleStance('con')}
-              className="w-full text-left border-2 rounded-xl p-4 hover:bg-[#f8f8f8]"
+              className={`w-full text-left border-2 rounded-xl p-4 hover:bg-[#f8f8f8] ${eduGameClasses.textKo}`}
               style={{ borderColor: eduGame.ink, fontSize: eduGame.fontSize.body, lineHeight: eduGame.lineHeight.body }}
             >
               <span className="font-bold block mb-1" style={{ fontSize: eduGame.fontSize.label }}>
@@ -518,13 +518,13 @@ export default function QuestFlowChat() {
           <section className="space-y-3 mb-4">
             {(quest.hook_short || quest.hook_full) && (
               <p
-                className="leading-relaxed whitespace-pre-wrap"
+                className={`leading-relaxed ${eduGameClasses.textKoPre}`}
                 style={{ fontSize: eduGame.fontSize.body, lineHeight: eduGame.lineHeight.body }}
               >
                 {quest.hook_short || quest.hook_full}
               </p>
             )}
-            <p style={{ color: EDU_BRAND.muted, fontSize: eduGame.fontSize.label }}>
+            <p className={eduGameClasses.textKo} style={{ color: EDU_BRAND.muted, fontSize: eduGame.fontSize.label }}>
               위 질문에 대해 네 생각을 자유롭게 적어줘.
             </p>
           </section>
@@ -756,7 +756,7 @@ export default function QuestFlowChat() {
                 {sending ? '제출 중…' : evidenceNudgeCount > 0 ? '다시 제출 — 다음 단계로' : '근거 제출'}
               </button>
               {evidenceNudgeCount > 0 && (
-                <p className="text-center" style={{ color: eduGame.muted, fontSize: eduGame.fontSize.caption }}>
+                <p className={`text-center ${eduGameClasses.textKo}`} style={{ color: eduGame.muted, fontSize: eduGame.fontSize.caption }}>
                   코치가 더 구체적으로 물어봤어요. 15자 이상으로 다시 제출하면 반론 단계로 넘어가요.
                 </p>
               )}
@@ -886,7 +886,7 @@ function DialogueBubble({
   return (
     <div className={`flex ${isStudent ? 'justify-end' : 'justify-start'}`}>
       <div
-        className={`max-w-[85%] px-4 py-2.5 whitespace-pre-wrap ${
+        className={`max-w-[85%] px-4 py-2.5 ${
           isStudent ? eduGameClasses.studentBubble : eduGameClasses.coachBubble
         }`}
         style={
@@ -913,7 +913,7 @@ function DialogueBubble({
               seg.type === 'snippet' ? (
                 <EduArticleSnippetCard key={`snip-${i}`} text={seg.value} display={seg.display} />
               ) : (
-                <p key={`txt-${i}`} className="whitespace-pre-wrap">
+                <p key={`txt-${i}`} className={eduGameClasses.textKoPre}>
                   {seg.value}
                 </p>
               ),

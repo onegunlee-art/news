@@ -241,6 +241,12 @@ input, textarea, select {
   overflow-wrap: normal;
 }
 
+/* EDU 코치 화면 — 어절 줄바꿈 + 긴 토큰 예외 (eduGame step 1-2) */
+.edu-game-text-ko {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
 /* 기사 본문(prose) 한글 잘림 금지 */
 .prose,
 .prose-lg {

@@ -39,15 +39,23 @@ export const eduGame = {
     body: 1.625,
     snippet: 1.7,
   },
+
+  /** 한글 줄바꿈 — 어절 단위, 긴 토큰은 예외 분리 */
+  textWrap: {
+    wordBreak: 'keep-all',
+    overflowWrap: 'break-word',
+  },
 } as const
 
 export const eduGameClasses = {
   btnPrimary:
     'rounded-xl font-bold text-white shadow-sm active:scale-[0.98] transition-transform disabled:opacity-40 disabled:active:scale-100',
   input:
-    'rounded-xl border-2 px-4 py-3 focus:outline-none focus:ring-2 transition-shadow',
+    'rounded-xl border-2 px-4 py-3 focus:outline-none focus:ring-2 transition-shadow edu-game-text-ko',
   coachBubble:
-    'rounded-2xl rounded-bl-md border-2 shadow-sm',
+    'rounded-2xl rounded-bl-md border-2 shadow-sm edu-game-text-ko whitespace-pre-wrap',
   studentBubble:
-    'rounded-2xl rounded-br-md text-white shadow-sm',
+    'rounded-2xl rounded-br-md text-white shadow-sm edu-game-text-ko whitespace-pre-wrap',
+  textKo: 'edu-game-text-ko',
+  textKoPre: 'edu-game-text-ko whitespace-pre-wrap',
 } as const
