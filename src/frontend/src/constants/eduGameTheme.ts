@@ -26,13 +26,26 @@ export const eduGame = {
   radiusCard: '0.75rem',
 
   fontBody: "'Noto Sans KR', sans-serif",
+
+  /** Duolingo-scale typography (14세+ 모바일) */
+  fontSize: {
+    caption: '0.8125rem', /* 13px — 탐구 바 보조, 메타 뱃지 */
+    label: '0.875rem', /* 14px — 짧은 안내 */
+    body: '1rem', /* 16px — 말풍선, 입력 */
+    bodyLg: '1.0625rem', /* 17px — 기사 요약 본문 */
+    button: '1.0625rem', /* 17px — footer CTA */
+  },
+  lineHeight: {
+    body: 1.625,
+    snippet: 1.7,
+  },
 } as const
 
 export const eduGameClasses = {
   btnPrimary:
     'rounded-xl font-bold text-white shadow-sm active:scale-[0.98] transition-transform disabled:opacity-40 disabled:active:scale-100',
   input:
-    'rounded-xl border-2 px-4 py-3 text-sm focus:outline-none focus:ring-2 transition-shadow',
+    'rounded-xl border-2 px-4 py-3 focus:outline-none focus:ring-2 transition-shadow',
   coachBubble:
     'rounded-2xl rounded-bl-md border-2 shadow-sm',
   studentBubble:

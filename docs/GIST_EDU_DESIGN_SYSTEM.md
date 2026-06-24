@@ -32,7 +32,7 @@
 
 **금지:** teal·컬러 악센트·그라데이션·브랜드 컬러 배지 (`#0d9488`, `#14b8a6`, `#ccfbf1` 등)
 
-**게임화 예외 (2026-06):** 탐구 UX 한정 `eduGame.*` / `src/frontend/src/constants/eduGameTheme.ts` — 오렌지 accent 1색만 (코치·완주 화면). 본문 흑백 유지.
+**게임화 예외 (2026-06):** 탐구 UX 한정 `eduGame.*` / `src/frontend/src/constants/eduGameTheme.ts` — 오렌지 accent 1색만 (코치·완주 화면). 본문 흑백 유지. 타이포는 코치·완주 화면에서 `eduGame.fontSize`(16–17px)로 §3보다 크게 허용.
 
 ---
 

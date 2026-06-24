@@ -484,23 +484,31 @@ export default function QuestFlowChat() {
       <main className={`flex-1 ${PAGE_MAX} mx-auto w-full px-4 py-4 overflow-y-auto space-y-3`}>
         {phase === 'stance' && dialogue.length === 0 && quest && !completed && entryMode === 'stance_pick' && (
           <section className="space-y-3 mb-4">
-            <p className="text-sm text-[#666]">오늘의 입장을 선택하세요.</p>
+            <p style={{ fontSize: eduGame.fontSize.body, lineHeight: eduGame.lineHeight.body, color: eduGame.muted }}>
+              오늘의 입장을 선택하세요.
+            </p>
             <button
               type="button"
               disabled={sending}
               onClick={() => handleStance('pro')}
-              className="w-full text-left border-2 border-[#1a1a1a] rounded p-4 hover:bg-[#f8f8f8]"
+              className="w-full text-left border-2 rounded-xl p-4 hover:bg-[#f8f8f8]"
+              style={{ borderColor: eduGame.ink, fontSize: eduGame.fontSize.body, lineHeight: eduGame.lineHeight.body }}
             >
-              <span className="text-xs font-bold block mb-1">찬성</span>
+              <span className="font-bold block mb-1" style={{ fontSize: eduGame.fontSize.label }}>
+                찬성
+              </span>
               {quest.pro_line}
             </button>
             <button
               type="button"
               disabled={sending}
               onClick={() => handleStance('con')}
-              className="w-full text-left border-2 border-[#1a1a1a] rounded p-4 hover:bg-[#f8f8f8]"
+              className="w-full text-left border-2 rounded-xl p-4 hover:bg-[#f8f8f8]"
+              style={{ borderColor: eduGame.ink, fontSize: eduGame.fontSize.body, lineHeight: eduGame.lineHeight.body }}
             >
-              <span className="text-xs font-bold block mb-1">반대</span>
+              <span className="font-bold block mb-1" style={{ fontSize: eduGame.fontSize.label }}>
+                반대
+              </span>
               {quest.con_line}
             </button>
           </section>
@@ -509,11 +517,14 @@ export default function QuestFlowChat() {
         {phase === 'stance' && dialogue.length === 0 && quest && !completed && entryMode === 'open_response' && (
           <section className="space-y-3 mb-4">
             {(quest.hook_short || quest.hook_full) && (
-              <p className="text-sm leading-relaxed whitespace-pre-wrap">
+              <p
+                className="leading-relaxed whitespace-pre-wrap"
+                style={{ fontSize: eduGame.fontSize.body, lineHeight: eduGame.lineHeight.body }}
+              >
                 {quest.hook_short || quest.hook_full}
               </p>
             )}
-            <p className="text-xs" style={{ color: EDU_BRAND.muted }}>
+            <p style={{ color: EDU_BRAND.muted, fontSize: eduGame.fontSize.label }}>
               위 질문에 대해 네 생각을 자유롭게 적어줘.
             </p>
           </section>
@@ -675,14 +686,19 @@ export default function QuestFlowChat() {
                 disabled={sending || composing}
                 rows={3}
                 className={`w-full resize-none ${eduGameClasses.input}`}
-                style={{ borderColor: eduGame.border, color: eduGame.ink }}
+                style={{
+                  borderColor: eduGame.border,
+                  color: eduGame.ink,
+                  fontSize: eduGame.fontSize.body,
+                  lineHeight: eduGame.lineHeight.body,
+                }}
               />
               <button
                 type="button"
                 onClick={() => void handleSubmitOpening()}
                 disabled={sending || composing || !input.trim()}
-                className={`w-full py-3.5 text-sm ${eduGameClasses.btnPrimary}`}
-                style={{ backgroundColor: eduGame.primary }}
+                className={`w-full py-3.5 ${eduGameClasses.btnPrimary}`}
+                style={{ backgroundColor: eduGame.primary, fontSize: eduGame.fontSize.button }}
               >
                 {sending ? '제출 중…' : '생각 보내기'}
               </button>
@@ -691,12 +707,15 @@ export default function QuestFlowChat() {
           {footerMode === 'evidence' && (
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-2">
-                <label className="text-xs font-bold" style={{ color: eduGame.muted }}>
+                <label className="font-bold" style={{ color: eduGame.muted, fontSize: eduGame.fontSize.label }}>
                   기사에서 찾은 근거
                 </label>
                 <span
-                  className="text-[10px] tabular-nums"
-                  style={{ color: evidenceLen >= EVIDENCE_RECOMMENDED_LEN ? eduGame.primary : eduGame.muted }}
+                  className="tabular-nums"
+                  style={{
+                    color: evidenceLen >= EVIDENCE_RECOMMENDED_LEN ? eduGame.primary : eduGame.muted,
+                    fontSize: eduGame.fontSize.caption,
+                  }}
                 >
                   {evidenceLen}자
                   {evidenceLen > 0 && evidenceLen < EVIDENCE_RECOMMENDED_LEN
@@ -720,19 +739,24 @@ export default function QuestFlowChat() {
                 disabled={sending || composing}
                 rows={3}
                 className={`w-full resize-none ${eduGameClasses.input}`}
-                style={{ borderColor: eduGame.border, color: eduGame.ink }}
+                style={{
+                  borderColor: eduGame.border,
+                  color: eduGame.ink,
+                  fontSize: eduGame.fontSize.body,
+                  lineHeight: eduGame.lineHeight.body,
+                }}
               />
               <button
                 type="button"
                 onClick={() => void handleSubmitEvidence()}
                 disabled={sending || composing || !evidenceReady}
-                className={`w-full py-3.5 text-sm ${eduGameClasses.btnPrimary}`}
-                style={{ backgroundColor: eduGame.primary }}
+                className={`w-full py-3.5 ${eduGameClasses.btnPrimary}`}
+                style={{ backgroundColor: eduGame.primary, fontSize: eduGame.fontSize.button }}
               >
                 {sending ? '제출 중…' : evidenceNudgeCount > 0 ? '다시 제출 — 다음 단계로' : '근거 제출'}
               </button>
               {evidenceNudgeCount > 0 && (
-                <p className="text-[10px] text-center" style={{ color: eduGame.muted }}>
+                <p className="text-center" style={{ color: eduGame.muted, fontSize: eduGame.fontSize.caption }}>
                   코치가 더 구체적으로 물어봤어요. 15자 이상으로 다시 제출하면 반론 단계로 넘어가요.
                 </p>
               )}
@@ -744,8 +768,8 @@ export default function QuestFlowChat() {
                 type="button"
                 onClick={handleConfirmReflection}
                 disabled={sending || composing}
-                className={`flex-1 py-3.5 text-sm ${eduGameClasses.btnPrimary}`}
-                style={{ backgroundColor: eduGame.primary }}
+                className={`flex-1 py-3.5 ${eduGameClasses.btnPrimary}`}
+                style={{ backgroundColor: eduGame.primary, fontSize: eduGame.fontSize.button }}
               >
                 맞아 — 글 만들기
               </button>
@@ -766,14 +790,19 @@ export default function QuestFlowChat() {
                 placeholder="네 생각을 입력해…"
                 disabled={sending || composing}
                 className={`flex-1 min-w-0 ${eduGameClasses.input}`}
-                style={{ borderColor: eduGame.border, color: eduGame.ink }}
+                style={{
+                  borderColor: eduGame.border,
+                  color: eduGame.ink,
+                  fontSize: eduGame.fontSize.body,
+                  lineHeight: eduGame.lineHeight.body,
+                }}
               />
               <button
                 type="button"
                 onClick={() => void handleSend()}
                 disabled={sending || composing || !input.trim()}
-                className={`px-5 py-3 text-sm shrink-0 ${eduGameClasses.btnPrimary}`}
-                style={{ backgroundColor: eduGame.primary }}
+                className={`px-5 py-3 shrink-0 ${eduGameClasses.btnPrimary}`}
+                style={{ backgroundColor: eduGame.primary, fontSize: eduGame.fontSize.button }}
               >
                 보내기
               </button>
@@ -790,8 +819,12 @@ function AxisExploreBar({ completed, pulse }: { completed: number; pulse: boolea
     <div className="relative">
       {pulse && (
         <div
-          className="absolute -top-1 left-1/2 -translate-x-1/2 z-10 px-3 py-1 rounded-full text-xs font-bold shadow-md animate-bounce"
-          style={{ backgroundColor: eduGame.primaryLight, color: eduGame.primaryDark }}
+          className="absolute -top-1 left-1/2 -translate-x-1/2 z-10 px-3 py-1 rounded-full font-bold shadow-md animate-bounce"
+          style={{
+            backgroundColor: eduGame.primaryLight,
+            color: eduGame.primaryDark,
+            fontSize: eduGame.fontSize.label,
+          }}
           aria-live="polite"
         >
           ✓ 탐구
@@ -811,14 +844,17 @@ function AxisExploreBar({ completed, pulse }: { completed: number; pulse: boolea
               }}
             >
               <span
-                className="text-sm font-bold leading-none"
-                style={{ color: done ? eduGame.primary : eduGame.border }}
+                className="font-bold leading-none"
+                style={{
+                  color: done ? eduGame.primary : eduGame.border,
+                  fontSize: eduGame.fontSize.body,
+                }}
                 aria-hidden
               >
                 {done ? '✓' : '·'}
               </span>
               {done && (
-                <span className="text-[10px] font-bold" style={{ color: eduGame.primaryDark }}>
+                <span className="font-bold" style={{ color: eduGame.primaryDark, fontSize: eduGame.fontSize.caption }}>
                   탐구
                 </span>
               )}
@@ -850,16 +886,22 @@ function DialogueBubble({
   return (
     <div className={`flex ${isStudent ? 'justify-end' : 'justify-start'}`}>
       <div
-        className={`max-w-[85%] px-4 py-2.5 text-sm whitespace-pre-wrap ${
+        className={`max-w-[85%] px-4 py-2.5 whitespace-pre-wrap ${
           isStudent ? eduGameClasses.studentBubble : eduGameClasses.coachBubble
         }`}
         style={
           isStudent
-            ? { backgroundColor: brandStudent ? eduGame.bubbleStudent : eduGame.ink }
+            ? {
+                backgroundColor: brandStudent ? eduGame.bubbleStudent : eduGame.ink,
+                fontSize: eduGame.fontSize.body,
+                lineHeight: eduGame.lineHeight.body,
+              }
             : {
                 backgroundColor: eduGame.bubbleCoach,
                 color: eduGame.ink,
                 borderColor: eduGame.bubbleCoachBorder,
+                fontSize: eduGame.fontSize.body,
+                lineHeight: eduGame.lineHeight.body,
               }
         }
       >
