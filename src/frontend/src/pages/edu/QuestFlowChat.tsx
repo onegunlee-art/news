@@ -3,7 +3,8 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import EssayRevealWrapper from '../../components/edu/EssayRevealWrapper'
 import { type EssayArtifact } from '../../components/edu/EssayRevealCard'
 import StructurePreviewCard, { type EssayStructurePreview } from '../../components/edu/StructurePreviewCard'
-import TierProgressCard from '../../components/edu/TierProgressCard'
+import EduQuestCompletionCelebration from '../../components/edu/EduQuestCompletionCelebration'
+import EduStructureReviewCard from '../../components/edu/EduStructureReviewCard'
 import TypingIndicator from '../../components/edu/TypingIndicator'
 import TypewriterText from '../../components/edu/TypewriterText'
 import EduArticleCard from '../../components/edu/EduArticleCard'
@@ -556,6 +557,19 @@ export default function QuestFlowChat() {
           <TypingIndicator label="네 글을 만들고 있어…" />
         )}
 
+        {completed && (
+          <EduQuestCompletionCelebration
+            xpGained={xpGained}
+            streakDays={tier?.streak_days ?? 0}
+            tier={tier}
+            active={completed}
+          />
+        )}
+
+        {completed && structurePreview && (
+          <EduStructureReviewCard structure={structurePreview} />
+        )}
+
         {completed && dialogue.length > 0 && (
           <ThinkingProcessPanel
             dialogue={dialogue}
@@ -587,14 +601,14 @@ export default function QuestFlowChat() {
         {completed && essay && (
           <section className="space-y-6 pt-2 mt-2">
             <div
-              className="border-t pt-8"
-              style={{ borderColor: EDU_BRAND.border }}
+              className="border-t-2 pt-8"
+              style={{ borderColor: eduGame.primaryLight }}
             >
               <div className="flex items-center justify-between gap-2 mb-6">
-                <p className="text-xs font-bold tracking-wide uppercase" style={{ color: EDU_BRAND.accent }}>
+                <p className="font-bold" style={{ fontSize: eduGame.fontSize.bodyLg, color: eduGame.primaryDark }}>
                   나만의 글
                 </p>
-                <span className="text-xs" style={{ color: EDU_BRAND.muted }}>
+                <span style={{ fontSize: eduGame.fontSize.caption, color: eduGame.muted }}>
                   {saveStatus === 'saving' && '저장 중…'}
                   {saveStatus === 'saved' && '✓ 자동 저장됨'}
                   {saveStatus === 'error' && '저장 실패 — 다시 시도해줘'}
@@ -602,8 +616,8 @@ export default function QuestFlowChat() {
               </div>
               {stanceChanged && (
                 <span
-                  className="inline-block text-xs font-bold px-2 py-0.5 rounded mb-4"
-                  style={{ color: EDU_BRAND.accent, backgroundColor: EDU_BRAND.accentBg }}
+                  className="inline-block font-bold px-3 py-1 rounded-full mb-4"
+                  style={{ fontSize: eduGame.fontSize.caption, color: eduGame.primaryDark, backgroundColor: eduGame.primaryLight }}
                 >
                   생각이 바뀌었다
                 </span>
@@ -617,7 +631,7 @@ export default function QuestFlowChat() {
                 onRevealComplete={() => setPlayEssayReveal(false)}
               />
               {!playEssayReveal && (
-                <p className="text-xs mt-6 text-center" style={{ color: EDU_BRAND.muted }}>
+                <p className={`mt-6 text-center ${eduGameClasses.textKo}`} style={{ fontSize: eduGame.fontSize.label, color: eduGame.muted }}>
                   고치고 싶은 부분을 탭하면 편집할 수 있어
                 </p>
               )}
@@ -626,41 +640,40 @@ export default function QuestFlowChat() {
               <>
                 {essay.feedback && (
                   <p
-                    className="text-sm p-3 rounded-lg"
-                    style={{ color: EDU_BRAND.muted, backgroundColor: EDU_BRAND.surface }}
+                    className={`p-4 rounded-xl ${eduGameClasses.textKo}`}
+                    style={{ fontSize: eduGame.fontSize.body, color: eduGame.muted, backgroundColor: eduGame.surface, lineHeight: eduGame.lineHeight.body }}
                   >
                     {essay.feedback}
                   </p>
                 )}
-                {xpGained > 0 && <p className="text-sm">+{xpGained} XP 획득</p>}
-                {tier && <TierProgressCard tier={tier} />}
                 <div className="space-y-2 pt-2">
                   <button
                     type="button"
                     onClick={() => essay && void persistEssay(essay)}
                     disabled={saveStatus === 'saving'}
-                    className="w-full py-2.5 text-sm rounded-lg font-medium disabled:opacity-40 border"
-                    style={{ borderColor: EDU_BRAND.border, color: EDU_BRAND.ink }}
+                    className={`w-full py-3.5 border-2 rounded-xl font-bold disabled:opacity-40 ${eduGameClasses.textKo}`}
+                    style={{ borderColor: eduGame.border, color: eduGame.ink, fontSize: eduGame.fontSize.button }}
                   >
                     지금 저장
                   </button>
                   <Link
                     to={`/edu/share/${sessionId}`}
-                    className="block w-full py-3 text-center text-white rounded-lg font-medium"
-                    style={{ backgroundColor: EDU_BRAND.accent }}
+                    className={`block w-full py-3.5 text-center ${eduGameClasses.btnPrimary}`}
+                    style={{ backgroundColor: eduGame.primary, fontSize: eduGame.fontSize.button }}
                   >
                     공유 카드 만들기
                   </Link>
                   <Link
                     to="/edu/profile"
-                    className="block w-full py-3 text-center rounded-lg font-medium border border-[#333] text-[#ccc]"
+                    className={`block w-full py-3.5 text-center rounded-xl font-bold border-2 ${eduGameClasses.textKo}`}
+                    style={{ borderColor: eduGame.border, color: eduGame.ink, fontSize: eduGame.fontSize.button }}
                   >
                     내 글함
                   </Link>
                   <Link
                     to="/edu"
-                    className="block w-full py-3 text-center rounded-lg font-medium"
-                    style={{ color: EDU_BRAND.muted }}
+                    className={`block w-full py-3.5 text-center rounded-xl font-medium ${eduGameClasses.textKo}`}
+                    style={{ color: eduGame.muted, fontSize: eduGame.fontSize.label }}
                   >
                     홈으로
                   </Link>
