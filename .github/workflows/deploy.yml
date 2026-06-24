@@ -523,13 +523,24 @@ jobs:
         run: |
           BASE="${{ env.SITE_URL }}"
           for path in /manifest.webmanifest /.well-known/assetlinks.json /sw.js; do
-            code=$(curl -sS -o /dev/null -w "%{http_code}" --connect-timeout 15 --max-time 30 "$BASE$path" 2>/dev/null || echo "000")
-            code=$(echo "$code" | tr -d '[:space:]')
-            if [ "$code" != "200" ]; then
-              echo "❌ Expected 200 for $path, got HTTP $code"
+            last=""
+            ok=0
+            for i in $(seq 1 6); do
+              last=$(curl -sS -o /dev/null -w "%{http_code}" --connect-timeout 15 --max-time 30 "$BASE$path" 2>/dev/null) || true
+              last=$(echo "$last" | tr -d '[:space:]')
+              if [ "$last" = "200" ]; then
+                echo "✅ $path → HTTP $last (attempt $i)"
+                ok=1
+                break
+              fi
+              echo "Attempt $i/6 for $path: HTTP ${last:-<empty>} — retry in 10s..."
+              sleep 10
+            done
+            if [ "$ok" != "1" ]; then
+              echo "❌ Expected 200 for $path, got HTTP ${last:-none}"
+              curl -sSI --connect-timeout 15 --max-time 30 "$BASE$path" || true
               exit 1
             fi
-            echo "✅ $path → HTTP $code"
           done
 
       - name: Verify Googlebot receives crawler HTML for /news/1 (SEO)
@@ -537,7 +548,7 @@ jobs:
           BASE="${{ env.SITE_URL }}"
           UA="Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
           tmp=$(mktemp)
-          code=$(curl -sS -o "$tmp" -w "%{http_code}" --connect-timeout 25 --max-time 60 -A "$UA" "$BASE/news/1" 2>/dev/null || echo "000")
+          code=$(curl -sS -o "$tmp" -w "%{http_code}" --connect-timeout 25 --max-time 60 -A "$UA" "$BASE/news/1" 2>/dev/null) || true
           code=$(echo "$code" | tr -d '[:space:]')
           echo "Googlebot GET /news/1 → HTTP $code"
           if [ "$code" = "404" ]; then
