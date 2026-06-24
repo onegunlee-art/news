@@ -72,10 +72,15 @@ function lastAssistantDialogueIndex(dialogue: EduDialogueTurn[]): number {
   return -1
 }
 
-/** visualViewport — 모바일 키보드 높이·가시 영역 (iOS Safari) */
-function useVisualViewportLayout(): { viewportHeight: number | null; keyboardInset: number } {
-  const [layout, setLayout] = useState<{ viewportHeight: number | null; keyboardInset: number }>({
-    viewportHeight: null,
+/** visualViewport — 모바일 키보드 가시 영역 (단일 보정: shell height+top만) */
+function useVisualViewportLayout(): {
+  viewportHeight: number | null
+  viewportOffsetTop: number
+  keyboardInset: number
+} {
+  const [layout, setLayout] = useState({
+    viewportHeight: null as number | null,
+    viewportOffsetTop: 0,
     keyboardInset: 0,
   })
 
@@ -86,6 +91,7 @@ function useVisualViewportLayout(): { viewportHeight: number | null; keyboardIns
     const update = () => {
       setLayout({
         viewportHeight: vv.height,
+        viewportOffsetTop: vv.offsetTop,
         keyboardInset: Math.max(0, window.innerHeight - vv.height - vv.offsetTop),
       })
     }
@@ -108,7 +114,9 @@ export default function QuestFlowChat() {
   const [searchParams] = useSearchParams()
   const bottomRef = useRef<HTMLDivElement>(null)
   const mainScrollRef = useRef<HTMLDivElement>(null)
-  const { viewportHeight, keyboardInset } = useVisualViewportLayout()
+  const pinScrollRef = useRef<HTMLDivElement>(null)
+  const { viewportHeight, viewportOffsetTop, keyboardInset } = useVisualViewportLayout()
+  const [inputFocused, setInputFocused] = useState(false)
 
   const [quest, setQuest] = useState<EduQuest | null>(null)
   const [sessionId, setSessionId] = useState('')
@@ -247,9 +255,18 @@ export default function QuestFlowChat() {
   }, [dialogue, completed, composing, sending, typingBubbleIndex])
 
   const scrollToBottom = () => {
-    const el = mainScrollRef.current
-    if (!el) return
-    el.scrollTo({ top: el.scrollHeight, behavior: 'auto' })
+    const pinEl = pinScrollRef.current
+    const mainEl = mainScrollRef.current
+    if (pinEl && pinEl.scrollHeight > pinEl.clientHeight) {
+      pinEl.scrollTo({ top: pinEl.scrollHeight, behavior: 'auto' })
+    } else if (mainEl) {
+      mainEl.scrollTo({ top: mainEl.scrollHeight, behavior: 'auto' })
+    }
+  }
+
+  const handleComposeInputFocus = () => setInputFocused(true)
+  const handleComposeInputBlur = () => {
+    window.setTimeout(() => setInputFocused(false), 100)
   }
 
   useEffect(() => {
@@ -503,15 +520,24 @@ export default function QuestFlowChat() {
     .map((turn, i) => ({ turn, i }))
     .filter(({ i }) => !showPinnedCoach || i !== pinnedCoachIndex)
 
+  const keyboardOpen = keyboardInset > 40
+  const compactMode =
+    !completed &&
+    footerMode !== null &&
+    (keyboardOpen || inputFocused) &&
+    (showPinnedCoach || showGuideAxisBar)
+  const showPinZone = !completed && (showGuideAxisBar || showPinnedCoach)
+
   return (
     <div
-      className={`${eduGameClasses.chatShell} fixed inset-0 flex flex-col`}
+      className={`${eduGameClasses.chatShell} fixed left-0 right-0 flex flex-col`}
       style={{
         color: eduGame.ink,
         fontFamily: eduGame.fontBody,
         backgroundColor: eduGame.bg,
-        height: viewportHeight ?? undefined,
-        maxHeight: viewportHeight ?? undefined,
+        top: viewportHeight != null ? viewportOffsetTop : 0,
+        height: viewportHeight ?? '100dvh',
+        maxHeight: viewportHeight ?? '100dvh',
       }}
     >
       <header className={`shrink-0 border-b px-4 py-3 ${PAGE_MAX} mx-auto w-full`} style={{ borderColor: eduGame.border }}>
@@ -551,14 +577,15 @@ export default function QuestFlowChat() {
         </div>
       </header>
 
-      {!completed && (showGuideAxisBar || showPinnedCoach) && (
+      {showPinZone && (
         <div
-          className="shrink-0 z-20 border-b"
+          ref={pinScrollRef}
+          className={`z-20 border-b ${compactMode ? `flex-1 min-h-0 overflow-y-auto ${eduGameClasses.chatScroll}` : 'shrink-0'}`}
           style={{ borderColor: eduGame.border, backgroundColor: eduGame.bg }}
         >
           <div className={`${PAGE_MAX} mx-auto w-full px-4`}>
             {showGuideAxisBar && (
-              <div className="pt-2 pb-1">
+              <div className="pt-2 pb-1 shrink-0">
                 <AxisExploreBar
                   completed={guideAxisCompleted}
                   currentSlot={guideAxisCurrentSlot}
@@ -585,7 +612,7 @@ export default function QuestFlowChat() {
 
       <main
         ref={mainScrollRef}
-        className={`flex-1 min-h-0 ${eduGameClasses.chatScroll} ${PAGE_MAX} mx-auto w-full px-4 py-4 overflow-y-auto space-y-3`}
+        className={`${compactMode ? 'hidden' : 'flex-1 min-h-0'} ${eduGameClasses.chatScroll} ${PAGE_MAX} mx-auto w-full px-4 py-4 overflow-y-auto space-y-3`}
       >
         {phase === 'stance' && dialogue.length === 0 && quest && !completed && entryMode === 'stance_pick' && (
           <section className="space-y-3 mb-4">
@@ -790,7 +817,7 @@ export default function QuestFlowChat() {
           style={{
             borderColor: eduGame.border,
             backgroundColor: eduGame.bg,
-            paddingBottom: `calc(0.75rem + ${keyboardInset}px + env(safe-area-inset-bottom, 0px))`,
+            paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0px))',
           }}
         >
           {footerMode === 'opening' && (
@@ -798,6 +825,8 @@ export default function QuestFlowChat() {
               <textarea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
+                onFocus={handleComposeInputFocus}
+                onBlur={handleComposeInputBlur}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
                     e.preventDefault()
@@ -851,6 +880,8 @@ export default function QuestFlowChat() {
                   setEvidenceInput(e.target.value)
                   if (error) setError('')
                 }}
+                onFocus={handleComposeInputFocus}
+                onBlur={handleComposeInputBlur}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
                     e.preventDefault()
@@ -903,6 +934,8 @@ export default function QuestFlowChat() {
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
+                onFocus={handleComposeInputFocus}
+                onBlur={handleComposeInputBlur}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault()
