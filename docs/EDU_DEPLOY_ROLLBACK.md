@@ -51,6 +51,7 @@
 | 2026-06-24 | `e462da9` | **키보드 집중 모드** — 지난 대화 숨김, viewport 빈 공간 제거 (PHP 0) |
 | 2026-06-24 | `eed9a08` | **compose bottom sheet** — compact 시 질문+입력 한 덩어리, 긴 snippet 가림 해결 (PHP 0) |
 | 2026-06-24 | `a7a4ac8` | **단계 3 표지** — 기사 썸네일 + 오늘 따질 주제, cover_image_url/hook_short API |
+| 2026-06-24 | `bf7c998` | **단계 4** — 196(이란)·288(청소년) axis_guide 3축 seed + 멀티유저 분리 CLI |
 
 ## P1-2+ 라이브 완주 게이트 (R4–R6)
 
