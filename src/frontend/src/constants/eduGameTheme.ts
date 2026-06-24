@@ -67,4 +67,6 @@ export const eduGameClasses = {
   animExploreToast: 'edu-game-explore-toast',
   chatShell: 'edu-game-chat-shell',
   chatScroll: 'edu-game-chat-scroll',
+  composeSheet: 'edu-game-compose-sheet',
+  composeHandle: 'edu-game-compose-handle',
 } as const

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode, type Ref } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import EssayRevealWrapper from '../../components/edu/EssayRevealWrapper'
 import { type EssayArtifact } from '../../components/edu/EssayRevealCard'
@@ -115,6 +115,7 @@ export default function QuestFlowChat() {
   const bottomRef = useRef<HTMLDivElement>(null)
   const mainScrollRef = useRef<HTMLDivElement>(null)
   const pinScrollRef = useRef<HTMLDivElement>(null)
+  const sheetScrollRef = useRef<HTMLDivElement>(null)
   const { viewportHeight, viewportOffsetTop, keyboardInset } = useVisualViewportLayout()
   const [inputFocused, setInputFocused] = useState(false)
 
@@ -255,12 +256,11 @@ export default function QuestFlowChat() {
   }, [dialogue, completed, composing, sending, typingBubbleIndex])
 
   const scrollToBottom = () => {
-    const pinEl = pinScrollRef.current
-    const mainEl = mainScrollRef.current
-    if (pinEl && pinEl.scrollHeight > pinEl.clientHeight) {
-      pinEl.scrollTo({ top: pinEl.scrollHeight, behavior: 'auto' })
-    } else if (mainEl) {
-      mainEl.scrollTo({ top: mainEl.scrollHeight, behavior: 'auto' })
+    for (const el of [sheetScrollRef.current, pinScrollRef.current, mainScrollRef.current]) {
+      if (el) {
+        el.scrollTo({ top: el.scrollHeight, behavior: 'auto' })
+        return
+      }
     }
   }
 
@@ -528,6 +528,30 @@ export default function QuestFlowChat() {
     (showPinnedCoach || showGuideAxisBar)
   const showPinZone = !completed && (showGuideAxisBar || showPinnedCoach)
 
+  const composeFooter =
+    footerMode !== null ? (
+      <QuestComposeFooter
+        footerMode={footerMode}
+        input={input}
+        setInput={setInput}
+        evidenceInput={evidenceInput}
+        setEvidenceInput={setEvidenceInput}
+        evidenceLen={evidenceLen}
+        evidenceReady={evidenceReady}
+        evidenceNudgeCount={evidenceNudgeCount}
+        sending={sending}
+        composing={composing}
+        error={error}
+        setError={setError}
+        onComposeFocus={handleComposeInputFocus}
+        onComposeBlur={handleComposeInputBlur}
+        onSubmitOpening={() => void handleSubmitOpening()}
+        onSubmitEvidence={() => void handleSubmitEvidence()}
+        onConfirmReflection={handleConfirmReflection}
+        onSend={() => void handleSend()}
+      />
+    ) : null
+
   return (
     <div
       className={`${eduGameClasses.chatShell} fixed left-0 right-0 flex flex-col`}
@@ -577,37 +601,57 @@ export default function QuestFlowChat() {
         </div>
       </header>
 
-      {showPinZone && (
+      {showGuideAxisBar && (
         <div
-          ref={pinScrollRef}
-          className={`z-20 border-b ${compactMode ? `flex-1 min-h-0 overflow-y-auto ${eduGameClasses.chatScroll}` : 'shrink-0'}`}
+          className="z-20 shrink-0 border-b"
           style={{ borderColor: eduGame.border, backgroundColor: eduGame.bg }}
         >
-          <div className={`${PAGE_MAX} mx-auto w-full px-4`}>
-            {showGuideAxisBar && (
-              <div className="pt-2 pb-1 shrink-0">
-                <AxisExploreBar
-                  completed={guideAxisCompleted}
-                  currentSlot={guideAxisCurrentSlot}
-                  pulse={explorePulse}
-                  pulseSlot={explorePulseSlot}
-                  nudgeText={exploreNudgeText}
-                />
-              </div>
-            )}
-            {showPinnedCoach && pinnedCoachTurn && (
-              <div className={`${showGuideAxisBar ? 'pb-2' : 'py-2'}`}>
-                <DialogueBubble
-                  turn={pinnedCoachTurn}
-                  typewriter={pinnedCoachIndex === typingBubbleIndex}
-                  coachEnter={pinnedCoachIndex === typingBubbleIndex}
-                  onTypewriterComplete={() => setTypingBubbleIndex(null)}
-                  onTypewriterProgress={scrollToBottom}
-                />
-              </div>
-            )}
+          <div className={`${PAGE_MAX} mx-auto w-full px-4 pt-2 pb-1`}>
+            <AxisExploreBar
+              completed={guideAxisCompleted}
+              currentSlot={guideAxisCurrentSlot}
+              pulse={explorePulse}
+              pulseSlot={explorePulseSlot}
+              nudgeText={exploreNudgeText}
+            />
           </div>
         </div>
+      )}
+
+      {showPinZone && !compactMode && showPinnedCoach && pinnedCoachTurn && (
+        <div
+          ref={pinScrollRef}
+          className="z-20 shrink-0 border-b"
+          style={{ borderColor: eduGame.border, backgroundColor: eduGame.bg }}
+        >
+          <div className={`${PAGE_MAX} mx-auto w-full px-4 ${showGuideAxisBar ? 'pb-2' : 'py-2'}`}>
+            <DialogueBubble
+              turn={pinnedCoachTurn}
+              typewriter={pinnedCoachIndex === typingBubbleIndex}
+              coachEnter={pinnedCoachIndex === typingBubbleIndex}
+              onTypewriterComplete={() => setTypingBubbleIndex(null)}
+              onTypewriterProgress={scrollToBottom}
+            />
+          </div>
+        </div>
+      )}
+
+      {compactMode && composeFooter && (
+        <ComposeBottomSheet
+          scrollRef={sheetScrollRef}
+          question={
+            showPinnedCoach && pinnedCoachTurn ? (
+              <DialogueBubble
+                turn={pinnedCoachTurn}
+                typewriter={pinnedCoachIndex === typingBubbleIndex}
+                coachEnter={pinnedCoachIndex === typingBubbleIndex}
+                onTypewriterComplete={() => setTypingBubbleIndex(null)}
+                onTypewriterProgress={scrollToBottom}
+              />
+            ) : null
+          }
+          footer={composeFooter}
+        />
       )}
 
       <main
@@ -811,7 +855,7 @@ export default function QuestFlowChat() {
         <div ref={bottomRef} />
       </main>
 
-      {!completed && footerMode !== null && (
+      {!completed && footerMode !== null && !compactMode && (
         <footer
           className={`shrink-0 border-t px-4 py-3 ${PAGE_MAX} mx-auto w-full z-30`}
           style={{
@@ -820,151 +864,237 @@ export default function QuestFlowChat() {
             paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0px))',
           }}
         >
-          {footerMode === 'opening' && (
-            <div className="space-y-2">
-              <textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onFocus={handleComposeInputFocus}
-                onBlur={handleComposeInputBlur}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-                    e.preventDefault()
-                    void handleSubmitOpening()
-                  }
-                }}
-                placeholder="네 생각을 입력해…"
-                disabled={sending || composing}
-                rows={3}
-                className={`w-full resize-none ${eduGameClasses.input}`}
-                style={{
-                  borderColor: eduGame.border,
-                  color: eduGame.ink,
-                  fontSize: eduGame.fontSize.body,
-                  lineHeight: eduGame.lineHeight.body,
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => void handleSubmitOpening()}
-                disabled={sending || composing || !input.trim()}
-                className={`w-full py-3.5 ${eduGameClasses.btnPrimary}`}
-                style={{ backgroundColor: eduGame.primary, fontSize: eduGame.fontSize.button }}
-              >
-                {sending ? '제출 중…' : '생각 보내기'}
-              </button>
-            </div>
-          )}
-          {footerMode === 'evidence' && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between gap-2">
-                <label className="font-bold" style={{ color: eduGame.muted, fontSize: eduGame.fontSize.label }}>
-                  기사에서 찾은 근거
-                </label>
-                <span
-                  className="tabular-nums"
-                  style={{
-                    color: evidenceLen >= EVIDENCE_RECOMMENDED_LEN ? eduGame.primary : eduGame.muted,
-                    fontSize: eduGame.fontSize.caption,
-                  }}
-                >
-                  {evidenceLen}자
-                  {evidenceLen > 0 && evidenceLen < EVIDENCE_RECOMMENDED_LEN
-                    ? ` · ${EVIDENCE_RECOMMENDED_LEN}자 이상이면 좋아요`
-                    : ''}
-                </span>
-              </div>
-              <textarea
-                value={evidenceInput}
-                onChange={(e) => {
-                  setEvidenceInput(e.target.value)
-                  if (error) setError('')
-                }}
-                onFocus={handleComposeInputFocus}
-                onBlur={handleComposeInputBlur}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-                    e.preventDefault()
-                    void handleSubmitEvidence()
-                  }
-                }}
-                placeholder="기사에서 본 구체적인 사실을 적어줘…"
-                disabled={sending || composing}
-                rows={3}
-                className={`w-full resize-none ${eduGameClasses.input}`}
-                style={{
-                  borderColor: eduGame.border,
-                  color: eduGame.ink,
-                  fontSize: eduGame.fontSize.body,
-                  lineHeight: eduGame.lineHeight.body,
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => void handleSubmitEvidence()}
-                disabled={sending || composing || !evidenceReady}
-                className={`w-full py-3.5 ${eduGameClasses.btnPrimary}`}
-                style={{ backgroundColor: eduGame.primary, fontSize: eduGame.fontSize.button }}
-              >
-                {sending ? '제출 중…' : evidenceNudgeCount > 0 ? '다시 제출 — 다음 단계로' : '근거 제출'}
-              </button>
-              {evidenceNudgeCount > 0 && (
-                <p className={`text-center ${eduGameClasses.textKo}`} style={{ color: eduGame.muted, fontSize: eduGame.fontSize.caption }}>
-                  코치가 더 구체적으로 물어봤어요. 15자 이상으로 다시 제출하면 반론 단계로 넘어가요.
-                </p>
-              )}
-            </div>
-          )}
-          {footerMode === 'reflection' && (
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={handleConfirmReflection}
-                disabled={sending || composing}
-                className={`flex-1 py-3.5 ${eduGameClasses.btnPrimary}`}
-                style={{ backgroundColor: eduGame.primary, fontSize: eduGame.fontSize.button }}
-              >
-                맞아 — 글 만들기
-              </button>
-            </div>
-          )}
-          {footerMode === 'chat' && (
-            <div className="flex gap-2 items-stretch">
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onFocus={handleComposeInputFocus}
-                onBlur={handleComposeInputBlur}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    void handleSend()
-                  }
-                }}
-                placeholder="네 생각을 입력해…"
-                disabled={sending || composing}
-                className={`flex-1 min-w-0 ${eduGameClasses.input}`}
-                style={{
-                  borderColor: eduGame.border,
-                  color: eduGame.ink,
-                  fontSize: eduGame.fontSize.body,
-                  lineHeight: eduGame.lineHeight.body,
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => void handleSend()}
-                disabled={sending || composing || !input.trim()}
-                className={`px-5 py-3 shrink-0 ${eduGameClasses.btnPrimary}`}
-                style={{ backgroundColor: eduGame.primary, fontSize: eduGame.fontSize.button }}
-              >
-                보내기
-              </button>
-            </div>
-          )}
+          {composeFooter}
         </footer>
       )}
+    </div>
+  )
+}
+
+function ComposeBottomSheet({
+  scrollRef,
+  question,
+  footer,
+}: {
+  scrollRef: Ref<HTMLDivElement>
+  question: ReactNode
+  footer: ReactNode
+}) {
+  return (
+    <div
+      className={`${eduGameClasses.composeSheet} flex flex-col flex-1 min-h-0 z-30 ${PAGE_MAX} mx-auto w-full`}
+      style={{ backgroundColor: eduGame.bg, borderColor: eduGame.border }}
+    >
+      <div aria-hidden className={eduGameClasses.composeHandle} />
+      <div
+        ref={scrollRef}
+        className={`flex-1 min-h-0 overflow-y-auto px-4 py-2 ${eduGameClasses.chatScroll}`}
+      >
+        {question}
+      </div>
+      <div
+        className="shrink-0 border-t px-4 py-3 w-full"
+        style={{
+          borderColor: eduGame.border,
+          backgroundColor: eduGame.bg,
+          paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0px))',
+        }}
+      >
+        {footer}
+      </div>
+    </div>
+  )
+}
+
+function QuestComposeFooter({
+  footerMode,
+  input,
+  setInput,
+  evidenceInput,
+  setEvidenceInput,
+  evidenceLen,
+  evidenceReady,
+  evidenceNudgeCount,
+  sending,
+  composing,
+  error,
+  setError,
+  onComposeFocus,
+  onComposeBlur,
+  onSubmitOpening,
+  onSubmitEvidence,
+  onConfirmReflection,
+  onSend,
+}: {
+  footerMode: QuestFooterMode
+  input: string
+  setInput: (v: string) => void
+  evidenceInput: string
+  setEvidenceInput: (v: string) => void
+  evidenceLen: number
+  evidenceReady: boolean
+  evidenceNudgeCount: number
+  sending: boolean
+  composing: boolean
+  error: string
+  setError: (v: string) => void
+  onComposeFocus: () => void
+  onComposeBlur: () => void
+  onSubmitOpening: () => void
+  onSubmitEvidence: () => void
+  onConfirmReflection: () => void
+  onSend: () => void
+}) {
+  if (footerMode === 'opening') {
+    return (
+      <div className="space-y-2">
+        <textarea
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onFocus={onComposeFocus}
+          onBlur={onComposeBlur}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+              e.preventDefault()
+              onSubmitOpening()
+            }
+          }}
+          placeholder="네 생각을 입력해…"
+          disabled={sending || composing}
+          rows={3}
+          className={`w-full resize-none ${eduGameClasses.input}`}
+          style={{
+            borderColor: eduGame.border,
+            color: eduGame.ink,
+            fontSize: eduGame.fontSize.body,
+            lineHeight: eduGame.lineHeight.body,
+          }}
+        />
+        <button
+          type="button"
+          onClick={onSubmitOpening}
+          disabled={sending || composing || !input.trim()}
+          className={`w-full py-3.5 ${eduGameClasses.btnPrimary}`}
+          style={{ backgroundColor: eduGame.primary, fontSize: eduGame.fontSize.button }}
+        >
+          {sending ? '제출 중…' : '생각 보내기'}
+        </button>
+      </div>
+    )
+  }
+
+  if (footerMode === 'evidence') {
+    return (
+      <div className="space-y-2">
+        <div className="flex items-center justify-between gap-2">
+          <label className="font-bold" style={{ color: eduGame.muted, fontSize: eduGame.fontSize.label }}>
+            기사에서 찾은 근거
+          </label>
+          <span
+            className="tabular-nums"
+            style={{
+              color: evidenceLen >= EVIDENCE_RECOMMENDED_LEN ? eduGame.primary : eduGame.muted,
+              fontSize: eduGame.fontSize.caption,
+            }}
+          >
+            {evidenceLen}자
+            {evidenceLen > 0 && evidenceLen < EVIDENCE_RECOMMENDED_LEN
+              ? ` · ${EVIDENCE_RECOMMENDED_LEN}자 이상이면 좋아요`
+              : ''}
+          </span>
+        </div>
+        <textarea
+          value={evidenceInput}
+          onChange={(e) => {
+            setEvidenceInput(e.target.value)
+            if (error) setError('')
+          }}
+          onFocus={onComposeFocus}
+          onBlur={onComposeBlur}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+              e.preventDefault()
+              onSubmitEvidence()
+            }
+          }}
+          placeholder="기사에서 본 구체적인 사실을 적어줘…"
+          disabled={sending || composing}
+          rows={3}
+          className={`w-full resize-none ${eduGameClasses.input}`}
+          style={{
+            borderColor: eduGame.border,
+            color: eduGame.ink,
+            fontSize: eduGame.fontSize.body,
+            lineHeight: eduGame.lineHeight.body,
+          }}
+        />
+        <button
+          type="button"
+          onClick={onSubmitEvidence}
+          disabled={sending || composing || !evidenceReady}
+          className={`w-full py-3.5 ${eduGameClasses.btnPrimary}`}
+          style={{ backgroundColor: eduGame.primary, fontSize: eduGame.fontSize.button }}
+        >
+          {sending ? '제출 중…' : evidenceNudgeCount > 0 ? '다시 제출 — 다음 단계로' : '근거 제출'}
+        </button>
+        {evidenceNudgeCount > 0 && (
+          <p className={`text-center ${eduGameClasses.textKo}`} style={{ color: eduGame.muted, fontSize: eduGame.fontSize.caption }}>
+            코치가 더 구체적으로 물어봤어요. 15자 이상으로 다시 제출하면 반론 단계로 넘어가요.
+          </p>
+        )}
+      </div>
+    )
+  }
+
+  if (footerMode === 'reflection') {
+    return (
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={onConfirmReflection}
+          disabled={sending || composing}
+          className={`flex-1 py-3.5 ${eduGameClasses.btnPrimary}`}
+          style={{ backgroundColor: eduGame.primary, fontSize: eduGame.fontSize.button }}
+        >
+          맞아 — 글 만들기
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex gap-2 items-stretch">
+      <input
+        type="text"
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        onFocus={onComposeFocus}
+        onBlur={onComposeBlur}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault()
+            onSend()
+          }
+        }}
+        placeholder="네 생각을 입력해…"
+        disabled={sending || composing}
+        className={`flex-1 min-w-0 ${eduGameClasses.input}`}
+        style={{
+          borderColor: eduGame.border,
+          color: eduGame.ink,
+          fontSize: eduGame.fontSize.body,
+          lineHeight: eduGame.lineHeight.body,
+        }}
+      />
+      <button
+        type="button"
+        onClick={onSend}
+        disabled={sending || composing || !input.trim()}
+        className={`px-5 py-3 shrink-0 ${eduGameClasses.btnPrimary}`}
+        style={{ backgroundColor: eduGame.primary, fontSize: eduGame.fontSize.button }}
+      >
+        보내기
+      </button>
     </div>
   )
 }

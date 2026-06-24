@@ -375,6 +375,22 @@ input, textarea, select {
   overscroll-behavior: contain;
 }
 
+/* compact 모드 — 질문+입력 bottom sheet */
+.edu-game-compose-sheet {
+  border-top: 1px solid #e8e8e8;
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.06);
+}
+
+.edu-game-compose-handle {
+  flex-shrink: 0;
+  width: 36px;
+  height: 4px;
+  margin: 8px auto 4px;
+  border-radius: 9999px;
+  background-color: #d4d4d4;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .edu-game-axis-pop,
   .edu-game-axis-check-pop,
