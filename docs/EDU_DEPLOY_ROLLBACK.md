@@ -40,6 +40,7 @@
 | 2026-06-23 | `34f55f3` | **게임화 조각 2** — 진단 XP 5~65, streak freeze, compose 훅 (Supabase `edu_gamification_xp.sql`) |
 | 2026-06-23 | `5f72cad` | **게임화 조각 3-A** — eduGame.* 토큰, QuestFlowChat 듀오링고 UI (axis_guide 로직 0) |
 | 2026-06-23 | `c18ef16` | **단계 1-1** — 코치 화면 글자 크기 (snippet 17px, 말풍선 16px) |
+| 2026-06-24 | `7502ac8` | **단계 1-2** — 코치 화면 한글 줄바꿈 keep-all (말풍선·snippet·입력) |
 
 ## P1-2+ 라이브 완주 게이트 (R4–R6)
 
