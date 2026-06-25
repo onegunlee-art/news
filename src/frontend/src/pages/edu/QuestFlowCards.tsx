@@ -12,7 +12,6 @@ import {
   coachMessageHasSnippet,
   parseCoachAssistantMessage,
   splitCoachParagraphs,
-  narrativePromptOneLine,
 } from '../../utils/eduCoachMessageParse'
 import {
   eduApi,
@@ -622,8 +621,7 @@ export default function QuestFlowCards() {
       ? coachChoice.questionText
       : cardQuestion
   const displayQuestionParagraphs = splitCoachParagraphs(displayQuestion)
-  const pinNarrativePrompt = showNarrativeInput && !showCoachChoiceButtons
-  const narrativePromptLabel = narrativePromptOneLine(displayQuestion)
+  const showNarrativeLayout = showNarrativeInput && !showCoachChoiceButtons
 
   const handlePrimaryAction = () => {
     if (footerMode === 'opening') return handleSubmitOpening()
@@ -662,6 +660,11 @@ export default function QuestFlowCards() {
   const keyboardOpen = keyboardInset > 40 || inputFocused
   const inputRows = keyboardOpen ? 2 : footerMode === 'opening' ? 3 : 2
   const inputMaxHeight = keyboardOpen ? '4.75rem' : footerMode === 'opening' ? '7rem' : '5.5rem'
+  const snippetMaxHeight = keyboardOpen
+    ? showNarrativeLayout
+      ? '12vh'
+      : '22vh'
+    : '28vh'
 
   return (
     <div
@@ -764,16 +767,15 @@ export default function QuestFlowCards() {
                 </div>
               )}
 
-              {/* 질문·fact — 선택형은 카드, 서술형은 footer 고정 라벨(2-C) */}
+              {/* 질문·fact — 서술형도 카드 상단에 전체 노출 (절대 한 줄 자르지 않음) */}
               <div className="shrink-0 px-4 pt-2 pb-2">
                 <div className="space-y-4">
-                  {!pinNarrativePrompt &&
-                    displayQuestionParagraphs.map((paragraph, i) => (
+                  {displayQuestionParagraphs.map((paragraph, i) => (
                     <p
                       key={`${cardKey}-q-${i}`}
                       className={`text-center font-bold ${eduGameClasses.textKoPre}`}
                       style={{
-                        fontSize: keyboardOpen ? '1.125rem' : '1.25rem',
+                        fontSize: keyboardOpen ? '1.0625rem' : '1.25rem',
                         lineHeight: 1.55,
                         color: eduGame.ink,
                       }}
@@ -786,7 +788,7 @@ export default function QuestFlowCards() {
                 {cardSnippets.length > 0 && (
                   <div
                     className="mt-3 space-y-2 overflow-y-auto"
-                    style={{ maxHeight: keyboardOpen ? '22vh' : '28vh' }}
+                    style={{ maxHeight: snippetMaxHeight }}
                   >
                     {cardSnippets.map((snip, i) => (
                       <EduArticleSnippetCard
@@ -848,20 +850,6 @@ export default function QuestFlowCards() {
                       </p>
                     )}
 
-                    {pinNarrativePrompt && narrativePromptLabel && (
-                      <p
-                        className="line-clamp-1 text-center font-bold shrink-0"
-                        title={displayQuestion.replace(/\*\*/g, '')}
-                        style={{
-                          fontSize: '1rem',
-                          lineHeight: 1.45,
-                          color: eduGame.ink,
-                        }}
-                      >
-                        {narrativePromptLabel}
-                      </p>
-                    )}
-
                     {footerMode === 'reflection' ? null : showCoachChoiceButtons ? (
                       <div className="space-y-2.5" role="group" aria-label="입장 선택">
                         {coachChoice.options.map((option, i) => (
@@ -912,11 +900,9 @@ export default function QuestFlowCards() {
                         onFocus={() => setInputFocused(true)}
                         onBlur={() => window.setTimeout(() => setInputFocused(false), 100)}
                         placeholder={
-                          pinNarrativePrompt
-                            ? ''
-                            : phase === 'hammer'
-                              ? '다른 시각을 듣고 — 네 생각을 한두 문장으로…'
-                              : '네 생각을 입력해…'
+                          phase === 'hammer'
+                            ? '다른 시각을 듣고 — 네 생각을 한두 문장으로…'
+                            : '네 생각을 입력해…'
                         }
                         disabled={sending || composing}
                         rows={inputRows}
