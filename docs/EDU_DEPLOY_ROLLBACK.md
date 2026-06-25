@@ -57,6 +57,7 @@
 | 2026-06-25 | `6b8f944` | **EDU 2-B** — QuestFlowCards 선택형 버튼 UI (PHP 0, 키보드 없이 탭 전송) |
 | 2026-06-25 | `67229cf` | **EDU 2-B fix** — DB stale axes choice merge + choice_question_text + state 복구 |
 | 2026-06-25 | `13a8dfd` | **EDU hammer 입력 복구** — 반론 textarea + 코치 긴 발화 문단 띄우기 |
+| 2026-06-25 | `ede448f` | **EDU 2-C** — 버튼+왜 콜라보 (pending_why) + 서술형 질문 한 줄 고정 라벨 |
 
 ## P1-2+ 라이브 완주 게이트 (R4–R6)
 
