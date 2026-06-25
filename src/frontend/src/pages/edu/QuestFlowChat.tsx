@@ -833,7 +833,7 @@ export default function QuestFlowChat() {
                     className={`block w-full py-3.5 text-center rounded-xl font-bold border-2 ${eduGameClasses.textKo}`}
                     style={{ borderColor: eduGame.border, color: eduGame.ink, fontSize: eduGame.fontSize.button }}
                   >
-                    내 글함
+                    내 프로필
                   </Link>
                   <Link
                     to="/edu"

@@ -405,6 +405,7 @@ input, textarea, select {
   .edu-game-explore-nudge,
   .edu-game-complete-in,
   .edu-game-streak-pop,
+  .edu-game-streak-live,
   .edu-game-xp-in {
     animation: none !important;
   }
@@ -453,6 +454,22 @@ input, textarea, select {
 
 .edu-game-streak-pop {
   animation: edu-game-streak-pop 0.55s ease-out 0.15s both;
+}
+
+@keyframes edu-game-streak-live {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: scale(1.08);
+    filter: brightness(1.06);
+  }
+}
+
+.edu-game-streak-live {
+  animation: edu-game-streak-live 2s ease-in-out infinite;
 }
 
 .edu-game-xp-in {

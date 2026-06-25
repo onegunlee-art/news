@@ -147,9 +147,10 @@ export default function EduHomePage() {
             <button
               type="button"
               onClick={() => navigate('/edu/profile')}
-              className="text-xs text-[#E8521C] underline"
+              className="text-xs underline font-bold"
+              style={{ color: '#f05123' }}
             >
-              내 글함
+              내 프로필
             </button>
             <button type="button" onClick={handleLogout} className="text-xs underline text-[#666]">
               나가기

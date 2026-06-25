@@ -392,6 +392,7 @@ export const eduApi = {
       student: EduStudent
       tier: EduTierProgress
       completed_count: number
+      topics_count?: number
     }>('/api/edu/student/profile.php'),
 
   studentSessions: (status: 'completed' | 'in_progress' | 'all' = 'completed') =>

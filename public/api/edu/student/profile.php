@@ -27,6 +27,13 @@ $completedRows = $supabase->select(
     500
 ) ?? [];
 
+$topicIds = [];
+foreach ($completedRows as $row) {
+    if (!empty($row['quest_id'])) {
+        $topicIds[(string) $row['quest_id']] = true;
+    }
+}
+
 eduSendJson([
     'success' => true,
     'student' => [
@@ -39,4 +46,5 @@ eduSendJson([
     ],
     'tier' => $tier,
     'completed_count' => count($completedRows),
+    'topics_count' => count($topicIds),
 ]);
