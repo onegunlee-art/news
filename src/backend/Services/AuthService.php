@@ -319,12 +319,23 @@ final class AuthService
         }
         $config = require dirname(__DIR__, 3) . '/config/app.php';
         $list = $config['security']['login_otp_skip_emails'] ?? [];
-        if (!is_array($list) || $list === []) {
+        if (is_array($list) && $list !== []) {
+            $normalized = array_map(static fn (string $e): string => strtolower(trim($e)), $list);
+            if (in_array($email, $normalized, true)) {
+                return true;
+            }
+        }
+
+        try {
+            $db = Database::getInstance();
+            $row = $db->fetchOne(
+                'SELECT 1 FROM corporate_otp_skip WHERE email = :email LIMIT 1',
+                ['email' => $email]
+            );
+            return $row !== null;
+        } catch (PDOException) {
             return false;
         }
-        $normalized = array_map(static fn (string $e): string => strtolower(trim($e)), $list);
-
-        return in_array($email, $normalized, true);
     }
 
     /**

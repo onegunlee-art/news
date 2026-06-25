@@ -13,6 +13,7 @@ import RAGTester from '../components/RAGTester/RAGTester';
 import { api, adminFetch, adminSettingsApi, adminTtsApi, ttsApi } from '../services/api';
 import { PRIVACY_POLICY_CONTENT } from '../components/Common/PrivacyPolicyContent';
 import AdminDraftPreviewEdit from '../components/Admin/AdminDraftPreviewEdit';
+import CorporateRegistrationModal from '../components/Admin/CorporateRegistrationModal';
 import StrategicHub from '../components/Admin/StrategicHub';
 import AGILab from '../components/Admin/AGILab';
 import GistLogo from '../components/Common/GistLogo';
@@ -306,6 +307,7 @@ const UsersManagementSection: React.FC<{
   const [pagination, setPagination] = useState({ page: 1, per_page: 20, total: 0, total_pages: 0 });
   const [filter, setFilter] = useState<'all' | 'subscribed' | 'unsubscribed' | 'expiring'>('all');
   const [loading, setLoading] = useState(true);
+  const [showCorporateModal, setShowCorporateModal] = useState(false);
 
   const loadUsers = useCallback(async (page = 1, filterParam: typeof filter = filter) => {
     setLoading(true);
@@ -362,6 +364,16 @@ const UsersManagementSection: React.FC<{
           <p className="text-slate-400 text-sm">이번 달 신규</p>
           <p className="text-2xl font-bold text-cyan-400 mt-1">{stats.new_this_month}</p>
         </div>
+      </div>
+
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={() => setShowCorporateModal(true)}
+          className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-sm font-medium transition-colors"
+        >
+          + 기업 고객 등록
+        </button>
       </div>
 
       {/* 필터 탭 */}
@@ -471,6 +483,12 @@ const UsersManagementSection: React.FC<{
           </>
         )}
       </div>
+
+      <CorporateRegistrationModal
+        isOpen={showCorporateModal}
+        onClose={() => setShowCorporateModal(false)}
+        onSuccess={() => void loadUsers(pagination.page, filter)}
+      />
     </div>
   );
 };

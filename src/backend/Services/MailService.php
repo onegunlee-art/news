@@ -191,4 +191,49 @@ final class MailService
         ];
         return (bool) @mail($to, $subjectEncoded, $textBody, implode("\r\n", $headers));
     }
+
+    /**
+     * 기업 고객 계정 생성 안내 메일
+     */
+    public function sendCorporateWelcomeEmail(
+        string $email,
+        string $password,
+        string $companyDisplayName,
+        int $subscriptionMonths
+    ): bool {
+        $loginUrl = getenv('APP_URL') ?: 'https://www.thegist.co.kr';
+        $loginUrl = rtrim($loginUrl, '/') . '/login';
+        $companyEsc = htmlspecialchars($companyDisplayName, ENT_QUOTES, 'UTF-8');
+        $emailEsc = htmlspecialchars($email, ENT_QUOTES, 'UTF-8');
+        $passwordEsc = htmlspecialchars($password, ENT_QUOTES, 'UTF-8');
+
+        $subject = '[The Gist] 기업 계정이 생성되었습니다';
+        $textBody = <<<TEXT
+The Gist 기업 계정 안내
+
+{$companyDisplayName} 소속으로 The Gist 계정이 생성되었습니다.
+
+이메일: {$email}
+비밀번호: {$password}
+구독 기간: {$subscriptionMonths}개월
+
+로그인: {$loginUrl}
+
+* 6자리 인증 코드 없이 이메일과 비밀번호만으로 로그인할 수 있습니다.
+TEXT;
+
+        $htmlBody = <<<HTML
+<h2>The Gist 기업 계정 안내</h2>
+<p><strong>{$companyEsc}</strong> 소속으로 The Gist 계정이 생성되었습니다.</p>
+<ul>
+  <li>이메일: {$emailEsc}</li>
+  <li>비밀번호: {$passwordEsc}</li>
+  <li>구독 기간: {$subscriptionMonths}개월</li>
+</ul>
+<p><a href="{$loginUrl}">로그인하기</a></p>
+<p style="color:#666;font-size:14px;">* 6자리 인증 코드 없이 이메일과 비밀번호만으로 로그인할 수 있습니다.</p>
+HTML;
+
+        return $this->send($email, $subject, $textBody, $htmlBody);
+    }
 }

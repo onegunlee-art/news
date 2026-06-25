@@ -16,6 +16,7 @@ use App\Core\Request;
 use App\Core\Response;
 use App\Core\Database;
 use App\Services\AuthService;
+use App\Services\MailService;
 use RuntimeException;
 use PDO;
 
@@ -361,6 +362,264 @@ final class AdminController
         } catch (RuntimeException $e) {
             return Response::error('구독 상태 변경 실패: ' . $e->getMessage(), 500);
         }
+    }
+
+    /**
+     * 기업 고객 일괄 등록
+     *
+     * POST /api/admin/users/corporate-batch
+     */
+    public function createCorporateBatch(Request $request): Response
+    {
+        $adminId = $this->checkAdminAuth($request);
+        if (!$adminId) {
+            return Response::unauthorized('관리자 권한이 필요합니다.');
+        }
+
+        $emailsRaw = $request->json('emails');
+        $password = (string) ($request->json('password') ?? '');
+        $companyTag = strtolower(trim((string) ($request->json('company_tag') ?? '')));
+        $companyDisplayName = trim((string) ($request->json('company_display_name') ?? ''));
+        $subscriptionMonths = (int) ($request->json('subscription_months') ?? 12);
+        $sendWelcomeEmail = (bool) ($request->json('send_welcome_email') ?? true);
+
+        if (!is_array($emailsRaw) || $emailsRaw === []) {
+            return Response::error('등록할 이메일 목록이 필요합니다.', 400);
+        }
+        if (strlen($password) < 6) {
+            return Response::error('비밀번호는 6자 이상이어야 합니다.', 400);
+        }
+        if ($companyTag === '') {
+            return Response::error('company_tag가 필요합니다.', 400);
+        }
+        if (!preg_match('/^[a-z0-9_-]{1,50}$/', $companyTag)) {
+            return Response::error('company_tag는 영문 소문자, 숫자, _, - 만 사용할 수 있습니다.', 400);
+        }
+        if (!in_array($subscriptionMonths, [6, 12, 24], true)) {
+            return Response::error('구독 기간은 6, 12, 24개월 중 하나여야 합니다.', 400);
+        }
+
+        $emails = $this->normalizeCorporateEmails($emailsRaw);
+        if ($emails === []) {
+            return Response::error('유효한 이메일이 없습니다.', 400);
+        }
+        if (count($emails) > 100) {
+            return Response::error('한 번에 최대 100명까지 등록할 수 있습니다.', 400);
+        }
+
+        $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+        if ($passwordHash === false) {
+            return Response::error('비밀번호 처리 중 오류가 발생했습니다.', 500);
+        }
+
+        $displayName = $companyDisplayName !== ''
+            ? $companyDisplayName
+            : $this->corporateCompanyDisplayName($companyTag);
+        $expiresAt = (new \DateTimeImmutable('+' . $subscriptionMonths . ' months'))->format('Y-m-d H:i:s');
+        $startDate = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
+        $subscriptionPlan = $this->corporateSubscriptionPlan($subscriptionMonths);
+
+        $created = [];
+        $updated = [];
+        $skipped = [];
+        $errors = [];
+        $emailsSent = 0;
+        $mailer = $sendWelcomeEmail ? new MailService() : null;
+
+        try {
+            $this->db->beginTransaction();
+
+            foreach ($emails as $email) {
+                try {
+                    $result = $this->upsertCorporateUser(
+                        $email,
+                        $passwordHash,
+                        $companyTag,
+                        $expiresAt,
+                        $startDate,
+                        $subscriptionPlan,
+                        $adminId
+                    );
+
+                    if ($result === 'created') {
+                        $created[] = $email;
+                    } elseif ($result === 'updated') {
+                        $updated[] = $email;
+                    } else {
+                        $skipped[] = $email;
+                    }
+
+                    if ($mailer !== null) {
+                        try {
+                            if ($mailer->sendCorporateWelcomeEmail($email, $password, $displayName, $subscriptionMonths)) {
+                                $emailsSent++;
+                            } else {
+                                $errors[] = ['email' => $email, 'message' => '안내 메일 발송 실패'];
+                            }
+                        } catch (RuntimeException $mailEx) {
+                            $errors[] = ['email' => $email, 'message' => '안내 메일: ' . $mailEx->getMessage()];
+                        }
+                    }
+                } catch (RuntimeException $e) {
+                    $errors[] = ['email' => $email, 'message' => $e->getMessage()];
+                }
+            }
+
+            $this->db->commit();
+        } catch (\Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            return Response::error('기업 고객 등록 실패: ' . $e->getMessage(), 500);
+        }
+
+        return Response::success([
+            'created' => $created,
+            'updated' => $updated,
+            'skipped' => $skipped,
+            'errors' => $errors,
+            'emails_sent' => $emailsSent,
+            'summary' => [
+                'created_count' => count($created),
+                'updated_count' => count($updated),
+                'skipped_count' => count($skipped),
+                'error_count' => count($errors),
+            ],
+        ], sprintf(
+            '등록 완료: 신규 %d명, 갱신 %d명, 건너뜀 %d명',
+            count($created),
+            count($updated),
+            count($skipped)
+        ));
+    }
+
+    /**
+     * @param list<string> $emailsRaw
+     * @return list<string>
+     */
+    private function normalizeCorporateEmails(array $emailsRaw): array
+    {
+        $normalized = [];
+        foreach ($emailsRaw as $raw) {
+            if (!is_string($raw)) {
+                continue;
+            }
+            foreach (preg_split('/[\n,;]+/', $raw) ?: [] as $part) {
+                $email = strtolower(trim($part));
+                if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    continue;
+                }
+                $normalized[$email] = $email;
+            }
+        }
+
+        return array_values($normalized);
+    }
+
+    private function corporateCompanyDisplayName(string $companyTag): string
+    {
+        return match ($companyTag) {
+            'hyundai' => '현대자동차',
+            'samsung' => '삼성',
+            'other' => '기업 고객',
+            default => $companyTag,
+        };
+    }
+
+    private function corporateSubscriptionPlan(int $months): string
+    {
+        return match ($months) {
+            6 => '6m',
+            24 => '12m',
+            default => '12m',
+        };
+    }
+
+    private function nicknameFromCorporateEmail(string $email): string
+    {
+        $local = explode('@', $email)[0] ?? 'user';
+        $local = preg_replace('/[^a-zA-Z0-9가-힣._-]/u', '', $local) ?? 'user';
+        if ($local === '') {
+            $local = 'user';
+        }
+
+        return mb_strlen($local) > 50 ? mb_substr($local, 0, 50) : $local;
+    }
+
+    /**
+     * @return 'created'|'updated'|'skipped'
+     */
+    private function upsertCorporateUser(
+        string $email,
+        string $passwordHash,
+        string $companyTag,
+        string $expiresAt,
+        string $startDate,
+        string $subscriptionPlan,
+        int $adminId
+    ): string {
+        $stmt = $this->db->prepare('SELECT id, email FROM users WHERE email = ? LIMIT 1');
+        $stmt->execute([$email]);
+        $existing = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($existing) {
+            $update = $this->db->prepare("
+                UPDATE users SET
+                    password_hash = ?,
+                    company_tag = ?,
+                    is_subscribed = 1,
+                    subscription_expires_at = ?,
+                    subscription_plan = ?,
+                    subscription_start_date = ?,
+                    status = 'active',
+                    role = 'user'
+                WHERE id = ?
+            ");
+            $update->execute([
+                $passwordHash,
+                $companyTag,
+                $expiresAt,
+                $subscriptionPlan,
+                $startDate,
+                (int) $existing['id'],
+            ]);
+            $userId = (int) $existing['id'];
+            $action = 'updated';
+        } else {
+            $insert = $this->db->prepare("
+                INSERT INTO users (
+                    email, password_hash, nickname, role, status,
+                    company_tag, is_subscribed, subscription_expires_at,
+                    subscription_plan, subscription_start_date
+                ) VALUES (?, ?, ?, 'user', 'active', ?, 1, ?, ?, ?)
+            ");
+            $insert->execute([
+                $email,
+                $passwordHash,
+                $this->nicknameFromCorporateEmail($email),
+                $companyTag,
+                $expiresAt,
+                $subscriptionPlan,
+                $startDate,
+            ]);
+            $userId = (int) $this->db->lastInsertId();
+            $action = 'created';
+        }
+
+        $otpStmt = $this->db->prepare("
+            INSERT INTO corporate_otp_skip (email, company_tag, created_by)
+            VALUES (?, ?, ?)
+            ON DUPLICATE KEY UPDATE
+                company_tag = VALUES(company_tag),
+                created_by = VALUES(created_by)
+        ");
+        $otpStmt->execute([$email, $companyTag, $adminId]);
+
+        if ($userId <= 0) {
+            throw new RuntimeException('사용자 저장에 실패했습니다.');
+        }
+
+        return $action;
     }
 
     /**

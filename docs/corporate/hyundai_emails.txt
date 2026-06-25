@@ -1,0 +1,14 @@
+# 현대자동차 기업 고객 이메일 목록 (30명)
+#
+# 등록 방법 (택1):
+# 1) Admin > 사용자 관리 > 기업 고객 등록 > Excel 업로드 (.xlsx/.csv)
+# 2) Admin 모달에 이메일 붙여넣기
+# 3) CLI: php tools/corporate_batch_seed.php --file=docs/corporate/hyundai_emails.txt --apply --no-mail
+#
+# Excel 형식: 첫 시트에 email(또는 이메일) 열 — Admin에서 "Excel 템플릿 다운로드" 가능
+#
+# 아래 placeholder를 실제 이메일로 교체하세요.
+
+# exec1@hyundai.com
+# exec2@hyundai.com
+# ... (30명)
