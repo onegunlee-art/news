@@ -52,6 +52,8 @@
 | 2026-06-24 | `eed9a08` | **compose bottom sheet** — compact 시 질문+입력 한 덩어리, 긴 snippet 가림 해결 (PHP 0) |
 | 2026-06-24 | `a7a4ac8` | **단계 3 표지** — 기사 썸네일 + 오늘 따질 주제, cover_image_url/hook_short API |
 | 2026-06-24 | `bf7c998` | **단계 4** — 196(이란)·288(청소년) axis_guide 3축 seed + 멀티유저 분리 CLI |
+| 2026-06-25 | `445f290` | **카드 1단계** — QuestFlowCards 골격 + 키보드 시 질문 우선 레이아웃 |
+| 2026-06-25 | `207fe87` | **EDU 2-A** — axis_guide `choice_question`/`options` JSON (서술형 FSM 0, 버튼 UI 전) |
 
 ## P1-2+ 라이브 완주 게이트 (R4–R6)
 
