@@ -88,10 +88,12 @@ function parseCoachCardContent(content: string): {
 function useVisualViewportLayout(): {
   viewportHeight: number | null
   viewportOffsetTop: number
+  keyboardInset: number
 } {
   const [layout, setLayout] = useState({
     viewportHeight: null as number | null,
     viewportOffsetTop: 0,
+    keyboardInset: 0,
   })
 
   useEffect(() => {
@@ -102,6 +104,7 @@ function useVisualViewportLayout(): {
       setLayout({
         viewportHeight: vv.height,
         viewportOffsetTop: vv.offsetTop,
+        keyboardInset: Math.max(0, window.innerHeight - vv.height - vv.offsetTop),
       })
     }
 
@@ -118,10 +121,10 @@ function useVisualViewportLayout(): {
   return layout
 }
 
-function CardStructureBarPlaceholder() {
+function CardStructureBarPlaceholder({ compact = false }: { compact?: boolean }) {
   return (
     <div
-      className="shrink-0 border-b px-4 py-2"
+      className={`shrink-0 border-b px-4 ${compact ? 'py-1' : 'py-2'}`}
       style={{ borderColor: eduGame.border, backgroundColor: eduGame.surface }}
       aria-label="글 구조 (준비 중)"
     >
@@ -129,7 +132,7 @@ function CardStructureBarPlaceholder() {
         {STRUCTURE_BAR_SLOTS.map((label) => (
           <div
             key={label}
-            className="flex-1 min-w-0 rounded-lg border-2 border-dashed py-2 px-1 text-center"
+            className={`flex-1 min-w-0 rounded-lg border-2 border-dashed text-center ${compact ? 'py-1 px-0.5' : 'py-2 px-1'}`}
             style={{ borderColor: eduGame.border, backgroundColor: eduGame.bg }}
           >
             <span
@@ -149,7 +152,8 @@ export default function QuestFlowCards() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const questIdParam = searchParams.get('quest_id')?.trim() || ''
-  const { viewportHeight, viewportOffsetTop } = useVisualViewportLayout()
+  const { viewportHeight, viewportOffsetTop, keyboardInset } = useVisualViewportLayout()
+  const [inputFocused, setInputFocused] = useState(false)
 
   const [quest, setQuest] = useState<EduQuest | null>(null)
   const [sessionId, setSessionId] = useState('')
@@ -530,6 +534,10 @@ export default function QuestFlowCards() {
     (footerMode === 'evidence' && !evidenceReady) ||
     (footerMode === 'chat' && !input.trim())
 
+  const keyboardOpen = keyboardInset > 40 || inputFocused
+  const inputRows = keyboardOpen ? 2 : footerMode === 'opening' ? 3 : 2
+  const inputMaxHeight = keyboardOpen ? '4.75rem' : footerMode === 'opening' ? '7rem' : '5.5rem'
+
   return (
     <div
       className={`${eduGameClasses.chatShell} fixed left-0 right-0 flex flex-col overflow-hidden`}
@@ -575,7 +583,7 @@ export default function QuestFlowCards() {
         </div>
       </header>
 
-      {!completed && <CardStructureBarPlaceholder />}
+      {!completed && <CardStructureBarPlaceholder compact={keyboardOpen} />}
 
       {completed ? (
         <main className={`flex-1 min-h-0 overflow-y-auto ${eduGameClasses.chatScroll} ${PAGE_MAX} mx-auto w-full px-4 py-4 space-y-4`}>
@@ -615,155 +623,162 @@ export default function QuestFlowCards() {
           )}
         </main>
       ) : (
-        <>
-          <div className={`flex-1 min-h-0 flex flex-col ${PAGE_MAX} mx-auto w-full overflow-hidden`}>
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={cardKey}
-                initial={{ opacity: 0, x: 48 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -48 }}
-                transition={{ duration: 0.22, ease: 'easeOut' }}
-                className="flex-1 min-h-0 flex flex-col px-4 py-3 overflow-hidden"
-              >
-                {(sending || composing) && (
-                  <div className="shrink-0 mb-2">
-                    <TypingIndicator label={composing ? '네 글을 만들고 있어…' : undefined} />
+        <div className={`flex-1 min-h-0 flex flex-col overflow-hidden ${PAGE_MAX} mx-auto w-full`}>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={cardKey}
+              initial={{ opacity: 0, x: 48 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -48 }}
+              transition={{ duration: 0.22, ease: 'easeOut' }}
+              className="flex-1 min-h-0 flex flex-col overflow-hidden"
+            >
+              {(sending || composing) && (
+                <div className="shrink-0 px-4 pt-2">
+                  <TypingIndicator label={composing ? '네 글을 만들고 있어…' : undefined} />
+                </div>
+              )}
+
+              {/* 질문·fact — shrink-0 고정 (키보드와 무관하게 전체 노출) */}
+              <div className="shrink-0 px-4 pt-2 pb-2">
+                <p
+                  className={`text-center font-bold ${eduGameClasses.textKoPre}`}
+                  style={{
+                    fontSize: keyboardOpen ? '1.125rem' : '1.25rem',
+                    lineHeight: 1.5,
+                    color: eduGame.ink,
+                  }}
+                >
+                  {cardQuestion}
+                </p>
+
+                {cardSnippets.length > 0 && (
+                  <div
+                    className="mt-3 space-y-2 overflow-y-auto"
+                    style={{ maxHeight: keyboardOpen ? '22vh' : '28vh' }}
+                  >
+                    {cardSnippets.map((snip, i) => (
+                      <EduArticleSnippetCard
+                        key={`${cardKey}-snip-${i}`}
+                        text={snip.value}
+                        display={snip.display}
+                      />
+                    ))}
                   </div>
                 )}
 
-                <div className="flex-1 min-h-0 flex flex-col justify-center gap-4 overflow-hidden">
-                  <p
-                    className={`text-center font-bold ${eduGameClasses.textKoPre}`}
-                    style={{
-                      fontSize: '1.25rem',
-                      lineHeight: 1.5,
-                      color: eduGame.ink,
-                    }}
-                  >
-                    {cardQuestion}
-                  </p>
-
-                  {cardSnippets.length > 0 && (
-                    <div className="shrink-0 space-y-2 max-h-[40%] overflow-y-auto">
-                      {cardSnippets.map((snip, i) => (
-                        <EduArticleSnippetCard
-                          key={`${cardKey}-snip-${i}`}
-                          text={snip.value}
-                          display={snip.display}
-                        />
-                      ))}
-                    </div>
-                  )}
-
-                  {footerMode === 'stance_pick' && quest && dialogue.length === 0 && (
-                    <div className="shrink-0 space-y-2">
-                      <button
-                        type="button"
-                        disabled={sending}
-                        onClick={() => void handleStance('pro')}
-                        className={`w-full text-left border-2 rounded-xl p-4 ${eduGameClasses.textKo}`}
-                        style={{ borderColor: eduGame.primary, fontSize: eduGame.fontSize.body }}
-                      >
-                        <span className="font-bold block mb-1" style={{ color: eduGame.primary }}>
-                          찬성
-                        </span>
-                        {quest.pro_line}
-                      </button>
-                      <button
-                        type="button"
-                        disabled={sending}
-                        onClick={() => void handleStance('con')}
-                        className={`w-full text-left border-2 rounded-xl p-4 ${eduGameClasses.textKo}`}
-                        style={{ borderColor: eduGame.ink, fontSize: eduGame.fontSize.body }}
-                      >
-                        <span className="font-bold block mb-1">반대</span>
-                        {quest.con_line}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            </AnimatePresence>
-          </div>
-
-          {footerMode && footerMode !== 'stance_pick' && (
-            <footer
-              className={`shrink-0 border-t px-4 py-3 ${PAGE_MAX} mx-auto w-full`}
-              style={{
-                borderColor: eduGame.border,
-                backgroundColor: eduGame.bg,
-                paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0px))',
-              }}
-            >
-              <div className="space-y-3">
-                {footerMode === 'evidence' && (
-                  <p className="text-center" style={{ fontSize: eduGame.fontSize.caption, color: eduGame.muted }}>
-                    {evidenceLen}자
-                    {evidenceLen > 0 && evidenceLen < EVIDENCE_RECOMMENDED_LEN
-                      ? ` · ${EVIDENCE_RECOMMENDED_LEN}자 이상이면 좋아요`
-                      : ''}
-                  </p>
+                {footerMode === 'stance_pick' && quest && dialogue.length === 0 && (
+                  <div className="mt-3 space-y-2">
+                    <button
+                      type="button"
+                      disabled={sending}
+                      onClick={() => void handleStance('pro')}
+                      className={`w-full text-left border-2 rounded-xl p-4 ${eduGameClasses.textKo}`}
+                      style={{ borderColor: eduGame.primary, fontSize: eduGame.fontSize.body }}
+                    >
+                      <span className="font-bold block mb-1" style={{ color: eduGame.primary }}>
+                        찬성
+                      </span>
+                      {quest.pro_line}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={sending}
+                      onClick={() => void handleStance('con')}
+                      className={`w-full text-left border-2 rounded-xl p-4 ${eduGameClasses.textKo}`}
+                      style={{ borderColor: eduGame.ink, fontSize: eduGame.fontSize.body }}
+                    >
+                      <span className="font-bold block mb-1">반대</span>
+                      {quest.con_line}
+                    </button>
+                  </div>
                 )}
-
-                {footerMode === 'reflection' ? null : footerMode === 'evidence' ? (
-                  <textarea
-                    value={evidenceInput}
-                    onChange={(e) => {
-                      setEvidenceInput(e.target.value)
-                      if (error) setError('')
-                    }}
-                    placeholder="기사에서 본 구체적인 사실을 적어줘…"
-                    disabled={sending || composing}
-                    rows={4}
-                    className={`w-full resize-none ${eduGameClasses.input}`}
-                    style={{
-                      borderColor: eduGame.border,
-                      fontSize: eduGame.fontSize.body,
-                      lineHeight: eduGame.lineHeight.body,
-                    }}
-                  />
-                ) : (
-                  <textarea
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    placeholder={
-                      footerMode === 'opening'
-                        ? '네 생각을 입력해…'
-                        : '네 생각을 입력해…'
-                    }
-                    disabled={sending || composing}
-                    rows={footerMode === 'opening' ? 4 : 3}
-                    className={`w-full resize-none ${eduGameClasses.input}`}
-                    style={{
-                      borderColor: eduGame.border,
-                      fontSize: eduGame.fontSize.body,
-                      lineHeight: eduGame.lineHeight.body,
-                    }}
-                  />
-                )}
-
-                {error && (
-                  <p className="text-sm text-red-600 text-center">{error}</p>
-                )}
-
-                <button
-                  type="button"
-                  onClick={() => void handlePrimaryAction()}
-                  disabled={primaryDisabled}
-                  className={`w-full py-3.5 ${eduGameClasses.btnPrimary}`}
-                  style={{ backgroundColor: eduGame.primary, fontSize: eduGame.fontSize.button }}
-                >
-                  {primaryLabel}
-                </button>
               </div>
-            </footer>
-          )}
 
-          {footerMode === 'stance_pick' && error && (
-            <p className="shrink-0 px-4 pb-3 text-sm text-red-600 text-center">{error}</p>
-          )}
-        </>
+              {/* 남는 세로 공간 — 키보드 시 여기만 줄어듦 (질문 영역 침범 방지) */}
+              <div className="flex-1 min-h-0" aria-hidden />
+
+              {footerMode && footerMode !== 'stance_pick' && (
+                <footer
+                  className="shrink-0 border-t px-4 py-2.5 w-full"
+                  style={{
+                    borderColor: eduGame.border,
+                    backgroundColor: eduGame.bg,
+                    paddingBottom: 'calc(0.5rem + env(safe-area-inset-bottom, 0px))',
+                  }}
+                >
+                  <div className="space-y-2">
+                    {footerMode === 'evidence' && (
+                      <p className="text-center" style={{ fontSize: eduGame.fontSize.caption, color: eduGame.muted }}>
+                        {evidenceLen}자
+                        {evidenceLen > 0 && evidenceLen < EVIDENCE_RECOMMENDED_LEN
+                          ? ` · ${EVIDENCE_RECOMMENDED_LEN}자 이상이면 좋아요`
+                          : ''}
+                      </p>
+                    )}
+
+                    {footerMode === 'reflection' ? null : footerMode === 'evidence' ? (
+                      <textarea
+                        value={evidenceInput}
+                        onChange={(e) => {
+                          setEvidenceInput(e.target.value)
+                          if (error) setError('')
+                        }}
+                        onFocus={() => setInputFocused(true)}
+                        onBlur={() => window.setTimeout(() => setInputFocused(false), 100)}
+                        placeholder="기사에서 본 구체적인 사실을 적어줘…"
+                        disabled={sending || composing}
+                        rows={inputRows}
+                        className={`w-full resize-none overflow-y-auto ${eduGameClasses.input}`}
+                        style={{
+                          borderColor: eduGame.border,
+                          fontSize: eduGame.fontSize.body,
+                          lineHeight: eduGame.lineHeight.body,
+                          maxHeight: inputMaxHeight,
+                        }}
+                      />
+                    ) : (
+                      <textarea
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onFocus={() => setInputFocused(true)}
+                        onBlur={() => window.setTimeout(() => setInputFocused(false), 100)}
+                        placeholder="네 생각을 입력해…"
+                        disabled={sending || composing}
+                        rows={inputRows}
+                        className={`w-full resize-none overflow-y-auto ${eduGameClasses.input}`}
+                        style={{
+                          borderColor: eduGame.border,
+                          fontSize: eduGame.fontSize.body,
+                          lineHeight: eduGame.lineHeight.body,
+                          maxHeight: inputMaxHeight,
+                        }}
+                      />
+                    )}
+
+                    {error && (
+                      <p className="text-sm text-red-600 text-center">{error}</p>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => void handlePrimaryAction()}
+                      disabled={primaryDisabled}
+                      className={`w-full py-3 ${eduGameClasses.btnPrimary}`}
+                      style={{ backgroundColor: eduGame.primary, fontSize: eduGame.fontSize.button }}
+                    >
+                      {primaryLabel}
+                    </button>
+                  </div>
+                </footer>
+              )}
+
+              {footerMode === 'stance_pick' && error && (
+                <p className="shrink-0 px-4 pb-3 text-sm text-red-600 text-center">{error}</p>
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </div>
       )}
     </div>
   )
