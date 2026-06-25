@@ -138,6 +138,9 @@ export interface EduChatResponse {
   needs_followup?: boolean
   feedback_hint?: string | null
   structure_preview?: EduStructurePreview
+  /** axis_guide 선택형 — 2-A 백엔드, 카드 버튼 UI용 */
+  choice_question?: boolean
+  options?: string[]
 }
 
 export interface EduEssaySection {

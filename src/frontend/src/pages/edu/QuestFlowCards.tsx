@@ -26,6 +26,53 @@ import { eduQuestPathWithUi, setEduCoachUiMode } from '../../constants/eduCoachU
 
 const PAGE_MAX = 'max-w-2xl'
 const EVIDENCE_RECOMMENDED_LEN = 20
+const COACH_CHOICE_CACHE_PREFIX = 'edu_coach_choice_v1'
+
+type CoachChoiceState = {
+  active: boolean
+  options: string[]
+}
+
+function emptyCoachChoice(): CoachChoiceState {
+  return { active: false, options: [] }
+}
+
+function coachChoiceCacheKey(sessionId: string, coachIndex: number): string {
+  return `${COACH_CHOICE_CACHE_PREFIX}:${sessionId}:${coachIndex}`
+}
+
+function readCachedCoachChoice(sessionId: string, coachIndex: number): CoachChoiceState | null {
+  if (coachIndex < 0) return null
+  try {
+    const raw = sessionStorage.getItem(coachChoiceCacheKey(sessionId, coachIndex))
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as CoachChoiceState
+    if (!parsed.active || !Array.isArray(parsed.options) || parsed.options.length === 0) {
+      return null
+    }
+    return parsed
+  } catch {
+    return null
+  }
+}
+
+function writeCachedCoachChoice(sessionId: string, coachIndex: number, choice: CoachChoiceState): void {
+  if (coachIndex < 0) return
+  if (!choice.active || choice.options.length === 0) {
+    sessionStorage.removeItem(coachChoiceCacheKey(sessionId, coachIndex))
+    return
+  }
+  sessionStorage.setItem(coachChoiceCacheKey(sessionId, coachIndex), JSON.stringify(choice))
+}
+
+function resolveCoachChoiceFromResponse(
+  res: Awaited<ReturnType<typeof eduApi.sendChat>>
+): CoachChoiceState {
+  if (res.choice_question && Array.isArray(res.options) && res.options.length > 0) {
+    return { active: true, options: res.options }
+  }
+  return emptyCoachChoice()
+}
 
 const STRUCTURE_BAR_SLOTS = ['배경', '입장', '갈등', '반론', '결론'] as const
 
@@ -175,6 +222,7 @@ export default function QuestFlowCards() {
   const [structurePreview, setStructurePreview] = useState<EssayStructurePreview | null>(null)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [playEssayReveal, setPlayEssayReveal] = useState(false)
+  const [coachChoice, setCoachChoice] = useState<CoachChoiceState>(emptyCoachChoice)
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const applySessionState = useCallback((state: Awaited<ReturnType<typeof eduApi.getSessionState>>) => {
@@ -272,6 +320,24 @@ export default function QuestFlowCards() {
     }
   }, [])
 
+  const coachIndex = lastAssistantDialogueIndex(dialogue)
+
+  useEffect(() => {
+    if (!sessionId || completed || coachIndex < 0) {
+      setCoachChoice(emptyCoachChoice())
+      return
+    }
+    const cached = readCachedCoachChoice(sessionId, coachIndex)
+    if (cached) {
+      setCoachChoice(cached)
+    }
+  }, [sessionId, coachIndex, completed])
+
+  useEffect(() => {
+    if (!sessionId || coachIndex < 0) return
+    writeCachedCoachChoice(sessionId, coachIndex, coachChoice)
+  }, [sessionId, coachIndex, coachChoice])
+
   const appendAssistant = (content: string) => {
     setDialogue((prev) => [...prev, { role: 'assistant', content }])
   }
@@ -366,10 +432,13 @@ export default function QuestFlowCards() {
     if (res.structure_preview?.sections?.length) {
       setStructurePreview(res.structure_preview as EssayStructurePreview)
     }
+    const nextChoice = resolveCoachChoiceFromResponse(res)
+    setCoachChoice(nextChoice)
     await syncSessionState(sid)
     if (res.should_compose) {
       await handleCompose(sid)
     }
+    return nextChoice
   }
 
   const handleSubmitOpening = async () => {
@@ -440,6 +509,23 @@ export default function QuestFlowCards() {
     }
   }
 
+  const handleChoiceSelect = async (choice: string) => {
+    const label = choice.trim()
+    if (!label || !sessionId || sending || completed) return
+    setCoachChoice(emptyCoachChoice())
+    setSending(true)
+    setError('')
+    appendStudent(label)
+    try {
+      const res = await eduApi.sendChat(sessionId, { message: label })
+      await handleChatResponse(res, sessionId)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '오류')
+    } finally {
+      setSending(false)
+    }
+  }
+
   const handleSubmitEvidence = async () => {
     const msg = evidenceInput.trim()
     if (!msg || !sessionId || sending || completed || phase !== 'evidence') {
@@ -477,14 +563,15 @@ export default function QuestFlowCards() {
   const authorName = getEduDisplayName() ?? '나'
   const entryMode = resolveQuestEntryMode(quest)
   const footerMode = resolveQuestFooterMode(phase, entryMode)
-  const coachIndex = lastAssistantDialogueIndex(dialogue)
   const coachTurn = coachIndex >= 0 ? dialogue[coachIndex] : null
   const evidenceLen = evidenceInput.trim().length
   const evidenceReady = evidenceLen > 0
+  const showCoachChoiceButtons =
+    footerMode === 'chat' && coachChoice.active && coachChoice.options.length > 0
 
   const cardKey = completed
     ? 'completed'
-    : `${phase}-${coachIndex}-${dialogue.length}-${footerMode ?? 'none'}`
+    : `${phase}-${coachIndex}-${dialogue.length}-${footerMode ?? 'none'}-${showCoachChoiceButtons ? coachChoice.options.join('|') : 'text'}`
 
   let cardQuestion = ''
   let cardSnippets: Array<{ display: string; value: string }> = []
@@ -530,6 +617,7 @@ export default function QuestFlowCards() {
   const primaryDisabled =
     sending ||
     composing ||
+    showCoachChoiceButtons ||
     (footerMode === 'opening' && !input.trim()) ||
     (footerMode === 'evidence' && !evidenceReady) ||
     (footerMode === 'chat' && !input.trim())
@@ -717,7 +805,29 @@ export default function QuestFlowCards() {
                       </p>
                     )}
 
-                    {footerMode === 'reflection' ? null : footerMode === 'evidence' ? (
+                    {footerMode === 'reflection' ? null : showCoachChoiceButtons ? (
+                      <div className="space-y-2.5" role="group" aria-label="입장 선택">
+                        {coachChoice.options.map((option, i) => (
+                          <button
+                            key={`${cardKey}-choice-${i}`}
+                            type="button"
+                            disabled={sending || composing}
+                            onClick={() => void handleChoiceSelect(option)}
+                            className={`w-full py-4 px-4 rounded-2xl font-bold border-2 text-center active:scale-[0.98] transition-transform disabled:opacity-40 disabled:active:scale-100 ${eduGameClasses.textKo}`}
+                            style={{
+                              fontSize: '1.125rem',
+                              lineHeight: 1.45,
+                              borderColor: eduGame.primary,
+                              backgroundColor: i === 0 ? eduGame.primary : eduGame.bg,
+                              color: i === 0 ? eduGame.bg : eduGame.ink,
+                              boxShadow: i === 0 ? '0 2px 0 rgba(217, 69, 28, 0.35)' : '0 2px 0 rgba(232, 232, 232, 1)',
+                            }}
+                          >
+                            {option}
+                          </button>
+                        ))}
+                      </div>
+                    ) : footerMode === 'evidence' ? (
                       <textarea
                         value={evidenceInput}
                         onChange={(e) => {
@@ -760,15 +870,17 @@ export default function QuestFlowCards() {
                       <p className="text-sm text-red-600 text-center">{error}</p>
                     )}
 
-                    <button
-                      type="button"
-                      onClick={() => void handlePrimaryAction()}
-                      disabled={primaryDisabled}
-                      className={`w-full py-3 ${eduGameClasses.btnPrimary}`}
-                      style={{ backgroundColor: eduGame.primary, fontSize: eduGame.fontSize.button }}
-                    >
-                      {primaryLabel}
-                    </button>
+                    {!showCoachChoiceButtons && (
+                      <button
+                        type="button"
+                        onClick={() => void handlePrimaryAction()}
+                        disabled={primaryDisabled}
+                        className={`w-full py-3 ${eduGameClasses.btnPrimary}`}
+                        style={{ backgroundColor: eduGame.primary, fontSize: eduGame.fontSize.button }}
+                      >
+                        {primaryLabel}
+                      </button>
+                    )}
                   </div>
                 </footer>
               )}
