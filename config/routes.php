@@ -381,6 +381,7 @@ $router->group(['prefix' => '/admin'], function (Router $router) {
     $router->put('/users/{id}/role', [AdminController::class, 'updateUserRole']);
     $router->put('/users/{id}/subscription', [AdminController::class, 'updateUserSubscription']);
     $router->post('/users/corporate-batch', [AdminController::class, 'createCorporateBatch']);
+    $router->post('/users/migrate-corporate', [AdminController::class, 'migrateCorporateUsers']);
     
     // 구독 취소 요청 관리
     $router->get('/cancel-requests', [AdminController::class, 'cancelRequests']);

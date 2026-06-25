@@ -308,6 +308,8 @@ const UsersManagementSection: React.FC<{
   const [filter, setFilter] = useState<'all' | 'subscribed' | 'unsubscribed' | 'expiring'>('all');
   const [loading, setLoading] = useState(true);
   const [showCorporateModal, setShowCorporateModal] = useState(false);
+  const [migrationMessage, setMigrationMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [migrationLoading, setMigrationLoading] = useState(false);
 
   const loadUsers = useCallback(async (page = 1, filterParam: typeof filter = filter) => {
     setLoading(true);
@@ -366,7 +368,31 @@ const UsersManagementSection: React.FC<{
         </div>
       </div>
 
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2 flex-wrap">
+        <button
+          type="button"
+          disabled={migrationLoading}
+          onClick={async () => {
+            setMigrationLoading(true);
+            setMigrationMessage(null);
+            try {
+              const r = await adminFetch('/api/admin/users/migrate-corporate', { method: 'POST' });
+              const d = await r.json();
+              if (d.success) {
+                setMigrationMessage({ type: 'success', text: d.message || 'DB 마이그레이션 완료' });
+              } else {
+                setMigrationMessage({ type: 'error', text: d.message || '마이그레이션 실패' });
+              }
+            } catch {
+              setMigrationMessage({ type: 'error', text: '마이그레이션 요청 실패' });
+            } finally {
+              setMigrationLoading(false);
+            }
+          }}
+          className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+        >
+          {migrationLoading ? '마이그레이션 중...' : '기업고객 DB 마이그레이션'}
+        </button>
         <button
           type="button"
           onClick={() => setShowCorporateModal(true)}
@@ -375,6 +401,16 @@ const UsersManagementSection: React.FC<{
           + 기업 고객 등록
         </button>
       </div>
+
+      {migrationMessage && (
+        <div className={`p-3 rounded-lg text-sm border ${
+          migrationMessage.type === 'success'
+            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-200'
+            : 'bg-red-500/10 border-red-500/30 text-red-300'
+        }`}>
+          {migrationMessage.text}
+        </div>
+      )}
 
       {/* 필터 탭 */}
       <div className="flex gap-2 flex-wrap">

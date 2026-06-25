@@ -365,6 +365,76 @@ final class AdminController
     }
 
     /**
+     * 기업 고객 DB 마이그레이션 (company_tag + corporate_otp_skip)
+     *
+     * POST /api/admin/users/migrate-corporate
+     */
+    public function migrateCorporateUsers(Request $request): Response
+    {
+        $adminId = $this->checkAdminAuth($request);
+        if (!$adminId) {
+            return Response::unauthorized('관리자 권한이 필요합니다.');
+        }
+
+        $steps = [];
+
+        try {
+            $hasCompanyTag = (bool) $this->db->query("SHOW COLUMNS FROM users LIKE 'company_tag'")->fetch(PDO::FETCH_ASSOC);
+            if (!$hasCompanyTag) {
+                $this->db->exec("
+                    ALTER TABLE `users`
+                      ADD COLUMN `company_tag` VARCHAR(50) NULL
+                      COMMENT '기업 고객 소속 (예: hyundai, samsung)'
+                      AFTER `profile_image`
+                ");
+                $steps[] = 'users.company_tag added';
+            } else {
+                $steps[] = 'users.company_tag already exists';
+            }
+
+            $hasIndex = (bool) $this->db->query("SHOW INDEX FROM users WHERE Key_name = 'idx_users_company_tag'")->fetch(PDO::FETCH_ASSOC);
+            if (!$hasIndex) {
+                try {
+                    $this->db->exec('CREATE INDEX `idx_users_company_tag` ON `users` (`company_tag`)');
+                    $steps[] = 'idx_users_company_tag created';
+                } catch (\PDOException $e) {
+                    if (str_contains($e->getMessage(), 'Duplicate key name')) {
+                        $steps[] = 'idx_users_company_tag already exists';
+                    } else {
+                        throw $e;
+                    }
+                }
+            } else {
+                $steps[] = 'idx_users_company_tag already exists';
+            }
+
+            $hasTable = (bool) $this->db->query("SHOW TABLES LIKE 'corporate_otp_skip'")->fetch(PDO::FETCH_NUM);
+            if (!$hasTable) {
+                $this->db->exec("
+                    CREATE TABLE `corporate_otp_skip` (
+                        `id` INT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'PK',
+                        `email` VARCHAR(255) NOT NULL COMMENT 'OTP 생략 이메일 (소문자)',
+                        `company_tag` VARCHAR(50) NOT NULL COMMENT '기업 태그',
+                        `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '등록 시각',
+                        `created_by` INT UNSIGNED NULL COMMENT '등록한 admin user id',
+                        PRIMARY KEY (`id`),
+                        UNIQUE KEY `uk_corporate_otp_skip_email` (`email`),
+                        KEY `idx_corporate_otp_skip_company` (`company_tag`)
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                      COMMENT='기업 고객 로그인 OTP 생략 목록'
+                ");
+                $steps[] = 'corporate_otp_skip table created';
+            } else {
+                $steps[] = 'corporate_otp_skip already exists';
+            }
+
+            return Response::success(['steps' => $steps], '기업 고객 마이그레이션 완료');
+        } catch (\PDOException $e) {
+            return Response::error('마이그레이션 실패: ' . $e->getMessage(), 500, ['steps' => $steps]);
+        }
+    }
+
+    /**
      * 기업 고객 일괄 등록
      *
      * POST /api/admin/users/corporate-batch
