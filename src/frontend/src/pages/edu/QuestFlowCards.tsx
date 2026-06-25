@@ -1,0 +1,770 @@
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { AnimatePresence, motion } from 'framer-motion'
+import EssayRevealWrapper from '../../components/edu/EssayRevealWrapper'
+import { type EssayArtifact } from '../../components/edu/EssayRevealCard'
+import { type EssayStructurePreview } from '../../components/edu/StructurePreviewCard'
+import EduQuestCompletionCelebration from '../../components/edu/EduQuestCompletionCelebration'
+import EduStructureReviewCard from '../../components/edu/EduStructureReviewCard'
+import TypingIndicator from '../../components/edu/TypingIndicator'
+import EduArticleSnippetCard from '../../components/edu/EduArticleSnippetCard'
+import {
+  coachMessageHasSnippet,
+  parseCoachAssistantMessage,
+} from '../../utils/eduCoachMessageParse'
+import {
+  eduApi,
+  getEduToken,
+  getEduDisplayName,
+  type EduDialogueTurn,
+  type EduQuest,
+  type EduTierProgress,
+} from '../../services/eduApi'
+import { EDU_BRAND } from '../../constants/eduBrand'
+import { eduGame, eduGameClasses } from '../../constants/eduGameTheme'
+import { eduQuestPathWithUi, setEduCoachUiMode } from '../../constants/eduCoachUi'
+
+const PAGE_MAX = 'max-w-2xl'
+const EVIDENCE_RECOMMENDED_LEN = 20
+
+const STRUCTURE_BAR_SLOTS = ['배경', '입장', '갈등', '반론', '결론'] as const
+
+type QuestFooterMode = 'opening' | 'evidence' | 'reflection' | 'chat' | 'stance_pick'
+type QuestEntryMode = 'open_response' | 'stance_pick'
+type StanceEntryChatAction = 'submit_opening' | 'select_stance'
+
+function resolveQuestEntryMode(quest: EduQuest | null | undefined): QuestEntryMode {
+  if (!quest) return 'stance_pick'
+  if (quest.entry_mode === 'open_response' || quest.entry_mode === 'stance_pick') {
+    return quest.entry_mode
+  }
+  return quest.quest_frame === 'myth_bust' ? 'open_response' : 'stance_pick'
+}
+
+function resolveStanceEntryChatAction(entryMode: QuestEntryMode): StanceEntryChatAction {
+  return entryMode === 'open_response' ? 'submit_opening' : 'select_stance'
+}
+
+function resolveQuestFooterMode(phase: string, entryMode: QuestEntryMode): QuestFooterMode | null {
+  if (phase === 'stance') {
+    return entryMode === 'open_response' ? 'opening' : 'stance_pick'
+  }
+  if (phase === 'evidence') return 'evidence'
+  if (phase === 'reflection') return 'reflection'
+  if (phase === 'reasoning' || phase === 'hammer') return 'chat'
+  if (phase === 'guide_axis' || phase === 'guide_conclusion') return 'chat'
+  return null
+}
+
+function lastAssistantDialogueIndex(dialogue: EduDialogueTurn[]): number {
+  for (let i = dialogue.length - 1; i >= 0; i--) {
+    if (dialogue[i].role === 'assistant') return i
+  }
+  return -1
+}
+
+function parseCoachCardContent(content: string): {
+  question: string
+  snippets: Array<{ display: string; value: string }>
+} {
+  if (!coachMessageHasSnippet(content)) {
+    return { question: content, snippets: [] }
+  }
+  const segments = parseCoachAssistantMessage(content)
+  const question = segments
+    .filter((s) => s.type === 'text')
+    .map((s) => s.value)
+    .join('\n\n')
+    .trim()
+  const snippets = segments
+    .filter((s) => s.type === 'snippet')
+    .map((s) => ({ display: s.display, value: s.value }))
+  return {
+    question: question || content,
+    snippets,
+  }
+}
+
+function useVisualViewportLayout(): {
+  viewportHeight: number | null
+  viewportOffsetTop: number
+} {
+  const [layout, setLayout] = useState({
+    viewportHeight: null as number | null,
+    viewportOffsetTop: 0,
+  })
+
+  useEffect(() => {
+    const vv = window.visualViewport
+    if (!vv) return
+
+    const update = () => {
+      setLayout({
+        viewportHeight: vv.height,
+        viewportOffsetTop: vv.offsetTop,
+      })
+    }
+
+    vv.addEventListener('resize', update)
+    vv.addEventListener('scroll', update)
+    update()
+
+    return () => {
+      vv.removeEventListener('resize', update)
+      vv.removeEventListener('scroll', update)
+    }
+  }, [])
+
+  return layout
+}
+
+function CardStructureBarPlaceholder() {
+  return (
+    <div
+      className="shrink-0 border-b px-4 py-2"
+      style={{ borderColor: eduGame.border, backgroundColor: eduGame.surface }}
+      aria-label="글 구조 (준비 중)"
+    >
+      <div className={`${PAGE_MAX} mx-auto w-full flex gap-1.5`}>
+        {STRUCTURE_BAR_SLOTS.map((label) => (
+          <div
+            key={label}
+            className="flex-1 min-w-0 rounded-lg border-2 border-dashed py-2 px-1 text-center"
+            style={{ borderColor: eduGame.border, backgroundColor: eduGame.bg }}
+          >
+            <span
+              className="block truncate font-bold"
+              style={{ fontSize: eduGame.fontSize.caption, color: eduGame.muted }}
+            >
+              {label}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export default function QuestFlowCards() {
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const questIdParam = searchParams.get('quest_id')?.trim() || ''
+  const { viewportHeight, viewportOffsetTop } = useVisualViewportLayout()
+
+  const [quest, setQuest] = useState<EduQuest | null>(null)
+  const [sessionId, setSessionId] = useState('')
+  const [dialogue, setDialogue] = useState<EduDialogueTurn[]>([])
+  const [input, setInput] = useState('')
+  const [evidenceInput, setEvidenceInput] = useState('')
+  const [evidenceNudgeCount, setEvidenceNudgeCount] = useState(0)
+  const [progressPct, setProgressPct] = useState(0)
+  const [phase, setPhase] = useState('stance')
+  const [completed, setCompleted] = useState(false)
+  const [essay, setEssay] = useState<EssayArtifact | null>(null)
+  const [xpGained, setXpGained] = useState(0)
+  const [tier, setTier] = useState<EduTierProgress | null>(null)
+  const [stanceChanged, setStanceChanged] = useState(false)
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [sending, setSending] = useState(false)
+  const [composing, setComposing] = useState(false)
+  const [structurePreview, setStructurePreview] = useState<EssayStructurePreview | null>(null)
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const [playEssayReveal, setPlayEssayReveal] = useState(false)
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const applySessionState = useCallback((state: Awaited<ReturnType<typeof eduApi.getSessionState>>) => {
+    setQuest(state.quest)
+    setProgressPct(state.progress_pct)
+    setPhase(state.blueprint?.phase ?? 'stance')
+    setDialogue(state.dialogue ?? [])
+    const preview = state.blueprint?.essay_structure
+    if (preview?.sections?.length) {
+      setStructurePreview(preview as EssayStructurePreview)
+    }
+    if (state.blueprint?.evidence) {
+      setEvidenceInput(String(state.blueprint.evidence))
+    }
+    setEvidenceNudgeCount(Number(state.blueprint?.evidence_nudge_count ?? 0))
+  }, [])
+
+  const syncSessionState = useCallback(async (sid: string) => {
+    const state = await eduApi.getSessionState(sid)
+    applySessionState(state)
+    return state
+  }, [applySessionState])
+
+  const init = useCallback(async () => {
+    setLoading(true)
+    setError('')
+    try {
+      let sid = ''
+      let tierData: EduTierProgress | null = null
+
+      if (questIdParam) {
+        const started = await eduApi.startSession(questIdParam)
+        sid = started.session_id
+        const today = await eduApi.todayQuest().catch(() => null)
+        tierData = today?.tier ?? null
+      } else {
+        const today = await eduApi.todayQuest()
+        setQuest(today.quest)
+        tierData = today.tier ?? null
+
+        if (!today.quest) {
+          setError('오늘의 퀘스트가 없습니다.')
+          return
+        }
+
+        const existing = today.active_session || today.existing_session
+        sid = existing?.session_id ?? ''
+
+        if (!sid) {
+          const started = await eduApi.startSession(today.quest.quest_id)
+          sid = started.session_id
+        }
+      }
+
+      setTier(tierData)
+      setSessionId(sid)
+
+      const state = await eduApi.getSessionState(sid)
+      applySessionState(state)
+
+      if (state.stage === 'completed' && state.essay) {
+        setCompleted(true)
+        setSaveStatus('saved')
+        setEssay({
+          title: state.essay.title,
+          subtitle: state.essay.subtitle,
+          sections: state.essay.sections,
+          conclusion_heading: state.essay.conclusion_heading,
+          conclusion_paragraphs: state.essay.conclusion_paragraphs,
+          full_text: state.essay.full_text,
+          hero_sentence: state.essay.hero_sentence,
+          feedback: state.essay.feedback,
+        })
+        setStanceChanged(state.essay.stance_changed)
+        setProgressPct(100)
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '초기화 실패')
+    } finally {
+      setLoading(false)
+    }
+  }, [questIdParam, applySessionState])
+
+  useEffect(() => {
+    if (!getEduToken()) {
+      navigate('/edu')
+      return
+    }
+    void init()
+  }, [navigate, init])
+
+  useEffect(() => {
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+    }
+  }, [])
+
+  const appendAssistant = (content: string) => {
+    setDialogue((prev) => [...prev, { role: 'assistant', content }])
+  }
+
+  const appendStudent = (content: string) => {
+    setDialogue((prev) => [...prev, { role: 'student', content }])
+  }
+
+  const persistEssay = async (data: EssayArtifact) => {
+    if (!sessionId) return
+    setSaveStatus('saving')
+    setError('')
+    try {
+      const res = await eduApi.saveEssay(sessionId, {
+        title: data.title,
+        subtitle: data.subtitle,
+        sections: data.sections,
+        conclusion_heading: data.conclusion_heading,
+        conclusion_paragraphs: data.conclusion_paragraphs,
+        hero_sentence: data.hero_sentence,
+        full_text: data.full_text,
+      })
+      setEssay({
+        title: res.title,
+        subtitle: res.subtitle,
+        sections: res.sections,
+        conclusion_heading: res.conclusion_heading,
+        conclusion_paragraphs: res.conclusion_paragraphs,
+        full_text: res.full_text ?? data.full_text,
+        hero_sentence: res.hero_sentence ?? data.hero_sentence,
+        feedback: data.feedback,
+      })
+      setSaveStatus('saved')
+    } catch (e) {
+      setSaveStatus('error')
+      setError(e instanceof Error ? e.message : '저장 실패')
+    }
+  }
+
+  const scheduleAutoSave = (data: EssayArtifact) => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+    setSaveStatus('idle')
+    saveTimerRef.current = setTimeout(() => {
+      void persistEssay(data)
+    }, 1500)
+  }
+
+  const handleEssayChange = (updated: EssayArtifact) => {
+    setEssay(updated)
+    scheduleAutoSave(updated)
+  }
+
+  const handleCompose = async (sid: string) => {
+    setComposing(true)
+    setError('')
+    try {
+      const res = await eduApi.composeEssay(sid)
+      setCompleted(true)
+      const artifact: EssayArtifact = {
+        title: res.title,
+        subtitle: res.subtitle,
+        sections: res.sections,
+        conclusion_heading: res.conclusion_heading,
+        conclusion_paragraphs: res.conclusion_paragraphs,
+        full_text: res.full_text ?? '',
+        hero_sentence: res.hero_sentence ?? null,
+        feedback: res.feedback ?? null,
+      }
+      setEssay(artifact)
+      setXpGained(res.xp_gained ?? 0)
+      if (res.tier) setTier(res.tier)
+      setProgressPct(100)
+      setSaveStatus(res.saved ? 'saved' : 'idle')
+      setPlayEssayReveal(true)
+      appendAssistant(
+        res.title
+          ? `네 글이 완성됐고 자동으로 저장됐어! 아래에서 읽고 필요하면 고쳐봐.`
+          : '글을 완성하고 저장했어! 필요하면 아래에서 고쳐봐.'
+      )
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '글 생성 실패')
+    } finally {
+      setComposing(false)
+    }
+  }
+
+  const handleChatResponse = async (
+    res: Awaited<ReturnType<typeof eduApi.sendChat>>,
+    sid: string
+  ) => {
+    if (res.stance_changed) setStanceChanged(true)
+    if (res.structure_preview?.sections?.length) {
+      setStructurePreview(res.structure_preview as EssayStructurePreview)
+    }
+    await syncSessionState(sid)
+    if (res.should_compose) {
+      await handleCompose(sid)
+    }
+  }
+
+  const handleSubmitOpening = async () => {
+    if (!input.trim() || !sessionId || sending || completed) return
+    if (resolveStanceEntryChatAction(resolveQuestEntryMode(quest)) !== 'submit_opening') return
+    const msg = input.trim()
+    setInput('')
+    setSending(true)
+    setError('')
+    appendStudent(msg)
+    try {
+      const res = await eduApi.sendChat(sessionId, { action: 'submit_opening', message: msg })
+      await handleChatResponse(res, sessionId)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '오류')
+    } finally {
+      setSending(false)
+    }
+  }
+
+  const handleStance = async (stance: 'pro' | 'con') => {
+    if (!sessionId || !quest) return
+    if (resolveStanceEntryChatAction(resolveQuestEntryMode(quest)) !== 'select_stance') return
+    setSending(true)
+    setError('')
+    const label = stance === 'pro' ? '찬성' : '반대'
+    const line = stance === 'pro' ? quest.pro_line : quest.con_line
+    appendStudent(`${label}: ${line}`)
+    try {
+      const res = await eduApi.sendChat(sessionId, { action: 'select_stance', stance })
+      await handleChatResponse(res, sessionId)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '오류')
+    } finally {
+      setSending(false)
+    }
+  }
+
+  const handleConfirmReflection = async () => {
+    if (!sessionId || sending || composing) return
+    setSending(true)
+    setError('')
+    appendStudent('맞아')
+    try {
+      const res = await eduApi.sendChat(sessionId, { action: 'confirm_reflection' })
+      await handleChatResponse(res, sessionId)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '오류')
+    } finally {
+      setSending(false)
+    }
+  }
+
+  const handleSend = async () => {
+    if (!input.trim() || !sessionId || sending || completed || phase === 'evidence') return
+    const msg = input.trim()
+    setInput('')
+    setSending(true)
+    setError('')
+    appendStudent(msg)
+    try {
+      const res = await eduApi.sendChat(sessionId, { message: msg })
+      await handleChatResponse(res, sessionId)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '오류')
+    } finally {
+      setSending(false)
+    }
+  }
+
+  const handleSubmitEvidence = async () => {
+    const msg = evidenceInput.trim()
+    if (!msg || !sessionId || sending || completed || phase !== 'evidence') {
+      if (!msg && phase === 'evidence') {
+        setError('기사에서 본 내용을 먼저 적어줘.')
+      }
+      return
+    }
+    setSending(true)
+    setError('')
+    appendStudent(msg)
+    try {
+      const res = await eduApi.sendChat(sessionId, { message: msg })
+      await handleChatResponse(res, sessionId)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '오류')
+    } finally {
+      setSending(false)
+    }
+  }
+
+  const switchToChatMode = () => {
+    setEduCoachUiMode('chat')
+    navigate(eduQuestPathWithUi(questIdParam || quest?.quest_id, 'chat'))
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white text-[#1a1a1a]">
+        불러오는 중…
+      </div>
+    )
+  }
+
+  const authorName = getEduDisplayName() ?? '나'
+  const entryMode = resolveQuestEntryMode(quest)
+  const footerMode = resolveQuestFooterMode(phase, entryMode)
+  const coachIndex = lastAssistantDialogueIndex(dialogue)
+  const coachTurn = coachIndex >= 0 ? dialogue[coachIndex] : null
+  const evidenceLen = evidenceInput.trim().length
+  const evidenceReady = evidenceLen > 0
+
+  const cardKey = completed
+    ? 'completed'
+    : `${phase}-${coachIndex}-${dialogue.length}-${footerMode ?? 'none'}`
+
+  let cardQuestion = ''
+  let cardSnippets: Array<{ display: string; value: string }> = []
+
+  if (phase === 'stance' && dialogue.length === 0 && quest) {
+    if (entryMode === 'open_response') {
+      cardQuestion = quest.hook_short || quest.hook_full || quest.conflict_summary || quest.quest_title
+    } else {
+      cardQuestion = '오늘의 입장을 골라줘.'
+    }
+  } else if (coachTurn) {
+    const parsed = parseCoachCardContent(coachTurn.content)
+    cardQuestion = parsed.question
+    cardSnippets = parsed.snippets
+  }
+
+  const handlePrimaryAction = () => {
+    if (footerMode === 'opening') return handleSubmitOpening()
+    if (footerMode === 'evidence') return handleSubmitEvidence()
+    if (footerMode === 'reflection') return handleConfirmReflection()
+    return handleSend()
+  }
+
+  const primaryLabel =
+    footerMode === 'opening'
+      ? sending
+        ? '보내는 중…'
+        : '다음'
+      : footerMode === 'evidence'
+        ? sending
+          ? '보내는 중…'
+          : evidenceNudgeCount > 0
+            ? '다시 제출'
+            : '다음'
+        : footerMode === 'reflection'
+          ? sending || composing
+            ? '처리 중…'
+            : '맞아 — 글 만들기'
+          : sending
+            ? '보내는 중…'
+            : '다음'
+
+  const primaryDisabled =
+    sending ||
+    composing ||
+    (footerMode === 'opening' && !input.trim()) ||
+    (footerMode === 'evidence' && !evidenceReady) ||
+    (footerMode === 'chat' && !input.trim())
+
+  return (
+    <div
+      className={`${eduGameClasses.chatShell} fixed left-0 right-0 flex flex-col overflow-hidden`}
+      style={{
+        color: eduGame.ink,
+        fontFamily: eduGame.fontBody,
+        backgroundColor: eduGame.bg,
+        top: viewportHeight != null ? viewportOffsetTop : 0,
+        height: viewportHeight ?? '100dvh',
+        maxHeight: viewportHeight ?? '100dvh',
+      }}
+    >
+      <header
+        className={`shrink-0 border-b px-4 py-2.5 ${PAGE_MAX} mx-auto w-full`}
+        style={{ borderColor: eduGame.border }}
+      >
+        <div className="flex items-center justify-between gap-2">
+          <Link to="/edu" className="text-xs underline" style={{ color: EDU_BRAND.muted }}>
+            ← 홈
+          </Link>
+          <button
+            type="button"
+            onClick={switchToChatMode}
+            className="text-xs underline"
+            style={{ color: eduGame.primary }}
+          >
+            채팅 모드
+          </button>
+        </div>
+        {quest && (
+          <p className="mt-1 text-sm font-bold truncate">{quest.quest_title}</p>
+        )}
+        <div className="mt-2 flex items-center gap-2">
+          <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: eduGame.border }}>
+            <div
+              className="h-full transition-all duration-500 rounded-full"
+              style={{ width: `${progressPct}%`, backgroundColor: eduGame.primary }}
+            />
+          </div>
+          <span className="text-[10px] whitespace-nowrap font-medium" style={{ color: eduGame.muted }}>
+            {progressPct}%
+          </span>
+        </div>
+      </header>
+
+      {!completed && <CardStructureBarPlaceholder />}
+
+      {completed ? (
+        <main className={`flex-1 min-h-0 overflow-y-auto ${eduGameClasses.chatScroll} ${PAGE_MAX} mx-auto w-full px-4 py-4 space-y-4`}>
+          <EduQuestCompletionCelebration
+            xpGained={xpGained}
+            streakDays={tier?.streak_days ?? 0}
+            tier={tier}
+            active={completed}
+          />
+          {structurePreview && <EduStructureReviewCard structure={structurePreview} />}
+          {essay && (
+            <section className="space-y-4 pt-2">
+              {stanceChanged && (
+                <span
+                  className="inline-block font-bold px-3 py-1 rounded-full"
+                  style={{ fontSize: eduGame.fontSize.caption, color: eduGame.primaryDark, backgroundColor: eduGame.primaryLight }}
+                >
+                  생각이 바뀌었다
+                </span>
+              )}
+              <EssayRevealWrapper
+                essay={essay}
+                onChange={handleEssayChange}
+                disabled={saveStatus === 'saving'}
+                authorName={authorName}
+                playReveal={playEssayReveal}
+                onRevealComplete={() => setPlayEssayReveal(false)}
+              />
+              <Link
+                to={`/edu/share/${sessionId}`}
+                className={`block w-full py-3.5 text-center ${eduGameClasses.btnPrimary}`}
+                style={{ backgroundColor: eduGame.primary, fontSize: eduGame.fontSize.button }}
+              >
+                공유 카드 만들기
+              </Link>
+            </section>
+          )}
+        </main>
+      ) : (
+        <>
+          <div className={`flex-1 min-h-0 flex flex-col ${PAGE_MAX} mx-auto w-full overflow-hidden`}>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={cardKey}
+                initial={{ opacity: 0, x: 48 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -48 }}
+                transition={{ duration: 0.22, ease: 'easeOut' }}
+                className="flex-1 min-h-0 flex flex-col px-4 py-3 overflow-hidden"
+              >
+                {(sending || composing) && (
+                  <div className="shrink-0 mb-2">
+                    <TypingIndicator label={composing ? '네 글을 만들고 있어…' : undefined} />
+                  </div>
+                )}
+
+                <div className="flex-1 min-h-0 flex flex-col justify-center gap-4 overflow-hidden">
+                  <p
+                    className={`text-center font-bold ${eduGameClasses.textKoPre}`}
+                    style={{
+                      fontSize: '1.25rem',
+                      lineHeight: 1.5,
+                      color: eduGame.ink,
+                    }}
+                  >
+                    {cardQuestion}
+                  </p>
+
+                  {cardSnippets.length > 0 && (
+                    <div className="shrink-0 space-y-2 max-h-[40%] overflow-y-auto">
+                      {cardSnippets.map((snip, i) => (
+                        <EduArticleSnippetCard
+                          key={`${cardKey}-snip-${i}`}
+                          text={snip.value}
+                          display={snip.display}
+                        />
+                      ))}
+                    </div>
+                  )}
+
+                  {footerMode === 'stance_pick' && quest && dialogue.length === 0 && (
+                    <div className="shrink-0 space-y-2">
+                      <button
+                        type="button"
+                        disabled={sending}
+                        onClick={() => void handleStance('pro')}
+                        className={`w-full text-left border-2 rounded-xl p-4 ${eduGameClasses.textKo}`}
+                        style={{ borderColor: eduGame.primary, fontSize: eduGame.fontSize.body }}
+                      >
+                        <span className="font-bold block mb-1" style={{ color: eduGame.primary }}>
+                          찬성
+                        </span>
+                        {quest.pro_line}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={sending}
+                        onClick={() => void handleStance('con')}
+                        className={`w-full text-left border-2 rounded-xl p-4 ${eduGameClasses.textKo}`}
+                        style={{ borderColor: eduGame.ink, fontSize: eduGame.fontSize.body }}
+                      >
+                        <span className="font-bold block mb-1">반대</span>
+                        {quest.con_line}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          {footerMode && footerMode !== 'stance_pick' && (
+            <footer
+              className={`shrink-0 border-t px-4 py-3 ${PAGE_MAX} mx-auto w-full`}
+              style={{
+                borderColor: eduGame.border,
+                backgroundColor: eduGame.bg,
+                paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0px))',
+              }}
+            >
+              <div className="space-y-3">
+                {footerMode === 'evidence' && (
+                  <p className="text-center" style={{ fontSize: eduGame.fontSize.caption, color: eduGame.muted }}>
+                    {evidenceLen}자
+                    {evidenceLen > 0 && evidenceLen < EVIDENCE_RECOMMENDED_LEN
+                      ? ` · ${EVIDENCE_RECOMMENDED_LEN}자 이상이면 좋아요`
+                      : ''}
+                  </p>
+                )}
+
+                {footerMode === 'reflection' ? null : footerMode === 'evidence' ? (
+                  <textarea
+                    value={evidenceInput}
+                    onChange={(e) => {
+                      setEvidenceInput(e.target.value)
+                      if (error) setError('')
+                    }}
+                    placeholder="기사에서 본 구체적인 사실을 적어줘…"
+                    disabled={sending || composing}
+                    rows={4}
+                    className={`w-full resize-none ${eduGameClasses.input}`}
+                    style={{
+                      borderColor: eduGame.border,
+                      fontSize: eduGame.fontSize.body,
+                      lineHeight: eduGame.lineHeight.body,
+                    }}
+                  />
+                ) : (
+                  <textarea
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    placeholder={
+                      footerMode === 'opening'
+                        ? '네 생각을 입력해…'
+                        : '네 생각을 입력해…'
+                    }
+                    disabled={sending || composing}
+                    rows={footerMode === 'opening' ? 4 : 3}
+                    className={`w-full resize-none ${eduGameClasses.input}`}
+                    style={{
+                      borderColor: eduGame.border,
+                      fontSize: eduGame.fontSize.body,
+                      lineHeight: eduGame.lineHeight.body,
+                    }}
+                  />
+                )}
+
+                {error && (
+                  <p className="text-sm text-red-600 text-center">{error}</p>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => void handlePrimaryAction()}
+                  disabled={primaryDisabled}
+                  className={`w-full py-3.5 ${eduGameClasses.btnPrimary}`}
+                  style={{ backgroundColor: eduGame.primary, fontSize: eduGame.fontSize.button }}
+                >
+                  {primaryLabel}
+                </button>
+              </div>
+            </footer>
+          )}
+
+          {footerMode === 'stance_pick' && error && (
+            <p className="shrink-0 px-4 pb-3 text-sm text-red-600 text-center">{error}</p>
+          )}
+        </>
+      )}
+    </div>
+  )
+}

@@ -23,6 +23,7 @@ import {
   type EduTierProgress,
 } from '../../services/eduApi'
 import { EDU_BRAND } from '../../constants/eduBrand'
+import { eduQuestPathWithUi, setEduCoachUiMode } from '../../constants/eduCoachUi'
 import { eduGame, eduGameClasses } from '../../constants/eduGameTheme'
 
 const PAGE_MAX = 'max-w-2xl'
@@ -126,6 +127,7 @@ function useVisualViewportLayout(): {
 export default function QuestFlowChat() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
+  const questIdParam = searchParams.get('quest_id')?.trim() || ''
   const bottomRef = useRef<HTMLDivElement>(null)
   const mainScrollRef = useRef<HTMLDivElement>(null)
   const { viewportHeight, viewportOffsetTop } = useVisualViewportLayout()
@@ -570,13 +572,17 @@ export default function QuestFlowChat() {
           <Link to="/edu" className="text-xs underline" style={{ color: EDU_BRAND.muted }}>
             ← 홈
           </Link>
-          <span
-            className="text-xl leading-none"
-            style={{ fontFamily: EDU_BRAND.fontLogo, color: EDU_BRAND.accent }}
-            aria-hidden
+          <button
+            type="button"
+            onClick={() => {
+              setEduCoachUiMode('cards')
+              navigate(eduQuestPathWithUi(questIdParam || quest?.quest_id, 'cards'))
+            }}
+            className="text-xs underline"
+            style={{ color: eduGame.primary }}
           >
-            g.
-          </span>
+            카드 모드
+          </button>
         </div>
         {quest && (
           <div className="mt-2">
