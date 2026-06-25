@@ -115,14 +115,14 @@ if ($action === 'submit_opening') {
         $dialogue = eduAppendDialogue($dialogue, 'assistant', $assistantMessage, 'axis_guide', (string) ($blueprint['phase'] ?? 'guide_axis'));
         eduSaveBlueprint($supabase, $sessionId, $blueprint, $dialogue);
 
-        eduSendJson(array_merge($response, [
+        eduSendJson(eduCoachGuideAttachChoiceFields(array_merge($response, [
             'stage' => eduBlueprintStage($blueprint),
             'phase' => $blueprint['phase'] ?? 'guide_axis',
             'assistant_message' => $assistantMessage,
             'progress_pct' => eduCoachGuideProgress($blueprint),
             'ui_hint' => $guideResult['ui_hint'],
             'blueprint' => $blueprint,
-        ]));
+        ]), $blueprint, $quest, $assistantMessage));
     }
 
     $blueprint = eduMergeBlueprint($blueprint, [
@@ -437,13 +437,13 @@ if (eduQuestUsesAxisGuide($quest) && in_array($phase, ['guide_axis', 'guide_conc
     }
     eduSaveBlueprint($supabase, $sessionId, $blueprint, $dialogue);
 
-    eduSendJson(array_merge($response, [
+    eduSendJson(eduCoachGuideAttachChoiceFields(array_merge($response, [
         'stage' => eduBlueprintStage($blueprint),
         'phase' => $blueprint['phase'] ?? $phase,
         'assistant_message' => $assistantMessage,
         'progress_pct' => (int) ($decision['progress_pct'] ?? eduCoachGuideProgress($blueprint)),
         'blueprint' => $blueprint,
-    ]));
+    ]), $blueprint, $quest, $assistantMessage));
 }
 
 if ($phase === 'reasoning') {

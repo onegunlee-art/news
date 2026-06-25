@@ -178,5 +178,55 @@ $open288 = eduCoachGuideHandleOpening(
 assertContains('288 intro framing survey', $open288['message'], '2025');
 assertNotContains('288 hook not repeated', $open288['message'], '사용 시간만');
 
+$choiceOpen = eduCoachGuideChoiceMeta($open['blueprint'], $quest, $open['message']);
+assertTrue('630 opening overlap is choice', ($choiceOpen['choice_question'] ?? false) === true);
+assertTrue('630 opening strengthen/weaken options', ($choiceOpen['options'] ?? []) === ['강하게', '약하게']);
+
+$questNoOverlap = [
+    'quest_code' => EDU_COACH_GUIDE_QUEST_CODE,
+    'hammer_hints' => eduCoachGuideAttachHints([]),
+];
+$openNoOverlap = eduCoachGuideHandleOpening(
+    ['phase' => 'stance', 'exchange_count' => 0],
+    $questNoOverlap,
+    '핵 억지가 재래식 공격을 막는다고 봐요'
+);
+$choiceNoOverlap = eduCoachGuideChoiceMeta($openNoOverlap['blueprint'], $questNoOverlap, $openNoOverlap['message']);
+assertTrue('630 military open core is narrative', $choiceNoOverlap === null);
+
+$defenseIntro = eduCoachGuideIntroAxis($axes[2], 2, 3);
+$choiceDefense = eduCoachGuideChoiceMeta(
+    ['phase' => 'guide_axis', 'guide_axis_index' => 2],
+    $quest,
+    $defenseIntro
+);
+assertTrue('630 defense axis is choice', ($choiceDefense['choice_question'] ?? false) === true);
+assertTrue('630 defense has 3 gist options', count($choiceDefense['options'] ?? []) === 3);
+assertContains('630 defense option nuclear', implode('|', $choiceDefense['options'] ?? []), '핵 현대화');
+
+$conclusionTurn = eduCoachGuideHandleTurn(
+    ['phase' => 'guide_axis', 'guide_axis_index' => 2, 'guide_axis_stall' => 0, 'guide_axis_answers' => ['military' => 'a', 'norms' => 'b']],
+    $quest,
+    '방공에 먼저 쓸 것 같아요'
+);
+$choiceConclusion = eduCoachGuideChoiceMeta(
+    $conclusionTurn['blueprint'],
+    $quest,
+    $conclusionTurn['message']
+);
+assertTrue('guide_conclusion is narrative not choice', $choiceConclusion === null);
+
+$unknownTurn = eduCoachGuideHandleTurn(
+    ['phase' => 'guide_axis', 'guide_axis_index' => 0, 'guide_axis_stall' => 0, 'guide_axis_answers' => []],
+    $quest,
+    '모르겠어'
+);
+$choiceUnknown = eduCoachGuideChoiceMeta(
+    $unknownTurn['blueprint'],
+    $quest,
+    $unknownTurn['message']
+);
+assertTrue('unknown evasion ternary stays narrative', $choiceUnknown === null);
+
 echo "\n=== {$pass} passed, {$fail} failed ===\n";
 exit($fail > 0 ? 1 : 0);

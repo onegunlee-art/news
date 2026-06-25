@@ -44,6 +44,7 @@ function eduCoachGuide630Axes(): array
             'core_question' => '핵시설·원전을 재래식으로 안 치겠다는 약속, 새로 만들 수 있을까?',
             'article_fact' => '2025년 인도-파키스탄은 핵보유국인데도 재래식 충돌이 났고, 인도·파키스탄은 매년 핵 관련 시설 목록을 바꿔 주며 상호 비공격을 약속한다.',
             'weak_scaffold' => '인도·파키스탄처럼 **약속·목록 교환**이 재래식 충돌을 막는 데 **도움이 됐다/안 됐다** — 네 말로 한쪽만 골라봐.',
+            'choice_options' => ['도움이 됐다', '안 됐다'],
         ],
         [
             'axis_id' => 'defense',
@@ -51,6 +52,8 @@ function eduCoachGuide630Axes(): array
             'core_question' => '예산이 한정돼 있다면 — 너는 **무엇에 먼저** 쓸 것 같아? (핵 현대화 / 기지·방공·드론 방어 / 규범 협상)',
             'article_fact' => '값싼 드론 떼를 막으려면 비싼 요격만으로는 오래 버티기 어렵고, 기지 방호·회복탄력성 이야기가 나온다.',
             'weak_scaffold' => '드론·미사일 앞에서 — **핵을 더 갖추는 쪽**과 **방공·기지를 키우는 쪽** 중 **하나만** 고르면 뭐부터야?',
+            'choice_options' => ['핵 현대화', '기지·방공·드론 방어', '규범 협상'],
+            'weak_choice_options' => ['핵을 더 갖추는 쪽', '방공·기지를 키우는 쪽'],
         ],
     ];
 }
@@ -72,6 +75,7 @@ function eduCoachGuide150Axes(): array
             'core_question' => '트럼프·빅테크의 전력 공급 서약이 뭘 의미하는가?',
             'article_fact' => '도널드 트럼프는 3월 4일 빅테크 리더들을 불러 자체 전력 공급을 구축·조달해 전기요금을 올리지 않겠다는 서약에 서명하게 했다.',
             'weak_scaffold' => '트럼프가 빅테크에 **자체 전력 공급·요금 동결** 서약 받았어. 이게 \'DC=범인\' 프레임을 **키워** 아니면 **줄여**?',
+            'weak_choice_options' => ['키운다', '줄인다'],
         ],
         [
             'axis_id' => 'grid_investment',
@@ -79,6 +83,8 @@ function eduCoachGuide150Axes(): array
             'core_question' => '요금이 올랐다면 — **주로 AI·데이터센터 탓**인가, **송전망·시장 제약**인가? (한쪽만)',
             'article_fact' => '전기요금 상승은 AI 수요뿐 아니라 송전망·에너지시장 전반의 제약과 연결된다고 본다. 데이터센터 수요는 신규 발전·전력망 투자를 뒷받침해 다른 소비자 요금 압력을 낮출 여지도 있다.',
             'weak_scaffold' => 'AI 탓만이면 **송전망·시장**은 어디에 끼워? 반대로 DC가 **새 발전·망 투자**를 부를 수 있다면 — 범인 프레임과 **맞나 안 맞나**?',
+            'choice_options' => ['AI·데이터센터 탓', '송전망·시장 제약'],
+            'weak_choice_options' => ['맞다', '안 맞다'],
         ],
     ];
 }
@@ -93,6 +99,8 @@ function eduCoachGuide196Axes(): array
             'core_question' => '모즈타바 체제가 핵 의지를 **강하게** 키웠다 / **약해졌다** — 네 말로 한쪽만.',
             'article_fact' => '새 최고지도자 모즈타바 하메네이는 선친보다 핵무기 획득에 더 적극적인 것으로 알려져 있으며 가족을 잃은 뒤 복수심까지 더해졌다고 본문은 전한다.',
             'weak_scaffold' => '지도부 교체·복수심만 봐 — 핵 의지가 **커졌다/작아졌다** 중 **하나**만 골라봐.',
+            'choice_options' => ['강하게 키웠다', '약해졌다'],
+            'weak_choice_options' => ['커졌다', '작아졌다'],
         ],
         [
             'axis_id' => 'uranium',
@@ -100,6 +108,8 @@ function eduCoachGuide196Axes(): array
             'core_question' => '400kg 우라늄이 남아 있다면 — **새 위협**이 커진다 / **통제 가능**하다 중 하나만.',
             'article_fact' => '약 400kg의 고농축 우라늄이 이란 내부에 매장돼 있으며 이는 핵폭탄 약 10개를 만들기에 충분한 양이라고 본문은 설명한다.',
             'weak_scaffold' => '**400kg**, **10개분** — 이게 **위협 키운다/아니다** 중 어디에 더 가깝다고 봐?',
+            'choice_options' => ['새 위협이 커진다', '통제 가능하다'],
+            'weak_choice_options' => ['위협 키운다', '아니다'],
         ],
         [
             'axis_id' => 'options',
@@ -107,6 +117,7 @@ function eduCoachGuide196Axes(): array
             'core_question' => '특수부대·폭격·협상 중 — **실행 가능성**이 가장 낮은 쪽은 어디라고 봐?',
             'article_fact' => '특수부대 투입은 1,000명 이상의 병력과 지속적인 공중 지원이 필요한 대규모 작전이며, 2015년 합의는 트럼프가 2018년 파기했다고 본문은 적는다.',
             'weak_scaffold' => '**대규모 특수부대** vs **협상 파기** — 세 해법 중 **가장 어중간한** 하나만 골라봐.',
+            'choice_options' => ['특수부대', '반복 폭격', '협상'],
         ],
     ];
 }
@@ -121,6 +132,8 @@ function eduCoachGuide288Axes(): array
             'core_question' => '청소년 AI 위험 — **시간**이 먼저냐, **삶의 조건·정서**가 먼저냐? (한쪽만)',
             'article_fact' => '2025년 11월 미국 대규모 조사에서 AI의 효과는 사용 시간보다 개인의 삶의 조건과 정서적 환경에 따라 크게 달라지는 것으로 나타났다.',
             'weak_scaffold' => '조사는 **시간**보다 **맥락**을 강조해. 네 말은 **시간파**야 **맥락파**야?',
+            'choice_options' => ['시간', '삶의 조건·정서'],
+            'weak_choice_options' => ['시간파', '맥락파'],
         ],
         [
             'axis_id' => 'mobility',
@@ -128,6 +141,7 @@ function eduCoachGuide288Axes(): array
             'core_question' => '파워 유저 집단 — AI가 **기회를 연다** / **별 차이 없다** 중 하나만.',
             'article_fact' => '전체의 약 10%인 낙관적 파워 유저 집단 가운데 3분의 2 이상은 AI가 새로운 기회를 열어준다고 답했고, 절반 이상은 문제 해결 자신감과 희망을 높여준다고 응답했다.',
             'weak_scaffold' => '**10%** 파워 유저, **3분의 2**가 기회 — 이게 **시간 제한** 논쟁을 **강하게/약하게** 해줘?',
+            'choice_options' => ['기회를 연다', '별 차이 없다'],
         ],
         [
             'axis_id' => 'substitute_policy',
@@ -135,6 +149,7 @@ function eduCoachGuide288Axes(): array
             'core_question' => '정책은 **일괄 금지** / **안전장치+인간 연결** 중 어디에 더 무게를 둬야 할까?',
             'article_fact' => '괴롭힘·차별·경제적 압박을 겪을 가능성이 더 높은 집단은 AI 사용 빈도도 높았고, 본문은 유해 상호작용을 줄이는 안전장치와 정신건강 서비스로 연결되는 경로를 제시한다.',
             'weak_scaffold' => '오프라인 지지 부족 + AI **대체재** — **금지**가 맞아, **안전장치+연결**이 맞아? **하나**만.',
+            'choice_options' => ['일괄 금지', '안전장치+인간 연결'],
         ],
     ];
 }
@@ -655,4 +670,155 @@ function eduCoachGuideProgress(array $blueprint): int
     }
 
     return eduBlueprintProgress($blueprint);
+}
+
+/** 강화/약화 프롬프트 — 입장 선택(정답 없음) */
+function eduCoachGuideStrengthenWeakenOptions(): array
+{
+    return ['강하게', '약하게'];
+}
+
+function eduCoachGuideMessageIsStrengthenWeakenPrompt(string $message): bool
+{
+    return (bool) preg_match('/강하게.*약하게/u', $message);
+}
+
+/** @param array<string, string> $axis */
+function eduCoachGuideAxisChoiceOptions(array $axis, string $assistantMessage): array
+{
+    $scaffold = trim((string) ($axis['weak_scaffold'] ?? ''));
+    if ($scaffold !== '' && eduCoachGuideMessageUsesWeakScaffold($assistantMessage, $scaffold)) {
+        $weak = $axis['weak_choice_options'] ?? null;
+        if (is_array($weak) && $weak !== []) {
+            return array_values(array_map('strval', $weak));
+        }
+    }
+
+    $options = $axis['choice_options'] ?? null;
+    if (!is_array($options) || $options === []) {
+        return [];
+    }
+
+    return array_values(array_map('strval', $options));
+}
+
+function eduCoachGuideMessageUsesWeakScaffold(string $message, string $scaffold): bool
+{
+    if (eduCoachGuideTextsOverlap($scaffold, $message)) {
+        return true;
+    }
+    $plain = static function (string $text): string {
+        $t = preg_replace('/\*\*/u', '', $text) ?? $text;
+
+        return trim(preg_replace('/\s+/u', ' ', $t) ?? $t);
+    };
+    $msg = $plain($message);
+    $sc = $plain($scaffold);
+    if ($sc === '' || $msg === '') {
+        return false;
+    }
+    $prefix = mb_substr($sc, 0, min(24, mb_strlen($sc)));
+
+    return $prefix !== '' && str_contains($msg, $prefix);
+}
+
+/**
+ * axis_guide 응답용 — 선택형일 때만 choice_question/options (서술형 FSM 무관, JSON 추가만).
+ *
+ * @param array<string, mixed> $blueprint
+ * @param array<string, mixed> $quest
+ * @return array{choice_question: true, options: list<string>}|null
+ */
+function eduCoachGuideChoiceMeta(array $blueprint, array $quest, string $assistantMessage): ?array
+{
+    $phase = (string) ($blueprint['phase'] ?? '');
+    if ($phase !== 'guide_axis' || trim($assistantMessage) === '') {
+        return null;
+    }
+
+    if (eduCoachGuideMessageIsStrengthenWeakenPrompt($assistantMessage)) {
+        return [
+            'choice_question' => true,
+            'options' => eduCoachGuideStrengthenWeakenOptions(),
+        ];
+    }
+
+    $idx = (int) ($blueprint['guide_axis_index'] ?? 0);
+    $axes = eduCoachGuideAxes($quest);
+    $axis = $axes[$idx] ?? null;
+    if ($axis === null) {
+        return null;
+    }
+
+    $options = eduCoachGuideAxisChoiceOptions($axis, $assistantMessage);
+    if ($options === []) {
+        return null;
+    }
+
+    if (!eduCoachGuideAssistantPromptsChoice($assistantMessage, $axis, $options)) {
+        return null;
+    }
+
+    return [
+        'choice_question' => true,
+        'options' => $options,
+    ];
+}
+
+/** @param array<string, string> $axis @param list<string> $options */
+function eduCoachGuideAssistantPromptsChoice(string $message, array $axis, array $options): bool
+{
+    $scaffold = trim((string) ($axis['weak_scaffold'] ?? ''));
+    if ($scaffold !== '' && eduCoachGuideMessageUsesWeakScaffold($message, $scaffold)) {
+        return true;
+    }
+
+    $core = trim((string) ($axis['core_question'] ?? ''));
+    if ($core !== '' && str_contains($message, $core)) {
+        return true;
+    }
+
+    if ($core !== '' && eduCoachGuideTextsOverlap($core, $message)) {
+        return true;
+    }
+
+    $hits = 0;
+    foreach ($options as $opt) {
+        $needle = preg_replace('/\s+/u', '', (string) $opt) ?? '';
+        $hay = preg_replace('/\s+/u', '', $message) ?? '';
+        if ($needle !== '' && str_contains($hay, $needle)) {
+            $hits++;
+        }
+    }
+    if ($hits >= 2) {
+        return true;
+    }
+
+    if (preg_match('/1순위\s*하나/u', $message) && count($options) >= 2) {
+        return true;
+    }
+
+    return false;
+}
+
+/**
+ * chat.php axis_guide JSON에 선택형 필드만 병합 (서술형 경로·FSM 변경 없음).
+ *
+ * @param array<string, mixed> $response
+ * @param array<string, mixed> $blueprint
+ * @param array<string, mixed> $quest
+ * @return array<string, mixed>
+ */
+function eduCoachGuideAttachChoiceFields(
+    array $response,
+    array $blueprint,
+    array $quest,
+    string $assistantMessage
+): array {
+    $meta = eduCoachGuideChoiceMeta($blueprint, $quest, $assistantMessage);
+    if ($meta === null) {
+        return $response;
+    }
+
+    return array_merge($response, $meta);
 }
