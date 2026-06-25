@@ -409,10 +409,46 @@ function eduCoachGuideHandleTurn(array $blueprint, array $quest, string $message
     $stall = (int) ($blueprint['guide_axis_stall'] ?? 0);
     $evasion = eduCoachDetectEvasion($message);
     $axis = $axes[$idx] ?? $axes[0];
+    $axisAnswerMessage = $message;
+    $pendingWhy = is_array($blueprint['guide_axis_pending_why'] ?? null)
+        ? $blueprint['guide_axis_pending_why']
+        : null;
+    $pendingWhyIncomplete = false;
 
-    if (eduCoachAxisStudentPass($message, $evasion)) {
+    if ($pendingWhy !== null && ($pendingWhy['axis_id'] ?? '') === ($axis['axis_id'] ?? '')) {
+        $storedChoice = trim((string) ($pendingWhy['choice'] ?? ''));
+        $sameChoice = $storedChoice !== ''
+            && eduCoachGuideNormalizeCompareKey($message) === eduCoachGuideNormalizeCompareKey($storedChoice);
+
+        if (!$sameChoice && eduCoachAxisStudentPass($message, $evasion)) {
+            $axisAnswerMessage = $storedChoice !== ''
+                ? $storedChoice . ' — ' . trim($message)
+                : trim($message);
+            $blueprint = eduMergeBlueprint($blueprint, ['guide_axis_pending_why' => null]);
+        } else {
+            $pendingWhyIncomplete = true;
+        }
+    } elseif (eduCoachGuideMessageMatchesChoiceOption($message, $axis)) {
+        $choice = trim($message);
+        $blueprint = eduMergeBlueprint($blueprint, [
+            'guide_axis_pending_why' => [
+                'axis_id' => (string) ($axis['axis_id'] ?? ''),
+                'choice' => $choice,
+            ],
+            'guide_axis_stall' => 0,
+        ]);
+
+        return [
+            'blueprint' => $blueprint,
+            'message' => eduCoachSpoonfeedGuard(eduCoachGuideWhyFollowUpMessage($axis, $choice)),
+            'ui_hint' => 'guide_axis',
+            'done_guide' => false,
+        ];
+    }
+
+    if (!$pendingWhyIncomplete && eduCoachAxisStudentPass($axisAnswerMessage, $evasion)) {
         $answers = is_array($blueprint['guide_axis_answers'] ?? null) ? $blueprint['guide_axis_answers'] : [];
-        $answers[$axis['axis_id']] = $message;
+        $answers[$axis['axis_id']] = $axisAnswerMessage;
         $idx++;
         $stall = 0;
 
@@ -438,6 +474,7 @@ function eduCoachGuideHandleTurn(array $blueprint, array $quest, string $message
             'guide_axis_answers' => $answers,
             'guide_axis_index' => $idx,
             'guide_axis_stall' => 0,
+            'guide_axis_pending_why' => null,
         ]);
         $msg = "좋아, 다음으로 넘어가자.\n\n" . eduCoachGuideIntroAxis($axes[$idx], $idx, count($axes));
 
@@ -476,6 +513,7 @@ function eduCoachGuideHandleTurn(array $blueprint, array $quest, string $message
             'guide_axis_answers' => $answers,
             'guide_axis_index' => $idx,
             'guide_axis_stall' => 0,
+            'guide_axis_pending_why' => null,
         ]);
         $msg = "막히면 괜찮아 — **다음 축**으로 넘어가자.\n\n" . eduCoachGuideIntroAxis($axes[$idx], $idx, count($axes));
 
@@ -727,6 +765,70 @@ function eduCoachGuideMessageIsStrengthenWeakenPrompt(string $message): bool
 }
 
 /** @param array<string, string> $axis */
+function eduCoachGuideMessageMatchesChoiceOption(string $message, array $axis): bool
+{
+    $m = trim($message);
+    if ($m === '') {
+        return false;
+    }
+    if (preg_match('/[—\-].{4,}/u', $m)) {
+        return false;
+    }
+    if (mb_strlen($m) > 48) {
+        return false;
+    }
+
+    $mn = eduCoachGuideNormalizeCompareKey($m);
+    foreach (eduCoachGuideStrengthenWeakenOptions() as $opt) {
+        if ($mn === eduCoachGuideNormalizeCompareKey($opt)) {
+            return true;
+        }
+    }
+
+    $allOpts = array_merge(
+        is_array($axis['choice_options'] ?? null) ? $axis['choice_options'] : [],
+        is_array($axis['weak_choice_options'] ?? null) ? $axis['weak_choice_options'] : []
+    );
+    foreach ($allOpts as $opt) {
+        $on = eduCoachGuideNormalizeCompareKey((string) $opt);
+        if ($on !== '' && $mn === $on) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/** @param array<string, string> $axis */
+function eduCoachGuideWhyFollowUpMessage(array $axis, string $choice): string
+{
+    $c = trim($choice);
+    $point = trim((string) ($axis['point'] ?? ''));
+    if ($point !== '') {
+        return "**{$c}** 골랐구나. **{$point}** — 왜 그렇게 봤어? 한두 문장만.";
+    }
+
+    return "**{$c}** — **왜** 그쪽이야? 짧게 이유만 말해줘.";
+}
+
+function eduCoachGuideNarrativePromptOneLine(string $message, int $maxLen = 46): string
+{
+    $plain = preg_replace('/\*\*/u', '', $message) ?? $message;
+    $plain = preg_replace('/\{\{snippet[\s\S]*?\{\{\/snippet\}\}/u', '', $plain) ?? $plain;
+    $plain = trim(preg_replace('/\s+/u', ' ', $plain) ?? $plain);
+    if ($plain === '') {
+        return '';
+    }
+    $lines = array_values(array_filter(array_map('trim', preg_split('/\n+/', $plain) ?: [])));
+    $first = $lines[0] ?? $plain;
+    if (mb_strlen($first) <= $maxLen) {
+        return $first;
+    }
+
+    return mb_substr($first, 0, $maxLen - 1) . '…';
+}
+
+/** @param array<string, string> $axis */
 function eduCoachGuideAxisChoiceOptions(array $axis, string $assistantMessage): array
 {
     $scaffold = trim((string) ($axis['weak_scaffold'] ?? ''));
@@ -776,6 +878,10 @@ function eduCoachGuideChoiceMeta(array $blueprint, array $quest, string $assista
 {
     $phase = (string) ($blueprint['phase'] ?? '');
     if ($phase !== 'guide_axis' || trim($assistantMessage) === '') {
+        return null;
+    }
+
+    if (!empty($blueprint['guide_axis_pending_why'])) {
         return null;
     }
 
@@ -919,9 +1025,14 @@ function eduCoachGuideAttachChoiceFields(
     string $assistantMessage
 ): array {
     $meta = eduCoachGuideChoiceMeta($blueprint, $quest, $assistantMessage);
-    if ($meta === null) {
-        return $response;
+    if ($meta !== null) {
+        return array_merge($response, $meta);
     }
 
-    return array_merge($response, $meta);
+    $line = eduCoachGuideNarrativePromptOneLine($assistantMessage);
+    if ($line !== '') {
+        $response['narrative_prompt'] = $line;
+    }
+
+    return $response;
 }

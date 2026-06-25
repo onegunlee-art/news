@@ -119,6 +119,8 @@ export interface EduBlueprint {
   /** axis_guide 코치 — UI 탐구 체크용 (표시만, 로직 무관) */
   guide_axis_index?: number
   guide_axis_answers?: Record<string, string>
+  /** 버튼 선택 후 "왜?" 서술 대기 (2-C) */
+  guide_axis_pending_why?: { axis_id: string; choice: string } | null
 }
 
 export interface EduChatResponse {
@@ -143,6 +145,8 @@ export interface EduChatResponse {
   options?: string[]
   /** 선택형일 때 질문 본문(선택지 괄호 제거) */
   choice_question_text?: string
+  /** 서술형 카드 — 입력 위 한 줄 고정 라벨 */
+  narrative_prompt?: string
 }
 
 export interface EduEssaySection {

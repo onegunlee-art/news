@@ -12,6 +12,7 @@ import {
   coachMessageHasSnippet,
   parseCoachAssistantMessage,
   splitCoachParagraphs,
+  narrativePromptOneLine,
 } from '../../utils/eduCoachMessageParse'
 import {
   eduApi,
@@ -621,6 +622,9 @@ export default function QuestFlowCards() {
       ? coachChoice.questionText
       : cardQuestion
   const displayQuestionParagraphs = splitCoachParagraphs(displayQuestion)
+  const pinNarrativePrompt =
+    showNarrativeInput && !showCoachChoiceButtons && footerMode !== 'reflection'
+  const narrativePromptLabel = narrativePromptOneLine(displayQuestion)
 
   const handlePrimaryAction = () => {
     if (footerMode === 'opening') return handleSubmitOpening()
@@ -761,10 +765,11 @@ export default function QuestFlowCards() {
                 </div>
               )}
 
-              {/* 질문·fact — shrink-0 고정 (키보드와 무관하게 전체 노출) */}
+              {/* 질문·fact — 선택형은 카드, 서술형은 footer 고정 라벨(2-C) */}
               <div className="shrink-0 px-4 pt-2 pb-2">
                 <div className="space-y-4">
-                  {displayQuestionParagraphs.map((paragraph, i) => (
+                  {!pinNarrativePrompt &&
+                    displayQuestionParagraphs.map((paragraph, i) => (
                     <p
                       key={`${cardKey}-q-${i}`}
                       className={`text-center font-bold ${eduGameClasses.textKoPre}`}
@@ -844,6 +849,20 @@ export default function QuestFlowCards() {
                       </p>
                     )}
 
+                    {pinNarrativePrompt && narrativePromptLabel && (
+                      <p
+                        className="line-clamp-1 text-center font-bold shrink-0"
+                        title={displayQuestion.replace(/\*\*/g, '')}
+                        style={{
+                          fontSize: '1rem',
+                          lineHeight: 1.45,
+                          color: eduGame.ink,
+                        }}
+                      >
+                        {narrativePromptLabel}
+                      </p>
+                    )}
+
                     {footerMode === 'reflection' ? null : showCoachChoiceButtons ? (
                       <div className="space-y-2.5" role="group" aria-label="입장 선택">
                         {coachChoice.options.map((option, i) => (
@@ -893,7 +912,13 @@ export default function QuestFlowCards() {
                         onChange={(e) => setInput(e.target.value)}
                         onFocus={() => setInputFocused(true)}
                         onBlur={() => window.setTimeout(() => setInputFocused(false), 100)}
-                        placeholder={phase === 'hammer' ? '다른 시각을 듣고 — 네 생각을 한두 문장으로…' : '네 생각을 입력해…'}
+                        placeholder={
+                          pinNarrativePrompt
+                            ? ''
+                            : phase === 'hammer'
+                              ? '다른 시각을 듣고 — 네 생각을 한두 문장으로…'
+                              : '네 생각을 입력해…'
+                        }
                         disabled={sending || composing}
                         rows={inputRows}
                         className={`w-full resize-none overflow-y-auto ${eduGameClasses.input}`}

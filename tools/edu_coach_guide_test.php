@@ -254,5 +254,33 @@ assertContains(
     '무엇에 먼저'
 );
 
+$choiceTap = eduCoachGuideHandleTurn($open['blueprint'], $quest, '강하게');
+assertTrue('choice tap does not advance axis', (int) ($choiceTap['blueprint']['guide_axis_index'] ?? 0) === 0);
+assertTrue('choice tap sets pending why', !empty($choiceTap['blueprint']['guide_axis_pending_why']));
+assertContains('why follow-up asks reason', $choiceTap['message'], '왜');
+$choiceMetaWhy = eduCoachGuideChoiceMeta($choiceTap['blueprint'], $quest, $choiceTap['message']);
+assertTrue('why step is narrative not choice', $choiceMetaWhy === null);
+
+$whyAnswer = eduCoachGuideHandleTurn(
+    $choiceTap['blueprint'],
+    $quest,
+    '재래식보다 핵이 먼저 위협이라서요'
+);
+assertTrue('why answer advances axis', (int) ($whyAnswer['blueprint']['guide_axis_index'] ?? 0) === 1);
+assertTrue('pending why cleared after answer', empty($whyAnswer['blueprint']['guide_axis_pending_why']));
+assertContains('why answer stored with choice', (string) ($whyAnswer['blueprint']['guide_axis_answers']['military'] ?? ''), '강하게');
+
+$longChoicePass = eduCoachGuideHandleTurn(
+    $open['blueprint'],
+    $quest,
+    '우크라이나 사례 보면 핵 대신 재래식만 써서 약하게 해줘'
+);
+assertTrue('long answer with choice word skips why gate', (int) ($longChoicePass['blueprint']['guide_axis_index'] ?? 0) === 1);
+assertTrue('long answer no pending why', empty($longChoicePass['blueprint']['guide_axis_pending_why']));
+
+$narrativeLine = eduCoachGuideNarrativePromptOneLine("**강하게** — **왜** 그쪽이야? 짧게 이유만 말해줘.");
+assertContains('narrative one line strips bold', $narrativeLine, '왜');
+assertTrue('narrative one line is single line', !str_contains($narrativeLine, "\n"));
+
 echo "\n=== {$pass} passed, {$fail} failed ===\n";
 exit($fail > 0 ? 1 : 0);

@@ -74,3 +74,16 @@ export function splitCoachParagraphs(text: string): string[] {
     .map((p) => p.trim())
     .filter(Boolean)
 }
+
+/** 서술형 카드 — 입력 위 한 줄 고정 라벨 (전체 질문은 대화 기록에) */
+export function narrativePromptOneLine(text: string, maxLen = 46): string {
+  const plain = text
+    .replace(/\*\*/g, '')
+    .replace(/\{\{snippet[\s\S]*?\{\{\/snippet\}\}/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+  if (plain === '') return ''
+  const firstLine = plain.split('\n').map((l) => l.trim()).find(Boolean) ?? plain
+  if (firstLine.length <= maxLen) return firstLine
+  return `${firstLine.slice(0, maxLen - 1)}…`
+}
