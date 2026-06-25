@@ -622,8 +622,7 @@ export default function QuestFlowCards() {
       ? coachChoice.questionText
       : cardQuestion
   const displayQuestionParagraphs = splitCoachParagraphs(displayQuestion)
-  const pinNarrativePrompt =
-    showNarrativeInput && !showCoachChoiceButtons && footerMode !== 'reflection'
+  const pinNarrativePrompt = showNarrativeInput && !showCoachChoiceButtons
   const narrativePromptLabel = narrativePromptOneLine(displayQuestion)
 
   const handlePrimaryAction = () => {
