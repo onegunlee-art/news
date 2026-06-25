@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode, type Ref } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import EssayRevealWrapper from '../../components/edu/EssayRevealWrapper'
 import { type EssayArtifact } from '../../components/edu/EssayRevealCard'
@@ -72,6 +72,20 @@ function lastAssistantDialogueIndex(dialogue: EduDialogueTurn[]): number {
   return -1
 }
 
+/** 코치 질문 미리보기 (플로팅 2줄 clamp용) */
+function coachQuestionPreviewText(content: string): string {
+  if (coachMessageHasSnippet(content)) {
+    const segments = parseCoachAssistantMessage(content)
+    const text = segments
+      .filter((s) => s.type === 'text')
+      .map((s) => s.value)
+      .join(' ')
+      .trim()
+    return text || content
+  }
+  return content
+}
+
 /** visualViewport — 모바일 키보드 가시 영역 (단일 보정: shell height+top만) */
 function useVisualViewportLayout(): {
   viewportHeight: number | null
@@ -114,10 +128,7 @@ export default function QuestFlowChat() {
   const [searchParams] = useSearchParams()
   const bottomRef = useRef<HTMLDivElement>(null)
   const mainScrollRef = useRef<HTMLDivElement>(null)
-  const pinScrollRef = useRef<HTMLDivElement>(null)
-  const sheetScrollRef = useRef<HTMLDivElement>(null)
-  const { viewportHeight, viewportOffsetTop, keyboardInset } = useVisualViewportLayout()
-  const [inputFocused, setInputFocused] = useState(false)
+  const { viewportHeight, viewportOffsetTop } = useVisualViewportLayout()
 
   const [quest, setQuest] = useState<EduQuest | null>(null)
   const [sessionId, setSessionId] = useState('')
@@ -256,18 +267,14 @@ export default function QuestFlowChat() {
   }, [dialogue, completed, composing, sending, typingBubbleIndex])
 
   const scrollToBottom = () => {
-    for (const el of [sheetScrollRef.current, pinScrollRef.current, mainScrollRef.current]) {
-      if (el) {
-        el.scrollTo({ top: el.scrollHeight, behavior: 'auto' })
-        return
-      }
+    const el = mainScrollRef.current
+    if (el) {
+      el.scrollTo({ top: el.scrollHeight, behavior: 'auto' })
     }
   }
 
-  const handleComposeInputFocus = () => setInputFocused(true)
-  const handleComposeInputBlur = () => {
-    window.setTimeout(() => setInputFocused(false), 100)
-  }
+  const handleComposeInputFocus = () => {}
+  const handleComposeInputBlur = () => {}
 
   useEffect(() => {
     return () => {
@@ -520,12 +527,6 @@ export default function QuestFlowChat() {
     .map((turn, i) => ({ turn, i }))
     .filter(({ i }) => !showPinnedCoach || i !== pinnedCoachIndex)
 
-  const keyboardOpen = keyboardInset > 40
-  const compactMode =
-    !completed &&
-    footerMode !== null &&
-    (keyboardOpen || inputFocused) &&
-    (showPinnedCoach || showGuideAxisBar)
   const showPinZone = !completed && (showGuideAxisBar || showPinnedCoach)
 
   const composeFooter =
@@ -601,62 +602,45 @@ export default function QuestFlowChat() {
         </div>
       </header>
 
-      {showGuideAxisBar && (
+      {showPinZone && (
         <div
-          className="z-20 shrink-0 border-b"
-          style={{ borderColor: eduGame.border, backgroundColor: eduGame.bg }}
+          className="z-30 shrink-0 border-b shadow-sm"
+          style={{
+            borderColor: eduGame.border,
+            backgroundColor: 'rgba(255, 255, 255, 0.94)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+          }}
         >
-          <div className={`${PAGE_MAX} mx-auto w-full px-4 pt-2 pb-1`}>
-            <AxisExploreBar
-              completed={guideAxisCompleted}
-              currentSlot={guideAxisCurrentSlot}
-              pulse={explorePulse}
-              pulseSlot={explorePulseSlot}
-              nudgeText={exploreNudgeText}
-            />
-          </div>
-        </div>
-      )}
-
-      {showPinZone && !compactMode && showPinnedCoach && pinnedCoachTurn && (
-        <div
-          ref={pinScrollRef}
-          className="z-20 shrink-0 border-b"
-          style={{ borderColor: eduGame.border, backgroundColor: eduGame.bg }}
-        >
-          <div className={`${PAGE_MAX} mx-auto w-full px-4 ${showGuideAxisBar ? 'pb-2' : 'py-2'}`}>
-            <DialogueBubble
-              turn={pinnedCoachTurn}
-              typewriter={pinnedCoachIndex === typingBubbleIndex}
-              coachEnter={pinnedCoachIndex === typingBubbleIndex}
-              onTypewriterComplete={() => setTypingBubbleIndex(null)}
-              onTypewriterProgress={scrollToBottom}
-            />
-          </div>
-        </div>
-      )}
-
-      {compactMode && composeFooter && (
-        <ComposeBottomSheet
-          scrollRef={sheetScrollRef}
-          question={
-            showPinnedCoach && pinnedCoachTurn ? (
-              <DialogueBubble
+          <div className={`${PAGE_MAX} mx-auto w-full px-4`}>
+            {showGuideAxisBar && (
+              <div className="pt-2 pb-1">
+                <AxisExploreBar
+                  completed={guideAxisCompleted}
+                  currentSlot={guideAxisCurrentSlot}
+                  pulse={explorePulse}
+                  pulseSlot={explorePulseSlot}
+                  nudgeText={exploreNudgeText}
+                />
+              </div>
+            )}
+            {showPinnedCoach && pinnedCoachTurn && (
+              <FloatingCoachQuestion
+                key={`${pinnedCoachIndex}-${phase}`}
                 turn={pinnedCoachTurn}
                 typewriter={pinnedCoachIndex === typingBubbleIndex}
                 coachEnter={pinnedCoachIndex === typingBubbleIndex}
                 onTypewriterComplete={() => setTypingBubbleIndex(null)}
                 onTypewriterProgress={scrollToBottom}
               />
-            ) : null
-          }
-          footer={composeFooter}
-        />
+            )}
+          </div>
+        </div>
       )}
 
       <main
         ref={mainScrollRef}
-        className={`${compactMode ? 'hidden' : 'flex-1 min-h-0'} ${eduGameClasses.chatScroll} ${PAGE_MAX} mx-auto w-full px-4 py-4 overflow-y-auto space-y-3`}
+        className={`flex-1 min-h-0 ${eduGameClasses.chatScroll} ${PAGE_MAX} mx-auto w-full px-4 py-4 overflow-y-auto space-y-3`}
       >
         {phase === 'stance' && dialogue.length === 0 && quest && !completed && entryMode === 'stance_pick' && (
           <section className="space-y-3 mb-4">
@@ -855,9 +839,9 @@ export default function QuestFlowChat() {
         <div ref={bottomRef} />
       </main>
 
-      {!completed && footerMode !== null && !compactMode && (
+      {!completed && footerMode !== null && (
         <footer
-          className={`shrink-0 border-t px-4 py-3 ${PAGE_MAX} mx-auto w-full z-30`}
+          className={`shrink-0 border-t px-4 py-3 ${PAGE_MAX} mx-auto w-full z-40`}
           style={{
             borderColor: eduGame.border,
             backgroundColor: eduGame.bg,
@@ -871,37 +855,79 @@ export default function QuestFlowChat() {
   )
 }
 
-function ComposeBottomSheet({
-  scrollRef,
-  question,
-  footer,
+function FloatingCoachQuestion({
+  turn,
+  typewriter = false,
+  coachEnter = false,
+  onTypewriterComplete,
+  onTypewriterProgress,
 }: {
-  scrollRef: Ref<HTMLDivElement>
-  question: ReactNode
-  footer: ReactNode
+  turn: EduDialogueTurn
+  typewriter?: boolean
+  coachEnter?: boolean
+  onTypewriterComplete?: () => void
+  onTypewriterProgress?: () => void
 }) {
+  const [expanded, setExpanded] = useState(false)
+  const preview = coachQuestionPreviewText(turn.content)
+  const isLong = preview.length > 72 || preview.split('\n').length > 2
+
+  const cardStyle = {
+    borderColor: eduGame.bubbleCoachBorder,
+    backgroundColor: 'rgba(255, 255, 255, 0.98)',
+  } as const
+
+  if (expanded || !isLong) {
+    return (
+      <div className="py-2">
+        <DialogueBubble
+          turn={turn}
+          typewriter={typewriter}
+          coachEnter={coachEnter}
+          onTypewriterComplete={onTypewriterComplete}
+          onTypewriterProgress={onTypewriterProgress}
+        />
+        {isLong && (
+          <button
+            type="button"
+            onClick={() => setExpanded(false)}
+            className="mt-1 font-medium"
+            style={{ fontSize: eduGame.fontSize.caption, color: eduGame.primary }}
+          >
+            접기
+          </button>
+        )}
+      </div>
+    )
+  }
+
   return (
-    <div
-      className={`${eduGameClasses.composeSheet} flex flex-col flex-1 min-h-0 z-30 ${PAGE_MAX} mx-auto w-full`}
-      style={{ backgroundColor: eduGame.bg, borderColor: eduGame.border }}
-    >
-      <div aria-hidden className={eduGameClasses.composeHandle} />
-      <div
-        ref={scrollRef}
-        className={`flex-1 min-h-0 overflow-y-auto px-4 py-2 ${eduGameClasses.chatScroll}`}
+    <div className="py-2">
+      <button
+        type="button"
+        onClick={() => setExpanded(true)}
+        className="w-full text-left rounded-2xl border-2 px-3 py-2.5 shadow-md active:shadow-lg transition-shadow"
+        style={cardStyle}
+        aria-expanded={false}
+        aria-label="질문 펼치기"
       >
-        {question}
-      </div>
-      <div
-        className="shrink-0 border-t px-4 py-3 w-full"
-        style={{
-          borderColor: eduGame.border,
-          backgroundColor: eduGame.bg,
-          paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0px))',
-        }}
-      >
-        {footer}
-      </div>
+        <p
+          className={`${eduGameClasses.textKoPre} line-clamp-2`}
+          style={{
+            fontSize: eduGame.fontSize.body,
+            lineHeight: eduGame.lineHeight.body,
+            color: eduGame.ink,
+          }}
+        >
+          {preview}
+        </p>
+        <p
+          className="mt-1 font-medium"
+          style={{ fontSize: eduGame.fontSize.caption, color: eduGame.primary }}
+        >
+          탭해서 전체 보기
+        </p>
+      </button>
     </div>
   )
 }
