@@ -8,6 +8,7 @@ require_once __DIR__ . '/../lib/bootstrap.php';
 require_once __DIR__ . '/../lib/eduAuth.php';
 require_once __DIR__ . '/../lib/eduQuest.php';
 require_once __DIR__ . '/../lib/eduBlueprint.php';
+require_once __DIR__ . '/../lib/eduCoachGuide.php';
 
 handleOptionsRequest();
 setCorsHeaders();
@@ -100,7 +101,7 @@ if (($session['stage'] ?? '') === 'completed') {
     ];
 }
 
-eduSendJson([
+$statePayload = [
     'success' => true,
     'session_id' => $sessionId,
     'stage' => $session['stage'] ?? 'commit',
@@ -109,4 +110,22 @@ eduSendJson([
     'dialogue' => $dialogue,
     'progress_pct' => eduBlueprintProgress($blueprint),
     'essay' => $essay,
-]);
+];
+
+if (eduQuestUsesAxisGuide($quest)) {
+    for ($i = count($dialogue) - 1; $i >= 0; $i--) {
+        if (($dialogue[$i]['role'] ?? '') === 'assistant') {
+            $choiceMeta = eduCoachGuideChoiceMeta(
+                $blueprint,
+                $quest,
+                (string) ($dialogue[$i]['content'] ?? '')
+            );
+            if ($choiceMeta !== null) {
+                $statePayload = array_merge($statePayload, $choiceMeta);
+            }
+            break;
+        }
+    }
+}
+
+eduSendJson($statePayload);

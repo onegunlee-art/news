@@ -228,5 +228,31 @@ $choiceUnknown = eduCoachGuideChoiceMeta(
 );
 assertTrue('unknown evasion ternary stays narrative', $choiceUnknown === null);
 
+$staleAxes = eduCoachGuide630Axes();
+unset($staleAxes[2]['choice_options'], $staleAxes[2]['weak_choice_options']);
+$staleQuest = [
+    'quest_code' => EDU_COACH_GUIDE_QUEST_CODE,
+    'articles' => [['news_id' => 630]],
+    'hammer_hints' => array_merge(eduCoachGuideAttachHints([]), ['_guide_axes' => $staleAxes]),
+];
+$staleDefenseIntro = eduCoachGuideIntroAxis($staleAxes[2], 2, 3);
+$choiceStale = eduCoachGuideChoiceMeta(
+    ['phase' => 'guide_axis', 'guide_axis_index' => 2],
+    $staleQuest,
+    $staleDefenseIntro
+);
+assertTrue('stale DB axes merge choice_options', ($choiceStale['choice_question'] ?? false) === true);
+assertTrue('stale DB axes has 3 options', count($choiceStale['options'] ?? []) === 3);
+assertNotContains(
+    'choice question strips inline options',
+    $choiceStale['choice_question_text'] ?? '',
+    '핵 현대화'
+);
+assertContains(
+    'choice question keeps core prompt',
+    $choiceStale['choice_question_text'] ?? '',
+    '무엇에 먼저'
+);
+
 echo "\n=== {$pass} passed, {$fail} failed ===\n";
 exit($fail > 0 ? 1 : 0);

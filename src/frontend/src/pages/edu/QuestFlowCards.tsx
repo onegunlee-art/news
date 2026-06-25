@@ -16,6 +16,7 @@ import {
   eduApi,
   getEduToken,
   getEduDisplayName,
+  type EduChatResponse,
   type EduDialogueTurn,
   type EduQuest,
   type EduTierProgress,
@@ -31,10 +32,11 @@ const COACH_CHOICE_CACHE_PREFIX = 'edu_coach_choice_v1'
 type CoachChoiceState = {
   active: boolean
   options: string[]
+  questionText: string
 }
 
 function emptyCoachChoice(): CoachChoiceState {
-  return { active: false, options: [] }
+  return { active: false, options: [], questionText: '' }
 }
 
 function coachChoiceCacheKey(sessionId: string, coachIndex: number): string {
@@ -66,10 +68,14 @@ function writeCachedCoachChoice(sessionId: string, coachIndex: number, choice: C
 }
 
 function resolveCoachChoiceFromResponse(
-  res: Awaited<ReturnType<typeof eduApi.sendChat>>
+  res: Pick<EduChatResponse, 'choice_question' | 'options' | 'choice_question_text'>
 ): CoachChoiceState {
   if (res.choice_question && Array.isArray(res.options) && res.options.length > 0) {
-    return { active: true, options: res.options }
+    return {
+      active: true,
+      options: res.options,
+      questionText: (res.choice_question_text ?? '').trim(),
+    }
   }
   return emptyCoachChoice()
 }
@@ -238,6 +244,7 @@ export default function QuestFlowCards() {
       setEvidenceInput(String(state.blueprint.evidence))
     }
     setEvidenceNudgeCount(Number(state.blueprint?.evidence_nudge_count ?? 0))
+    setCoachChoice(resolveCoachChoiceFromResponse(state))
   }, [])
 
   const syncSessionState = useCallback(async (sid: string) => {
@@ -588,6 +595,11 @@ export default function QuestFlowCards() {
     cardSnippets = parsed.snippets
   }
 
+  const displayQuestion =
+    showCoachChoiceButtons && coachChoice.questionText
+      ? coachChoice.questionText
+      : cardQuestion
+
   const handlePrimaryAction = () => {
     if (footerMode === 'opening') return handleSubmitOpening()
     if (footerMode === 'evidence') return handleSubmitEvidence()
@@ -737,7 +749,7 @@ export default function QuestFlowCards() {
                     color: eduGame.ink,
                   }}
                 >
-                  {cardQuestion}
+                  {displayQuestion}
                 </p>
 
                 {cardSnippets.length > 0 && (

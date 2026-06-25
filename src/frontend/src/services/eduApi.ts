@@ -141,6 +141,8 @@ export interface EduChatResponse {
   /** axis_guide 선택형 — 2-A 백엔드, 카드 버튼 UI용 */
   choice_question?: boolean
   options?: string[]
+  /** 선택형일 때 질문 본문(선택지 괄호 제거) */
+  choice_question_text?: string
 }
 
 export interface EduEssaySection {
@@ -193,6 +195,9 @@ export interface EduSessionState {
     scqa_parts: Record<string, string> | null
     stance_changed: boolean
   } | null
+  choice_question?: boolean
+  options?: string[]
+  choice_question_text?: string
 }
 
 export interface EduCompletedSession {

@@ -165,16 +165,59 @@ function eduCoachGuideAxesForNewsId(int $newsId): array
     };
 }
 
+/** @param array<string, mixed> $quest */
+function eduCoachGuideNewsIdFromQuest(array $quest): int
+{
+    $articles = $quest['articles'] ?? [];
+    if (is_array($articles) && !empty($articles[0]['news_id'])) {
+        return (int) $articles[0]['news_id'];
+    }
+
+    return match ($quest['quest_code'] ?? '') {
+        EDU_COACH_GUIDE_QUEST_CODE_DC_150 => 150,
+        EDU_COACH_GUIDE_QUEST_CODE_IRAN_196 => 196,
+        EDU_COACH_GUIDE_QUEST_CODE_YOUTH_288 => 288,
+        default => 630,
+    };
+}
+
+/** @param array<string, string> $axis @param array<string, string> $canonical */
+function eduCoachGuideMergeAxisChoiceFields(array $axis, array $canonical): array
+{
+    foreach (['choice_options', 'weak_choice_options'] as $key) {
+        if (!empty($canonical[$key]) && empty($axis[$key])) {
+            $axis[$key] = $canonical[$key];
+        }
+    }
+
+    return $axis;
+}
+
 /** @param array<string, mixed> $quest @return list<array<string, string>> */
 function eduCoachGuideAxes(array $quest): array
 {
     $hints = eduQuestHammerHints($quest);
     $fromHints = $hints['_guide_axes'] ?? null;
-    if (is_array($fromHints) && $fromHints !== []) {
-        return $fromHints;
+    $canonicalList = eduCoachGuideAxesForNewsId(eduCoachGuideNewsIdFromQuest($quest));
+    $canonicalById = [];
+    foreach ($canonicalList as $canonical) {
+        $canonicalById[(string) ($canonical['axis_id'] ?? '')] = $canonical;
     }
 
-    return eduCoachGuide630Axes();
+    if (is_array($fromHints) && $fromHints !== []) {
+        $merged = [];
+        foreach ($fromHints as $axis) {
+            if (!is_array($axis)) {
+                continue;
+            }
+            $id = (string) ($axis['axis_id'] ?? '');
+            $merged[] = eduCoachGuideMergeAxisChoiceFields($axis, $canonicalById[$id] ?? []);
+        }
+
+        return $merged !== [] ? $merged : $canonicalList;
+    }
+
+    return $canonicalList;
 }
 
 function eduCoachGuideAttachHints(array $hints, int $newsId = 630): array
@@ -727,7 +770,7 @@ function eduCoachGuideMessageUsesWeakScaffold(string $message, string $scaffold)
  *
  * @param array<string, mixed> $blueprint
  * @param array<string, mixed> $quest
- * @return array{choice_question: true, options: list<string>}|null
+ * @return array{choice_question: true, options: list<string>, choice_question_text: string}|null
  */
 function eduCoachGuideChoiceMeta(array $blueprint, array $quest, string $assistantMessage): ?array
 {
@@ -737,9 +780,12 @@ function eduCoachGuideChoiceMeta(array $blueprint, array $quest, string $assista
     }
 
     if (eduCoachGuideMessageIsStrengthenWeakenPrompt($assistantMessage)) {
+        $options = eduCoachGuideStrengthenWeakenOptions();
+
         return [
             'choice_question' => true,
-            'options' => eduCoachGuideStrengthenWeakenOptions(),
+            'options' => $options,
+            'choice_question_text' => eduCoachGuideChoiceQuestionText($assistantMessage, $options),
         ];
     }
 
@@ -762,6 +808,7 @@ function eduCoachGuideChoiceMeta(array $blueprint, array $quest, string $assista
     return [
         'choice_question' => true,
         'options' => $options,
+        'choice_question_text' => eduCoachGuideChoiceQuestionText($assistantMessage, $options, $axis),
     ];
 }
 
@@ -798,7 +845,63 @@ function eduCoachGuideAssistantPromptsChoice(string $message, array $axis, array
         return true;
     }
 
+    $point = trim((string) ($axis['point'] ?? ''));
+    if ($point !== '' && str_contains($message, $point) && count($options) >= 2) {
+        return true;
+    }
+
     return false;
+}
+
+/** @param list<string> $options */
+function eduCoachGuideStripInlineChoiceFromQuestion(string $question, array $options): string
+{
+    $out = trim($question);
+    if ($out === '' || $options === []) {
+        return $out;
+    }
+
+    $out = preg_replace('/\s*\([^)]*(?:\/|／)[^)]*\)\s*$/u', '', $out) ?? $out;
+    $out = preg_replace('/\s*\(한쪽만\)\s*$/u', '', $out) ?? $out;
+    $out = preg_replace('/\s*[\—\-]\s*네\s*말로\s*한쪽만\.?\s*$/u', '', $out) ?? $out;
+
+    if (eduCoachGuideMessageIsStrengthenWeakenPrompt($out)) {
+        $out = preg_replace('/\s*위\s*기사\s*조각만[\s\S]*$/u', '', $out) ?? $out;
+        $out = preg_replace('/\s*[\—\-]?\s*네\s*말을?\s*\*\*강하게\*\*[\s\S]*$/u', '', $out) ?? $out;
+    }
+
+    foreach ($options as $opt) {
+        $escaped = preg_quote((string) $opt, '/');
+        $out = preg_replace('/\s*[\—\-]\s*\*\*' . $escaped . '\*\*\s*\/\s*/u', ' — ', $out) ?? $out;
+        $out = preg_replace('/\s*\/\s*\*\*' . $escaped . '\*\*/u', '', $out) ?? $out;
+    }
+
+    $out = preg_replace('/\s*\/\s*[\s\S]*$/u', '', $out) ?? $out;
+    $out = trim(preg_replace('/\s+/u', ' ', $out) ?? $out);
+
+    return $out !== '' ? $out : trim($question);
+}
+
+/** @param list<string> $options @param array<string, string> $axis */
+function eduCoachGuideChoiceQuestionText(string $assistantMessage, array $options, array $axis = []): string
+{
+    $core = trim((string) ($axis['core_question'] ?? ''));
+    if ($core !== '' && (str_contains($assistantMessage, $core) || eduCoachGuideTextsOverlap($core, $assistantMessage))) {
+        $plainCore = preg_replace('/\*\*/u', '', $core) ?? $core;
+
+        return eduCoachGuideStripInlineChoiceFromQuestion($plainCore, $options);
+    }
+
+    if (eduCoachGuideMessageIsStrengthenWeakenPrompt($assistantMessage)) {
+        return '위 기사 조각만 놓고 — 네 말을 어떻게 받쳐 주나?';
+    }
+
+    $plain = preg_replace('/\{\{snippet\|\w+\}\}[\s\S]*?\{\{\/snippet\}\}/u', '', $assistantMessage) ?? $assistantMessage;
+    $plain = preg_replace('/\*\*/u', '', $plain) ?? $plain;
+    $lines = array_values(array_filter(array_map('trim', preg_split('/\n+/', trim($plain)) ?: [])));
+    $questionLine = $lines !== [] ? $lines[count($lines) - 1] : trim($plain);
+
+    return eduCoachGuideStripInlineChoiceFromQuestion($questionLine, $options);
 }
 
 /**
