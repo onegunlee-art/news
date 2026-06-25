@@ -56,6 +56,7 @@
 | 2026-06-25 | `207fe87` | **EDU 2-A** — axis_guide `choice_question`/`options` JSON (서술형 FSM 0, 버튼 UI 전) |
 | 2026-06-25 | `6b8f944` | **EDU 2-B** — QuestFlowCards 선택형 버튼 UI (PHP 0, 키보드 없이 탭 전송) |
 | 2026-06-25 | `67229cf` | **EDU 2-B fix** — DB stale axes choice merge + choice_question_text + state 복구 |
+| 2026-06-25 | `13a8dfd` | **EDU hammer 입력 복구** — 반론 textarea + 코치 긴 발화 문단 띄우기 |
 
 ## P1-2+ 라이브 완주 게이트 (R4–R6)
 
