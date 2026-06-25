@@ -51,3 +51,26 @@ export function parseCoachAssistantMessage(content: string): CoachMessageSegment
 
   return segments
 }
+
+/** 긴 코치 발화 — 논점별 문단 분리 (카드·채팅 공용) */
+export function splitCoachParagraphs(text: string): string[] {
+  const normalized = text.replace(/\r\n/g, '\n').trim()
+  if (normalized === '') return []
+
+  if (normalized.includes('\n\n')) {
+    return normalized
+      .split(/\n{2,}/)
+      .map((p) => p.trim())
+      .filter(Boolean)
+  }
+
+  const withBreaks = normalized.replace(
+    /([.!?…]["'”’)]*)\s+(?=(?:다만|하지만|그래서|그런데|한편|반면|즉|또|실제로)\b)/gu,
+    '$1\n\n'
+  )
+
+  return withBreaks
+    .split(/\n{2,}/)
+    .map((p) => p.trim())
+    .filter(Boolean)
+}

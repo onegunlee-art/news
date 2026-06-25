@@ -340,6 +340,13 @@ function eduIsReflectionConfirm(string $message): bool
 function eduFormatHammerDelivery(string $counterBody, string $mode = ''): string
 {
     $body = trim($counterBody);
+    if ($body !== '') {
+        $body = preg_replace(
+            '/([.!?…]["\'”’)]*)\s+(?=(?:다만|하지만|그래서|그런데|한편|반면|즉|또|실제로)\b)/u',
+            "$1\n\n",
+            $body
+        ) ?? $body;
+    }
     if ($body === '') {
         return $mode === 'convergent_meta_ask'
             ? '어느 쪽이 더 와닿아?'

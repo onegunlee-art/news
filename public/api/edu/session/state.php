@@ -112,7 +112,7 @@ $statePayload = [
     'essay' => $essay,
 ];
 
-if (eduQuestUsesAxisGuide($quest)) {
+if (eduQuestUsesAxisGuide($quest) && ($blueprint['phase'] ?? '') === 'guide_axis') {
     for ($i = count($dialogue) - 1; $i >= 0; $i--) {
         if (($dialogue[$i]['role'] ?? '') === 'assistant') {
             $choiceMeta = eduCoachGuideChoiceMeta(

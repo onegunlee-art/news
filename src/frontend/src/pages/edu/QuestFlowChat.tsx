@@ -56,8 +56,17 @@ function resolveStanceEntryChatAction(entryMode: QuestEntryMode): StanceEntryCha
   return entryMode === 'open_response' ? 'submit_opening' : 'select_stance'
 }
 
-function resolveQuestFooterMode(phase: string, entryMode: QuestEntryMode): QuestFooterMode | null {
-  if (phase === 'stance') return entryMode === 'open_response' ? 'opening' : null
+function resolveQuestFooterMode(
+  phase: string,
+  entryMode: QuestEntryMode,
+  dialogueLength: number
+): QuestFooterMode | null {
+  if (phase === 'stance') {
+    if (dialogueLength > 0) {
+      return 'chat'
+    }
+    return entryMode === 'open_response' ? 'opening' : null
+  }
   if (phase === 'evidence') return 'evidence'
   if (phase === 'reflection') return 'reflection'
   if (phase === 'reasoning' || phase === 'hammer') return 'chat'
@@ -510,7 +519,7 @@ export default function QuestFlowChat() {
   const lastTurn = dialogue[dialogue.length - 1]
   const authorName = getEduDisplayName() ?? '나'
   const entryMode = resolveQuestEntryMode(quest)
-  const footerMode = resolveQuestFooterMode(phase, entryMode)
+  const footerMode = resolveQuestFooterMode(phase, entryMode, dialogue.length)
   const showGuideAxisBar =
     !completed && (phase === 'guide_axis' || phase === 'guide_conclusion')
   const guideAxisCompleted =

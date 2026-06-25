@@ -11,6 +11,7 @@ import EduArticleSnippetCard from '../../components/edu/EduArticleSnippetCard'
 import {
   coachMessageHasSnippet,
   parseCoachAssistantMessage,
+  splitCoachParagraphs,
 } from '../../utils/eduCoachMessageParse'
 import {
   eduApi,
@@ -98,8 +99,15 @@ function resolveStanceEntryChatAction(entryMode: QuestEntryMode): StanceEntryCha
   return entryMode === 'open_response' ? 'submit_opening' : 'select_stance'
 }
 
-function resolveQuestFooterMode(phase: string, entryMode: QuestEntryMode): QuestFooterMode | null {
+function resolveQuestFooterMode(
+  phase: string,
+  entryMode: QuestEntryMode,
+  dialogueLength: number
+): QuestFooterMode | null {
   if (phase === 'stance') {
+    if (dialogueLength > 0) {
+      return 'chat'
+    }
     return entryMode === 'open_response' ? 'opening' : 'stance_pick'
   }
   if (phase === 'evidence') return 'evidence'
@@ -327,6 +335,12 @@ export default function QuestFlowCards() {
     }
   }, [])
 
+  useEffect(() => {
+    if (phase !== 'guide_axis') {
+      setCoachChoice(emptyCoachChoice())
+    }
+  }, [phase])
+
   const coachIndex = lastAssistantDialogueIndex(dialogue)
 
   useEffect(() => {
@@ -441,6 +455,8 @@ export default function QuestFlowCards() {
     }
     const nextChoice = resolveCoachChoiceFromResponse(res)
     setCoachChoice(nextChoice)
+    if (res.phase) setPhase(res.phase)
+    else if (res.blueprint?.phase) setPhase(String(res.blueprint.phase))
     await syncSessionState(sid)
     if (res.should_compose) {
       await handleCompose(sid)
@@ -569,12 +585,17 @@ export default function QuestFlowCards() {
 
   const authorName = getEduDisplayName() ?? '나'
   const entryMode = resolveQuestEntryMode(quest)
-  const footerMode = resolveQuestFooterMode(phase, entryMode)
+  const footerMode = resolveQuestFooterMode(phase, entryMode, dialogue.length)
   const coachTurn = coachIndex >= 0 ? dialogue[coachIndex] : null
   const evidenceLen = evidenceInput.trim().length
   const evidenceReady = evidenceLen > 0
   const showCoachChoiceButtons =
-    footerMode === 'chat' && coachChoice.active && coachChoice.options.length > 0
+    phase === 'guide_axis' &&
+    footerMode === 'chat' &&
+    coachChoice.active &&
+    coachChoice.options.length > 0
+  const showNarrativeInput =
+    footerMode === 'chat' || footerMode === 'opening' || footerMode === 'evidence'
 
   const cardKey = completed
     ? 'completed'
@@ -599,6 +620,7 @@ export default function QuestFlowCards() {
     showCoachChoiceButtons && coachChoice.questionText
       ? coachChoice.questionText
       : cardQuestion
+  const displayQuestionParagraphs = splitCoachParagraphs(displayQuestion)
 
   const handlePrimaryAction = () => {
     if (footerMode === 'opening') return handleSubmitOpening()
@@ -741,16 +763,21 @@ export default function QuestFlowCards() {
 
               {/* 질문·fact — shrink-0 고정 (키보드와 무관하게 전체 노출) */}
               <div className="shrink-0 px-4 pt-2 pb-2">
-                <p
-                  className={`text-center font-bold ${eduGameClasses.textKoPre}`}
-                  style={{
-                    fontSize: keyboardOpen ? '1.125rem' : '1.25rem',
-                    lineHeight: 1.5,
-                    color: eduGame.ink,
-                  }}
-                >
-                  {displayQuestion}
-                </p>
+                <div className="space-y-4">
+                  {displayQuestionParagraphs.map((paragraph, i) => (
+                    <p
+                      key={`${cardKey}-q-${i}`}
+                      className={`text-center font-bold ${eduGameClasses.textKoPre}`}
+                      style={{
+                        fontSize: keyboardOpen ? '1.125rem' : '1.25rem',
+                        lineHeight: 1.55,
+                        color: eduGame.ink,
+                      }}
+                    >
+                      {paragraph}
+                    </p>
+                  ))}
+                </div>
 
                 {cardSnippets.length > 0 && (
                   <div
@@ -839,7 +866,8 @@ export default function QuestFlowCards() {
                           </button>
                         ))}
                       </div>
-                    ) : footerMode === 'evidence' ? (
+                    ) : showNarrativeInput ? (
+                      footerMode === 'evidence' ? (
                       <textarea
                         value={evidenceInput}
                         onChange={(e) => {
@@ -865,7 +893,7 @@ export default function QuestFlowCards() {
                         onChange={(e) => setInput(e.target.value)}
                         onFocus={() => setInputFocused(true)}
                         onBlur={() => window.setTimeout(() => setInputFocused(false), 100)}
-                        placeholder="네 생각을 입력해…"
+                        placeholder={phase === 'hammer' ? '다른 시각을 듣고 — 네 생각을 한두 문장으로…' : '네 생각을 입력해…'}
                         disabled={sending || composing}
                         rows={inputRows}
                         className={`w-full resize-none overflow-y-auto ${eduGameClasses.input}`}
@@ -876,7 +904,8 @@ export default function QuestFlowCards() {
                           maxHeight: inputMaxHeight,
                         }}
                       />
-                    )}
+                    )
+                    ) : null}
 
                     {error && (
                       <p className="text-sm text-red-600 text-center">{error}</p>
