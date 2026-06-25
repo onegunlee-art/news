@@ -32,6 +32,7 @@ final class User
     private ?\DateTimeImmutable $updatedAt = null;
     private bool $isSubscribed = false;
     private ?string $subscriptionExpiresAt = null;
+    private ?string $companyTag = null;
 
     /**
      * 생성자
@@ -70,6 +71,9 @@ final class User
 
         $user->isSubscribed = (bool) ($data['is_subscribed'] ?? false);
         $user->subscriptionExpiresAt = $data['subscription_expires_at'] ?? null;
+        $user->companyTag = isset($data['company_tag']) && $data['company_tag'] !== ''
+            ? (string) $data['company_tag']
+            : null;
         
         return $user;
     }
@@ -272,6 +276,7 @@ final class User
             'created_at' => $this->createdAt?->format('c'),
             'is_subscribed' => $this->isSubscribed,
             'subscription_expires_at' => $this->subscriptionExpiresAt,
+            'company_tag' => $this->companyTag,
             'login_provider' => $provider,
         ];
     }

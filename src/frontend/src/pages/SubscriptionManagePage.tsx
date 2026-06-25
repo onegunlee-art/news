@@ -44,6 +44,7 @@ export default function SubscriptionManagePage() {
         if (cancelled) return
         if (r.data?.success && r.data.data) {
           setDetail(r.data.data)
+          useAuthStore.getState().setSubscribed(true)
         } else {
           // 서버는 200 인데 data 가 비어 있는 경우 = 구독 이력 없음
           setNeedsSubscribe(true)
@@ -68,7 +69,8 @@ export default function SubscriptionManagePage() {
   }, [isAuthenticated, isInitialized, navigate])
 
   const isAutoRenewOn = detail ? detail.auto_renew : true
-  const canToggle = detail && ['ACTIVE', 'PAUSED', 'PENDING_CANCEL', 'PENDING_PAUSE'].includes(detail.status)
+  const isCorporate = detail?.is_corporate === true
+  const canToggle = detail && !isCorporate && ['ACTIVE', 'PAUSED', 'PENDING_CANCEL', 'PENDING_PAUSE'].includes(detail.status)
 
   const handleToggleClick = () => {
     if (!detail?.subscription_id || toggling) return
@@ -193,22 +195,24 @@ export default function SubscriptionManagePage() {
                         </span>
                       )}
                     </div>
-                    {detail.start_date && (
+                    {detail.start_date && !isCorporate && (
                       <div className="flex items-center justify-between">
                         <span className="text-page-secondary text-sm">구독 시작일</span>
                         <span className="text-page text-sm">{new Date(detail.start_date).toLocaleDateString('ko-KR')}</span>
                       </div>
                     )}
-                    {detail.next_payment_date && (
+                    {detail.next_payment_date && !isCorporate && (
                       <div className="flex items-center justify-between">
                         <span className="text-page-secondary text-sm">{isPendingCancel ? '서비스 이용 종료일' : '다음 결제일'}</span>
                         <span className="text-page text-sm">{new Date(detail.next_payment_date).toLocaleDateString('ko-KR')}</span>
                       </div>
                     )}
+                    {!isCorporate && (
                     <div className="flex items-center justify-between">
                       <span className="text-page-secondary text-sm">결제 금액</span>
                       <span className="text-page font-medium">{detail.amount_formatted}</span>
                     </div>
+                    )}
                   </div>
                 </section>
 

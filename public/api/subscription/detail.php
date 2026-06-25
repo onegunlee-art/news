@@ -19,6 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 
 require_once __DIR__ . '/../lib/auth.php';
 require_once __DIR__ . '/../lib/steppay.php';
+require_once __DIR__ . '/../lib/corporate_display.php';
 
 $pdo = getDb();
 $userId = getAuthUserId($pdo);
@@ -28,7 +29,7 @@ if (!$userId) {
     exit;
 }
 
-$stmt = $pdo->prepare("SELECT is_subscribed, steppay_subscription_id, subscription_plan, subscription_start_date, subscription_expires_at FROM users WHERE id = ?");
+$stmt = $pdo->prepare("SELECT is_subscribed, steppay_subscription_id, subscription_plan, subscription_start_date, subscription_expires_at, company_tag, email FROM users WHERE id = ?");
 $stmt->execute([$userId]);
 $user = $stmt->fetch();
 if (!$user) {
@@ -47,6 +48,28 @@ if (!$user['is_subscribed']) {
 $dbPlan = $user['subscription_plan'] ?? null;
 $dbStartDate = $user['subscription_start_date'] ?? null;
 $dbExpiresAt = $user['subscription_expires_at'] ?? null;
+
+$corporatePlanName = corporateSubscriptionPlanName(
+    $user['company_tag'] ?? null,
+    $user['email'] ?? null
+);
+if ($corporatePlanName !== null) {
+    echo json_encode([
+        'success' => true,
+        'data' => [
+            'plan_name' => $corporatePlanName,
+            'status' => 'ACTIVE',
+            'status_label' => '활성화',
+            'start_date' => $dbStartDate,
+            'next_payment_date' => $dbExpiresAt,
+            'amount_formatted' => '',
+            'auto_renew' => false,
+            'subscription_id' => null,
+            'is_corporate' => true,
+        ],
+    ], JSON_UNESCAPED_UNICODE);
+    exit;
+}
 
 $planLabels = [
     '1m'  => 'the gist 1개월 구독권',

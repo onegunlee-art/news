@@ -12,7 +12,16 @@ export interface User {
   created_at: string
   is_subscribed?: boolean
   subscription_expires_at?: string | null
+  company_tag?: string | null
   login_provider?: 'kakao' | 'google' | 'email'
+}
+
+function computeIsSubscribed(user: User | null | undefined): boolean {
+  if (!user) return false
+  if (user.subscription_expires_at) {
+    return new Date(user.subscription_expires_at) > new Date()
+  }
+  return !!user.is_subscribed
 }
 
 interface AuthState {
@@ -54,7 +63,11 @@ export const useAuthStore = create<AuthState>()(
       error: null,
 
       setUser: (user) => {
-        set({ user, isAuthenticated: !!user })
+        const isSubscribed = computeIsSubscribed(user)
+        set({ user, isAuthenticated: !!user, isSubscribed })
+        if (user) {
+          localStorage.setItem('is_subscribed', String(isSubscribed))
+        }
       },
 
       setTokens: (accessToken, refreshToken, options) => {
@@ -192,7 +205,7 @@ export const useAuthStore = create<AuthState>()(
 
           if (response.data.success) {
             const user = response.data.data
-            const isSubscribed = user.is_subscribed || false
+            const isSubscribed = computeIsSubscribed(user)
             set({ user, isLoading: false, isSubscribed })
             localStorage.setItem('user', JSON.stringify(user))
             localStorage.setItem('is_subscribed', String(isSubscribed))
@@ -208,16 +221,8 @@ export const useAuthStore = create<AuthState>()(
       },
 
       checkSubscription: () => {
-        const { user, isSubscribed } = get()
-        if (!user) return false
-        
-        // 구독 만료일 체크
-        if (user.subscription_expires_at) {
-          const expiresAt = new Date(user.subscription_expires_at)
-          return expiresAt > new Date()
-        }
-        
-        return isSubscribed
+        const { user } = get()
+        return computeIsSubscribed(user)
       },
     }),
     {
@@ -242,7 +247,10 @@ export const useAuthStore = create<AuthState>()(
             localStorage.setItem('refresh_token', state.refreshToken || '')
             const userStr = localStorage.getItem('user')
             if (userStr) {
-              try { state.user = JSON.parse(userStr) } catch { /* ignore */ }
+              try {
+                state.user = JSON.parse(userStr)
+                state.isSubscribed = computeIsSubscribed(state.user)
+              } catch { /* ignore */ }
             }
           }
         }

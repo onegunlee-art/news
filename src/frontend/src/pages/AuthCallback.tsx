@@ -1,17 +1,24 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { useAuthStore } from '../store/authStore'
+import { useAuthStore, type User } from '../store/authStore'
 import LoadingSpinner from '../components/Common/LoadingSpinner'
 import MaterialIcon from '../components/Common/MaterialIcon'
 import { getAuthCodeFromUrl, getAuthErrorFromUrl } from '../services/kakaoAuth'
 import { consumeAuthReturnState, getAuthRedirectTarget } from '../utils/authReturnState'
 
-function syncAuthStorage(accessToken: string, refreshToken: string) {
+function syncAuthStorage(accessToken: string, refreshToken: string, user?: User | null) {
+  let isSubscribed = false
+  if (user?.subscription_expires_at) {
+    isSubscribed = new Date(user.subscription_expires_at) > new Date()
+  } else if (user) {
+    isSubscribed = !!user.is_subscribed
+  }
   try {
     localStorage.setItem('auth-storage', JSON.stringify({
-      state: { accessToken, refreshToken, isSubscribed: false },
+      state: { accessToken, refreshToken, isSubscribed },
       version: 0,
     }))
+    localStorage.setItem('is_subscribed', String(isSubscribed))
   } catch { /* ignore */ }
 }
 
@@ -51,7 +58,7 @@ export default function AuthCallback() {
       if (token && refreshToken) {
         localStorage.setItem('access_token', token)
         localStorage.setItem('refresh_token', refreshToken)
-        syncAuthStorage(token, refreshToken)
+        syncAuthStorage(token, refreshToken, user)
 
         const userStr = localStorage.getItem('user')
         let user = null
@@ -112,7 +119,7 @@ export default function AuthCallback() {
         if (data.success && data.access_token) {
           localStorage.setItem('access_token', data.access_token)
           localStorage.setItem('refresh_token', data.refresh_token || '')
-          syncAuthStorage(data.access_token, data.refresh_token || '')
+          syncAuthStorage(data.access_token, data.refresh_token || '', data.user)
           
           if (data.user) {
             localStorage.setItem('user', JSON.stringify(data.user))

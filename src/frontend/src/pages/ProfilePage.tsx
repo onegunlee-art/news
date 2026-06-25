@@ -11,6 +11,7 @@ import MaterialIcon from '../components/Common/MaterialIcon'
 import { useMenuConfig } from '../hooks/useMenuConfig'
 import { apiErrorMessage } from '../utils/apiErrorMessage'
 import { formatContentHtml } from '../utils/sanitizeHtml'
+import { corporateCustomerLabel, corporateSubscriptionLabel, isCorporateUser } from '../utils/corporateDisplay'
 import { PLAY_STORE_URL } from '../constants/appLinks'
 
 type BookmarkRow = {
@@ -115,6 +116,9 @@ export default function ProfilePage() {
     navigate('/')
   }
 
+  const corporateSubLabel = corporateSubscriptionLabel(user)
+  const corporateAccount = isCorporateUser(user)
+
   return (
     <div className="min-h-screen bg-page pb-24">
       <div className={CONTAINER_CLASS}>
@@ -137,13 +141,19 @@ export default function ProfilePage() {
                         </div>
                       )}
                       <div className="min-w-0">
-                        <p className="text-page font-medium truncate text-[1.4875rem] md:text-[1.7rem] leading-tight">{user.nickname}</p>
+                        <p className="text-page font-medium truncate text-[1.4875rem] md:text-[1.7rem] leading-tight">
+                          {corporateCustomerLabel(user)}
+                        </p>
                         {user.role === 'admin' && (
                           <p className="text-page-secondary text-xs md:text-sm mt-0.5">관리자</p>
                         )}
                         {isSubscribed && (
                           <div className="mt-1.5">
-                            {subscriptionDetail?.start_date && user?.subscription_expires_at ? (
+                            {corporateSubLabel ? (
+                              <p className="text-[11px] font-bold text-primary-500 dark:text-primary-400">
+                                {corporateSubLabel}
+                              </p>
+                            ) : subscriptionDetail?.start_date && user?.subscription_expires_at ? (
                               <p className="text-[11px] font-bold text-primary-500 dark:text-primary-400">
                                 {subscriptionDetail.plan_name || 'the gist. 구독권'} ({formatDateKorean(subscriptionDetail.start_date)} ~ {formatDateKorean(user.subscription_expires_at)})
                               </p>
@@ -328,15 +338,17 @@ export default function ProfilePage() {
                       <div className="bg-page-secondary rounded-lg p-4 border border-page">
                         <p className="text-xs font-semibold text-primary-500 uppercase tracking-wider mb-2">사용중인 플랜</p>
                         <p className="text-page font-medium text-sm">
-                          {subscriptionDetail?.plan_name || 'the gist. 구독권'} 사용중
+                          {corporateSubLabel || subscriptionDetail?.plan_name || 'the gist. 구독권'} 사용중
                         </p>
-                        {subscriptionDetail?.start_date && user?.subscription_expires_at && (
+                        {!corporateAccount && subscriptionDetail?.start_date && user?.subscription_expires_at && (
                           <p className="text-page-secondary text-xs mt-1">
                             {formatDateKorean(subscriptionDetail.start_date)} ~ {formatDateKorean(user.subscription_expires_at)}
                           </p>
                         )}
                       </div>
 
+                      {!corporateAccount && (
+                      <>
                       {/* 자동연장 토글 */}
                       <div>
                         <div className="flex items-center justify-between">
@@ -392,6 +404,8 @@ export default function ProfilePage() {
                       >
                         구독 취소 및 환불
                       </button>
+                      </>
+                      )}
                     </div>
                   </motion.div>
                 )}

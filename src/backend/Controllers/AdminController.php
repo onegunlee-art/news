@@ -589,7 +589,8 @@ final class AdminController
     private function corporateCompanyDisplayName(string $companyTag): string
     {
         return match ($companyTag) {
-            'hyundai' => '현대자동차',
+            'hyundai' => '현대 자동차',
+            'kt' => 'KT',
             'samsung' => '삼성',
             'other' => '기업 고객',
             default => $companyTag,

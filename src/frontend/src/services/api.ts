@@ -396,6 +396,7 @@ export type SubscriptionDetail = {
   amount_formatted: string
   auto_renew: boolean
   subscription_id: number | null
+  is_corporate?: boolean
 }
 
 export type SubscriptionPlan = {
