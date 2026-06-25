@@ -58,17 +58,17 @@ export default function AuthCallback() {
       if (token && refreshToken) {
         localStorage.setItem('access_token', token)
         localStorage.setItem('refresh_token', refreshToken)
-        syncAuthStorage(token, refreshToken, user)
 
         const userStr = localStorage.getItem('user')
-        let user = null
+        let user: User | null = null
         if (userStr) {
           try {
-            user = JSON.parse(userStr)
+            user = JSON.parse(userStr) as User
             setUser(user)
           } catch { /* ignore parse error */ }
         }
 
+        syncAuthStorage(token, refreshToken, user)
         setTokens(token, refreshToken, { clearLandingSeen: true })
 
         const saved = consumeAuthReturnState()
