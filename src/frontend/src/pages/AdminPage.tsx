@@ -15,6 +15,7 @@ import { PRIVACY_POLICY_CONTENT } from '../components/Common/PrivacyPolicyConten
 import AdminDraftPreviewEdit from '../components/Admin/AdminDraftPreviewEdit';
 import CorporateRegistrationModal from '../components/Admin/CorporateRegistrationModal';
 import StrategicHub from '../components/Admin/StrategicHub';
+import SeriesCoverEditor from '../components/Admin/SeriesCoverEditor';
 import AGILab from '../components/Admin/AGILab';
 import GistLogo from '../components/Common/GistLogo';
 import { DEFAULT_VISION } from '../constants/site';
@@ -1175,7 +1176,6 @@ const AdminPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   // 대시보드: 회원 목록, 개인정보처리방침
-  const [dashboardUsers, setDashboardUsers] = useState<UserRow[]>([]);
   const [selectedUserDetail, setSelectedUserDetail] = useState<UserDetail | null>(null);
   const [subEditMode, setSubEditMode] = useState(false);
   const [subEditSubscribed, setSubEditSubscribed] = useState(false);
@@ -1446,12 +1446,7 @@ const AdminPage: React.FC = () => {
   const loadDashboardData = async () => {
     setLoading(true);
     try {
-      const [usersRes, settingsRes] = await Promise.all([
-        api.get<{ success: boolean; data: { items: UserRow[] } }>('/admin/users?per_page=5&page=1'),
-        adminSettingsApi.getSettings(),
-      ]);
-      if (usersRes.data.success && usersRes.data.data?.items)
-        setDashboardUsers(usersRes.data.data.items);
+      const settingsRes = await adminSettingsApi.getSettings();
       const s = settingsRes.data?.data;
       if (s) {
         setPrivacyContent(formatContentHtml((s.privacy_policy && s.privacy_policy.trim()) ? s.privacy_policy : PRIVACY_POLICY_CONTENT));
@@ -1588,56 +1583,14 @@ const AdminPage: React.FC = () => {
                 </div>
               ) : (
                 <>
-                  {/* 회원 관리 (최근 5명) */}
+                  {/* 과거 특집 매거진 표지 편집기 */}
                   <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold text-white">최근 가입 회원</h3>
-                      <button
-                        type="button"
-                        onClick={() => setActiveTab('users')}
-                        className="text-cyan-400 hover:text-cyan-300 text-sm"
-                      >
-                        전체 보기 →
-                      </button>
-                    </div>
-                    <div className="space-y-2">
-                      {dashboardUsers.length === 0 ? (
-                        <p className="text-slate-500 text-sm">등록된 회원이 없습니다.</p>
-                      ) : (
-                        dashboardUsers.map((u) => (
-                          <div
-                            key={u.id}
-                            className="flex items-center justify-between py-2 px-3 bg-slate-900/50 rounded-lg hover:bg-slate-700/30"
-                          >
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-white font-medium">{u.nickname}</span>
-                              {u.email && <span className="text-slate-500 text-sm">({u.email})</span>}
-                              <span className={`px-1.5 py-0.5 rounded text-xs ${u.is_subscribed === 1 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-500/20 text-slate-400'}`}>
-                                {u.is_subscribed === 1 ? '구독' : '미구독'}
-                              </span>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={async () => {
-                                try {
-                                  const res = await api.get<{ success: boolean; data: typeof selectedUserDetail }>(`/admin/users/${u.id}`);
-                                  if (res.data.success && res.data.data) {
-                                    setSelectedUserDetail(res.data.data);
-                                  } else {
-                                    alert('사용자 정보를 불러올 수 없습니다.');
-                                  }
-                                } catch {
-                                  alert('사용자 상세 조회 실패: 서버 오류가 발생했습니다.');
-                                }
-                              }}
-                              className="text-cyan-400 hover:text-cyan-300 text-sm"
-                            >
-                              상세
-                            </button>
-                          </div>
-                        ))
-                      )}
-                    </div>
+                    <SeriesCoverEditor
+                      onMessage={(type, text) => {
+                        if (type === 'success') alert(text);
+                        else alert(text);
+                      }}
+                    />
                   </div>
 
                   {/* 개인정보처리방침 수정 */}
@@ -1807,7 +1760,7 @@ const AdminPage: React.FC = () => {
                   {/* 메뉴 설정: 탭·하위 카테고리 라벨 */}
                   <div className="bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700/50 space-y-4">
                     <h3 className="text-lg font-semibold text-white mb-4">메뉴 설정</h3>
-                    <p className="text-slate-400 text-sm mb-4">홈 탭(최신/외교/경제/특집/인기)과 하위 카테고리 표시 라벨만 수정합니다. 키·순서는 고정입니다.</p>
+                    <p className="text-slate-400 text-sm mb-4">홈 탭(최신/외교/경제/특집/과거 특집)과 하위 카테고리 표시 라벨만 수정합니다. 키·순서는 고정입니다.</p>
                     <div className="space-y-6">
                       <div>
                         <h4 className="text-slate-300 font-medium mb-3">탭 라벨 (5개)</h4>
