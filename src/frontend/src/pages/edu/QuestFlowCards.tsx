@@ -8,11 +8,12 @@ import EduQuestCompletionCelebration from '../../components/edu/EduQuestCompleti
 import EduStructureReviewCard from '../../components/edu/EduStructureReviewCard'
 import TypingIndicator from '../../components/edu/TypingIndicator'
 import EduArticleSnippetCard from '../../components/edu/EduArticleSnippetCard'
-import CardStructureBar, {
+import CardStructureBar from '../../components/edu/CardStructureBar'
+import {
   completedSlotOnPhaseExit,
   structureNudgeForAxisPass,
   structureNudgeForPhaseSlot,
-} from '../../components/edu/CardStructureBar'
+} from '../../components/edu/cardStructureBarState'
 import {
   coachMessageHasSnippet,
   parseCoachAssistantMessage,
@@ -388,7 +389,7 @@ export default function QuestFlowCards() {
       }
     }
     prevPhase.current = phase
-  }, [phase])
+  }, [phase, guideAxisIndex])
 
   const coachIndex = lastAssistantDialogueIndex(dialogue)
 
