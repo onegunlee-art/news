@@ -39,7 +39,7 @@ $structure = read('src/frontend/src/components/edu/CardStructureBar.tsx');
 check(str_contains($parse, 'parseCoachBoldSegments'), 'parse: bold segments');
 check(str_contains($coachText, 'primaryLight'), 'highlight: orange background');
 check(str_contains($coachText, 'primaryDark'), 'highlight: orange text');
-check(str_contains($coachText, 'stripIncompleteCoachBold'), 'highlight: hide partial **');
+check(str_contains($parse, 'stripIncompleteCoachBold'), 'highlight: hide partial **');
 
 check(str_contains($typing, '생각 중'), 'waiting: default label');
 check(str_contains($waitingPanel, 'EduCoachWaitingPanel'), 'waiting: shared panel');

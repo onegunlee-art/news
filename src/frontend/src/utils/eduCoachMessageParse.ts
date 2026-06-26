@@ -41,6 +41,17 @@ export function stripCoachBoldMarkers(text: string): string {
   return text.replace(/\*\*([^*]+)\*\*/g, '$1')
 }
 
+/** 타입라이터 중 미완성 ** 마커 숨김 */
+export function stripIncompleteCoachBold(text: string): string {
+  const open = text.lastIndexOf('**')
+  if (open === -1) return text
+  const tail = text.slice(open + 2)
+  if (!tail.includes('**')) {
+    return text.slice(0, open)
+  }
+  return text
+}
+
 export function coachMessageHasSnippet(content: string): boolean {
   return content.includes('{{snippet|')
 }

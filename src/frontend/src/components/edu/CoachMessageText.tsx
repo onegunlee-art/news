@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { eduGame } from '../../constants/eduGameTheme'
-import { parseCoachBoldSegments } from '../../utils/eduCoachMessageParse'
+import { parseCoachBoldSegments, stripIncompleteCoachBold } from '../../utils/eduCoachMessageParse'
 
 type Props = {
   text: string
@@ -11,16 +11,6 @@ type Props = {
 }
 
 /** 코치 **강조** → 오렌지 하이라이트 (별표 미노출) */
-export function stripIncompleteCoachBold(text: string): string {
-  const open = text.lastIndexOf('**')
-  if (open === -1) return text
-  const tail = text.slice(open + 2)
-  if (!tail.includes('**')) {
-    return text.slice(0, open)
-  }
-  return text
-}
-
 export default function CoachMessageText({
   text,
   className,
