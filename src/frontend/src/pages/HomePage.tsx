@@ -1,17 +1,19 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import MaterialIcon from '../components/Common/MaterialIcon'
-import { newsApi } from '../services/api'
+import { newsApi, seriesCoversApi, type SeriesCover } from '../services/api'
 import ShareMenu from '../components/Common/ShareMenu'
 import { useAuthStore } from '../store/authStore'
 import { useAudioListStore } from '../store/audioListStore'
 import { useAudioPlayerStore } from '../store/audioPlayerStore'
 import LoadingSpinner from '../components/Common/LoadingSpinner'
+import SeriesCoverCard from '../components/Series/SeriesCoverCard'
 import { getPlaceholderImageUrl } from '../utils/imagePolicy'
 import { formatSourceDisplayName, buildEditorialLine } from '../utils/formatSource'
 import { extractTitleFromUrl } from '../utils/extractTitleFromUrl'
 import { stripHtml } from '../utils/sanitizeHtml'
-import { useInfiniteNewsList, usePopularNews } from '../hooks/useNews'
+import { useInfiniteNewsList } from '../hooks/useNews'
 import { useMenuConfig } from '../hooks/useMenuConfig'
 import { apiErrorMessage } from '../utils/apiErrorMessage'
 import { newsDetailPath } from '../utils/newsDetailLink'
@@ -62,7 +64,7 @@ export default function HomePage() {
   const location = useLocation()
   const navigate = useNavigate()
   const { tabs, tabLabels, tabToCategory, subCategoryToLabel, specialBadgeText } = useMenuConfig()
-  const popularLabel = tabs.find((t) => t.key === 'popular')?.label ?? '인기'
+  const archiveLabel = tabs.find((t) => t.key === 'archive')?.label ?? '과거 특집'
   const specialLabel = tabs.find((t) => t.key === 'special')?.label ?? '특집'
   const [activeTab, setActiveTab] = useState<string>(() => {
     const s = (location.state as { restoreTab?: string } | null) ?? null
@@ -72,7 +74,7 @@ export default function HomePage() {
 
   // React Query: 탭별 데이터 페칭
   const category = tabToCategory[activeTab] ?? undefined
-  const isPopularTab = activeTab === popularLabel
+  const isArchiveTab = activeTab === archiveLabel
 
 
   const {
@@ -83,20 +85,29 @@ export default function HomePage() {
     fetchNextPage,
   } = useInfiniteNewsList(category, PER_PAGE)
 
-  const { data: popularData, isLoading: isLoadingPopular } = usePopularNews(isPopularTab)
+  // 과거 특집 탭: 시리즈 표지 데이터 가져오기
+  const { data: archiveData, isLoading: isLoadingArchive } = useQuery({
+    queryKey: ['series', 'featured'],
+    queryFn: async () => {
+      const res = await seriesCoversApi.getFeatured()
+      return res.data?.data?.covers ?? []
+    },
+    enabled: isArchiveTab,
+    staleTime: 1000 * 60 * 5,
+  })
 
-  // 뉴스 데이터 통합
+  // 뉴스 데이터 통합 (과거 특집 탭 제외)
   const news = useMemo(() => {
-    if (isPopularTab) {
-      const items = popularData?.data?.items || []
-      return filterPlaceholder(items)
-    }
+    if (isArchiveTab) return []
     const pages = infiniteData?.pages || []
     const allItems = pages.flatMap((page) => page.data?.items || [])
     return filterPlaceholder(allItems)
-  }, [isPopularTab, popularData, infiniteData])
+  }, [isArchiveTab, infiniteData])
 
-  const isLoading = isPopularTab ? isLoadingPopular : isLoadingInfinite
+  // 과거 특집 시리즈 데이터
+  const featuredCovers = useMemo<SeriesCover[]>(() => archiveData ?? [], [archiveData])
+
+  const isLoading = isArchiveTab ? isLoadingArchive : isLoadingInfinite
   const isLoadingMore = isFetchingNextPage
 
 
@@ -192,12 +203,25 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* 기사 목록 */}
+      {/* 기사 목록 / 과거 특집 매거진 */}
       <div className="max-w-lg md:max-w-4xl lg:max-w-6xl xl:max-w-7xl mx-auto px-4 md:px-8 lg:px-12 xl:px-16 pt-4 md:pt-5 bg-page">
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
             <LoadingSpinner size="large" />
           </div>
+        ) : isArchiveTab ? (
+          // 과거 특집: 매거진 표지 그리드
+          featuredCovers.length === 0 ? (
+            <div className="text-center py-20 text-page-secondary">
+              아직 특집이 없습니다.
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 pb-8">
+              {featuredCovers.map((cover, i) => (
+                <SeriesCoverCard key={cover.id} cover={cover} index={i} />
+              ))}
+            </div>
+          )
         ) : news.length === 0 ? (
           <div className="text-center py-20 text-page-secondary">
             기사가 없습니다.
@@ -230,7 +254,7 @@ export default function HomePage() {
                 ))}
               </div>
             </div>
-            {hasNextPage && !isPopularTab && (
+            {hasNextPage && !isArchiveTab && (
               <div className="flex justify-center pt-8 pb-4">
                 <button
                   type="button"

@@ -429,3 +429,94 @@ export const subscriptionApi = {
     api.get<{ success: boolean; data: SubscriptionPlansResponse }>('/subscription/plans'),
 }
 
+/** 시리즈 표지 (과거 특집 매거진) 타입 */
+export interface SeriesCover {
+  id: number
+  series_id: string
+  cover_text: string | null
+  text_color: string
+  text_size: number
+  text_x: number
+  text_y: number
+  is_featured: number
+  display_order: number
+  created_at: string
+  updated_at: string
+  first_article_id?: number | null
+  first_article_title?: string | null
+  first_article_image?: string | null
+  series_title?: string | null
+  article_count?: number
+}
+
+export interface SeriesListItem {
+  series_id: string
+  series_title: string | null
+  article_count: number
+  first_article_id: number | null
+  first_article_image: string | null
+  cover_id?: number | null
+  cover_text?: string | null
+  text_color?: string
+  text_size?: number
+  text_x?: number
+  text_y?: number
+  is_featured?: number
+  display_order?: number
+}
+
+/** 시리즈 표지 API (과거 특집 매거진) */
+export const seriesCoversApi = {
+  /** 과거 특집용 표지 목록 (is_featured=1) */
+  getFeatured: () =>
+    api.get<{ success: boolean; data: { covers: SeriesCover[] } }>('/series/covers.php', {
+      params: { featured: '1' },
+    }),
+
+  /** 모든 시리즈 표지 목록 (admin용) */
+  getAll: () =>
+    api.get<{ success: boolean; data: { covers: SeriesCover[] } }>('/series/covers.php', {
+      params: { all: '1' },
+    }),
+
+  /** 시리즈 목록 (표지 정보 포함) */
+  getSeriesList: () =>
+    api.get<{ success: boolean; data: { series: SeriesListItem[] } }>('/series/covers.php'),
+
+  /** 특정 시리즈 표지 조회 */
+  getBySeriesId: (seriesId: string) =>
+    api.get<{ success: boolean; data: SeriesCover | null }>('/series/covers.php', {
+      params: { series_id: seriesId },
+    }),
+
+  /** 시리즈 표지 생성/수정 (upsert) */
+  save: (data: {
+    series_id: string
+    cover_text?: string | null
+    text_color?: string
+    text_size?: number
+    text_x?: number
+    text_y?: number
+    is_featured?: boolean
+    display_order?: number
+  }) => api.post<{ success: boolean; data: SeriesCover }>('/series/covers.php', data),
+
+  /** 시리즈 표지 수정 (PUT) */
+  update: (data: {
+    series_id: string
+    cover_text?: string | null
+    text_color?: string
+    text_size?: number
+    text_x?: number
+    text_y?: number
+    is_featured?: boolean
+    display_order?: number
+  }) => api.put<{ success: boolean; data: SeriesCover }>('/series/covers.php', data),
+
+  /** 시리즈 표지 삭제 */
+  delete: (seriesId: string) =>
+    api.delete<{ success: boolean; message: string }>('/series/covers.php', {
+      params: { series_id: seriesId },
+    }),
+}
+

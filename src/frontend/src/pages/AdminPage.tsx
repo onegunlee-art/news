@@ -1199,7 +1199,7 @@ const AdminPage: React.FC = () => {
     { key: 'diplomacy', label: '외교' },
     { key: 'economy', label: '경제' },
     { key: 'special', label: '특집' },
-    { key: 'popular', label: '인기' },
+    { key: 'archive', label: '과거 특집' },
   ]);
   const [menuSubcategories, setMenuSubcategories] = useState<Record<string, string>>({
     politics_diplomacy: 'Politics/Diplomacy',

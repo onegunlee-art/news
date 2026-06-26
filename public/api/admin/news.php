@@ -545,16 +545,31 @@ if ($method === 'POST') {
 
 // GET: 뉴스 단건 조회 (id 있을 때) 또는 목록 조회
 if ($method === 'GET') {
-    // 시리즈 목록 조회: GET ?series_list=1 → 기존 시리즈 그룹 목록 반환
+    // 시리즈 목록 조회: GET ?series_list=1 → 기존 시리즈 그룹 목록 반환 (첫 기사 image_url 포함)
     if (isset($_GET['series_list']) && $hasSeriesId) {
         try {
             $stmt = $db->query("
-                SELECT series_id, series_title, COUNT(*) as article_count,
-                       MIN(series_order) as min_order, MAX(series_order) as max_order
-                FROM news
-                WHERE series_id IS NOT NULL
-                GROUP BY series_id, series_title
-                ORDER BY MAX(id) DESC
+                SELECT 
+                    n.series_id, 
+                    n.series_title, 
+                    COUNT(*) as article_count,
+                    MIN(n.series_order) as min_order, 
+                    MAX(n.series_order) as max_order,
+                    first_article.id as first_article_id,
+                    first_article.title as first_article_title,
+                    first_article.image_url as first_article_image
+                FROM news n
+                LEFT JOIN (
+                    SELECT id, series_id, title, image_url
+                    FROM news n2
+                    WHERE n2.id = (
+                        SELECT MIN(n3.id) FROM news n3 
+                        WHERE n3.series_id = n2.series_id AND n3.series_id IS NOT NULL
+                    )
+                ) first_article ON n.series_id = first_article.series_id
+                WHERE n.series_id IS NOT NULL
+                GROUP BY n.series_id, n.series_title, first_article.id, first_article.title, first_article.image_url
+                ORDER BY MAX(n.id) DESC
             ");
             $seriesList = $stmt->fetchAll(PDO::FETCH_ASSOC);
             echo json_encode(['success' => true, 'data' => ['series' => $seriesList]], JSON_UNESCAPED_UNICODE);

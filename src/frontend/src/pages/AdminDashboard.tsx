@@ -10,6 +10,7 @@ import { api } from '../services/api'
 import { adminSettingsApi } from '../services/api'
 import { PRIVACY_POLICY_CONTENT } from '../components/Common/PrivacyPolicyContent'
 import RichTextEditor from '../components/Common/RichTextEditor'
+import SeriesCoverEditor from '../components/Admin/SeriesCoverEditor'
 import { formatContentHtml } from '../utils/sanitizeHtml'
 import { DEFAULT_VISION } from '../constants/site'
 
@@ -17,14 +18,6 @@ const adminRichPaste = (t: string) =>
   t.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')
 
 type TabId = 'dashboard' | 'members' | 'privacy' | 'settings' | 'news'
-
-interface Stats {
-  totalUsers: number
-  totalNews: number
-  totalAnalyses: number
-  todayUsers: number
-  todayAnalyses: number
-}
 
 interface User {
   id: number
@@ -62,7 +55,6 @@ export default function AdminDashboard() {
   const navigate = useNavigate()
   const { user, isAuthenticated } = useAuthStore()
   const [activeTab, setActiveTab] = useState<TabId>('dashboard')
-  const [stats, setStats] = useState<Stats | null>(null)
   const [users, setUsers] = useState<User[]>([])
   const [usersPage, setUsersPage] = useState(1)
   const [usersTotal, setUsersTotal] = useState(0)
@@ -89,13 +81,6 @@ export default function AdminDashboard() {
       navigate('/')
     }
   }, [user, isAuthenticated, navigate])
-
-  // 초기 stats 로드
-  useEffect(() => {
-    api.get<{ success: boolean; data: Stats }>('/admin/stats')
-      .then((r) => r.data?.success && r.data?.data && setStats(r.data.data))
-      .catch(() => {})
-  }, [])
 
   // 회원 목록
   useEffect(() => {
@@ -290,30 +275,9 @@ export default function AdminDashboard() {
           {activeTab === 'dashboard' && (
             <div>
               <h2 className="text-xl font-bold text-white mb-4">대시보드</h2>
-              {loading ? (
-                <div className="text-slate-400">로딩 중...</div>
-              ) : stats ? (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="bg-slate-800 rounded-lg p-4">
-                    <p className="text-slate-400 text-sm">전체 사용자</p>
-                    <p className="text-2xl font-bold text-white">{stats.totalUsers}</p>
-                  </div>
-                  <div className="bg-slate-800 rounded-lg p-4">
-                    <p className="text-slate-400 text-sm">저장된 뉴스</p>
-                    <p className="text-2xl font-bold text-white">{stats.totalNews.toLocaleString()}</p>
-                  </div>
-                  <div className="bg-slate-800 rounded-lg p-4">
-                    <p className="text-slate-400 text-sm">오늘 가입</p>
-                    <p className="text-2xl font-bold text-white">{stats.todayUsers}</p>
-                  </div>
-                  <div className="bg-slate-800 rounded-lg p-4">
-                    <p className="text-slate-400 text-sm">오늘 분석</p>
-                    <p className="text-2xl font-bold text-white">{stats.todayAnalyses}</p>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-slate-400">통계를 불러올 수 없습니다.</p>
-              )}
+              <SeriesCoverEditor
+                onMessage={(type, text) => setMessage({ type, text })}
+              />
             </div>
           )}
 

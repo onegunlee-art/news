@@ -12,7 +12,7 @@ const DEFAULT_TABS: MenuTab[] = [
   { key: 'diplomacy', label: '외교' },
   { key: 'economy', label: '경제' },
   { key: 'special', label: '특집' },
-  { key: 'popular', label: '인기' },
+  { key: 'archive', label: '과거 특집' },
 ]
 
 const DEFAULT_SUBCATEGORIES: Record<string, string> = {
@@ -55,11 +55,11 @@ function parseSubcategories(raw: string | undefined): Record<string, string> {
   return DEFAULT_SUBCATEGORIES
 }
 
-/** 탭 label → API category (key). latest/popular → null */
+/** 탭 label → API category (key). latest/popular/archive → null (카테고리 필터 아님) */
 export function tabLabelToCategory(tabs: MenuTab[]): Record<string, string | null> {
   const out: Record<string, string | null> = {}
   for (const t of tabs) {
-    out[t.label] = t.key === 'latest' || t.key === 'popular' ? null : t.key
+    out[t.label] = t.key === 'latest' || t.key === 'popular' || t.key === 'archive' ? null : t.key
   }
   return out
 }
@@ -74,7 +74,7 @@ export function tabsToParentKeyToLabel(tabs: MenuTab[]): Record<string, string> 
   out.economy = out.economy ?? '경제'
   out.special = out.special ?? '특집'
   out.latest = out.latest ?? '최신'
-  out.popular = out.popular ?? '인기'
+  out.archive = out.archive ?? '과거 특집'
   return out
 }
 
