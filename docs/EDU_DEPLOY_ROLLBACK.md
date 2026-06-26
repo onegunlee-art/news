@@ -61,6 +61,8 @@
 | 2026-06-25 | `02a030e` | **EDU 개인 페이지** — 스트릭 주인공 프로필 + 내 글 목록 (eduGame, 조회만) |
 | 2026-06-25 | `77f2064` | **EDU 카드 질문 전문** — 한 줄 clamp 제거, 카드 상단 전체 노출 + 입력칸 양보 (PHP 0) |
 
+**v1 완결 기록**: [`docs/EDU_STUDENT_JOURNEY_V1_COMPLETE.md`](EDU_STUDENT_JOURNEY_V1_COMPLETE.md) · 검증 `php tools/edu_student_journey_static_verify.php`
+
 ## P1-2+ 라이브 완주 게이트 (R4–R6)
 
 분기 이관 조각마다 `--live` 실행:
