@@ -20,6 +20,7 @@ import AGILab from '../components/Admin/AGILab';
 import GistLogo from '../components/Common/GistLogo';
 import { DEFAULT_VISION } from '../constants/site';
 import { useMenuConfig } from '../hooks/useMenuConfig';
+import { normalizeMenuTabs } from '../utils/menuTabs';
 
 /** Listen과 동일한 구조로 TTS params 구성 (캐시 공유) */
 function buildTtsParamsForListen(params: {
@@ -1458,7 +1459,12 @@ const AdminPage: React.FC = () => {
         if (s.menu_tabs && typeof s.menu_tabs === 'string') {
           try {
             const parsed = JSON.parse(s.menu_tabs);
-            if (Array.isArray(parsed) && parsed.length >= 5) setMenuTabs(parsed);
+            if (Array.isArray(parsed) && parsed.length >= 5) {
+              setMenuTabs(normalizeMenuTabs(parsed.map((t: { key?: string; label?: string }) => ({
+                key: String(t?.key ?? ''),
+                label: String(t?.label ?? ''),
+              }))));
+            }
           } catch { /* ignore */ }
         }
         if (s.menu_subcategories && typeof s.menu_subcategories === 'string') {

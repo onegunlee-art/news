@@ -1,11 +1,9 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { siteSettingsApi } from '../services/api'
+import { normalizeMenuTabs, type MenuTab } from '../utils/menuTabs'
 
-export interface MenuTab {
-  key: string
-  label: string
-}
+export type { MenuTab }
 
 const DEFAULT_TABS: MenuTab[] = [
   { key: 'latest', label: '최신' },
@@ -31,10 +29,12 @@ function parseMenuTabs(raw: string | undefined): MenuTab[] {
   try {
     const arr = JSON.parse(raw)
     if (Array.isArray(arr) && arr.length >= 5) {
-      return arr.map((t: { key?: string; label?: string }) => ({
-        key: String(t?.key ?? ''),
-        label: String(t?.label ?? ''),
-      }))
+      return normalizeMenuTabs(
+        arr.map((t: { key?: string; label?: string }) => ({
+          key: String(t?.key ?? ''),
+          label: String(t?.label ?? ''),
+        }))
+      )
     }
   } catch {
     /* ignore */

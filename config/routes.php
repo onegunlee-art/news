@@ -50,7 +50,7 @@ $router->get('/settings/terms', function (Request $request): Response {
 // 사이트 공개 설정 (My Page/푸터용: 문의 이메일, 저작권, 비전, 메뉴 설정)
 $router->get('/settings/site', function (Request $request): Response {
     $year = date('Y');
-    $defaultMenuTabs = '[{"key":"latest","label":"최신"},{"key":"diplomacy","label":"외교"},{"key":"economy","label":"경제"},{"key":"special","label":"특집"},{"key":"popular","label":"인기"}]';
+    $defaultMenuTabs = '[{"key":"latest","label":"최신"},{"key":"diplomacy","label":"외교"},{"key":"economy","label":"경제"},{"key":"special","label":"특집"},{"key":"archive","label":"과거 특집"}]';
     $defaultMenuSubcategories = '{"politics_diplomacy":"Politics/Diplomacy","economy_industry":"Economy/Industry","society":"Society","security_conflict":"Security/Conflict","environment":"Environment","science_technology":"Science/Technology","culture":"Culture","health_development":"Health/Development"}';
     $data = [
         'contact_email' => 'onegunlee@gmail.com',

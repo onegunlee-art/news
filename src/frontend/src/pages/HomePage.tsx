@@ -64,7 +64,8 @@ export default function HomePage() {
   const location = useLocation()
   const navigate = useNavigate()
   const { tabs, tabLabels, tabToCategory, subCategoryToLabel, specialBadgeText } = useMenuConfig()
-  const archiveLabel = tabs.find((t) => t.key === 'archive')?.label ?? '과거 특집'
+  const archiveTab = tabs.find((t) => t.key === 'archive' || t.key === 'popular')
+  const archiveLabel = archiveTab?.label ?? '과거 특집'
   const specialLabel = tabs.find((t) => t.key === 'special')?.label ?? '특집'
   const [activeTab, setActiveTab] = useState<string>(() => {
     const s = (location.state as { restoreTab?: string } | null) ?? null
