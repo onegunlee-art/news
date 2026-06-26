@@ -53,9 +53,10 @@ $passTurnLegacy = eduCoachGuideHandleTurn($bothTurnLegacy['blueprint'], $quest, 
 $passTurnL7 = eduCoachGuideHandleTurn($bothTurnLegacy['blueprint'], $quest, '우크라이나 사례 보면 핵 대신 재래식만 써서 약하게 해줘', EDU_COACH_LEVEL_ADVANCED);
 assertSame('pass turn message legacy vs level 7', $passTurnLegacy['message'], $passTurnL7['message']);
 
-assertTrue('resolve defaults to level 7 before elementary ready', eduResolveCoachLevel([], []) === EDU_COACH_LEVEL_ADVANCED);
+assertTrue('resolve defaults to level 1 when elementary ready', eduResolveCoachLevel([], []) === EDU_COACH_LEVEL_DEFAULT);
+assertTrue('explicit level 7 still available', eduResolveCoachLevel(['coach_level' => 7], []) === EDU_COACH_LEVEL_ADVANCED);
 assertTrue('blueprint coach_level frozen', (eduBlueprintFreezeCoachLevel([], 7)['coach_level'] ?? 0) === 7);
-assertTrue('elementary not ready yet', eduCoachGuideElementaryReady() === false);
+assertTrue('elementary ready flag', eduCoachGuideElementaryReady() === true);
 
 echo "\n=== {$pass} passed, {$fail} failed ===\n";
 exit($fail > 0 ? 1 : 0);

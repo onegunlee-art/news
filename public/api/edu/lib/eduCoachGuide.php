@@ -758,9 +758,13 @@ function eduCoachGuideProgress(array $blueprint): int
 {
     $phase = (string) ($blueprint['phase'] ?? '');
     $idx = (int) ($blueprint['guide_axis_index'] ?? 0);
+    $axisDivisor = ((int) ($blueprint['coach_level'] ?? EDU_COACH_LEVEL_ADVANCED) < EDU_COACH_LEVEL_ADVANCED
+        && eduCoachGuideElementaryReady())
+        ? EDU_COACH_ELEMENTARY_AXIS_MAX
+        : 3;
     $base = 15;
     if ($phase === 'guide_axis') {
-        return min(55, $base + (int) (30 * ($idx / 3)));
+        return min(55, $base + (int) (30 * ($idx / max(1, $axisDivisor))));
     }
     if ($phase === 'guide_conclusion') {
         return 60;
@@ -919,6 +923,10 @@ function eduCoachGuideChoiceMeta(array $blueprint, array $quest, string $assista
 
     $idx = (int) ($blueprint['guide_axis_index'] ?? 0);
     $axes = eduCoachGuideAxes($quest);
+    if ((int) ($blueprint['coach_level'] ?? EDU_COACH_LEVEL_ADVANCED) < EDU_COACH_LEVEL_ADVANCED
+        && eduCoachGuideElementaryReady()) {
+        $axes = eduCoachGuideElementaryAxes($quest);
+    }
     $axis = $axes[$idx] ?? null;
     if ($axis === null) {
         return null;

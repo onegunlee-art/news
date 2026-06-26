@@ -97,5 +97,13 @@ $parityText = implode("\n", $parityOut);
 echo $parityText . "\n";
 check($parityCode === 0 && str_contains($parityText, '0 failed'), 'coach level 7 parity (v1 preserve)');
 
+echo "\n--- edu_coach_guide_elementary_test.php ---\n";
+$elemOut = [];
+$elemCode = 0;
+exec('php ' . escapeshellarg($root . '/tools/edu_coach_guide_elementary_test.php') . ' 2>&1', $elemOut, $elemCode);
+$elemText = implode("\n", $elemOut);
+echo $elemText . "\n";
+check($elemCode === 0 && str_contains($elemText, '0 failed'), 'coach level 1 elementary guide');
+
 echo "\n=== {$pass} passed, {$fail} failed ===\n";
 exit($fail > 0 ? 1 : 0);
