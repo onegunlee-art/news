@@ -233,6 +233,8 @@ jobs:
             --include='edu_myth_bust_coach_regression_test.php' \
             --include='edu_hammer_tone_regression_test.php' \
             --include='edu_axis_resolve_regression_test.php' \
+            --include='edu_level_depth_verify.php' \
+            --include='edu_level_depth_verify_static.php' \
             --include='seed_lens_quests.php' \
             --include='seed_japan_decision_quest.php' \
             --include='seed_iran_decision_quest.php' \
@@ -241,7 +243,7 @@ jobs:
             tools/ "$REMOTE:$DEST/tools/"
 
           ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" \
-            "mkdir -p $DEST/docs/hinge_quest_drafts $DEST/docs/axis_extractions $DEST/docs/structure_diagnoses && sudo chown -R \$(whoami):\$(whoami) $DEST/docs/hinge_quest_drafts $DEST/docs/axis_extractions $DEST/docs/structure_diagnoses 2>/dev/null || true"
+            "mkdir -p $DEST/docs/hinge_quest_drafts $DEST/docs/axis_extractions $DEST/docs/structure_diagnoses $DEST/docs/level_depth_verify && sudo chown -R \$(whoami):\$(whoami) $DEST/docs/hinge_quest_drafts $DEST/docs/axis_extractions $DEST/docs/structure_diagnoses $DEST/docs/level_depth_verify 2>/dev/null || true"
           rsync -avz \
             -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
             docs/hinge_quest_drafts/ "$REMOTE:$DEST/docs/hinge_quest_drafts/"
