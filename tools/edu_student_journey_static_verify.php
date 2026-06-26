@@ -49,12 +49,16 @@ check(str_contains($cards, 'CardStructureBar'), 'cards: structure bar with anima
 check(str_contains($cards, 'structureNudgeForAxisPass'), 'cards: axis pass nudge wired');
 check(str_contains($cards, "phase === 'hammer'"), 'cards: hammer question font reduced');
 check(str_contains($cards, 'EduEssayCompletionPanel'), 'cards: essay completion toggle panel');
+check(str_contains($cards, 'isWaiting'), 'cards: waiting state on submit');
+check(str_contains($cards, 'CoachMessageText'), 'cards: coach bold highlight');
 
 $completionPanel = read('src/frontend/src/components/edu/EduEssayCompletionPanel.tsx');
 check(str_contains($completionPanel, '구조 보기'), 'completion: structure view toggle');
 
 $chat = read('src/frontend/src/pages/edu/QuestFlowChat.tsx');
 check(str_contains($chat, 'EduEssayCompletionPanel'), 'chat: essay completion toggle panel');
+check(str_contains($chat, 'isWaiting'), 'chat: waiting state on submit');
+check(str_contains($chat, 'CoachMessageText'), 'chat: coach bold highlight');
 check(str_contains($chat, "resolveQuestFooterMode"), 'chat: footer mode resolver');
 check(str_contains($chat, 'dialogueLength > 0'), 'chat: stance dead zone fix (dialogue > 0 -> chat)');
 check(str_contains($chat, '/edu/profile'), 'chat: profile link after completion');
@@ -117,6 +121,14 @@ exec('php ' . escapeshellarg($root . '/tools/edu_compose_narration_static_verify
 $narrText = implode("\n", $narrOut);
 echo $narrText . "\n";
 check($narrCode === 0 && str_contains($narrText, '0 failed'), 'composer narration weave static');
+
+echo "\n--- edu_ux_waiting_highlight_static_verify.php ---\n";
+$uxOut = [];
+$uxCode = 0;
+exec('php ' . escapeshellarg($root . '/tools/edu_ux_waiting_highlight_static_verify.php') . ' 2>&1', $uxOut, $uxCode);
+$uxText = implode("\n", $uxOut);
+echo $uxText . "\n";
+check($uxCode === 0 && str_contains($uxText, '0 failed'), 'ux waiting + bold highlight static');
 
 echo "\n=== {$pass} passed, {$fail} failed ===\n";
 exit($fail > 0 ? 1 : 0);

@@ -6,11 +6,14 @@ import StructurePreviewCard, { type EssayStructurePreview } from '../../componen
 import EduQuestCompletionCelebration from '../../components/edu/EduQuestCompletionCelebration'
 import TypingIndicator from '../../components/edu/TypingIndicator'
 import TypewriterText from '../../components/edu/TypewriterText'
+import CoachMessageText from '../../components/edu/CoachMessageText'
+import EduCoachWaitingPanel from '../../components/edu/EduCoachWaitingPanel'
 import EduArticleCard from '../../components/edu/EduArticleCard'
 import EduArticleSnippetCard from '../../components/edu/EduArticleSnippetCard'
 import {
   coachMessageHasSnippet,
   parseCoachAssistantMessage,
+  stripCoachBoldMarkers,
 } from '../../utils/eduCoachMessageParse'
 import {
   eduApi,
@@ -90,9 +93,9 @@ function coachQuestionPreviewText(content: string): string {
       .map((s) => s.value)
       .join(' ')
       .trim()
-    return text || content
+    return stripCoachBoldMarkers(text || content)
   }
-  return content
+  return stripCoachBoldMarkers(content)
 }
 
 /** visualViewport — 모바일 키보드 가시 영역 (단일 보정: shell height+top만) */
@@ -536,6 +539,8 @@ export default function QuestFlowChat() {
   const showArticles = articles.length > 0 && !completed && ARTICLE_PHASES.includes(phase)
   const evidenceLen = evidenceInput.trim().length
   const evidenceReady = evidenceLen > 0
+  const isWaiting = sending || composing
+  const waitingLabel = composing ? '네 글을 만들고 있어…' : undefined
 
   const pinCoachUi = !completed && footerMode !== null
   const pinnedCoachIndex = pinCoachUi ? lastAssistantDialogueIndex(dialogue) : -1
@@ -546,6 +551,7 @@ export default function QuestFlowChat() {
     .filter(({ i }) => !showPinnedCoach || i !== pinnedCoachIndex)
 
   const showPinZone = !completed && (showGuideAxisBar || showPinnedCoach)
+  const showWaitingInPin = isWaiting && showPinZone
 
   const composeFooter =
     footerMode !== null ? (
@@ -643,10 +649,16 @@ export default function QuestFlowChat() {
                   pulse={explorePulse}
                   pulseSlot={explorePulseSlot}
                   nudgeText={exploreNudgeText}
+                  waiting={sending && !composing}
                 />
               </div>
             )}
-            {showPinnedCoach && pinnedCoachTurn && (
+            {showWaitingInPin && (
+              <div className="py-2 pb-3">
+                <TypingIndicator label={waitingLabel} />
+              </div>
+            )}
+            {showPinnedCoach && pinnedCoachTurn && !isWaiting && (
               <FloatingCoachQuestion
                 key={`${pinnedCoachIndex}-${phase}`}
                 turn={pinnedCoachTurn}
@@ -724,9 +736,8 @@ export default function QuestFlowChat() {
             />
           ))}
 
-        {!completed && sending && <TypingIndicator />}
-        {!completed && composing && !sending && (
-          <TypingIndicator label="네 글을 만들고 있어…" />
+        {!completed && isWaiting && !showPinZone && (
+          <TypingIndicator label={waitingLabel} />
         )}
 
         {completed && (
@@ -843,7 +854,17 @@ export default function QuestFlowChat() {
             paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom, 0px))',
           }}
         >
-          {composeFooter}
+          {isWaiting ? (
+            showPinZone ? (
+              <div className="py-1" role="status" aria-live="polite">
+                <span className="sr-only">{waitingLabel ?? '생각 중'}</span>
+              </div>
+            ) : (
+              <EduCoachWaitingPanel compact label={waitingLabel} />
+            )
+          ) : (
+            composeFooter
+          )}
         </footer>
       )}
     </div>
@@ -914,7 +935,7 @@ function FloatingCoachQuestion({
             color: eduGame.ink,
           }}
         >
-          {preview}
+          <CoachMessageText text={preview} />
         </p>
         <p
           className="mt-1 font-medium"
@@ -1126,12 +1147,14 @@ function AxisExploreBar({
   pulse,
   pulseSlot,
   nudgeText,
+  waiting = false,
 }: {
   completed: number
   currentSlot: number
   pulse: boolean
   pulseSlot: number | null
   nudgeText: string
+  waiting?: boolean
 }) {
   return (
     <div className="relative">
@@ -1141,6 +1164,7 @@ function AxisExploreBar({
           const isDone = i < completed
           const isCurrent = !isDone && i === currentSlot && currentSlot >= 0
           const isPending = !isDone && !isCurrent
+          const isFilling = waiting && isCurrent
           const justFilled = pulse && pulseSlot === i
 
           const slotStyle: {
@@ -1153,7 +1177,7 @@ function AxisExploreBar({
               : { borderColor: eduGame.border, backgroundColor: isPending ? eduGame.bg : eduGame.surface }
 
           let slotClass = ''
-          if (isCurrent) slotClass = eduGameClasses.animAxisCurrent
+          if (isCurrent || isFilling) slotClass = eduGameClasses.animAxisCurrent
           if (justFilled) slotClass = `${slotClass} ${eduGameClasses.animAxisPop}`.trim()
 
           return (
@@ -1162,11 +1186,13 @@ function AxisExploreBar({
               role="listitem"
               aria-current={isCurrent ? 'step' : undefined}
               aria-label={
-                isDone
-                  ? `${slotLabel} 완료`
-                  : isCurrent
-                    ? `${slotLabel} 진행 중`
-                    : `${slotLabel} 대기`
+                isFilling
+                  ? `${slotLabel} 채우는 중`
+                  : isDone
+                    ? `${slotLabel} 완료`
+                    : isCurrent
+                      ? `${slotLabel} 진행 중`
+                      : `${slotLabel} 대기`
               }
               className={`relative flex-1 flex flex-col items-center gap-1 py-2.5 rounded-xl border-2 transition-colors duration-300 ${slotClass}`}
               style={slotStyle}
@@ -1192,16 +1218,16 @@ function AxisExploreBar({
                 }}
                 aria-hidden
               >
-                {isDone ? '✓' : isCurrent ? '●' : '·'}
+                {isDone ? '✓' : isFilling ? '…' : isCurrent ? '●' : '·'}
               </span>
               <span
                 className="font-bold"
                 style={{
-                  color: isDone ? eduGame.primaryDark : isCurrent ? eduGame.primary : eduGame.muted,
+                  color: isDone ? eduGame.primaryDark : isCurrent || isFilling ? eduGame.primary : eduGame.muted,
                   fontSize: eduGame.fontSize.caption,
                 }}
               >
-                {slotLabel}
+                {isFilling ? '채우는 중' : slotLabel}
               </span>
             </div>
           )
@@ -1262,7 +1288,7 @@ function DialogueBubble({
                 <EduArticleSnippetCard key={`snip-${i}`} text={seg.value} display={seg.display} />
               ) : (
                 <p key={`txt-${i}`} className={eduGameClasses.textKoPre}>
-                  {seg.value}
+                  <CoachMessageText text={seg.value} />
                 </p>
               ),
             )}

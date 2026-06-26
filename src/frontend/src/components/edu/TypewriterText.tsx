@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import CoachMessageText from './CoachMessageText'
 
 type Props = {
   text: string
@@ -67,7 +68,7 @@ export default function TypewriterText({ text, active, onComplete, onProgress }:
   }, [text, active])
 
   if (!active) {
-    return <>{text}</>
+    return <CoachMessageText text={text} />
   }
 
   return (
@@ -81,7 +82,7 @@ export default function TypewriterText({ text, active, onComplete, onProgress }:
       className={done ? undefined : 'cursor-pointer'}
       title={done ? undefined : '탭하면 전체 보기'}
     >
-      {displayed}
+      <CoachMessageText text={displayed} hideIncompleteBold />
       {!done && (
         <span
           className="inline-block w-0.5 h-[1em] ml-0.5 align-text-bottom animate-pulse"

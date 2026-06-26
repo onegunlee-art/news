@@ -5,7 +5,8 @@ import EduEssayCompletionPanel from '../../components/edu/EduEssayCompletionPane
 import { type EssayArtifact } from '../../components/edu/EssayRevealCard'
 import { type EssayStructurePreview } from '../../components/edu/StructurePreviewCard'
 import EduQuestCompletionCelebration from '../../components/edu/EduQuestCompletionCelebration'
-import TypingIndicator from '../../components/edu/TypingIndicator'
+import CoachMessageText from '../../components/edu/CoachMessageText'
+import EduCoachWaitingPanel from '../../components/edu/EduCoachWaitingPanel'
 import EduArticleSnippetCard from '../../components/edu/EduArticleSnippetCard'
 import CardStructureBar from '../../components/edu/CardStructureBar'
 import {
@@ -657,6 +658,15 @@ export default function QuestFlowCards() {
   const showNarrativeInput =
     footerMode === 'chat' || footerMode === 'opening' || footerMode === 'evidence'
 
+  const isWaiting = sending || composing
+  const lastStudentAnswer = (() => {
+    for (let i = dialogue.length - 1; i >= 0; i--) {
+      if (dialogue[i].role === 'student') return dialogue[i].content
+    }
+    return null
+  })()
+  const waitingLabel = composing ? '네 글을 만들고 있어…' : undefined
+
   const cardKey = completed
     ? 'completed'
     : `${phase}-${coachIndex}-${dialogue.length}-${footerMode ?? 'none'}-${showCoachChoiceButtons ? coachChoice.options.join('|') : 'text'}`
@@ -787,6 +797,7 @@ export default function QuestFlowCards() {
           pulseSlot={structurePulseSlot}
           nudgeText={structureNudgeText}
           compact={keyboardOpen}
+          waiting={sending && !composing}
         />
       )}
 
@@ -832,12 +843,15 @@ export default function QuestFlowCards() {
               transition={{ duration: 0.22, ease: 'easeOut' }}
               className="flex-1 min-h-0 flex flex-col overflow-hidden"
             >
-              {(sending || composing) && (
-                <div className="shrink-0 px-4 pt-2">
-                  <TypingIndicator label={composing ? '네 글을 만들고 있어…' : undefined} />
+              {isWaiting ? (
+                <div className="flex-1 min-h-0 flex flex-col justify-center px-4 py-6">
+                  <EduCoachWaitingPanel
+                    studentAnswer={lastStudentAnswer}
+                    label={waitingLabel}
+                  />
                 </div>
-              )}
-
+              ) : (
+                <>
               {/* 질문·fact — 서술형도 카드 상단에 전체 노출 (절대 한 줄 자르지 않음) */}
               <div className="shrink-0 px-4 pt-2 pb-2">
                 <div className="space-y-4">
@@ -851,7 +865,7 @@ export default function QuestFlowCards() {
                         color: eduGame.ink,
                       }}
                     >
-                      {paragraph}
+                      <CoachMessageText text={paragraph} />
                     </p>
                   ))}
                 </div>
@@ -1009,6 +1023,8 @@ export default function QuestFlowCards() {
 
               {footerMode === 'stance_pick' && error && (
                 <p className="shrink-0 px-4 pb-3 text-sm text-red-600 text-center">{error}</p>
+              )}
+                </>
               )}
             </motion.div>
           </AnimatePresence>

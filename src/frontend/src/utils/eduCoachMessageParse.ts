@@ -2,7 +2,44 @@ export type CoachMessageSegment =
   | { type: 'text'; value: string }
   | { type: 'snippet'; value: string; display: string }
 
+export type CoachBoldSegment =
+  | { type: 'plain'; value: string }
+  | { type: 'bold'; value: string }
+
 const SNIPPET_RE = /\{\{snippet\|(\w+)\}\}\s*([\s\S]*?)\s*\{\{\/snippet\}\}/g
+const BOLD_RE = /\*\*([^*]+)\*\*/g
+
+/** 코치 **강조** → 렌더용 세그먼트 (기존 **만 변환, 새 강조 생성 없음) */
+export function parseCoachBoldSegments(text: string): CoachBoldSegment[] {
+  const segments: CoachBoldSegment[] = []
+  let lastIndex = 0
+  BOLD_RE.lastIndex = 0
+  let match: RegExpExecArray | null
+
+  while ((match = BOLD_RE.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      segments.push({ type: 'plain', value: text.slice(lastIndex, match.index) })
+    }
+    segments.push({ type: 'bold', value: match[1] ?? '' })
+    lastIndex = match.index + match[0].length
+  }
+
+  const tail = text.slice(lastIndex)
+  if (tail !== '') {
+    segments.push({ type: 'plain', value: tail })
+  }
+
+  if (segments.length === 0) {
+    segments.push({ type: 'plain', value: text })
+  }
+
+  return segments
+}
+
+/** 미리보기·한 줄 라벨 — ** 제거 */
+export function stripCoachBoldMarkers(text: string): string {
+  return text.replace(/\*\*([^*]+)\*\*/g, '$1')
+}
 
 export function coachMessageHasSnippet(content: string): boolean {
   return content.includes('{{snippet|')
@@ -77,8 +114,7 @@ export function splitCoachParagraphs(text: string): string[] {
 
 /** 서술형 카드 — 입력 위 한 줄 고정 라벨 (전체 질문은 대화 기록에) */
 export function narrativePromptOneLine(text: string, maxLen = 46): string {
-  const plain = text
-    .replace(/\*\*/g, '')
+  const plain = stripCoachBoldMarkers(text)
     .replace(/\{\{snippet[\s\S]*?\{\{\/snippet\}\}/g, '')
     .replace(/\s+/g, ' ')
     .trim()
