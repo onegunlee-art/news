@@ -7,6 +7,8 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/eduQuest.php';
 require_once __DIR__ . '/eduBlueprint.php';
+require_once __DIR__ . '/eduCoachLevel.php';
+require_once __DIR__ . '/eduCoachGuideElementary.php';
 
 const EDU_COACH_GUIDE_QUEST_CODE = 'Q-AUTO-NUKE-630';
 const EDU_COACH_GUIDE_QUEST_CODE_DC_150 = 'Q-AUTO-DC-150';
@@ -351,8 +353,18 @@ function eduCoachGuideTextsOverlap(string $a, string $b): bool
  * @param array<string, mixed> $quest
  * @return array{blueprint: array, message: string, ui_hint: string, done_guide: bool}
  */
-function eduCoachGuideHandleOpening(array $blueprint, array $quest, string $opening): array
-{
+function eduCoachGuideHandleOpening(
+    array $blueprint,
+    array $quest,
+    string $opening,
+    int $coachLevel = EDU_COACH_LEVEL_ADVANCED
+): array {
+    if (!eduCoachLevelIsAdvanced($coachLevel) && eduCoachGuideElementaryReady()) {
+        require_once __DIR__ . '/eduCoachGuideElementary.php';
+
+        return eduCoachGuideElementaryHandleOpening($blueprint, $quest, $opening, $coachLevel);
+    }
+
     $axes = eduCoachGuideAxes($quest);
     $blueprint = eduMergeBlueprint($blueprint, [
         'guide_opening' => $opening,
@@ -387,8 +399,18 @@ function eduCoachGuideHandleOpening(array $blueprint, array $quest, string $open
  * @param array<string, mixed> $quest
  * @return array{blueprint: array, message: string, ui_hint: string, done_guide: bool, advance_hammer?: bool}
  */
-function eduCoachGuideHandleTurn(array $blueprint, array $quest, string $message): array
-{
+function eduCoachGuideHandleTurn(
+    array $blueprint,
+    array $quest,
+    string $message,
+    int $coachLevel = EDU_COACH_LEVEL_ADVANCED
+): array {
+    if (!eduCoachLevelIsAdvanced($coachLevel) && eduCoachGuideElementaryReady()) {
+        require_once __DIR__ . '/eduCoachGuideElementary.php';
+
+        return eduCoachGuideElementaryHandleTurn($blueprint, $quest, $message, $coachLevel);
+    }
+
     $phase = (string) ($blueprint['phase'] ?? '');
     $axes = eduCoachGuideAxes($quest);
 

@@ -72,6 +72,14 @@ $home = read('src/frontend/src/pages/edu/EduHomePage.tsx');
 check(str_contains($home, '/edu/profile'), 'home: profile navigation');
 check(str_contains($home, '내 프로필'), 'home: profile label');
 
+$coachLevel = read('public/api/edu/lib/eduCoachLevel.php');
+check(str_contains($coachLevel, 'EDU_COACH_LEVEL_ADVANCED'), 'coach: level 7 constant');
+check(str_contains($coachLevel, 'EDU_COACH_LEVEL_DEFAULT'), 'coach: default level constant');
+
+$chatPhp = read('public/api/edu/session/chat.php');
+check(str_contains($chatPhp, 'eduResolveCoachLevel'), 'coach: level resolved in chat');
+check(str_contains($chatPhp, 'eduBlueprintFreezeCoachLevel'), 'coach: level frozen in blueprint');
+
 // D — 코치 why (local PHP)
 echo "\n--- edu_coach_guide_test.php ---\n";
 $coachOut = [];
@@ -80,6 +88,14 @@ exec('php ' . escapeshellarg($root . '/tools/edu_coach_guide_test.php') . ' 2>&1
 $coachText = implode("\n", $coachOut);
 echo $coachText . "\n";
 check($coachCode === 0 && str_contains($coachText, '0 failed'), 'coach guide regression (630/150/196/288 + why collab)');
+
+echo "\n--- edu_coach_guide_level7_parity_test.php ---\n";
+$parityOut = [];
+$parityCode = 0;
+exec('php ' . escapeshellarg($root . '/tools/edu_coach_guide_level7_parity_test.php') . ' 2>&1', $parityOut, $parityCode);
+$parityText = implode("\n", $parityOut);
+echo $parityText . "\n";
+check($parityCode === 0 && str_contains($parityText, '0 failed'), 'coach level 7 parity (v1 preserve)');
 
 echo "\n=== {$pass} passed, {$fail} failed ===\n";
 exit($fail > 0 ? 1 : 0);

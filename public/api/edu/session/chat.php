@@ -11,6 +11,8 @@ require_once __DIR__ . '/../lib/eduQuestConfig.php';
 require_once __DIR__ . '/../lib/eduConfig.php';
 require_once __DIR__ . '/../lib/eduBlueprint.php';
 require_once __DIR__ . '/../lib/eduCoachGuide.php';
+require_once __DIR__ . '/../lib/eduCoachLevel.php';
+require_once __DIR__ . '/../lib/eduCoachGuideElementary.php';
 require_once __DIR__ . '/../lib/eduAgents.php';
 require_once __DIR__ . '/../lib/_llm.php';
 
@@ -75,6 +77,8 @@ $quest['articles'] = $supabase->select(
 ) ?? [];
 
 $blueprint = eduLoadBlueprint($session);
+$coachLevel = eduResolveCoachLevel($student, $blueprint);
+$blueprint = eduBlueprintFreezeCoachLevel($blueprint, $coachLevel);
 $dialogue = eduLoadDialogue($session);
 $llm = eduLlm();
 $rag = new EduRagService($supabase);
@@ -109,7 +113,7 @@ if ($action === 'submit_opening') {
 
     if (eduQuestUsesAxisGuide($quest)) {
         $dialogue = eduAppendDialogue($dialogue, 'student', $message, null, 'guide_axis');
-        $guideResult = eduCoachGuideHandleOpening($blueprint, $quest, $message);
+        $guideResult = eduCoachGuideHandleOpening($blueprint, $quest, $message, $coachLevel);
         $blueprint = $guideResult['blueprint'];
         $assistantMessage = $guideResult['message'];
         $dialogue = eduAppendDialogue($dialogue, 'assistant', $assistantMessage, 'axis_guide', (string) ($blueprint['phase'] ?? 'guide_axis'));
@@ -404,7 +408,7 @@ $dialogue = eduAppendDialogue($dialogue, 'student', $message, null, $phase);
 $blueprint['exchange_count'] = (int) ($blueprint['exchange_count'] ?? 0) + 1;
 
 if (eduQuestUsesAxisGuide($quest) && in_array($phase, ['guide_axis', 'guide_conclusion'], true)) {
-    $guideResult = eduCoachGuideHandleTurn($blueprint, $quest, $message);
+    $guideResult = eduCoachGuideHandleTurn($blueprint, $quest, $message, $coachLevel);
     $blueprint = $guideResult['blueprint'];
     $assistantMessage = $guideResult['message'];
     $response['ui_hint'] = $guideResult['ui_hint'];
