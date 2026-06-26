@@ -45,6 +45,9 @@ check(str_contains($cards, 'displayQuestionParagraphs.map'), 'cards: full questi
 check(str_contains($cards, 'showNarrativeLayout'), 'cards: input yields when keyboard (snippet shrink)');
 check(str_contains($cards, 'handleChoiceSelect'), 'cards: choice button handler');
 check(str_contains($cards, 'useVisualViewportLayout'), 'cards: visualViewport keyboard shell');
+check(str_contains($cards, 'CardStructureBar'), 'cards: structure bar with animations');
+check(str_contains($cards, 'structureNudgeForAxisPass'), 'cards: axis pass nudge wired');
+check(str_contains($cards, "phase === 'hammer'"), 'cards: hammer question font reduced');
 
 $chat = read('src/frontend/src/pages/edu/QuestFlowChat.tsx');
 check(str_contains($chat, "resolveQuestFooterMode"), 'chat: footer mode resolver');

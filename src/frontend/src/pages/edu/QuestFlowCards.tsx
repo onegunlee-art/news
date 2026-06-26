@@ -8,6 +8,11 @@ import EduQuestCompletionCelebration from '../../components/edu/EduQuestCompleti
 import EduStructureReviewCard from '../../components/edu/EduStructureReviewCard'
 import TypingIndicator from '../../components/edu/TypingIndicator'
 import EduArticleSnippetCard from '../../components/edu/EduArticleSnippetCard'
+import CardStructureBar, {
+  completedSlotOnPhaseExit,
+  structureNudgeForAxisPass,
+  structureNudgeForPhaseSlot,
+} from '../../components/edu/CardStructureBar'
 import {
   coachMessageHasSnippet,
   parseCoachAssistantMessage,
@@ -29,6 +34,7 @@ import { eduQuestPathWithUi, setEduCoachUiMode } from '../../constants/eduCoachU
 const PAGE_MAX = 'max-w-2xl'
 const EVIDENCE_RECOMMENDED_LEN = 20
 const COACH_CHOICE_CACHE_PREFIX = 'edu_coach_choice_v1'
+const STRUCTURE_PULSE_MS = 900
 
 type CoachChoiceState = {
   active: boolean
@@ -81,7 +87,22 @@ function resolveCoachChoiceFromResponse(
   return emptyCoachChoice()
 }
 
-const STRUCTURE_BAR_SLOTS = ['배경', '입장', '갈등', '반론', '결론'] as const
+function triggerStructureBarPulse(
+  slot: number,
+  nudge: string,
+  setPulse: (v: boolean) => void,
+  setSlot: (v: number | null) => void,
+  setNudge: (v: string) => void
+): ReturnType<typeof setTimeout> {
+  setPulse(true)
+  setSlot(slot)
+  setNudge(nudge)
+  return setTimeout(() => {
+    setPulse(false)
+    setSlot(null)
+    setNudge('')
+  }, STRUCTURE_PULSE_MS)
+}
 
 type QuestFooterMode = 'opening' | 'evidence' | 'reflection' | 'chat' | 'stance_pick'
 type QuestEntryMode = 'open_response' | 'stance_pick'
@@ -182,33 +203,6 @@ function useVisualViewportLayout(): {
   return layout
 }
 
-function CardStructureBarPlaceholder({ compact = false }: { compact?: boolean }) {
-  return (
-    <div
-      className={`shrink-0 border-b px-4 ${compact ? 'py-1' : 'py-2'}`}
-      style={{ borderColor: eduGame.border, backgroundColor: eduGame.surface }}
-      aria-label="글 구조 (준비 중)"
-    >
-      <div className={`${PAGE_MAX} mx-auto w-full flex gap-1.5`}>
-        {STRUCTURE_BAR_SLOTS.map((label) => (
-          <div
-            key={label}
-            className={`flex-1 min-w-0 rounded-lg border-2 border-dashed text-center ${compact ? 'py-1 px-0.5' : 'py-2 px-1'}`}
-            style={{ borderColor: eduGame.border, backgroundColor: eduGame.bg }}
-          >
-            <span
-              className="block truncate font-bold"
-              style={{ fontSize: eduGame.fontSize.caption, color: eduGame.muted }}
-            >
-              {label}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
 export default function QuestFlowCards() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -237,7 +231,14 @@ export default function QuestFlowCards() {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [playEssayReveal, setPlayEssayReveal] = useState(false)
   const [coachChoice, setCoachChoice] = useState<CoachChoiceState>(emptyCoachChoice)
+  const [guideAxisIndex, setGuideAxisIndex] = useState(0)
+  const [structurePulse, setStructurePulse] = useState(false)
+  const [structurePulseSlot, setStructurePulseSlot] = useState<number | null>(null)
+  const [structureNudgeText, setStructureNudgeText] = useState('')
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const prevGuideAxisIndex = useRef(0)
+  const prevPhase = useRef('stance')
+  const skipStructurePulseRef = useRef(true)
 
   const applySessionState = useCallback((state: Awaited<ReturnType<typeof eduApi.getSessionState>>) => {
     setQuest(state.quest)
@@ -252,6 +253,7 @@ export default function QuestFlowCards() {
       setEvidenceInput(String(state.blueprint.evidence))
     }
     setEvidenceNudgeCount(Number(state.blueprint?.evidence_nudge_count ?? 0))
+    setGuideAxisIndex(Number(state.blueprint?.guide_axis_index ?? 0))
     setCoachChoice(resolveCoachChoiceFromResponse(state))
   }, [])
 
@@ -339,6 +341,53 @@ export default function QuestFlowCards() {
     if (phase !== 'guide_axis') {
       setCoachChoice(emptyCoachChoice())
     }
+  }, [phase])
+
+  useEffect(() => {
+    if (phase !== 'guide_axis') return
+    if (skipStructurePulseRef.current) {
+      prevGuideAxisIndex.current = guideAxisIndex
+      return
+    }
+    if (guideAxisIndex <= prevGuideAxisIndex.current || guideAxisIndex <= 0) {
+      prevGuideAxisIndex.current = guideAxisIndex
+      return
+    }
+    const filledAxis = guideAxisIndex - 1
+    const t = triggerStructureBarPulse(
+      2,
+      structureNudgeForAxisPass(filledAxis),
+      setStructurePulse,
+      setStructurePulseSlot,
+      setStructureNudgeText
+    )
+    prevGuideAxisIndex.current = guideAxisIndex
+    return () => clearTimeout(t)
+  }, [guideAxisIndex, phase])
+
+  useEffect(() => {
+    if (skipStructurePulseRef.current) {
+      prevPhase.current = phase
+      prevGuideAxisIndex.current = guideAxisIndex
+      skipStructurePulseRef.current = false
+      return
+    }
+    const previous = prevPhase.current
+    if (previous && previous !== phase) {
+      const slot = completedSlotOnPhaseExit(previous)
+      if (slot !== null) {
+        const t = triggerStructureBarPulse(
+          slot,
+          structureNudgeForPhaseSlot(slot),
+          setStructurePulse,
+          setStructurePulseSlot,
+          setStructureNudgeText
+        )
+        prevPhase.current = phase
+        return () => clearTimeout(t)
+      }
+    }
+    prevPhase.current = phase
   }, [phase])
 
   const coachIndex = lastAssistantDialogueIndex(dialogue)
@@ -457,6 +506,9 @@ export default function QuestFlowCards() {
     setCoachChoice(nextChoice)
     if (res.phase) setPhase(res.phase)
     else if (res.blueprint?.phase) setPhase(String(res.blueprint.phase))
+    if (res.blueprint?.guide_axis_index != null) {
+      setGuideAxisIndex(Number(res.blueprint.guide_axis_index))
+    }
     await syncSessionState(sid)
     if (res.should_compose) {
       await handleCompose(sid)
@@ -665,6 +717,14 @@ export default function QuestFlowCards() {
       ? '12vh'
       : '22vh'
     : '28vh'
+  const questionFontSize =
+    phase === 'hammer'
+      ? keyboardOpen
+        ? '0.85rem'
+        : '1rem'
+      : keyboardOpen
+        ? '1.0625rem'
+        : '1.25rem'
 
   return (
     <div
@@ -711,7 +771,16 @@ export default function QuestFlowCards() {
         </div>
       </header>
 
-      {!completed && <CardStructureBarPlaceholder compact={keyboardOpen} />}
+      {!completed && (
+        <CardStructureBar
+          phase={phase}
+          guideAxisIndex={guideAxisIndex}
+          pulse={structurePulse}
+          pulseSlot={structurePulseSlot}
+          nudgeText={structureNudgeText}
+          compact={keyboardOpen}
+        />
+      )}
 
       {completed ? (
         <main className={`flex-1 min-h-0 overflow-y-auto ${eduGameClasses.chatScroll} ${PAGE_MAX} mx-auto w-full px-4 py-4 space-y-4`}>
@@ -775,7 +844,7 @@ export default function QuestFlowCards() {
                       key={`${cardKey}-q-${i}`}
                       className={`text-center font-bold ${eduGameClasses.textKoPre}`}
                       style={{
-                        fontSize: keyboardOpen ? '1.0625rem' : '1.25rem',
+                        fontSize: questionFontSize,
                         lineHeight: 1.55,
                         color: eduGame.ink,
                       }}
