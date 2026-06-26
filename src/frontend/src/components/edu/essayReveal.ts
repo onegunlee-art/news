@@ -34,6 +34,8 @@ export function buildRevealSteps(
     title?: string | null
     subtitle?: string | null
     sections?: { heading: string; paragraphs: string[] }[]
+    body_paragraphs?: string[]
+    narration_mode?: boolean
     conclusion_heading?: string
     conclusion_paragraphs?: string[]
     full_text?: string
@@ -53,7 +55,22 @@ export function buildRevealSteps(
 
   steps.push({ kind: 'congrats' })
 
-  const hasStructure = (essay.sections?.length ?? 0) > 0
+  const narration =
+    essay.narration_mode === true ||
+    ((essay.body_paragraphs?.length ?? 0) >= 2 && (essay.sections?.length ?? 0) === 0)
+
+  const hasStructure = !narration && (essay.sections?.length ?? 0) > 0
+
+  if (narration) {
+    if (essay.title) steps.push({ kind: 'title', text: essay.title })
+    if (essay.subtitle) steps.push({ kind: 'subtitle', text: essay.subtitle })
+    for (const p of essay.body_paragraphs ?? []) {
+      if (p.trim()) steps.push({ kind: 'paragraph', text: p })
+    }
+    if (essay.hero_sentence) steps.push({ kind: 'hero', text: essay.hero_sentence })
+    if (authorName) steps.push({ kind: 'byline', text: authorName })
+    return capSteps(steps)
+  }
 
   if (!hasStructure) {
     if (essay.full_text) steps.push({ kind: 'full-text', text: essay.full_text })

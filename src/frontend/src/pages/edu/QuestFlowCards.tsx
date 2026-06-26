@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import EssayRevealWrapper from '../../components/edu/EssayRevealWrapper'
+import EduEssayCompletionPanel from '../../components/edu/EduEssayCompletionPanel'
 import { type EssayArtifact } from '../../components/edu/EssayRevealCard'
 import { type EssayStructurePreview } from '../../components/edu/StructurePreviewCard'
 import EduQuestCompletionCelebration from '../../components/edu/EduQuestCompletionCelebration'
-import EduStructureReviewCard from '../../components/edu/EduStructureReviewCard'
 import TypingIndicator from '../../components/edu/TypingIndicator'
 import EduArticleSnippetCard from '../../components/edu/EduArticleSnippetCard'
 import CardStructureBar from '../../components/edu/CardStructureBar'
@@ -310,6 +309,8 @@ export default function QuestFlowCards() {
           sections: state.essay.sections,
           conclusion_heading: state.essay.conclusion_heading,
           conclusion_paragraphs: state.essay.conclusion_paragraphs,
+          body_paragraphs: state.essay.body_paragraphs,
+          narration_mode: state.essay.narration_mode,
           full_text: state.essay.full_text,
           hero_sentence: state.essay.hero_sentence,
           feedback: state.essay.feedback,
@@ -428,6 +429,8 @@ export default function QuestFlowCards() {
         sections: data.sections,
         conclusion_heading: data.conclusion_heading,
         conclusion_paragraphs: data.conclusion_paragraphs,
+        body_paragraphs: data.body_paragraphs,
+        narration_mode: data.narration_mode,
         hero_sentence: data.hero_sentence,
         full_text: data.full_text,
       })
@@ -437,6 +440,8 @@ export default function QuestFlowCards() {
         sections: res.sections,
         conclusion_heading: res.conclusion_heading,
         conclusion_paragraphs: res.conclusion_paragraphs,
+        body_paragraphs: res.body_paragraphs ?? data.body_paragraphs,
+        narration_mode: res.narration_mode ?? data.narration_mode,
         full_text: res.full_text ?? data.full_text,
         hero_sentence: res.hero_sentence ?? data.hero_sentence,
         feedback: data.feedback,
@@ -473,6 +478,8 @@ export default function QuestFlowCards() {
         sections: res.sections,
         conclusion_heading: res.conclusion_heading,
         conclusion_paragraphs: res.conclusion_paragraphs,
+        body_paragraphs: res.body_paragraphs,
+        narration_mode: res.narration_mode,
         full_text: res.full_text ?? '',
         hero_sentence: res.hero_sentence ?? null,
         feedback: res.feedback ?? null,
@@ -791,33 +798,27 @@ export default function QuestFlowCards() {
             tier={tier}
             active={completed}
           />
-          {structurePreview && <EduStructureReviewCard structure={structurePreview} />}
           {essay && (
-            <section className="space-y-4 pt-2">
-              {stanceChanged && (
-                <span
-                  className="inline-block font-bold px-3 py-1 rounded-full"
-                  style={{ fontSize: eduGame.fontSize.caption, color: eduGame.primaryDark, backgroundColor: eduGame.primaryLight }}
-                >
-                  생각이 바뀌었다
-                </span>
-              )}
-              <EssayRevealWrapper
-                essay={essay}
-                onChange={handleEssayChange}
-                disabled={saveStatus === 'saving'}
-                authorName={authorName}
-                playReveal={playEssayReveal}
-                onRevealComplete={() => setPlayEssayReveal(false)}
-              />
-              <Link
+            <EduEssayCompletionPanel
+              essay={essay}
+              structure={structurePreview}
+              onChange={handleEssayChange}
+              disabled={saveStatus === 'saving'}
+              authorName={authorName}
+              playReveal={playEssayReveal}
+              onRevealComplete={() => setPlayEssayReveal(false)}
+              saveStatus={saveStatus}
+              stanceChanged={stanceChanged}
+            />
+          )}
+          {essay && (
+            <Link
                 to={`/edu/share/${sessionId}`}
                 className={`block w-full py-3.5 text-center ${eduGameClasses.btnPrimary}`}
                 style={{ backgroundColor: eduGame.primary, fontSize: eduGame.fontSize.button }}
               >
                 공유 카드 만들기
               </Link>
-            </section>
           )}
         </main>
       ) : (

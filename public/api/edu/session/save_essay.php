@@ -66,12 +66,26 @@ $conclusionParagraphs = array_values(array_filter(array_map(
     $conclusionParagraphs
 )));
 
+$bodyParagraphs = $body['body_paragraphs'] ?? [];
+if (!is_array($bodyParagraphs)) {
+    $bodyParagraphs = [];
+}
+$bodyParagraphs = array_values(array_filter(array_map(
+    static fn ($p) => trim((string) $p),
+    $bodyParagraphs
+)));
+$narrationMode = !empty($body['narration_mode']) || $bodyParagraphs !== [];
+
 $fullText = trim((string) ($body['full_text'] ?? ''));
+if ($fullText === '' && $narrationMode && $bodyParagraphs !== []) {
+    $blocks = array_filter([$title, $subtitle, ...$bodyParagraphs]);
+    $fullText = implode("\n\n", $blocks);
+}
 if ($fullText === '') {
     $fullText = eduBuildEssayFullText($title, $subtitle, $sections, $conclusionHeading, $conclusionParagraphs);
 }
 
-if ($fullText === '' && $sections === []) {
+if ($fullText === '' && $sections === [] && $bodyParagraphs === []) {
     eduSendError('Essay content required');
 }
 
@@ -95,19 +109,23 @@ if (!is_array($structureDiagram)) {
 }
 
 $sentenceExtract = [];
-foreach ($sections as $sec) {
-    if (($sec['heading'] ?? '') !== '') {
-        $sentenceExtract[] = (string) $sec['heading'];
+if ($bodyParagraphs !== []) {
+    $sentenceExtract = $bodyParagraphs;
+} else {
+    foreach ($sections as $sec) {
+        if (($sec['heading'] ?? '') !== '') {
+            $sentenceExtract[] = (string) $sec['heading'];
+        }
+        foreach ($sec['paragraphs'] ?? [] as $p) {
+            if ($p !== '') {
+                $sentenceExtract[] = (string) $p;
+            }
+        }
     }
-    foreach ($sec['paragraphs'] ?? [] as $p) {
+    foreach ($conclusionParagraphs as $p) {
         if ($p !== '') {
             $sentenceExtract[] = (string) $p;
         }
-    }
-}
-foreach ($conclusionParagraphs as $p) {
-    if ($p !== '') {
-        $sentenceExtract[] = (string) $p;
     }
 }
 
@@ -116,6 +134,8 @@ $essayStructurePayload = [
     'subtitle' => $subtitle,
     'structure' => $structureDiagram,
     'sections' => $sections,
+    'body_paragraphs' => $bodyParagraphs,
+    'narration_mode' => $narrationMode,
     'conclusion_heading' => $conclusionHeading !== '' ? $conclusionHeading : '결론',
     'conclusion_paragraphs' => $conclusionParagraphs,
 ];
@@ -151,6 +171,8 @@ $blueprint = eduMergeBlueprint($blueprint, [
         'title' => $title,
         'subtitle' => $subtitle,
         'sections' => $sections,
+        'body_paragraphs' => $bodyParagraphs,
+        'narration_mode' => $narrationMode,
         'conclusion_heading' => $conclusionHeading !== '' ? $conclusionHeading : '결론',
         'conclusion_paragraphs' => $conclusionParagraphs,
         'full_text' => $fullText,
@@ -186,6 +208,8 @@ eduSendJson([
     'title' => $title,
     'subtitle' => $subtitle,
     'sections' => $sections,
+    'body_paragraphs' => $bodyParagraphs,
+    'narration_mode' => $narrationMode,
     'conclusion_heading' => $conclusionHeading !== '' ? $conclusionHeading : '결론',
     'conclusion_paragraphs' => $conclusionParagraphs,
     'full_text' => $fullText,

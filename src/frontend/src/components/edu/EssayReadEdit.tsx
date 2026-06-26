@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState, type ReactNode } from 'react'
 import { EDU_BRAND } from '../../constants/eduBrand'
-import { paragraphsToText, textToParagraphs, updateSectionAt } from './essayUtils'
+import { paragraphsToText, textToParagraphs, updateSectionAt, isEssayNarrationMode, rebuildNarrationFullText } from './essayUtils'
 import type { EssayArtifact } from './EssayRevealCard'
 
 interface EssayReadEditProps {
@@ -15,6 +15,7 @@ type EditField =
   | 'subtitle'
   | 'hero'
   | 'full_text'
+  | 'body-paragraphs'
   | 'conclusion-heading'
   | 'conclusion-body'
   | `section-${number}-heading`
@@ -35,6 +36,7 @@ export default function EssayReadEdit({
   const draftRef = useRef('')
 
   const hasStructure = (essay.sections?.length ?? 0) > 0
+  const narration = isEssayNarrationMode(essay)
 
   const update = useCallback(
     (patch: Partial<EssayArtifact>) => {
@@ -57,7 +59,16 @@ export default function EssayReadEdit({
     else if (field === 'subtitle') update({ subtitle: value })
     else if (field === 'hero') update({ hero_sentence: value })
     else if (field === 'full_text') update({ full_text: value })
-    else if (field === 'conclusion-heading') update({ conclusion_heading: value })
+    else if (field === 'body-paragraphs') {
+      const bodyParagraphs = textToParagraphs(value)
+      update({
+        body_paragraphs: bodyParagraphs,
+        narration_mode: true,
+        sections: [],
+        conclusion_paragraphs: [],
+        full_text: rebuildNarrationFullText({ ...essay, body_paragraphs: bodyParagraphs }),
+      })
+    } else if (field === 'conclusion-heading') update({ conclusion_heading: value })
     else if (field === 'conclusion-body') {
       update({ conclusion_paragraphs: textToParagraphs(value) })
     } else if (field.startsWith('section-')) {
@@ -174,6 +185,81 @@ export default function EssayReadEdit({
           </span>
         )}
       </button>
+    )
+  }
+
+  if (narration) {
+    const bodyText = paragraphsToText(essay.body_paragraphs ?? textToParagraphs(essay.full_text ?? ''))
+    return (
+      <article className="space-y-8">
+        <EditShell
+          field="title"
+          value={essay.title ?? ''}
+          read={
+            <h2 className="text-2xl sm:text-3xl font-bold leading-tight tracking-tight py-1 pr-16">
+              {essay.title || '제목'}
+            </h2>
+          }
+        />
+
+        {(essay.subtitle || editing === 'subtitle') && (
+          <EditShell
+            field="subtitle"
+            value={essay.subtitle ?? ''}
+            multiline
+            rows={2}
+            read={
+              <p className="text-base leading-relaxed py-1 pr-16" style={{ color: EDU_BRAND.muted }}>
+                {essay.subtitle}
+              </p>
+            }
+          />
+        )}
+
+        <EditShell
+          field="body-paragraphs"
+          value={bodyText}
+          multiline
+          rows={12}
+          read={
+            <div className="space-y-5 py-1 pr-16">
+              {(essay.body_paragraphs ?? textToParagraphs(essay.full_text ?? '')).map((p, j) => (
+                <p key={j} className="text-base leading-[1.75] text-[#333] whitespace-pre-wrap">
+                  {p}
+                </p>
+              ))}
+            </div>
+          }
+        />
+
+        <EditShell
+          field="hero"
+          value={essay.hero_sentence ?? ''}
+          multiline
+          rows={2}
+          read={
+            <blockquote
+              className="text-lg leading-snug italic py-4 px-5 rounded-xl pr-16"
+              style={{
+                color: EDU_BRAND.ink,
+                backgroundColor: EDU_BRAND.accentBg,
+                borderLeft: `4px solid ${EDU_BRAND.accent}`,
+              }}
+            >
+              {essay.hero_sentence || '핵심 문장'}
+            </blockquote>
+          }
+        />
+
+        {authorName && (
+          <footer
+            className="text-right text-sm pt-4 mt-2"
+            style={{ color: EDU_BRAND.muted, borderTop: `1px solid ${EDU_BRAND.border}` }}
+          >
+            by {authorName}
+          </footer>
+        )}
+      </article>
     )
   }
 

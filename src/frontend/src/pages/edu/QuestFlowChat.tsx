@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import EssayRevealWrapper from '../../components/edu/EssayRevealWrapper'
+import EduEssayCompletionPanel from '../../components/edu/EduEssayCompletionPanel'
 import { type EssayArtifact } from '../../components/edu/EssayRevealCard'
 import StructurePreviewCard, { type EssayStructurePreview } from '../../components/edu/StructurePreviewCard'
 import EduQuestCompletionCelebration from '../../components/edu/EduQuestCompletionCelebration'
-import EduStructureReviewCard from '../../components/edu/EduStructureReviewCard'
 import TypingIndicator from '../../components/edu/TypingIndicator'
 import TypewriterText from '../../components/edu/TypewriterText'
 import EduArticleCard from '../../components/edu/EduArticleCard'
@@ -249,6 +248,8 @@ export default function QuestFlowChat() {
           sections: state.essay.sections,
           conclusion_heading: state.essay.conclusion_heading,
           conclusion_paragraphs: state.essay.conclusion_paragraphs,
+          body_paragraphs: state.essay.body_paragraphs,
+          narration_mode: state.essay.narration_mode,
           full_text: state.essay.full_text,
           hero_sentence: state.essay.hero_sentence,
           feedback: state.essay.feedback,
@@ -335,6 +336,8 @@ export default function QuestFlowChat() {
         sections: data.sections,
         conclusion_heading: data.conclusion_heading,
         conclusion_paragraphs: data.conclusion_paragraphs,
+        body_paragraphs: data.body_paragraphs,
+        narration_mode: data.narration_mode,
         hero_sentence: data.hero_sentence,
         full_text: data.full_text,
       })
@@ -344,6 +347,8 @@ export default function QuestFlowChat() {
         sections: res.sections,
         conclusion_heading: res.conclusion_heading,
         conclusion_paragraphs: res.conclusion_paragraphs,
+        body_paragraphs: res.body_paragraphs ?? data.body_paragraphs,
+        narration_mode: res.narration_mode ?? data.narration_mode,
         full_text: res.full_text ?? data.full_text,
         hero_sentence: res.hero_sentence ?? data.hero_sentence,
         feedback: data.feedback,
@@ -380,6 +385,8 @@ export default function QuestFlowChat() {
         sections: res.sections,
         conclusion_heading: res.conclusion_heading,
         conclusion_paragraphs: res.conclusion_paragraphs,
+        body_paragraphs: res.body_paragraphs,
+        narration_mode: res.narration_mode,
         full_text: res.full_text ?? '',
         hero_sentence: res.hero_sentence ?? null,
         feedback: res.feedback ?? null,
@@ -731,8 +738,18 @@ export default function QuestFlowChat() {
           />
         )}
 
-        {completed && structurePreview && (
-          <EduStructureReviewCard structure={structurePreview} />
+        {completed && essay && (
+          <EduEssayCompletionPanel
+            essay={essay}
+            structure={structurePreview}
+            onChange={handleEssayChange}
+            disabled={saveStatus === 'saving'}
+            authorName={authorName}
+            playReveal={playEssayReveal}
+            onRevealComplete={() => setPlayEssayReveal(false)}
+            saveStatus={saveStatus}
+            stanceChanged={stanceChanged}
+          />
         )}
 
         {completed && dialogue.length > 0 && (
@@ -763,88 +780,51 @@ export default function QuestFlowChat() {
           <StructurePreviewCard structure={structurePreview} />
         )}
 
-        {completed && essay && (
-          <section className="space-y-6 pt-2 mt-2">
-            <div
-              className="border-t-2 pt-8"
-              style={{ borderColor: eduGame.primaryLight }}
-            >
-              <div className="flex items-center justify-between gap-2 mb-6">
-                <p className="font-bold" style={{ fontSize: eduGame.fontSize.bodyLg, color: eduGame.primaryDark }}>
-                  나만의 글
-                </p>
-                <span style={{ fontSize: eduGame.fontSize.caption, color: eduGame.muted }}>
-                  {saveStatus === 'saving' && '저장 중…'}
-                  {saveStatus === 'saved' && '✓ 자동 저장됨'}
-                  {saveStatus === 'error' && '저장 실패 — 다시 시도해줘'}
-                </span>
-              </div>
-              {stanceChanged && (
-                <span
-                  className="inline-block font-bold px-3 py-1 rounded-full mb-4"
-                  style={{ fontSize: eduGame.fontSize.caption, color: eduGame.primaryDark, backgroundColor: eduGame.primaryLight }}
-                >
-                  생각이 바뀌었다
-                </span>
-              )}
-              <EssayRevealWrapper
-                essay={essay}
-                onChange={handleEssayChange}
-                disabled={saveStatus === 'saving'}
-                authorName={authorName}
-                playReveal={playEssayReveal}
-                onRevealComplete={() => setPlayEssayReveal(false)}
-              />
-              {!playEssayReveal && (
-                <p className={`mt-6 text-center ${eduGameClasses.textKo}`} style={{ fontSize: eduGame.fontSize.label, color: eduGame.muted }}>
-                  고치고 싶은 부분을 탭하면 편집할 수 있어
-                </p>
-              )}
-            </div>
-            {!playEssayReveal && (
-              <>
-                {essay.feedback && (
-                  <p
-                    className={`p-4 rounded-xl ${eduGameClasses.textKo}`}
-                    style={{ fontSize: eduGame.fontSize.body, color: eduGame.muted, backgroundColor: eduGame.surface, lineHeight: eduGame.lineHeight.body }}
-                  >
-                    {essay.feedback}
-                  </p>
-                )}
-                <div className="space-y-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => essay && void persistEssay(essay)}
-                    disabled={saveStatus === 'saving'}
-                    className={`w-full py-3.5 border-2 rounded-xl font-bold disabled:opacity-40 ${eduGameClasses.textKo}`}
-                    style={{ borderColor: eduGame.border, color: eduGame.ink, fontSize: eduGame.fontSize.button }}
-                  >
-                    지금 저장
-                  </button>
-                  <Link
-                    to={`/edu/share/${sessionId}`}
-                    className={`block w-full py-3.5 text-center ${eduGameClasses.btnPrimary}`}
-                    style={{ backgroundColor: eduGame.primary, fontSize: eduGame.fontSize.button }}
-                  >
-                    공유 카드 만들기
-                  </Link>
-                  <Link
-                    to="/edu/profile"
-                    className={`block w-full py-3.5 text-center rounded-xl font-bold border-2 ${eduGameClasses.textKo}`}
-                    style={{ borderColor: eduGame.border, color: eduGame.ink, fontSize: eduGame.fontSize.button }}
-                  >
-                    내 프로필
-                  </Link>
-                  <Link
-                    to="/edu"
-                    className={`block w-full py-3.5 text-center rounded-xl font-medium ${eduGameClasses.textKo}`}
-                    style={{ color: eduGame.muted, fontSize: eduGame.fontSize.label }}
-                  >
-                    홈으로
-                  </Link>
-                </div>
-              </>
+        {completed && essay && !playEssayReveal && (
+          <section className="space-y-4 pt-2 mt-2">
+            <p className={`text-center ${eduGameClasses.textKo}`} style={{ fontSize: eduGame.fontSize.label, color: eduGame.muted }}>
+              고치고 싶은 부분을 탭하면 편집할 수 있어
+            </p>
+            {essay.feedback && (
+              <p
+                className={`p-4 rounded-xl ${eduGameClasses.textKo}`}
+                style={{ fontSize: eduGame.fontSize.body, color: eduGame.muted, backgroundColor: eduGame.surface, lineHeight: eduGame.lineHeight.body }}
+              >
+                {essay.feedback}
+              </p>
             )}
+            <div className="space-y-2 pt-2">
+              <button
+                type="button"
+                onClick={() => void persistEssay(essay)}
+                disabled={saveStatus === 'saving'}
+                className={`w-full py-3.5 border-2 rounded-xl font-bold disabled:opacity-40 ${eduGameClasses.textKo}`}
+                style={{ borderColor: eduGame.border, color: eduGame.ink, fontSize: eduGame.fontSize.button }}
+              >
+                지금 저장
+              </button>
+              <Link
+                to={`/edu/share/${sessionId}`}
+                className={`block w-full py-3.5 text-center ${eduGameClasses.btnPrimary}`}
+                style={{ backgroundColor: eduGame.primary, fontSize: eduGame.fontSize.button }}
+              >
+                공유 카드 만들기
+              </Link>
+              <Link
+                to="/edu/profile"
+                className={`block w-full py-3.5 text-center rounded-xl font-bold border-2 ${eduGameClasses.textKo}`}
+                style={{ borderColor: eduGame.border, color: eduGame.ink, fontSize: eduGame.fontSize.button }}
+              >
+                내 프로필
+              </Link>
+              <Link
+                to="/edu"
+                className={`block w-full py-3.5 text-center rounded-xl font-medium ${eduGameClasses.textKo}`}
+                style={{ color: eduGame.muted, fontSize: eduGame.fontSize.label }}
+              >
+                홈으로
+              </Link>
+            </div>
           </section>
         )}
 

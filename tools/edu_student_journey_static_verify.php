@@ -48,8 +48,13 @@ check(str_contains($cards, 'useVisualViewportLayout'), 'cards: visualViewport ke
 check(str_contains($cards, 'CardStructureBar'), 'cards: structure bar with animations');
 check(str_contains($cards, 'structureNudgeForAxisPass'), 'cards: axis pass nudge wired');
 check(str_contains($cards, "phase === 'hammer'"), 'cards: hammer question font reduced');
+check(str_contains($cards, 'EduEssayCompletionPanel'), 'cards: essay completion toggle panel');
+
+$completionPanel = read('src/frontend/src/components/edu/EduEssayCompletionPanel.tsx');
+check(str_contains($completionPanel, '구조 보기'), 'completion: structure view toggle');
 
 $chat = read('src/frontend/src/pages/edu/QuestFlowChat.tsx');
+check(str_contains($chat, 'EduEssayCompletionPanel'), 'chat: essay completion toggle panel');
 check(str_contains($chat, "resolveQuestFooterMode"), 'chat: footer mode resolver');
 check(str_contains($chat, 'dialogueLength > 0'), 'chat: stance dead zone fix (dialogue > 0 -> chat)');
 check(str_contains($chat, '/edu/profile'), 'chat: profile link after completion');
@@ -104,6 +109,14 @@ exec('php ' . escapeshellarg($root . '/tools/edu_coach_guide_elementary_test.php
 $elemText = implode("\n", $elemOut);
 echo $elemText . "\n";
 check($elemCode === 0 && str_contains($elemText, '0 failed'), 'coach level 1 elementary guide');
+
+echo "\n--- edu_compose_narration_static_verify.php ---\n";
+$narrOut = [];
+$narrCode = 0;
+exec('php ' . escapeshellarg($root . '/tools/edu_compose_narration_static_verify.php') . ' 2>&1', $narrOut, $narrCode);
+$narrText = implode("\n", $narrOut);
+echo $narrText . "\n";
+check($narrCode === 0 && str_contains($narrText, '0 failed'), 'composer narration weave static');
 
 echo "\n=== {$pass} passed, {$fail} failed ===\n";
 exit($fail > 0 ? 1 : 0);

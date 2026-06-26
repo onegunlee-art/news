@@ -163,6 +163,8 @@ export interface EduComposeResponse {
   title?: string
   subtitle?: string
   sections?: EduEssaySection[]
+  body_paragraphs?: string[]
+  narration_mode?: boolean
   conclusion_heading?: string
   conclusion_paragraphs?: string[]
   essay_structure?: Record<string, unknown>
@@ -190,6 +192,8 @@ export interface EduSessionState {
     title?: string | null
     subtitle?: string | null
     sections?: EduEssaySection[]
+    body_paragraphs?: string[]
+    narration_mode?: boolean
     conclusion_heading?: string
     conclusion_paragraphs?: string[]
     full_text: string
@@ -486,6 +490,8 @@ export const eduApi = {
       title?: string | null
       subtitle?: string | null
       sections?: EduEssaySection[]
+      body_paragraphs?: string[]
+      narration_mode?: boolean
       conclusion_heading?: string
       conclusion_paragraphs?: string[]
       hero_sentence?: string | null
@@ -500,6 +506,8 @@ export const eduApi = {
       title?: string
       subtitle?: string
       sections?: EduEssaySection[]
+      body_paragraphs?: string[]
+      narration_mode?: boolean
       conclusion_heading?: string
       conclusion_paragraphs?: string[]
       full_text?: string

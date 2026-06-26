@@ -83,6 +83,8 @@ if (($session['stage'] ?? '') === 'completed') {
         'title' => $artifact['title'] ?? ($blueprint['essay_artifact']['title'] ?? null),
         'subtitle' => $artifact['subtitle'] ?? ($blueprint['essay_artifact']['subtitle'] ?? null),
         'sections' => $artifact['sections'] ?? ($blueprint['essay_artifact']['sections'] ?? []),
+        'body_paragraphs' => $artifact['body_paragraphs'] ?? ($blueprint['essay_artifact']['body_paragraphs'] ?? []),
+        'narration_mode' => !empty($artifact['narration_mode']) || !empty($blueprint['essay_artifact']['narration_mode']),
         'conclusion_heading' => $artifact['conclusion_heading'] ?? '결론',
         'conclusion_paragraphs' => $artifact['conclusion_paragraphs'] ?? [],
         'full_text' => $fullText,

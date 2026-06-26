@@ -1,4 +1,5 @@
 import { EDU_BRAND } from '../../constants/eduBrand'
+import { isEssayNarrationMode } from './essayUtils'
 
 export interface EssaySection {
   heading: string
@@ -9,6 +10,8 @@ export interface EssayArtifact {
   title?: string | null
   subtitle?: string | null
   sections?: EssaySection[]
+  body_paragraphs?: string[]
+  narration_mode?: boolean
   conclusion_heading?: string
   conclusion_paragraphs?: string[]
   full_text?: string
@@ -29,10 +32,12 @@ export default function EssayRevealCard({
   authorName,
 }: EssayRevealCardProps) {
   const isArticle = variant === 'article'
+  const narration = isEssayNarrationMode(essay)
   const hasStructure =
-    (essay.sections?.length ?? 0) > 0 ||
-    Boolean(essay.title) ||
-    Boolean(essay.subtitle)
+    !narration &&
+    ((essay.sections?.length ?? 0) > 0 ||
+      Boolean(essay.title) ||
+      Boolean(essay.subtitle))
 
   const titleClass = isArticle
     ? 'text-2xl sm:text-3xl font-bold leading-tight tracking-tight'
@@ -46,6 +51,42 @@ export default function EssayRevealCard({
   const headingClass = isArticle
     ? 'text-sm font-bold tracking-wide'
     : 'text-sm font-bold border-l-2 pl-2'
+
+  if (narration || (!hasStructure && essay.full_text)) {
+    const paragraphs = essay.body_paragraphs?.length
+      ? essay.body_paragraphs
+      : (essay.full_text ?? '').split(/\n{2,}/).filter(Boolean)
+    return (
+      <div className="space-y-4">
+        {essay.title && <h2 className={titleClass}>{essay.title}</h2>}
+        {essay.subtitle && (
+          <p className={subtitleClass} style={isArticle ? { color: EDU_BRAND.muted } : undefined}>
+            {essay.subtitle}
+          </p>
+        )}
+        <div className={isArticle ? 'space-y-5' : 'space-y-3'}>
+          {paragraphs.map((p, i) => (
+            <p key={i} className={`${bodyClass} whitespace-pre-wrap`}>
+              {p}
+            </p>
+          ))}
+        </div>
+        {essay.hero_sentence && isArticle && (
+          <blockquote
+            className="text-lg leading-snug italic py-4 px-5 rounded-xl"
+            style={{
+              color: EDU_BRAND.ink,
+              backgroundColor: EDU_BRAND.accentBg,
+              borderLeft: `4px solid ${EDU_BRAND.accent}`,
+            }}
+          >
+            {essay.hero_sentence}
+          </blockquote>
+        )}
+        {isArticle && authorName && <ArticleByline name={authorName} />}
+      </div>
+    )
+  }
 
   if (!hasStructure && essay.full_text) {
     return (

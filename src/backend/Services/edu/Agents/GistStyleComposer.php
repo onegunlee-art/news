@@ -280,20 +280,23 @@ MSG;
 - 어려운 어휘 자제: "결정타", "본격적으로 개입", "정치적 정당성", "변수", "수렴" 등 칼럼니스트 표현 대신 학생이 쓸 법한 쉬운 말.
 - 심한 비문·오타는 정리하되, **완벽한 글**로 만들지 말 것. 일부러 못 쓰게 하거나 오타를 넣지도 말 것 — 그것도 가짜.
 - gist **리듬**(갈등 인정 → 내 관점)은 유지하되, 문장은 중학생(14세)이 **노력해서 쓴** 수준.
-- 명확한 제목·소제목, 각 섹션 2~3문단 (문단마다 길이·리듬 다르게)
+- **소제목·섹션 제목 금지** — 배경/갈등/입장/반론/결론 라벨을 본문에 넣지 말 것.
+- **2~3개 연속 문단**으로 한 편의 글. 구조도 축 순서는 **접속어**(그래서, 물론, 다만, 결국, 한편)로만 이어 붙일 것.
+- 학생 대화·이유·근거·반론 반응에 나온 **표현·뉘앙스를 문장 안에 살릴 것** — 더 매끄럽게 고치거나 칼럼체로 바꾸지 말 것.
+- **학생 결론만** — the gist·편집장 결론·정답 방향 주입 금지. 엉뚱해도 학생 것 유지.
 - 학생 대화에 없는 새 사실·수치 추가 금지
 
 JSON만 응답:
 {
   "title": "...",
   "subtitle": "...",
-  "sections": [
-    {"heading": "소제목", "paragraphs": ["문단1", "문단2"]}
-  ],
-  "conclusion_heading": "결론",
-  "conclusion_paragraphs": ["문단1", "문단2"],
-  "full_text": "제목부터 결론까지 읽기 좋게 이어 붙인 전체 (소제목 포함)",
-  "hero_sentence": "공유카드용 핵심 문장 1개 (1인칭)"
+  "body_paragraphs": ["1단락(배경+갈등 녹임)", "2단락(입장)", "3단락(반론+결론, 선택)"],
+  "sections": [],
+  "conclusion_heading": "",
+  "conclusion_paragraphs": [],
+  "full_text": "제목·부제·본문 2~3단락만 (소제목 없이, 단락 사이 빈 줄)",
+  "hero_sentence": "공유카드용 핵심 문장 1개 (1인칭, 학생 말투)",
+  "narration_mode": true
 }
 PROMPT;
 
@@ -373,6 +376,47 @@ MSG;
     /** @param array<string, mixed> $raw @param array<string, mixed> $structure @param array<string, mixed> $ctx */
     private function normalizeArticle(array $raw, array $structure, array $ctx): array
     {
+        $bodyParagraphs = [];
+        foreach ($raw['body_paragraphs'] ?? [] as $p) {
+            $t = trim((string) $p);
+            if ($t !== '') {
+                $bodyParagraphs[] = $t;
+            }
+        }
+
+        $title = trim((string) ($raw['title'] ?? $structure['title'] ?? ''));
+        $subtitle = trim((string) ($raw['subtitle'] ?? $structure['subtitle'] ?? ''));
+        $narrationMode = !empty($raw['narration_mode']) || $bodyParagraphs !== [] || !empty($raw['sections']);
+
+        if ($bodyParagraphs === []) {
+            $bodyParagraphs = $this->flattenSectionsToBodyParagraphs($raw, $structure);
+        }
+
+        if ($narrationMode && $bodyParagraphs !== []) {
+            $bodyParagraphs = array_slice($bodyParagraphs, 0, 3);
+            $fullText = trim((string) ($raw['full_text'] ?? ''));
+            if ($fullText === '') {
+                $fullText = $this->renderNarrationPlainText($title, $subtitle, $bodyParagraphs);
+            }
+
+            $hero = trim((string) ($raw['hero_sentence'] ?? ''));
+            if ($hero === '') {
+                $hero = $bodyParagraphs[count($bodyParagraphs) - 1] ?? mb_substr($fullText, 0, 80);
+            }
+
+            return [
+                'title' => $title,
+                'subtitle' => $subtitle,
+                'body_paragraphs' => $bodyParagraphs,
+                'sections' => [],
+                'conclusion_heading' => '',
+                'conclusion_paragraphs' => [],
+                'full_text' => $fullText,
+                'hero_sentence' => $hero,
+                'narration_mode' => true,
+            ];
+        }
+
         $sections = [];
         foreach ($raw['sections'] ?? [] as $sec) {
             if (!is_array($sec)) {
@@ -419,6 +463,80 @@ MSG;
             'conclusion_paragraphs' => array_values(array_filter(array_map('trim', array_map('strval', $conclusionParagraphs)))),
             'full_text' => $fullText,
             'hero_sentence' => $hero,
+            'narration_mode' => false,
+        ];
+    }
+
+    /**
+     * @param list<string> $bodyParagraphs
+     */
+    public function renderNarrationPlainText(string $title, string $subtitle, array $bodyParagraphs): string
+    {
+        $blocks = [];
+        if ($title !== '') {
+            $blocks[] = $title;
+        }
+        if ($subtitle !== '') {
+            $blocks[] = $subtitle;
+        }
+        foreach ($bodyParagraphs as $p) {
+            $t = trim($p);
+            if ($t !== '') {
+                $blocks[] = $t;
+            }
+        }
+
+        return trim(implode("\n\n", $blocks));
+    }
+
+    /**
+     * LLM이 구형 sections JSON을 줄 때 body_paragraphs로 폴백
+     *
+     * @param array<string, mixed> $raw
+     * @param array<string, mixed> $structure
+     * @return list<string>
+     */
+    private function flattenSectionsToBodyParagraphs(array $raw, array $structure): array
+    {
+        $chunks = [];
+        foreach ($raw['sections'] ?? [] as $sec) {
+            if (!is_array($sec)) {
+                continue;
+            }
+            foreach ($sec['paragraphs'] ?? [] as $p) {
+                $t = trim((string) $p);
+                if ($t !== '') {
+                    $chunks[] = $t;
+                }
+            }
+        }
+        foreach ($raw['conclusion_paragraphs'] ?? [] as $p) {
+            $t = trim((string) $p);
+            if ($t !== '') {
+                $chunks[] = $t;
+            }
+        }
+        if ($chunks === []) {
+            foreach ($structure['sections'] ?? [] as $sec) {
+                if (!is_array($sec)) {
+                    continue;
+                }
+                $bullets = implode(' ', $sec['bullets'] ?? []);
+                if (trim($bullets) !== '') {
+                    $chunks[] = trim($bullets);
+                }
+            }
+        }
+        if (count($chunks) <= 3) {
+            return $chunks;
+        }
+
+        $mid = (int) ceil(count($chunks) / 2);
+
+        return [
+            implode(' ', array_slice($chunks, 0, max(1, $mid - 1))),
+            implode(' ', array_slice($chunks, max(1, $mid - 1), 1)),
+            implode(' ', array_slice($chunks, $mid)),
         ];
     }
 

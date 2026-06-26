@@ -153,17 +153,22 @@ $supabase->insert('edu_writing_versions', [
 
 $essayStructure = $draft['essay_structure'] ?? [];
 $articleSections = $draft['sections'] ?? [];
+$bodyParagraphs = is_array($draft['body_paragraphs'] ?? null) ? $draft['body_paragraphs'] : [];
 $sentenceExtract = [];
-foreach ($articleSections as $sec) {
-    if (!is_array($sec)) {
-        continue;
-    }
-    if (!empty($sec['heading'])) {
-        $sentenceExtract[] = (string) $sec['heading'];
-    }
-    foreach ($sec['paragraphs'] ?? [] as $p) {
-        if (trim((string) $p) !== '') {
-            $sentenceExtract[] = (string) $p;
+if ($bodyParagraphs !== []) {
+    $sentenceExtract = array_values(array_filter(array_map('strval', $bodyParagraphs)));
+} else {
+    foreach ($articleSections as $sec) {
+        if (!is_array($sec)) {
+            continue;
+        }
+        if (!empty($sec['heading'])) {
+            $sentenceExtract[] = (string) $sec['heading'];
+        }
+        foreach ($sec['paragraphs'] ?? [] as $p) {
+            if (trim((string) $p) !== '') {
+                $sentenceExtract[] = (string) $p;
+            }
         }
     }
 }
@@ -213,6 +218,8 @@ $blueprint = eduMergeBlueprint($blueprint, [
         'title' => $draft['title'] ?? '',
         'subtitle' => $draft['subtitle'] ?? '',
         'sections' => $articleSections,
+        'body_paragraphs' => $bodyParagraphs,
+        'narration_mode' => !empty($draft['narration_mode']) || $bodyParagraphs !== [],
         'conclusion_heading' => $draft['conclusion_heading'] ?? '결론',
         'conclusion_paragraphs' => $draft['conclusion_paragraphs'] ?? [],
         'full_text' => $draft['full_text'] ?? '',
@@ -273,6 +280,8 @@ eduSendJson([
     'title' => $draft['title'] ?? '',
     'subtitle' => $draft['subtitle'] ?? '',
     'sections' => $articleSections,
+    'body_paragraphs' => $bodyParagraphs,
+    'narration_mode' => !empty($draft['narration_mode']) || $bodyParagraphs !== [],
     'conclusion_heading' => $draft['conclusion_heading'] ?? '결론',
     'conclusion_paragraphs' => $draft['conclusion_paragraphs'] ?? [],
     'essay_structure' => $essayStructure,
