@@ -63,6 +63,7 @@
 | 2026-06-25 | `8723fd6` | **EDU 카드 구조 바** — 5블록 현재/통과 애니(채팅 1+3 동일) + hammer 질문 글자 80% (PHP 0) |
 | 2026-06-25 | `d1cfa83` | **EDU 초등 코치 level 1** — 디폴트 level 1, 2축·쉬운 fact, level 7(v1) 보존 |
 | 2026-06-25 | `8a907a4` | **EDU 완성글 내래이션 직조** — Composer 2~3단락 + 구조 보기 토글 (학생 말 보존, 코치 FSM 0) |
+| 2026-06-25 | `eb048de` | **EDU UX waiting + 하이라이트** — 답 제출 후 생각 중·입력 숨김, `**`→오렌지 (프론트만, PHP 0) |
 
 **v1 완결 기록**: [`docs/EDU_STUDENT_JOURNEY_V1_COMPLETE.md`](EDU_STUDENT_JOURNEY_V1_COMPLETE.md) · 검증 `php tools/edu_student_journey_static_verify.php`
 
