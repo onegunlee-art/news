@@ -1,5 +1,6 @@
 import { eduGame, eduGameClasses } from '../../constants/eduGameTheme'
 import { CARD_STRUCTURE_SLOTS, resolveCardStructureBarState } from './cardStructureBarState'
+import StructureBarFillingOverlay from './StructureBarFillingOverlay'
 
 type Props = {
   phase: string
@@ -64,6 +65,7 @@ export default function CardStructureBar({
                 className={`relative flex-1 min-w-0 flex flex-col items-center gap-0.5 rounded-lg border-2 text-center transition-colors duration-300 ${compact ? 'py-1 px-0.5' : 'py-2 px-0.5'} ${slotClass}`}
                 style={slotStyle}
               >
+                {isFilling && <StructureBarFillingOverlay />}
                 {justFilled && nudgeText && (
                   <span
                     className={`absolute -top-8 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap px-2 py-0.5 rounded-full font-bold shadow-sm ${eduGameClasses.animExploreNudge}`}
@@ -78,17 +80,17 @@ export default function CardStructureBar({
                   </span>
                 )}
                 <span
-                  className={`font-bold leading-none ${justFilled ? eduGameClasses.animAxisCheckPop : ''}`}
+                  className={`relative z-[1] font-bold leading-none ${justFilled ? eduGameClasses.animAxisCheckPop : ''}`}
                   style={{
                     color: isDone ? eduGame.primary : isCurrent ? eduGame.primary : eduGame.muted,
                     fontSize: compact ? '0.75rem' : eduGame.fontSize.label,
                   }}
                   aria-hidden
                 >
-                  {isDone ? '✓' : isFilling ? '…' : isCurrent ? '●' : '·'}
+                  {isDone ? '✓' : isFilling ? '▮' : isCurrent ? '●' : '·'}
                 </span>
                 <span
-                  className="block truncate font-bold w-full"
+                  className="relative z-[1] block truncate font-bold w-full"
                   style={{
                     color: isDone ? eduGame.primaryDark : isCurrent || isFilling ? eduGame.primary : eduGame.muted,
                     fontSize: eduGame.fontSize.caption,

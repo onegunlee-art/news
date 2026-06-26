@@ -4,10 +4,10 @@ import EduEssayCompletionPanel from '../../components/edu/EduEssayCompletionPane
 import { type EssayArtifact } from '../../components/edu/EssayRevealCard'
 import StructurePreviewCard, { type EssayStructurePreview } from '../../components/edu/StructurePreviewCard'
 import EduQuestCompletionCelebration from '../../components/edu/EduQuestCompletionCelebration'
-import TypingIndicator from '../../components/edu/TypingIndicator'
 import TypewriterText from '../../components/edu/TypewriterText'
 import CoachMessageText from '../../components/edu/CoachMessageText'
 import EduCoachWaitingPanel from '../../components/edu/EduCoachWaitingPanel'
+import StructureBarFillingOverlay from '../../components/edu/StructureBarFillingOverlay'
 import EduArticleCard from '../../components/edu/EduArticleCard'
 import EduArticleSnippetCard from '../../components/edu/EduArticleSnippetCard'
 import {
@@ -540,7 +540,13 @@ export default function QuestFlowChat() {
   const evidenceLen = evidenceInput.trim().length
   const evidenceReady = evidenceLen > 0
   const isWaiting = sending || composing
-  const waitingLabel = composing ? '네 글을 만들고 있어…' : undefined
+  const lastStudentAnswer = (() => {
+    for (let i = dialogue.length - 1; i >= 0; i--) {
+      if (dialogue[i].role === 'student') return dialogue[i].content
+    }
+    return null
+  })()
+  const waitingLabel = composing ? '네 글을 만들고 있어…' : '코치가 읽는 중...'
 
   const pinCoachUi = !completed && footerMode !== null
   const pinnedCoachIndex = pinCoachUi ? lastAssistantDialogueIndex(dialogue) : -1
@@ -655,7 +661,11 @@ export default function QuestFlowChat() {
             )}
             {showWaitingInPin && (
               <div className="py-2 pb-3">
-                <TypingIndicator label={waitingLabel} />
+                <EduCoachWaitingPanel
+                  compact
+                  studentAnswer={lastStudentAnswer}
+                  label={waitingLabel}
+                />
               </div>
             )}
             {showPinnedCoach && pinnedCoachTurn && !isWaiting && (
@@ -737,7 +747,7 @@ export default function QuestFlowChat() {
           ))}
 
         {!completed && isWaiting && !showPinZone && (
-          <TypingIndicator label={waitingLabel} />
+          <EduCoachWaitingPanel studentAnswer={lastStudentAnswer} label={waitingLabel} />
         )}
 
         {completed && (
@@ -857,10 +867,14 @@ export default function QuestFlowChat() {
           {isWaiting ? (
             showPinZone ? (
               <div className="py-1" role="status" aria-live="polite">
-                <span className="sr-only">{waitingLabel ?? '생각 중'}</span>
+                <span className="sr-only">{waitingLabel}</span>
               </div>
             ) : (
-              <EduCoachWaitingPanel compact label={waitingLabel} />
+              <EduCoachWaitingPanel
+                compact
+                studentAnswer={lastStudentAnswer}
+                label={waitingLabel}
+              />
             )
           ) : (
             composeFooter
@@ -1197,6 +1211,7 @@ function AxisExploreBar({
               className={`relative flex-1 flex flex-col items-center gap-1 py-2.5 rounded-xl border-2 transition-colors duration-300 ${slotClass}`}
               style={slotStyle}
             >
+              {isFilling && <StructureBarFillingOverlay />}
               {justFilled && nudgeText && (
                 <span
                   className={`absolute -top-9 left-1/2 z-10 whitespace-nowrap px-2.5 py-1 rounded-full font-bold shadow-sm ${eduGameClasses.animExploreNudge}`}
@@ -1211,17 +1226,17 @@ function AxisExploreBar({
                 </span>
               )}
               <span
-                className={`font-bold leading-none ${justFilled ? eduGameClasses.animAxisCheckPop : ''}`}
+                className={`relative z-[1] font-bold leading-none ${justFilled ? eduGameClasses.animAxisCheckPop : ''}`}
                 style={{
                   color: isDone ? eduGame.primary : isCurrent ? eduGame.primary : eduGame.muted,
                   fontSize: eduGame.fontSize.body,
                 }}
                 aria-hidden
               >
-                {isDone ? '✓' : isFilling ? '…' : isCurrent ? '●' : '·'}
+                {isDone ? '✓' : isFilling ? '▮' : isCurrent ? '●' : '·'}
               </span>
               <span
-                className="font-bold"
+                className="relative z-[1] font-bold"
                 style={{
                   color: isDone ? eduGame.primaryDark : isCurrent || isFilling ? eduGame.primary : eduGame.muted,
                   fontSize: eduGame.fontSize.caption,

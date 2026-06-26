@@ -1,6 +1,6 @@
 <?php
 /**
- * UX waiting + bold highlight static checks (frontend only)
+ * UX waiting v2 + quote highlight static checks (frontend only)
  * php tools/edu_ux_waiting_highlight_static_verify.php
  */
 declare(strict_types=1);
@@ -30,28 +30,40 @@ function read(string $rel): string
 
 $coachText = read('src/frontend/src/components/edu/CoachMessageText.tsx');
 $waitingPanel = read('src/frontend/src/components/edu/EduCoachWaitingPanel.tsx');
-$typing = read('src/frontend/src/components/edu/TypingIndicator.tsx');
+$fillOverlay = read('src/frontend/src/components/edu/StructureBarFillingOverlay.tsx');
 $parse = read('src/frontend/src/utils/eduCoachMessageParse.ts');
 $cards = read('src/frontend/src/pages/edu/QuestFlowCards.tsx');
 $chat = read('src/frontend/src/pages/edu/QuestFlowChat.tsx');
 $structure = read('src/frontend/src/components/edu/CardStructureBar.tsx');
+$css = read('src/frontend/src/index.css');
 
-check(str_contains($parse, 'parseCoachBoldSegments'), 'parse: bold segments');
+check(str_contains($parse, 'parseCoachHighlightSegments'), 'parse: highlight segments');
+check(str_contains($parse, 'QUOTE_MAX_LEN'), 'parse: quote length cap');
+check(str_contains($parse, 'normalizeCoachQuotes'), 'parse: smart quote normalize');
+check(str_contains($coachText, 'parseCoachHighlightSegments'), 'highlight: unified parser');
 check(str_contains($coachText, 'primaryLight'), 'highlight: orange background');
 check(str_contains($coachText, 'primaryDark'), 'highlight: orange text');
-check(str_contains($parse, 'stripIncompleteCoachBold'), 'highlight: hide partial **');
+check(str_contains($parse, 'stripIncompleteCoachMarkers'), 'highlight: hide partial markers');
 
-check(str_contains($typing, '생각 중'), 'waiting: default label');
-check(str_contains($waitingPanel, 'EduCoachWaitingPanel'), 'waiting: shared panel');
+check(!str_contains($waitingPanel, 'TypingIndicator'), 'waiting: no TypingIndicator box');
+check(str_contains($waitingPanel, '코치가 읽는 중'), 'waiting: default reading label');
+check(str_contains($waitingPanel, 'studentAnswer'), 'waiting: student answer prop');
+check(str_contains($fillOverlay, 'StructureBarFillingOverlay'), 'waiting: fill overlay component');
+check(str_contains($css, 'edu-structure-slot-fill'), 'waiting: fill keyframes');
+
 check(str_contains($cards, 'isWaiting'), 'cards: waiting state');
 check(str_contains($cards, 'EduCoachWaitingPanel'), 'cards: waiting panel wired');
-check(str_contains($cards, 'CoachMessageText'), 'cards: bold highlight render');
+check(str_contains($cards, '코치가 읽는 중'), 'cards: reading label');
+check(str_contains($cards, 'CoachMessageText'), 'cards: highlight render');
 
 check(str_contains($chat, 'isWaiting'), 'chat: waiting state');
-check(str_contains($chat, 'CoachMessageText'), 'chat: bold highlight render');
+check(str_contains($chat, 'EduCoachWaitingPanel'), 'chat: waiting panel wired');
+check(str_contains($chat, 'lastStudentAnswer'), 'chat: student answer wired');
+check(str_contains($chat, 'CoachMessageText'), 'chat: highlight render');
 check(str_contains($chat, '!isWaiting'), 'chat: hide pinned coach while waiting');
+check(!str_contains($chat, 'TypingIndicator label={waitingLabel}'), 'chat: no TypingIndicator in waiting');
 
-check(str_contains($structure, 'waiting'), 'structure bar: waiting prop');
+check(str_contains($structure, 'StructureBarFillingOverlay'), 'structure bar: fill overlay');
 check(str_contains($structure, '채우는 중'), 'structure bar: filling label');
 
 echo "\n=== {$pass} passed, {$fail} failed ===\n";

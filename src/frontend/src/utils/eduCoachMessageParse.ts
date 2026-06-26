@@ -1,60 +1,143 @@
-export type CoachMessageSegment =
-  | { type: 'text'; value: string }
-  | { type: 'snippet'; value: string; display: string }
-
-export type CoachBoldSegment =
+export type CoachHighlightSegment =
   | { type: 'plain'; value: string }
-  | { type: 'bold'; value: string }
+  | { type: 'highlight'; value: string }
+
+/** @deprecated use CoachHighlightSegment */
+export type CoachBoldSegment = CoachHighlightSegment
 
 const SNIPPET_RE = /\{\{snippet\|(\w+)\}\}\s*([\s\S]*?)\s*\{\{\/snippet\}\}/g
 const BOLD_RE = /\*\*([^*]+)\*\*/g
+const QUOTE_RE = /"([^"]+)"/g
+const QUOTE_MAX_LEN = 24
 
-/** 코치 **강조** → 렌더용 세그먼트 (기존 **만 변환, 새 강조 생성 없음) */
-export function parseCoachBoldSegments(text: string): CoachBoldSegment[] {
-  const segments: CoachBoldSegment[] = []
-  let lastIndex = 0
-  BOLD_RE.lastIndex = 0
+/** 스마트 따옴표 → ASCII (AdminPage와 동일) */
+export function normalizeCoachQuotes(text: string): string {
+  return text
+    .replace(/[\u201C\u201D\u201E\u201F\u2033\u2036]/g, '"')
+    .replace(/[\u2018\u2019\u201A\u201B\u2032\u2035]/g, "'")
+}
+
+type HighlightMarker = { index: number; length: number; value: string }
+
+function findHighlightMarkers(text: string): HighlightMarker[] {
+  const markers: HighlightMarker[] = []
   let match: RegExpExecArray | null
 
+  BOLD_RE.lastIndex = 0
   while ((match = BOLD_RE.exec(text)) !== null) {
-    if (match.index > lastIndex) {
-      segments.push({ type: 'plain', value: text.slice(lastIndex, match.index) })
-    }
-    segments.push({ type: 'bold', value: match[1] ?? '' })
-    lastIndex = match.index + match[0].length
+    markers.push({
+      index: match.index,
+      length: match[0].length,
+      value: match[1] ?? '',
+    })
   }
 
-  const tail = text.slice(lastIndex)
+  QUOTE_RE.lastIndex = 0
+  while ((match = QUOTE_RE.exec(text)) !== null) {
+    const value = match[1] ?? ''
+    if (value.length <= QUOTE_MAX_LEN) {
+      markers.push({
+        index: match.index,
+        length: match[0].length,
+        value,
+      })
+    }
+  }
+
+  markers.sort((a, b) => a.index - b.index)
+
+  const filtered: HighlightMarker[] = []
+  let end = 0
+  for (const marker of markers) {
+    if (marker.index >= end) {
+      filtered.push(marker)
+      end = marker.index + marker.length
+    }
+  }
+  return filtered
+}
+
+/** 코치 **강조** · "핵심어" → 렌더용 세그먼트 (기존 마커만 변환) */
+export function parseCoachHighlightSegments(text: string): CoachHighlightSegment[] {
+  const normalized = normalizeCoachQuotes(text)
+  const markers = findHighlightMarkers(normalized)
+  const segments: CoachHighlightSegment[] = []
+  let lastIndex = 0
+
+  for (const marker of markers) {
+    if (marker.index > lastIndex) {
+      segments.push({ type: 'plain', value: normalized.slice(lastIndex, marker.index) })
+    }
+    segments.push({ type: 'highlight', value: marker.value })
+    lastIndex = marker.index + marker.length
+  }
+
+  const tail = normalized.slice(lastIndex)
   if (tail !== '') {
     segments.push({ type: 'plain', value: tail })
   }
 
   if (segments.length === 0) {
-    segments.push({ type: 'plain', value: text })
+    segments.push({ type: 'plain', value: normalized })
   }
 
   return segments
 }
 
-/** 미리보기·한 줄 라벨 — ** 제거 */
-export function stripCoachBoldMarkers(text: string): string {
-  return text.replace(/\*\*([^*]+)\*\*/g, '$1')
+/** @deprecated use parseCoachHighlightSegments */
+export function parseCoachBoldSegments(text: string): CoachBoldSegment[] {
+  return parseCoachHighlightSegments(text)
 }
 
-/** 타입라이터 중 미완성 ** 마커 숨김 */
-export function stripIncompleteCoachBold(text: string): string {
-  const open = text.lastIndexOf('**')
-  if (open === -1) return text
-  const tail = text.slice(open + 2)
-  if (!tail.includes('**')) {
-    return text.slice(0, open)
+/** 미리보기·한 줄 라벨 — ** · " 제거 */
+export function stripCoachHighlightMarkers(text: string): string {
+  const normalized = normalizeCoachQuotes(text)
+  return normalized
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/"([^"]+)"/g, '$1')
+}
+
+/** @deprecated use stripCoachHighlightMarkers */
+export function stripCoachBoldMarkers(text: string): string {
+  return stripCoachHighlightMarkers(text)
+}
+
+/** 타입라이터 중 미완성 ** · " 마커 숨김 */
+export function stripIncompleteCoachMarkers(text: string): string {
+  let result = text
+
+  const openBold = result.lastIndexOf('**')
+  if (openBold !== -1) {
+    const tail = result.slice(openBold + 2)
+    if (!tail.includes('**')) {
+      result = result.slice(0, openBold)
+    }
   }
-  return text
+
+  const normalized = normalizeCoachQuotes(result)
+  const quoteCount = (normalized.match(/"/g) ?? []).length
+  if (quoteCount % 2 === 1) {
+    const openQuote = normalized.lastIndexOf('"')
+    if (openQuote !== -1) {
+      result = result.slice(0, openQuote)
+    }
+  }
+
+  return result
+}
+
+/** @deprecated use stripIncompleteCoachMarkers */
+export function stripIncompleteCoachBold(text: string): string {
+  return stripIncompleteCoachMarkers(text)
 }
 
 export function coachMessageHasSnippet(content: string): boolean {
   return content.includes('{{snippet|')
 }
+
+export type CoachMessageSegment =
+  | { type: 'text'; value: string }
+  | { type: 'snippet'; value: string; display: string }
 
 /** Parse axis-guide coach messages with optional article snippet blocks. */
 export function parseCoachAssistantMessage(content: string): CoachMessageSegment[] {
@@ -125,7 +208,7 @@ export function splitCoachParagraphs(text: string): string[] {
 
 /** 서술형 카드 — 입력 위 한 줄 고정 라벨 (전체 질문은 대화 기록에) */
 export function narrativePromptOneLine(text: string, maxLen = 46): string {
-  const plain = stripCoachBoldMarkers(text)
+  const plain = stripCoachHighlightMarkers(text)
     .replace(/\{\{snippet[\s\S]*?\{\{\/snippet\}\}/g, '')
     .replace(/\s+/g, ' ')
     .trim()

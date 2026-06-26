@@ -665,7 +665,7 @@ export default function QuestFlowCards() {
     }
     return null
   })()
-  const waitingLabel = composing ? '네 글을 만들고 있어…' : undefined
+  const waitingLabel = composing ? '네 글을 만들고 있어…' : '코치가 읽는 중...'
 
   const cardKey = completed
     ? 'completed'

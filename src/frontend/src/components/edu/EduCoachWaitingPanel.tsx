@@ -1,5 +1,4 @@
 import { eduGame, eduGameClasses } from '../../constants/eduGameTheme'
-import TypingIndicator from './TypingIndicator'
 
 type Props = {
   studentAnswer?: string | null
@@ -7,31 +6,56 @@ type Props = {
   compact?: boolean
 }
 
-/** 답 제출 후 — 입력 불가 + 생각 중 (카드·채팅 공용) */
+const DEFAULT_LABEL = '코치가 읽는 중...'
+
+/** 답 제출 후 — 학생 답 강조 + 코치 읽는 중 (카드·채팅 공용) */
 export default function EduCoachWaitingPanel({
   studentAnswer,
-  label,
+  label = DEFAULT_LABEL,
   compact = false,
 }: Props) {
+  const answerSize = compact ? '1.0625rem' : '1.25rem'
+  const labelSize = compact ? eduGame.fontSize.caption : eduGame.fontSize.label
+
   return (
-    <div className={`flex flex-col ${compact ? 'gap-2' : 'gap-4'} w-full`} aria-live="polite">
+    <div
+      className={`flex flex-col items-center justify-center text-center w-full ${compact ? 'gap-2 py-2' : 'gap-4 py-6'}`}
+      aria-live="polite"
+      role="status"
+      aria-label={label}
+    >
       {studentAnswer && (
-        <div className="flex justify-end animate-[edu-wait-student-in_0.28s_ease-out]">
-          <div
-            className={`max-w-[90%] px-4 py-2.5 ${eduGameClasses.studentBubble}`}
-            style={{
-              backgroundColor: eduGame.bubbleStudent,
-              fontSize: eduGame.fontSize.body,
-              lineHeight: eduGame.lineHeight.body,
-            }}
-          >
-            {studentAnswer}
-          </div>
-        </div>
+        <p
+          className={`max-w-[90%] font-bold animate-[edu-wait-student-in_0.28s_ease-out] ${eduGameClasses.textKoPre}`}
+          style={{
+            fontSize: answerSize,
+            lineHeight: 1.55,
+            color: eduGame.ink,
+          }}
+        >
+          {studentAnswer}
+        </p>
       )}
-      <div className={`flex ${compact ? 'justify-start' : 'justify-center'} w-full`}>
-        <TypingIndicator label={label} />
-      </div>
+      <p
+        className="inline-flex items-center gap-1.5"
+        style={{ fontSize: labelSize, color: eduGame.muted }}
+      >
+        <span>{label}</span>
+        <span className="inline-flex items-center gap-0.5 h-3" aria-hidden>
+          <span
+            className="w-1 h-1 rounded-full animate-bounce"
+            style={{ backgroundColor: eduGame.primary, animationDelay: '0ms', animationDuration: '0.9s' }}
+          />
+          <span
+            className="w-1 h-1 rounded-full animate-bounce"
+            style={{ backgroundColor: eduGame.primary, animationDelay: '150ms', animationDuration: '0.9s' }}
+          />
+          <span
+            className="w-1 h-1 rounded-full animate-bounce"
+            style={{ backgroundColor: eduGame.primary, animationDelay: '300ms', animationDuration: '0.9s' }}
+          />
+        </span>
+      </p>
     </div>
   )
 }

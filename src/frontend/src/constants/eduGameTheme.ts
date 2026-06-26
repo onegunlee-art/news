@@ -62,6 +62,7 @@ export const eduGameClasses = {
   animAxisPop: 'edu-game-axis-pop',
   animAxisCheckPop: 'edu-game-axis-check-pop',
   animAxisCurrent: 'edu-game-axis-current',
+  animAxisFilling: 'edu-game-axis-filling',
   animCoachIn: 'edu-game-coach-in',
   animExploreNudge: 'edu-game-explore-nudge',
   animExploreToast: 'edu-game-explore-toast',
