@@ -9,6 +9,8 @@ require_once __DIR__ . '/eduQuest.php';
 require_once __DIR__ . '/eduBlueprint.php';
 require_once __DIR__ . '/eduCoachLevel.php';
 require_once __DIR__ . '/eduCoachGuideElementary.php';
+require_once __DIR__ . '/eduCoachGuideBridge.php';
+require_once __DIR__ . '/eduCoachGuideUpper.php';
 
 const EDU_COACH_GUIDE_QUEST_CODE = 'Q-AUTO-NUKE-630';
 const EDU_COACH_GUIDE_QUEST_CODE_DC_150 = 'Q-AUTO-DC-150';
@@ -348,6 +350,33 @@ function eduCoachGuideTextsOverlap(string $a, string $b): bool
     return $pct >= 68.0;
 }
 
+/** @param array<string, mixed> $quest @return list<array<string, string>> */
+function eduCoachGuideResolveAxes(array $quest, int $coachLevel): array
+{
+    return match (eduCoachLevelCoachPath($coachLevel)) {
+        'l1' => eduCoachGuideElementaryAxes($quest),
+        'l2' => eduCoachGuideBridgeAxes($quest),
+        'l4' => eduCoachGuideUpperAxes($quest),
+        default => eduCoachGuideAxes($quest),
+    };
+}
+
+/** @param array<string, string> $axis */
+function eduCoachGuideIntroForCoachLevel(
+    array $axis,
+    int $index,
+    int $total,
+    string $openingContext,
+    string $hookShort,
+    int $coachLevel
+): string {
+    if (eduCoachLevelCoachPath($coachLevel) === 'l4') {
+        return eduCoachGuideUpperIntroAxis($axis, $index, $total, $openingContext, $hookShort);
+    }
+
+    return eduCoachGuideIntroAxis($axis, $index, $total, $openingContext, $hookShort);
+}
+
 /**
  * @param array<string, mixed> $blueprint
  * @param array<string, mixed> $quest
@@ -359,13 +388,20 @@ function eduCoachGuideHandleOpening(
     string $opening,
     int $coachLevel = EDU_COACH_LEVEL_ADVANCED
 ): array {
-    if (!eduCoachLevelIsAdvanced($coachLevel) && eduCoachGuideElementaryReady()) {
-        require_once __DIR__ . '/eduCoachGuideElementary.php';
-
-        return eduCoachGuideElementaryHandleOpening($blueprint, $quest, $opening, $coachLevel);
+    if (!eduCoachGuideElementaryReady()) {
+        $coachLevel = EDU_COACH_LEVEL_L5;
     }
 
-    $axes = eduCoachGuideAxes($quest);
+    $path = eduCoachLevelCoachPath($coachLevel);
+    if ($path === 'l1') {
+        return eduCoachGuideElementaryHandleOpening($blueprint, $quest, $opening, $coachLevel);
+    }
+    if ($path === 'l2') {
+        return eduCoachGuideBridgeHandleOpening($blueprint, $quest, $opening, $coachLevel);
+    }
+
+    $axes = eduCoachGuideResolveAxes($quest, $coachLevel);
+    $storeLevel = eduCoachLevelNormalize($coachLevel);
     $blueprint = eduMergeBlueprint($blueprint, [
         'guide_opening' => $opening,
         'reason' => $opening,
@@ -373,6 +409,7 @@ function eduCoachGuideHandleOpening(
         'guide_axis_index' => 0,
         'guide_axis_stall' => 0,
         'guide_axis_answers' => [],
+        'coach_level' => $storeLevel,
         'phase' => 'guide_axis',
         'exchange_count' => (int) ($blueprint['exchange_count'] ?? 0) + 1,
     ]);
@@ -383,7 +420,7 @@ function eduCoachGuideHandleOpening(
     if ($evasion !== null) {
         $msg = eduCoachGuideEvasionReply($evasion, $axes[0], 0, $axes, false);
     } else {
-        $msg = eduCoachGuideIntroAxis($axes[0], 0, count($axes), $opening, $hookShort);
+        $msg = eduCoachGuideIntroForCoachLevel($axes[0], 0, count($axes), $opening, $hookShort, $coachLevel);
     }
 
     return [
@@ -405,14 +442,20 @@ function eduCoachGuideHandleTurn(
     string $message,
     int $coachLevel = EDU_COACH_LEVEL_ADVANCED
 ): array {
-    if (!eduCoachLevelIsAdvanced($coachLevel) && eduCoachGuideElementaryReady()) {
-        require_once __DIR__ . '/eduCoachGuideElementary.php';
+    if (!eduCoachGuideElementaryReady()) {
+        $coachLevel = EDU_COACH_LEVEL_L5;
+    }
 
+    $path = eduCoachLevelCoachPath($coachLevel);
+    if ($path === 'l1') {
         return eduCoachGuideElementaryHandleTurn($blueprint, $quest, $message, $coachLevel);
+    }
+    if ($path === 'l2') {
+        return eduCoachGuideBridgeHandleTurn($blueprint, $quest, $message, $coachLevel);
     }
 
     $phase = (string) ($blueprint['phase'] ?? '');
-    $axes = eduCoachGuideAxes($quest);
+    $axes = eduCoachGuideResolveAxes($quest, $coachLevel);
 
     if ($phase === 'guide_conclusion') {
         return eduCoachGuideHandleConclusion($blueprint, $quest, $message, $axes);
@@ -498,7 +541,14 @@ function eduCoachGuideHandleTurn(
             'guide_axis_stall' => 0,
             'guide_axis_pending_why' => null,
         ]);
-        $msg = "좋아, 다음으로 넘어가자.\n\n" . eduCoachGuideIntroAxis($axes[$idx], $idx, count($axes));
+        $msg = "좋아, 다음으로 넘어가자.\n\n" . eduCoachGuideIntroForCoachLevel(
+            $axes[$idx],
+            $idx,
+            count($axes),
+            '',
+            '',
+            $coachLevel
+        );
 
         return [
             'blueprint' => $blueprint,
@@ -537,7 +587,14 @@ function eduCoachGuideHandleTurn(
             'guide_axis_stall' => 0,
             'guide_axis_pending_why' => null,
         ]);
-        $msg = "막히면 괜찮아 — **다음 축**으로 넘어가자.\n\n" . eduCoachGuideIntroAxis($axes[$idx], $idx, count($axes));
+        $msg = "막히면 괜찮아 — **다음 축**으로 넘어가자.\n\n" . eduCoachGuideIntroForCoachLevel(
+            $axes[$idx],
+            $idx,
+            count($axes),
+            '',
+            '',
+            $coachLevel
+        );
 
         return [
             'blueprint' => $blueprint,
@@ -758,10 +815,7 @@ function eduCoachGuideProgress(array $blueprint): int
 {
     $phase = (string) ($blueprint['phase'] ?? '');
     $idx = (int) ($blueprint['guide_axis_index'] ?? 0);
-    $axisDivisor = ((int) ($blueprint['coach_level'] ?? EDU_COACH_LEVEL_ADVANCED) < EDU_COACH_LEVEL_ADVANCED
-        && eduCoachGuideElementaryReady())
-        ? EDU_COACH_ELEMENTARY_AXIS_MAX
-        : 3;
+    $axisDivisor = eduCoachLevelAxisDivisor((int) ($blueprint['coach_level'] ?? EDU_COACH_LEVEL_L5));
     $base = 15;
     if ($phase === 'guide_axis') {
         return min(55, $base + (int) (30 * ($idx / max(1, $axisDivisor))));
@@ -922,11 +976,8 @@ function eduCoachGuideChoiceMeta(array $blueprint, array $quest, string $assista
     }
 
     $idx = (int) ($blueprint['guide_axis_index'] ?? 0);
-    $axes = eduCoachGuideAxes($quest);
-    if ((int) ($blueprint['coach_level'] ?? EDU_COACH_LEVEL_ADVANCED) < EDU_COACH_LEVEL_ADVANCED
-        && eduCoachGuideElementaryReady()) {
-        $axes = eduCoachGuideElementaryAxes($quest);
-    }
+    $coachLevel = eduCoachLevelNormalize((int) ($blueprint['coach_level'] ?? EDU_COACH_LEVEL_L5));
+    $axes = eduCoachGuideResolveAxes($quest, $coachLevel);
     $axis = $axes[$idx] ?? null;
     if ($axis === null) {
         return null;

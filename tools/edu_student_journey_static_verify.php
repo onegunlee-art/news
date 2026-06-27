@@ -82,7 +82,8 @@ check(str_contains($home, '/edu/profile'), 'home: profile navigation');
 check(str_contains($home, '내 프로필'), 'home: profile label');
 
 $coachLevel = read('public/api/edu/lib/eduCoachLevel.php');
-check(str_contains($coachLevel, 'EDU_COACH_LEVEL_ADVANCED'), 'coach: level 7 constant');
+check(str_contains($coachLevel, 'EDU_COACH_LEVEL_L5'), 'coach: L5 advanced constant');
+check(str_contains($coachLevel, 'eduCoachLevelFromLegacy'), 'coach: legacy 7→5 remap');
 check(str_contains($coachLevel, 'EDU_COACH_LEVEL_DEFAULT'), 'coach: default level constant');
 
 $chatPhp = read('public/api/edu/session/chat.php');
@@ -98,13 +99,13 @@ $coachText = implode("\n", $coachOut);
 echo $coachText . "\n";
 check($coachCode === 0 && str_contains($coachText, '0 failed'), 'coach guide regression (630/150/196/288 + why collab)');
 
-echo "\n--- edu_coach_guide_level7_parity_test.php ---\n";
+echo "\n--- edu_coach_guide_level5_parity_test.php ---\n";
 $parityOut = [];
 $parityCode = 0;
-exec('php ' . escapeshellarg($root . '/tools/edu_coach_guide_level7_parity_test.php') . ' 2>&1', $parityOut, $parityCode);
+exec('php ' . escapeshellarg($root . '/tools/edu_coach_guide_level5_parity_test.php') . ' 2>&1', $parityOut, $parityCode);
 $parityText = implode("\n", $parityOut);
 echo $parityText . "\n";
-check($parityCode === 0 && str_contains($parityText, '0 failed'), 'coach level 7 parity (v1 preserve)');
+check($parityCode === 0 && str_contains($parityText, '0 failed'), 'coach L5 parity (v1 preserve + legacy 7)');
 
 echo "\n--- edu_coach_guide_elementary_test.php ---\n";
 $elemOut = [];
