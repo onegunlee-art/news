@@ -7,6 +7,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/eduBlueprint.php';
 require_once __DIR__ . '/eduStructureDiagnose.php';
 require_once __DIR__ . '/eduGamification.php';
+require_once __DIR__ . '/eduCoachLevel.php';
 
 /**
  * 완주 시 LLM 진단 (Phase 2 기본 ON). 실패/비활성 시 eduStructureDiagnoseSession이 rule fallback.
@@ -173,8 +174,12 @@ function eduSaveStructureInsight(
             . ' reason=' . ($diag['diagnose_fallback_reason'] ?? 'unknown')
         );
     }
+    $students = $sb->select('edu_students', 'id=eq.' . $studentId, 1);
+    $studentRow = $students[0] ?? [];
+    $coachLevel = eduResolveCoachLevel($studentRow, $blueprint);
+    $xpAward = eduXpAwardFromDiagnose($diag, $coachLevel, $blueprint);
     $row = eduStructureInsightRowFromDiagnose($studentId, $diag);
-    $row['xp_earned'] = eduXpFromStructureDiagnose($diag);
+    $row['xp_earned'] = $xpAward['xp'];
 
     $completedAt = trim((string) ($session['completed_at'] ?? ''));
     if ($completedAt !== '') {
@@ -187,6 +192,10 @@ function eduSaveStructureInsight(
 
         return null;
     }
+
+    $inserted[0]['xp_breakdown'] = $xpAward['breakdown'];
+    $inserted[0]['gate_hit'] = $xpAward['gate_hit'];
+    $inserted[0]['gate_label_ko'] = $xpAward['gate_label_ko'];
 
     return $inserted[0];
 }

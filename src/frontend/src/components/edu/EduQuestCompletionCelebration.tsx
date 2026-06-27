@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { eduGame, eduGameClasses } from '../../constants/eduGameTheme'
 import type { EduCoachLevelInfo } from '../../constants/eduCoachLevel'
 import { eduCoachLevelByNumber } from '../../constants/eduCoachLevel'
-import type { EduTierProgress } from '../../services/eduApi'
+import type { EduTierProgress, EduXpBreakdownLine } from '../../services/eduApi'
 import EduCoachLevelBadge from './EduCoachLevelBadge'
 
 function useCountUp(target: number, durationMs = 1200, active = true) {
@@ -31,6 +31,9 @@ function useCountUp(target: number, durationMs = 1200, active = true) {
 
 type Props = {
   xpGained: number
+  xpBreakdown?: EduXpBreakdownLine[]
+  gateHit?: boolean
+  gateLabelKo?: string | null
   streakDays: number
   coachLevel?: EduCoachLevelInfo | null
   levelDebugSwitch?: boolean
@@ -39,9 +42,12 @@ type Props = {
   active?: boolean
 }
 
-/** 완주 성취 — 스트릭(최대 강조) + 코치 뱃지 + XP 카운트업 */
+/** B-2 완주 — 스트릭 + 코치 뱃지 + 질 기반 XP·게이지 */
 export default function EduQuestCompletionCelebration({
   xpGained,
+  xpBreakdown = [],
+  gateHit,
+  gateLabelKo,
   streakDays,
   coachLevel,
   levelDebugSwitch = false,
@@ -51,6 +57,11 @@ export default function EduQuestCompletionCelebration({
 }: Props) {
   const xpDisplay = useCountUp(xpGained, 1200, active)
   const level = coachLevel ?? eduCoachLevelByNumber(1)
+  const gaugePct = tier?.coach_gauge_progress_pct ?? tier?.progress_pct ?? 0
+  const gaugeXp = tier?.coach_gauge_xp ?? tier?.xp_current ?? 0
+  const gaugeTarget = tier?.coach_gauge_target ?? tier?.xp_next_tier ?? 100
+  const gaugeFull = tier?.coach_gauge_full === true
+  const nextLabel = tier?.next_coach_label_ko
 
   return (
     <section
@@ -97,28 +108,67 @@ export default function EduQuestCompletionCelebration({
           className="edu-game-xp-in text-center py-4 px-3 rounded-xl border-2"
           style={{ backgroundColor: eduGame.bg, borderColor: eduGame.primaryLight }}
         >
-          <p style={{ fontSize: eduGame.fontSize.label, color: eduGame.muted }}>오늘 획득 XP</p>
+          <p style={{ fontSize: eduGame.fontSize.label, color: eduGame.muted }}>이번 탐구 XP</p>
           <p
             className="font-bold tabular-nums mt-1"
             style={{ fontSize: '1.75rem', color: eduGame.primary, lineHeight: 1.2 }}
           >
             +{xpDisplay}
           </p>
+          {gateLabelKo && (
+            <p
+              className="mt-1 font-bold"
+              style={{
+                fontSize: eduGame.fontSize.caption,
+                color: gateHit ? eduGame.primary : eduGame.muted,
+              }}
+            >
+              {gateHit ? `${gateLabelKo} ✓ — 게이지 빨리 참` : `${gateLabelKo} — 다음엔 더 깊게!`}
+            </p>
+          )}
+          {xpBreakdown.length > 1 && (
+            <ul className="mt-2 space-y-0.5 text-left max-w-xs mx-auto">
+              {xpBreakdown.map((line) => (
+                <li
+                  key={`${line.label}-${line.xp}`}
+                  className="flex justify-between tabular-nums"
+                  style={{ fontSize: eduGame.fontSize.caption, color: eduGame.muted }}
+                >
+                  <span>{line.label}</span>
+                  <span>+{line.xp}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
 
-      {tier && tier.xp_next_tier != null && (
+      {tier && level.coach_level < 5 && tier.xp_next_tier != null && (
         <div className="mt-4 pt-3 border-t-2" style={{ borderColor: eduGame.bg }}>
-          <div className="flex justify-between mb-1.5" style={{ fontSize: eduGame.fontSize.caption, color: eduGame.muted }}>
-            <span>탐구 XP</span>
-            <span>{tier.xp_current.toLocaleString()} / {tier.xp_next_tier.toLocaleString()}</span>
+          <div
+            className="flex justify-between mb-1.5"
+            style={{ fontSize: eduGame.fontSize.caption, color: eduGame.muted }}
+          >
+            <span>{level.label_ko} 게이지</span>
+            <span>
+              {gaugePct}% · {gaugeXp}/{gaugeTarget}
+              {nextLabel ? ` → ${nextLabel}` : ''}
+            </span>
           </div>
           <div className="h-2.5 rounded-full overflow-hidden" style={{ backgroundColor: eduGame.bg }}>
             <div
               className="h-full rounded-full transition-all duration-700"
-              style={{ width: `${tier.progress_pct}%`, backgroundColor: eduGame.primary }}
+              style={{ width: `${gaugePct}%`, backgroundColor: eduGame.primary }}
             />
           </div>
+          {gaugeFull && (
+            <p
+              className="mt-2 text-center font-bold"
+              style={{ fontSize: eduGame.fontSize.caption, color: eduGame.primary }}
+            >
+              곧 레벨업!
+            </p>
+          )}
         </div>
       )}
     </section>

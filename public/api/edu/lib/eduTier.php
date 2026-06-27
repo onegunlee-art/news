@@ -1,10 +1,15 @@
 <?php
 /**
  * GIST EDU — tier / XP helpers
+ *
+ * B-2: coach_gauge_xp = 현재 코치 레벨(L1~5) 진척 게이지. 7단 메달 tier_id는 레거시(동결).
+ * 스트릭은 eduStreakOnCompletion — XP와 분리.
  */
 declare(strict_types=1);
 
 require_once __DIR__ . '/bootstrap.php';
+require_once __DIR__ . '/eduGamification.php';
+require_once __DIR__ . '/eduCoachLevel.php';
 
 const EDU_TIER_THRESHOLDS = [
     'observer' => 0,
@@ -73,6 +78,7 @@ function eduFetchTierRow(string $studentId): array
         'student_id' => $studentId,
         'tier_id' => 'observer',
         'xp_current' => 0,
+        'coach_gauge_xp' => 0,
         'streak_days' => 0,
         'streak_freeze_available' => 1,
     ]);
@@ -80,59 +86,107 @@ function eduFetchTierRow(string $studentId): array
         'student_id' => $studentId,
         'tier_id' => 'observer',
         'xp_current' => 0,
+        'coach_gauge_xp' => 0,
         'streak_days' => 0,
         'streak_freeze_available' => 1,
         'status' => 'active',
     ];
 }
 
-function eduTierProgressPayload(array $tierRow): array
+/** @param array<string, mixed> $tierRow */
+function eduCoachGaugeXpFromRow(array $tierRow): int
 {
-    $tierId = $tierRow['tier_id'] ?? 'observer';
-    $xp = (int) ($tierRow['xp_current'] ?? 0);
-    $next = eduNextTier($tierId);
-    $nextXp = $next !== null ? EDU_TIER_THRESHOLDS[$next] : null;
+    return max(0, (int) ($tierRow['coach_gauge_xp'] ?? 0));
+}
 
-    $progressPct = 100;
-    if ($next !== null && $nextXp !== null) {
-        $floor = EDU_TIER_THRESHOLDS[$tierId];
-        $span = max(1, $nextXp - $floor);
-        $progressPct = (int) round(min(100, max(0, (($xp - $floor) / $span) * 100)));
-    }
+/**
+ * B-2 코치 레벨 게이지 — API·UI 공용
+ *
+ * @param array<string, mixed> $tierRow
+ * @return array<string, mixed>
+ */
+function eduCoachGaugeProgressPayload(int $coachLevel, array $tierRow): array
+{
+    $level = eduCoachLevelNormalize($coachLevel);
+    $gaugeXp = eduCoachGaugeXpFromRow($tierRow);
+    $target = EDU_COACH_GAUGE_TARGET;
+    $progressPct = $level >= EDU_COACH_LEVEL_L5
+        ? 100
+        : (int) round(min(100, max(0, ($gaugeXp / max(1, $target)) * 100)));
+    $gaugeFull = $level < EDU_COACH_LEVEL_L5 && $gaugeXp >= $target;
+    $nextLevel = $level < EDU_COACH_LEVEL_L5 ? $level + 1 : null;
+    $nextLabels = $nextLevel !== null ? eduCoachLevelLabels($nextLevel) : null;
+    $gateInfo = eduCoachGaugeGateInfo($level);
 
     return [
+        'coach_gauge_xp' => $gaugeXp,
+        'coach_gauge_target' => $target,
+        'coach_gauge_progress_pct' => $progressPct,
+        'coach_gauge_full' => $gaugeFull,
+        'coach_gauge_gate_ko' => $gateInfo['ko'] ?? null,
+        'next_coach_level' => $nextLevel,
+        'next_coach_label_ko' => $nextLabels['ko'] ?? null,
+        'next_coach_label_en' => $nextLabels['en'] ?? null,
+    ];
+}
+
+/** @param array<string, mixed> $tierRow */
+function eduTierProgressPayload(array $tierRow, int $coachLevel = EDU_COACH_LEVEL_L1): array
+{
+    $tierId = $tierRow['tier_id'] ?? 'observer';
+    $legacyXp = (int) ($tierRow['xp_current'] ?? 0);
+    $gauge = eduCoachGaugeProgressPayload($coachLevel, $tierRow);
+    $level = eduCoachLevelNormalize($coachLevel);
+
+    $gaugeXp = $gauge['coach_gauge_xp'];
+    $gaugeTarget = $gauge['coach_gauge_target'];
+    $progressPct = (int) $gauge['coach_gauge_progress_pct'];
+
+    return array_merge([
         'tier_id' => $tierId,
         'tier_label_en' => eduTierLabelEn($tierId),
         'tier_label_ko' => EDU_TIER_LABELS_KO[$tierId] ?? '',
         'status' => $tierRow['status'] ?? 'active',
-        'next_tier_id' => $next,
-        'next_tier_label_en' => $next !== null ? eduTierLabelEn($next) : null,
-        'xp_current' => $xp,
-        'xp_next_tier' => $nextXp,
+        'next_tier_id' => null,
+        'next_tier_label_en' => null,
+        'xp_current' => $gaugeXp,
+        'xp_next_tier' => $level < EDU_COACH_LEVEL_L5 ? $gaugeTarget : null,
         'progress_pct' => $progressPct,
         'streak_days' => (int) ($tierRow['streak_days'] ?? 0),
         'streak_freeze_available' => (int) ($tierRow['streak_freeze_available'] ?? 1),
         'show_quest_cta' => ($tierRow['status'] ?? 'active') === 'active',
-    ];
+        'legacy_xp_total' => $legacyXp,
+    ], $gauge);
 }
 
 function eduAwardXp(\Agents\Services\SupabaseService $supabase, string $studentId, int $delta, string $eventType, ?string $sessionId = null, array $meta = []): array
 {
     $tierRow = eduFetchTierRow($studentId);
-    $oldTier = $tierRow['tier_id'] ?? 'observer';
-    $newXp = max(0, (int) ($tierRow['xp_current'] ?? 0) + $delta);
-    $newTier = eduTierFromXp($newXp);
-    $tierOrder = array_flip(EDU_TIER_ORDER);
-    if (($tierOrder[$newTier] ?? 0) < ($tierOrder[$oldTier] ?? 0)) {
-        $newTier = $oldTier;
-    }
+    $coachGaugeEvent = in_array($eventType, ['structure_quest', 'coach_gauge'], true);
 
-    $supabase->update('edu_user_tier', 'student_id=eq.' . $studentId, [
-        'xp_current' => $newXp,
-        'tier_id' => $newTier,
-        'status' => 'active',
-        'updated_at' => date('c'),
-    ]);
+    if ($coachGaugeEvent) {
+        $gaugeXp = eduCoachGaugeXpFromRow($tierRow);
+        $newGauge = min(EDU_COACH_GAUGE_TARGET, $gaugeXp + max(0, $delta));
+        $supabase->update('edu_user_tier', 'student_id=eq.' . $studentId, [
+            'coach_gauge_xp' => $newGauge,
+            'status' => 'active',
+            'updated_at' => date('c'),
+        ]);
+    } else {
+        $oldTier = $tierRow['tier_id'] ?? 'observer';
+        $newXp = max(0, (int) ($tierRow['xp_current'] ?? 0) + $delta);
+        $newTier = eduTierFromXp($newXp);
+        $tierOrder = array_flip(EDU_TIER_ORDER);
+        if (($tierOrder[$newTier] ?? 0) < ($tierOrder[$oldTier] ?? 0)) {
+            $newTier = $oldTier;
+        }
+        $supabase->update('edu_user_tier', 'student_id=eq.' . $studentId, [
+            'xp_current' => $newXp,
+            'tier_id' => $newTier,
+            'status' => 'active',
+            'updated_at' => date('c'),
+        ]);
+    }
 
     $supabase->insert('edu_xp_events', [
         'student_id' => $studentId,

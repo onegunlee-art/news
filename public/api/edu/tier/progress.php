@@ -18,7 +18,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'GET') {
 }
 
 $student = eduRequireStudent();
-$tier = eduTierProgressPayload(eduFetchTierRow($student['id']));
+$coachLevel = eduCoachLevelNormalize((int) ($student['coach_level'] ?? EDU_COACH_LEVEL_L1));
+$tier = eduTierProgressPayload(eduFetchTierRow($student['id']), $coachLevel);
 
 eduSendJson([
     'success' => true,

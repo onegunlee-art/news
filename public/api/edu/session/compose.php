@@ -282,10 +282,19 @@ try {
     error_log('edu insight save: ' . $insightErr->getMessage());
 }
 
-$tierRow = eduAwardXp($supabase, $student['id'], $sessionXp, 'structure_quest', $sessionId, [
+$coachLevel = eduResolveCoachLevel($student, $blueprint);
+$xpMeta = [
     'structure_xp' => $sessionXp,
     'quest_code' => $quest['quest_code'] ?? '',
-]);
+    'coach_level' => $coachLevel,
+];
+if (is_array($insightRow ?? null)) {
+    $xpMeta['gate_hit'] = !empty($insightRow['gate_hit']);
+    $xpMeta['gate_label_ko'] = $insightRow['gate_label_ko'] ?? null;
+    $xpMeta['xp_breakdown'] = $insightRow['xp_breakdown'] ?? [];
+}
+
+$tierRow = eduAwardXp($supabase, $student['id'], $sessionXp, 'structure_quest', $sessionId, $xpMeta);
 $tierRow = eduStreakOnCompletion($supabase, $student['id']);
 
 $composePayload = [
@@ -309,7 +318,10 @@ $composePayload = [
     'structure_score' => $verification['structure_score'] ?? 3,
     'feedback' => $evaluation['feedback'] ?? '잘 정리했어요!',
     'xp_gained' => $sessionXp,
-    'tier' => eduTierProgressPayload($tierRow),
+    'xp_breakdown' => $xpMeta['xp_breakdown'] ?? [],
+    'gate_hit' => !empty($xpMeta['gate_hit']),
+    'gate_label_ko' => $xpMeta['gate_label_ko'] ?? null,
+    'tier' => eduTierProgressPayload($tierRow, $coachLevel),
     'coach_level' => eduCoachLevelProfilePayload($student),
     'level_debug_allowed' => eduLevelDebugAllowed($student),
     'progress_pct' => 100,

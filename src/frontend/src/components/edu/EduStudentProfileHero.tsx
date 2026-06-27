@@ -13,7 +13,7 @@ type Props = {
   topicsCount: number
 }
 
-/** 개인 페이지 — 스트릭 주인공, 코치 레벨 뱃지 + XP 보조 (eduGame 오렌지/화이트) */
+/** B-2 — 스트릭 주인공 + 코치 레벨 뱃지 + 질 기반 진척 게이지 */
 export default function EduStudentProfileHero({
   student,
   tier,
@@ -26,6 +26,14 @@ export default function EduStudentProfileHero({
   const streak = tier.streak_days
   const streakLabel =
     streak > 1 ? `연속 탐구 ${streak}일` : streak === 1 ? '연속 탐구 1일' : '오늘 탐구하면 불꽃이 켜져요'
+
+  const gaugePct = tier.coach_gauge_progress_pct ?? tier.progress_pct
+  const gaugeXp = tier.coach_gauge_xp ?? tier.xp_current
+  const gaugeTarget = tier.coach_gauge_target ?? tier.xp_next_tier ?? 100
+  const nextLabel = tier.next_coach_label_ko
+  const gateLabel = tier.coach_gauge_gate_ko
+  const gaugeFull = tier.coach_gauge_full === true
+  const atMaxLevel = coachLevel.coach_level >= 5
 
   return (
     <div className={`space-y-4 ${eduGameClasses.textKo}`}>
@@ -62,7 +70,6 @@ export default function EduStudentProfileHero({
         />
       </div>
 
-      {/* 스트릭 — 화면 주인공 */}
       <section
         className="rounded-2xl border-2 px-4 py-7 text-center shadow-sm"
         style={{ borderColor: eduGame.primary, backgroundColor: eduGame.primaryLight }}
@@ -85,41 +92,53 @@ export default function EduStudentProfileHero({
         </p>
       </section>
 
-      {/* XP — B-2 전까지 숫자·바만 (메인 레벨 아님) */}
       <section
         className="rounded-2xl border-2 px-4 py-4"
         style={{ borderColor: eduGame.border, backgroundColor: eduGame.bg }}
+        aria-label="코치 레벨 진척 게이지"
       >
         <div className="flex items-center justify-between gap-2 mb-2">
           <span className="font-bold" style={{ fontSize: eduGame.fontSize.label, color: eduGame.ink }}>
-            탐구 XP
+            {coachLevel.label_ko} · 탐구 XP
           </span>
-          {tier.xp_next_tier != null && (
+          {!atMaxLevel && nextLabel && (
             <span style={{ fontSize: eduGame.fontSize.caption, color: eduGame.muted }}>
-              다음 구간까지
+              다음 {nextLabel}
             </span>
           )}
         </div>
-        {tier.xp_next_tier != null ? (
+        {!atMaxLevel ? (
           <>
             <div className="h-3 rounded-full overflow-hidden" style={{ backgroundColor: eduGame.surface }}>
               <div
                 className="h-full rounded-full transition-all duration-700"
-                style={{ width: `${tier.progress_pct}%`, backgroundColor: eduGame.primary }}
+                style={{ width: `${gaugePct}%`, backgroundColor: eduGame.primary }}
               />
             </div>
             <p className="mt-2 text-center tabular-nums" style={{ fontSize: eduGame.fontSize.label, color: eduGame.muted }}>
-              {tier.xp_current.toLocaleString()} / {tier.xp_next_tier.toLocaleString()} XP
+              {gaugePct}% · {gaugeXp} / {gaugeTarget} XP
             </p>
+            {gateLabel && (
+              <p className="mt-1 text-center" style={{ fontSize: eduGame.fontSize.caption, color: eduGame.muted }}>
+                질 관문: {gateLabel}
+              </p>
+            )}
+            {gaugeFull && (
+              <p
+                className="mt-2 text-center font-bold edu-game-xp-in"
+                style={{ fontSize: eduGame.fontSize.label, color: eduGame.primary }}
+              >
+                곧 레벨업! (다음 단계에서 올라가요)
+              </p>
+            )}
           </>
         ) : (
-          <p className="text-center tabular-nums" style={{ fontSize: eduGame.fontSize.label, color: eduGame.muted }}>
-            {tier.xp_current.toLocaleString()} XP
+          <p className="text-center font-bold" style={{ fontSize: eduGame.fontSize.label, color: eduGame.primary }}>
+            최고 레벨 · 칼럼니스트
           </p>
         )}
       </section>
 
-      {/* 통계 */}
       <div className="grid grid-cols-2 gap-3">
         <div
           className="rounded-xl border-2 px-3 py-3 text-center"

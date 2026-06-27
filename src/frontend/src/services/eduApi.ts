@@ -59,6 +59,11 @@ export function getEduKakaoLoginUrl(): string {
   return '/api/edu/auth_kakao.php'
 }
 
+export interface EduXpBreakdownLine {
+  label: string
+  xp: number
+}
+
 export interface EduTierProgress {
   tier_id: string
   tier_label_en: string
@@ -71,6 +76,16 @@ export interface EduTierProgress {
   progress_pct: number
   streak_days: number
   show_quest_cta: boolean
+  /** B-2 — 현재 코치 레벨 게이지 */
+  coach_gauge_xp?: number
+  coach_gauge_target?: number
+  coach_gauge_progress_pct?: number
+  coach_gauge_full?: boolean
+  coach_gauge_gate_ko?: string | null
+  next_coach_level?: number | null
+  next_coach_label_ko?: string | null
+  next_coach_label_en?: string | null
+  legacy_xp_total?: number
 }
 
 export interface EduQuestArticle {
@@ -182,6 +197,9 @@ export interface EduComposeResponse {
   structure_score?: number
   feedback?: string
   xp_gained?: number
+  xp_breakdown?: EduXpBreakdownLine[]
+  gate_hit?: boolean
+  gate_label_ko?: string | null
   tier?: EduTierProgress
   coach_level?: EduCoachLevelInfo
   level_debug_allowed?: boolean

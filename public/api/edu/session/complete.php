@@ -92,7 +92,7 @@ eduSendJson([
     'stage' => 'completed',
     'hero_sentence' => $hero,
     'xp_gained' => $xpQuest + $xpWriting,
-    'tier' => eduTierProgressPayload($tierRow),
+    'tier' => eduTierProgressPayload($tierRow, eduCoachLevelNormalize((int) ($student['coach_level'] ?? EDU_COACH_LEVEL_L1))),
     'coach_level' => eduCoachLevelProfilePayload($student),
     'level_debug_allowed' => eduLevelDebugAllowed($student),
     'ui_step' => 4,

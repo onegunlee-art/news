@@ -21,7 +21,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'GET') {
 $student = eduRequireStudent();
 $supabase = eduSupabase();
 
-$tier = eduTierProgressPayload(eduFetchTierRow($student['id']));
+$coachLevel = eduCoachLevelNormalize((int) ($student['coach_level'] ?? EDU_COACH_LEVEL_L1));
+$tier = eduTierProgressPayload(eduFetchTierRow($student['id']), $coachLevel);
 
 $completedRows = $supabase->select(
     'edu_quest_sessions',

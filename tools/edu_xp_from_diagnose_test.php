@@ -1,6 +1,6 @@
 <?php
 /**
- * P2-B 진단 → XP 산식 회귀 (LLM 없음)
+ * P2-B / B-2 진단 → XP 산식 회귀 (LLM 없음)
  *
  * Usage: php tools/edu_xp_from_diagnose_test.php
  */
@@ -40,7 +40,7 @@ $diag = eduStructureDiagnoseSession(
     null,
     (string) ($fixture['essay_text'] ?? '')
 );
-$fullXp = eduXpFromStructureDiagnose($diag);
+$fullXp = eduXpFromStructureDiagnose($diag, 1, $fixture['blueprint'] ?? []);
 
 $skippedDiag = $diag;
 $skippedDiag['axes_covered'] = array_map(static function (array $a): array {
@@ -52,7 +52,7 @@ $skippedDiag['axes_covered'] = array_map(static function (array $a): array {
 $skippedDiag['tension_engaged'] = '없음';
 $skippedDiag['conclusion_clarity'] = '모호';
 $skippedDiag['evidence_linked'] = 'no';
-assertEq('all skipped evasion complete', 5, eduXpFromStructureDiagnose($skippedDiag));
+assertEq('all skipped evasion floor', EDU_XP_GATE_MISS_TOTAL, eduXpFromStructureDiagnose($skippedDiag, 1, []));
 
 $partialDiag = [
     'axes_covered' => [
@@ -64,7 +64,8 @@ $partialDiag = [
     'conclusion_clarity' => '모호',
     'evidence_linked' => 'no',
 ];
-assertEq('2 axis partial 20', 20, eduXpFromStructureDiagnose($partialDiag));
+$partialXp = eduXpFromStructureDiagnose($partialDiag, 1, []);
+assertTrue('partial L1 miss <= cap', $partialXp >= EDU_XP_COMPLETE_FLOOR && $partialXp <= EDU_XP_COMPLETE_CAP);
 
 $maxDiag = [
     'axes_covered' => [
@@ -76,9 +77,10 @@ $maxDiag = [
     'conclusion_clarity' => '명확',
     'evidence_linked' => 'yes',
 ];
-assertEq('max depth 65', 65, eduXpFromStructureDiagnose($maxDiag));
+$maxXp = eduXpFromStructureDiagnose($maxDiag, 1, []);
+assertTrue('L1 gate hit quality xp', $maxXp >= 20 && $maxXp <= EDU_XP_COMPLETE_CAP);
 
-assertTrue('630 rule path xp', $fullXp >= 30 && $fullXp <= 65);
+assertTrue('630 rule path xp', $fullXp >= 8 && $fullXp <= EDU_XP_COMPLETE_CAP);
 
 echo "\n=== {$pass} passed, {$fail} failed ===\n";
 exit($fail > 0 ? 1 : 0);

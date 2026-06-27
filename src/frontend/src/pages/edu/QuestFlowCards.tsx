@@ -28,6 +28,7 @@ import {
   type EduDialogueTurn,
   type EduQuest,
   type EduTierProgress,
+  type EduXpBreakdownLine,
 } from '../../services/eduApi'
 import { EDU_BRAND } from '../../constants/eduBrand'
 import { eduGame, eduGameClasses } from '../../constants/eduGameTheme'
@@ -229,6 +230,9 @@ export default function QuestFlowCards() {
   const [completed, setCompleted] = useState(false)
   const [essay, setEssay] = useState<EssayArtifact | null>(null)
   const [xpGained, setXpGained] = useState(0)
+  const [xpBreakdown, setXpBreakdown] = useState<EduXpBreakdownLine[]>([])
+  const [gateHit, setGateHit] = useState<boolean | undefined>(undefined)
+  const [gateLabelKo, setGateLabelKo] = useState<string | null>(null)
   const [tier, setTier] = useState<EduTierProgress | null>(null)
   const [coachLevel, setCoachLevel] = useState<EduCoachLevelInfo>(() => eduCoachLevelByNumber(1))
   const [levelDebugAllowed, setLevelDebugAllowed] = useState(false)
@@ -537,6 +541,9 @@ export default function QuestFlowCards() {
       }
       setEssay(artifact)
       setXpGained(res.xp_gained ?? 0)
+      setXpBreakdown(res.xp_breakdown ?? [])
+      setGateHit(res.gate_hit)
+      setGateLabelKo(res.gate_label_ko ?? null)
       if (res.tier) setTier(res.tier)
       if (res.coach_level) setCoachLevel(res.coach_level)
       if (res.level_debug_allowed != null) setLevelDebugAllowed(res.level_debug_allowed)
@@ -877,6 +884,9 @@ export default function QuestFlowCards() {
         <main className={`flex-1 min-h-0 overflow-y-auto ${eduGameClasses.chatScroll} ${PAGE_MAX} mx-auto w-full px-4 py-4 space-y-4`}>
           <EduQuestCompletionCelebration
             xpGained={xpGained}
+            xpBreakdown={xpBreakdown}
+            gateHit={gateHit}
+            gateLabelKo={gateLabelKo}
             streakDays={tier?.streak_days ?? 0}
             coachLevel={coachLevel}
             levelDebugSwitch={canShowCoachLevelDebugSwitch(levelDebugAllowed)}
