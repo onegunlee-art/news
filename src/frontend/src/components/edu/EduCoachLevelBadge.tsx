@@ -2,7 +2,6 @@ import { useState } from 'react'
 import {
   EDU_COACH_LEVELS,
   EDU_COACH_LEVEL_MEDAL,
-  eduCoachLevelByNumber,
   type EduCoachLevelInfo,
 } from '../../constants/eduCoachLevel'
 import { eduGame, eduGameClasses } from '../../constants/eduGameTheme'
@@ -162,5 +161,3 @@ export default function EduCoachLevelBadge({
     </div>
   )
 }
-
-export { eduCoachLevelByNumber }
