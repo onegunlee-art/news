@@ -2,6 +2,8 @@ const EDU_TOKEN_KEY = 'edu_access_token'
 const EDU_DISPLAY_NAME_KEY = 'edu_display_name'
 const EDU_STUDENT_KEY = 'edu_student'
 
+import type { EduStructureInsightDebug } from '../constants/eduInsightDebug'
+
 export interface EduStudent {
   id: string
   display_name: string
@@ -178,6 +180,7 @@ export interface EduComposeResponse {
   tier?: EduTierProgress
   progress_pct?: number
   already_completed?: boolean
+  structure_insight?: EduStructureInsightDebug
 }
 
 export interface EduSessionState {
@@ -483,6 +486,11 @@ export const eduApi = {
       method: 'POST',
       body: JSON.stringify({ session_id: sessionId, force }),
     }),
+
+  getStructureInsight: (sessionId: string) =>
+    eduFetch<{ success: boolean; session_id: string; structure_insight: EduStructureInsightDebug }>(
+      `/api/edu/session/structure_insight.php?session_id=${encodeURIComponent(sessionId)}`
+    ),
 
   saveEssay: (
     sessionId: string,

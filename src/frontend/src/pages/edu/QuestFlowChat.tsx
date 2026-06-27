@@ -26,6 +26,8 @@ import {
 } from '../../services/eduApi'
 import { EDU_BRAND } from '../../constants/eduBrand'
 import { eduQuestPathWithUi, setEduCoachUiMode } from '../../constants/eduCoachUi'
+import { resolveEduInsightDebug, type EduStructureInsightDebug } from '../../constants/eduInsightDebug'
+import EduStructureInsightDebugPanel from '../../components/edu/EduStructureInsightDebugPanel'
 import { eduGame, eduGameClasses } from '../../constants/eduGameTheme'
 
 const PAGE_MAX = 'max-w-2xl'
@@ -139,6 +141,7 @@ export default function QuestFlowChat() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const questIdParam = searchParams.get('quest_id')?.trim() || ''
+  const insightDebug = resolveEduInsightDebug(searchParams)
   const bottomRef = useRef<HTMLDivElement>(null)
   const mainScrollRef = useRef<HTMLDivElement>(null)
   const { viewportHeight, viewportOffsetTop } = useVisualViewportLayout()
@@ -172,6 +175,8 @@ export default function QuestFlowChat() {
   const [exploreNudgeText, setExploreNudgeText] = useState('')
   const prevGuideAxisIndex = useRef(0)
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [structureInsight, setStructureInsight] = useState<EduStructureInsightDebug | null>(null)
+  const [insightLoading, setInsightLoading] = useState(false)
   const selectedQuestId = searchParams.get('quest_id')?.trim() || ''
 
   const blurActiveInput = () => {
@@ -314,6 +319,26 @@ export default function QuestFlowChat() {
     prevGuideAxisIndex.current = guideAxisIndex
   }, [guideAxisIndex])
 
+  useEffect(() => {
+    if (!insightDebug || !completed || !sessionId || structureInsight) return
+    let cancelled = false
+    setInsightLoading(true)
+    eduApi
+      .getStructureInsight(sessionId)
+      .then((res) => {
+        if (!cancelled) setStructureInsight(res.structure_insight)
+      })
+      .catch(() => {
+        if (!cancelled) setStructureInsight(null)
+      })
+      .finally(() => {
+        if (!cancelled) setInsightLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [insightDebug, completed, sessionId, structureInsight])
+
   const appendAssistant = (content: string, animate = true) => {
     setDialogue((prev) => {
       if (animate) {
@@ -400,6 +425,9 @@ export default function QuestFlowChat() {
       setProgressPct(100)
       setSaveStatus(res.saved ? 'saved' : 'idle')
       setPlayEssayReveal(true)
+      if (res.structure_insight) {
+        setStructureInsight(res.structure_insight)
+      }
       appendAssistant(
         res.title
           ? `네 글이 완성됐고 자동으로 저장됐어! 아래에서 읽고 필요하면 고쳐봐.`
@@ -757,6 +785,10 @@ export default function QuestFlowChat() {
             tier={tier}
             active={completed}
           />
+        )}
+
+        {completed && insightDebug && (
+          <EduStructureInsightDebugPanel insight={structureInsight} loading={insightLoading} />
         )}
 
         {completed && essay && (

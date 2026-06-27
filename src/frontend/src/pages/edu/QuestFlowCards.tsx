@@ -31,6 +31,8 @@ import {
 import { EDU_BRAND } from '../../constants/eduBrand'
 import { eduGame, eduGameClasses } from '../../constants/eduGameTheme'
 import { eduQuestPathWithUi, setEduCoachUiMode } from '../../constants/eduCoachUi'
+import { resolveEduInsightDebug, type EduStructureInsightDebug } from '../../constants/eduInsightDebug'
+import EduStructureInsightDebugPanel from '../../components/edu/EduStructureInsightDebugPanel'
 
 const PAGE_MAX = 'max-w-2xl'
 const EVIDENCE_RECOMMENDED_LEN = 20
@@ -208,6 +210,7 @@ export default function QuestFlowCards() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const questIdParam = searchParams.get('quest_id')?.trim() || ''
+  const insightDebug = resolveEduInsightDebug(searchParams)
   const { viewportHeight, viewportOffsetTop, keyboardInset } = useVisualViewportLayout()
   const [inputFocused, setInputFocused] = useState(false)
 
@@ -232,6 +235,8 @@ export default function QuestFlowCards() {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [playEssayReveal, setPlayEssayReveal] = useState(false)
   const [coachChoice, setCoachChoice] = useState<CoachChoiceState>(emptyCoachChoice)
+  const [structureInsight, setStructureInsight] = useState<EduStructureInsightDebug | null>(null)
+  const [insightLoading, setInsightLoading] = useState(false)
   const [guideAxisIndex, setGuideAxisIndex] = useState(0)
   const [structurePulse, setStructurePulse] = useState(false)
   const [structurePulseSlot, setStructurePulseSlot] = useState<number | null>(null)
@@ -345,6 +350,26 @@ export default function QuestFlowCards() {
       setCoachChoice(emptyCoachChoice())
     }
   }, [phase])
+
+  useEffect(() => {
+    if (!insightDebug || !completed || !sessionId || structureInsight) return
+    let cancelled = false
+    setInsightLoading(true)
+    eduApi
+      .getStructureInsight(sessionId)
+      .then((res) => {
+        if (!cancelled) setStructureInsight(res.structure_insight)
+      })
+      .catch(() => {
+        if (!cancelled) setStructureInsight(null)
+      })
+      .finally(() => {
+        if (!cancelled) setInsightLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [insightDebug, completed, sessionId, structureInsight])
 
   useEffect(() => {
     if (phase !== 'guide_axis') return
@@ -491,6 +516,9 @@ export default function QuestFlowCards() {
       setProgressPct(100)
       setSaveStatus(res.saved ? 'saved' : 'idle')
       setPlayEssayReveal(true)
+      if (res.structure_insight) {
+        setStructureInsight(res.structure_insight)
+      }
       appendAssistant(
         res.title
           ? `네 글이 완성됐고 자동으로 저장됐어! 아래에서 읽고 필요하면 고쳐봐.`
@@ -809,6 +837,9 @@ export default function QuestFlowCards() {
             tier={tier}
             active={completed}
           />
+          {insightDebug && (
+            <EduStructureInsightDebugPanel insight={structureInsight} loading={insightLoading} />
+          )}
           {essay && (
             <EduEssayCompletionPanel
               essay={essay}

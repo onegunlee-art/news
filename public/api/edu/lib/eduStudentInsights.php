@@ -207,3 +207,89 @@ function eduListStudentInsights(\Agents\Services\SupabaseService $sb, string $st
 
     return is_array($rows) ? $rows : [];
 }
+
+/**
+ * @return array<string, mixed>|null
+ */
+function eduFetchStructureInsightRow(\Agents\Services\SupabaseService $sb, string $sessionId): ?array
+{
+    if ($sessionId === '') {
+        return null;
+    }
+    $rows = $sb->select('edu_student_insights', 'session_id=eq.' . $sessionId, 1);
+
+    return $rows[0] ?? null;
+}
+
+/**
+ * 완주 시 insight 없으면 저장 시도 (already_completed 재호출 백필).
+ *
+ * @param array<string, mixed> $session
+ * @param array<string, mixed> $quest
+ * @return array<string, mixed>|null
+ */
+function eduEnsureStructureInsight(
+    \Agents\Services\SupabaseService $sb,
+    array $session,
+    array $quest,
+    string $essayTextOverride = ''
+): ?array {
+    $sessionId = (string) ($session['id'] ?? '');
+    if ($sessionId === '') {
+        return null;
+    }
+    $existing = eduFetchStructureInsightRow($sb, $sessionId);
+    if ($existing !== null) {
+        return $existing;
+    }
+
+    try {
+        return eduSaveStructureInsight($sb, $session, $quest, null, $essayTextOverride);
+    } catch (Throwable $e) {
+        error_log('eduEnsureStructureInsight: ' . $e->getMessage());
+
+        return null;
+    }
+}
+
+/**
+ * @param array<string, mixed>|null $row
+ * @return array<string, mixed>
+ */
+function eduStructureInsightDebugPayload(?array $row): array
+{
+    if ($row === null) {
+        return [
+            'saved' => false,
+            'diagnose_mode' => null,
+            'diagnose_version' => null,
+            'exploration_depth_level' => null,
+            'tension_engaged' => null,
+            'conclusion_clarity' => null,
+            'evidence_linked' => null,
+            'axes_engaged_count' => null,
+            'axes_total' => null,
+            'structure_note' => null,
+            'fallback_reason' => null,
+        ];
+    }
+
+    $diagJson = $row['diagnose_json'] ?? [];
+    if (is_string($diagJson)) {
+        $diagJson = json_decode($diagJson, true) ?: [];
+    }
+
+    return [
+        'saved' => true,
+        'diagnose_mode' => (string) ($row['diagnose_mode'] ?? ''),
+        'diagnose_version' => (string) ($row['diagnose_version'] ?? ''),
+        'exploration_depth_level' => $row['exploration_depth_level'] ?? null,
+        'tension_engaged' => (string) ($row['tension_engaged'] ?? ''),
+        'conclusion_clarity' => (string) ($row['conclusion_clarity'] ?? ''),
+        'evidence_linked' => (string) ($row['evidence_linked'] ?? ''),
+        'axes_engaged_count' => (int) ($row['axes_engaged_count'] ?? 0),
+        'axes_total' => (int) ($row['axes_total'] ?? 0),
+        'structure_note' => (string) ($row['structure_note'] ?? ''),
+        'fallback_reason' => is_array($diagJson) ? (string) ($diagJson['diagnose_fallback_reason'] ?? '') : '',
+    ];
+}

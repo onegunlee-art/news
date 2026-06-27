@@ -11,7 +11,9 @@ require_once __DIR__ . '/../lib/eduConfig.php';
 require_once __DIR__ . '/../lib/eduBlueprint.php';
 require_once __DIR__ . '/../lib/eduTier.php';
 require_once __DIR__ . '/../lib/eduAgents.php';
+require_once __DIR__ . '/../lib/eduConfig.php';
 require_once __DIR__ . '/../lib/eduDraftStorage.php';
+require_once __DIR__ . '/../lib/eduStudentInsights.php';
 require_once __DIR__ . '/../lib/_llm.php';
 
 $root = eduFindProjectRoot();
@@ -63,7 +65,17 @@ if (($session['stage'] ?? '') === 'completed') {
         }
         $fullText = is_array($v2) ? implode("\n\n", array_filter(array_map('strval', $v2))) : '';
     }
-    eduSendJson([
+
+    $insightRow = null;
+    if (!eduStructureInsightExists($supabase, $sessionId)) {
+        $questsEarly = $supabase->select('edu_daily_quests', 'id=eq.' . $session['quest_id'], 1);
+        $questEarly = $questsEarly[0] ?? [];
+        $insightRow = eduEnsureStructureInsight($supabase, $session, $questEarly, $fullText);
+    } else {
+        $insightRow = eduFetchStructureInsightRow($supabase, $sessionId);
+    }
+
+    $alreadyPayload = [
         'success' => true,
         'session_id' => $sessionId,
         'stage' => 'completed',
@@ -72,7 +84,11 @@ if (($session['stage'] ?? '') === 'completed') {
         'title' => $essayStructure['title'] ?? null,
         'hero_sentence' => $draft['hero_sentence'] ?? null,
         'already_completed' => true,
-    ]);
+    ];
+    if (eduStructureInsightDebugAllowed($student)) {
+        $alreadyPayload['structure_insight'] = eduStructureInsightDebugPayload($insightRow);
+    }
+    eduSendJson($alreadyPayload);
 }
 
 $quests = $supabase->select('edu_daily_quests', 'id=eq.' . $session['quest_id'], 1);
@@ -209,6 +225,7 @@ if (!$draftSave['ok'] && eduStrictDraftStorage()) {
 
 $sessionXp = 5;
 $tierRow = eduFetchTierRow($student['id']);
+$insightRow = null;
 
 $blueprint = eduMergeBlueprint($blueprint, [
     'phase' => 'completed',
@@ -243,7 +260,6 @@ $supabase->update('edu_quest_sessions', 'id=eq.' . $sessionId, [
     'updated_at' => $completedAt,
 ]);
 
-require_once __DIR__ . '/../lib/eduStudentInsights.php';
 try {
     $sessionForInsight = array_merge($session, [
         'blueprint_json' => $blueprint,
@@ -271,7 +287,7 @@ $tierRow = eduAwardXp($supabase, $student['id'], $sessionXp, 'structure_quest', 
 ]);
 $tierRow = eduStreakOnCompletion($supabase, $student['id']);
 
-eduSendJson([
+$composePayload = [
     'success' => true,
     'session_id' => $sessionId,
     'saved' => true,
@@ -294,7 +310,12 @@ eduSendJson([
     'xp_gained' => $sessionXp,
     'tier' => eduTierProgressPayload($tierRow),
     'progress_pct' => 100,
-]);
+];
+if (eduStructureInsightDebugAllowed($student)) {
+    $savedInsight = $insightRow ?? eduFetchStructureInsightRow($supabase, $sessionId);
+    $composePayload['structure_insight'] = eduStructureInsightDebugPayload($savedInsight);
+}
+eduSendJson($composePayload);
 
 } catch (Throwable $e) {
     error_log('edu compose fatal: ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
