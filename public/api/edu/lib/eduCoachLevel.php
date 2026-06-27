@@ -39,7 +39,7 @@ function eduCoachLevelNormalize(int $level): int
     return max(EDU_COACH_LEVEL_MIN, min(EDU_COACH_LEVEL_MAX, $level));
 }
 
-/** 코치 FSM 경로 — l3·l5는 v1 axis_guide (동일 엔진, L4만 upper axes) */
+/** 코치 FSM 경로 — L3=middle, L4=upper(v1+), L5=v1(the gist) */
 function eduCoachLevelCoachPath(int $level): string
 {
     return match (eduCoachLevelNormalize($level)) {

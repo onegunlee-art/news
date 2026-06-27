@@ -10,6 +10,7 @@ require_once __DIR__ . '/eduBlueprint.php';
 require_once __DIR__ . '/eduCoachLevel.php';
 require_once __DIR__ . '/eduCoachGuideElementary.php';
 require_once __DIR__ . '/eduCoachGuideBridge.php';
+require_once __DIR__ . '/eduCoachGuideMiddle.php';
 require_once __DIR__ . '/eduCoachGuideUpper.php';
 
 const EDU_COACH_GUIDE_QUEST_CODE = 'Q-AUTO-NUKE-630';
@@ -356,6 +357,7 @@ function eduCoachGuideResolveAxes(array $quest, int $coachLevel): array
     return match (eduCoachLevelCoachPath($coachLevel)) {
         'l1' => eduCoachGuideElementaryAxes($quest),
         'l2' => eduCoachGuideBridgeAxes($quest),
+        'l3' => eduCoachGuideMiddleAxes($quest),
         'l4' => eduCoachGuideUpperAxes($quest),
         default => eduCoachGuideAxes($quest),
     };
@@ -398,6 +400,9 @@ function eduCoachGuideHandleOpening(
     }
     if ($path === 'l2') {
         return eduCoachGuideBridgeHandleOpening($blueprint, $quest, $opening, $coachLevel);
+    }
+    if ($path === 'l3') {
+        return eduCoachGuideMiddleHandleOpening($blueprint, $quest, $opening, $coachLevel);
     }
 
     $axes = eduCoachGuideResolveAxes($quest, $coachLevel);
@@ -452,6 +457,9 @@ function eduCoachGuideHandleTurn(
     }
     if ($path === 'l2') {
         return eduCoachGuideBridgeHandleTurn($blueprint, $quest, $message, $coachLevel);
+    }
+    if ($path === 'l3') {
+        return eduCoachGuideMiddleHandleTurn($blueprint, $quest, $message, $coachLevel);
     }
 
     $phase = (string) ($blueprint['phase'] ?? '');
