@@ -66,6 +66,8 @@ ok('fixture 3 axes covered', count($covered) === 3);
 ok('tension enum', in_array($diag['tension_engaged'] ?? '', ['양면', '한쪽', '없음'], true));
 ok('clarity enum', in_array($diag['conclusion_clarity'] ?? '', ['명확', '모호'], true));
 ok('evidence enum', in_array($diag['evidence_linked'] ?? '', ['yes', 'no'], true));
+ok('rule fallback has level', is_int($diag['exploration_depth_level'] ?? null) && ($diag['exploration_depth_level'] ?? 0) >= 1);
+ok('diagnose_mode rule_fallback', ($diag['diagnose_mode'] ?? '') === 'rule_fallback');
 $note = (string) ($diag['structure_note'] ?? '');
 ok('structure_note no grade smell', !preg_match('/\d+\s*\/\s*\d|등급|점수|잘함|못함/u', $note));
 

@@ -9,17 +9,38 @@ require_once __DIR__ . '/eduStructureDiagnose.php';
 require_once __DIR__ . '/eduGamification.php';
 
 /**
- * compose/백필에서 LLM 보강 여부 (기본 OFF — rule_fallback, 속도 우선)
+ * 완주 시 LLM 진단 (Phase 2 기본 ON). 실패/비활성 시 eduStructureDiagnoseSession이 rule fallback.
+ *
+ * EDU_STRUCTURE_DIAGNOSE_RULE_ONLY=1 → rule only (롤백)
+ * EDU_STRUCTURE_DIAGNOSE_LIVE=0      → legacy opt-out (rule only)
  */
-function eduStructureDiagnoseOptionalLlm()
+function eduStructureDiagnoseResolveLlm()
 {
-    $live = getenv('EDU_STRUCTURE_DIAGNOSE_LIVE');
-    if ($live === '1' || $live === 'true') {
-        require_once __DIR__ . '/_llm.php';
-        return eduLlm();
+    $ruleOnly = getenv('EDU_STRUCTURE_DIAGNOSE_RULE_ONLY');
+    if ($ruleOnly === '1' || $ruleOnly === 'true') {
+        return null;
     }
 
-    return null;
+    $legacyLive = getenv('EDU_STRUCTURE_DIAGNOSE_LIVE');
+    if ($legacyLive === '0' || $legacyLive === 'false') {
+        return null;
+    }
+
+    try {
+        require_once __DIR__ . '/_llm.php';
+
+        return eduLlm();
+    } catch (Throwable $e) {
+        error_log('eduStructureDiagnoseResolveLlm: ' . $e->getMessage());
+
+        return null;
+    }
+}
+
+/** @deprecated use eduStructureDiagnoseResolveLlm */
+function eduStructureDiagnoseOptionalLlm()
+{
+    return eduStructureDiagnoseResolveLlm();
 }
 
 /**
@@ -58,6 +79,9 @@ function eduStructureInsightRowFromDiagnose(string $studentId, array $diag): arr
         'tension_engaged' => (string) ($diag['tension_engaged'] ?? ''),
         'conclusion_clarity' => (string) ($diag['conclusion_clarity'] ?? ''),
         'evidence_linked' => (string) ($diag['evidence_linked'] ?? ''),
+        'exploration_depth_level' => isset($diag['exploration_depth_level']) && is_numeric($diag['exploration_depth_level'])
+            ? max(1, min(7, (int) $diag['exploration_depth_level']))
+            : null,
         'structure_note' => (string) ($diag['structure_note'] ?? ''),
         'diagnose_version' => (string) ($diag['diagnose_version'] ?? EDU_STRUCTURE_DIAGNOSE_VERSION),
         'diagnose_mode' => (string) ($diag['diagnose_mode'] ?? 'rule_fallback'),

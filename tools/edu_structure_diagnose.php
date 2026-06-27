@@ -16,12 +16,14 @@ require_once $root . '/public/api/lib/env_bootstrap.php';
 require_once $root . '/public/api/edu/lib/bootstrap.php';
 require_once $root . '/public/api/edu/lib/eduBlueprint.php';
 require_once $root . '/public/api/edu/lib/eduStructureDiagnose.php';
+require_once $root . '/public/api/edu/lib/eduStudentInsights.php';
 require_once $root . '/public/api/edu/lib/_llm.php';
 
 $sessionId = '';
 $questCode = 'Q-AUTO-NUKE-630';
 $fixturePath = '';
 $useLive = in_array('--live', $argv ?? [], true);
+$ruleOnly = in_array('--rule-only', $argv ?? [], true);
 $write = in_array('--write', $argv ?? [], true);
 $saveInsights = in_array('--save-insights', $argv ?? [], true);
 $latest = 1;
@@ -44,7 +46,13 @@ foreach ($argv ?? [] as $arg) {
     }
 }
 
-$llm = $useLive ? eduLlm() : null;
+if ($ruleOnly) {
+    $llm = null;
+} elseif ($useLive) {
+    $llm = eduLlm();
+} else {
+    $llm = eduStructureDiagnoseResolveLlm();
+}
 
 function runDiagnose(
     string $sessionId,
