@@ -1,16 +1,18 @@
 <?php
 /**
- * EDU 7단계 Phase 1 — 레벨별 구조 깊이 추출 (검증 전용, 프로덕션 무관)
+ * EDU 5단계 깊이 검증 — 레벨별 구조 추출 (검증 전용, 프로덕션 무관)
  *
- * 같은 글에서 coach_level 1/4/7 깊이로 경첩·축을 다르게 뽑을 수 있는지 실험.
+ * L1~L5: 초6 → the gist. 7단 검증 FAIL 후 5단으로 재설계.
  */
 declare(strict_types=1);
 
 require_once __DIR__ . '/eduHingeExtract.php';
 
-const EDU_LEVEL_DEPTH_VERIFY_LEVELS = [1, 2, 3, 4, 5, 6, 7];
+const EDU_LEVEL_DEPTH_VERIFY_LEVELS = [1, 2, 3, 4, 5];
+const EDU_LEVEL_DEPTH_VERIFY_LEVELS_LEGACY7 = [1, 2, 3, 4, 5, 6, 7];
 const EDU_LEVEL_DEPTH_VERIFY_LEVELS_PHASE1 = [1, 4, 7];
-const EDU_LEVEL_DEPTH_PROMPT_VERSION = 'level-depth-verify-v2-phase3';
+const EDU_LEVEL_DEPTH_PROMPT_VERSION = 'level-depth-verify-v3-5step';
+const EDU_LEVEL_DEPTH_STEP_COUNT = 5;
 
 /** @param list<int>|null $override */
 function eduLevelDepthVerifyLevels(?array $override = null): array
@@ -66,78 +68,63 @@ function eduLevelDepthSpec(int $level): array
     $specs = [
         1 => [
             'level' => 1,
-            'label' => 'L1 초등',
-            'audience' => '초5~6 / 만 10~12세',
+            'label' => 'L1 초6',
+            'audience' => '초6 / 만 11~12세',
             'hinge_mode' => 'single_question',
             'axis_min' => 1,
             'axis_max' => 2,
             'scaffolding' => 'heavy',
-            'thinking' => '단순 — "~일까?" 한 층, 통념 vs 본문 한 fact',
+            'legacy_7' => 'L1',
+            'thinking' => '한 면 — "~일까?" 일상어, 통념 vs 본문 fact 1개, 비계 듬뿍',
         ],
         2 => [
             'level' => 2,
-            'label' => 'L2 초등+',
-            'audience' => '초6 / 만 11~12세',
+            'label' => 'L2 초고~중1',
+            'audience' => '초6~중1',
             'hinge_mode' => 'dual_intro',
             'axis_min' => 2,
-            'axis_max' => 2,
+            'axis_max' => 3,
             'scaffolding' => 'heavyish',
-            'thinking' => '양면 입문 — "A처럼 보이지만 B" 짧게, 2축, 비계 많음 (L1보다 살짝 깊게)',
+            'legacy_7' => 'L2~3',
+            'thinking' => '양면 입문 — 짧은 A/B, 2~3축, 비계 많음 (L1보다 깊게)',
         ],
         3 => [
             'level' => 3,
-            'label' => 'L3 중등-',
-            'audience' => '중1~2',
-            'hinge_mode' => 'dual_sided_soft',
-            'axis_min' => 2,
-            'axis_max' => 3,
-            'scaffolding' => 'medium_high',
-            'thinking' => '양면 — 2~3축, 비계 중상 (L4 바로 아래, L2보다 깊음)',
-        ],
-        4 => [
-            'level' => 4,
-            'label' => 'L4 중등',
+            'label' => 'L3 중2~3',
             'audience' => '중2~3',
             'hinge_mode' => 'dual_sided',
             'axis_min' => 3,
             'axis_max' => 3,
             'scaffolding' => 'medium',
-            'thinking' => '양면 — A vs B, 3축, 사실+질문 균형',
+            'legacy_7' => 'L4',
+            'thinking' => '양면 3축 — A vs B, 축마다 반론 1겹(counter), 비계 중',
+        ],
+        4 => [
+            'level' => 4,
+            'label' => 'L4 고1~2',
+            'audience' => '고1~2',
+            'hinge_mode' => 'evidence_multi_layer',
+            'axis_min' => 3,
+            'axis_max' => 3,
+            'scaffolding' => 'light',
+            'legacy_7' => 'L5~6',
+            'thinking' => '3축+근거(수치·사건) + 다층 입문, 비계 적음',
         ],
         5 => [
             'level' => 5,
-            'label' => 'L5 중등+',
-            'audience' => '중3 / 고1',
-            'hinge_mode' => 'evidence_triple',
-            'axis_min' => 3,
-            'axis_max' => 3,
-            'scaffolding' => 'medium_low',
-            'thinking' => '3축+근거 강조 — article_fact 구체적, 비계 중하 (L4 위)',
-        ],
-        6 => [
-            'level' => 6,
-            'label' => 'L6 고등-',
-            'audience' => '고1~2',
-            'hinge_mode' => 'multi_layer_intro',
-            'axis_min' => 3,
-            'axis_max' => 4,
-            'scaffolding' => 'light',
-            'thinking' => '다층 입문 — 3~4축, 반론 각도 시작, 비계 적음 (L7 바로 아래)',
-        ],
-        7 => [
-            'level' => 7,
-            'label' => 'L7 고등',
-            'audience' => '고2~3',
+            'label' => 'L5 the gist',
+            'audience' => '최상위 고3 / 졸업',
             'hinge_mode' => 'multi_layer',
             'axis_min' => 3,
             'axis_max' => 4,
             'scaffolding' => 'minimal',
-            'thinking' => '다층 — 반론·반론의 반론, 축 간 연결, 비계 최소',
+            'legacy_7' => 'L7',
+            'thinking' => 'the gist 원문 수준 — 다층+반론의 반론, 축 연결, 비계 0',
         ],
     ];
 
     if (!isset($specs[$level])) {
-        throw new InvalidArgumentException("Unsupported verify level: {$level} (use 1–7)");
+        throw new InvalidArgumentException("Unsupported verify level: {$level} (use 1–5)");
     }
 
     $spec = $specs[$level];
@@ -157,114 +144,81 @@ function eduLevelDepthSystemPrompt(int $level): string
 
     $hingeRules = match ((int) $level) {
         1 => <<<'RULES'
-경첩 규칙 (level 1 — 초등):
-- hinge: **한 면**만. "A이지만 B" 금지. 학생이 처음 던질 **단순 질문** 한 문장 ("~일까?", "~면 안전할까?").
-- side_a: 그 질문 틀/통념 한 줄 (쉬운 말).
-- side_b: null 또는 빈 문자열 (초등은 양면 분해 안 함).
-- hook_student: side_a와 같은 톤의 질문 한 문장.
-- shake_prompt: 본문 fact 1개만 덧붙인 부드러운 힌트 (결론·the gist 입장 금지).
+경첩 규칙 (L1 — 초6, 일상어):
+- hinge: **한 면**만. "A이지만 B" 금지. **일상어** 단순 질문 ("~일까?", "~면 안전할까?").
+- side_a: 쉬운 통념/질문 틀 (초등 어휘).
+- side_b: null (양면 분해 안 함).
+- hook_student: side_a와 같은 톤.
+- shake_prompt: 본문 fact 1개 + 부드러운 힌트.
 RULES,
         2 => <<<'RULES'
-경첩 규칙 (level 2 — 양면 입문):
-- hinge: **짧은 양면** "A처럼 보이지만/그런데 B" — L4보다 짧고 쉬운 말. C층 금지.
-- side_a: 쉬운 통념/질문 틀.
-- side_b: 본문이 살짝 흔드는 반대쪽 (한 줄, 추상 금지).
-- hook_student: side_a에서 시작하는 질문.
-- shake_prompt: side_b 힌트 + 본문 fact 1개 (부드럽게).
+경첩 규칙 (L2 — 양면 입문):
+- hinge: **짧은 양면** "A처럼 보이지만/그런데 B" — L3보다 짧고 쉬운 말. C층 금지.
+- side_a / side_b: 본문 근거, 일상어 유지.
+- hook_student: side_a에서 시작.
+- shake_prompt: side_b 힌트 + fact 1개.
 RULES,
         3 => <<<'RULES'
-경첩 규칙 (level 3 — 양면 중하):
-- hinge: **양면** "A이지만 B" — L4와 비슷하지만 문장·어휘 더 쉽게. 세 번째 층(C) 금지.
-- side_a / side_b: 본문 근거, L4보다 짧게.
+경첩 규칙 (L3 — 중등 양면):
+- hinge: **양면** "A이지만/그러나 B" 한 문장. side_a·side_b 모두 본문 근거.
 - hook_student: 양면을 여는 질문.
 - shake_prompt: side_b + fact 1개.
 RULES,
         4 => <<<'RULES'
-경첩 규칙 (level 4 — 중등):
-- hinge: **양면** "A이지만/그러나 B" 한 문장. side_a·side_b 모두 본문 근거.
-- side_a: 표면 통념 또는 질문 틀.
-- side_b: 본문이 드러내는 더 복잡한 진실.
-- hook_student: side_a에서 시작하는 질문.
-- shake_prompt: side_b 쪽으로 흔드는 한 문장 + 본문 fact 1개.
-RULES,
-        5 => <<<'RULES'
-경첩 규칙 (level 5 — 3축+근거):
-- hinge: 양면 + **근거가 갈리는 지점** 한 문장 ("숫자/사건 때문에 A vs B").
-- side_a / side_b: L4보다 구체적 (행위자·수치).
-- hook_student: 근거를 따져야 하는 질문.
-- shake_prompt: 반대 근거 fact 1개 (숫자·고유명사 포함).
-RULES,
-        6 => <<<'RULES'
-경첩 규칙 (level 6 — 다층 입문):
-- hinge: **2층 긴장** "A이지만 B, 더 나아가 C" — L7보다 짧고 C는 힌트 수준.
-- side_a / side_b: 고등 입문 토론 수준.
-- hook_student: 긴장을 관통하는 질문.
-- shake_prompt: 반론 fact + "그럼에도" 뉘앙스 (결론 금지).
+경첩 규칙 (L4 — 근거+다층 입문):
+- hinge: **2층 긴장** "A이지만 B, 더 나아가 C" — L5보다 짧고 C는 힌트. **근거(수치·사건)** 포함.
+- side_a / side_b: 구체적 행위자·사건.
+- hook_student: 근거와 긴장을 함께 따지는 질문.
+- shake_prompt: 반론 fact + "그럼에도" (결론 금지).
 RULES,
         default => <<<'RULES'
-경첩 규칙 (level 7 — 고등):
-- hinge: **다층** 긴장 — "A이지만 B, 더 나아가 C" 또는 nested tension. 한 문장~두 문장.
-- side_a / side_b: 고등 토론 수준 분해. 추상어 최소, 행위자·사건 명확.
-- hook_student: 핵심 긴장을 관통하는 질문.
-- shake_prompt: 반론을 깨는 구체 fact + "그럼에도" 뉘앙스.
+경첩 규칙 (L5 — the gist / 졸업):
+- hinge: **다층** — "A이지만 B, 더 나아가 C" 또는 nested tension. the gist 원문에 가까운 밀도.
+- side_a / side_b: 고등 토론 수준. 추상어 최소.
+- hook_student: 핵심 긴장 관통 질문.
+- shake_prompt: 반론 깨는 fact + "그럼에도".
 RULES,
     };
 
     $axisRules = match ((int) $level) {
         1 => <<<RULES
-축(axes) 규칙 (level 1):
-- {$axisMin}~{$axisMax}개만. **아주 쉬운 point** (한 줄).
-- core_question: "~일까?" 형태. 답·결론 금지.
-- article_fact: 본문 사실 1개 — 학생이 읽고 생각할 재료 (해석 넣지 말 것).
-- scaffolding_note: 이 축에서 코치가 줄 **비계 힌트** 한 줄 (듬뿍).
-- counter_angle: null (초등은 반론 층 없음).
+축(axes) 규칙 (L1):
+- {$axisMin}~{$axisMax}개. **일상어** point.
+- core_question: "~일까?" 답·결론 금지.
+- article_fact: 본문 사실 1개.
+- scaffolding_note: **듬뿍** (한 줄이지만 구체적 힌트).
+- counter_angle: null.
 RULES,
         2 => <<<RULES
-축(axes) 규칙 (level 2):
-- 정확히 {$axisMin}개. 서로 다른 쉬운 측면.
-- core_question: "~일까?" / "~해야 할까?" (L1보다 살짝 열린 질문).
+축(axes) 규칙 (L2):
+- {$axisMin}~{$axisMax}개. L1보다 측면 분화.
+- core_question: "~일까?" / "~해야 할까?"
 - article_fact: 본문 사실 1개.
-- scaffolding_note: **비계 2줄 분량**을 한 줄에 압축 (많음).
+- scaffolding_note: **많음** (L1보다 짧게).
 - counter_angle: null.
 RULES,
         3 => <<<RULES
-축(axes) 규칙 (level 3):
-- {$axisMin}~{$axisMax}개. L2보다 측면 더 분화.
-- core_question: 양면을 여는 질문.
+축(axes) 규칙 (L3):
+- 정확히 {$axisMin}개. 서로 다른 측면.
+- core_question: 양면 여는 질문.
 - article_fact: 본문 사실 1개.
-- scaffolding_note: 중상 비계 (한 줄, L2보다 짧게).
-- counter_angle: 최대 1축만 가벼운 반론 각도 (답 금지).
+- scaffolding_note: 중간 (한 줄).
+- counter_angle: **모든 축**에 예상 반론 1줄 (반론 1겹, 답 금지).
 RULES,
         4 => <<<RULES
-축(axes) 규칙 (level 4):
-- 정확히 {$axisMin}개. 서로 다른 측면.
-- core_question: 양면을 열어주는 질문 ("~일까?" / "~해야 할까?").
-- article_fact: 본문 사실 1개.
-- scaffolding_note: 짧은 힌트 1줄 (중간).
-- counter_angle: 예상 반론 한 줄 (답 아님).
-RULES,
-        5 => <<<RULES
-축(axes) 규칙 (level 5):
-- 정확히 {$axisMin}개. **근거 중심** — article_fact에 숫자·사건명·고유명사 1개 이상.
-- core_question: 근거를 따지는 질문.
-- scaffolding_note: 짧음 (중하) — 힌트만, 답 주지 말 것.
-- counter_angle: 1~2축에 예상 반론.
-RULES,
-        6 => <<<RULES
-축(axes) 규칙 (level 6):
-- {$axisMin}~{$axisMax}개. 축 간 연결 notes에 한 줄.
-- core_question: 반론을 전제로 한 질문.
-- article_fact: 본문 사실 1개 (비계 적음).
-- scaffolding_note: null 또는 매우 짧음.
-- counter_angle: **2축 이상**에 반론 각도 (L7보다 얕게).
+축(axes) 규칙 (L4):
+- 정확히 {$axisMin}개. **근거 중심** — article_fact에 숫자·사건명·고유명사.
+- core_question: 근거+다층을 따지는 질문.
+- scaffolding_note: null 또는 매우 짧음 (light).
+- counter_angle: 2축 이상 반론 각도.
 RULES,
         default => <<<RULES
-축(axes) 규칙 (level 7):
-- {$axisMin}~{$axisMax}개. **축 간 연결** notes에 한 줄로 명시.
-- core_question: 깊은 질문 — "~라면 ~는?" / 반론을 전제로 한 질문.
-- article_fact: 본문 사실 1개 (최소 비계).
-- scaffolding_note: null 또는 매우 짧음 (비계 최소).
-- counter_angle: **반론의 반론** 한 줄 (메타 반박 각도, 결론 금지).
+축(axes) 규칙 (L5 — the gist):
+- {$axisMin}~{$axisMax}개. **축 간 연결** notes에 한 줄.
+- core_question: "~라면 ~는?" / 반론 전제 질문.
+- article_fact: 본문 사실 1개.
+- scaffolding_note: null (비계 0).
+- counter_angle: **반론의 반론** (메타 반박, 결론 금지).
 - source_section: content 소제목 (없으면 null).
 RULES,
     };
@@ -515,18 +469,30 @@ function eduLevelDepthStaircaseAnalysis(array $compare): array
         }
     }
 
-    $criticalPairs = ['2→3', '5→6'];
+    $criticalPairs = ['1→2', '2→3', '3→4', '4→5'];
     foreach ($adjacent as $row) {
         if (in_array($row['pair'], $criticalPairs, true) && !($row['distinct'] ?? false)) {
-            $warnings[] = 'CRITICAL ' . $row['pair'] . ': 사이 단계 구분 실패';
+            $warnings[] = 'CRITICAL ' . $row['pair'] . ': 인접 레벨 구분 실패';
         }
     }
+
+    $hingeWarn = !$monotonic['hinge_len'];
+    if ($hingeWarn) {
+        $warnings[] = 'hinge_len 비단조 (참고 — axis/scaffold/counter로 판정)';
+    }
+
+    $blockingWarnings = array_filter(
+        $warnings,
+        static fn ($w) => str_starts_with($w, 'CRITICAL') || str_contains($w, '거의 동일')
+    );
 
     return [
         'monotonic' => $monotonic,
         'adjacent' => $adjacent,
         'warnings' => $warnings,
-        'staircase_ok' => $monotonic['hinge_len'] && $monotonic['scaffolding_score'] && $warnings === [],
+        'staircase_ok' => $monotonic['scaffolding_score']
+            && $monotonic['axis_count']
+            && count($blockingWarnings) === 0,
     ];
 }
 
@@ -554,11 +520,20 @@ function eduLevelDepthVerifyMarkdown(array $payload): string
 {
     $newsId = (int) ($payload['news_id'] ?? 0);
     $title = (string) ($payload['title'] ?? '');
-    $phase = (string) ($payload['phase'] ?? 'phase3');
+    $phase = (string) ($payload['phase'] ?? 'phase5');
+    $stepCount = count($payload['level_order'] ?? eduLevelDepthVerifyLevels());
+    $phaseLabel = match ($phase) {
+        'phase5' => 'Phase 5 (5단 검증)',
+        'phase3' => 'Phase 3 (7단)',
+        default => 'Phase 1',
+    };
     $md = "# EDU Level Depth Verify — {$newsId} {$title}\n\n";
-    $md .= '> ' . ($phase === 'phase3' ? 'Phase 3' : 'Phase 1') . ' · ' . date('Y-m-d H:i:s') . ' · prompt ' . EDU_LEVEL_DEPTH_PROMPT_VERSION . "\n\n";
+    $md .= '> ' . $phaseLabel . ' · ' . date('Y-m-d H:i:s') . ' · prompt ' . EDU_LEVEL_DEPTH_PROMPT_VERSION . "\n\n";
 
-    if ($phase === 'phase3') {
+    if ($phase === 'phase5') {
+        $md .= "## 핵심 질문\n\n";
+        $md .= "같은 글에서 level **1~5**가 **계단**처럼 단조 증가하는가? 인접(1↔2, 2↔3, 3↔4, 4↔5)이 **7단보다 또렷**한가?\n\n";
+    } elseif ($phase === 'phase3') {
         $md .= "## 핵심 질문\n\n";
         $md .= "같은 글에서 level **1~7**이 **계단**처럼 단조 증가하는가? 인접(2↔3, 5↔6)이 구분되는가?\n\n";
     } else {
@@ -566,7 +541,7 @@ function eduLevelDepthVerifyMarkdown(array $payload): string
         $md .= "같은 글에서 level 1 / 4 / 7 구조가 **진짜 다른 깊이**로 나오는가?\n\n";
     }
 
-    $md .= "## 7단 계단 표 (자동 — 사람 눈 검수 필수)\n\n";
+    $md .= "## {$stepCount}단 계단 표 (자동 — 사람 눈 검수 필수)\n\n";
     $md .= "| L | label | hinge | side_b | axes | counter | scaffold | scaffold_axes | thinking |\n";
     $md .= "|---|-------|-------|--------|------|---------|----------|---------------|----------|\n";
     foreach ($payload['compare'] ?? [] as $row) {
@@ -588,7 +563,7 @@ function eduLevelDepthVerifyMarkdown(array $payload): string
         $md .= '- hinge_len 단조: ' . (!empty($mono['hinge_len']) ? 'OK' : 'FAIL') . "\n";
         $md .= '- axis_count 단조: ' . (!empty($mono['axis_count']) ? 'OK' : 'WARN(유연)') . "\n";
         $md .= '- scaffold 단조: ' . (!empty($mono['scaffolding_score']) ? 'OK' : 'FAIL') . "\n";
-        $md .= '- staircase_ok: ' . (!empty($stair['staircase_ok']) ? '**YES**' : '**NO — 단계 수 재고 검토**') . "\n";
+        $md .= '- staircase_ok: ' . (!empty($stair['staircase_ok']) ? '**YES**' : '**NO — 4단 재설계 검토**') . "\n";
         foreach ($stair['warnings'] ?? [] as $w) {
             $md .= '- ⚠ ' . $w . "\n";
         }
@@ -605,7 +580,12 @@ function eduLevelDepthVerifyMarkdown(array $payload): string
     }
 
     $md .= "\n## 사람 검수 (이원근)\n\n";
-    if ($phase === 'phase3') {
+    if ($phase === 'phase5') {
+        $md .= "- [ ] 1→5 **계단**이 매끄러운가? (hinge/축/비계/counter)\n";
+        $md .= "- [ ] **1 vs 2, 2 vs 3, 3 vs 4, 4 vs 5** 모두 구분되는가?\n";
+        $md .= "- [ ] L1 단순 / L3 반론 1겹 / L5 the gist 수준인가?\n";
+        $md .= "- [ ] FAIL이면 → **4단** 재설계\n\n";
+    } elseif ($phase === 'phase3') {
         $md .= "- [ ] 1→7 **계단**이 매끄러운가? (띄엄띄엄이면 5~4단 재설계)\n";
         $md .= "- [ ] **2 vs 3** 구분되는가?\n";
         $md .= "- [ ] **5 vs 6** 구분되는가?\n";

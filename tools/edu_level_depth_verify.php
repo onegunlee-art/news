@@ -1,11 +1,11 @@
 <?php
 /**
- * EDU 7단계 Phase 3 — level 1~7 구조 깊이 검증 (프로덕션 무관)
+ * EDU 5단계 Phase 5 — level 1~5 구조 깊이 검증 (프로덕션 무관)
  *
  * Usage:
  *   php tools/edu_level_depth_verify.php 630
  *   php tools/edu_level_depth_verify.php 630 150
- *   php tools/edu_level_depth_verify.php 630 --levels=1,4,7   (Phase 1 subset)
+ *   php tools/edu_level_depth_verify.php 630 --levels=1,4,5   (subset)
  *   php tools/edu_level_depth_verify.php 630 --stdout-only
  *   php tools/edu_level_depth_verify.php --dry-run
  */
@@ -28,7 +28,12 @@ foreach ($argv as $arg) {
     }
 }
 $verifyLevels = eduLevelDepthVerifyLevels($levelsOverride);
-$phase = count($verifyLevels) >= 7 ? 'phase3' : 'phase1';
+$phase = match (true) {
+    $verifyLevels === EDU_LEVEL_DEPTH_VERIFY_LEVELS => 'phase5',
+    count($verifyLevels) >= 7 => 'phase3',
+    default => 'phase1',
+};
+$stepLabel = count($verifyLevels) === EDU_LEVEL_DEPTH_STEP_COUNT ? '5-STEP' : (count($verifyLevels) >= 7 ? '7-STEP' : 'SUBSET');
 
 $numericArgs = array_values(array_filter($argv, static fn ($a) => is_numeric($a)));
 $ids = $numericArgs !== [] ? array_map('intval', $numericArgs) : [630];
@@ -126,7 +131,7 @@ foreach ($ids as $newsId) {
     $staircase = count($compare) >= 2 ? eduLevelDepthStaircaseAnalysis($compare) : [];
 
     echo str_repeat('-', 72) . "\n";
-    echo "7-STEP STAIRCASE (자동 — 사람 눈 검수 필수)\n";
+    echo "{$stepLabel} STAIRCASE (자동 — 사람 눈 검수 필수)\n";
     echo str_repeat('-', 72) . "\n";
     printf("%-3s %-10s %6s %5s %5s %7s %12s %6s\n", 'L', 'label', 'hinge', 'side_b', 'axes', 'counter', 'scaffold', 'sc_ax');
     foreach ($compare as $row) {
@@ -160,7 +165,11 @@ foreach ($ids as $newsId) {
     }
 
     echo "HUMAN CHECK (이원근):\n";
-    if ($phase === 'phase3') {
+    if ($phase === 'phase5') {
+        echo "  · 1→5 계단 매끄러운가? (hinge/축/비계/counter)\n";
+        echo "  · 1↔2, 2↔3, 3↔4, 4↔5 모두 구분되나?\n";
+        echo "  · FAIL → 4단 재설계\n\n";
+    } elseif ($phase === 'phase3') {
         echo "  · 1→7 계단 매끄러운가? (hinge/축/비계)\n";
         echo "  · 2 vs 3, 5 vs 6 구분되나?\n";
         echo "  · 흐릿하면 → 7단→5단 재설계\n\n";
