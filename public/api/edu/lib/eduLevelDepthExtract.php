@@ -8,13 +8,46 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/eduHingeExtract.php';
 
-const EDU_LEVEL_DEPTH_VERIFY_LEVELS = [1, 4, 7];
-const EDU_LEVEL_DEPTH_PROMPT_VERSION = 'level-depth-verify-v1';
+const EDU_LEVEL_DEPTH_VERIFY_LEVELS = [1, 2, 3, 4, 5, 6, 7];
+const EDU_LEVEL_DEPTH_VERIFY_LEVELS_PHASE1 = [1, 4, 7];
+const EDU_LEVEL_DEPTH_PROMPT_VERSION = 'level-depth-verify-v2-phase3';
+
+/** @param list<int>|null $override */
+function eduLevelDepthVerifyLevels(?array $override = null): array
+{
+    if ($override !== null && $override !== []) {
+        return array_values(array_unique(array_map('intval', $override)));
+    }
+
+    return EDU_LEVEL_DEPTH_VERIFY_LEVELS;
+}
 
 /** @return list<int> */
-function eduLevelDepthVerifyLevels(): array
+function eduLevelDepthParseLevelsArg(string $arg): array
 {
-    return EDU_LEVEL_DEPTH_VERIFY_LEVELS;
+    $parts = array_map('trim', explode(',', $arg));
+    $levels = [];
+    foreach ($parts as $p) {
+        if ($p !== '' && is_numeric($p)) {
+            $levels[] = (int) $p;
+        }
+    }
+
+    return $levels;
+}
+
+function eduLevelDepthScaffoldingScore(string $scaffolding): int
+{
+    return match ($scaffolding) {
+        'heavy' => 4,
+        'heavyish' => 3,
+        'medium_high' => 3,
+        'medium' => 2,
+        'medium_low' => 1,
+        'light' => 1,
+        'minimal' => 0,
+        default => 2,
+    };
 }
 
 function eduLevelDepthVerifyDir(): string
@@ -33,7 +66,7 @@ function eduLevelDepthSpec(int $level): array
     $specs = [
         1 => [
             'level' => 1,
-            'label' => '초등 (level 1)',
+            'label' => 'L1 초등',
             'audience' => '초5~6 / 만 10~12세',
             'hinge_mode' => 'single_question',
             'axis_min' => 1,
@@ -41,9 +74,29 @@ function eduLevelDepthSpec(int $level): array
             'scaffolding' => 'heavy',
             'thinking' => '단순 — "~일까?" 한 층, 통념 vs 본문 한 fact',
         ],
+        2 => [
+            'level' => 2,
+            'label' => 'L2 초등+',
+            'audience' => '초6 / 만 11~12세',
+            'hinge_mode' => 'dual_intro',
+            'axis_min' => 2,
+            'axis_max' => 2,
+            'scaffolding' => 'heavyish',
+            'thinking' => '양면 입문 — "A처럼 보이지만 B" 짧게, 2축, 비계 많음 (L1보다 살짝 깊게)',
+        ],
+        3 => [
+            'level' => 3,
+            'label' => 'L3 중등-',
+            'audience' => '중1~2',
+            'hinge_mode' => 'dual_sided_soft',
+            'axis_min' => 2,
+            'axis_max' => 3,
+            'scaffolding' => 'medium_high',
+            'thinking' => '양면 — 2~3축, 비계 중상 (L4 바로 아래, L2보다 깊음)',
+        ],
         4 => [
             'level' => 4,
-            'label' => '중등 (level 4)',
+            'label' => 'L4 중등',
             'audience' => '중2~3',
             'hinge_mode' => 'dual_sided',
             'axis_min' => 3,
@@ -51,9 +104,29 @@ function eduLevelDepthSpec(int $level): array
             'scaffolding' => 'medium',
             'thinking' => '양면 — A vs B, 3축, 사실+질문 균형',
         ],
+        5 => [
+            'level' => 5,
+            'label' => 'L5 중등+',
+            'audience' => '중3 / 고1',
+            'hinge_mode' => 'evidence_triple',
+            'axis_min' => 3,
+            'axis_max' => 3,
+            'scaffolding' => 'medium_low',
+            'thinking' => '3축+근거 강조 — article_fact 구체적, 비계 중하 (L4 위)',
+        ],
+        6 => [
+            'level' => 6,
+            'label' => 'L6 고등-',
+            'audience' => '고1~2',
+            'hinge_mode' => 'multi_layer_intro',
+            'axis_min' => 3,
+            'axis_max' => 4,
+            'scaffolding' => 'light',
+            'thinking' => '다층 입문 — 3~4축, 반론 각도 시작, 비계 적음 (L7 바로 아래)',
+        ],
         7 => [
             'level' => 7,
-            'label' => '고등 (level 7)',
+            'label' => 'L7 고등',
             'audience' => '고2~3',
             'hinge_mode' => 'multi_layer',
             'axis_min' => 3,
@@ -64,10 +137,13 @@ function eduLevelDepthSpec(int $level): array
     ];
 
     if (!isset($specs[$level])) {
-        throw new InvalidArgumentException("Unsupported verify level: {$level} (use 1, 4, or 7)");
+        throw new InvalidArgumentException("Unsupported verify level: {$level} (use 1–7)");
     }
 
-    return $specs[$level];
+    $spec = $specs[$level];
+    $spec['scaffolding_score'] = eduLevelDepthScaffoldingScore((string) $spec['scaffolding']);
+
+    return $spec;
 }
 
 function eduLevelDepthSystemPrompt(int $level): string
@@ -88,6 +164,21 @@ function eduLevelDepthSystemPrompt(int $level): string
 - hook_student: side_a와 같은 톤의 질문 한 문장.
 - shake_prompt: 본문 fact 1개만 덧붙인 부드러운 힌트 (결론·the gist 입장 금지).
 RULES,
+        2 => <<<'RULES'
+경첩 규칙 (level 2 — 양면 입문):
+- hinge: **짧은 양면** "A처럼 보이지만/그런데 B" — L4보다 짧고 쉬운 말. C층 금지.
+- side_a: 쉬운 통념/질문 틀.
+- side_b: 본문이 살짝 흔드는 반대쪽 (한 줄, 추상 금지).
+- hook_student: side_a에서 시작하는 질문.
+- shake_prompt: side_b 힌트 + 본문 fact 1개 (부드럽게).
+RULES,
+        3 => <<<'RULES'
+경첩 규칙 (level 3 — 양면 중하):
+- hinge: **양면** "A이지만 B" — L4와 비슷하지만 문장·어휘 더 쉽게. 세 번째 층(C) 금지.
+- side_a / side_b: 본문 근거, L4보다 짧게.
+- hook_student: 양면을 여는 질문.
+- shake_prompt: side_b + fact 1개.
+RULES,
         4 => <<<'RULES'
 경첩 규칙 (level 4 — 중등):
 - hinge: **양면** "A이지만/그러나 B" 한 문장. side_a·side_b 모두 본문 근거.
@@ -95,6 +186,20 @@ RULES,
 - side_b: 본문이 드러내는 더 복잡한 진실.
 - hook_student: side_a에서 시작하는 질문.
 - shake_prompt: side_b 쪽으로 흔드는 한 문장 + 본문 fact 1개.
+RULES,
+        5 => <<<'RULES'
+경첩 규칙 (level 5 — 3축+근거):
+- hinge: 양면 + **근거가 갈리는 지점** 한 문장 ("숫자/사건 때문에 A vs B").
+- side_a / side_b: L4보다 구체적 (행위자·수치).
+- hook_student: 근거를 따져야 하는 질문.
+- shake_prompt: 반대 근거 fact 1개 (숫자·고유명사 포함).
+RULES,
+        6 => <<<'RULES'
+경첩 규칙 (level 6 — 다층 입문):
+- hinge: **2층 긴장** "A이지만 B, 더 나아가 C" — L7보다 짧고 C는 힌트 수준.
+- side_a / side_b: 고등 입문 토론 수준.
+- hook_student: 긴장을 관통하는 질문.
+- shake_prompt: 반론 fact + "그럼에도" 뉘앙스 (결론 금지).
 RULES,
         default => <<<'RULES'
 경첩 규칙 (level 7 — 고등):
@@ -114,6 +219,22 @@ RULES,
 - scaffolding_note: 이 축에서 코치가 줄 **비계 힌트** 한 줄 (듬뿍).
 - counter_angle: null (초등은 반론 층 없음).
 RULES,
+        2 => <<<RULES
+축(axes) 규칙 (level 2):
+- 정확히 {$axisMin}개. 서로 다른 쉬운 측면.
+- core_question: "~일까?" / "~해야 할까?" (L1보다 살짝 열린 질문).
+- article_fact: 본문 사실 1개.
+- scaffolding_note: **비계 2줄 분량**을 한 줄에 압축 (많음).
+- counter_angle: null.
+RULES,
+        3 => <<<RULES
+축(axes) 규칙 (level 3):
+- {$axisMin}~{$axisMax}개. L2보다 측면 더 분화.
+- core_question: 양면을 여는 질문.
+- article_fact: 본문 사실 1개.
+- scaffolding_note: 중상 비계 (한 줄, L2보다 짧게).
+- counter_angle: 최대 1축만 가벼운 반론 각도 (답 금지).
+RULES,
         4 => <<<RULES
 축(axes) 규칙 (level 4):
 - 정확히 {$axisMin}개. 서로 다른 측면.
@@ -121,6 +242,21 @@ RULES,
 - article_fact: 본문 사실 1개.
 - scaffolding_note: 짧은 힌트 1줄 (중간).
 - counter_angle: 예상 반론 한 줄 (답 아님).
+RULES,
+        5 => <<<RULES
+축(axes) 규칙 (level 5):
+- 정확히 {$axisMin}개. **근거 중심** — article_fact에 숫자·사건명·고유명사 1개 이상.
+- core_question: 근거를 따지는 질문.
+- scaffolding_note: 짧음 (중하) — 힌트만, 답 주지 말 것.
+- counter_angle: 1~2축에 예상 반론.
+RULES,
+        6 => <<<RULES
+축(axes) 규칙 (level 6):
+- {$axisMin}~{$axisMax}개. 축 간 연결 notes에 한 줄.
+- core_question: 반론을 전제로 한 질문.
+- article_fact: 본문 사실 1개 (비계 적음).
+- scaffolding_note: null 또는 매우 짧음.
+- counter_angle: **2축 이상**에 반론 각도 (L7보다 얕게).
 RULES,
         default => <<<RULES
 축(axes) 규칙 (level 7):
@@ -237,6 +373,7 @@ function eduLevelDepthNormalize(array $parsed, int $newsId, string $title, int $
             'axis_min' => $spec['axis_min'],
             'axis_max' => $spec['axis_max'],
             'scaffolding' => $spec['scaffolding'],
+            'scaffolding_score' => $spec['scaffolding_score'] ?? eduLevelDepthScaffoldingScore((string) $spec['scaffolding']),
         ],
     ];
 }
@@ -287,14 +424,29 @@ USER;
     ];
 }
 
-/** @param list<array<string, mixed>> $byLevel keyed by level in outer array */
-function eduLevelDepthCompareSummary(array $byLevel): array
+/** @param list<array<string, mixed>> $byLevel keyed by level */
+function eduLevelDepthCompareSummary(array $byLevel, ?array $levels = null): array
 {
+    $order = $levels ?? eduLevelDepthVerifyLevels(array_keys($byLevel));
+    sort($order);
     $rows = [];
-    foreach (EDU_LEVEL_DEPTH_VERIFY_LEVELS as $level) {
+    foreach ($order as $level) {
         $ex = $byLevel[$level] ?? null;
         if (!is_array($ex)) {
             continue;
+        }
+        $spec = $ex['depth_spec'] ?? [];
+        $scaffoldAxes = 0;
+        $scaffoldChars = 0;
+        foreach ($ex['axes'] ?? [] as $ax) {
+            if (!is_array($ax)) {
+                continue;
+            }
+            $note = trim((string) ($ax['scaffolding_note'] ?? ''));
+            if ($note !== '') {
+                $scaffoldAxes++;
+                $scaffoldChars += mb_strlen($note);
+            }
         }
         $rows[] = [
             'level' => $level,
@@ -306,11 +458,76 @@ function eduLevelDepthCompareSummary(array $byLevel): array
                 $ex['axes'] ?? [],
                 static fn ($ax) => is_array($ax) && !empty($ax['counter_angle'])
             )),
+            'scaffolding' => (string) ($spec['scaffolding'] ?? ''),
+            'scaffolding_score' => (int) ($spec['scaffolding_score'] ?? 0),
+            'scaffold_axes' => $scaffoldAxes,
+            'scaffold_chars' => $scaffoldChars,
             'thinking_summary' => (string) ($ex['thinking_summary'] ?? ''),
         ];
     }
 
     return $rows;
+}
+
+/**
+ * @param list<array<string, mixed>> $compare
+ * @return array<string, mixed>
+ */
+function eduLevelDepthStaircaseAnalysis(array $compare): array
+{
+    $warnings = [];
+    $adjacent = [];
+    $monotonic = ['hinge_len' => true, 'axis_count' => true, 'scaffolding_score' => true];
+
+    for ($i = 1, $n = count($compare); $i < $n; $i++) {
+        $prev = $compare[$i - 1];
+        $cur = $compare[$i];
+        $pair = ($prev['level'] ?? '?') . '→' . ($cur['level'] ?? '?');
+
+        if ((int) ($cur['hinge_len'] ?? 0) < (int) ($prev['hinge_len'] ?? 0)) {
+            $monotonic['hinge_len'] = false;
+        }
+        if ((int) ($cur['axis_count'] ?? 0) < (int) ($prev['axis_count'] ?? 0)) {
+            $monotonic['axis_count'] = false;
+        }
+        if ((int) ($cur['scaffolding_score'] ?? 0) > (int) ($prev['scaffolding_score'] ?? 0)) {
+            $monotonic['scaffolding_score'] = false;
+        }
+
+        $hingeDelta = (int) ($cur['hinge_len'] ?? 0) - (int) ($prev['hinge_len'] ?? 0);
+        $axisDelta = (int) ($cur['axis_count'] ?? 0) - (int) ($prev['axis_count'] ?? 0);
+        $scaffoldDelta = (int) ($prev['scaffolding_score'] ?? 0) - (int) ($cur['scaffolding_score'] ?? 0);
+
+        $distinct = $hingeDelta !== 0 || $axisDelta !== 0 || $scaffoldDelta !== 0
+            || (bool) ($cur['has_side_b'] ?? false) !== (bool) ($prev['has_side_b'] ?? false)
+            || (int) ($cur['counter_axes'] ?? 0) !== (int) ($prev['counter_axes'] ?? 0);
+
+        $adjacent[] = [
+            'pair' => $pair,
+            'hinge_delta' => $hingeDelta,
+            'axis_delta' => $axisDelta,
+            'scaffold_delta' => $scaffoldDelta,
+            'distinct' => $distinct,
+        ];
+
+        if (!$distinct) {
+            $warnings[] = "{$pair}: 인접 레벨이 거의 동일 (흐릿)";
+        }
+    }
+
+    $criticalPairs = ['2→3', '5→6'];
+    foreach ($adjacent as $row) {
+        if (in_array($row['pair'], $criticalPairs, true) && !($row['distinct'] ?? false)) {
+            $warnings[] = 'CRITICAL ' . $row['pair'] . ': 사이 단계 구분 실패';
+        }
+    }
+
+    return [
+        'monotonic' => $monotonic,
+        'adjacent' => $adjacent,
+        'warnings' => $warnings,
+        'staircase_ok' => $monotonic['hinge_len'] && $monotonic['scaffolding_score'] && $warnings === [],
+    ];
 }
 
 function eduLevelDepthEnsureDirs(): void
@@ -337,14 +554,21 @@ function eduLevelDepthVerifyMarkdown(array $payload): string
 {
     $newsId = (int) ($payload['news_id'] ?? 0);
     $title = (string) ($payload['title'] ?? '');
+    $phase = (string) ($payload['phase'] ?? 'phase3');
     $md = "# EDU Level Depth Verify — {$newsId} {$title}\n\n";
-    $md .= '> Phase 1 검증 · ' . date('Y-m-d H:i:s') . ' · prompt ' . EDU_LEVEL_DEPTH_PROMPT_VERSION . "\n\n";
-    $md .= "## 핵심 질문\n\n";
-    $md .= "같은 글에서 level 1 / 4 / 7 구조가 **진짜 다른 깊이**로 나오는가?\n\n";
+    $md .= '> ' . ($phase === 'phase3' ? 'Phase 3' : 'Phase 1') . ' · ' . date('Y-m-d H:i:s') . ' · prompt ' . EDU_LEVEL_DEPTH_PROMPT_VERSION . "\n\n";
 
-    $md .= "## 요약 비교\n\n";
-    $md .= "| level | label | hinge 글자 | side_b | axes | counter_angle 축 | thinking_summary |\n";
-    $md .= "|-------|-------|------------|--------|------|------------------|------------------|\n";
+    if ($phase === 'phase3') {
+        $md .= "## 핵심 질문\n\n";
+        $md .= "같은 글에서 level **1~7**이 **계단**처럼 단조 증가하는가? 인접(2↔3, 5↔6)이 구분되는가?\n\n";
+    } else {
+        $md .= "## 핵심 질문\n\n";
+        $md .= "같은 글에서 level 1 / 4 / 7 구조가 **진짜 다른 깊이**로 나오는가?\n\n";
+    }
+
+    $md .= "## 7단 계단 표 (자동 — 사람 눈 검수 필수)\n\n";
+    $md .= "| L | label | hinge | side_b | axes | counter | scaffold | scaffold_axes | thinking |\n";
+    $md .= "|---|-------|-------|--------|------|---------|----------|---------------|----------|\n";
     foreach ($payload['compare'] ?? [] as $row) {
         $md .= '| ' . ($row['level'] ?? '') . ' | '
             . ($row['label'] ?? '') . ' | '
@@ -352,16 +576,49 @@ function eduLevelDepthVerifyMarkdown(array $payload): string
             . (($row['has_side_b'] ?? false) ? 'Y' : 'N') . ' | '
             . ($row['axis_count'] ?? '') . ' | '
             . ($row['counter_axes'] ?? '') . ' | '
-            . str_replace('|', '\\|', (string) ($row['thinking_summary'] ?? '')) . " |\n";
+            . ($row['scaffolding'] ?? '') . ' | '
+            . ($row['scaffold_axes'] ?? '') . ' | '
+            . str_replace('|', '\\|', mb_substr((string) ($row['thinking_summary'] ?? ''), 0, 40)) . " |\n";
+    }
+
+    $stair = $payload['staircase'] ?? [];
+    if ($stair !== []) {
+        $md .= "\n## 계단 자동 판정 (참고)\n\n";
+        $mono = $stair['monotonic'] ?? [];
+        $md .= '- hinge_len 단조: ' . (!empty($mono['hinge_len']) ? 'OK' : 'FAIL') . "\n";
+        $md .= '- axis_count 단조: ' . (!empty($mono['axis_count']) ? 'OK' : 'WARN(유연)') . "\n";
+        $md .= '- scaffold 단조: ' . (!empty($mono['scaffolding_score']) ? 'OK' : 'FAIL') . "\n";
+        $md .= '- staircase_ok: ' . (!empty($stair['staircase_ok']) ? '**YES**' : '**NO — 단계 수 재고 검토**') . "\n";
+        foreach ($stair['warnings'] ?? [] as $w) {
+            $md .= '- ⚠ ' . $w . "\n";
+        }
+        $md .= "\n### 인접 delta\n\n";
+        $md .= "| pair | Δhinge | Δaxes | Δscaffold | distinct? |\n";
+        $md .= "|------|--------|-------|-----------|----------|\n";
+        foreach ($stair['adjacent'] ?? [] as $row) {
+            $md .= '| ' . ($row['pair'] ?? '') . ' | '
+                . ($row['hinge_delta'] ?? '') . ' | '
+                . ($row['axis_delta'] ?? '') . ' | '
+                . ($row['scaffold_delta'] ?? '') . ' | '
+                . (($row['distinct'] ?? false) ? 'Y' : '**N**') . " |\n";
+        }
     }
 
     $md .= "\n## 사람 검수 (이원근)\n\n";
-    $md .= "- [ ] level 1이 초등이 따질 만큼 **단순**한가?\n";
-    $md .= "- [ ] level 7이 **고등 수준으로 깊은**가?\n";
-    $md .= "- [ ] level 4가 **중간**인가?\n";
-    $md .= "- [ ] 셋이 **서로 비슷하지 않은**가? (흐릿하면 재설계)\n\n";
+    if ($phase === 'phase3') {
+        $md .= "- [ ] 1→7 **계단**이 매끄러운가? (띄엄띄엄이면 5~4단 재설계)\n";
+        $md .= "- [ ] **2 vs 3** 구분되는가?\n";
+        $md .= "- [ ] **5 vs 6** 구분되는가?\n";
+        $md .= "- [ ] 1·4·7 Phase 1 수준 유지되는가?\n\n";
+    } else {
+        $md .= "- [ ] level 1이 초등이 따질 만큼 **단순**한가?\n";
+        $md .= "- [ ] level 7이 **고등 수준으로 깊은**가?\n";
+        $md .= "- [ ] level 4가 **중간**인가?\n";
+        $md .= "- [ ] 셋이 **서로 비슷하지 않은**가? (흐릿하면 재설계)\n\n";
+    }
 
-    foreach (EDU_LEVEL_DEPTH_VERIFY_LEVELS as $level) {
+    $levelOrder = $payload['level_order'] ?? eduLevelDepthVerifyLevels();
+    foreach ($levelOrder as $level) {
         $ex = $payload['levels'][(string) $level] ?? $payload['levels'][$level] ?? null;
         if (!is_array($ex)) {
             continue;
