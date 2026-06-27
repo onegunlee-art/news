@@ -118,6 +118,7 @@ export interface EduBlueprint {
   progress_pct?: number
   ready_for_compose?: boolean
   reflection_lines?: string[]
+  reflection_confirmed?: boolean
   stance_changed?: boolean
   essay_structure?: EduStructurePreview
   /** axis_guide 코치 — UI 탐구 체크용 (표시만, 로직 무관) */

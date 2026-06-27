@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import EduEssayCompletionPanel from '../../components/edu/EduEssayCompletionPanel'
 import { type EssayArtifact } from '../../components/edu/EssayRevealCard'
 import { type EssayStructurePreview } from '../../components/edu/StructurePreviewCard'
+import { shouldTriggerEduCompose } from '../../utils/eduComposeTrigger'
 import EduQuestCompletionCelebration from '../../components/edu/EduQuestCompletionCelebration'
 import CoachMessageText from '../../components/edu/CoachMessageText'
 import EduCoachWaitingPanel from '../../components/edu/EduCoachWaitingPanel'
@@ -250,6 +251,7 @@ export default function QuestFlowCards() {
   const prevGuideAxisIndex = useRef(0)
   const prevPhase = useRef('stance')
   const skipStructurePulseRef = useRef(true)
+  const composeStartedRef = useRef(false)
 
   const applySessionState = useCallback((state: Awaited<ReturnType<typeof eduApi.getSessionState>>) => {
     setQuest(state.quest)
@@ -357,6 +359,10 @@ export default function QuestFlowCards() {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
     }
   }, [])
+
+  useEffect(() => {
+    composeStartedRef.current = false
+  }, [sessionId])
 
   useEffect(() => {
     if (phase !== 'guide_axis') {
@@ -551,6 +557,13 @@ export default function QuestFlowCards() {
     }
   }
 
+  useEffect(() => {
+    if (!sessionId || loading || completed || composing || composeStartedRef.current) return
+    if (phase !== 'compose') return
+    composeStartedRef.current = true
+    void handleCompose(sessionId)
+  }, [sessionId, loading, completed, composing, phase])
+
   const handleChatResponse = async (
     res: Awaited<ReturnType<typeof eduApi.sendChat>>,
     sid: string
@@ -563,12 +576,21 @@ export default function QuestFlowCards() {
     setCoachChoice(nextChoice)
     if (res.phase) setPhase(res.phase)
     else if (res.blueprint?.phase) setPhase(String(res.blueprint.phase))
+    if (res.progress_pct != null) setProgressPct(res.progress_pct)
     if (res.blueprint?.guide_axis_index != null) {
       setGuideAxisIndex(Number(res.blueprint.guide_axis_index))
     }
-    await syncSessionState(sid)
-    if (res.should_compose) {
+
+    const triggerCompose = shouldTriggerEduCompose(res)
+    if (triggerCompose) {
+      composeStartedRef.current = true
       await handleCompose(sid)
+    }
+
+    try {
+      await syncSessionState(sid)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '상태 동기화 실패')
     }
     return nextChoice
   }
@@ -845,7 +867,7 @@ export default function QuestFlowCards() {
           pulseSlot={structurePulseSlot}
           nudgeText={structureNudgeText}
           compact={keyboardOpen}
-          waiting={sending && !composing}
+          waiting={isWaiting}
         />
       )}
 

@@ -74,6 +74,10 @@ function eduMergeBlueprint(array $blueprint, array $patch): array
 /** @param array<string, mixed> $blueprint */
 function eduBlueprintProgress(array $blueprint): int
 {
+    if (!empty($blueprint['ready_for_compose']) || (string) ($blueprint['phase'] ?? '') === 'compose') {
+        return 100;
+    }
+
     $weights = [
         'stance' => 10,
         'reason' => 20,

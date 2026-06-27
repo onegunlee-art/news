@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import EduEssayCompletionPanel from '../../components/edu/EduEssayCompletionPanel'
 import { type EssayArtifact } from '../../components/edu/EssayRevealCard'
 import StructurePreviewCard, { type EssayStructurePreview } from '../../components/edu/StructurePreviewCard'
+import { shouldTriggerEduCompose } from '../../utils/eduComposeTrigger'
 import EduQuestCompletionCelebration from '../../components/edu/EduQuestCompletionCelebration'
 import TypewriterText from '../../components/edu/TypewriterText'
 import CoachMessageText from '../../components/edu/CoachMessageText'
@@ -180,6 +181,7 @@ export default function QuestFlowChat() {
   const [exploreNudgeText, setExploreNudgeText] = useState('')
   const prevGuideAxisIndex = useRef(0)
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const composeStartedRef = useRef(false)
   const [structureInsight, setStructureInsight] = useState<EduStructureInsightDebug | null>(null)
   const [insightLoading, setInsightLoading] = useState(false)
   const selectedQuestId = searchParams.get('quest_id')?.trim() || ''
@@ -460,6 +462,17 @@ export default function QuestFlowChat() {
     }
   }
 
+  useEffect(() => {
+    composeStartedRef.current = false
+  }, [sessionId])
+
+  useEffect(() => {
+    if (!sessionId || loading || completed || composing || composeStartedRef.current) return
+    if (phase !== 'compose') return
+    composeStartedRef.current = true
+    void handleCompose(sessionId)
+  }, [sessionId, loading, completed, composing, phase])
+
   const handleChatResponse = async (
     res: Awaited<ReturnType<typeof eduApi.sendChat>>,
     sid: string
@@ -469,9 +482,20 @@ export default function QuestFlowChat() {
     if (res.structure_preview?.sections?.length) {
       setStructurePreview(res.structure_preview as EssayStructurePreview)
     }
-    await syncSessionState(sid)
-    if (res.should_compose) {
+    if (res.phase) setPhase(res.phase)
+    else if (res.blueprint?.phase) setPhase(String(res.blueprint.phase))
+    if (res.progress_pct != null) setProgressPct(res.progress_pct)
+
+    const triggerCompose = shouldTriggerEduCompose(res)
+    if (triggerCompose) {
+      composeStartedRef.current = true
       await handleCompose(sid)
+    }
+
+    try {
+      await syncSessionState(sid)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '상태 동기화 실패')
     }
   }
 

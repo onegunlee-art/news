@@ -110,7 +110,9 @@ $statePayload = [
     'quest' => eduPublicQuestPayload(array_merge($quest, ['articles' => $quest['articles'] ?? []])),
     'blueprint' => $blueprint,
     'dialogue' => $dialogue,
-    'progress_pct' => eduBlueprintProgress($blueprint),
+    'progress_pct' => eduQuestUsesAxisGuide($quest)
+        ? max(eduCoachGuideProgress($blueprint), eduBlueprintProgress($blueprint))
+        : eduBlueprintProgress($blueprint),
     'essay' => $essay,
 ];
 

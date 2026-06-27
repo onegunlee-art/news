@@ -399,7 +399,7 @@ if ($action === 'confirm_reflection') {
         'stage' => eduBlueprintStage($blueprint),
         'phase' => $blueprint['phase'] ?? $phase,
         'assistant_message' => $assistantMessage,
-        'progress_pct' => (int) ($decision['progress_pct'] ?? eduBlueprintProgress($blueprint)),
+        'progress_pct' => eduBlueprintProgress($blueprint),
         'blueprint' => $blueprint,
     ]));
 }

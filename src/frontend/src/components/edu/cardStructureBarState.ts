@@ -29,8 +29,11 @@ export function resolveCardStructureBarState(
     case 'guide_conclusion':
       return { completed: 3, current: 4 }
     case 'hammer':
-      return { completed: 4, current: 3 }
+      return { completed: 3, current: 3 }
     case 'reflection':
+      return { completed: 5, current: -1 }
+    case 'compose':
+    case 'completed':
       return { completed: 5, current: -1 }
     default:
       return { completed: 0, current: 0 }
