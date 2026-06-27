@@ -16,12 +16,13 @@ require_once __DIR__ . '/eduGamification.php';
  */
 function eduStructureDiagnoseResolveLlm()
 {
-    $ruleOnly = getenv('EDU_STRUCTURE_DIAGNOSE_RULE_ONLY');
+    $ruleOnly = eduStructureDiagnoseEnv('EDU_STRUCTURE_DIAGNOSE_RULE_ONLY');
     if ($ruleOnly === '1' || $ruleOnly === 'true') {
         return null;
     }
 
-    $legacyLive = getenv('EDU_STRUCTURE_DIAGNOSE_LIVE');
+    // Legacy opt-out only when explicitly off (unset = LLM on)
+    $legacyLive = eduStructureDiagnoseEnv('EDU_STRUCTURE_DIAGNOSE_LIVE');
     if ($legacyLive === '0' || $legacyLive === 'false') {
         return null;
     }
@@ -35,6 +36,20 @@ function eduStructureDiagnoseResolveLlm()
 
         return null;
     }
+}
+
+/** FPM/CLI 모두 — getenv + $_ENV */
+function eduStructureDiagnoseEnv(string $name): string|false
+{
+    $v = getenv($name);
+    if ($v !== false && $v !== '') {
+        return $v;
+    }
+    if (isset($_ENV[$name]) && $_ENV[$name] !== '') {
+        return (string) $_ENV[$name];
+    }
+
+    return false;
 }
 
 /** @deprecated use eduStructureDiagnoseResolveLlm */
@@ -143,11 +158,21 @@ function eduSaveStructureInsight(
         return null;
     }
 
+    if ($llm === null) {
+        $llm = eduStructureDiagnoseResolveLlm();
+    }
+
     $blueprint = eduLoadBlueprint($session);
     $dialogue = eduLoadDialogue($session, true);
     $essayText = eduStructureInsightEssayText($sb, $session, $essayTextOverride);
 
     $diag = eduStructureDiagnoseSession($sessionId, $quest, $blueprint, $dialogue, $llm, $essayText);
+    if (($diag['diagnose_mode'] ?? '') === 'rule_fallback') {
+        error_log(
+            'edu insight rule_fallback session=' . $sessionId
+            . ' reason=' . ($diag['diagnose_fallback_reason'] ?? 'unknown')
+        );
+    }
     $row = eduStructureInsightRowFromDiagnose($studentId, $diag);
     $row['xp_earned'] = eduXpFromStructureDiagnose($diag);
 

@@ -86,7 +86,11 @@ foreach ($rows as $row) {
     $tension = (string) ($row['tension_engaged'] ?? '');
     $clarity = (string) ($row['conclusion_clarity'] ?? '');
     $evidence = (string) ($row['evidence_linked'] ?? '');
-    echo "#{$i}  {$at}  {$qc}  axes {$axes}  tension={$tension}  clarity={$clarity}  evidence={$evidence}\n";
+    $mode = (string) ($row['diagnose_mode'] ?? '');
+    $ver = (string) ($row['diagnose_version'] ?? '');
+    $level = $row['exploration_depth_level'] ?? null;
+    $levelStr = $level !== null && $level !== '' ? (string) $level : '-';
+    echo "#{$i}  {$at}  {$qc}  axes {$axes}  tension={$tension}  evidence={$evidence}  mode={$mode}  L={$levelStr}  ver={$ver}\n";
     $note = trim((string) ($row['structure_note'] ?? ''));
     if ($note !== '') {
         echo '    ' . str_replace("\n", ' ', mb_substr($note, 0, 120)) . "\n";

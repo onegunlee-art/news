@@ -235,6 +235,8 @@ jobs:
             --include='edu_axis_resolve_regression_test.php' \
             --include='edu_level_depth_verify.php' \
             --include='edu_level_depth_verify_static.php' \
+            --include='edu_insight_compose_probe.php' \
+            --include='edu_llm_diagnose_phase2_static_verify.php' \
             --include='seed_lens_quests.php' \
             --include='seed_japan_decision_quest.php' \
             --include='seed_iran_decision_quest.php' \

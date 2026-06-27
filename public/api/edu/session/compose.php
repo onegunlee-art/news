@@ -255,7 +255,7 @@ try {
         $supabase,
         $sessionForInsight,
         $quest,
-        eduStructureDiagnoseOptionalLlm(),
+        null,
         trim((string) ($draft['full_text'] ?? ''))
     );
     if (is_array($insightRow) && isset($insightRow['xp_earned'])) {

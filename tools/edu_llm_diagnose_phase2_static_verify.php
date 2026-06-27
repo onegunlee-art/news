@@ -45,6 +45,7 @@ check(str_contains($insights, 'EDU_STRUCTURE_DIAGNOSE_RULE_ONLY'), 'insights: ru
 check(str_contains($insights, 'exploration_depth_level'), 'insights: level column in row');
 
 check(str_contains($compose, 'eduSaveStructureInsight'), 'compose: insight hook preserved');
+check(str_contains($compose, 'null,'), 'compose: save resolves LLM internally');
 check(str_contains($compose, 'catch (Throwable $insightErr)'), 'compose: fail-safe insight');
 
 check(str_contains($migration, 'exploration_depth_level'), 'migration: level column');

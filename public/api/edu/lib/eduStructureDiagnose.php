@@ -376,7 +376,12 @@ function eduStructureDiagnoseSession(
         );
     }
 
+    $fallbackReason = null;
     if (!empty($llmPart['error'])) {
+        $fallbackReason = (string) ($llmPart['error']);
+        if (!empty($llmPart['message'])) {
+            $fallbackReason .= ':' . (string) $llmPart['message'];
+        }
         $llmPart = eduStructureDiagnoseRuleFallback($hinge, $axes, $axesCovered, $blueprint, $studentTexts);
         $llmPart['diagnose_mode'] = 'rule_fallback';
     } else {
@@ -399,6 +404,7 @@ function eduStructureDiagnoseSession(
         'level_rationale' => $llmPart['level_rationale'] ?? '',
         'structure_note' => $llmPart['structure_note'],
         'diagnose_mode' => $llmPart['diagnose_mode'] ?? 'llm',
+        'diagnose_fallback_reason' => $fallbackReason,
         'hinge_ref' => [
             'side_a' => $hinge['side_a'] ?? null,
             'side_b' => $hinge['side_b'] ?? null,
