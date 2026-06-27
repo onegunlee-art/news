@@ -252,6 +252,7 @@ export default function QuestFlowCards() {
   const prevPhase = useRef('stance')
   const skipStructurePulseRef = useRef(true)
   const composeStartedRef = useRef(false)
+  const handleComposeRef = useRef<(sid: string) => Promise<void>>(async () => {})
 
   const applySessionState = useCallback((state: Awaited<ReturnType<typeof eduApi.getSessionState>>) => {
     setQuest(state.quest)
@@ -556,12 +557,13 @@ export default function QuestFlowCards() {
       setComposing(false)
     }
   }
+  handleComposeRef.current = handleCompose
 
   useEffect(() => {
     if (!sessionId || loading || completed || composing || composeStartedRef.current) return
     if (phase !== 'compose') return
     composeStartedRef.current = true
-    void handleCompose(sessionId)
+    void handleComposeRef.current(sessionId)
   }, [sessionId, loading, completed, composing, phase])
 
   const handleChatResponse = async (

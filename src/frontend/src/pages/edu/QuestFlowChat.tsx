@@ -182,6 +182,7 @@ export default function QuestFlowChat() {
   const prevGuideAxisIndex = useRef(0)
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const composeStartedRef = useRef(false)
+  const handleComposeRef = useRef<(sid: string) => Promise<void>>(async () => {})
   const [structureInsight, setStructureInsight] = useState<EduStructureInsightDebug | null>(null)
   const [insightLoading, setInsightLoading] = useState(false)
   const selectedQuestId = searchParams.get('quest_id')?.trim() || ''
@@ -461,6 +462,7 @@ export default function QuestFlowChat() {
       setComposing(false)
     }
   }
+  handleComposeRef.current = handleCompose
 
   useEffect(() => {
     composeStartedRef.current = false
@@ -470,7 +472,7 @@ export default function QuestFlowChat() {
     if (!sessionId || loading || completed || composing || composeStartedRef.current) return
     if (phase !== 'compose') return
     composeStartedRef.current = true
-    void handleCompose(sessionId)
+    void handleComposeRef.current(sessionId)
   }, [sessionId, loading, completed, composing, phase])
 
   const handleChatResponse = async (
