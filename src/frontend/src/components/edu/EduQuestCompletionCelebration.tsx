@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
 import { eduGame, eduGameClasses } from '../../constants/eduGameTheme'
+import type { EduCoachLevelInfo } from '../../constants/eduCoachLevel'
+import { eduCoachLevelByNumber } from '../../constants/eduCoachLevel'
 import type { EduTierProgress } from '../../services/eduApi'
+import EduCoachLevelBadge from './EduCoachLevelBadge'
 
 function useCountUp(target: number, durationMs = 1200, active = true) {
   const [value, setValue] = useState(0)
@@ -29,18 +32,25 @@ function useCountUp(target: number, durationMs = 1200, active = true) {
 type Props = {
   xpGained: number
   streakDays: number
+  coachLevel?: EduCoachLevelInfo | null
+  levelDebugSwitch?: boolean
+  onCoachLevelChange?: (level: number) => void | Promise<void>
   tier?: EduTierProgress | null
   active?: boolean
 }
 
-/** 완주 성취 — 스트릭(최대 강조) + XP 카운트업. quality_score/등급 노출 없음. */
+/** 완주 성취 — 스트릭(최대 강조) + 코치 뱃지 + XP 카운트업 */
 export default function EduQuestCompletionCelebration({
   xpGained,
   streakDays,
+  coachLevel,
+  levelDebugSwitch = false,
+  onCoachLevelChange,
   tier,
   active = true,
 }: Props) {
   const xpDisplay = useCountUp(xpGained, 1200, active)
+  const level = coachLevel ?? eduCoachLevelByNumber(1)
 
   return (
     <section
@@ -49,11 +59,20 @@ export default function EduQuestCompletionCelebration({
       aria-label="탐구 완료"
     >
       <p
-        className="font-bold text-center mb-4"
+        className="font-bold text-center mb-3"
         style={{ color: eduGame.primaryDark, fontSize: '1.375rem', lineHeight: 1.3 }}
       >
         탐구 완료!
       </p>
+
+      <div className="flex justify-center mb-4">
+        <EduCoachLevelBadge
+          coachLevel={level}
+          size="lg"
+          debugSwitchEnabled={levelDebugSwitch}
+          onSelectLevel={onCoachLevelChange}
+        />
+      </div>
 
       <div className="flex flex-col items-center gap-0.5 mb-5">
         <span className="edu-game-streak-pop text-5xl leading-none select-none" aria-hidden>
@@ -91,8 +110,8 @@ export default function EduQuestCompletionCelebration({
       {tier && tier.xp_next_tier != null && (
         <div className="mt-4 pt-3 border-t-2" style={{ borderColor: eduGame.bg }}>
           <div className="flex justify-between mb-1.5" style={{ fontSize: eduGame.fontSize.caption, color: eduGame.muted }}>
-            <span>{tier.tier_label_en}</span>
-            <span>{tier.next_tier_label_en}</span>
+            <span>탐구 XP</span>
+            <span>{tier.xp_current.toLocaleString()} / {tier.xp_next_tier.toLocaleString()}</span>
           </div>
           <div className="h-2.5 rounded-full overflow-hidden" style={{ backgroundColor: eduGame.bg }}>
             <div
@@ -100,9 +119,6 @@ export default function EduQuestCompletionCelebration({
               style={{ width: `${tier.progress_pct}%`, backgroundColor: eduGame.primary }}
             />
           </div>
-          <p className="mt-1.5 text-center" style={{ fontSize: eduGame.fontSize.caption, color: eduGame.muted }}>
-            {tier.xp_current.toLocaleString()} / {tier.xp_next_tier.toLocaleString()} XP
-          </p>
         </div>
       )}
     </section>

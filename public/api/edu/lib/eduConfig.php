@@ -75,3 +75,30 @@ function eduStructureInsightDebugAllowed(?array $student = null): bool
 
     return false;
 }
+
+/** 코치 레벨 테스트 스위치 — EDU_LEVEL_DEBUG=1 또는 EDU_LEVEL_DEBUG_STUDENT_IDS */
+function eduLevelDebugAllowed(?array $student = null): bool
+{
+    require_once __DIR__ . '/eduStudentInsights.php';
+
+    $flag = eduStructureDiagnoseEnv('EDU_LEVEL_DEBUG');
+    if ($flag === '1' || $flag === 'true') {
+        return true;
+    }
+
+    $idsRaw = eduStructureDiagnoseEnv('EDU_LEVEL_DEBUG_STUDENT_IDS');
+    if ($idsRaw === false || $idsRaw === '') {
+        return false;
+    }
+    if ($student === null || ($student['id'] ?? '') === '') {
+        return false;
+    }
+    $studentId = (string) $student['id'];
+    foreach (explode(',', (string) $idsRaw) as $id) {
+        if ($id !== '' && hash_equals(trim($id), $studentId)) {
+            return true;
+        }
+    }
+
+    return false;
+}

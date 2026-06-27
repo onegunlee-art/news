@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import EduStudentProfileHero from '../../components/edu/EduStudentProfileHero'
+import { eduCoachLevelByNumber, type EduCoachLevelInfo } from '../../constants/eduCoachLevel'
+import { canShowCoachLevelDebugSwitch, resolveEduLevelDebug } from '../../constants/eduLevelDebug'
 import { eduGame, eduGameClasses } from '../../constants/eduGameTheme'
 import {
   clearEduToken,
@@ -28,10 +30,15 @@ function stanceLabel(stance?: string | null): string {
 
 export default function EduProfilePage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  resolveEduLevelDebug(searchParams)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [student, setStudent] = useState<EduStudent | null>(() => getEduStudent())
   const [tier, setTier] = useState<EduTierProgress | null>(null)
+  const [coachLevel, setCoachLevel] = useState<EduCoachLevelInfo>(() => eduCoachLevelByNumber(1))
+  const [levelDebugAllowed, setLevelDebugAllowed] = useState(false)
+  const [levelSwitchMsg, setLevelSwitchMsg] = useState('')
   const [completedCount, setCompletedCount] = useState(0)
   const [topicsCount, setTopicsCount] = useState(0)
   const [sessions, setSessions] = useState<EduCompletedSession[]>([])
@@ -55,6 +62,8 @@ export default function EduProfilePage() {
         ])
         setStudent(profileRes.student)
         setTier(profileRes.tier)
+        setCoachLevel(profileRes.coach_level ?? eduCoachLevelByNumber(1))
+        setLevelDebugAllowed(profileRes.level_debug_allowed ?? false)
         setCompletedCount(profileRes.completed_count)
         setTopicsCount(
           profileRes.topics_count ??
@@ -74,6 +83,12 @@ export default function EduProfilePage() {
 
     void load()
   }, [navigate])
+
+  const handleCoachLevelChange = async (level: number) => {
+    const res = await eduApi.setCoachLevel(level)
+    setCoachLevel(res.coach_level)
+    setLevelSwitchMsg(res.message ?? '다음 퀘스트부터 적용돼요.')
+  }
 
   const handleLogout = () => {
     clearEduToken()
@@ -129,6 +144,9 @@ export default function EduProfilePage() {
               <EduStudentProfileHero
                 student={student}
                 tier={tier}
+                coachLevel={coachLevel}
+                levelDebugSwitch={canShowCoachLevelDebugSwitch(levelDebugAllowed)}
+                onCoachLevelChange={handleCoachLevelChange}
                 completedCount={completedCount}
                 topicsCount={
                   topicsCount ||
@@ -136,6 +154,11 @@ export default function EduProfilePage() {
                 }
               />
             )}
+            {levelSwitchMsg ? (
+              <p className="text-center px-2" style={{ fontSize: eduGame.fontSize.caption, color: eduGame.primary }}>
+                {levelSwitchMsg}
+              </p>
+            ) : null}
 
             <section className="space-y-3">
               <h2 className="font-bold px-1" style={{ fontSize: eduGame.fontSize.label, color: eduGame.primary }}>

@@ -7,6 +7,8 @@ declare(strict_types=1);
 require_once __DIR__ . '/../lib/bootstrap.php';
 require_once __DIR__ . '/../lib/eduAuth.php';
 require_once __DIR__ . '/../lib/eduTier.php';
+require_once __DIR__ . '/../lib/eduCoachLevel.php';
+require_once __DIR__ . '/../lib/eduConfig.php';
 
 handleOptionsRequest();
 setCorsHeaders();
@@ -91,6 +93,8 @@ eduSendJson([
     'hero_sentence' => $hero,
     'xp_gained' => $xpQuest + $xpWriting,
     'tier' => eduTierProgressPayload($tierRow),
+    'coach_level' => eduCoachLevelProfilePayload($student),
+    'level_debug_allowed' => eduLevelDebugAllowed($student),
     'ui_step' => 4,
     'ui_label' => 'XP·티어',
     'share_card' => [

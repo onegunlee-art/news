@@ -8,6 +8,8 @@ require_once __DIR__ . '/../lib/bootstrap.php';
 require_once __DIR__ . '/../lib/eduAuth.php';
 require_once __DIR__ . '/../lib/eduQuest.php';
 require_once __DIR__ . '/../lib/eduTier.php';
+require_once __DIR__ . '/../lib/eduCoachLevel.php';
+require_once __DIR__ . '/../lib/eduConfig.php';
 
 handleOptionsRequest();
 setCorsHeaders();
@@ -43,7 +45,10 @@ eduSendJson([
         'profile_image' => $student['profile_image'] ?? null,
         'email' => $student['email'] ?? null,
         'has_kakao' => !empty($student['kakao_id']),
+        'coach_level' => eduCoachLevelProfilePayload($student)['coach_level'],
     ],
+    'coach_level' => eduCoachLevelProfilePayload($student),
+    'level_debug_allowed' => eduLevelDebugAllowed($student),
     'tier' => $tier,
     'completed_count' => count($completedRows),
     'topics_count' => count($topicIds),

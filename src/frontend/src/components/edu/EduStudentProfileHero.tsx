@@ -1,42 +1,28 @@
 import { eduGame, eduGameClasses } from '../../constants/eduGameTheme'
+import type { EduCoachLevelInfo } from '../../constants/eduCoachLevel'
 import type { EduStudent, EduTierProgress } from '../../services/eduApi'
-
-const TIER_LEVEL: Record<string, number> = {
-  observer: 1,
-  iron: 2,
-  bronze: 3,
-  silver: 4,
-  gold: 5,
-  platinum: 6,
-  gist_challenger: 7,
-}
-
-const TIER_MEDAL: Record<string, { bg: string; ring: string }> = {
-  observer: { bg: '#e8e8e8', ring: '#999999' },
-  iron: { bg: '#8b9aab', ring: '#5c6b7a' },
-  bronze: { bg: '#cd7f32', ring: '#9a5f24' },
-  silver: { bg: '#c8cdd4', ring: '#8a9199' },
-  gold: { bg: '#f5c542', ring: '#c9971a' },
-  platinum: { bg: '#7ec8ff', ring: '#3d9ad4' },
-  gist_challenger: { bg: '#f05123', ring: '#d9451c' },
-}
+import EduCoachLevelBadge from './EduCoachLevelBadge'
 
 type Props = {
   student: EduStudent | null
   tier: EduTierProgress
+  coachLevel: EduCoachLevelInfo
+  levelDebugSwitch?: boolean
+  onCoachLevelChange?: (level: number) => void | Promise<void>
   completedCount: number
   topicsCount: number
 }
 
-/** 개인 페이지 — 스트릭 주인공, XP·티어는 보조 (eduGame 오렌지/화이트) */
+/** 개인 페이지 — 스트릭 주인공, 코치 레벨 뱃지 + XP 보조 (eduGame 오렌지/화이트) */
 export default function EduStudentProfileHero({
   student,
   tier,
+  coachLevel,
+  levelDebugSwitch = false,
+  onCoachLevelChange,
   completedCount,
   topicsCount,
 }: Props) {
-  const medal = TIER_MEDAL[tier.tier_id] ?? TIER_MEDAL.observer
-  const level = TIER_LEVEL[tier.tier_id] ?? 1
   const streak = tier.streak_days
   const streakLabel =
     streak > 1 ? `연속 탐구 ${streak}일` : streak === 1 ? '연속 탐구 1일' : '오늘 탐구하면 불꽃이 켜져요'
@@ -64,18 +50,16 @@ export default function EduStudentProfileHero({
             {student?.display_name || '학생'}
           </h1>
           <p style={{ fontSize: eduGame.fontSize.caption, color: eduGame.muted }}>
-            Lv.{level} · {tier.tier_label_ko || tier.tier_label_en}
+            탐구하는 사상가
           </p>
         </div>
-        <div
-          className="w-12 h-12 rounded-full border-[3px] flex items-center justify-center shrink-0 shadow-sm"
-          style={{ backgroundColor: medal.bg, borderColor: medal.ring }}
-          aria-label={`${tier.tier_label_ko} 티어`}
-        >
-          <span className="text-lg font-bold text-white drop-shadow-sm">
-            {tier.tier_label_en.charAt(0).toUpperCase()}
-          </span>
-        </div>
+        <EduCoachLevelBadge
+          coachLevel={coachLevel}
+          size="md"
+          debugSwitchEnabled={levelDebugSwitch}
+          onSelectLevel={onCoachLevelChange}
+          className="shrink-0"
+        />
       </div>
 
       {/* 스트릭 — 화면 주인공 */}
@@ -101,19 +85,18 @@ export default function EduStudentProfileHero({
         </p>
       </section>
 
-      {/* XP — 스트릭보다 작게 */}
+      {/* XP — B-2 전까지 숫자·바만 (메인 레벨 아님) */}
       <section
         className="rounded-2xl border-2 px-4 py-4"
         style={{ borderColor: eduGame.border, backgroundColor: eduGame.bg }}
       >
         <div className="flex items-center justify-between gap-2 mb-2">
           <span className="font-bold" style={{ fontSize: eduGame.fontSize.label, color: eduGame.ink }}>
-            {tier.tier_label_en}
-            {tier.tier_label_ko ? ` · ${tier.tier_label_ko}` : ''}
+            탐구 XP
           </span>
-          {tier.xp_next_tier != null && tier.next_tier_label_en && (
+          {tier.xp_next_tier != null && (
             <span style={{ fontSize: eduGame.fontSize.caption, color: eduGame.muted }}>
-              → {tier.next_tier_label_en}
+              다음 구간까지
             </span>
           )}
         </div>
@@ -131,7 +114,7 @@ export default function EduStudentProfileHero({
           </>
         ) : (
           <p className="text-center tabular-nums" style={{ fontSize: eduGame.fontSize.label, color: eduGame.muted }}>
-            {tier.xp_current.toLocaleString()} XP · 최고 등급
+            {tier.xp_current.toLocaleString()} XP
           </p>
         )}
       </section>

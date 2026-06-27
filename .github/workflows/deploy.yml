@@ -393,6 +393,7 @@ jobs:
             ensure_env "NYT_API_KEY"            "${V_NYT:-esBGryyMeUL7hVbEHc45wO27jOStaudfaKYC6akW7RALg0P4}"
             ensure_env "GUARDIAN_API_KEY"       "${V_GUARDIAN:-}"
             ensure_env "EDU_INSIGHT_DEBUG_STUDENT_IDS" "f88c2fc2-132c-4f0c-9c7f-aa60d3ec3c01"
+            ensure_env "EDU_LEVEL_DEBUG_STUDENT_IDS"   "f88c2fc2-132c-4f0c-9c7f-aa60d3ec3c01"
             sudo chmod 644 "\$ENV_FILE" 2>/dev/null || true
           ENVEOF
 

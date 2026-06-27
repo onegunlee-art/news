@@ -10,7 +10,8 @@ require_once __DIR__ . '/../lib/eduQuest.php';
 require_once __DIR__ . '/../lib/eduConfig.php';
 require_once __DIR__ . '/../lib/eduBlueprint.php';
 require_once __DIR__ . '/../lib/eduTier.php';
-require_once __DIR__ . '/../lib/eduAgents.php';
+require_once __DIR__ . '/../lib/eduCoachLevel.php';
+require_once __DIR__ . '/../lib/eduConfig.php';
 require_once __DIR__ . '/../lib/eduConfig.php';
 require_once __DIR__ . '/../lib/eduDraftStorage.php';
 require_once __DIR__ . '/../lib/eduStudentInsights.php';
@@ -309,6 +310,8 @@ $composePayload = [
     'feedback' => $evaluation['feedback'] ?? '잘 정리했어요!',
     'xp_gained' => $sessionXp,
     'tier' => eduTierProgressPayload($tierRow),
+    'coach_level' => eduCoachLevelProfilePayload($student),
+    'level_debug_allowed' => eduLevelDebugAllowed($student),
     'progress_pct' => 100,
 ];
 if (eduStructureInsightDebugAllowed($student)) {

@@ -27,6 +27,8 @@ import {
 import { EDU_BRAND } from '../../constants/eduBrand'
 import { eduQuestPathWithUi, setEduCoachUiMode } from '../../constants/eduCoachUi'
 import { resolveEduInsightDebug, type EduStructureInsightDebug } from '../../constants/eduInsightDebug'
+import { eduCoachLevelByNumber, type EduCoachLevelInfo } from '../../constants/eduCoachLevel'
+import { canShowCoachLevelDebugSwitch, resolveEduLevelDebug } from '../../constants/eduLevelDebug'
 import EduStructureInsightDebugPanel from '../../components/edu/EduStructureInsightDebugPanel'
 import { eduGame, eduGameClasses } from '../../constants/eduGameTheme'
 
@@ -142,6 +144,7 @@ export default function QuestFlowChat() {
   const [searchParams] = useSearchParams()
   const questIdParam = searchParams.get('quest_id')?.trim() || ''
   const insightDebug = resolveEduInsightDebug(searchParams)
+  resolveEduLevelDebug(searchParams)
   const bottomRef = useRef<HTMLDivElement>(null)
   const mainScrollRef = useRef<HTMLDivElement>(null)
   const { viewportHeight, viewportOffsetTop } = useVisualViewportLayout()
@@ -159,6 +162,8 @@ export default function QuestFlowChat() {
   const [essay, setEssay] = useState<EssayArtifact | null>(null)
   const [xpGained, setXpGained] = useState(0)
   const [tier, setTier] = useState<EduTierProgress | null>(null)
+  const [coachLevel, setCoachLevel] = useState<EduCoachLevelInfo>(() => eduCoachLevelByNumber(1))
+  const [levelDebugAllowed, setLevelDebugAllowed] = useState(false)
   const [stanceChanged, setStanceChanged] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
@@ -242,6 +247,14 @@ export default function QuestFlowChat() {
       }
 
       setTier(tierData)
+      try {
+        const progress = await eduApi.tierProgress()
+        setTier(progress.tier)
+        setCoachLevel(progress.coach_level ?? eduCoachLevelByNumber(1))
+        setLevelDebugAllowed(progress.level_debug_allowed ?? false)
+      } catch {
+        /* default L1 */
+      }
       setSessionId(sid)
 
       const state = await eduApi.getSessionState(sid)
@@ -401,6 +414,11 @@ export default function QuestFlowChat() {
     scheduleAutoSave(updated)
   }
 
+  const handleCoachLevelChange = async (level: number) => {
+    const res = await eduApi.setCoachLevel(level)
+    setCoachLevel(res.coach_level)
+  }
+
   const handleCompose = async (sid: string) => {
     setComposing(true)
     setError('')
@@ -422,6 +440,8 @@ export default function QuestFlowChat() {
       setEssay(artifact)
       setXpGained(res.xp_gained ?? 0)
       if (res.tier) setTier(res.tier)
+      if (res.coach_level) setCoachLevel(res.coach_level)
+      if (res.level_debug_allowed != null) setLevelDebugAllowed(res.level_debug_allowed)
       setProgressPct(100)
       setSaveStatus(res.saved ? 'saved' : 'idle')
       setPlayEssayReveal(true)
@@ -782,6 +802,9 @@ export default function QuestFlowChat() {
           <EduQuestCompletionCelebration
             xpGained={xpGained}
             streakDays={tier?.streak_days ?? 0}
+            coachLevel={coachLevel}
+            levelDebugSwitch={canShowCoachLevelDebugSwitch(levelDebugAllowed)}
+            onCoachLevelChange={handleCoachLevelChange}
             tier={tier}
             active={completed}
           />

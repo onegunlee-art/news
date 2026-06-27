@@ -3,6 +3,7 @@ const EDU_DISPLAY_NAME_KEY = 'edu_display_name'
 const EDU_STUDENT_KEY = 'edu_student'
 
 import type { EduStructureInsightDebug } from '../constants/eduInsightDebug'
+import type { EduCoachLevelInfo } from '../constants/eduCoachLevel'
 
 export interface EduStudent {
   id: string
@@ -11,6 +12,7 @@ export interface EduStudent {
   profile_image?: string | null
   email?: string | null
   has_kakao?: boolean
+  coach_level?: number
 }
 
 export function getEduToken(): string | null {
@@ -123,6 +125,8 @@ export interface EduBlueprint {
   guide_axis_answers?: Record<string, string>
   /** 버튼 선택 후 "왜?" 서술 대기 (2-C) */
   guide_axis_pending_why?: { axis_id: string; choice: string } | null
+  /** 코치 깊이 L1~5 — 세션 freeze 후 읽기 전용 */
+  coach_level?: number
 }
 
 export interface EduChatResponse {
@@ -178,6 +182,8 @@ export interface EduComposeResponse {
   feedback?: string
   xp_gained?: number
   tier?: EduTierProgress
+  coach_level?: EduCoachLevelInfo
+  level_debug_allowed?: boolean
   progress_pct?: number
   already_completed?: boolean
   structure_insight?: EduStructureInsightDebug
@@ -392,15 +398,29 @@ export const eduApi = {
     }),
 
   tierProgress: () =>
-    eduFetch<{ tier: EduTierProgress }>('/api/edu/tier/progress.php'),
+    eduFetch<{ tier: EduTierProgress; coach_level: EduCoachLevelInfo; level_debug_allowed: boolean }>(
+      '/api/edu/tier/progress.php'
+    ),
 
   studentProfile: () =>
     eduFetch<{
       student: EduStudent
       tier: EduTierProgress
+      coach_level: EduCoachLevelInfo
+      level_debug_allowed: boolean
       completed_count: number
       topics_count?: number
     }>('/api/edu/student/profile.php'),
+
+  setCoachLevel: (coach_level: number) =>
+    eduFetch<{
+      coach_level: EduCoachLevelInfo
+      level_debug_allowed: boolean
+      message?: string
+    }>('/api/edu/student/coach_level.php', {
+      method: 'POST',
+      body: JSON.stringify({ coach_level }),
+    }),
 
   studentSessions: (status: 'completed' | 'in_progress' | 'all' = 'completed') =>
     eduFetch<{ sessions: EduCompletedSession[] }>(

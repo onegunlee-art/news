@@ -23,6 +23,37 @@ const EDU_COACH_LEVEL_ELEMENTARY = EDU_COACH_LEVEL_L1;
 const EDU_COACH_LEVEL_ADVANCED = EDU_COACH_LEVEL_L5;
 const EDU_COACH_LEVEL_DEFAULT = EDU_COACH_LEVEL_L1;
 
+/** @var array<int, array{ko: string, en: string, role_id: string}> */
+const EDU_COACH_LEVEL_LABELS = [
+    EDU_COACH_LEVEL_L1 => ['ko' => '관찰자', 'en' => 'Observer', 'role_id' => 'observer'],
+    EDU_COACH_LEVEL_L2 => ['ko' => '질문자', 'en' => 'Questioner', 'role_id' => 'questioner'],
+    EDU_COACH_LEVEL_L3 => ['ko' => '논객', 'en' => 'Debater', 'role_id' => 'debater'],
+    EDU_COACH_LEVEL_L4 => ['ko' => '분석가', 'en' => 'Analyst', 'role_id' => 'analyst'],
+    EDU_COACH_LEVEL_L5 => ['ko' => '칼럼니스트', 'en' => 'Columnist', 'role_id' => 'columnist'],
+];
+
+/** @return array{ko: string, en: string, role_id: string} */
+function eduCoachLevelLabels(int $level): array
+{
+    $level = eduCoachLevelNormalize($level);
+
+    return EDU_COACH_LEVEL_LABELS[$level] ?? EDU_COACH_LEVEL_LABELS[EDU_COACH_LEVEL_L1];
+}
+
+/** @param array<string, mixed>|null $student */
+function eduCoachLevelProfilePayload(?array $student): array
+{
+    $level = eduCoachLevelNormalize((int) ($student['coach_level'] ?? EDU_COACH_LEVEL_DEFAULT));
+    $labels = eduCoachLevelLabels($level);
+
+    return [
+        'coach_level' => $level,
+        'label_ko' => $labels['ko'],
+        'label_en' => $labels['en'],
+        'role_id' => $labels['role_id'],
+    ];
+}
+
 /** 구 7단 번호 → 5단 (frozen blueprint·student). ★ 4→3은 하지 않음 — 새 L4=4와 충돌, 구 coach_level 4는 라이브에 없었음 */
 function eduCoachLevelFromLegacy(int $level): int
 {
