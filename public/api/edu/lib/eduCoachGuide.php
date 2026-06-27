@@ -12,6 +12,7 @@ require_once __DIR__ . '/eduCoachGuideElementary.php';
 require_once __DIR__ . '/eduCoachGuideBridge.php';
 require_once __DIR__ . '/eduCoachGuideMiddle.php';
 require_once __DIR__ . '/eduCoachGuideUpper.php';
+require_once __DIR__ . '/eduCoachGuideColumnist.php';
 
 const EDU_COACH_GUIDE_QUEST_CODE = 'Q-AUTO-NUKE-630';
 const EDU_COACH_GUIDE_QUEST_CODE_DC_150 = 'Q-AUTO-DC-150';
@@ -407,6 +408,9 @@ function eduCoachGuideHandleOpening(
     if ($path === 'l4') {
         return eduCoachGuideUpperHandleOpening($blueprint, $quest, $opening, $coachLevel);
     }
+    if ($path === 'l5') {
+        return eduCoachGuideColumnistHandleOpening($blueprint, $quest, $opening, $coachLevel);
+    }
 
     $axes = eduCoachGuideAxes($quest);
     $storeLevel = eduCoachLevelNormalize($coachLevel);
@@ -467,153 +471,11 @@ function eduCoachGuideHandleTurn(
     if ($path === 'l4') {
         return eduCoachGuideUpperHandleTurn($blueprint, $quest, $message, $coachLevel);
     }
-
-    $phase = (string) ($blueprint['phase'] ?? '');
-    $axes = eduCoachGuideAxes($quest);
-
-    if ($phase === 'guide_conclusion') {
-        return eduCoachGuideHandleConclusion($blueprint, $quest, $message, $axes);
+    if ($path === 'l5') {
+        return eduCoachGuideColumnistHandleTurn($blueprint, $quest, $message, $coachLevel);
     }
 
-    if ($phase !== 'guide_axis') {
-        return [
-            'blueprint' => $blueprint,
-            'message' => '계속 이야기해줘.',
-            'ui_hint' => 'guide_axis',
-            'done_guide' => false,
-        ];
-    }
-
-    $idx = (int) ($blueprint['guide_axis_index'] ?? 0);
-    $stall = (int) ($blueprint['guide_axis_stall'] ?? 0);
-    $evasion = eduCoachDetectEvasion($message);
-    $axis = $axes[$idx] ?? $axes[0];
-    $axisAnswerMessage = $message;
-    $pendingWhy = is_array($blueprint['guide_axis_pending_why'] ?? null)
-        ? $blueprint['guide_axis_pending_why']
-        : null;
-    $pendingWhyIncomplete = false;
-
-    if ($pendingWhy !== null && ($pendingWhy['axis_id'] ?? '') === ($axis['axis_id'] ?? '')) {
-        $storedChoice = trim((string) ($pendingWhy['choice'] ?? ''));
-        $sameChoice = $storedChoice !== ''
-            && eduCoachGuideNormalizeCompareKey($message) === eduCoachGuideNormalizeCompareKey($storedChoice);
-
-        if (!$sameChoice && eduCoachAxisStudentPass($message, $evasion)) {
-            $axisAnswerMessage = $storedChoice !== ''
-                ? $storedChoice . ' — ' . trim($message)
-                : trim($message);
-            $blueprint = eduMergeBlueprint($blueprint, ['guide_axis_pending_why' => null]);
-        } else {
-            $pendingWhyIncomplete = true;
-        }
-    } elseif (eduCoachGuideMessageMatchesChoiceOption($message, $axis)) {
-        $choice = trim($message);
-        $blueprint = eduMergeBlueprint($blueprint, [
-            'guide_axis_pending_why' => [
-                'axis_id' => (string) ($axis['axis_id'] ?? ''),
-                'choice' => $choice,
-            ],
-            'guide_axis_stall' => 0,
-        ]);
-
-        return [
-            'blueprint' => $blueprint,
-            'message' => eduCoachSpoonfeedGuard(eduCoachGuideWhyFollowUpMessage($axis, $choice)),
-            'ui_hint' => 'guide_axis',
-            'done_guide' => false,
-        ];
-    }
-
-    if (!$pendingWhyIncomplete && eduCoachAxisStudentPass($axisAnswerMessage, $evasion)) {
-        $answers = is_array($blueprint['guide_axis_answers'] ?? null) ? $blueprint['guide_axis_answers'] : [];
-        $answers[$axis['axis_id']] = $axisAnswerMessage;
-        $idx++;
-        $stall = 0;
-
-        if ($idx >= count($axes)) {
-            $blueprint = eduMergeBlueprint($blueprint, [
-                'guide_axis_answers' => $answers,
-                'guide_axis_index' => $idx,
-                'guide_axis_stall' => 0,
-                'phase' => 'guide_conclusion',
-            ]);
-            $msg = '지금까지 따져본 걸로 **네 결론**은 한 문장으로? '
-                . "'나는 ~라고 본다'로만 — **네 말**이어야 해.";
-
-            return [
-                'blueprint' => $blueprint,
-                'message' => eduCoachSpoonfeedGuard($msg),
-                'ui_hint' => 'guide_conclusion',
-                'done_guide' => false,
-            ];
-        }
-
-        $blueprint = eduMergeBlueprint($blueprint, [
-            'guide_axis_answers' => $answers,
-            'guide_axis_index' => $idx,
-            'guide_axis_stall' => 0,
-            'guide_axis_pending_why' => null,
-        ]);
-        $msg = "좋아, 다음으로 넘어가자.\n\n" . eduCoachGuideIntroAxis($axes[$idx], $idx, count($axes));
-
-        return [
-            'blueprint' => $blueprint,
-            'message' => eduCoachSpoonfeedGuard($msg),
-            'ui_hint' => 'guide_axis',
-            'done_guide' => false,
-        ];
-    }
-
-    $stall++;
-    if ($stall >= EDU_COACH_GUIDE_STALL_ESCAPE) {
-        $answers = is_array($blueprint['guide_axis_answers'] ?? null) ? $blueprint['guide_axis_answers'] : [];
-        $answers[$axis['axis_id'] . '_skipped'] = $message;
-        $idx++;
-        $stall = 0;
-
-        if ($idx >= count($axes)) {
-            $blueprint = eduMergeBlueprint($blueprint, [
-                'guide_axis_answers' => $answers,
-                'guide_axis_index' => $idx,
-                'phase' => 'guide_conclusion',
-            ]);
-            $msg = "여기서 막혔구나 — 일단 넘어가자. **네 결론**은 한 문장으로? ('나는 ~라고 본다')";
-
-            return [
-                'blueprint' => $blueprint,
-                'message' => eduCoachSpoonfeedGuard($msg),
-                'ui_hint' => 'guide_conclusion',
-                'done_guide' => false,
-            ];
-        }
-
-        $blueprint = eduMergeBlueprint($blueprint, [
-            'guide_axis_answers' => $answers,
-            'guide_axis_index' => $idx,
-            'guide_axis_stall' => 0,
-            'guide_axis_pending_why' => null,
-        ]);
-        $msg = "막히면 괜찮아 — **다음 축**으로 넘어가자.\n\n" . eduCoachGuideIntroAxis($axes[$idx], $idx, count($axes));
-
-        return [
-            'blueprint' => $blueprint,
-            'message' => eduCoachSpoonfeedGuard($msg),
-            'ui_hint' => 'guide_axis',
-            'done_guide' => false,
-        ];
-    }
-
-    $blueprint = eduMergeBlueprint($blueprint, ['guide_axis_stall' => $stall]);
-    $useScaffold = $stall >= 2;
-    $msg = eduCoachGuideEvasionReply($evasion, $axis, $idx, $axes, $useScaffold);
-
-    return [
-        'blueprint' => $blueprint,
-        'message' => eduCoachSpoonfeedGuard($msg),
-        'ui_hint' => 'guide_axis',
-        'done_guide' => false,
-    ];
+    return eduCoachGuideColumnistHandleTurn($blueprint, $quest, $message, EDU_COACH_LEVEL_L5);
 }
 
 /**

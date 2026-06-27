@@ -52,9 +52,24 @@ $bothTurnLegacy = eduCoachGuideHandleTurn($level5Open['blueprint'], $quest, '둘
 $bothTurnL5 = eduCoachGuideHandleTurn($level5Open['blueprint'], $quest, '둘 다 필요해', EDU_COACH_LEVEL_L5);
 assertSame('evasion turn message legacy vs L5', $bothTurnLegacy['message'], $bothTurnL5['message']);
 
-$passTurnLegacy = eduCoachGuideHandleTurn($bothTurnLegacy['blueprint'], $quest, '우크라이나 사례 보면 핵 대신 재래식만 써서 약하게 해줘');
-$passTurnL5 = eduCoachGuideHandleTurn($bothTurnLegacy['blueprint'], $quest, '우크라이나 사례 보면 핵 대신 재래식만 써서 약하게 해줘', EDU_COACH_LEVEL_L5);
+$axisPassMsg = '우크라이나 사례 보면 핵 대신 재래식만 써서 약하게 해줘';
+$passTurnLegacy = eduCoachGuideHandleTurn($bothTurnLegacy['blueprint'], $quest, $axisPassMsg);
+$passTurnL5 = eduCoachGuideHandleTurn($bothTurnLegacy['blueprint'], $quest, $axisPassMsg, EDU_COACH_LEVEL_L5);
 assertSame('pass turn message legacy vs L5', $passTurnLegacy['message'], $passTurnL5['message']);
+assertTrue(
+    'L5 axis pass triggers meta counter-ask (not next axis)',
+    str_contains($passTurnL5['message'], '반대')
+        || str_contains($passTurnL5['message'], '받아칠')
+);
+assertTrue(
+    'L5 meta ask does not spoonfeed counter-argument',
+    !str_contains($passTurnL5['message'], '거미줄')
+        && !str_contains($passTurnL5['message'], '재래식 보복만')
+);
+assertTrue(
+    'L5 sets guide_axis_pending_meta after axis pass',
+    is_array($passTurnL5['blueprint']['guide_axis_pending_meta'] ?? null)
+);
 
 assertTrue('resolve defaults to L1 when elementary ready', eduResolveCoachLevel([], []) === EDU_COACH_LEVEL_DEFAULT);
 assertTrue('legacy blueprint 7 → L5', eduResolveCoachLevel(['coach_level' => 7], []) === EDU_COACH_LEVEL_L5);
@@ -88,6 +103,48 @@ assertTrue('L4 evidence ask does not spoonfeed 거미줄', !str_contains($vagueT
 
 $l3Vague = eduCoachGuideHandleTurn($level3Open['blueprint'], $quest, '그냥 도움이 될 것 같아요', EDU_COACH_LEVEL_L3);
 assertTrue('L4 evidence flow differs from L3 on vague answer', $vagueTurn['message'] !== $l3Vague['message']);
+
+$l4EvidencePass = eduCoachGuideHandleTurn(
+    $l4Bp,
+    $quest,
+    '우크라이나 거미줄 작전 후 러시아가 재래식만 썼어요',
+    EDU_COACH_LEVEL_L4
+);
+assertTrue(
+    'L4 evidence pass asks layer_half not meta counter',
+    str_contains($l4EvidencePass['message'], '반대') || str_contains($l4EvidencePass['message'], '약해')
+);
+assertTrue(
+    'L4 differs from L5 meta ask on same axis answer',
+    $l4EvidencePass['message'] !== $passTurnL5['message']
+);
+assertTrue(
+    'L4 does not set guide_axis_pending_meta',
+    !is_array($l4EvidencePass['blueprint']['guide_axis_pending_meta'] ?? null)
+);
+
+$metaReply = eduCoachGuideHandleTurn(
+    $passTurnL5['blueprint'],
+    $quest,
+    '반대편은 핵이 없으면 재래식으로 밀릴 거라고 할 것 같아요',
+    EDU_COACH_LEVEL_L5
+);
+assertTrue(
+    'L5 meta reply advances to next axis intro',
+    str_contains($metaReply['message'], '다음') || (int) ($metaReply['blueprint']['guide_axis_index'] ?? 0) === 1
+);
+
+$l5ConclusionDraft = eduCoachGuideHandleTurn(
+    array_merge($level5Open['blueprint'], ['phase' => 'guide_conclusion', 'guide_conclusion_meta_done' => false]),
+    $quest,
+    '나는 핵 억지가 재래식까지는 못 막는다고 본다',
+    EDU_COACH_LEVEL_L5
+);
+assertTrue(
+    'L5 conclusion draft triggers meta counter-ask',
+    str_contains($l5ConclusionDraft['message'], '반대') || str_contains($l5ConclusionDraft['message'], '받아칠')
+);
+assertTrue('L5 path is l5', eduCoachLevelCoachPath(EDU_COACH_LEVEL_L5) === 'l5');
 
 echo "\n=== {$pass} passed, {$fail} failed ===\n";
 exit($fail > 0 ? 1 : 0);
