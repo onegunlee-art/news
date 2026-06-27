@@ -78,7 +78,16 @@ assertTrue('L3 differs from L2 intro', $level3Open['message'] !== $level2Open['m
 
 $level4Open = eduCoachGuideHandleOpening($bp, $quest, $opening, EDU_COACH_LEVEL_L4);
 assertTrue('L4 differs from L3 intro (evidence lead)', $level4Open['message'] !== $level3Open['message']);
+assertTrue('L4 intro asks for evidence not spoonfeed', str_contains($level4Open['message'], '근거'));
 assertTrue('L4 stores coach_level 4', (int) ($level4Open['blueprint']['coach_level'] ?? 0) === EDU_COACH_LEVEL_L4);
+
+$l4Bp = $level4Open['blueprint'];
+$vagueTurn = eduCoachGuideHandleTurn($l4Bp, $quest, '그냥 도움이 될 것 같아요', EDU_COACH_LEVEL_L4);
+assertTrue('L4 vague answer triggers evidence ask', str_contains($vagueTurn['message'], '기사') || str_contains($vagueTurn['message'], '사건'));
+assertTrue('L4 evidence ask does not spoonfeed 거미줄', !str_contains($vagueTurn['message'], '거미줄'));
+
+$l3Vague = eduCoachGuideHandleTurn($level3Open['blueprint'], $quest, '그냥 도움이 될 것 같아요', EDU_COACH_LEVEL_L3);
+assertTrue('L4 evidence flow differs from L3 on vague answer', $vagueTurn['message'] !== $l3Vague['message']);
 
 echo "\n=== {$pass} passed, {$fail} failed ===\n";
 exit($fail > 0 ? 1 : 0);

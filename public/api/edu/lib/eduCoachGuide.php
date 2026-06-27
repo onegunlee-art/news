@@ -404,8 +404,11 @@ function eduCoachGuideHandleOpening(
     if ($path === 'l3') {
         return eduCoachGuideMiddleHandleOpening($blueprint, $quest, $opening, $coachLevel);
     }
+    if ($path === 'l4') {
+        return eduCoachGuideUpperHandleOpening($blueprint, $quest, $opening, $coachLevel);
+    }
 
-    $axes = eduCoachGuideResolveAxes($quest, $coachLevel);
+    $axes = eduCoachGuideAxes($quest);
     $storeLevel = eduCoachLevelNormalize($coachLevel);
     $blueprint = eduMergeBlueprint($blueprint, [
         'guide_opening' => $opening,
@@ -425,7 +428,7 @@ function eduCoachGuideHandleOpening(
     if ($evasion !== null) {
         $msg = eduCoachGuideEvasionReply($evasion, $axes[0], 0, $axes, false);
     } else {
-        $msg = eduCoachGuideIntroForCoachLevel($axes[0], 0, count($axes), $opening, $hookShort, $coachLevel);
+        $msg = eduCoachGuideIntroAxis($axes[0], 0, count($axes), $opening, $hookShort);
     }
 
     return [
@@ -461,9 +464,12 @@ function eduCoachGuideHandleTurn(
     if ($path === 'l3') {
         return eduCoachGuideMiddleHandleTurn($blueprint, $quest, $message, $coachLevel);
     }
+    if ($path === 'l4') {
+        return eduCoachGuideUpperHandleTurn($blueprint, $quest, $message, $coachLevel);
+    }
 
     $phase = (string) ($blueprint['phase'] ?? '');
-    $axes = eduCoachGuideResolveAxes($quest, $coachLevel);
+    $axes = eduCoachGuideAxes($quest);
 
     if ($phase === 'guide_conclusion') {
         return eduCoachGuideHandleConclusion($blueprint, $quest, $message, $axes);
@@ -549,14 +555,7 @@ function eduCoachGuideHandleTurn(
             'guide_axis_stall' => 0,
             'guide_axis_pending_why' => null,
         ]);
-        $msg = "좋아, 다음으로 넘어가자.\n\n" . eduCoachGuideIntroForCoachLevel(
-            $axes[$idx],
-            $idx,
-            count($axes),
-            '',
-            '',
-            $coachLevel
-        );
+        $msg = "좋아, 다음으로 넘어가자.\n\n" . eduCoachGuideIntroAxis($axes[$idx], $idx, count($axes));
 
         return [
             'blueprint' => $blueprint,
@@ -595,14 +594,7 @@ function eduCoachGuideHandleTurn(
             'guide_axis_stall' => 0,
             'guide_axis_pending_why' => null,
         ]);
-        $msg = "막히면 괜찮아 — **다음 축**으로 넘어가자.\n\n" . eduCoachGuideIntroForCoachLevel(
-            $axes[$idx],
-            $idx,
-            count($axes),
-            '',
-            '',
-            $coachLevel
-        );
+        $msg = "막히면 괜찮아 — **다음 축**으로 넘어가자.\n\n" . eduCoachGuideIntroAxis($axes[$idx], $idx, count($axes));
 
         return [
             'blueprint' => $blueprint,
