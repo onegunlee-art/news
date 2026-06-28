@@ -282,6 +282,8 @@ export interface EduQuest {
 
 export interface EduQuestListItem {
   quest_id: string
+  /** list.php는 approved만 반환 — 클라이언트 2차 필터용 */
+  status?: string
   quest_code: string
   quest_title: string
   pro_line: string

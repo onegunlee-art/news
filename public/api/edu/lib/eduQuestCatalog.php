@@ -271,6 +271,7 @@ function eduQuestToListItem(array $quest, array $completedIds = [], ?string $cov
 
     return [
         'quest_id' => $questId,
+        'status' => (string) ($quest['status'] ?? 'approved'),
         'quest_code' => $quest['quest_code'] ?? '',
         'quest_title' => $quest['quest_title'] ?? '',
         'pro_line' => $quest['pro_line'] ?? '',

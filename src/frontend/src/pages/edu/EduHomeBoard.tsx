@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import EduHomeStatusBanner from '../../components/edu/EduHomeStatusBanner'
+import EduStudentProfileHero from '../../components/edu/EduStudentProfileHero'
 import EduQuestBoardCard from '../../components/edu/EduQuestBoardCard'
 import { eduCoachLevelByNumber, type EduCoachLevelInfo } from '../../constants/eduCoachLevel'
 import { eduGame, eduGameClasses } from '../../constants/eduGameTheme'
@@ -12,7 +12,7 @@ import {
   type EduStudent,
   type EduTierProgress,
 } from '../../services/eduApi'
-import { partitionHomeBoard } from '../../utils/eduHomeBoardSections'
+import { filterApprovedQuestsForHome, partitionHomeBoard } from '../../utils/eduHomeBoardSections'
 
 type Props = {
   onLogout: () => void
@@ -42,7 +42,7 @@ export default function EduHomeBoard({ onLogout }: Props) {
       ])
       if (statusRes.tier) setTier(statusRes.tier)
       if (statusRes.coach_level) setCoachLevel(statusRes.coach_level)
-      setQuests(listRes.quests)
+      setQuests(filterApprovedQuestsForHome(listRes.quests))
     } catch (e) {
       const msg = e instanceof Error ? e.message : '불러오기 실패'
       setError(msg)
@@ -111,7 +111,7 @@ export default function EduHomeBoard({ onLogout }: Props) {
         </div>
       </header>
 
-      <main className="max-w-lg mx-auto px-4 py-5 space-y-8 pb-12">
+      <main className="max-w-lg mx-auto px-4 py-5 space-y-8 pb-12" style={{ paddingBottom: 'max(3rem, env(safe-area-inset-bottom))' }}>
         {loading ? (
           <div className="text-center py-16" style={{ color: eduGame.muted }}>
             불러오는 중…
@@ -119,7 +119,12 @@ export default function EduHomeBoard({ onLogout }: Props) {
         ) : (
           <>
             {tier && (
-              <EduHomeStatusBanner student={student} tier={tier} coachLevel={coachLevel} />
+              <EduStudentProfileHero
+                student={student}
+                tier={tier}
+                coachLevel={coachLevel}
+                layout="homeBoard"
+              />
             )}
 
             <section className="space-y-1">
@@ -127,7 +132,7 @@ export default function EduHomeBoard({ onLogout }: Props) {
                 오늘 뭐 따질까?
               </h1>
               <p style={{ fontSize: eduGame.fontSize.caption, color: eduGame.muted }}>
-                골라서 바로 시작 · approved {totalVisible}개
+                {totalVisible > 0 ? `${totalVisible}개의 논쟁 · 골라서 바로 시작` : '골라서 바로 시작'}
               </p>
             </section>
 
@@ -141,7 +146,7 @@ export default function EduHomeBoard({ onLogout }: Props) {
                   ⭐ 오늘의 추천
                 </h2>
                 <p style={{ fontSize: eduGame.fontSize.caption, color: eduGame.muted }}>
-                  너의 레벨에 맞춰 골라봤어요
+                  지금 따지기 좋은 글 3개
                 </p>
                 <ul className="space-y-4">
                   {sections.recommended.map((q) => (

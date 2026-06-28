@@ -23,7 +23,7 @@ export default function EduQuestBoardCard({
       type="button"
       onClick={() => onSelect(quest.quest_id)}
       disabled={disabled}
-      className={`w-full text-left rounded-2xl border-2 overflow-hidden transition-all active:scale-[0.99] disabled:opacity-50 ${eduGameClasses.textKo}`}
+      className={`w-full text-left rounded-2xl border-2 overflow-hidden transition-all active:scale-[0.99] disabled:opacity-50 touch-manipulation ${eduGameClasses.textKo}`}
       style={{
         borderColor: eduGame.border,
         backgroundColor: eduGame.bg,

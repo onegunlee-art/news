@@ -61,6 +61,10 @@ if ($student !== null && $rows !== []) {
 $quests = [];
 $filteredRows = [];
 foreach ($rows as $quest) {
+    // 홈 보드 안전망: draft·선언문 등 비-approved는 절대 목록에 포함하지 않음
+    if (($quest['status'] ?? '') !== 'approved') {
+        continue;
+    }
     if (!eduQuestMatchesFrameFilter($quest, $frame)) {
         continue;
     }
