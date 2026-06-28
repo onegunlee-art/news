@@ -61,6 +61,9 @@ jobs:
       - name: EDU home board static test (Phase 1)
         run: php tools/edu_home_board_static_test.php
 
+      - name: EDU quest combo static test (Phase 2)
+        run: php tools/edu_quest_combo_static_test.php
+
   # ========================================
   # TypeScript Type Check
   # ========================================

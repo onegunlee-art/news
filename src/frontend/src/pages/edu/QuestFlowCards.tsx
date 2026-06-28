@@ -5,7 +5,9 @@ import EduEssayCompletionPanel from '../../components/edu/EduEssayCompletionPane
 import { type EssayArtifact } from '../../components/edu/EssayRevealCard'
 import { type EssayStructurePreview } from '../../components/edu/StructurePreviewCard'
 import { shouldTriggerEduCompose } from '../../utils/eduComposeTrigger'
+import { getTodayComboCount, recordTodayQuestCompletion } from '../../utils/eduQuestCombo'
 import EduQuestCompletionCelebration from '../../components/edu/EduQuestCompletionCelebration'
+import EduQuestComboContinue from '../../components/edu/EduQuestComboContinue'
 import CoachMessageText from '../../components/edu/CoachMessageText'
 import EduCoachWaitingPanel from '../../components/edu/EduCoachWaitingPanel'
 import EduArticleSnippetCard from '../../components/edu/EduArticleSnippetCard'
@@ -259,7 +261,9 @@ export default function QuestFlowCards() {
   const prevPhase = useRef('stance')
   const skipStructurePulseRef = useRef(true)
   const composeStartedRef = useRef(false)
+  const comboRecordedRef = useRef(false)
   const handleComposeRef = useRef<(sid: string) => Promise<void>>(async () => {})
+  const [todayComboCount, setTodayComboCount] = useState(0)
 
   const applySessionState = useCallback((state: Awaited<ReturnType<typeof eduApi.getSessionState>>) => {
     setQuest(state.quest)
@@ -331,6 +335,8 @@ export default function QuestFlowCards() {
 
       if (state.stage === 'completed' && state.essay) {
         setCompleted(true)
+        comboRecordedRef.current = true
+        setTodayComboCount(getTodayComboCount())
         setSaveStatus('saved')
         setEssay({
           title: state.essay.title,
@@ -532,6 +538,10 @@ export default function QuestFlowCards() {
     try {
       const res = await eduApi.composeEssay(sid)
       setCompleted(true)
+      if (!comboRecordedRef.current) {
+        comboRecordedRef.current = true
+        setTodayComboCount(recordTodayQuestCompletion())
+      }
       const artifact: EssayArtifact = {
         title: res.title,
         subtitle: res.subtitle,
@@ -923,6 +933,14 @@ export default function QuestFlowCards() {
               onRevealComplete={() => setPlayEssayReveal(false)}
               saveStatus={saveStatus}
               stanceChanged={stanceChanged}
+            />
+          )}
+          {essay && quest?.quest_id && (
+            <EduQuestComboContinue
+              currentQuestId={quest.quest_id}
+              diversity={{ questFrame: quest.quest_frame ?? null }}
+              comboCount={todayComboCount}
+              uiMode="cards"
             />
           )}
           {essay && (

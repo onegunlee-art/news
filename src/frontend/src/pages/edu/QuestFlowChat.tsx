@@ -4,7 +4,9 @@ import EduEssayCompletionPanel from '../../components/edu/EduEssayCompletionPane
 import { type EssayArtifact } from '../../components/edu/EssayRevealCard'
 import StructurePreviewCard, { type EssayStructurePreview } from '../../components/edu/StructurePreviewCard'
 import { shouldTriggerEduCompose } from '../../utils/eduComposeTrigger'
+import { getTodayComboCount, recordTodayQuestCompletion } from '../../utils/eduQuestCombo'
 import EduQuestCompletionCelebration from '../../components/edu/EduQuestCompletionCelebration'
+import EduQuestComboContinue from '../../components/edu/EduQuestComboContinue'
 import TypewriterText from '../../components/edu/TypewriterText'
 import CoachMessageText from '../../components/edu/CoachMessageText'
 import EduCoachWaitingPanel from '../../components/edu/EduCoachWaitingPanel'
@@ -189,7 +191,9 @@ export default function QuestFlowChat() {
   const prevGuideAxisIndex = useRef(0)
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const composeStartedRef = useRef(false)
+  const comboRecordedRef = useRef(false)
   const handleComposeRef = useRef<(sid: string) => Promise<void>>(async () => {})
+  const [todayComboCount, setTodayComboCount] = useState(0)
   const [structureInsight, setStructureInsight] = useState<EduStructureInsightDebug | null>(null)
   const [insightLoading, setInsightLoading] = useState(false)
   const selectedQuestId = searchParams.get('quest_id')?.trim() || ''
@@ -272,6 +276,8 @@ export default function QuestFlowChat() {
 
       if (state.stage === 'completed' && state.essay) {
         setCompleted(true)
+        comboRecordedRef.current = true
+        setTodayComboCount(getTodayComboCount())
         setSaveStatus('saved')
         setEssay({
           title: state.essay.title,
@@ -436,6 +442,10 @@ export default function QuestFlowChat() {
     try {
       const res = await eduApi.composeEssay(sid)
       setCompleted(true)
+      if (!comboRecordedRef.current) {
+        comboRecordedRef.current = true
+        setTodayComboCount(recordTodayQuestCompletion())
+      }
       const artifact: EssayArtifact = {
         title: res.title,
         subtitle: res.subtitle,
@@ -920,6 +930,14 @@ export default function QuestFlowChat() {
                 {essay.feedback}
               </p>
             )}
+            {quest?.quest_id && (
+              <EduQuestComboContinue
+                currentQuestId={quest.quest_id}
+                diversity={{ questFrame: quest.quest_frame ?? null }}
+                comboCount={todayComboCount}
+                uiMode="chat"
+              />
+            )}
             <div className="space-y-2 pt-2">
               <button
                 type="button"
@@ -943,13 +961,6 @@ export default function QuestFlowChat() {
                 style={{ borderColor: eduGame.border, color: eduGame.ink, fontSize: eduGame.fontSize.button }}
               >
                 내 프로필
-              </Link>
-              <Link
-                to="/edu"
-                className={`block w-full py-3.5 text-center rounded-xl font-medium ${eduGameClasses.textKo}`}
-                style={{ color: eduGame.muted, fontSize: eduGame.fontSize.label }}
-              >
-                홈으로
               </Link>
             </div>
           </section>
