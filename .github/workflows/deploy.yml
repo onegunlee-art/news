@@ -215,6 +215,7 @@ jobs:
           rsync -avz \
             -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
             --no-times \
+            --include='edu_quest_filter_*.php' \
             --include='edu_quest_*.php' \
             --include='edu_backfill_*.php' \
             --include='edu_gist_hinge_*.php' \
