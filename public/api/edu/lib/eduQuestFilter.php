@@ -14,6 +14,148 @@ require_once __DIR__ . '/eduQuestArticleSnapshot.php';
 const EDU_QUEST_FILTER_ELIGIBLE_DEFAULT = 55;
 const EDU_QUEST_FILTER_BORDERLINE_DEFAULT = 40;
 
+/** Step 2 — 선언문·연설 blocklist (이원근 확정, draft purge용) */
+const EDU_QUEST_FILTER_DECLARATION_NEWS_IDS = [
+    647, 650, 651, 652, 653, 654, 656, 657, 658,
+    590, 591, 592, 593, 594, 595, 596, 597, 598,
+];
+
+/**
+ * @return list<int>
+ */
+function eduQuestFilterKnownDeclarationNewsIds(): array
+{
+    return EDU_QUEST_FILTER_DECLARATION_NEWS_IDS;
+}
+
+/**
+ * 선언문/연설 vs 분석글 형식 판정.
+ *
+ * @param array<string, mixed> $meta title, category, topic_label, content_preview?
+ * @param array<string, mixed>|null $extraction hinge fields
+ * @return array{
+ *   is_declaration: bool,
+ *   kind: string,
+ *   label: string,
+ *   reasons: list<string>,
+ *   analysis_override: bool
+ * }
+ */
+function eduQuestFilterDeclarationCheck(array $meta, ?array $extraction = null): array
+{
+    $title = (string) ($meta['title'] ?? '');
+    $topic = (string) ($meta['topic_label'] ?? '');
+    $category = (string) ($meta['category'] ?? '');
+    $preview = (string) ($meta['content_preview'] ?? '');
+    $text = mb_strtolower($title . ' ' . $topic . ' ' . $category . ' ' . $preview);
+    $newsId = (int) ($meta['news_id'] ?? 0);
+
+    $reasons = [];
+    $analysisOverride = (bool) preg_match(
+        '/(비판|분석|함정|딜레마|어중간|한계|논쟁|문제는|왜\s|why|paradox|통념|깨|뒤집|함정|trade-off|양자택일)/ui',
+        $title
+    );
+    if ($analysisOverride) {
+        return [
+            'is_declaration' => false,
+            'kind' => 'analysis',
+            'label' => '분석글(유지)',
+            'reasons' => ['제목·주제가 선언 비판/분석형'],
+            'analysis_override' => true,
+        ];
+    }
+
+    if ($newsId > 0 && in_array($newsId, eduQuestFilterKnownDeclarationNewsIds(), true)) {
+        return [
+            'is_declaration' => true,
+            'kind' => 'known_blocklist',
+            'label' => '선언문·연설(확정 제외)',
+            'reasons' => ["news_id={$newsId} blocklist"],
+            'analysis_override' => false,
+        ];
+    }
+
+    $declarationPatterns = [
+        'g7' => '/\bG7\b|지\s*7\s*국|G-?7/u',
+        'g20' => '/\bG20\b|G-?20/u',
+        'summit_decl' => '/정상회의|정상\s*선언|공동\s*선언|합의\s*문|성명|촉구|communiqué|communique|joint\s*statement/u',
+        'shangri' => '/샹그릴라|shangri/u',
+        'speech' => '/국방\s*장관\s*연설|방위\s*상\s*연설|장관\s*연설|defence\s*minister.*speech|keynote/u',
+        'official' => '/공식\s*발표|선언문\s*요약|선언\s*전문|회의\s*결과\s*요약/u',
+    ];
+
+    $kind = '';
+    foreach ($declarationPatterns as $key => $pat) {
+        if (preg_match($pat, $text)) {
+            $kind = $key;
+            $reasons[] = "형식 시그널: {$key}";
+            break;
+        }
+    }
+
+    if ($kind === '' && $extraction !== null) {
+        $hinge = trim((string) ($extraction['hinge'] ?? ''));
+        $weak = eduQuestFilterWeakTensionCheck($hinge, $extraction);
+        if ($weak['weak'] && $weak['declaration_like']) {
+            $kind = 'weak_hinge';
+            $reasons = array_merge($reasons, $weak['reasons']);
+        }
+    }
+
+    if ($kind === '') {
+        return [
+            'is_declaration' => false,
+            'kind' => 'analysis',
+            'label' => '분석글 후보',
+            'reasons' => ['선언문 시그널 없음'],
+            'analysis_override' => false,
+        ];
+    }
+
+    return [
+        'is_declaration' => true,
+        'kind' => $kind,
+        'label' => '선언문·연설(제외)',
+        'reasons' => $reasons,
+        'analysis_override' => false,
+    ];
+}
+
+/**
+ * @param array<string, mixed> $extraction
+ * @return array{weak: bool, declaration_like: bool, reasons: list<string>}
+ */
+function eduQuestFilterWeakTensionCheck(string $hinge, array $extraction): array
+{
+    $reasons = [];
+    $sideA = trim((string) ($extraction['side_a'] ?? ''));
+    $sideB = trim((string) ($extraction['side_b'] ?? ''));
+
+    $hasStrongPivot = (bool) preg_match('/(이지만|그러나|하지만|반면)/u', $hinge);
+    $softExpansion = (bool) preg_match('/(동시에|로도\s*볼\s*수|것으로\s*보이지만|듯하지만)/u', $hinge);
+
+    if ($softExpansion && !$hasStrongPivot) {
+        $reasons[] = '경첩: 동시에/확장형 (통념 깨기 약함)';
+    }
+
+    if ($sideB !== '' && $sideA !== '') {
+        $coop = preg_match('/(국제\s*협력|협력|연대|공동|다자)/u', $sideB);
+        $problem = preg_match('/(문제|위협|갈등|딜레마|함정)/u', $sideA);
+        if ($coop && $problem && !$hasStrongPivot) {
+            $reasons[] = 'side_b가 협력 당연론 — 따질 긴장 약함';
+        }
+    }
+
+    $weak = $reasons !== [];
+    $declarationLike = $softExpansion || ($reasons !== [] && !$hasStrongPivot);
+
+    return [
+        'weak' => $weak,
+        'declaration_like' => $declarationLike,
+        'reasons' => $reasons,
+    ];
+}
+
 /** @return list<int> */
 function eduQuestFilterDefaultSampleIds(): array
 {
@@ -295,10 +437,27 @@ function eduQuestFilterStrengthScore(?array $extraction, array $meta): array
         $breakdown[] = '정보 전달형 (−10)';
     }
 
+    $decl = eduQuestFilterDeclarationCheck($meta, $extraction);
+    if ($decl['is_declaration']) {
+        $score -= 35;
+        $breakdown[] = '선언문·연설 형식 (−35)';
+    } elseif (($decl['analysis_override'] ?? false) === true) {
+        $score += 5;
+        $breakdown[] = '분석글 시그널 (+5)';
+    }
+
+    $weak = eduQuestFilterWeakTensionCheck($hinge, $extraction ?? []);
+    if ($weak['weak'] && !$decl['is_declaration']) {
+        $score -= 15;
+        $breakdown[] = '약한 경첩 긴장 (−15)';
+    }
+
     return [
         'score' => max(0, min(100, $score)),
         'breakdown' => $breakdown,
         'axis_count' => $axisCount,
+        'declaration' => $decl,
+        'weak_tension' => $weak,
     ];
 }
 
@@ -311,11 +470,27 @@ function eduQuestFilterClassify(?array $extraction, array $meta, int $eligibleMi
 {
     $strength = eduQuestFilterStrengthScore($extraction, $meta);
     $timeliness = eduQuestFilterTimeliness($meta);
+    $declaration = $strength['declaration'] ?? eduQuestFilterDeclarationCheck($meta, $extraction);
     $score = $strength['score'];
     $hinge = trim((string) ($extraction['hinge'] ?? ''));
     $confidence = strtolower(trim((string) ($extraction['confidence'] ?? '')));
 
     $reasons = [];
+
+    if (($declaration['is_declaration'] ?? false) === true) {
+        return [
+            'verdict' => '불가',
+            'verdict_en' => 'ineligible',
+            'score' => $score,
+            'reasons' => array_merge(
+                [$declaration['label'] ?? '선언문·연설'],
+                $declaration['reasons'] ?? []
+            ),
+            'strength' => $strength,
+            'timeliness' => $timeliness,
+            'declaration' => $declaration,
+        ];
+    }
 
     if (($strength['breakdown'][0] ?? '') === '민감 키워드 — 제외') {
         return [

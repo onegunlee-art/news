@@ -75,11 +75,28 @@ $everMeta = [
 $everTime = eduQuestFilterTimeliness($everMeta);
 ok('evergreen topic → 주제형', ($everTime['kind'] ?? '') === 'evergreen');
 
-$tool = is_file($root . '/tools/edu_quest_filter_verify.php')
-    ? (string) file_get_contents($root . '/tools/edu_quest_filter_verify.php')
+$g7Meta = ['news_id' => 651, 'title' => 'G7 정상회의 암 퇴치 선언', 'category' => 'politics'];
+$g7Decl = eduQuestFilterDeclarationCheck($g7Meta, ['hinge' => '의학 발전하면 될 듯하지만 국제협력', 'side_a' => 'a', 'side_b' => 'b']);
+ok('G7 declaration → exclude', ($g7Decl['is_declaration'] ?? false) === true);
+
+$analysisMeta = ['news_id' => 631, 'title' => '흰코끼리와 중국: 대만 봉쇄의 함정', 'category' => 'security'];
+$analysisDecl = eduQuestFilterDeclarationCheck($analysisMeta, ['hinge' => 'A이지만 B', 'side_a' => 'a', 'side_b' => 'b']);
+ok('analysis critique title → keep', ($analysisDecl['is_declaration'] ?? false) === false);
+
+$g7Class = eduQuestFilterClassify(
+    ['news_id' => 651, 'hinge' => '동시에 국제협력도 필요', 'side_a' => '의학', 'side_b' => '협력', 'confidence' => 'high'],
+    $g7Meta
+);
+ok('G7 weak hinge → 불가', ($g7Class['verdict'] ?? '') === '불가');
+
+$purgeTool = is_file($root . '/tools/edu_quest_declaration_purge.php')
+    ? (string) file_get_contents($root . '/tools/edu_quest_declaration_purge.php')
     : '';
-ok('verify CLI exists', $tool !== '');
-ok('verify: no edu_daily_quests write', !str_contains($tool, "insert('edu_daily_quests'"));
+ok('purge tool exists', $purgeTool !== '');
+ok('purge: draft only', str_contains($purgeTool, "status=eq.draft"));
+
+$candidatesTool = is_file($root . '/tools/edu_quest_analyze_candidates.php');
+ok('analyze candidates tool', $candidatesTool);
 
 echo "\n{$pass} passed, {$fail} failed\n";
 exit($fail > 0 ? 1 : 0);

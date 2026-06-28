@@ -116,7 +116,11 @@ foreach ($scanIds as $newsId) {
     $class = eduQuestFilterClassify($hinge, $meta);
     $verdict = $class['verdict'] ?? '불가';
     if ($verdict === '불가') {
-        $skipped[] = ['news_id' => $newsId, 'reason' => 'filter: 불가 — ' . implode(', ', $class['reasons'] ?? [])];
+        $decl = $class['declaration'] ?? null;
+        $reason = $decl !== null && ($decl['is_declaration'] ?? false)
+            ? '선언문·연설: ' . implode(', ', $decl['reasons'] ?? [])
+            : implode(', ', $class['reasons'] ?? []);
+        $skipped[] = ['news_id' => $newsId, 'reason' => 'filter: 불가 — ' . $reason];
         continue;
     }
     if ($verdict === '경계' && !$includeBorderline) {

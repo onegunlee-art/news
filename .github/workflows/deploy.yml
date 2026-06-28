@@ -216,6 +216,8 @@ jobs:
             -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
             --no-times \
             --include='edu_quest_generate*.php' \
+            --include='edu_quest_declaration_purge.php' \
+            --include='edu_quest_analyze_candidates.php' \
             --include='edu_quest_filter_*.php' \
             --include='edu_quest_*.php' \
             --include='edu_backfill_*.php' \
