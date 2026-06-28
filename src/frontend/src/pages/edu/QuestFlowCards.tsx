@@ -33,13 +33,13 @@ import {
   type EduTierProgress,
   type EduXpBreakdownLine,
 } from '../../services/eduApi'
-import { EDU_BRAND } from '../../constants/eduBrand'
 import { eduGame, eduGameClasses } from '../../constants/eduGameTheme'
 import { eduQuestPathWithUi, setEduCoachUiMode } from '../../constants/eduCoachUi'
 import { resolveEduInsightDebug, type EduStructureInsightDebug } from '../../constants/eduInsightDebug'
 import { eduCoachLevelByNumber, type EduCoachLevelInfo } from '../../constants/eduCoachLevel'
 import { canShowCoachLevelDebugSwitch, resolveEduLevelDebug } from '../../constants/eduLevelDebug'
 import EduStructureInsightDebugPanel from '../../components/edu/EduStructureInsightDebugPanel'
+import EduQuestHomeButton from '../../components/edu/EduQuestHomeButton'
 
 const PAGE_MAX = 'max-w-2xl'
 const EVIDENCE_RECOMMENDED_LEN = 20
@@ -860,33 +860,57 @@ export default function QuestFlowCards() {
       }}
     >
       <header
-        className={`shrink-0 border-b px-4 py-2.5 ${PAGE_MAX} mx-auto w-full`}
-        style={{ borderColor: eduGame.border }}
+        className={`shrink-0 border-b ${PAGE_MAX} mx-auto w-full`}
+        style={{
+          borderColor: eduGame.border,
+          backgroundColor: eduGame.bg,
+          paddingTop: 'max(0.375rem, env(safe-area-inset-top, 0px))',
+        }}
       >
-        <div className="flex items-center justify-between gap-2">
-          <Link to="/edu" className="text-xs underline" style={{ color: EDU_BRAND.muted }}>
-            ← 홈
-          </Link>
+        <div className="flex items-center gap-2.5 px-4 py-2">
+          <EduQuestHomeButton />
+          <div className="min-w-0 flex-1">
+            {quest && (
+              <p
+                className="text-sm font-bold truncate leading-snug"
+                style={{ color: eduGame.ink }}
+              >
+                {quest.quest_title}
+              </p>
+            )}
+          </div>
           <button
             type="button"
             onClick={switchToChatMode}
-            className="text-xs underline"
-            style={{ color: eduGame.primary }}
+            className="shrink-0 px-2.5 py-1.5 rounded-lg text-xs font-medium border touch-manipulation"
+            style={{
+              borderColor: eduGame.border,
+              color: eduGame.muted,
+              backgroundColor: eduGame.surface,
+            }}
           >
-            채팅 모드
+            채팅
           </button>
         </div>
-        {quest && (
-          <p className="mt-1 text-sm font-bold truncate">{quest.quest_title}</p>
-        )}
-        <div className="mt-2 flex items-center gap-2">
-          <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: eduGame.border }}>
+        <div className="flex items-center gap-2 px-4 pb-2.5">
+          <div
+            className="flex-1 h-2 rounded-full overflow-hidden"
+            style={{ backgroundColor: eduGame.surface }}
+            role="progressbar"
+            aria-valuenow={progressPct}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label="탐구 진행"
+          >
             <div
               className="h-full transition-all duration-500 rounded-full"
               style={{ width: `${progressPct}%`, backgroundColor: eduGame.primary }}
             />
           </div>
-          <span className="text-[10px] whitespace-nowrap font-medium" style={{ color: eduGame.muted }}>
+          <span
+            className="text-xs whitespace-nowrap font-bold tabular-nums shrink-0"
+            style={{ color: eduGame.primary, minWidth: '2.25rem', textAlign: 'right' }}
+          >
             {progressPct}%
           </span>
         </div>
@@ -974,7 +998,7 @@ export default function QuestFlowCards() {
               ) : (
                 <>
               {/* 질문·fact — 서술형도 카드 상단에 전체 노출 (절대 한 줄 자르지 않음) */}
-              <div className="shrink-0 px-4 pt-2 pb-2">
+              <div className="shrink-0 px-4 pt-3 pb-2">
                 <div className="space-y-4">
                   {displayQuestionParagraphs.map((paragraph, i) => (
                     <p
@@ -1039,11 +1063,14 @@ export default function QuestFlowCards() {
 
               {footerMode && footerMode !== 'stance_pick' && (
                 <footer
-                  className="shrink-0 border-t px-4 py-2.5 w-full"
+                  className="shrink-0 border-t px-4 w-full"
                   style={{
                     borderColor: eduGame.border,
                     backgroundColor: eduGame.bg,
-                    paddingBottom: 'calc(0.5rem + env(safe-area-inset-bottom, 0px))',
+                    paddingTop: keyboardOpen ? '0.375rem' : '0.625rem',
+                    paddingBottom: keyboardOpen
+                      ? 'calc(0.375rem + env(safe-area-inset-bottom, 0px))'
+                      : 'calc(0.625rem + env(safe-area-inset-bottom, 0px))',
                   }}
                 >
                   <div className="space-y-2">
@@ -1071,7 +1098,7 @@ export default function QuestFlowCards() {
                               borderColor: eduGame.primary,
                               backgroundColor: i === 0 ? eduGame.primary : eduGame.bg,
                               color: i === 0 ? eduGame.bg : eduGame.ink,
-                              boxShadow: i === 0 ? '0 2px 0 rgba(217, 69, 28, 0.35)' : '0 2px 0 rgba(232, 232, 232, 1)',
+                              boxShadow: i === 0 ? `0 2px 0 ${eduGame.primaryDark}59` : `0 2px 0 ${eduGame.border}`,
                             }}
                           >
                             {option}

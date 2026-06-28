@@ -23,14 +23,34 @@ export default function CardStructureBar({
   waiting = false,
 }: Props) {
   const { completed, current } = resolveCardStructureBarState(phase, guideAxisIndex)
+  const total = CARD_STRUCTURE_SLOTS.length
+  const stepNum =
+    current >= 0 ? Math.min(completed + 1, total) : Math.min(Math.max(completed, 0), total)
 
   return (
     <div
-      className={`shrink-0 border-b px-4 ${compact ? 'py-1' : 'py-2'}`}
+      className={`shrink-0 border-b px-4 ${compact ? 'py-1.5' : 'py-2.5'}`}
       style={{ borderColor: eduGame.border, backgroundColor: eduGame.surface }}
     >
-      <div className={`${compact ? '' : ''} max-w-2xl mx-auto w-full`}>
-        <div className="relative flex gap-1.5" role="list" aria-label="글 구조 진행">
+      <div className="max-w-2xl mx-auto w-full">
+        {!compact && (
+          <div className="mb-1.5 flex items-center justify-between gap-2">
+            <span
+              className="font-bold"
+              style={{ fontSize: eduGame.fontSize.caption, color: eduGame.muted }}
+            >
+              글 구조
+            </span>
+            <span
+              className="font-bold tabular-nums"
+              style={{ fontSize: eduGame.fontSize.caption, color: eduGame.primary }}
+              aria-live="polite"
+            >
+              {stepNum}/{total}
+            </span>
+          </div>
+        )}
+        <div className={`relative flex ${compact ? 'gap-1' : 'gap-1.5'}`} role="list" aria-label="글 구조 진행">
           {CARD_STRUCTURE_SLOTS.map((label, i) => {
             const isDone = i < completed
             const isCurrent = !isDone && i === current && current >= 0
