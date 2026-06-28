@@ -299,17 +299,41 @@ export interface EduExploreShelf {
   categories: string[]
 }
 
-async function eduFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+type EduFetchOptions = RequestInit & { timeoutMs?: number }
+
+async function eduFetch<T>(path: string, options: EduFetchOptions = {}): Promise<T> {
+  const { timeoutMs, ...fetchOptions } = options
   const token = getEduToken()
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...(options.headers as Record<string, string> | undefined),
+    ...(fetchOptions.headers as Record<string, string> | undefined),
   }
   if (token) {
     headers['X-Edu-Token'] = token
   }
 
-  const res = await fetch(path, { ...options, headers })
+  const controller = timeoutMs != null && timeoutMs > 0 ? new AbortController() : null
+  const timeoutId =
+    controller != null
+      ? window.setTimeout(() => {
+          controller.abort()
+        }, timeoutMs)
+      : null
+
+  let res: Response
+  try {
+    res = await fetch(path, { ...fetchOptions, headers, signal: controller?.signal })
+  } catch (e) {
+    if (e instanceof DOMException && e.name === 'AbortError') {
+      throw new Error('요청 시간이 초과됐어요. 잠시 후 다시 시도해 주세요.')
+    }
+    throw e
+  } finally {
+    if (timeoutId != null) {
+      window.clearTimeout(timeoutId)
+    }
+  }
+
   const raw = await res.text()
   let data: { success?: boolean; error?: string }
   try {
@@ -524,6 +548,7 @@ export const eduApi = {
     eduFetch<EduComposeResponse>('/api/edu/session/compose.php', {
       method: 'POST',
       body: JSON.stringify({ session_id: sessionId, force }),
+      timeoutMs: 180_000,
     }),
 
   getStructureInsight: (sessionId: string) =>

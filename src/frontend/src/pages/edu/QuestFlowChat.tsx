@@ -174,6 +174,7 @@ export default function QuestFlowChat() {
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [composing, setComposing] = useState(false)
+  const [composeFailed, setComposeFailed] = useState(false)
   const [structurePreview, setStructurePreview] = useState<EssayStructurePreview | null>(null)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [thinkingExpanded, setThinkingExpanded] = useState(false)
@@ -428,6 +429,7 @@ export default function QuestFlowChat() {
 
   const handleCompose = async (sid: string) => {
     setComposing(true)
+    setComposeFailed(false)
     setError('')
     try {
       const res = await eduApi.composeEssay(sid)
@@ -464,6 +466,8 @@ export default function QuestFlowChat() {
           : '글을 완성하고 저장했어! 필요하면 아래에서 고쳐봐.'
       )
     } catch (e) {
+      composeStartedRef.current = false
+      setComposeFailed(true)
       setError(e instanceof Error ? e.message : '글 생성 실패')
     } finally {
       setComposing(false)
@@ -471,8 +475,15 @@ export default function QuestFlowChat() {
   }
   handleComposeRef.current = handleCompose
 
+  const handleComposeRetry = () => {
+    if (!sessionId || composing || completed) return
+    composeStartedRef.current = true
+    void handleCompose(sessionId)
+  }
+
   useEffect(() => {
     composeStartedRef.current = false
+    setComposeFailed(false)
   }, [sessionId])
 
   useEffect(() => {
@@ -941,7 +952,20 @@ export default function QuestFlowChat() {
         )}
 
         {error && (
-          <p className="text-sm text-red-600 border border-red-200 bg-red-50 p-3 rounded">{error}</p>
+          <div className="text-sm text-red-600 border border-red-200 bg-red-50 p-3 rounded space-y-2">
+            <p>{error}</p>
+            {composeFailed && phase === 'compose' && !completed && sessionId && (
+              <button
+                type="button"
+                onClick={() => void handleComposeRetry()}
+                disabled={composing}
+                className={`w-full py-2.5 rounded-lg font-medium ${eduGameClasses.btnPrimary}`}
+                style={{ backgroundColor: eduGame.primary, fontSize: eduGame.fontSize.button }}
+              >
+                글 다시 만들기
+              </button>
+            )}
+          </div>
         )}
         <div ref={bottomRef} />
       </main>
