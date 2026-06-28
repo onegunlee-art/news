@@ -236,6 +236,9 @@ jobs:
             --include='edu_level_depth_verify.php' \
             --include='edu_level_depth_verify_static.php' \
             --include='edu_insight_compose_probe.php' \
+            --include='edu_live_*.php' \
+            --include='edu_compose_bootstrap_*.php' \
+            --include='edu_compose_bootstrap_require_test.php' \
             --include='edu_llm_diagnose_phase2_static_verify.php' \
             --include='seed_lens_quests.php' \
             --include='seed_japan_decision_quest.php' \
@@ -496,6 +499,37 @@ jobs:
           echo "--- curl -I (debug) ---"
           curl -sSI --connect-timeout 15 --max-time 30 "$URL" || true
           exit 1
+
+      - name: EDU compose bootstrap gate (401 JSON required, 500 empty rejected)
+        run: |
+          URL="${{ env.SITE_URL }}/api/edu/session/compose.php"
+          tmp=$(mktemp)
+          code=$(curl -sS -o "$tmp" -w "%{http_code}" -X POST \
+            -H 'Content-Type: application/json' \
+            -d '{"session_id":"x"}' \
+            --connect-timeout 15 --max-time 30 "$URL" 2>/dev/null) || true
+          code=$(echo "$code" | tr -d '[:space:]')
+          body=$(tr -d '[:space:]' < "$tmp" 2>/dev/null || true)
+          echo "compose bootstrap probe: HTTP $code body_len=${#body}"
+          if [ "$code" = "500" ] && [ -z "$body" ]; then
+            echo "❌ compose.php bootstrap fatal (HTTP 500 empty body — eduAgents.php require missing?)"
+            rm -f "$tmp"
+            exit 1
+          fi
+          if [ "$code" != "401" ]; then
+            echo "❌ compose.php without token must return 401 JSON, got HTTP $code"
+            cat "$tmp" || true
+            rm -f "$tmp"
+            exit 1
+          fi
+          if ! grep -q 'X-Edu-Token required' "$tmp"; then
+            echo "❌ compose.php 401 JSON missing X-Edu-Token required"
+            cat "$tmp" || true
+            rm -f "$tmp"
+            exit 1
+          fi
+          rm -f "$tmp"
+          echo "✅ EDU compose bootstrap gate passed"
 
       - name: Check homepage (retries)
         run: |

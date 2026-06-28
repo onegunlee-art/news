@@ -7,15 +7,21 @@
 declare(strict_types=1);
 
 $root = dirname(__DIR__);
-$targets = [
-    'public/api/edu/session/compose.php',
-    'public/api/edu/session/chat.php',
-    'public/api/edu/internal/quest-candidate.php',
-];
+$targets = [];
+foreach (['public/api/edu/session', 'public/api/edu/internal'] as $dir) {
+    $full = $root . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $dir);
+    if (!is_dir($full)) {
+        continue;
+    }
+    foreach (glob($full . DIRECTORY_SEPARATOR . '*.php') ?: [] as $path) {
+        $targets[] = $dir . '/' . basename($path);
+    }
+}
+sort($targets);
 
 $fail = 0;
 foreach ($targets as $rel) {
-    $path = $root . '/' . $rel;
+    $path = $root . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $rel);
     if (!is_file($path)) {
         echo "SKIP missing {$rel}\n";
         continue;

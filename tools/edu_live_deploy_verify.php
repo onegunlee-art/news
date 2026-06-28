@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 $root = dirname(__DIR__);
 require_once $root . '/public/api/lib/env_bootstrap.php';
+require_once __DIR__ . '/edu_compose_bootstrap_gate.php';
 require_once $root . '/public/api/edu/lib/bootstrap.php';
 require_once $root . '/public/api/edu/lib/eduConfig.php';
 require_once $root . '/public/api/edu/lib/eduQuest.php';
@@ -51,15 +52,11 @@ echo "=== EDU Live Deploy Verify ===\n\n";
 
 echo "--- compose.php bootstrap (live HTTP, no token) ---\n";
 $bootstrap = httpJson('POST', $base . '/api/edu/session/compose.php', ['session_id' => 'x']);
-$bootstrapBody = trim($bootstrap['raw']);
-if ($bootstrap['http'] === 500 && $bootstrapBody === '') {
-    echo "FAIL: compose.php bootstrap fatal (HTTP 500 empty body — eduAgents.php require missing?)\n";
-    exit(1);
-}
-if ($bootstrap['http'] !== 401) {
-    echo "FAIL: compose.php without token should return 401 JSON, got HTTP {$bootstrap['http']}\n";
-    if ($bootstrapBody !== '') {
-        echo substr($bootstrapBody, 0, 200) . "\n";
+$gateErr = eduComposeBootstrapGateError(['http' => $bootstrap['http'], 'raw' => $bootstrap['raw']]);
+if ($gateErr !== null) {
+    echo "FAIL: {$gateErr}\n";
+    if (trim($bootstrap['raw']) !== '') {
+        echo substr(trim($bootstrap['raw']), 0, 200) . "\n";
     }
     exit(1);
 }

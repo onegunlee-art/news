@@ -40,6 +40,12 @@ jobs:
       - name: EDU smoke test (news pipeline isolation)
         run: php tests/edu_smoke_test.php
 
+      - name: EDU compose bootstrap require (static)
+        run: php tools/edu_compose_bootstrap_require_test.php
+
+      - name: EDU compose bootstrap gate self-test
+        run: php tools/edu_compose_bootstrap_gate_self_test.php
+
   # ========================================
   # TypeScript Type Check
   # ========================================
