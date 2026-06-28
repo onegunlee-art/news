@@ -94,6 +94,14 @@ $purgeTool = is_file($root . '/tools/edu_quest_declaration_purge.php')
     : '';
 ok('purge tool exists', $purgeTool !== '');
 ok('purge: draft only', str_contains($purgeTool, "status=eq.draft"));
+ok('purge: forceIds passed to loader', str_contains($purgeTool, 'loadGistDraftQuests($supabase, $forceIds)'));
+
+$approveTool = is_file($root . '/tools/edu_quest_generate_approve.php')
+    ? (string) file_get_contents($root . '/tools/edu_quest_generate_approve.php')
+    : '';
+ok('approve --top option', str_contains($approveTool, '--top='));
+ok('approve --codes option', str_contains($approveTool, '--codes='));
+ok('approve skips declaration', str_contains($approveTool, 'eduQuestFilterDeclarationCheck'));
 
 $candidatesTool = is_file($root . '/tools/edu_quest_analyze_candidates.php');
 ok('analyze candidates tool', $candidatesTool);

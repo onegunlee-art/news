@@ -416,3 +416,75 @@ function eduQuestGenerateReviewRow(array $draft, array $persist): array
         'persist' => $persist,
     ];
 }
+
+/**
+ * Q-GIST draft 중 선언문 제외 · filter score 순 후보.
+ *
+ * @return list<array<string, mixed>>
+ */
+function eduQuestListAnalysisDraftCandidates(\Agents\Services\SupabaseService $supabase): array
+{
+    $rows = [];
+    $offset = 0;
+    while (true) {
+        $batch = $supabase->select(
+            'edu_daily_quests',
+            'status=eq.draft&order=created_at.desc&limit=100&offset=' . $offset,
+            100
+        ) ?? [];
+        if ($batch === []) {
+            break;
+        }
+        foreach ($batch as $quest) {
+            $code = (string) ($quest['quest_code'] ?? '');
+            if (!str_starts_with($code, 'Q-GIST-')) {
+                continue;
+            }
+            $articles = $supabase->select(
+                'edu_quest_articles',
+                'quest_id=eq.' . ($quest['id'] ?? '') . '&role=eq.primary',
+                1
+            ) ?? [];
+            $newsId = (int) ($articles[0]['news_id'] ?? 0);
+            $hints = $quest['hammer_hints'] ?? [];
+            if (is_string($hints)) {
+                $hints = json_decode($hints, true) ?: [];
+            }
+            $hinge = is_array($hints['_hinge'] ?? null) ? $hints['_hinge'] : [];
+            $meta = [
+                'news_id' => $newsId,
+                'title' => (string) ($quest['quest_title'] ?? ''),
+                'category' => '',
+                'topic_label' => '',
+            ];
+            $extraction = array_merge(['news_id' => $newsId], $hinge);
+            $decl = eduQuestFilterDeclarationCheck($meta, $extraction);
+            if ($decl['is_declaration']) {
+                continue;
+            }
+            $class = eduQuestFilterClassify($extraction, $meta);
+            if (($class['verdict'] ?? '') === '불가') {
+                continue;
+            }
+            $rows[] = [
+                'quest_id' => (string) ($quest['id'] ?? ''),
+                'news_id' => $newsId,
+                'quest_code' => $code,
+                'title' => $meta['title'],
+                'hinge' => $hinge['hinge'] ?? ($quest['conflict_summary'] ?? ''),
+                'filter_verdict' => $class['verdict'] ?? '',
+                'filter_score' => (int) ($class['score'] ?? 0),
+                'axes' => count($hints['_guide_axes'] ?? []),
+                'gist_url' => 'https://www.thegist.co.kr/news/' . $newsId,
+            ];
+        }
+        if (count($batch) < 100) {
+            break;
+        }
+        $offset += 100;
+    }
+
+    usort($rows, static fn ($a, $b) => ($b['filter_score'] ?? 0) <=> ($a['filter_score'] ?? 0));
+
+    return $rows;
+}

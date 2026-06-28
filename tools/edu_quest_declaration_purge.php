@@ -35,7 +35,7 @@ if (!$supabase->isConfigured()) {
 }
 
 /** @return list<array<string, mixed>> */
-function loadGistDraftQuests(SupabaseService $supabase): array
+function loadGistDraftQuests(SupabaseService $supabase, array $forceIds = []): array
 {
     $out = [];
     $offset = 0;
@@ -101,7 +101,7 @@ echo 'Mode: ' . ($apply ? 'APPLY (delete draft)' : 'LIST ONLY') . "\n";
 echo "Scope: Q-GIST-* status=draft only\n";
 echo "Preserve: approved, 수동 시드, 분석글\n\n";
 
-$quests = loadGistDraftQuests($supabase);
+$quests = loadGistDraftQuests($supabase, $forceIds);
 $toPurge = array_values(array_filter($quests, static fn ($q) => $q['purge']));
 $toKeep = array_values(array_filter($quests, static fn ($q) => !$q['purge']));
 
