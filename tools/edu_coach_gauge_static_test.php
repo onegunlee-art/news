@@ -81,13 +81,21 @@ ok('tier progress uses gauge', ($tierPayload['progress_pct'] ?? 0) === 100);
 ok('next coach label', ($tierPayload['next_coach_label_ko'] ?? '') === '분석가');
 ok('streak preserved in payload', ($tierPayload['streak_days'] ?? 0) === 3);
 
-$hero = (string) file_get_contents($root . '/src/frontend/src/components/edu/EduStudentProfileHero.tsx');
-ok('profile gauge UI', str_contains($hero, 'coach_gauge') || str_contains($hero, 'gaugePct'));
-ok('profile soon levelup', str_contains($hero, '곧 레벨업'));
+$frontendRoot = $root . '/src/frontend/src/components/edu';
+$heroPath = $frontendRoot . '/EduStudentProfileHero.tsx';
+$homePath = $frontendRoot . '/TierProgressCard.tsx';
 
-$homeCard = (string) file_get_contents($root . '/src/frontend/src/components/edu/TierProgressCard.tsx');
-ok('home gauge UI', str_contains($homeCard, 'coach_gauge') || str_contains($homeCard, 'gaugePct'));
-ok('home no legacy iron tier', !str_contains($homeCard, 'tier_label_en'));
+if (is_file($heroPath) && is_file($homePath)) {
+    $hero = (string) file_get_contents($heroPath);
+    ok('profile gauge UI', str_contains($hero, 'coach_gauge') || str_contains($hero, 'gaugePct'));
+    ok('profile soon levelup', str_contains($hero, '곧 레벨업'));
+
+    $homeCard = (string) file_get_contents($homePath);
+    ok('home gauge UI', str_contains($homeCard, 'coach_gauge') || str_contains($homeCard, 'gaugePct'));
+    ok('home no legacy iron tier', !str_contains($homeCard, 'tier_label_en'));
+} else {
+    echo "SKIP frontend UI checks (src/frontend not on server — CI runs full suite)\n";
+}
 
 echo "\n{$pass} passed, {$fail} failed\n";
 exit($fail > 0 ? 1 : 0);
