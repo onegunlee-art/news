@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import TierProgressCard from '../../components/edu/TierProgressCard'
+import { useNavigate } from 'react-router-dom'
 import EduQuestCoverHero from '../../components/edu/EduQuestCoverHero'
 import {
   clearEduToken,
@@ -11,27 +10,26 @@ import {
   getEduToken,
   setEduStudent,
   setEduToken,
-  type EduTierProgress,
   type EduQuest,
   type EduQuestListItem,
 } from '../../services/eduApi'
-import { eduCoachLevelByNumber, type EduCoachLevelInfo } from '../../constants/eduCoachLevel'
+import EduHomeBoard from './EduHomeBoard'
 
-export default function EduHomePage() {
+/** 비로그인 체험·가입 유도 (3단계에서 확장) */
+function EduHomeGuestPage() {
   const navigate = useNavigate()
   const [inviteCode, setInviteCode] = useState('')
-  const [studentName, setStudentName] = useState(() => getEduStudent()?.display_name || getEduDisplayName() || '')
-  const [tier, setTier] = useState<EduTierProgress | null>(null)
-  const [coachLevel, setCoachLevel] = useState<EduCoachLevelInfo>(() => eduCoachLevelByNumber(1))
+  const [studentName, setStudentName] = useState(
+    () => getEduStudent()?.display_name || getEduDisplayName() || '',
+  )
   const [quest, setQuest] = useState<EduQuest | null>(null)
   const [otherQuests, setOtherQuests] = useState<EduQuestListItem[]>([])
-  const [participation, setParticipation] = useState<string>('')
+  const [participation, setParticipation] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
-  const [authed, setAuthed] = useState(!!getEduToken())
   const [showLogin, setShowLogin] = useState(false)
 
-  const loadHome = async () => {
+  const loadGuestPreview = async () => {
     setLoading(true)
     setError('')
     try {
@@ -41,32 +39,21 @@ export default function EduHomePage() {
       ])
       setQuest(todayRes.quest)
       setParticipation(todayRes.participation?.display || '')
-      if (todayRes.tier) {
-        setTier(todayRes.tier)
-        setAuthed(true)
-      }
-      if (todayRes.coach_level) {
-        setCoachLevel(todayRes.coach_level)
-      }
       const liveId = todayRes.quest?.quest_id
       setOtherQuests(
         listRes.quests
           .filter((q) => !q.is_live && q.quest_id !== liveId)
-          .slice(0, 3)
+          .slice(0, 3),
       )
     } catch (e) {
       setError(e instanceof Error ? e.message : '로드 실패')
-      if ((e as Error).message?.includes('401')) {
-        clearEduToken()
-        setAuthed(false)
-      }
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    loadHome()
+    void loadGuestPreview()
   }, [])
 
   const handleRedeem = async () => {
@@ -82,24 +69,9 @@ export default function EduHomePage() {
         grade_band: res.student.grade_band,
       })
       setStudentName(res.student.display_name)
-      setAuthed(true)
-      await loadHome()
+      window.location.reload()
     } catch (e) {
       setError(e instanceof Error ? e.message : '초대코드 오류')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleStart = async (questId?: string) => {
-    const id = questId ?? quest?.quest_id
-    if (!id) return
-    setLoading(true)
-    try {
-      await eduApi.startSession(id)
-      navigate(questId ? `/edu/quest?quest_id=${encodeURIComponent(id)}` : '/edu/quest')
-    } catch (e) {
-      setError(e instanceof Error ? e.message : '시작 실패')
     } finally {
       setLoading(false)
     }
@@ -117,7 +89,6 @@ export default function EduHomePage() {
         grade_band: res.student.grade_band,
       })
       setStudentName(res.student.display_name)
-      setAuthed(true)
       navigate('/edu/quest')
     } catch (e) {
       setError(e instanceof Error ? e.message : '게스트 시작 실패')
@@ -130,13 +101,6 @@ export default function EduHomePage() {
     window.location.href = getEduKakaoLoginUrl()
   }
 
-  const handleLogout = () => {
-    clearEduToken()
-    setAuthed(false)
-    setTier(null)
-    setStudentName('')
-  }
-
   const coverArticle =
     quest?.articles.find((a) => a.role === 'primary') ?? quest?.articles[0] ?? null
 
@@ -144,24 +108,11 @@ export default function EduHomePage() {
     <div className="min-h-screen bg-[#0D0D0D] text-white">
       <header className="border-b border-[#333] px-4 py-4 flex items-center justify-between max-w-lg mx-auto">
         <div className="flex items-center gap-2">
-          <span className="font-bold text-xl" style={{ fontFamily: 'Lobster, cursive' }}>g.</span>
+          <span className="font-bold text-xl" style={{ fontFamily: 'Lobster, cursive' }}>
+            g.
+          </span>
           <span className="text-sm tracking-wide text-[#999]">the gist · EDU</span>
         </div>
-        {authed ? (
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => navigate('/edu/profile')}
-              className="text-xs underline font-bold"
-              style={{ color: '#f05123' }}
-            >
-              내 프로필
-            </button>
-            <button type="button" onClick={handleLogout} className="text-xs underline text-[#666]">
-              나가기
-            </button>
-          </div>
-        ) : null}
       </header>
 
       <main className="max-w-lg mx-auto px-4 py-6 space-y-6">
@@ -169,7 +120,6 @@ export default function EduHomePage() {
           <div className="text-center py-12 text-[#666]">불러오는 중…</div>
         ) : quest ? (
           <>
-            {/* 오늘의 퀘스트 표지 */}
             <EduQuestCoverHero
               coverImageUrl={quest.cover_image_url}
               questTitle={quest.quest_title}
@@ -182,7 +132,6 @@ export default function EduHomePage() {
 
             <section className="border border-[#333] rounded-lg p-5 bg-[#1a1a1a] space-y-4">
               <h1 className="text-lg font-bold leading-snug edu-game-text-ko">{quest.quest_title}</h1>
-              
               <div className="grid grid-cols-2 gap-3">
                 <div className="border border-[#333] rounded p-3">
                   <span className="text-xs text-[#4CAF50] font-bold block mb-1">찬성</span>
@@ -193,36 +142,12 @@ export default function EduHomePage() {
                   <p className="text-sm text-[#ccc] edu-game-text-ko">{quest.con_line}</p>
                 </div>
               </div>
-
               {participation && (
                 <p className="text-xs text-[#666] text-center">{participation}</p>
               )}
             </section>
 
-            {/* 참여 버튼 또는 로그인 */}
-            {authed ? (
-              <>
-                {studentName && (
-                  <p className="text-sm text-[#666]">안녕하세요, {studentName}님</p>
-                )}
-                {tier && (
-                  <TierProgressCard
-                    tier={tier}
-                    coachLevel={coachLevel}
-                    onStartQuest={() => handleStart()}
-                    loading={loading}
-                  />
-                )}
-                <button
-                  type="button"
-                  onClick={() => handleStart()}
-                  disabled={loading}
-                  className="w-full py-4 bg-[#E8521C] text-white rounded-lg font-bold text-lg disabled:opacity-50"
-                >
-                  퀘스트 시작하기
-                </button>
-              </>
-            ) : showLogin ? (
+            {showLogin ? (
               <section className="space-y-4 border border-[#333] rounded-lg p-5 bg-[#1a1a1a]">
                 <h2 className="text-lg font-bold">로그인</h2>
                 <button
@@ -246,7 +171,7 @@ export default function EduHomePage() {
                 />
                 <button
                   type="button"
-                  onClick={handleRedeem}
+                  onClick={() => void handleRedeem()}
                   disabled={loading}
                   className="w-full py-3 bg-[#E8521C] text-white rounded font-medium disabled:opacity-50"
                 >
@@ -255,7 +180,7 @@ export default function EduHomePage() {
                 <div className="text-center text-[#666] text-xs my-2">또는</div>
                 <button
                   type="button"
-                  onClick={handleGuestStart}
+                  onClick={() => void handleGuestStart()}
                   disabled={loading}
                   className="w-full py-3 border border-[#E8521C] text-[#E8521C] rounded font-medium disabled:opacity-50"
                 >
@@ -282,25 +207,24 @@ export default function EduHomePage() {
         ) : (
           <section className="text-center py-12">
             <p className="text-[#666]">오늘은 퀘스트가 없어요.</p>
-            <p className="text-sm text-[#666] mt-2">수, 토, 일 오후 4시에 새 퀘스트가 드랍됩니다!</p>
+            <p className="text-sm text-[#666] mt-2">로그인하면 더 많은 논쟁을 골라볼 수 있어요.</p>
+            <button
+              type="button"
+              onClick={() => setShowLogin(true)}
+              className="mt-6 px-6 py-3 bg-[#E8521C] text-white rounded-lg font-bold"
+            >
+              참여하기
+            </button>
           </section>
         )}
 
         {otherQuests.length > 0 && (
           <section className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm font-medium text-[#888]">다른 논쟁</h2>
-              <Link to="/edu/explore" className="text-xs text-[#E8521C] underline">
-                전체 보기 →
-              </Link>
-            </div>
+            <h2 className="text-sm font-medium text-[#888]">다른 논쟁 미리보기</h2>
             {otherQuests.map((q) => (
-              <button
+              <div
                 key={q.quest_id}
-                type="button"
-                onClick={() => authed && handleStart(q.quest_id)}
-                disabled={loading || !authed}
-                className="w-full text-left border border-[#333] rounded-lg overflow-hidden bg-[#1a1a1a] hover:border-[#555] disabled:opacity-50 transition-colors"
+                className="w-full text-left border border-[#333] rounded-lg overflow-hidden bg-[#1a1a1a] opacity-80"
               >
                 <EduQuestCoverHero
                   coverImageUrl={q.cover_image_url}
@@ -311,41 +235,37 @@ export default function EduHomePage() {
                   topicLabel="따질 주제"
                 />
                 <div className="p-3 pt-2">
-                <div className="flex items-start justify-between gap-2 mb-1">
-                  {q.lens_label ? (
-                    <span className="text-xs text-[#E8521C] edu-game-text-ko">쟁점: {q.lens_label}</span>
-                  ) : q.time_anchor ? (
-                    <span className="text-xs text-[#888]">{q.time_anchor}</span>
-                  ) : null}
-                  {q.completed && (
-                    <span className="text-xs text-[#4CAF50] shrink-0">완료</span>
-                  )}
-                </div>
-                <p className="text-sm font-medium leading-snug edu-game-text-ko">{q.quest_title}</p>
-                {!authed && (
+                  <p className="text-sm font-medium leading-snug edu-game-text-ko">{q.quest_title}</p>
                   <p className="text-xs text-[#666] mt-2">참여하려면 로그인하세요</p>
-                )}
                 </div>
-              </button>
+              </div>
             ))}
-          </section>
-        )}
-
-        {otherQuests.length === 0 && quest && (
-          <section className="text-center py-4">
-            <Link
-              to="/edu/explore"
-              className="inline-block px-5 py-3 border border-[#E8521C] text-[#E8521C] rounded-lg text-sm font-medium hover:bg-[#E8521C]/10 transition-colors"
-            >
-              더 많은 논쟁 탐색하기
-            </Link>
           </section>
         )}
 
         {error && (
           <p className="text-sm text-red-400 border border-red-900 bg-red-900/20 p-3 rounded">{error}</p>
         )}
+
+        {studentName && !showLogin && (
+          <p className="text-xs text-center text-[#666]">환영합니다, {studentName}님</p>
+        )}
       </main>
     </div>
   )
+}
+
+export default function EduHomePage() {
+  const [authed, setAuthed] = useState(!!getEduToken())
+
+  const handleLogout = () => {
+    clearEduToken()
+    setAuthed(false)
+  }
+
+  if (authed) {
+    return <EduHomeBoard onLogout={handleLogout} />
+  }
+
+  return <EduHomeGuestPage />
 }
