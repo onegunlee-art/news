@@ -49,6 +49,9 @@ jobs:
       - name: EDU coach gauge XP static test (B-2)
         run: php tools/edu_coach_gauge_static_test.php
 
+      - name: EDU coach level-up static test (B-3)
+        run: php tools/edu_coach_levelup_static_test.php
+
   # ========================================
   # TypeScript Type Check
   # ========================================

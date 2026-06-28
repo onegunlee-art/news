@@ -21,6 +21,7 @@ import {
   getEduToken,
   getEduDisplayName,
   type EduDialogueTurn,
+  type EduLevelUpPayload,
   type EduQuest,
   type EduQuestArticle,
   type EduTierProgress,
@@ -166,6 +167,7 @@ export default function QuestFlowChat() {
   const [xpBreakdown, setXpBreakdown] = useState<EduXpBreakdownLine[]>([])
   const [gateHit, setGateHit] = useState<boolean | undefined>(undefined)
   const [gateLabelKo, setGateLabelKo] = useState<string | null>(null)
+  const [levelUp, setLevelUp] = useState<EduLevelUpPayload | null>(null)
   const [tier, setTier] = useState<EduTierProgress | null>(null)
   const [coachLevel, setCoachLevel] = useState<EduCoachLevelInfo>(() => eduCoachLevelByNumber(1))
   const [levelDebugAllowed, setLevelDebugAllowed] = useState(false)
@@ -451,6 +453,7 @@ export default function QuestFlowChat() {
       setXpBreakdown(res.xp_breakdown ?? [])
       setGateHit(res.gate_hit)
       setGateLabelKo(res.gate_label_ko ?? null)
+      setLevelUp(res.level_up ?? null)
       if (res.tier) setTier(res.tier)
       if (res.coach_level) setCoachLevel(res.coach_level)
       if (res.level_debug_allowed != null) setLevelDebugAllowed(res.level_debug_allowed)
@@ -848,6 +851,7 @@ export default function QuestFlowChat() {
             xpBreakdown={xpBreakdown}
             gateHit={gateHit}
             gateLabelKo={gateLabelKo}
+            levelUp={levelUp}
             streakDays={tier?.streak_days ?? 0}
             coachLevel={coachLevel}
             levelDebugSwitch={canShowCoachLevelDebugSwitch(levelDebugAllowed)}

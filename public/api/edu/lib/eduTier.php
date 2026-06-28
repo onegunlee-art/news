@@ -200,6 +200,95 @@ function eduAwardXp(\Agents\Services\SupabaseService $supabase, string $studentI
 }
 
 /**
+ * B-3 — 게이지 100% → coach_level +1, gauge reset. demotion 없음. L5 = 졸업(만렙).
+ *
+ * @param array<string, mixed> $student
+ * @param array<string, mixed> $tierRow
+ * @return array{
+ *   leveled_up: bool,
+ *   from_level?: int,
+ *   to_level?: int,
+ *   from_label_ko?: string,
+ *   to_label_ko?: string,
+ *   from_label_en?: string,
+ *   to_label_en?: string,
+ *   message?: string
+ * }
+ */
+function eduTryCoachLevelUp(
+    \Agents\Services\SupabaseService $supabase,
+    string $studentId,
+    array $student,
+    array $tierRow
+): array {
+    $none = ['leveled_up' => false];
+
+    $level = eduCoachLevelNormalize((int) ($student['coach_level'] ?? EDU_COACH_LEVEL_L1));
+    if ($level >= EDU_COACH_LEVEL_L5) {
+        return $none;
+    }
+
+    $gaugeXp = eduCoachGaugeXpFromRow($tierRow);
+    if ($gaugeXp < EDU_COACH_GAUGE_TARGET) {
+        return $none;
+    }
+
+    $toLevel = $level + 1;
+    $fromLabels = eduCoachLevelLabels($level);
+    $toLabels = eduCoachLevelLabels($toLevel);
+
+    $studentUpdated = $supabase->update('edu_students', 'id=eq.' . $studentId, [
+        'coach_level' => $toLevel,
+        'updated_at' => date('c'),
+    ]);
+    if ($studentUpdated === null) {
+        error_log('eduTryCoachLevelUp: student update failed ' . $supabase->getLastError());
+
+        return $none;
+    }
+
+    $tierUpdated = $supabase->update('edu_user_tier', 'student_id=eq.' . $studentId, [
+        'coach_gauge_xp' => 0,
+        'updated_at' => date('c'),
+    ]);
+    if ($tierUpdated === null) {
+        error_log('eduTryCoachLevelUp: gauge reset failed ' . $supabase->getLastError());
+    }
+
+    $supabase->insert('edu_xp_events', [
+        'student_id' => $studentId,
+        'session_id' => null,
+        'event_type' => 'coach_level_up',
+        'xp_delta' => 0,
+        'meta' => [
+            'from_level' => $level,
+            'to_level' => $toLevel,
+            'from_label_ko' => $fromLabels['ko'],
+            'to_label_ko' => $toLabels['ko'],
+        ],
+    ]);
+
+    return [
+        'leveled_up' => true,
+        'from_level' => $level,
+        'to_level' => $toLevel,
+        'from_label_ko' => $fromLabels['ko'],
+        'to_label_ko' => $toLabels['ko'],
+        'from_label_en' => $fromLabels['en'],
+        'to_label_en' => $toLabels['en'],
+        'message' => $toLabels['ko'] . ' 달성!',
+    ];
+}
+
+/** @return array<string, mixed>|null */
+function eduFetchStudentRow(\Agents\Services\SupabaseService $supabase, string $studentId): ?array
+{
+    $rows = $supabase->select('edu_students', 'id=eq.' . $studentId, 1);
+
+    return $rows[0] ?? null;
+}
+
+/**
  * 완주(세션 종료) 시 스트릭 — XP와 분리. 하루 1회 +1, freeze 1회 후 리셋.
  */
 function eduStreakOnCompletion(\Agents\Services\SupabaseService $supabase, string $studentId): array

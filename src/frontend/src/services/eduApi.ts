@@ -64,6 +64,17 @@ export interface EduXpBreakdownLine {
   xp: number
 }
 
+export interface EduLevelUpPayload {
+  leveled_up: boolean
+  from_level?: number
+  to_level?: number
+  from_label_ko?: string
+  to_label_ko?: string
+  from_label_en?: string
+  to_label_en?: string
+  message?: string
+}
+
 export interface EduTierProgress {
   tier_id: string
   tier_label_en: string
@@ -200,6 +211,7 @@ export interface EduComposeResponse {
   xp_breakdown?: EduXpBreakdownLine[]
   gate_hit?: boolean
   gate_label_ko?: string | null
+  level_up?: EduLevelUpPayload
   tier?: EduTierProgress
   coach_level?: EduCoachLevelInfo
   level_debug_allowed?: boolean
@@ -456,14 +468,18 @@ export const eduApi = {
       topics_count?: number
     }>('/api/edu/student/profile.php'),
 
-  setCoachLevel: (coach_level: number) =>
+  setCoachLevel: (coach_level: number, options?: { coach_gauge_xp?: number }) =>
     eduFetch<{
       coach_level: EduCoachLevelInfo
       level_debug_allowed: boolean
       message?: string
+      tier?: EduTierProgress
     }>('/api/edu/student/coach_level.php', {
       method: 'POST',
-      body: JSON.stringify({ coach_level }),
+      body: JSON.stringify({
+        coach_level,
+        ...(options?.coach_gauge_xp != null ? { coach_gauge_xp: options.coach_gauge_xp } : {}),
+      }),
     }),
 
   studentSessions: (status: 'completed' | 'in_progress' | 'all' = 'completed') =>

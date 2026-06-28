@@ -240,6 +240,7 @@ jobs:
             --include='edu_compose_bootstrap_*.php' \
             --include='edu_compose_bootstrap_require_test.php' \
             --include='edu_coach_gauge_static_test.php' \
+            --include='edu_coach_levelup_static_test.php' \
             --include='edu_llm_diagnose_phase2_static_verify.php' \
             --include='seed_lens_quests.php' \
             --include='seed_japan_decision_quest.php' \

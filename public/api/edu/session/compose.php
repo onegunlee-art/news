@@ -296,6 +296,16 @@ if (is_array($insightRow ?? null)) {
 $tierRow = eduAwardXp($supabase, $student['id'], $sessionXp, 'structure_quest', $sessionId, $xpMeta);
 $tierRow = eduStreakOnCompletion($supabase, $student['id']);
 
+$levelUp = eduTryCoachLevelUp($supabase, $student['id'], $student, $tierRow);
+if (!empty($levelUp['leveled_up'])) {
+    $tierRow = eduFetchTierRow($student['id']);
+    $refreshed = eduFetchStudentRow($supabase, $student['id']);
+    if ($refreshed !== null) {
+        $student = $refreshed;
+    }
+    $coachLevel = eduResolveCoachLevel($student, $blueprint);
+}
+
 $composePayload = [
     'success' => true,
     'session_id' => $sessionId,
@@ -320,6 +330,7 @@ $composePayload = [
     'xp_breakdown' => $xpMeta['xp_breakdown'] ?? [],
     'gate_hit' => !empty($xpMeta['gate_hit']),
     'gate_label_ko' => $xpMeta['gate_label_ko'] ?? null,
+    'level_up' => $levelUp,
     'tier' => eduTierProgressPayload($tierRow, $coachLevel),
     'coach_level' => eduCoachLevelProfilePayload($student),
     'level_debug_allowed' => eduLevelDebugAllowed($student),

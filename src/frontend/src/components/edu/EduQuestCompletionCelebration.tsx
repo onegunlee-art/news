@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { eduGame, eduGameClasses } from '../../constants/eduGameTheme'
 import type { EduCoachLevelInfo } from '../../constants/eduCoachLevel'
 import { eduCoachLevelByNumber } from '../../constants/eduCoachLevel'
-import type { EduTierProgress, EduXpBreakdownLine } from '../../services/eduApi'
+import type { EduTierProgress, EduLevelUpPayload, EduXpBreakdownLine } from '../../services/eduApi'
 import EduCoachLevelBadge from './EduCoachLevelBadge'
 
 function useCountUp(target: number, durationMs = 1200, active = true) {
@@ -39,6 +39,7 @@ type Props = {
   levelDebugSwitch?: boolean
   onCoachLevelChange?: (level: number) => void | Promise<void>
   tier?: EduTierProgress | null
+  levelUp?: EduLevelUpPayload | null
   active?: boolean
 }
 
@@ -53,10 +54,12 @@ export default function EduQuestCompletionCelebration({
   levelDebugSwitch = false,
   onCoachLevelChange,
   tier,
+  levelUp,
   active = true,
 }: Props) {
   const xpDisplay = useCountUp(xpGained, 1200, active)
   const level = coachLevel ?? eduCoachLevelByNumber(1)
+  const leveledUp = levelUp?.leveled_up === true
   const gaugePct = tier?.coach_gauge_progress_pct ?? tier?.progress_pct ?? 0
   const gaugeXp = tier?.coach_gauge_xp ?? tier?.xp_current ?? 0
   const gaugeTarget = tier?.coach_gauge_target ?? tier?.xp_next_tier ?? 100
@@ -73,8 +76,25 @@ export default function EduQuestCompletionCelebration({
         className="font-bold text-center mb-3"
         style={{ color: eduGame.primaryDark, fontSize: '1.375rem', lineHeight: 1.3 }}
       >
-        탐구 완료!
+        {leveledUp ? '레벨업!' : '탐구 완료!'}
       </p>
+
+      {leveledUp && levelUp?.to_label_ko && (
+        <div
+          className="edu-game-xp-in text-center mb-4 py-4 px-3 rounded-xl border-2"
+          style={{ backgroundColor: eduGame.bg, borderColor: eduGame.primary }}
+        >
+          <p className="text-3xl leading-none mb-2" aria-hidden>
+            🎉
+          </p>
+          <p className="font-bold" style={{ fontSize: '1.375rem', color: eduGame.primary, lineHeight: 1.3 }}>
+            {levelUp.to_label_ko} 달성!
+          </p>
+          <p className="mt-1" style={{ fontSize: eduGame.fontSize.caption, color: eduGame.muted }}>
+            {levelUp.from_label_ko} → {levelUp.to_label_ko} · 다음 퀘스트부터 더 깊은 코치
+          </p>
+        </div>
+      )}
 
       <div className="flex justify-center mb-4">
         <EduCoachLevelBadge
@@ -161,12 +181,20 @@ export default function EduQuestCompletionCelebration({
               style={{ width: `${gaugePct}%`, backgroundColor: eduGame.primary }}
             />
           </div>
-          {gaugeFull && (
+          {gaugeFull && !leveledUp && (
             <p
               className="mt-2 text-center font-bold"
               style={{ fontSize: eduGame.fontSize.caption, color: eduGame.primary }}
             >
               곧 레벨업!
+            </p>
+          )}
+          {leveledUp && (
+            <p
+              className="mt-2 text-center font-bold"
+              style={{ fontSize: eduGame.fontSize.caption, color: eduGame.primary }}
+            >
+              게이지 리셋 · {level.label_ko} 0%부터 다시
             </p>
           )}
         </div>
