@@ -67,6 +67,9 @@ jobs:
       - name: EDU brand refresh static test
         run: php tools/edu_brand_refresh_static_test.php
 
+      - name: EDU parent report static test
+        run: php tools/edu_parent_report_static_test.php
+
   # ========================================
   # TypeScript Type Check
   # ========================================

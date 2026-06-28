@@ -25,6 +25,7 @@ const EduProfilePage = lazy(() => import('./pages/edu/EduProfilePage'))
 const QuestFlowPage = lazy(() => import('./pages/edu/QuestFlowPage'))
 const NationalStatsPage = lazy(() => import('./pages/edu/NationalStatsPage'))
 const ShareCardPage = lazy(() => import('./pages/edu/ShareCardPage'))
+const EduOperatorReportsPage = lazy(() => import('./pages/edu/EduOperatorReportsPage'))
 const AnalysisPage = lazy(() => import('./pages/AnalysisPage'))
 const AdminPage = lazy(() => import('./pages/AdminPage'))
 const SearchPage = lazy(() => import('./pages/SearchPage'))
@@ -114,6 +115,7 @@ function App() {
           <Route path="/edu/quest" element={<QuestFlowPage />} />
           <Route path="/edu/stats/:questId" element={<NationalStatsPage />} />
           <Route path="/edu/share/:sessionId" element={<ShareCardPage />} />
+          <Route path="/edu/operator/reports" element={<EduOperatorReportsPage />} />
           <Route path="/share/:hash" element={<ShareCardPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
