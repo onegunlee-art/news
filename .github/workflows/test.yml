@@ -46,6 +46,9 @@ jobs:
       - name: EDU compose bootstrap gate self-test
         run: php tools/edu_compose_bootstrap_gate_self_test.php
 
+      - name: EDU coach gauge XP static test (B-2)
+        run: php tools/edu_coach_gauge_static_test.php
+
   # ========================================
   # TypeScript Type Check
   # ========================================

@@ -15,12 +15,14 @@ import {
   type EduQuest,
   type EduQuestListItem,
 } from '../../services/eduApi'
+import { eduCoachLevelByNumber, type EduCoachLevelInfo } from '../../constants/eduCoachLevel'
 
 export default function EduHomePage() {
   const navigate = useNavigate()
   const [inviteCode, setInviteCode] = useState('')
   const [studentName, setStudentName] = useState(() => getEduStudent()?.display_name || getEduDisplayName() || '')
   const [tier, setTier] = useState<EduTierProgress | null>(null)
+  const [coachLevel, setCoachLevel] = useState<EduCoachLevelInfo>(() => eduCoachLevelByNumber(1))
   const [quest, setQuest] = useState<EduQuest | null>(null)
   const [otherQuests, setOtherQuests] = useState<EduQuestListItem[]>([])
   const [participation, setParticipation] = useState<string>('')
@@ -42,6 +44,9 @@ export default function EduHomePage() {
       if (todayRes.tier) {
         setTier(todayRes.tier)
         setAuthed(true)
+      }
+      if (todayRes.coach_level) {
+        setCoachLevel(todayRes.coach_level)
       }
       const liveId = todayRes.quest?.quest_id
       setOtherQuests(
@@ -201,7 +206,12 @@ export default function EduHomePage() {
                   <p className="text-sm text-[#666]">안녕하세요, {studentName}님</p>
                 )}
                 {tier && (
-                  <TierProgressCard tier={tier} onStartQuest={() => handleStart()} loading={loading} />
+                  <TierProgressCard
+                    tier={tier}
+                    coachLevel={coachLevel}
+                    onStartQuest={() => handleStart()}
+                    loading={loading}
+                  />
                 )}
                 <button
                   type="button"

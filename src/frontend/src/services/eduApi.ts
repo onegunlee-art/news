@@ -366,6 +366,7 @@ export const eduApi = {
       quest: EduQuest | null
       active_session: { session_id: string; stage: string; stance?: string } | null
       tier?: EduTierProgress
+      coach_level?: EduCoachLevelInfo
       ui_steps?: string[]
       participation?: { total: number; display: string }
       curiosity_locked?: boolean

@@ -9,6 +9,8 @@ require_once __DIR__ . '/../lib/bootstrap.php';
 require_once __DIR__ . '/../lib/eduAuth.php';
 require_once __DIR__ . '/../lib/eduQuest.php';
 require_once __DIR__ . '/../lib/eduQuestConfig.php';
+require_once __DIR__ . '/../lib/eduTier.php';
+require_once __DIR__ . '/../lib/eduCoachLevel.php';
 
 handleOptionsRequest();
 setCorsHeaders();
@@ -31,12 +33,18 @@ if (empty($quests) && $student) {
 }
 
 if (empty($quests)) {
-    eduSendJson([
+    $payload = [
         'success' => true,
         'quest' => null,
         'message' => '오늘은 퀘스트가 없어요. 수, 토, 일 오후 4시에 새 퀘스트가 드랍됩니다!',
         'next_drop' => getNextDropTime(),
-    ]);
+    ];
+    if ($student) {
+        $coachLevel = eduCoachLevelNormalize((int) ($student['coach_level'] ?? EDU_COACH_LEVEL_L1));
+        $payload['tier'] = eduTierProgressPayload(eduFetchTierRow($student['id']), $coachLevel);
+        $payload['coach_level'] = eduCoachLevelProfilePayload($student);
+    }
+    eduSendJson($payload);
 }
 
 $quest = $quests[0];
@@ -77,7 +85,7 @@ $questPayload['grade_band'] = $quest['grade_band'];
 $questPayload['live_at'] = $quest['live_at'] ?? null;
 $questPayload['expires_at'] = $quest['expires_at'] ?? null;
 
-eduSendJson([
+$response = [
     'success' => true,
     'quest' => $questPayload,
     'participation' => [
@@ -96,7 +104,15 @@ eduSendJson([
         'stage' => $existingSession['stage'],
         'stance' => $existingSession['stance'] ?? null,
     ] : null,
-]);
+];
+
+if ($student) {
+    $coachLevel = eduCoachLevelNormalize((int) ($student['coach_level'] ?? EDU_COACH_LEVEL_L1));
+    $response['tier'] = eduTierProgressPayload(eduFetchTierRow($student['id']), $coachLevel);
+    $response['coach_level'] = eduCoachLevelProfilePayload($student);
+}
+
+eduSendJson($response);
 
 function getNextDropTime(): string {
     date_default_timezone_set('Asia/Seoul');

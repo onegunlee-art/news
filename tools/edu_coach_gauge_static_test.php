@@ -60,6 +60,13 @@ $l3Hit = eduXpAwardFromDiagnose($qualityDiag, 3, ['counter_handled' => true]);
 $l3Miss = eduXpAwardFromDiagnose($weakDiag, 3, []);
 ok('L3 evidence gate hit > miss', $l3Hit['xp'] > $l3Miss['xp']);
 
+$l4Hit = eduXpAwardFromDiagnose($qualityDiag, 4, ['counter_handled' => true]);
+$l4Miss = eduXpAwardFromDiagnose($weakDiag, 4, []);
+ok('L4 meta gate hit > miss', $l4Hit['xp'] > $l4Miss['xp']);
+
+ok('floor XP on miss (5-8)', $l1Miss['xp'] >= 5 && $l1Miss['xp'] <= 8);
+ok('quality XP cap', $l1Hit['xp'] <= 28);
+
 $gaugeRow = ['coach_gauge_xp' => 80, 'streak_days' => 3, 'tier_id' => 'observer', 'status' => 'active'];
 $payload = eduCoachGaugeProgressPayload(2, $gaugeRow);
 ok('gauge progress 80%', ($payload['coach_gauge_progress_pct'] ?? 0) === 80);
@@ -77,6 +84,10 @@ ok('streak preserved in payload', ($tierPayload['streak_days'] ?? 0) === 3);
 $hero = (string) file_get_contents($root . '/src/frontend/src/components/edu/EduStudentProfileHero.tsx');
 ok('profile gauge UI', str_contains($hero, 'coach_gauge') || str_contains($hero, 'gaugePct'));
 ok('profile soon levelup', str_contains($hero, '곧 레벨업'));
+
+$homeCard = (string) file_get_contents($root . '/src/frontend/src/components/edu/TierProgressCard.tsx');
+ok('home gauge UI', str_contains($homeCard, 'coach_gauge') || str_contains($homeCard, 'gaugePct'));
+ok('home no legacy iron tier', !str_contains($homeCard, 'tier_label_en'));
 
 echo "\n{$pass} passed, {$fail} failed\n";
 exit($fail > 0 ? 1 : 0);
