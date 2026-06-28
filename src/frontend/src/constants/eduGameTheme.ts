@@ -3,11 +3,11 @@
  * 흑백 EDU_BRAND / GIST_EDU_DESIGN_SYSTEM과 격리. 코치·완주 화면 등 탐구 UX 전용.
  */
 export const eduGame = {
-  /** Primary accent — 탐구 체크, CTA, 학생 말풍선 */
-  primary: '#f05123',
-  primaryDark: '#d9451c',
-  primaryLight: '#fef3ef',
-  primaryRing: 'rgba(240, 81, 35, 0.35)',
+  /** Primary accent — 브랜드 오렌지 #D85A30 */
+  primary: '#D85A30',
+  primaryDark: '#B84A26',
+  primaryLight: '#FEF3EF',
+  primaryRing: 'rgba(216, 90, 48, 0.35)',
 
   bg: '#ffffff',
   ink: '#1a1a1a',
@@ -17,8 +17,8 @@ export const eduGame = {
 
   /** 말풍선 */
   bubbleCoach: '#ffffff',
-  bubbleCoachBorder: '#f05123',
-  bubbleStudent: '#f05123',
+  bubbleCoachBorder: '#D85A30',
+  bubbleStudent: '#D85A30',
 
   /** 둥근 UI */
   radiusButton: '0.75rem', /* rounded-xl */
@@ -26,6 +26,8 @@ export const eduGame = {
   radiusCard: '0.75rem',
 
   fontBody: "'Noto Sans KR', sans-serif",
+  /** gistudy 로고 워드마크 */
+  fontLogo: "'Playfair Display', Georgia, 'Times New Roman', serif",
 
   /** Duolingo-scale typography (14세+ 모바일) */
   fontSize: {

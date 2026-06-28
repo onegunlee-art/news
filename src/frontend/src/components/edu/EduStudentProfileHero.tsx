@@ -2,6 +2,7 @@ import { eduGame, eduGameClasses } from '../../constants/eduGameTheme'
 import type { EduCoachLevelInfo } from '../../constants/eduCoachLevel'
 import type { EduStudent, EduTierProgress } from '../../services/eduApi'
 import EduCoachLevelBadge from './EduCoachLevelBadge'
+import EduGamingStreakFlame from './EduGamingStreakFlame'
 
 type Props = {
   student: EduStudent | null
@@ -56,13 +57,7 @@ export default function EduStudentProfileHero({
             </p>
           </div>
           <div className="shrink-0 text-center" aria-label={streakLabel}>
-            <span className="text-2xl leading-none block edu-game-streak-live" aria-hidden>
-              🔥
-            </span>
-            <p className="font-bold tabular-nums leading-none mt-0.5" style={{ color: eduGame.primary }}>
-              {streak}
-            </p>
-            <p style={{ fontSize: '0.65rem', color: eduGame.muted }}>일 연속</p>
+            <EduGamingStreakFlame streakDays={streak} variant="compact" showCount />
           </div>
         </div>
 
@@ -134,19 +129,13 @@ export default function EduStudentProfileHero({
       </div>
 
       <section
-        className="rounded-2xl border-2 px-4 py-7 text-center shadow-sm"
+        className="rounded-2xl border-2 px-4 py-6 text-center shadow-sm"
         style={{ borderColor: eduGame.primary, backgroundColor: eduGame.primaryLight }}
         aria-label="연속 탐구 스트릭"
       >
-        <span className="edu-game-streak-live text-7xl leading-none select-none block" aria-hidden>
-          🔥
-        </span>
-        <p
-          className="font-bold tabular-nums leading-none mt-2"
-          style={{ fontSize: '3.5rem', color: eduGame.primary }}
-        >
-          {streak}
-        </p>
+        <div className="flex justify-center mb-2">
+          <EduGamingStreakFlame streakDays={streak} variant="hero" showCount />
+        </div>
         <p className="font-bold mt-1" style={{ fontSize: '1.125rem', color: eduGame.primaryDark }}>
           {streakLabel}
         </p>

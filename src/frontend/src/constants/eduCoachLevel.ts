@@ -14,12 +14,12 @@ export const EDU_COACH_LEVELS: EduCoachLevelInfo[] = [
   { coach_level: 5, label_ko: '칼럼니스트', label_en: 'Columnist', role_id: 'columnist' },
 ]
 
-export const EDU_COACH_LEVEL_MEDAL: Record<number, { bg: string; ring: string; icon: string }> = {
-  1: { bg: '#e8e8e8', ring: '#999999', icon: '👁' },
-  2: { bg: '#8b9aab', ring: '#5c6b7a', icon: '❓' },
-  3: { bg: '#5a9a8a', ring: '#3d7268', icon: '⚖' },
-  4: { bg: '#7b6b9e', ring: '#5a4d78', icon: '🔍' },
-  5: { bg: '#f05123', ring: '#d9451c', icon: '✦' },
+export const EDU_COACH_LEVEL_MEDAL: Record<number, { bg: string; ring: string }> = {
+  1: { bg: '#f5f5f5', ring: '#cccccc' },
+  2: { bg: '#f0f0f0', ring: '#bbbbbb' },
+  3: { bg: '#f0f0f0', ring: '#bbbbbb' },
+  4: { bg: '#f0f0f0', ring: '#bbbbbb' },
+  5: { bg: '#D85A30', ring: '#B84A26' },
 }
 
 export function eduCoachLevelByNumber(level: number): EduCoachLevelInfo {

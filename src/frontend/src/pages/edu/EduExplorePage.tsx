@@ -1,12 +1,16 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
+  clearEduToken,
   eduApi,
   getEduToken,
   type EduExploreShelf,
   type EduQuestListItem,
 } from '../../services/eduApi'
+import { eduAuthedTopBarMenu, eduGuestTopBarMenu } from '../../utils/eduTopBarMenu'
 import EduQuestCoverHero from '../../components/edu/EduQuestCoverHero'
+import EduTopBar from '../../components/edu/EduTopBar'
+import { eduGame, eduGameClasses } from '../../constants/eduGameTheme'
 
 const FRAME_TABS = [
   { id: 'all', label: '전체' },
@@ -25,20 +29,28 @@ export default function EduExplorePage() {
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [streakDays, setStreakDays] = useState(0)
   const authed = !!getEduToken()
+
+  const handleLogout = () => {
+    clearEduToken()
+    navigate('/edu')
+  }
 
   const load = useCallback(async () => {
     setLoading(true)
     setError('')
     try {
-      const [catRes, listRes] = await Promise.all([
+      const [catRes, listRes, todayRes] = await Promise.all([
         eduApi.exploreCategories(frame),
         eduApi.listQuests({
           limit: 50,
           frame,
           shelf: shelf || undefined,
         }),
+        authed ? eduApi.todayQuest().catch(() => null) : Promise.resolve(null),
       ])
+      setStreakDays(todayRes?.tier?.streak_days ?? 0)
       setShelves(catRes.shelves)
       setTotal(catRes.total)
       setQuests(listRes.quests)
@@ -47,7 +59,7 @@ export default function EduExplorePage() {
     } finally {
       setLoading(false)
     }
-  }, [frame, shelf])
+  }, [frame, shelf, authed])
 
   useEffect(() => {
     void load()
@@ -104,19 +116,24 @@ export default function EduExplorePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0D0D0D] text-white">
-      <header className="border-b border-[#333] px-4 py-4 max-w-2xl mx-auto flex items-center justify-between">
-        <Link to="/edu" className="text-xs text-[#888] underline">
-          ← 홈
-        </Link>
-        <span className="text-sm font-medium">논쟁 탐색</span>
-        <span className="w-8" />
-      </header>
+    <div
+      className={`min-h-screen ${eduGameClasses.textKo}`}
+      style={{ backgroundColor: eduGame.bg, color: eduGame.ink, fontFamily: eduGame.fontBody }}
+    >
+      <EduTopBar
+        streakDays={streakDays}
+        menuItems={
+          authed
+            ? eduAuthedTopBarMenu(handleLogout)
+            : eduGuestTopBarMenu(() => navigate('/edu'))
+        }
+        className="max-w-2xl mx-auto w-full"
+      />
 
-      <main className="max-w-2xl mx-auto px-4 py-6 space-y-6">
+      <main className="max-w-2xl mx-auto px-4 py-6 space-y-6 pb-10">
         <section>
           <h1 className="text-xl font-bold mb-1">더 많은 논쟁</h1>
-          <p className="text-sm text-[#888]">
+          <p style={{ fontSize: eduGame.fontSize.caption, color: eduGame.muted }}>
             주제와 유형으로 골라보세요 · 총 {total}개
           </p>
         </section>
@@ -127,9 +144,14 @@ export default function EduExplorePage() {
             onClick={() => setFilter({ shelf: '' })}
             className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
               shelf === ''
-                ? 'bg-[#E8521C] border-[#E8521C] text-white'
-                : 'border-[#444] text-[#aaa] hover:border-[#666]'
+                ? 'text-white'
+                : ''
             }`}
+            style={
+              shelf === ''
+                ? { backgroundColor: eduGame.primary, borderColor: eduGame.primary }
+                : { borderColor: eduGame.border, color: eduGame.muted }
+            }
           >
             전체
           </button>
@@ -138,11 +160,12 @@ export default function EduExplorePage() {
               key={s.shelf_id}
               type="button"
               onClick={() => setFilter({ shelf: s.shelf_id })}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors`}
+              style={
                 shelf === s.shelf_id
-                  ? 'bg-[#E8521C] border-[#E8521C] text-white'
-                  : 'border-[#444] text-[#aaa] hover:border-[#666]'
-              }`}
+                  ? { backgroundColor: eduGame.primary, borderColor: eduGame.primary, color: '#fff' }
+                  : { borderColor: eduGame.border, color: eduGame.muted }
+              }
             >
               {s.label}
               {s.count > 0 && <span className="ml-1 opacity-70">({s.count})</span>}
@@ -150,17 +173,17 @@ export default function EduExplorePage() {
           ))}
         </section>
 
-        <section className="flex gap-2 border-b border-[#333] pb-2">
+        <section className="flex gap-2 border-b pb-2" style={{ borderColor: eduGame.border }}>
           {FRAME_TABS.map((tab) => (
             <button
               key={tab.id}
               type="button"
               onClick={() => setFilter({ frame: tab.id })}
-              className={`text-xs pb-2 border-b-2 transition-colors ${
-                frame === tab.id
-                  ? 'border-[#E8521C] text-white'
-                  : 'border-transparent text-[#666] hover:text-[#999]'
-              }`}
+              className="text-xs pb-2 border-b-2 transition-colors"
+              style={{
+                borderColor: frame === tab.id ? eduGame.primary : 'transparent',
+                color: frame === tab.id ? eduGame.ink : eduGame.muted,
+              }}
             >
               {tab.label}
             </button>
@@ -181,7 +204,8 @@ export default function EduExplorePage() {
                     type="button"
                     onClick={() => void handleStart(q.quest_id)}
                     disabled={!authed}
-                    className="w-full text-left border border-[#333] rounded-lg overflow-hidden bg-[#1a1a1a] hover:border-[#555] disabled:opacity-60 transition-colors"
+                    className="w-full text-left rounded-2xl border-2 overflow-hidden transition-colors disabled:opacity-60"
+                    style={{ borderColor: eduGame.border, backgroundColor: eduGame.bg }}
                   >
                     <EduQuestCoverHero
                       coverImageUrl={q.cover_image_url}

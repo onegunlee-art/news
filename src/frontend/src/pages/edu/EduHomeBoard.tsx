@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import EduStudentProfileHero from '../../components/edu/EduStudentProfileHero'
 import EduQuestBoardCard from '../../components/edu/EduQuestBoardCard'
+import EduTopBar from '../../components/edu/EduTopBar'
 import { eduCoachLevelByNumber, type EduCoachLevelInfo } from '../../constants/eduCoachLevel'
 import { eduGame, eduGameClasses } from '../../constants/eduGameTheme'
 import {
@@ -13,6 +14,7 @@ import {
   type EduTierProgress,
 } from '../../services/eduApi'
 import { filterApprovedQuestsForHome, partitionHomeBoard } from '../../utils/eduHomeBoardSections'
+import { eduAuthedTopBarMenu } from '../../utils/eduTopBarMenu'
 
 type Props = {
   onLogout: () => void
@@ -77,39 +79,11 @@ export default function EduHomeBoard({ onLogout }: Props) {
       className={`min-h-screen ${eduGameClasses.textKo}`}
       style={{ backgroundColor: eduGame.bg, color: eduGame.ink, fontFamily: eduGame.fontBody }}
     >
-      <header
-        className="border-b px-4 py-3 flex items-center justify-between max-w-lg mx-auto sticky top-0 z-10"
-        style={{ borderColor: eduGame.border, backgroundColor: eduGame.bg }}
-      >
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="font-bold text-xl shrink-0" style={{ fontFamily: 'Lobster, cursive' }}>
-            g.
-          </span>
-          <span
-            className="text-sm tracking-wide truncate"
-            style={{ color: eduGame.muted }}
-          >
-            the gist · EDU
-          </span>
-        </div>
-        <div className="flex items-center gap-3 shrink-0">
-          <Link
-            to="/edu/profile"
-            className="text-xs underline font-bold"
-            style={{ color: eduGame.primary }}
-          >
-            내 프로필
-          </Link>
-          <button
-            type="button"
-            onClick={onLogout}
-            className="text-xs underline"
-            style={{ color: eduGame.muted }}
-          >
-            나가기
-          </button>
-        </div>
-      </header>
+      <EduTopBar
+        streakDays={tier?.streak_days ?? 0}
+        menuItems={eduAuthedTopBarMenu(onLogout)}
+        className="max-w-lg mx-auto w-full"
+      />
 
       <main className="max-w-lg mx-auto px-4 py-5 space-y-8 pb-12" style={{ paddingBottom: 'max(3rem, env(safe-area-inset-bottom))' }}>
         {loading ? (

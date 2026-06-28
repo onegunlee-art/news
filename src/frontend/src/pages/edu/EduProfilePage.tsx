@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import EduStudentProfileHero from '../../components/edu/EduStudentProfileHero'
+import EduTopBar from '../../components/edu/EduTopBar'
 import { eduCoachLevelByNumber, type EduCoachLevelInfo } from '../../constants/eduCoachLevel'
 import { canShowCoachLevelDebugSwitch, resolveEduLevelDebug } from '../../constants/eduLevelDebug'
 import { eduGame, eduGameClasses } from '../../constants/eduGameTheme'
@@ -14,6 +15,7 @@ import {
   type EduStudent,
   type EduTierProgress,
 } from '../../services/eduApi'
+import { eduAuthedTopBarMenu } from '../../utils/eduTopBarMenu'
 
 function formatDate(value?: string | null): string {
   if (!value) return ''
@@ -120,18 +122,11 @@ export default function EduProfilePage() {
       className={`min-h-screen ${eduGameClasses.textKo}`}
       style={{ backgroundColor: eduGame.bg, color: eduGame.ink, fontFamily: eduGame.fontBody }}
     >
-      <header
-        className="border-b px-4 py-3 flex items-center justify-between max-w-lg mx-auto sticky top-0 z-10"
-        style={{ borderColor: eduGame.border, backgroundColor: eduGame.bg }}
-      >
-        <Link to="/edu" className="text-sm underline" style={{ color: eduGame.muted }}>
-          ← 홈
-        </Link>
-        <span className="text-sm font-bold">내 프로필</span>
-        <button type="button" onClick={handleLogout} className="text-xs underline" style={{ color: eduGame.muted }}>
-          로그아웃
-        </button>
-      </header>
+      <EduTopBar
+        streakDays={tier?.streak_days ?? 0}
+        menuItems={eduAuthedTopBarMenu(handleLogout)}
+        className="max-w-lg mx-auto w-full"
+      />
 
       <main className="max-w-lg mx-auto px-4 py-5 space-y-6 pb-10">
         {loading ? (

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import EduCoachLevelIcon from './EduCoachLevelIcon'
 import {
   EDU_COACH_LEVELS,
   EDU_COACH_LEVEL_MEDAL,
@@ -25,12 +26,13 @@ export default function EduCoachLevelBadge({
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState(false)
   const medal = EDU_COACH_LEVEL_MEDAL[coachLevel.coach_level] ?? EDU_COACH_LEVEL_MEDAL[1]
+  const iconPx = size === 'lg' ? 28 : size === 'sm' ? 18 : 22
   const dim =
     size === 'lg'
-      ? { circle: 'w-14 h-14 text-2xl', label: '1.125rem', sub: eduGame.fontSize.body }
+      ? { circle: 'w-14 h-14', label: '1.125rem', sub: eduGame.fontSize.body }
       : size === 'sm'
-        ? { circle: 'w-9 h-9 text-sm', label: eduGame.fontSize.caption, sub: '0.65rem' }
-        : { circle: 'w-12 h-12 text-lg', label: eduGame.fontSize.label, sub: eduGame.fontSize.caption }
+        ? { circle: 'w-9 h-9', label: eduGame.fontSize.caption, sub: '0.65rem' }
+        : { circle: 'w-12 h-12', label: eduGame.fontSize.label, sub: eduGame.fontSize.caption }
 
   const handlePick = async (level: number) => {
     if (!onSelectLevel || level === coachLevel.coach_level) {
@@ -49,11 +51,11 @@ export default function EduCoachLevelBadge({
   const badgeInner = (
     <>
       <div
-        className={`${dim.circle} rounded-full border-[3px] flex items-center justify-center shrink-0 shadow-sm`}
+        className={`${dim.circle} rounded-full border-2 flex items-center justify-center shrink-0 shadow-sm`}
         style={{ backgroundColor: medal.bg, borderColor: medal.ring }}
         aria-hidden
       >
-        <span className="select-none leading-none">{medal.icon}</span>
+        <EduCoachLevelIcon level={coachLevel.coach_level} size={iconPx} />
       </div>
       <div className="min-w-0 text-left">
         <p className="font-bold truncate" style={{ fontSize: dim.label, color: eduGame.ink }}>
@@ -136,10 +138,10 @@ export default function EduCoachLevelBadge({
                   }}
                 >
                   <span
-                    className="w-8 h-8 rounded-full border-2 flex items-center justify-center shrink-0 text-sm"
+                    className="w-8 h-8 rounded-full border-2 flex items-center justify-center shrink-0"
                     style={{ backgroundColor: m.bg, borderColor: m.ring }}
                   >
-                    {m.icon}
+                    <EduCoachLevelIcon level={item.coach_level} size={18} />
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="font-bold block" style={{ color: eduGame.ink }}>

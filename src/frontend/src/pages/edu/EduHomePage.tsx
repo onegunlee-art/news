@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import EduQuestCoverHero from '../../components/edu/EduQuestCoverHero'
+import EduTopBar from '../../components/edu/EduTopBar'
 import {
   clearEduToken,
   eduApi,
@@ -14,6 +15,7 @@ import {
   type EduQuestListItem,
 } from '../../services/eduApi'
 import EduHomeBoard from './EduHomeBoard'
+import { eduGuestTopBarMenu } from '../../utils/eduTopBarMenu'
 
 /** 비로그인 체험·가입 유도 (3단계에서 확장) */
 function EduHomeGuestPage() {
@@ -106,14 +108,12 @@ function EduHomeGuestPage() {
 
   return (
     <div className="min-h-screen bg-[#0D0D0D] text-white">
-      <header className="border-b border-[#333] px-4 py-4 flex items-center justify-between max-w-lg mx-auto">
-        <div className="flex items-center gap-2">
-          <span className="font-bold text-xl" style={{ fontFamily: 'Lobster, cursive' }}>
-            g.
-          </span>
-          <span className="text-sm tracking-wide text-[#999]">the gist · EDU</span>
-        </div>
-      </header>
+      <EduTopBar
+        variant="dark"
+        streakDays={0}
+        menuItems={eduGuestTopBarMenu(() => setShowLogin(true))}
+        className="max-w-lg mx-auto w-full"
+      />
 
       <main className="max-w-lg mx-auto px-4 py-6 space-y-6">
         {loading && !quest ? (

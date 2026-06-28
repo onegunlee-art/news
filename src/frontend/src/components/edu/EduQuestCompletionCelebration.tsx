@@ -4,6 +4,7 @@ import type { EduCoachLevelInfo } from '../../constants/eduCoachLevel'
 import { eduCoachLevelByNumber } from '../../constants/eduCoachLevel'
 import type { EduTierProgress, EduLevelUpPayload, EduXpBreakdownLine } from '../../services/eduApi'
 import EduCoachLevelBadge from './EduCoachLevelBadge'
+import EduGamingStreakFlame from './EduGamingStreakFlame'
 
 function useCountUp(target: number, durationMs = 1200, active = true) {
   const [value, setValue] = useState(0)
@@ -105,17 +106,15 @@ export default function EduQuestCompletionCelebration({
         />
       </div>
 
-      <div className="flex flex-col items-center gap-0.5 mb-5">
-        <span className="edu-game-streak-pop text-5xl leading-none select-none" aria-hidden>
-          🔥
-        </span>
-        <p
-          className="font-bold tabular-nums leading-none mt-1"
-          style={{ fontSize: '2.25rem', color: eduGame.primary }}
-        >
-          {streakDays}
-        </p>
-        <p className="font-bold" style={{ fontSize: eduGame.fontSize.body, color: eduGame.primaryDark }}>
+      <div className="flex flex-col items-center gap-1 mb-5">
+        <EduGamingStreakFlame
+          streakDays={streakDays}
+          variant="hero"
+          showCount
+          animate
+          className="edu-game-streak-pop"
+        />
+        <p className="font-bold mt-1" style={{ fontSize: eduGame.fontSize.body, color: eduGame.primaryDark }}>
           {streakDays > 1 ? `연속 탐구 ${streakDays}일` : streakDays === 1 ? '연속 탐구 1일' : '오늘의 탐구를 마쳤어!'}
         </p>
         <p style={{ fontSize: eduGame.fontSize.caption, color: eduGame.muted }}>
