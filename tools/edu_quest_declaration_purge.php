@@ -138,9 +138,23 @@ echo "\n=== 검증 요약 ===\n";
 echo 'G7 blocklist hit: ' . count(array_filter($toPurge, static fn ($q) => in_array($q['news_id'], [647, 650, 651, 652, 653, 654, 656, 657, 658], true))) . "\n";
 echo 'Shangri-La blocklist hit: ' . count(array_filter($toPurge, static fn ($q) => $q['news_id'] >= 590 && $q['news_id'] <= 598)) . "\n";
 $keepIds = array_column($toKeep, 'news_id');
-echo '631 preserved: ' . (in_array(631, $keepIds, true) ? 'YES' : 'NO') . "\n";
-echo '668 preserved: ' . (in_array(668, $keepIds, true) ? 'YES' : 'NO') . "\n";
-echo '288 preserved: ' . (in_array(288, $keepIds, true) ? 'YES' : 'NO') . "\n";
+foreach ([631, 668, 288] as $checkId) {
+    $inDraftKeep = in_array($checkId, $keepIds, true);
+    $code = eduQuestGenerateQuestCode($checkId);
+    $approvedRows = $supabase->select(
+        'edu_daily_quests',
+        'quest_code=eq.' . rawurlencode($code) . '&status=eq.approved',
+        1
+    ) ?? [];
+    $isApproved = $approvedRows !== [];
+    if ($isApproved) {
+        echo "{$checkId} approved (live pool): YES\n";
+    } elseif ($inDraftKeep) {
+        echo "{$checkId} draft preserved: YES\n";
+    } else {
+        echo "{$checkId} missing: CHECK\n";
+    }
+}
 
 if (!$apply) {
     echo "\nNext: php tools/edu_quest_declaration_purge.php --apply\n";
