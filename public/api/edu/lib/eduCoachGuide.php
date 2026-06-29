@@ -612,24 +612,44 @@ function eduCoachGuideEvasionReply(?string $evasion, array $axis, int $index, ar
     };
 }
 
-/** @param array<string, mixed> $blueprint @return list<string> */
-function eduCoachGuideReflectionLines(array $blueprint): array
+/** @param array<string, mixed> $quest @return array<string, string> */
+function eduCoachGuideReflectionAxisPrefixes(array $quest): array
+{
+    $prefixes = [];
+    foreach (eduCoachGuideAxes($quest) as $axis) {
+        $id = (string) ($axis['axis_id'] ?? '');
+        $label = trim((string) ($axis['axis_label'] ?? $axis['point'] ?? ''));
+        if ($id !== '' && $label !== '') {
+            $prefixes[$id] = $label;
+        }
+    }
+
+    return $prefixes;
+}
+
+/** @param array<string, mixed> $blueprint @param array<string, mixed> $quest @return list<string> */
+function eduCoachGuideReflectionLines(array $blueprint, array $quest = []): array
 {
     $opening = trim((string) ($blueprint['guide_opening'] ?? $blueprint['reason'] ?? ''));
     $answers = is_array($blueprint['guide_axis_answers'] ?? null) ? $blueprint['guide_axis_answers'] : [];
     $conclusion = trim((string) ($blueprint['guide_student_conclusion'] ?? ''));
     $rebuttal = trim((string) ($blueprint['rebuttal'] ?? ''));
 
+    $axisPrefixes = $quest !== [] ? eduCoachGuideReflectionAxisPrefixes($quest) : [];
+    $ordinalPrefixes = ['처음 따진 점', '두 번째 각도', '세 번째 각도'];
+
     $lines = [];
     if ($opening !== '') {
         $lines[] = '처음: ' . mb_substr($opening, 0, 60);
     }
-    $i = 1;
+    $i = 0;
     foreach ($answers as $key => $ans) {
         if (str_ends_with((string) $key, '_skipped')) {
             continue;
         }
-        $lines[] = "축{$i}: " . mb_substr((string) $ans, 0, 50);
+        $axisId = (string) $key;
+        $prefix = $axisPrefixes[$axisId] ?? ($ordinalPrefixes[$i] ?? '다음 각도');
+        $lines[] = $prefix . ': ' . mb_substr((string) $ans, 0, 50);
         $i++;
     }
     if ($conclusion !== '') {
