@@ -109,17 +109,6 @@ export default function EduOperatorReportsPage() {
     }
   }
 
-  const handleDownloadPdf = async () => {
-    const result = await fetchPdfBlob()
-    if (!result) return
-    const url = URL.createObjectURL(result.blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = result.filename
-    a.click()
-    URL.revokeObjectURL(url)
-  }
-
   const handleShare = async () => {
     setShareHint('')
     const result = await fetchPdfBlob()
@@ -288,24 +277,15 @@ export default function EduOperatorReportsPage() {
                 </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-2 pt-2">
-                <button
-                  type="button"
-                  disabled={loadingPdf}
-                  onClick={() => void handleDownloadPdf()}
-                  className={`flex-1 py-3 ${eduGameClasses.btnPrimary}`}
-                  style={{ backgroundColor: eduGame.primary, fontSize: eduGame.fontSize.button }}
-                >
-                  PDF 생성
-                </button>
+              <div className="pt-2">
                 <button
                   type="button"
                   disabled={loadingPdf}
                   onClick={() => void handleShare()}
-                  className="flex-1 py-3 rounded-xl font-bold border-2 touch-manipulation"
-                  style={{ borderColor: eduGame.primary, color: eduGame.primary, fontSize: eduGame.fontSize.button }}
+                  className={`w-full py-3.5 ${eduGameClasses.btnPrimary} touch-manipulation`}
+                  style={{ backgroundColor: eduGame.primary, fontSize: eduGame.fontSize.button }}
                 >
-                  공유하기
+                  {loadingPdf ? 'PDF 만드는 중…' : '공유하기'}
                 </button>
               </div>
             </div>
