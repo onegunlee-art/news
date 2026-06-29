@@ -199,9 +199,8 @@ function eduQuestGenerateBuildDraft(array $hinge, array $meta, ?array $axisExtra
 
     $sideA = trim((string) ($hinge['side_a'] ?? ''));
     $sideB = trim((string) ($hinge['side_b'] ?? ''));
-    $shared = trim((string) ($min['hammer_hints']['shared_conclusion'] ?? ''));
     $min['pro_line'] = $sideA !== '' ? mb_substr($sideA, 0, 140) : '';
-    $min['con_line'] = mb_substr($shared !== '' ? $shared : $sideB, 0, 140);
+    $min['con_line'] = $sideB !== '' ? mb_substr($sideB, 0, 140) : '';
 
     $hints = $min['hammer_hints'];
     $hints = eduQuestGenerateAttachCoachHints($hints, $newsId, $axisExtraction, $hinge);

@@ -41,6 +41,8 @@ $student = eduRequireStudent();
 $supabase = eduSupabase();
 $body = eduJsonBody();
 
+try {
+
 $sessionId = trim((string) ($body['session_id'] ?? ''));
 $message = trim((string) ($body['message'] ?? ''));
 $action = trim((string) ($body['action'] ?? 'continue'));
@@ -81,10 +83,20 @@ $blueprint = eduLoadBlueprint($session);
 $coachLevel = eduResolveCoachLevel($student, $blueprint);
 $blueprint = eduBlueprintFreezeCoachLevel($blueprint, $coachLevel);
 $dialogue = eduLoadDialogue($session);
-$llm = eduLlm();
-$rag = new EduRagService($supabase);
-$director = new ConversationDirector($llm);
-$coach = new SocraticCoach($llm);
+
+$llm = null;
+$rag = null;
+$director = null;
+$coach = null;
+$ensureCoachStack = static function () use (&$llm, &$rag, &$director, &$coach, $supabase): void {
+    if ($llm !== null) {
+        return;
+    }
+    $llm = eduLlm();
+    $rag = new EduRagService($supabase);
+    $director = new ConversationDirector($llm);
+    $coach = new SocraticCoach($llm);
+};
 
 $response = [
     'success' => true,
@@ -131,6 +143,7 @@ if ($action === 'submit_opening') {
         ]), $blueprint, $quest, $assistantMessage));
     }
 
+    $ensureCoachStack();
     $blueprint = eduMergeBlueprint($blueprint, [
         'reason' => $message,
         'opening_submitted' => true,
@@ -181,6 +194,8 @@ if ($action === 'select_stance') {
         eduSendError('stance (pro|con) required');
     }
 
+    $ensureCoachStack();
+
     $blueprint = eduMergeBlueprint($blueprint, [
         'stance' => $stanceInput,
         'final_stance' => $stanceInput,
@@ -218,6 +233,8 @@ if ($action === 'select_stance') {
 if ($message === '' && $action !== 'confirm_reflection') {
     eduSendError('message required');
 }
+
+$ensureCoachStack();
 
 $eval = [];
 $assistantMessage = '';
@@ -687,3 +704,8 @@ eduSendJson(array_merge($response, [
     'needs_followup' => !empty($eval['needs_followup']),
     'feedback_hint' => $eval['feedback_hint'] ?? null,
 ]));
+
+} catch (Throwable $e) {
+    error_log('edu chat fatal: ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
+    eduSendError('대화 처리 중 오류가 났어요. 잠시 후 다시 시도해 주세요.', 503);
+}

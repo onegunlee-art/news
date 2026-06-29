@@ -170,8 +170,14 @@ function eduNewsImageUrlsByIds(array $newsIds): array
         return [];
     }
 
-    require_once __DIR__ . '/eduMysql.php';
-    $pdo = eduMysql();
+    try {
+        require_once __DIR__ . '/eduMysql.php';
+        $pdo = eduMysql();
+    } catch (Throwable $e) {
+        error_log('eduNewsImageUrlsByIds: ' . $e->getMessage());
+
+        return [];
+    }
     if (!in_array('image_url', eduNewsColumns($pdo), true)) {
         return [];
     }

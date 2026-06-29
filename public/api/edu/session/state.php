@@ -16,6 +16,8 @@ setCorsHeaders();
 $student = eduRequireStudent();
 $supabase = eduSupabase();
 
+try {
+
 $sessionId = trim((string) ($_GET['session_id'] ?? ''));
 if ($sessionId === '') {
     eduSendError('session_id required');
@@ -133,3 +135,8 @@ if (eduQuestUsesAxisGuide($quest) && ($blueprint['phase'] ?? '') === 'guide_axis
 }
 
 eduSendJson($statePayload);
+
+} catch (Throwable $e) {
+    error_log('edu state fatal: ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
+    eduSendError('세션을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.', 503);
+}
