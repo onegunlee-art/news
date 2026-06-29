@@ -16,6 +16,7 @@ import {
   hasEduOperatorSession,
   setEduOperatorSession,
 } from '../../utils/eduOperatorSession'
+import { sharePdfFile, sharePdfResultMessage } from '../../utils/eduSharePdf'
 
 const REPORTS_PATH = '/edu/operator/reports'
 const LOGIN_PATH = '/edu/operator/login'
@@ -39,6 +40,7 @@ export default function EduOperatorReportsPage() {
   const [loadingPreview, setLoadingPreview] = useState(false)
   const [loadingPdf, setLoadingPdf] = useState(false)
   const [error, setError] = useState('')
+  const [shareHint, setShareHint] = useState('')
 
   useEffect(() => {
     if (!hasEduOperatorSession()) {
@@ -119,28 +121,17 @@ export default function EduOperatorReportsPage() {
   }
 
   const handleShare = async () => {
+    setShareHint('')
     const result = await fetchPdfBlob()
     if (!result || !report) return
-    const file = new File([result.blob], result.filename, { type: 'application/pdf' })
-    const shareData: ShareData = {
+
+    const shareResult = await sharePdfFile(result.blob, result.filename, {
       title: `${report.student_name} gistudy 리포트`,
       text: report.cover.headline,
-      files: [file],
-    }
-    if (typeof navigator.share === 'function' && navigator.canShare?.(shareData)) {
-      try {
-        await navigator.share(shareData)
-        return
-      } catch {
-        /* fallback */
-      }
-    }
-    const url = URL.createObjectURL(result.blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = result.filename
-    a.click()
-    URL.revokeObjectURL(url)
+    })
+
+    const hint = sharePdfResultMessage(shareResult)
+    if (hint) setShareHint(hint)
   }
 
   const handleLogout = () => {
@@ -323,7 +314,15 @@ export default function EduOperatorReportsPage() {
       </main>
 
       {error && (
-        <p className="max-w-5xl mx-auto px-4 pb-4 text-sm text-red-600 text-center">{error}</p>
+        <p className="max-w-5xl mx-auto px-4 pb-2 text-sm text-red-600 text-center">{error}</p>
+      )}
+      {shareHint && (
+        <p
+          className="max-w-5xl mx-auto px-4 pb-4 text-sm text-center font-medium"
+          style={{ color: eduGame.primary }}
+        >
+          {shareHint}
+        </p>
       )}
     </div>
   )
