@@ -10,7 +10,6 @@ require_once __DIR__ . '/../lib/eduQuest.php';
 require_once __DIR__ . '/../lib/eduQuestConfig.php';
 require_once __DIR__ . '/../lib/eduConfig.php';
 require_once __DIR__ . '/../lib/eduBlueprint.php';
-require_once __DIR__ . '/../lib/eduDialogueRevise.php';
 require_once __DIR__ . '/../lib/eduCoachGuide.php';
 require_once __DIR__ . '/../lib/eduCoachLevel.php';
 require_once __DIR__ . '/../lib/eduCoachGuideElementary.php';
@@ -125,7 +124,6 @@ if ($action === 'submit_opening') {
     }
 
     if (eduQuestUsesAxisGuide($quest)) {
-        $blueprint = eduBlueprintStoreReviseSnapshot($blueprint);
         $dialogue = eduAppendDialogue($dialogue, 'student', $message, null, 'guide_axis');
         $guideResult = eduCoachGuideHandleOpening($blueprint, $quest, $message, $coachLevel);
         $blueprint = $guideResult['blueprint'];
