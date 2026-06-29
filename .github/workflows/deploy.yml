@@ -247,6 +247,8 @@ jobs:
             --include='edu_coach_levelup_static_test.php' \
             --include='edu_parent_report_generate.php' \
             --include='edu_parent_report_static_test.php' \
+            --include='edu_seed_operator.php' \
+            --include='edu_admin_account_static_test.php' \
             --include='edu_llm_diagnose_phase2_static_verify.php' \
             --include='seed_lens_quests.php' \
             --include='seed_japan_decision_quest.php' \

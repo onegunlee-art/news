@@ -1,14 +1,24 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { useAuthStore } from '../../store/authStore'
 import { eduGame, eduGameClasses } from '../../constants/eduGameTheme'
 import {
   eduOperatorDownloadPdf,
   eduOperatorListStudents,
   eduOperatorPreviewReport,
+  eduOperatorVerifySession,
   type EduOperatorStudent,
   type EduParentReportPayload,
 } from '../../services/eduOperatorApi'
+import {
+  clearEduOperatorSession,
+  getEduOperatorProfile,
+  getEduOperatorToken,
+  hasEduOperatorSession,
+  setEduOperatorSession,
+} from '../../utils/eduOperatorSession'
+
+const REPORTS_PATH = '/edu/operator/reports'
+const LOGIN_PATH = '/edu/operator/login'
 
 function formatRelative(iso: string | null): string {
   if (!iso) return '—'
@@ -19,8 +29,8 @@ function formatRelative(iso: string | null): string {
 
 export default function EduOperatorReportsPage() {
   const navigate = useNavigate()
-  const { user, isAuthenticated, isInitialized } = useAuthStore()
-  const isAdmin = user?.role === 'admin'
+  const [ready, setReady] = useState(false)
+  const [operatorName, setOperatorName] = useState('')
 
   const [students, setStudents] = useState<EduOperatorStudent[]>([])
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -31,11 +41,25 @@ export default function EduOperatorReportsPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    if (!isInitialized) return
-    if (!isAuthenticated) {
-      navigate('/login', { replace: true })
+    if (!hasEduOperatorSession()) {
+      navigate(`${LOGIN_PATH}?returnTo=${encodeURIComponent(REPORTS_PATH)}`, { replace: true })
+      return
     }
-  }, [isInitialized, isAuthenticated, navigate])
+
+    void (async () => {
+      try {
+        const token = getEduOperatorToken()
+        if (!token) throw new Error('no token')
+        const operator = await eduOperatorVerifySession()
+        setEduOperatorSession(token, operator)
+        setOperatorName(operator.display_name || operator.email)
+        setReady(true)
+      } catch {
+        clearEduOperatorSession()
+        navigate(`${LOGIN_PATH}?returnTo=${encodeURIComponent(REPORTS_PATH)}`, { replace: true })
+      }
+    })()
+  }, [navigate])
 
   const loadStudents = useCallback(async () => {
     setLoadingList(true)
@@ -51,8 +75,8 @@ export default function EduOperatorReportsPage() {
   }, [])
 
   useEffect(() => {
-    if (isAdmin) void loadStudents()
-  }, [isAdmin, loadStudents])
+    if (ready) void loadStudents()
+  }, [ready, loadStudents])
 
   const selectStudent = async (id: string) => {
     setSelectedId(id)
@@ -108,7 +132,7 @@ export default function EduOperatorReportsPage() {
         await navigator.share(shareData)
         return
       } catch {
-        /* fallback download */
+        /* fallback */
       }
     }
     const url = URL.createObjectURL(result.blob)
@@ -119,31 +143,20 @@ export default function EduOperatorReportsPage() {
     URL.revokeObjectURL(url)
   }
 
-  if (!isInitialized) {
+  const handleLogout = () => {
+    clearEduOperatorSession()
+    navigate(LOGIN_PATH, { replace: true })
+  }
+
+  if (!ready) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: eduGame.bg }}>
-        <p style={{ color: eduGame.muted }}>로딩 중…</p>
+        <p style={{ color: eduGame.muted }}>확인 중…</p>
       </div>
     )
   }
 
-  if (!isAuthenticated) {
-    return null
-  }
-
-  if (!isAdmin) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-4" style={{ backgroundColor: eduGame.bg }}>
-        <p className="text-lg font-bold mb-2">접근 권한이 없습니다</p>
-        <p className="text-sm mb-4 text-center" style={{ color: eduGame.muted }}>
-          이 페이지는 운영자(admin)만 이용할 수 있습니다.
-        </p>
-        <Link to="/edu" className="underline text-sm" style={{ color: eduGame.primary }}>
-          EDU 홈으로
-        </Link>
-      </div>
-    )
-  }
+  const profile = getEduOperatorProfile()
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: eduGame.bg, color: eduGame.ink, fontFamily: eduGame.fontBody }}>
@@ -154,10 +167,20 @@ export default function EduOperatorReportsPage() {
         <div>
           <p className="text-xs font-bold" style={{ color: eduGame.primary }}>운영자 전용</p>
           <h1 className="text-lg font-bold">부모 리포트 발송</h1>
+          {(profile?.email || operatorName) && (
+            <p className="text-xs mt-0.5" style={{ color: eduGame.muted }}>
+              {operatorName || profile?.email}
+            </p>
+          )}
         </div>
-        <Link to="/edu" className="text-sm underline" style={{ color: eduGame.muted }}>
-          EDU 홈
-        </Link>
+        <div className="flex items-center gap-3 text-sm">
+          <Link to="/edu" className="underline" style={{ color: eduGame.muted }}>
+            EDU 홈
+          </Link>
+          <button type="button" onClick={handleLogout} className="underline" style={{ color: eduGame.muted }}>
+            로그아웃
+          </button>
+        </div>
       </header>
 
       <main className="max-w-5xl mx-auto w-full px-4 py-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
@@ -199,10 +222,7 @@ export default function EduOperatorReportsPage() {
             <p className="text-sm" style={{ color: eduGame.muted }}>리포트 생성 중… (코치 편지 포함)</p>
           ) : report ? (
             <div className="space-y-4">
-              <div
-                className="rounded-xl p-4 text-white"
-                style={{ backgroundColor: eduGame.ink }}
-              >
+              <div className="rounded-xl p-4 text-white" style={{ backgroundColor: eduGame.ink }}>
                 <p className="text-xs opacity-80 mb-1">● gistudy</p>
                 <h3 className="text-xl font-bold leading-snug">{report.cover.headline}</h3>
                 <p className="text-sm mt-2 opacity-90">
@@ -228,11 +248,14 @@ export default function EduOperatorReportsPage() {
                   <div className="grid gap-2 sm:grid-cols-2 text-sm">
                     <div className="rounded-lg border p-2" style={{ borderColor: eduGame.border }}>
                       <p className="text-xs" style={{ color: eduGame.muted }}>{report.before_after.before_label}</p>
-                      <p className="font-bold mt-1">"{report.before_after.before_text}"</p>
+                      <p className="font-bold mt-1">&ldquo;{report.before_after.before_text}&rdquo;</p>
                     </div>
-                    <div className="rounded-lg border p-2" style={{ borderColor: eduGame.primary, backgroundColor: eduGame.primaryLight }}>
+                    <div
+                      className="rounded-lg border p-2"
+                      style={{ borderColor: eduGame.primary, backgroundColor: eduGame.primaryLight }}
+                    >
                       <p className="text-xs" style={{ color: eduGame.primary }}>{report.before_after.after_label}</p>
-                      <p className="font-bold mt-1">"{report.before_after.after_text}"</p>
+                      <p className="font-bold mt-1">&ldquo;{report.before_after.after_text}&rdquo;</p>
                     </div>
                   </div>
                 </div>
@@ -243,7 +266,7 @@ export default function EduOperatorReportsPage() {
                   className="border-l-4 pl-3 text-sm font-bold"
                   style={{ borderColor: eduGame.primary, lineHeight: 1.55 }}
                 >
-                  "{report.student_quote}"
+                  &ldquo;{report.student_quote}&rdquo;
                 </blockquote>
               )}
 

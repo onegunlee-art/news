@@ -1,6 +1,10 @@
-import { adminFetch } from './api'
+import {
+  getEduOperatorToken,
+  type EduOperatorProfile,
+} from '../utils/eduOperatorSession'
 
-const BASE = '/api/admin/edu-parent-report.php'
+const BASE = '/api/edu/operator/reports.php'
+const LOGIN_URL = '/api/edu/operator/login.php'
 
 export type EduOperatorStudent = {
   id: string
@@ -39,6 +43,18 @@ export type EduParentReportPayload = {
   }
 }
 
+async function operatorFetch(url: string, init?: RequestInit): Promise<Response> {
+  const token = getEduOperatorToken()
+  const headers = new Headers(init?.headers)
+  if (!headers.has('Content-Type') && !(init?.body instanceof FormData)) {
+    headers.set('Content-Type', 'application/json')
+  }
+  if (token) {
+    headers.set('X-Edu-Operator-Token', token)
+  }
+  return fetch(url, { ...init, headers })
+}
+
 async function parseJson<T>(res: Response): Promise<T> {
   const data = await res.json()
   if (!res.ok || data.success === false) {
@@ -47,24 +63,44 @@ async function parseJson<T>(res: Response): Promise<T> {
   return data as T
 }
 
+export async function eduOperatorLogin(
+  email: string,
+  password: string
+): Promise<{ token: string; operator: EduOperatorProfile }> {
+  const res = await fetch(LOGIN_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  })
+  const data = await parseJson<{ token: string; operator: EduOperatorProfile }>(res)
+  return { token: data.token, operator: data.operator }
+}
+
+export async function eduOperatorVerifySession(): Promise<EduOperatorProfile> {
+  const res = await operatorFetch('/api/edu/operator/me.php')
+  const data = await parseJson<{ operator: EduOperatorProfile }>(res)
+  return data.operator
+}
+
 export async function eduOperatorListStudents(): Promise<EduOperatorStudent[]> {
-  const res = await adminFetch(`${BASE}?action=students`)
+  const res = await operatorFetch(`${BASE}?action=students`)
   const data = await parseJson<{ students: EduOperatorStudent[] }>(res)
   return data.students ?? []
 }
 
 export async function eduOperatorPreviewReport(studentId: string): Promise<EduParentReportPayload> {
-  const res = await adminFetch(
+  const res = await operatorFetch(
     `${BASE}?action=preview&student_id=${encodeURIComponent(studentId)}`
   )
   const data = await parseJson<{ report: EduParentReportPayload }>(res)
   return data.report
 }
 
-export async function eduOperatorDownloadPdf(studentId: string): Promise<{ blob: Blob; filename: string }> {
-  const res = await adminFetch(`${BASE}?action=pdf`, {
+export async function eduOperatorDownloadPdf(
+  studentId: string
+): Promise<{ blob: Blob; filename: string }> {
+  const res = await operatorFetch(`${BASE}?action=pdf`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ action: 'pdf', student_id: studentId }),
   })
   if (!res.ok) {
