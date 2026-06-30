@@ -765,6 +765,11 @@ if ($method === 'GET') {
         if ($hasSeriesId) $selectColumns .= ', series_id';
         if ($hasSeriesOrder) $selectColumns .= ', series_order';
         if ($hasSeriesTitle) $selectColumns .= ', series_title';
+
+        $selectAiSnapshotForDraft = ($statusFilter === 'draft' && $hasAiOriginalSnapshot);
+        if ($selectAiSnapshotForDraft) {
+            $selectColumns .= ', ai_original_snapshot';
+        }
         
         if ($omitListContent) {
             $selectColumns = preg_replace('/\bcontent,\s*/', '', $selectColumns);
@@ -788,6 +793,14 @@ if ($method === 'GET') {
         // 표시용 날짜 정책: display_date = published_at 우선 (게시 시점). 없으면 created_at (docs/DATE_POLICY.md)
         foreach ($news as &$item) {
             $item['display_date'] = $item['published_at'] ?? $item['created_at'] ?? null;
+            if ($selectAiSnapshotForDraft && !empty($item['ai_original_snapshot'])) {
+                $snap = json_decode((string) $item['ai_original_snapshot'], true);
+                $track = is_array($snap) ? ($snap['prompt_track'] ?? null) : null;
+                $item['prompt_track'] = in_array($track, ['A', 'B'], true) ? $track : null;
+                unset($item['ai_original_snapshot']);
+            } else {
+                $item['prompt_track'] = null;
+            }
         }
         unset($item);
         api_log('admin/news', 'GET', 200);

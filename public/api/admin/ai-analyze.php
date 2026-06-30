@@ -152,6 +152,36 @@ function sendError($message, $status = 400, $extra = []) {
     sendResponse(array_merge(['success' => false, 'error' => $message, 'analysis' => null], $extra), $status);
 }
 
+/** FA B 프롬프트 수동 검증 피처 플래그 (기본 off) */
+function isFaPromptBEnabled(): bool
+{
+    $v = $_ENV['ENABLE_FA_PROMPT_B'] ?? getenv('ENABLE_FA_PROMPT_B');
+    if ($v === false || $v === null || $v === '') {
+        return false;
+    }
+    return in_array(strtolower(trim((string) $v)), ['1', 'true', 'yes', 'on'], true);
+}
+
+/**
+ * 플래그 on일 때만 prompt_track / skip_tts를 파이프라인 config에 반영.
+ * @return array{prompt_track?: string, skip_tts?: bool}
+ */
+function extractFaPipelineOptions(array $options): array
+{
+    if (!isFaPromptBEnabled()) {
+        return [];
+    }
+    $track = $options['prompt_track'] ?? 'A';
+    if (!in_array($track, ['A', 'B'], true)) {
+        $track = 'A';
+    }
+    $enableTts = !empty($options['enable_tts']);
+    return [
+        'prompt_track' => $track,
+        'skip_tts' => !$enableTts,
+    ];
+}
+
 /**
  * 504 게이트웨이 타임아웃 회피: 백그라운드 작업 + 폴링
  * analyze 요청 시 즉시 job_id 반환 후, 파이프라인을 백그라운드에서 실행
@@ -252,7 +282,7 @@ function analyzeUrl(string $url, array $options = []): array {
     $ragService = null;
     $personaService = null;
 
-    $pipelineConfig = [
+    $pipelineConfig = array_merge([
         'project_root' => rtrim($projectRoot, '/\\'),
         'openai' => [],
         'scraper' => ['timeout' => 60],
@@ -285,7 +315,7 @@ function analyzeUrl(string $url, array $options = []): array {
             'temperature' => 0.3,
         ],
         'stop_on_failure' => true
-    ];
+    ], extractFaPipelineOptions($options));
 
     $pipeline = new AgentPipeline($pipelineConfig);
     $pipeline->setupDefaultPipeline();
@@ -544,7 +574,7 @@ function analyzeContent(string $content, string $url, string $title, array $opti
         );
     }
 
-    $pipelineConfig = [
+    $pipelineConfig = array_merge([
         'project_root' => rtrim($projectRoot, '/\\'),
         'openai' => [],
         'scraper' => ['timeout' => 60],
@@ -577,7 +607,7 @@ function analyzeContent(string $content, string $url, string $title, array $opti
             'temperature' => 0.3,
         ],
         'stop_on_failure' => true
-    ];
+    ], extractFaPipelineOptions($options));
 
     $pipeline = new AgentPipeline($pipelineConfig);
     $pipeline->setupDefaultPipeline();
@@ -920,6 +950,7 @@ try {
                 'env_tried' => $envTried ?? [],
                 'project_root' => $projectRoot ?? 'not set',
                 'agents' => $pipeline->getAgentNames(),
+                'enable_fa_prompt_b' => isFaPromptBEnabled(),
                 'message' => 'The Gist AI 분석 시스템 준비 완료'
             ]);
             break;
@@ -951,6 +982,12 @@ try {
                         'enable_interpret' => $input['enable_interpret'] ?? true,
                         'enable_learning' => $input['enable_learning'] ?? true
                     ];
+                    if (isFaPromptBEnabled()) {
+                        $options['prompt_track'] = $input['prompt_track'] ?? 'A';
+                        if (!in_array($options['prompt_track'], ['A', 'B'], true)) {
+                            $options['prompt_track'] = 'A';
+                        }
+                    }
                     
                     // 504 회피: job 생성 후 즉시 반환, 파이프라인은 백그라운드 실행
                     $jobId = 'job_' . bin2hex(random_bytes(12));
@@ -999,6 +1036,12 @@ try {
                         'enable_interpret' => $input['enable_interpret'] ?? true,
                         'enable_learning' => $input['enable_learning'] ?? true
                     ];
+                    if (isFaPromptBEnabled()) {
+                        $contentOptions['prompt_track'] = $input['prompt_track'] ?? 'A';
+                        if (!in_array($contentOptions['prompt_track'], ['A', 'B'], true)) {
+                            $contentOptions['prompt_track'] = 'A';
+                        }
+                    }
 
                     $jobId = 'job_' . bin2hex(random_bytes(12));
                     writeJobStatus($jobId, [

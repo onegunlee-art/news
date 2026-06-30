@@ -10,6 +10,7 @@ create table if not exists judgement_records (
   human_output jsonb not null default '{}',
   semantic_diff jsonb default '{}',
   source text not null default 'publish' check (source in ('publish', 'backfill')),
+  track text null check (track is null or track in ('A', 'B')),
   created_at timestamptz default now()
 );
 

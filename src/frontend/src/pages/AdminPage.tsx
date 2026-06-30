@@ -89,6 +89,7 @@ interface NewsArticle {
   created_at?: string;
   updated_at?: string;
   original_title?: string;
+  prompt_track?: 'A' | 'B';
   also_special?: number;
 }
 
@@ -139,6 +140,7 @@ const KNOWLEDGE_CATEGORIES = [
 interface AIAnalysisResult {
   news_title?: string;
   original_title?: string;
+  prompt_track?: 'A' | 'B';
   translation_summary?: string;
   key_points?: string[];
   content_summary?: string;
@@ -148,6 +150,21 @@ interface AIAnalysisResult {
   };
   audio_url?: string;
 }
+
+const isFaArticleUrl = (url: string): boolean => url.toLowerCase().includes('foreignaffairs.com');
+
+const buildAiOriginalForSave = (
+  aiResult: AIAnalysisResult | null,
+  enableFaPromptB: boolean,
+  url: string,
+  faPromptTrack: 'A' | 'B',
+): AIAnalysisResult | undefined => {
+  if (!aiResult) return undefined;
+  if (enableFaPromptB && isFaArticleUrl(url)) {
+    return { ...aiResult, prompt_track: faPromptTrack };
+  }
+  return aiResult;
+};
 
 // 텍스트 정제 함수 - 복사/붙여넣기 시 문제 될 수 있는 문자 변환
 const sanitizeText = (text: string): string => {
@@ -644,8 +661,21 @@ const AdminPage: React.FC = () => {
     fetchPromotionCodes()
   }, [activeTab, fetchPromotionCodes])
 
+  useEffect(() => {
+    if (activeTab !== 'ai') return;
+    adminFetch('/api/admin/ai-analyze.php')
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.enable_fa_prompt_b) setEnableFaPromptB(true);
+      })
+      .catch(() => {});
+  }, [activeTab]);
+
   // feedback useEffect deps에서 참조되므로 컴포넌트 최상단에 선언
   const [articleUrl, setArticleUrl] = useState('');
+  const [enableFaPromptB, setEnableFaPromptB] = useState(false);
+  const [faPromptTrack, setFaPromptTrack] = useState<'A' | 'B'>('A');
+  const [faEnableVoice, setFaEnableVoice] = useState(false);
   const [editingNewsId, setEditingNewsId] = useState<number | null>(null);
 
   // 본문 붙여넣기 분석
@@ -2009,6 +2039,30 @@ const AdminPage: React.FC = () => {
                         </span>
                       </label>
                     </div>
+                    {enableFaPromptB && isFaArticleUrl(articleUrl) && (
+                      <div className="flex flex-wrap items-center gap-4 mb-2 text-sm">
+                        <label className="flex items-center gap-2 text-slate-300">
+                          <span className="text-slate-400">프롬프트</span>
+                          <select
+                            value={faPromptTrack}
+                            onChange={(e) => setFaPromptTrack(e.target.value as 'A' | 'B')}
+                            className="bg-slate-900/50 border border-slate-700 rounded-lg px-3 py-1.5 text-white focus:border-cyan-500 outline-none"
+                          >
+                            <option value="A">현행 (A)</option>
+                            <option value="B">신규 FA (B)</option>
+                          </select>
+                        </label>
+                        <label className="flex items-center gap-2 text-slate-400 cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={faEnableVoice}
+                            onChange={(e) => setFaEnableVoice(e.target.checked)}
+                            className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-cyan-500 focus:ring-cyan-500/50 focus:ring-offset-0"
+                          />
+                          <span>음성 생성</span>
+                        </label>
+                      </div>
+                    )}
                     <div className="flex gap-2 flex-wrap items-center">
                       <input
                         type="url"
@@ -2074,10 +2128,13 @@ const AdminPage: React.FC = () => {
                               body: JSON.stringify({
                                 action: 'analyze',
                                 url: articleUrl.trim(),
-                                enable_tts: false,
+                                enable_tts: enableFaPromptB && isFaArticleUrl(articleUrl) ? faEnableVoice : false,
                                 enable_interpret: false,
                                 enable_learning: false,
                                 use_persona: usePersonaExperiment,
+                                ...(enableFaPromptB && isFaArticleUrl(articleUrl)
+                                  ? { prompt_track: faPromptTrack }
+                                  : {}),
                               }),
                             });
                             clearTimeout(startTimer);
@@ -3075,7 +3132,7 @@ const AdminPage: React.FC = () => {
                               series_title: seriesTitle.trim() || null,
                             }),
                             status: 'draft' as const,
-                            ai_original: aiResult ?? undefined,
+                            ai_original: buildAiOriginalForSave(aiResult, enableFaPromptB, articleUrl, faPromptTrack),
                           };
                           const response = await adminFetch('/api/admin/news.php', {
                             method: editingNewsId ? 'PUT' : 'POST',
@@ -3166,7 +3223,7 @@ const AdminPage: React.FC = () => {
                               series_title: seriesTitle.trim() || null,
                             }),
                             status: 'published' as const,
-                            ai_original: aiResult ?? undefined,
+                            ai_original: buildAiOriginalForSave(aiResult, enableFaPromptB, articleUrl, faPromptTrack),
                           };
                           
                           const response = await adminFetch('/api/admin/news.php', {
@@ -3536,7 +3593,10 @@ const AdminPage: React.FC = () => {
                                   </span>
                                 )}
                               </div>
-                              <h4 className="text-white font-medium truncate">{draft.title}</h4>
+                              <h4 className="text-white font-medium truncate">
+                                {draft.title}
+                                {draft.prompt_track ? ` [${draft.prompt_track}]` : ''}
+                              </h4>
                               <p className="text-slate-400 text-sm mt-1 line-clamp-2">
                                 {draft.description || draft.content}
                               </p>

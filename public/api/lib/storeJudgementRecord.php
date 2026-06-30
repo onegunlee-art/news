@@ -14,7 +14,7 @@ declare(strict_types=1);
  * @param array{title?:string,narration?:string|null,why_important?:string|null,content?:string} $humanOutput
  * @param 'publish'|'backfill' $source
  */
-function storeJudgementRecord(int $newsId, array $aiOutput, array $humanOutput, string $source = 'publish'): void
+function storeJudgementRecord(int $newsId, array $aiOutput, array $humanOutput, string $source = 'publish', ?string $track = null): void
 {
     if ($newsId < 1) {
         return;
@@ -68,6 +68,16 @@ function storeJudgementRecord(int $newsId, array $aiOutput, array $humanOutput, 
             'semantic_diff' => $semanticDiff,
             'source' => $source,
         ];
+
+        if ($track === null && isset($aiSanitized['prompt_track'])) {
+            $candidate = strtoupper(trim((string) $aiSanitized['prompt_track']));
+            if (in_array($candidate, ['A', 'B'], true)) {
+                $track = $candidate;
+            }
+        }
+        if ($track !== null && in_array($track, ['A', 'B'], true)) {
+            $row['track'] = $track;
+        }
 
         $inserted = $supabase->insert('judgement_records', $row);
         if ($inserted === null) {
