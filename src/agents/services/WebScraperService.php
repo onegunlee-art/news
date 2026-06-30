@@ -367,6 +367,15 @@ class WebScraperService
     }
 
     /**
+     * Foreign Affairs URL 여부 (프론트/백엔드 FA 판별 기준 통일)
+     */
+    public static function isForeignAffairs(string $url): bool
+    {
+        $host = strtolower(parse_url($url, PHP_URL_HOST) ?? '');
+        return str_contains($host, 'foreignaffairs.com');
+    }
+
+    /**
      * URL에서 도메인을 소스명으로 추출 (알려진 매체면 브랜드명 우선)
      */
     private function extractSourceFromUrl(string $url): ?string
@@ -637,8 +646,12 @@ class WebScraperService
             "//*[contains(@class, 'standfirst')]",
             "//*[contains(@class, 'article__deck')]",
             "//*[contains(@class, 'deck')]",
+            "//*[contains(@class, 'article__description')]",
+            "//*[contains(@class, 'article__subhead')]",
+            "//article//h2[1]",
             "//*[contains(@data-testid, 'standfirst')]",
             "//*[contains(@data-testid, 'deck')]",
+            "//*[contains(@data-testid, 'subheadline')]",
             "//p[contains(@class, 'article__lead')]",
             "//*[@itemprop='description']",
         ];

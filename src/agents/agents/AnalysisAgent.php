@@ -41,7 +41,13 @@ class AnalysisAgent extends BaseAgent
     protected function getDefaultPrompts(): array
     {
         return [
-            'system' => '당신은 "The Gist"의 수석 에디터입니다. 해외 뉴스를 한국어로 분석하여 독자가 핵심을 빠르게 파악할 수 있도록 합니다. 반드시 요청된 JSON 형식으로만 응답하세요.'
+            'system' => <<<'SYS'
+당신은 "The Gist"의 수석 에디터입니다. 해외 뉴스를 한국어로 분석하여 독자가 핵심을 빠르게 파악할 수 있도록 합니다. 반드시 요청된 JSON 형식으로만 응답하세요.
+
+[어조 규칙]
+- introduction_summary, section_analysis[].summary, section_analysis[].key_insight, geopolitical_implication → 합니다체(~입니다/~합니다)
+- key_points[] → 개조식 명사형(체언 종결)
+SYS
         ];
     }
 
@@ -476,7 +482,7 @@ PROMPT;
         
         // 서론 요약 (부제목) — 끝나고 한 줄 띄움
         if (!empty($data['introduction_summary'])) {
-            $blocks[] = "- " . trim($data['introduction_summary']);
+            $blocks[] = "· " . trim($data['introduction_summary']);
         }
         
         // 섹션별 분석 — 각 소제목 앞·뒤 한 줄 띄움
@@ -503,12 +509,12 @@ PROMPT;
                     foreach ($sentences as $sentence) {
                         $sentence = trim($sentence);
                         if ($sentence) {
-                            $sectionLines[] = "- " . $sentence;
+                            $sectionLines[] = "· " . $sentence;
                         }
                     }
                 }
                 if ($keyInsight && $keyInsight !== $summary) {
-                    $sectionLines[] = "- " . trim($keyInsight);
+                    $sectionLines[] = "· " . trim($keyInsight);
                 }
                 if ($sectionLines !== []) {
                     $blocks[] = implode("\n", $sectionLines);
@@ -519,7 +525,7 @@ PROMPT;
         
         // 왜 중요한가 — 앞에 한 줄 띄움
         if (!empty($data['geopolitical_implication'])) {
-            $blocks[] = "왜 중요한가\n\n- " . trim($data['geopolitical_implication']);
+            $blocks[] = "왜 중요한가\n\n· " . trim($data['geopolitical_implication']);
         }
         
         return implode("\n\n", $blocks);

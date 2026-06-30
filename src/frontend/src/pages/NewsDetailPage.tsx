@@ -490,6 +490,11 @@ export default function NewsDetailPage() {
           <h1 className="text-2xl font-bold text-page leading-snug mb-2">
             {news.title}
           </h1>
+          {news.original_title && news.original_title.trim() && news.original_title.trim() !== news.title.trim() && (
+            <p className="text-base text-page-secondary italic mb-2">
+              {news.original_title.trim()}
+            </p>
+          )}
 
           {/* 매체 설명 */}
           <p className="text-sm text-page-secondary mb-6">
