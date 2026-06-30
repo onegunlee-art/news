@@ -21,6 +21,7 @@ use Agents\Models\AgentResult;
 use Agents\Models\ArticleData;
 use Agents\Models\AnalysisResult;
 use Agents\Services\OpenAIService;
+use Agents\Services\WebScraperService;
 
 class NarrationAgent extends BaseAgent
 {
@@ -67,7 +68,7 @@ class NarrationAgent extends BaseAgent
         $this->log("Generating narration for: " . ($analysisResult->getNewsTitle() ?? 'Unknown'), 'info');
 
         try {
-            $narration = $this->generateNarration($analysisResult, $article);
+            $narration = $this->generateNarration($analysisResult, $article, $context);
             
             $updatedResult = $analysisResult->withNarration($narration);
             $updatedResult = $updatedResult->withMetadata([
@@ -92,9 +93,15 @@ class NarrationAgent extends BaseAgent
     /**
      * Narration 생성
      */
-    private function generateNarration(AnalysisResult $analysis, ?ArticleData $article): string
+    private function generateNarration(AnalysisResult $analysis, ?ArticleData $article, AgentContext $context): string
     {
-        $userPrompt = $this->buildNarrationPrompt($analysis, $article);
+        $track = $context->getMetadataValue('prompt_track') ?? 'A';
+        $isFA = (bool) ($context->getMetadataValue('is_foreign_affairs')
+            ?? ($article !== null && WebScraperService::isForeignAffairs($article->getUrl())));
+
+        $userPrompt = ($track === 'B' && $isFA)
+            ? $this->buildNarrationPromptB($analysis, $article)
+            : $this->buildNarrationPrompt($analysis, $article);
         
         $response = $this->callGPT($userPrompt, [
             'system_prompt' => $this->prompts['system'] ?? '당신은 "The Gist"의 내레이션 작가입니다.',
@@ -266,6 +273,71 @@ JSON으로만 응답하세요.
 위 분석 결과와 원문을 참고하여, 예시와 같은 형식과 어조로 {$lengthRef}의 narration을 작성하세요.
 예시의 '주제'가 아닌 '형식과 어조'만 따르세요.
 PROMPT;
+    }
+
+    /**
+     * FA Track B 내레이션 프롬프트 — 동적 분량 (buildNarrationPrompt 본문과 독립)
+     */
+    private function buildNarrationPromptB(AnalysisResult $analysis, ?ArticleData $article): string
+    {
+        $title = $analysis->getNewsTitle() ?? $analysis->getOriginalTitle() ?? '';
+        $analysisJson = json_encode([
+            'news_title' => $analysis->getNewsTitle(),
+            'introduction_summary' => $analysis->getIntroductionSummary(),
+            'section_analysis' => $analysis->getSectionAnalysis(),
+            'key_points' => $analysis->getKeyPoints(),
+            'geopolitical_implication' => $analysis->getGeopoliticalImplication(),
+        ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+
+        $articleContent = '';
+        $bodyLen = 0;
+        if ($article !== null) {
+            $articleContent = $this->truncateContent($article->getContent(), 25000);
+            $bodyLen = mb_strlen(trim(strip_tags($articleContent)));
+        }
+        if ($bodyLen < 500) {
+            $bodyLen = 2000;
+        }
+        $target = $this->clamp((int) round($bodyLen * 0.70), 1100, 2200);
+
+        return <<<PROMPT
+##############################################################
+# Foreign Affairs Track B — 내레이션 (동적 분량)
+##############################################################
+
+[절대 규칙]
+1. 목표 분량: 약 {$target}자 (±15%), 4~6개 단락
+2. 모든 문장은 공손한 높임말 (~입니다, ~합니다)
+3. 인사말 없이 핵심으로 시작
+4. 섹션 나열이 아닌 논리적 흐름으로 연결
+5. 원문에 없는 주장·과도한 확신 금지
+6. 정책 브리핑 톤: 외교·안보 담당자에게 브리핑하듯 명확하고 간결하게
+
+[출력 형식]
+JSON만 응답:
+{
+  "narration_paragraphs": ["문단1", "문단2", ...]
+}
+
+---
+
+기사 제목: {$title}
+
+분석 결과:
+{$analysisJson}
+
+기사 원문:
+{$articleContent}
+
+---
+
+위 분석과 원문을 바탕으로 Track B 내레이션을 작성하세요.
+PROMPT;
+    }
+
+    private function clamp(int $value, int $min, int $max): int
+    {
+        return max($min, min($max, $value));
     }
 
     /**

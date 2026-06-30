@@ -129,6 +129,14 @@ class AgentPipeline
 
         $startTime = microtime(true);
         $context = new AgentContext($url);
+        $promptTrack = $this->config['prompt_track'] ?? 'A';
+        if (!in_array($promptTrack, ['A', 'B'], true)) {
+            $promptTrack = 'A';
+        }
+        $isFA = WebScraperService::isForeignAffairs($url);
+        $context = $context
+            ->withMetadata('prompt_track', $promptTrack)
+            ->withMetadata('is_foreign_affairs', $isFA);
 
         if ($preloadedArticle !== null) {
             $context = $context->withArticleData($preloadedArticle);
@@ -187,7 +195,9 @@ class AgentPipeline
                 }
 
                 if ($agentName === 'EditingAgent' && $result->isSuccess()) {
-                    $context = $this->generateTTS($context);
+                    if (!($this->config['skip_tts'] ?? false)) {
+                        $context = $this->generateTTS($context);
+                    }
                 }
 
             } catch (\Throwable $e) {

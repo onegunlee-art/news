@@ -25,6 +25,7 @@ use Agents\Models\AgentResult;
 use Agents\Models\ArticleData;
 use Agents\Models\AnalysisResult;
 use Agents\Services\OpenAIService;
+use Agents\Services\WebScraperService;
 
 class AnalysisAgent extends BaseAgent
 {
@@ -86,7 +87,7 @@ SYS
         $this->log("Analyzing article: {$article->getTitle()}", 'info');
 
         try {
-            $analysisResult = $this->performStructuredAnalysis($article);
+            $analysisResult = $this->performStructuredAnalysis($article, $context);
 
             $analysisResult = $analysisResult->withMetadata([
                 'source_url' => $article->getUrl(),
@@ -113,9 +114,15 @@ SYS
     /**
      * 구조화된 분석 수행 (GPT-5.4 + JSON mode)
      */
-    private function performStructuredAnalysis(ArticleData $article): AnalysisResult
+    private function performStructuredAnalysis(ArticleData $article, AgentContext $context): AnalysisResult
     {
-        $analysisPrompt = $this->buildAnalysisPrompt($article);
+        $track = $context->getMetadataValue('prompt_track') ?? 'A';
+        $isFA = (bool) ($context->getMetadataValue('is_foreign_affairs')
+            ?? WebScraperService::isForeignAffairs($article->getUrl()));
+
+        $analysisPrompt = ($track === 'B' && $isFA)
+            ? $this->buildAnalysisPromptB($article)
+            : $this->buildAnalysisPrompt($article);
         
         $response = $this->callGPT($analysisPrompt, [
             'system_prompt' => $this->prompts['system'] ?? '당신은 "The Gist"의 수석 에디터입니다.',
@@ -423,6 +430,54 @@ HINT;
    - section_title_ko: section_title의 한글 번역
 
 위 규칙에 따라 JSON으로 응답하세요. JSON 외 텍스트 금지.
+PROMPT;
+    }
+
+    /**
+     * FA 전용 분석 프롬프트 (Track B) — buildAnalysisPrompt() 본문과 독립
+     */
+    private function buildAnalysisPromptB(ArticleData $article): string
+    {
+        $title = $article->getTitle();
+        $subtitle = $article->getSubtitle() ?? '';
+        $content = $this->truncateContent($article->getContent(), 12000);
+        $host = parse_url($article->getUrl(), PHP_URL_HOST) ?? '';
+        $subheadings = $article->getSubheadings();
+        $subheadingBlock = $this->formatSubheadingsForPrompt($subheadings, $host);
+
+        return <<<PROMPT
+[Foreign Affairs Track B — 브리핑형 구조 분석]
+
+당신은 Foreign Affairs 장문을 한국 독자용 **정책·외교 브리핑**으로 재구성하는 분석가입니다.
+원문 논지를 유지하되, 학술·정책 브리핑 톤으로 압축·정리합니다.
+
+[원문 제목]
+{$title}
+
+[원문 부제목]
+{$subtitle}
+
+[원문 소제목 목록]
+{$subheadingBlock}
+
+[원문 본문]
+{$content}
+
+##############################################################
+## Track B 출력 규칙 (Foreign Affairs 전용)
+##############################################################
+
+1. **news_title**: 원문 제목을 한글로 번역 (간결, 40자 내외)
+2. **original_title**: 원문 제목 그대로
+3. **introduction_summary**: 2~3문장. 핵심 논지 + 왜 지금 중요한지 (부제목·서론 반영)
+4. **section_analysis**: 원문 소제목(ALL CAPS)을 section_title로 **그대로** 사용
+   - 각 섹션: section_title_ko(한글), section_content(3~5문장, 불릿 없이 문단)
+   - 섹션마다 **핵심 쟁점 1문장**을 section_content 첫 줄에 명시
+5. **key_points**: 4~6개. 각 1문장, 정책·전략 함의 중심 (일반 독자도 이해 가능)
+6. **why_important**: 3~4문장. 한국·동아시아·글로벌 질서와의 연결 (과장 금지)
+7. **critical_thinking**: 2~3문장. 반론·한계·불확실성 (균형 유지)
+
+JSON 스키마는 Track A와 동일합니다. JSON 외 텍스트 금지.
 PROMPT;
     }
 

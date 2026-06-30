@@ -74,7 +74,7 @@ class EditingAgent extends BaseAgent
         $this->log("Editing narration for: " . ($analysisResult->getNewsTitle() ?? 'Unknown'), 'info');
 
         try {
-            $editedNarration = $this->editNarration($originalNarration, $analysisResult);
+            $editedNarration = $this->editNarration($originalNarration, $analysisResult, $context);
             
             $updatedResult = $analysisResult->withNarration($editedNarration);
             $updatedResult = $updatedResult->withMetadata([
@@ -101,9 +101,14 @@ class EditingAgent extends BaseAgent
     /**
      * Narration 편집
      */
-    private function editNarration(string $narration, AnalysisResult $analysis): string
+    private function editNarration(string $narration, AnalysisResult $analysis, AgentContext $context): string
     {
-        $userPrompt = $this->buildEditingPrompt($narration, $analysis);
+        $track = $context->getMetadataValue('prompt_track') ?? 'A';
+        $isFA = (bool) ($context->getMetadataValue('is_foreign_affairs') ?? false);
+
+        $userPrompt = ($track === 'B' && $isFA)
+            ? $this->buildEditingPromptB($narration, $analysis)
+            : $this->buildEditingPrompt($narration, $analysis);
         
         $response = $this->callGPT($userPrompt, [
             'system_prompt' => $this->prompts['system'] ?? '당신은 "The Gist"의 수석 에디터입니다.',
@@ -213,6 +218,53 @@ JSON으로만 응답하세요.
 
 위 스타일 가이드에 따라 Narration을 교정하세요.
 원래 의미를 유지하면서 문체와 가독성만 개선합니다.
+PROMPT;
+    }
+
+    /**
+     * FA Track B 편집 프롬프트 — 최소 개입 (buildEditingPrompt 본문과 독립)
+     */
+    private function buildEditingPromptB(string $narration, AnalysisResult $analysis): string
+    {
+        $title = $analysis->getNewsTitle() ?? '';
+
+        return <<<PROMPT
+##############################################################
+# Track B 편집 — 최소 개입 원칙
+##############################################################
+
+[어조 규칙]
+- 모든 문장은 공손한 높임말 (~입니다, ~합니다) 유지
+- 평어/반말 금지
+
+[편집 원칙 - 최소 개입]
+의미가 동일하면 단어 선택·어순·문장 길이를 바꾸지 마라.
+교정 범위는 어조 일관성·필러 제거·문단 구조에 한정한다.
+원문의 강조와 문장 리듬을 평탄화하지 마라.
+정보 추가/삭제 금지.
+
+[완화된 스타일]
+- 문장 길이: 원문 리듬을 우선 (40자 권장 강제 없음)
+- 능동태/피동태: 원문 선택 존중
+- "사실", "굉장히" 등 강조 표현: 원문에 있으면 유지
+
+[출력 형식]
+JSON만 응답:
+{
+  "edited_paragraphs": ["교정된 문단1", "..."],
+  "changes_made": ["변경 사항 (있을 때만)"]
+}
+
+---
+
+기사 제목: {$title}
+
+원본 Narration:
+{$narration}
+
+---
+
+위 원칙에 따라 최소한만 교정하세요.
 PROMPT;
     }
 
