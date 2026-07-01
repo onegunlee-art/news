@@ -144,6 +144,9 @@ interface AIAnalysisResult {
   translation_summary?: string;
   key_points?: string[];
   content_summary?: string;
+  introduction_summary?: string;
+  subtitle_ko?: string;
+  original_subtitle?: string;
   narration?: string;
   critical_analysis?: {
     why_important?: string;

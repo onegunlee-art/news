@@ -136,6 +136,11 @@ SYS
 
         $this->logResponse('analysis', $response, $data);
 
+        $scrapedSubtitle = trim((string) ($article->getDescription() ?? ''));
+        if ($scrapedSubtitle !== '') {
+            $data['original_subtitle'] = $scrapedSubtitle;
+        }
+
         $originalTitle = $article->getTitle() !== '' && $article->getTitle() !== null
             ? $article->getTitle()
             : ($data['original_title'] ?? null);
@@ -160,7 +165,13 @@ SYS
             sections: [],
             introductionSummary: $data['introduction_summary'] ?? null,
             sectionAnalysis: $data['section_analysis'] ?? [],
-            geopoliticalImplication: $data['geopolitical_implication'] ?? null
+            geopoliticalImplication: $data['geopolitical_implication'] ?? null,
+            subtitleKo: isset($data['subtitle_ko']) && trim((string) $data['subtitle_ko']) !== ''
+                ? trim((string) $data['subtitle_ko'])
+                : null,
+            originalSubtitle: isset($data['original_subtitle']) && trim((string) $data['original_subtitle']) !== ''
+                ? trim((string) $data['original_subtitle'])
+                : null
         );
     }
 
@@ -186,7 +197,7 @@ SYS
 - [원문 소제목 목록]이 비어 있더라도, 본문 텍스트에서 ALL CAPS 라인을 직접 찾아 section_title로 사용하세요.
 - section_title에 원문 소제목을 그대로 입력하세요. 번역하거나 재해석하지 마세요.
 - section_title_ko에는 한글 번역을 넣으세요.
-- 소제목 앞의 서론은 introduction_summary에 요약하세요.
+- 소제목 앞의 서론은 introduction_summary에 요약하세요 (부제 번역은 subtitle_ko에만).
 - 서론만 분석하고 끝내는 것은 절대 금지입니다. 모든 소제목 섹션을 빠짐없이 분석하세요.
 
 [Foreign Affairs 기사 구조]
@@ -350,7 +361,9 @@ HINT;
   "news_title": "미국은 동맹 감사를 필요로 한다",
   "author": "",
   "original_title": "America Needs an Alliance Audit",
-  "introduction_summary": "모든 파트너십이 유지할 가치가 있는 것은 아니다. 트럼프는 단기적 이익을 위해 압박, 동맹 영토 병합 위협, 무차별 관세로 동맹을 훼손하고 있다. 그렇다고 해서 차기 대통령이 냉전기의 동맹 틀을 그대로 복원해서는 안 된다. 중국·러시아·핵무장한 북한은 동맹의 필요성을 높이면서도, 전쟁 연루 위험과 비용도 크게 높인다.",
+  "subtitle_ko": "모든 파트너십이 되살릴 가치가 있는 것은 아니다",
+  "original_subtitle": "Not all partnerships are worth reviving.",
+  "introduction_summary": "트럼프는 단기적 이익을 위해 압박, 동맹 영토 병합 위협, 무차별 관세로 동맹을 훼손하고 있다. 그렇다고 해서 차기 대통령이 냉전기의 동맹 틀을 그대로 복원해서는 안 된다. 중국·러시아·핵무장한 북한은 동맹의 필요성을 높이면서도, 전쟁 연루 위험과 비용도 크게 높인다.",
   "section_analysis": [
     {
       "section_title": "DON'T SETTLE",
@@ -423,8 +436,10 @@ HINT;
 
 1. news_title: 원문 제목을 한글로 번역
 2. original_title: 원문 제목 그대로 (위 [원문 제목] 사용)
-3. introduction_summary: 원문 부제목을 한글로 번역 + 서론 요약 (위 [원문 부제목] 참조)
-4. section_analysis:
+3. subtitle_ko: [원문 부제목]을 한글로 번역 (부제만, 서론 요약과 분리)
+4. original_subtitle: [원문 부제목] 값을 그대로 복사 (번역·수정 금지). 비어 있으면 ""
+5. introduction_summary: 서론만 2~3문장 요약 (부제 번역 금지, subtitle_ko와 분리)
+6. section_analysis:
    - Foreign Affairs: 위 [원문 소제목 목록]의 각 소제목을 section_title에 그대로 사용
    - Economist/FT/일반: 단락별 주제를 영문 대문자로 생성하여 section_title에 사용
    - section_title_ko: section_title의 한글 번역
@@ -469,13 +484,15 @@ PROMPT;
 
 1. **news_title**: 원문 제목을 한글로 번역 (간결, 40자 내외)
 2. **original_title**: 원문 제목 그대로
-3. **introduction_summary**: 2~3문장. 핵심 논지 + 왜 지금 중요한지 (부제목·서론 반영)
-4. **section_analysis**: 원문 소제목(ALL CAPS)을 section_title로 **그대로** 사용
+3. **subtitle_ko**: [원문 부제목]을 한글로 번역 (부제만)
+4. **original_subtitle**: [원문 부제목] 값을 그대로 복사 (번역·수정 금지). 비어 있으면 ""
+5. **introduction_summary**: 2~3문장. 서론만 요약 (부제 번역 금지, subtitle_ko와 분리)
+6. **section_analysis**: 원문 소제목(ALL CAPS)을 section_title로 **그대로** 사용
    - 각 섹션: section_title_ko(한글), section_content(3~5문장, 불릿 없이 문단)
    - 섹션마다 **핵심 쟁점 1문장**을 section_content 첫 줄에 명시
-5. **key_points**: 4~6개. 각 1문장, 정책·전략 함의 중심 (일반 독자도 이해 가능)
-6. **why_important**: 3~4문장. 한국·동아시아·글로벌 질서와의 연결 (과장 금지)
-7. **critical_thinking**: 2~3문장. 반론·한계·불확실성 (균형 유지)
+7. **key_points**: 4~6개. 각 1문장, 정책·전략 함의 중심 (일반 독자도 이해 가능)
+8. **why_important**: 3~4문장. 한국·동아시아·글로벌 질서와의 연결 (과장 금지)
+9. **critical_thinking**: 2~3문장. 반론·한계·불확실성 (균형 유지)
 
 JSON 스키마는 Track A와 동일합니다. JSON 외 텍스트 금지.
 PROMPT;
@@ -512,9 +529,8 @@ PROMPT;
      * 
      * 형식:
      * 한글 제목 (영문 원제)
-     * - 부제목/핵심 요약
-     * 
-     * 서론 요약 문장들
+     * 한글 부제 (영문 부제)
+     * · 서론 요약
      * 
      * 1. 소제목 (영문 소제목)
      * 
@@ -534,8 +550,13 @@ PROMPT;
                 ? "{$newsTitle} ({$originalTitle})"
                 : $newsTitle;
         }
+
+        $subtitleLine = $this->formatSubtitleLine($data);
+        if ($subtitleLine !== null) {
+            $blocks[] = $subtitleLine;
+        }
         
-        // 서론 요약 (부제목) — 끝나고 한 줄 띄움
+        // 서론 요약 — 끝나고 한 줄 띄움
         if (!empty($data['introduction_summary'])) {
             $blocks[] = "· " . trim($data['introduction_summary']);
         }
@@ -584,6 +605,22 @@ PROMPT;
         }
         
         return implode("\n\n", $blocks);
+    }
+
+    /**
+     * 부제 줄: 한글 (영문) — original_subtitle 없으면 한글만
+     */
+    private function formatSubtitleLine(array $data): ?string
+    {
+        $ko = trim((string) ($data['subtitle_ko'] ?? ''));
+        $en = trim((string) ($data['original_subtitle'] ?? ''));
+        if ($ko === '' && $en === '') {
+            return null;
+        }
+        if ($ko !== '' && $en !== '' && $ko !== $en) {
+            return "{$ko} ({$en})";
+        }
+        return $ko !== '' ? $ko : $en;
     }
     
     /**
@@ -634,6 +671,8 @@ PROMPT;
             'original_title' => null,
             'author' => null,
             'introduction_summary' => '',
+            'subtitle_ko' => '',
+            'original_subtitle' => '',
             'section_analysis' => [],
             'key_points' => ['분석 결과를 확인하세요.'],
             'geopolitical_implication' => null

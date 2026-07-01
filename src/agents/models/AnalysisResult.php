@@ -30,6 +30,8 @@ final class AnalysisResult
      * @param string|null $introductionSummary 서론 요약 (v3.0 신규)
      * @param array $sectionAnalysis 섹션별 분석 배열 (v3.0 신규)
      * @param string|null $geopoliticalImplication 지정학적 함의 (v3.0 신규)
+     * @param string|null $subtitleKo 부제 한글 번역
+     * @param string|null $originalSubtitle 부제 영문 원문
      */
     public function __construct(
         private readonly string $translationSummary,
@@ -45,7 +47,9 @@ final class AnalysisResult
         private readonly array $sections = [],
         private readonly ?string $introductionSummary = null,
         private readonly array $sectionAnalysis = [],
-        private readonly ?string $geopoliticalImplication = null
+        private readonly ?string $geopoliticalImplication = null,
+        private readonly ?string $subtitleKo = null,
+        private readonly ?string $originalSubtitle = null
     ) {}
 
     public function getTranslationSummary(): string
@@ -142,6 +146,16 @@ final class AnalysisResult
         return $this->geopoliticalImplication;
     }
 
+    public function getSubtitleKo(): ?string
+    {
+        return $this->subtitleKo;
+    }
+
+    public function getOriginalSubtitle(): ?string
+    {
+        return $this->originalSubtitle;
+    }
+
     /**
      * 오디오 URL 추가된 새 인스턴스 반환
      */
@@ -161,7 +175,9 @@ final class AnalysisResult
             sections: $this->sections,
             introductionSummary: $this->introductionSummary,
             sectionAnalysis: $this->sectionAnalysis,
-            geopoliticalImplication: $this->geopoliticalImplication
+            geopoliticalImplication: $this->geopoliticalImplication,
+            subtitleKo: $this->subtitleKo,
+            originalSubtitle: $this->originalSubtitle
         );
     }
 
@@ -184,7 +200,9 @@ final class AnalysisResult
             sections: $this->sections,
             introductionSummary: $this->introductionSummary,
             sectionAnalysis: $this->sectionAnalysis,
-            geopoliticalImplication: $this->geopoliticalImplication
+            geopoliticalImplication: $this->geopoliticalImplication,
+            subtitleKo: $this->subtitleKo,
+            originalSubtitle: $this->originalSubtitle
         );
     }
 
@@ -207,7 +225,9 @@ final class AnalysisResult
             sections: $this->sections,
             introductionSummary: $this->introductionSummary,
             sectionAnalysis: $this->sectionAnalysis,
-            geopoliticalImplication: $this->geopoliticalImplication
+            geopoliticalImplication: $this->geopoliticalImplication,
+            subtitleKo: $this->subtitleKo,
+            originalSubtitle: $this->originalSubtitle
         );
     }
 
@@ -226,6 +246,8 @@ final class AnalysisResult
             'content_summary' => $this->contentSummary,
             'sections' => $this->sections,
             'introduction_summary' => $this->introductionSummary,
+            'subtitle_ko' => $this->subtitleKo,
+            'original_subtitle' => $this->originalSubtitle,
             'section_analysis' => $this->sectionAnalysis,
             'geopolitical_implication' => $this->geopoliticalImplication,
             'critical_analysis' => $this->criticalAnalysis,
@@ -261,7 +283,9 @@ final class AnalysisResult
             sections: $data['sections'] ?? [],
             introductionSummary: $data['introduction_summary'] ?? null,
             sectionAnalysis: $data['section_analysis'] ?? [],
-            geopoliticalImplication: $data['geopolitical_implication'] ?? null
+            geopoliticalImplication: $data['geopolitical_implication'] ?? null,
+            subtitleKo: $data['subtitle_ko'] ?? null,
+            originalSubtitle: $data['original_subtitle'] ?? null
         );
     }
 

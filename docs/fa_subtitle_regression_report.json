@@ -1,0 +1,77 @@
+{
+    "generated_at": "2026-07-01T14:16:24+09:00",
+    "patch": "subtitle_ko + original_subtitle separation",
+    "checks": [
+        {
+            "name": "A_subtitle_line_in_content_summary",
+            "pass": true,
+            "detail": "block[1] should be 한글 (영문), not bullet intro"
+        },
+        {
+            "name": "A_intro_not_merged_subtitle",
+            "pass": true,
+            "detail": "introduction_summary should not start with 부제는"
+        },
+        {
+            "name": "A_section_titles_unchanged",
+            "pass": true,
+            "detail": "section_title EN list vs baseline",
+            "baseline": [
+                "DON'T SETTLE",
+                "TRIM THE FAT",
+                "BANG FOR YOUR BUCK",
+                "TIME FOR AN AUDIT"
+            ],
+            "current": [
+                "DON'T SETTLE",
+                "TRIM THE FAT",
+                "BANG FOR YOUR BUCK",
+                "TIME FOR AN AUDIT"
+            ]
+        },
+        {
+            "name": "A_narration_length_stable",
+            "pass": true,
+            "detail": "ratio=0.823 (baseline 3230 vs current 2659)"
+        },
+        {
+            "name": "B_subtitle_bilingual",
+            "pass": true,
+            "detail": "B track should expose subtitle_ko + original_subtitle"
+        },
+        {
+            "name": "B_subtitle_line_in_content_summary",
+            "pass": true,
+            "detail": "확장억제가 끝난 뒤 무엇이 오는가 (What comes after extended deterrence.)"
+        }
+    ],
+    "track_a_alliance_audit": {
+        "duration_ms": 59872.26,
+        "subtitle_ko": "모든 파트너십이 되살릴 가치가 있는 것은 아니다.",
+        "original_subtitle": "Not all partnerships are worth reviving.",
+        "introduction_summary_head": "제공된 스크래핑 본문에는 기사 서론과 본문이 사실상 누락되어 있어, 실제 도입부의 논지 전개를 직접 확인할 수는 없다. 다만 제목과 부제, 그리고 Foreign Affairs 기사 구조를 바탕으로 보면 이 글은 미국이 동맹을 무조건 복원하거나 유지할 것이 아니라, 전략적 가치와 비용, 전쟁 연루 위험을 기준으로 재평가해야 한다는 문제의식을 제기하는 것으로 ",
+        "content_summary_blocks_head": [
+            "미국은 동맹 감사를 필요로 한다 (America Needs an Alliance Audit)",
+            "모든 파트너십이 되살릴 가치가 있는 것은 아니다. (Not all partnerships are worth reviving.)",
+            "· 제공된 스크래핑 본문에는 기사 서론과 본문이 사실상 누락되어 있어, 실제 도입부의 논지 전개를 직접 확인할 수는 없다. 다만 제목과 부제, 그리고 Foreign Affairs 기사 구조를 바탕으로 보면 이 글은 미국이 동맹을 무조건 복원하거나 유지할 것이 아니라, 전략적 가치와 비용, 전쟁 연루 위험을 기준으로 재평가해야 한다는 문제의식을 제기하는 것으로 읽힌다."
+        ],
+        "section_titles": [
+            "DON'T SETTLE",
+            "TRIM THE FAT",
+            "BANG FOR YOUR BUCK",
+            "TIME FOR AN AUDIT"
+        ],
+        "narration_length": 2659
+    },
+    "track_b_nuclear_umbrella": {
+        "duration_ms": 41231.66,
+        "subtitle_ko": "확장억제가 끝난 뒤 무엇이 오는가",
+        "original_subtitle": "What comes after extended deterrence.",
+        "content_summary_blocks_head": [
+            "무너진 핵우산 (The Broken Nuclear Umbrella)",
+            "확장억제가 끝난 뒤 무엇이 오는가 (What comes after extended deterrence.)",
+            "· 이 글은 미국의 확장억제가 더 이상 자동적이거나 무조건적으로 신뢰되지 않는 국제환경을 전제로 논의를 시작한다. 특히 동맹국들이 미국의 핵우산 아래에 머무는 전략이 약화될 경우, 자체 억지력 확보와 새로운 안보 질서 구상이 어떻게 불가피해지는지를 문제 제기한다."
+        ]
+    },
+    "all_pass": true
+}

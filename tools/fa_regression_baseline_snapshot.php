@@ -98,6 +98,8 @@ function extractSnapshotFields(array $analysis, ?array $article, array $pipeline
         'key_points' => $analysis['key_points'] ?? [],
         'section_analysis' => $analysis['section_analysis'] ?? [],
         'introduction_summary' => $analysis['introduction_summary'] ?? null,
+        'subtitle_ko' => $analysis['subtitle_ko'] ?? null,
+        'original_subtitle' => $analysis['original_subtitle'] ?? null,
         'geopolitical_implication' => $analysis['geopolitical_implication'] ?? null,
         'thumbnail_url' => $thumbnailUrl,
         'article_title' => is_array($article) ? ($article['title'] ?? null) : null,
@@ -199,6 +201,7 @@ function runBaselineForUrl(string $url, string $projectRoot, array $googleTtsCon
     ];
 }
 
+if (realpath($argv[0] ?? '') === realpath(__FILE__)) {
 echo "=== FA Regression Baseline Snapshot ===\n";
 echo "skip_thumbnail=" . ($skipThumbnail ? 'true' : 'false') . "\n";
 
@@ -242,3 +245,4 @@ file_put_contents($outPath, json_encode($snapshot, JSON_UNESCAPED_UNICODE | JSON
 echo "\nSaved: {$outPath}\n";
 $ok = count(array_filter($snapshot['results'], fn($r) => !empty($r['success'])));
 echo "Success: {$ok}/" . count($snapshot['results']) . "\n";
+}
