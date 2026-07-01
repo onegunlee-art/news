@@ -662,14 +662,13 @@ const AdminPage: React.FC = () => {
   }, [activeTab, fetchPromotionCodes])
 
   useEffect(() => {
-    if (activeTab !== 'ai') return;
     adminFetch('/api/admin/ai-analyze.php')
       .then((r) => r.json())
       .then((d) => {
         if (d.enable_fa_prompt_b) setEnableFaPromptB(true);
       })
       .catch(() => {});
-  }, [activeTab]);
+  }, []);
 
   // feedback useEffect deps에서 참조되므로 컴포넌트 최상단에 선언
   const [articleUrl, setArticleUrl] = useState('');
