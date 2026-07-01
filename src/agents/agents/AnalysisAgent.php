@@ -439,7 +439,7 @@ PROMPT;
     private function buildAnalysisPromptB(ArticleData $article): string
     {
         $title = $article->getTitle();
-        $subtitle = $article->getSubtitle() ?? '';
+        $subtitle = $article->getDescription() ?? '';
         $content = $this->truncateContent($article->getContent(), 12000);
         $host = parse_url($article->getUrl(), PHP_URL_HOST) ?? '';
         $subheadings = $article->getSubheadings();
