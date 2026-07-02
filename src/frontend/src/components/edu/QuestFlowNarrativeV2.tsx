@@ -113,6 +113,21 @@ function lastStudentAnswer(dialogue: EduDialogueTurn[]): string | null {
   return null
 }
 
+function useMobileCompactLayout(): boolean {
+  const [mobile, setMobile] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches
+  )
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 639px)')
+    const onChange = () => setMobile(mq.matches)
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [])
+
+  return mobile
+}
+
 function useVisualViewportLayout(): {
   viewportHeight: number | null
   viewportOffsetTop: number
@@ -149,6 +164,7 @@ function useVisualViewportLayout(): {
 export default function QuestFlowNarrativeV2() {
   const [searchParams] = useSearchParams()
   const questIdParam = searchParams.get('quest_id')?.trim() ?? ''
+  const mobileCompact = useMobileCompactLayout()
   const { viewportHeight, viewportOffsetTop, keyboardInset } = useVisualViewportLayout()
 
   const [quest, setQuest] = useState<EduQuest | null>(null)
@@ -161,7 +177,10 @@ export default function QuestFlowNarrativeV2() {
   const [textInput, setTextInput] = useState('')
   const [inputFocused, setInputFocused] = useState(false)
   const [pulseLayer, setPulseLayer] = useState<string | null>(null)
-  const [boardCollapsed, setBoardCollapsed] = useState(false)
+  const [boardCollapsed, setBoardCollapsed] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches
+  )
+  const [boardCollapsedTouched, setBoardCollapsedTouched] = useState(false)
   const [turnCount, setTurnCount] = useState(0)
   const [progressPct, setProgressPct] = useState(0)
   const [phase, setPhase] = useState('narrative_bridge_v2')
@@ -183,7 +202,40 @@ export default function QuestFlowNarrativeV2() {
   const initCalledRef = useRef(false)
   const composeStartedRef = useRef(false)
   const comboRecordedRef = useRef(false)
+  const boardPeekTimerRef = useRef<number | null>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+
+  useEffect(() => {
+    if (boardCollapsedTouched) return
+    setBoardCollapsed(mobileCompact)
+  }, [mobileCompact, boardCollapsedTouched])
+
+  useEffect(() => {
+    if (!mobileCompact || !pulseLayer) return
+    setBoardCollapsed(false)
+    if (boardPeekTimerRef.current != null) {
+      window.clearTimeout(boardPeekTimerRef.current)
+    }
+    boardPeekTimerRef.current = window.setTimeout(() => {
+      setBoardCollapsed(true)
+      boardPeekTimerRef.current = null
+    }, 2200)
+    return () => {
+      if (boardPeekTimerRef.current != null) {
+        window.clearTimeout(boardPeekTimerRef.current)
+        boardPeekTimerRef.current = null
+      }
+    }
+  }, [pulseLayer, mobileCompact])
+
+  const toggleBoardCollapsed = useCallback(() => {
+    setBoardCollapsedTouched(true)
+    if (boardPeekTimerRef.current != null) {
+      window.clearTimeout(boardPeekTimerRef.current)
+      boardPeekTimerRef.current = null
+    }
+    setBoardCollapsed(v => !v)
+  }, [])
 
   const applyResponse = useCallback((res: EduChatResponse) => {
     if (res.phase) setPhase(res.phase)
@@ -443,8 +495,9 @@ export default function QuestFlowNarrativeV2() {
           board={board}
           pulseLayer={pulseLayer}
           collapsed={boardCollapsed}
-          onToggle={() => setBoardCollapsed(v => !v)}
+          onToggle={toggleBoardCollapsed}
           filledCount={filledCount}
+          compact={mobileCompact}
         />
       </div>
 
@@ -463,38 +516,36 @@ export default function QuestFlowNarrativeV2() {
                 <EduCoachWaitingPanel studentAnswer={lastStudentAnswer(dialogue)} label={waitingLabel} compact />
               </div>
             ) : (
-              <>
-                <div className="shrink-0 px-4 pt-3 pb-2 overflow-y-auto" style={{ maxHeight: keyboardOpen ? '42vh' : '55vh' }}>
-                  <div className="space-y-4">
-                    {cardParagraphs.map((paragraph, i) => (
-                      <p
-                        key={`${cardKey}-p-${i}`}
-                        className={`text-center font-bold ${eduGameClasses.textKoPre}`}
-                        style={{
-                          fontSize: keyboardOpen ? '1.0625rem' : '1.25rem',
-                          lineHeight: 1.55,
-                          color: eduGame.ink,
-                        }}
-                      >
-                        <CoachMessageText text={paragraph} />
-                      </p>
-                    ))}
-                  </div>
-
-                  {cardContent.snippets.length > 0 && (
-                    <div
-                      className="mt-3 space-y-2 overflow-y-auto"
-                      style={{ maxHeight: keyboardOpen ? '14vh' : '24vh' }}
+              <div
+                className={`flex-1 min-h-0 overflow-y-auto px-4 pt-3 pb-2 ${mobileCompact ? 'flex flex-col justify-center' : ''}`}
+              >
+                <div className="space-y-4">
+                  {cardParagraphs.map((paragraph, i) => (
+                    <p
+                      key={`${cardKey}-p-${i}`}
+                      className={`text-center font-bold ${eduGameClasses.textKoPre}`}
+                      style={{
+                        fontSize: keyboardOpen ? '1.0625rem' : mobileCompact ? '1.125rem' : '1.25rem',
+                        lineHeight: 1.55,
+                        color: eduGame.ink,
+                      }}
                     >
-                      {cardContent.snippets.map((snip, i) => (
-                        <EduArticleSnippetCard key={`${cardKey}-snip-${i}`} text={snip.value} display={snip.display} />
-                      ))}
-                    </div>
-                  )}
+                      <CoachMessageText text={paragraph} />
+                    </p>
+                  ))}
                 </div>
 
-                <div className="flex-1 min-h-0" aria-hidden />
-              </>
+                {cardContent.snippets.length > 0 && (
+                  <div
+                    className="mt-3 space-y-2 overflow-y-auto"
+                    style={{ maxHeight: keyboardOpen ? '14vh' : mobileCompact ? '18vh' : '24vh' }}
+                  >
+                    {cardContent.snippets.map((snip, i) => (
+                      <EduArticleSnippetCard key={`${cardKey}-snip-${i}`} text={snip.value} display={snip.display} />
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
           </motion.div>
         </AnimatePresence>

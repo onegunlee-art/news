@@ -125,6 +125,14 @@ $v2Ui = is_file($root . '/src/frontend/src/components/edu/QuestFlowNarrativeV2.t
 ok('V2 auto reset on pollution', str_contains($v2Ui, 'narrativeV2SessionIsPolluted'));
 ok('V2 force_reset payload', str_contains($v2Ui, 'force_reset'));
 ok('V2 coach prompt fallback', str_contains($v2Ui, 'choice_question_text'));
+ok('V2 mobile compact board', str_contains($v2Ui, 'useMobileCompactLayout'));
+ok('V2 board peek on pulse', str_contains($v2Ui, 'boardPeekTimerRef'));
+
+$boardUi = is_file($root . '/src/frontend/src/components/edu/EduThoughtBoardPanel.tsx')
+    ? (string) file_get_contents($root . '/src/frontend/src/components/edu/EduThoughtBoardPanel.tsx')
+    : '';
+ok('thought board compact mode', str_contains($boardUi, 'compact?: boolean'));
+ok('thought board horizontal scroll', str_contains($boardUi, 'overflow-x-auto'));
 
 echo "\nResult: {$pass} passed, {$fail} failed\n";
 exit($fail > 0 ? 1 : 0);
