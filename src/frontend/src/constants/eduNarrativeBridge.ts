@@ -1,9 +1,11 @@
 /** 630 narrative bridge — v1/v2 라우팅 */
-import type { EduQuest, EduThoughtBoardSlot } from '../services/eduApi'
+import type { EduBlueprint, EduQuest, EduThoughtBoardSlot } from '../services/eduApi'
 
 export const EDU_NARRATIVE_BRIDGE_QUEST_CODE = 'Q-AUTO-NUKE-630'
 export const EDU_NARRATIVE_BRIDGE_V1 = 'narrative_bridge_v1'
 export const EDU_NARRATIVE_BRIDGE_V2 = 'narrative_bridge_v2'
+
+export type NarrativeSurface = 'v2' | 'v1' | 'default'
 
 export function questUsesNarrativeBridgeV1(
   quest: Pick<EduQuest, 'quest_code' | 'coach_mode'> | null | undefined
@@ -31,10 +33,55 @@ export const NARRATIVE_BRIDGE_STEP_COUNT = 5
 
 export function resolveNarrativeSurface(
   quest: Pick<EduQuest, 'quest_code' | 'coach_mode'> | null | undefined
-): 'v2' | 'v1' | 'default' {
+): NarrativeSurface {
   if (questUsesNarrativeBridgeV2(quest)) return 'v2'
   if (questUsesNarrativeBridgeV1(quest)) return 'v1'
   return 'default'
+}
+
+/** URL·blueprint·quest 다중 신호 — 디바이스 무관 v2 라우팅 */
+export function resolveQuestFlowSurface(input: {
+  quest?: Pick<EduQuest, 'quest_code' | 'coach_mode'> | null
+  blueprint?: Pick<EduBlueprint, 'phase' | 'narrative_version'> | null
+  coachModeParam?: string | null
+  questCodeParam?: string | null
+}): NarrativeSurface {
+  const coachParam = (input.coachModeParam ?? '').trim()
+  if (coachParam === EDU_NARRATIVE_BRIDGE_V2) return 'v2'
+  if (coachParam === EDU_NARRATIVE_BRIDGE_V1) return 'v1'
+
+  const phase = (input.blueprint?.phase ?? '').trim()
+  if (phase === 'narrative_bridge_v2') return 'v2'
+  if (phase === 'narrative_bridge') return 'v1'
+
+  const narrativeVersion = (input.blueprint?.narrative_version ?? '').trim()
+  if (narrativeVersion === EDU_NARRATIVE_BRIDGE_V2) return 'v2'
+
+  const fromQuest = resolveNarrativeSurface(input.quest)
+  if (fromQuest !== 'default') return fromQuest
+
+  const questCode = (input.quest?.quest_code ?? input.questCodeParam ?? '').trim()
+  if (questCode === EDU_NARRATIVE_BRIDGE_QUEST_CODE) {
+    const mode = (input.quest?.coach_mode ?? coachParam).trim()
+    if (mode === '' || mode === EDU_NARRATIVE_BRIDGE_V2) return 'v2'
+  }
+
+  return 'default'
+}
+
+export function eduQuestFlowPath(opts: {
+  questId?: string | null
+  coachMode?: string | null
+  questCode?: string | null
+  ui?: 'cards' | 'chat'
+}): string {
+  const params = new URLSearchParams()
+  if (opts.questId) params.set('quest_id', opts.questId)
+  if (opts.coachMode) params.set('coach_mode', opts.coachMode)
+  if (opts.questCode) params.set('quest_code', opts.questCode)
+  if (opts.ui === 'chat') params.set('ui', 'chat')
+  const qs = params.toString()
+  return qs ? `/edu/quest?${qs}` : '/edu/quest'
 }
 
 export function filledThoughtBoardCount(board: EduThoughtBoardSlot[]): number {

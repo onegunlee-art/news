@@ -14,6 +14,7 @@ import {
   type EduExploreShelf,
   type EduQuestListItem,
 } from '../../services/eduApi'
+import { eduQuestFlowPath } from '../../constants/eduNarrativeBridge'
 import { eduAuthedTopBarMenu, eduGuestTopBarMenu } from '../../utils/eduTopBarMenu'
 
 export default function EduExplorePage() {
@@ -82,14 +83,20 @@ export default function EduExplorePage() {
     setSearchParams(next, { replace: true })
   }
 
-  const handleStart = async (questId: string) => {
+  const handleStart = async (quest: EduQuestListItem) => {
     if (!authed) {
       navigate('/edu')
       return
     }
     try {
-      await eduApi.startSession(questId)
-      navigate(`/edu/quest?quest_id=${encodeURIComponent(questId)}`)
+      await eduApi.startSession(quest.quest_id)
+      navigate(
+        eduQuestFlowPath({
+          questId: quest.quest_id,
+          coachMode: quest.coach_mode,
+          questCode: quest.quest_code,
+        })
+      )
     } catch (e) {
       setError(e instanceof Error ? e.message : '시작 실패')
     }
@@ -199,7 +206,7 @@ export default function EduExplorePage() {
               <li key={q.quest_id}>
                 <button
                   type="button"
-                  onClick={() => void handleStart(q.quest_id)}
+                  onClick={() => void handleStart(q)}
                   disabled={!authed}
                   className="w-full text-left rounded-2xl border-2 overflow-hidden transition-colors disabled:opacity-60"
                   style={{ borderColor: eduGame.border, backgroundColor: eduGame.bg }}

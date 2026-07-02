@@ -263,7 +263,7 @@ function eduQuestToListItem(array $quest, array $completedIds = [], ?string $cov
     require_once __DIR__ . '/eduQuestConfig.php';
     require_once __DIR__ . '/eduQuestDifficulty.php';
     require_once __DIR__ . '/eduQuestDifficultyLlm.php';
-    $hints = eduQuestRawHammerHints($quest);
+    $hints = eduQuestHammerHints($quest);
     $meta = eduQuestListCategoryMeta($quest);
     $questId = (string) ($quest['id'] ?? '');
     $liveAt = $quest['live_at'] ?? null;
@@ -292,6 +292,7 @@ function eduQuestToListItem(array $quest, array $completedIds = [], ?string $cov
         'lens_label' => $meta['lens_label'],
         'subtitle' => $meta['lens_label'] ?? ($hints['shared_conclusion'] ?? null),
         'hook_short' => $hints['hook_short'] ?? null,
+        'coach_mode' => $hints['coach_mode'] ?? null,
         'cover_image_url' => $coverImageUrl,
         'is_live' => $isLive,
         'live_at' => $liveAt,

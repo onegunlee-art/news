@@ -14,6 +14,7 @@ import {
   type EduQuest,
   type EduQuestListItem,
 } from '../../services/eduApi'
+import { eduQuestFlowPath } from '../../constants/eduNarrativeBridge'
 import EduHomeBoard from './EduHomeBoard'
 import { eduGuestTopBarMenu } from '../../utils/eduTopBarMenu'
 
@@ -91,7 +92,13 @@ function EduHomeGuestPage() {
         grade_band: res.student.grade_band,
       })
       setStudentName(res.student.display_name)
-      navigate('/edu/quest')
+      navigate(
+        eduQuestFlowPath({
+          questId: quest?.quest_id,
+          coachMode: quest?.coach_mode,
+          questCode: quest?.quest_code,
+        })
+      )
     } catch (e) {
       setError(e instanceof Error ? e.message : '게스트 시작 실패')
     } finally {

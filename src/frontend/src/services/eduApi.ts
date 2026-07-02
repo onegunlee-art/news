@@ -355,6 +355,7 @@ export interface EduQuestListItem {
   difficulty_label_en?: string | null
   difficulty_student_frame_ko?: string | null
   recommended_for_you?: boolean
+  coach_mode?: string | null
 }
 
 export interface EduExploreLevel {

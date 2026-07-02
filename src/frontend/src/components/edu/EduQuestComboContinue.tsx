@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { eduQuestFlowPath } from '../../constants/eduNarrativeBridge'
 import { eduGame, eduGameClasses } from '../../constants/eduGameTheme'
 import { eduApi, type EduQuestListItem } from '../../services/eduApi'
 import {
@@ -60,8 +61,12 @@ export default function EduQuestComboContinue({
     setError('')
     try {
       await eduApi.startSession(nextQuest.quest_id)
-      const ui = uiMode === 'chat' ? '&ui=chat' : ''
-      window.location.href = `/edu/quest?quest_id=${encodeURIComponent(nextQuest.quest_id)}${ui}`
+      window.location.href = eduQuestFlowPath({
+        questId: nextQuest.quest_id,
+        coachMode: nextQuest.coach_mode,
+        questCode: nextQuest.quest_code,
+        ui: uiMode,
+      })
     } catch (e) {
       setError(e instanceof Error ? e.message : '시작 실패')
       setStarting(false)

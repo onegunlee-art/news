@@ -91,6 +91,8 @@ $page = is_file($root . '/src/frontend/src/pages/edu/QuestFlowPage.tsx')
     ? (string) file_get_contents($root . '/src/frontend/src/pages/edu/QuestFlowPage.tsx')
     : '';
 ok('QuestFlowPage routes v2', str_contains($page, 'QuestFlowNarrativeV2'));
+ok('QuestFlowPage URL coach_mode hint', str_contains($page, 'coach_mode'));
+ok('QuestFlowPage no mobile branch', !preg_match('/isMobile|matchMedia|innerWidth\s*[<>=]/', $page));
 
 echo "\nResult: {$pass} passed, {$fail} failed\n";
 exit($fail > 0 ? 1 : 0);
