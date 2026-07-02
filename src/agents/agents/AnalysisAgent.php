@@ -136,6 +136,10 @@ SYS
 
         $this->logResponse('analysis', $response, $data);
 
+        if ($track === 'B' && $isFA) {
+            $data = $this->normalizeTrackBAnalysisData($data);
+        }
+
         $scrapedSubtitle = trim((string) ($article->getDescription() ?? ''));
         if ($scrapedSubtitle !== '') {
             $data['original_subtitle'] = $scrapedSubtitle;
@@ -455,7 +459,7 @@ PROMPT;
     {
         $title = $article->getTitle();
         $subtitle = $article->getDescription() ?? '';
-        $content = $this->truncateContent($article->getContent(), 12000);
+        $content = $this->truncateContent($article->getContent(), 40000);
         $host = parse_url($article->getUrl(), PHP_URL_HOST) ?? '';
         $subheadings = $article->getSubheadings();
         $subheadingBlock = $this->formatSubheadingsForPrompt($subheadings, $host);
@@ -488,14 +492,48 @@ PROMPT;
 4. **original_subtitle**: [원문 부제목] 값을 그대로 복사 (번역·수정 금지). 비어 있으면 ""
 5. **introduction_summary**: 2~3문장. 서론만 요약 (부제 번역 금지, subtitle_ko와 분리)
 6. **section_analysis**: 원문 소제목(ALL CAPS)을 section_title로 **그대로** 사용
-   - 각 섹션: section_title_ko(한글), section_content(3~5문장, 불릿 없이 문단)
-   - 섹션마다 **핵심 쟁점 1문장**을 section_content 첫 줄에 명시
-7. **key_points**: 4~6개. 각 1문장, 정책·전략 함의 중심 (일반 독자도 이해 가능)
-8. **why_important**: 3~4문장. 한국·동아시아·글로벌 질서와의 연결 (과장 금지)
-9. **critical_thinking**: 2~3문장. 반론·한계·불확실성 (균형 유지)
+   - 각 섹션 필드: section_title, section_title_ko, **summary** (3~5문장), **key_insight** (한 줄 핵심)
+   - summary 첫 문장에 해당 섹션 핵심 쟁점을 명시
+   - 최소 3개 섹션 (서론만 분석 금지)
+7. **key_points**: 4~6개. 각 1문장, 정책·전략 함의 중심
+8. **geopolitical_implication**: 3~4문장. 한국·동아시아·글로벌 질서와의 연결 (과장 금지)
 
-JSON 스키마는 Track A와 동일합니다. JSON 외 텍스트 금지.
+JSON 필드명은 Track A와 **동일**하게 사용하세요.
+**금지 필드명**: section_content, why_important, critical_thinking (조립 파이프라인이 읽지 않음)
 PROMPT;
+    }
+
+    /**
+     * Track B GPT가 A와 다른 필드명(section_content, why_important)을 쓸 때 조립용 A 스키마로 정규화
+     */
+    private function normalizeTrackBAnalysisData(array $data): array
+    {
+        if (empty($data['geopolitical_implication']) && !empty($data['why_important'])) {
+            $data['geopolitical_implication'] = trim((string) $data['why_important']);
+        }
+
+        if (!empty($data['section_analysis']) && is_array($data['section_analysis'])) {
+            foreach ($data['section_analysis'] as $i => $section) {
+                if (!is_array($section)) {
+                    continue;
+                }
+                $summary = trim((string) ($section['summary'] ?? ''));
+                $content = trim((string) ($section['section_content'] ?? ''));
+                if ($summary === '' && $content !== '') {
+                    $data['section_analysis'][$i]['summary'] = $content;
+                    $summary = $content;
+                }
+                $insight = trim((string) ($section['key_insight'] ?? ''));
+                if ($insight === '' && $summary !== '') {
+                    $sentences = $this->splitIntoSentences($summary);
+                    if ($sentences !== []) {
+                        $data['section_analysis'][$i]['key_insight'] = trim((string) $sentences[0]);
+                    }
+                }
+            }
+        }
+
+        return $data;
     }
 
     /**
