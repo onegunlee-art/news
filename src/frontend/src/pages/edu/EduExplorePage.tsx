@@ -1,30 +1,30 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import EduCoachLevelIcon from '../../components/edu/EduCoachLevelIcon'
+import EduQuestCoverHero from '../../components/edu/EduQuestCoverHero'
+import EduQuestDifficultyBadge from '../../components/edu/EduQuestDifficultyBadge'
+import EduTopBar from '../../components/edu/EduTopBar'
+import { eduCoachLevelByNumber } from '../../constants/eduCoachLevel'
+import { eduGame, eduGameClasses } from '../../constants/eduGameTheme'
 import {
   clearEduToken,
   eduApi,
   getEduToken,
+  type EduExploreLevel,
   type EduExploreShelf,
   type EduQuestListItem,
 } from '../../services/eduApi'
 import { eduAuthedTopBarMenu, eduGuestTopBarMenu } from '../../utils/eduTopBarMenu'
-import EduQuestCoverHero from '../../components/edu/EduQuestCoverHero'
-import EduTopBar from '../../components/edu/EduTopBar'
-import { eduGame, eduGameClasses } from '../../constants/eduGameTheme'
-
-const FRAME_TABS = [
-  { id: 'all', label: '전체' },
-  { id: 'decision_inquiry', label: '결정 탐구' },
-  { id: 'myth_bust', label: 'Myth Bust' },
-] as const
 
 export default function EduExplorePage() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const shelf = searchParams.get('shelf') ?? ''
-  const frame = searchParams.get('frame') ?? 'all'
+  const levelParam = searchParams.get('level') ?? ''
+  const levelFilter = levelParam !== '' ? parseInt(levelParam, 10) : 0
 
   const [shelves, setShelves] = useState<EduExploreShelf[]>([])
+  const [levels, setLevels] = useState<EduExploreLevel[]>([])
   const [quests, setQuests] = useState<EduQuestListItem[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -42,16 +42,17 @@ export default function EduExplorePage() {
     setError('')
     try {
       const [catRes, listRes, todayRes] = await Promise.all([
-        eduApi.exploreCategories(frame),
+        eduApi.exploreCategories(),
         eduApi.listQuests({
           limit: 50,
-          frame,
+          level: levelFilter >= 1 && levelFilter <= 5 ? levelFilter : undefined,
           shelf: shelf || undefined,
         }),
         authed ? eduApi.todayQuest().catch(() => null) : Promise.resolve(null),
       ])
       setStreakDays(todayRes?.tier?.streak_days ?? 0)
       setShelves(catRes.shelves)
+      setLevels(catRes.levels ?? [])
       setTotal(catRes.total)
       setQuests(listRes.quests)
     } catch (e) {
@@ -59,21 +60,24 @@ export default function EduExplorePage() {
     } finally {
       setLoading(false)
     }
-  }, [frame, shelf, authed])
+  }, [levelFilter, shelf, authed])
 
   useEffect(() => {
     void load()
   }, [load])
 
-  const setFilter = (patch: { shelf?: string; frame?: string }) => {
+  const setFilter = (patch: { shelf?: string; level?: number | null }) => {
     const next = new URLSearchParams(searchParams)
     if ('shelf' in patch) {
       if (patch.shelf) next.set('shelf', patch.shelf)
       else next.delete('shelf')
     }
-    if ('frame' in patch) {
-      if (patch.frame && patch.frame !== 'all') next.set('frame', patch.frame)
-      else next.delete('frame')
+    if ('level' in patch) {
+      if (patch.level != null && patch.level >= 1 && patch.level <= 5) {
+        next.set('level', String(patch.level))
+      } else {
+        next.delete('level')
+      }
     }
     setSearchParams(next, { replace: true })
   }
@@ -89,30 +93,6 @@ export default function EduExplorePage() {
     } catch (e) {
       setError(e instanceof Error ? e.message : '시작 실패')
     }
-  }
-
-  const frameLabel = (f?: string | null) => {
-    if (f === 'myth_bust') return 'Myth Bust'
-    if (f === 'decision_inquiry') return '결정 탐구'
-    return null
-  }
-
-  /** P1-2k: entry_mode derive first, quest_frame fallback (behavior 0 vs frame-only) */
-  const exploreQuestBadge = (
-    q: EduQuestListItem & { entry_mode?: string | null },
-  ): string | null => {
-    const entryMode = q.entry_mode
-    const frame = q.quest_frame ?? ''
-
-    if (entryMode === 'open_response') {
-      return 'Myth Bust'
-    }
-    if (entryMode === 'stance_pick') {
-      if (frame === 'decision_inquiry') return '결정 탐구'
-      return frameLabel(frame)
-    }
-
-    return frameLabel(frame)
   }
 
   return (
@@ -134,7 +114,7 @@ export default function EduExplorePage() {
         <section>
           <h1 className="text-xl font-bold mb-1">더 많은 논쟁</h1>
           <p style={{ fontSize: eduGame.fontSize.caption, color: eduGame.muted }}>
-            주제와 유형으로 골라보세요 · 총 {total}개
+            레벨과 주제로 골라보세요 · 총 {total}개
           </p>
         </section>
 
@@ -142,25 +122,21 @@ export default function EduExplorePage() {
           <button
             type="button"
             onClick={() => setFilter({ shelf: '' })}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-              shelf === ''
-                ? 'text-white'
-                : ''
-            }`}
+            className="px-3 py-1.5 rounded-full text-xs font-medium border transition-colors"
             style={
               shelf === ''
-                ? { backgroundColor: eduGame.primary, borderColor: eduGame.primary }
+                ? { backgroundColor: eduGame.primary, borderColor: eduGame.primary, color: '#fff' }
                 : { borderColor: eduGame.border, color: eduGame.muted }
             }
           >
-            전체
+            전체 주제
           </button>
           {shelves.map((s) => (
             <button
               key={s.shelf_id}
               type="button"
               onClick={() => setFilter({ shelf: s.shelf_id })}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors`}
+              className="px-3 py-1.5 rounded-full text-xs font-medium border transition-colors"
               style={
                 shelf === s.shelf_id
                   ? { backgroundColor: eduGame.primary, borderColor: eduGame.primary, color: '#fff' }
@@ -173,19 +149,42 @@ export default function EduExplorePage() {
           ))}
         </section>
 
-        <section className="flex gap-2 border-b pb-2" style={{ borderColor: eduGame.border }}>
-          {FRAME_TABS.map((tab) => (
+        <section className="flex flex-wrap gap-2 border-b pb-3" style={{ borderColor: eduGame.border }}>
+          <button
+            type="button"
+            onClick={() => setFilter({ level: null })}
+            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors"
+            style={
+              levelFilter < 1 || levelFilter > 5
+                ? { backgroundColor: eduGame.primary, borderColor: eduGame.primary, color: '#fff' }
+                : { borderColor: eduGame.border, color: eduGame.muted }
+            }
+          >
+            전체 레벨
+          </button>
+          {(levels.length > 0
+            ? levels
+            : [1, 2, 3, 4, 5].map((id) => ({
+                id,
+                label_ko: eduCoachLevelByNumber(id).label_ko,
+                label_en: '',
+                count: 0,
+              }))
+          ).map((lv) => (
             <button
-              key={tab.id}
+              key={lv.id}
               type="button"
-              onClick={() => setFilter({ frame: tab.id })}
-              className="text-xs pb-2 border-b-2 transition-colors"
-              style={{
-                borderColor: frame === tab.id ? eduGame.primary : 'transparent',
-                color: frame === tab.id ? eduGame.ink : eduGame.muted,
-              }}
+              onClick={() => setFilter({ level: lv.id })}
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors"
+              style={
+                levelFilter === lv.id
+                  ? { backgroundColor: eduGame.primary, borderColor: eduGame.primary, color: '#fff' }
+                  : { borderColor: eduGame.border, color: eduGame.muted }
+              }
             >
-              {tab.label}
+              <EduCoachLevelIcon level={lv.id} size={14} />
+              L{lv.id} {lv.label_ko}
+              {lv.count > 0 && <span className="opacity-70">({lv.count})</span>}
             </button>
           ))}
         </section>
@@ -196,35 +195,34 @@ export default function EduExplorePage() {
           <p className="text-center py-12 text-[#666]">이 조건에 맞는 논쟁이 없어요.</p>
         ) : (
           <ul className="space-y-3">
-            {quests.map((q) => {
-              const badge = exploreQuestBadge(q)
-              return (
-                <li key={q.quest_id}>
-                  <button
-                    type="button"
-                    onClick={() => void handleStart(q.quest_id)}
-                    disabled={!authed}
-                    className="w-full text-left rounded-2xl border-2 overflow-hidden transition-colors disabled:opacity-60"
-                    style={{ borderColor: eduGame.border, backgroundColor: eduGame.bg }}
-                  >
-                    <EduQuestCoverHero
-                      coverImageUrl={q.cover_image_url}
-                      questTitle={q.quest_title}
-                      hookShort={q.hook_short}
-                      timeAnchor={q.time_anchor}
-                      variant="card"
-                      topicLabel="따질 주제"
-                    />
-                    <div className="p-4 pt-3">
+            {quests.map((q) => (
+              <li key={q.quest_id}>
+                <button
+                  type="button"
+                  onClick={() => void handleStart(q.quest_id)}
+                  disabled={!authed}
+                  className="w-full text-left rounded-2xl border-2 overflow-hidden transition-colors disabled:opacity-60"
+                  style={{ borderColor: eduGame.border, backgroundColor: eduGame.bg }}
+                >
+                  <EduQuestCoverHero
+                    coverImageUrl={q.cover_image_url}
+                    questTitle={q.quest_title}
+                    hookShort={q.hook_short}
+                    timeAnchor={q.time_anchor}
+                    variant="card"
+                    topicLabel="따질 주제"
+                  />
+                  <div className="p-4 pt-3">
                     <div className="flex flex-wrap items-center gap-2 mb-2">
                       {q.shelf_label && (
                         <span className="text-[10px] px-2 py-0.5 rounded bg-[#2a2a2a] text-[#aaa]">
                           {q.shelf_label}
                         </span>
                       )}
-                      {badge && (
-                        <span className="text-[10px] px-2 py-0.5 rounded border border-[#444] text-[#888]">
-                          {badge}
+                      <EduQuestDifficultyBadge quest={q} showHint={q.difficulty_level === 1} />
+                      {q.recommended_for_you && (
+                        <span className="text-[10px] px-2 py-0.5 rounded bg-[#E8521C]/15 text-[#E8521C]">
+                          내 레벨
                         </span>
                       )}
                       {q.is_live && (
@@ -237,7 +235,7 @@ export default function EduExplorePage() {
                       )}
                     </div>
                     {q.lens_label && (
-                      <p className="text-xs text-[#E8521C] mb-1">쟁점: {q.lens_label}</p>
+                      <p className="text-xs text-[#888] mb-1">{q.lens_label}</p>
                     )}
                     <p className="text-sm font-medium leading-snug">{q.quest_title}</p>
                     {q.conflict_summary && (
@@ -249,11 +247,10 @@ export default function EduExplorePage() {
                     {!authed && (
                       <p className="text-xs text-[#666] mt-2">시작하려면 홈에서 로그인하세요</p>
                     )}
-                    </div>
-                  </button>
-                </li>
-              )
-            })}
+                  </div>
+                </button>
+              </li>
+            ))}
           </ul>
         )}
 

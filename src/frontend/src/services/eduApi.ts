@@ -304,6 +304,18 @@ export interface EduQuestListItem {
   is_live: boolean
   live_at?: string | null
   completed: boolean
+  difficulty_level?: number | null
+  difficulty_label_ko?: string | null
+  difficulty_label_en?: string | null
+  difficulty_student_frame_ko?: string | null
+  recommended_for_you?: boolean
+}
+
+export interface EduExploreLevel {
+  id: number
+  label_ko: string
+  label_en: string
+  count: number
 }
 
 export interface EduExploreShelf {
@@ -387,21 +399,30 @@ export const eduApi = {
       existing_session?: { session_id: string; stage: string; stance?: string } | null
     }>('/api/edu/quests/today.php'),
 
-  listQuests: (params?: { limit?: number; frame?: string; category?: string; shelf?: string }) => {
+  listQuests: (params?: {
+    limit?: number
+    level?: number
+    category?: string
+    shelf?: string
+    /** @deprecated internal only */
+    frame?: string
+  }) => {
     const q = new URLSearchParams()
     if (params?.limit) q.set('limit', String(params.limit))
-    if (params?.frame) q.set('frame', params.frame)
+    if (params?.level) q.set('level', String(params.level))
     if (params?.category) q.set('category', params.category)
     if (params?.shelf) q.set('shelf', params.shelf)
     const qs = q.toString()
-    return eduFetch<{ quests: EduQuestListItem[]; count: number }>(
-      `/api/edu/quests/list.php${qs ? `?${qs}` : ''}`
-    )
+    return eduFetch<{
+      quests: EduQuestListItem[]
+      count: number
+      coach_level?: number
+    }>(`/api/edu/quests/list.php${qs ? `?${qs}` : ''}`)
   },
 
-  exploreCategories: (frame = 'all') =>
-    eduFetch<{ total: number; shelves: EduExploreShelf[] }>(
-      `/api/edu/quests/categories.php?frame=${encodeURIComponent(frame)}`
+  exploreCategories: () =>
+    eduFetch<{ total: number; shelves: EduExploreShelf[]; levels: EduExploreLevel[] }>(
+      '/api/edu/quests/categories.php'
     ),
 
   startSession: (quest_id?: string) =>

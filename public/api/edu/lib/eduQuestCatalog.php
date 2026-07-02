@@ -261,6 +261,8 @@ function eduQuestMatchesCategoryFilter(array $quest, array $categoryIds): bool
 function eduQuestToListItem(array $quest, array $completedIds = [], ?string $coverImageUrl = null): array
 {
     require_once __DIR__ . '/eduQuestConfig.php';
+    require_once __DIR__ . '/eduQuestDifficulty.php';
+    require_once __DIR__ . '/eduQuestDifficultyLlm.php';
     $hints = eduQuestRawHammerHints($quest);
     $meta = eduQuestListCategoryMeta($quest);
     $questId = (string) ($quest['id'] ?? '');
@@ -268,6 +270,7 @@ function eduQuestToListItem(array $quest, array $completedIds = [], ?string $cov
     $now = time();
     $isLive = $liveAt !== null && $liveAt !== '' && strtotime((string) $liveAt) <= $now;
     $resolvedFrame = eduQuestResolvedFrame($hints);
+    $difficulty = eduQuestDifficultyListFields($quest);
 
     return [
         'quest_id' => $questId,
@@ -293,6 +296,49 @@ function eduQuestToListItem(array $quest, array $completedIds = [], ?string $cov
         'is_live' => $isLive,
         'live_at' => $liveAt,
         'completed' => isset($completedIds[$questId]),
+        'difficulty_level' => $difficulty['difficulty_level'],
+        'difficulty_label_ko' => $difficulty['difficulty_label_ko'],
+        'difficulty_label_en' => $difficulty['difficulty_label_en'],
+        'difficulty_student_frame_ko' => $difficulty['difficulty_student_frame_ko'],
+    ];
+}
+
+/**
+ * @return array{
+ *   difficulty_level: int|null,
+ *   difficulty_label_ko: string|null,
+ *   difficulty_label_en: string|null,
+ *   difficulty_student_frame_ko: string|null
+ * }
+ */
+function eduQuestDifficultyListFields(array $quest): array
+{
+    require_once __DIR__ . '/eduQuestDifficulty.php';
+    require_once __DIR__ . '/eduQuestDifficultyLlm.php';
+
+    $level = eduQuestReadDifficultyLevel($quest);
+    if ($level === null) {
+        return [
+            'difficulty_level' => null,
+            'difficulty_label_ko' => null,
+            'difficulty_label_en' => null,
+            'difficulty_student_frame_ko' => null,
+        ];
+    }
+
+    $labels = eduQuestDifficultyLabel($level);
+    $code = (string) ($quest['quest_code'] ?? '');
+    $cache = $code !== '' ? eduQuestDifficultyLoadRatingCache($code) : null;
+    $frame = trim((string) ($cache['student_frame_ko'] ?? ''));
+    if ($frame === '' && $level === EDU_COACH_LEVEL_L1) {
+        $frame = '관찰자 · 시작하기 좋은 글 (친숙한 주제)';
+    }
+
+    return [
+        'difficulty_level' => $level,
+        'difficulty_label_ko' => $labels['ko'],
+        'difficulty_label_en' => $labels['en'],
+        'difficulty_student_frame_ko' => $frame !== '' ? $frame : null,
     ];
 }
 
