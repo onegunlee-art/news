@@ -94,5 +94,32 @@ ok('QuestFlowPage routes v2', str_contains($page, 'QuestFlowNarrativeV2'));
 ok('QuestFlowPage URL coach_mode hint', str_contains($page, 'coach_mode'));
 ok('QuestFlowPage no mobile branch', !preg_match('/isMobile|matchMedia|innerWidth\s*[<>=]/', $page));
 
+$legacyBp = eduBlueprintDefaults();
+$legacyBp['phase'] = 'guide_axis';
+$legacyDialogue = [
+    ['role' => 'assistant', 'content' => '어떤 쪽이 더 와닿아?', 'turn_id' => 'guide_axis'],
+];
+ok('polluted: legacy phase', eduNarrativeV2SessionIsPolluted($legacyBp, $legacyDialogue));
+ok('polluted: legacy turn_id', eduNarrativeV2SessionIsPolluted(
+    ['phase' => EDU_NARRATIVE_V2_PHASE],
+    [['role' => 'assistant', 'content' => 'old', 'turn_id' => 'guide_axis']]
+));
+ok('clean: empty dialogue', !eduNarrativeV2SessionIsPolluted(['phase' => 'guide_axis'], []));
+ok('clean: v2 dialogue', !eduNarrativeV2SessionIsPolluted(
+    ['phase' => EDU_NARRATIVE_V2_PHASE],
+    [['role' => 'assistant', 'content' => '1945', 'turn_id' => 'narrative_v2']]
+));
+
+$resetInit = eduNarrativeV2HandleInit($legacyBp, $questV2, true);
+ok('force reset clears legacy phase', ($resetInit['blueprint']['phase'] ?? '') === EDU_NARRATIVE_V2_PHASE);
+ok('force reset opening mentions 1945', str_contains((string) ($resetInit['message'] ?? ''), '1945'));
+ok('force reset session_reset flag', !empty($resetInit['session_reset']));
+
+$v2Ui = is_file($root . '/src/frontend/src/components/edu/QuestFlowNarrativeV2.tsx')
+    ? (string) file_get_contents($root . '/src/frontend/src/components/edu/QuestFlowNarrativeV2.tsx')
+    : '';
+ok('V2 auto reset on pollution', str_contains($v2Ui, 'narrativeV2SessionIsPolluted'));
+ok('V2 force_reset payload', str_contains($v2Ui, 'force_reset'));
+
 echo "\nResult: {$pass} passed, {$fail} failed\n";
 exit($fail > 0 ? 1 : 0);

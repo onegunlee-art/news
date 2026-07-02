@@ -124,10 +124,14 @@ $statePayload = [
     'essay' => $essay,
 ];
 
-if (eduQuestUsesNarrativeV2($quest) && ($blueprint['phase'] ?? '') === EDU_NARRATIVE_V2_PHASE) {
-    $choiceMeta = eduNarrativeV2RestoreMeta($blueprint, $quest, $dialogue);
-    if ($choiceMeta !== null) {
-        $statePayload = array_merge($statePayload, $choiceMeta);
+if (eduQuestUsesNarrativeV2($quest)) {
+    if (eduNarrativeV2SessionIsPolluted($blueprint, $dialogue)) {
+        $statePayload['narrative_v2_polluted'] = true;
+    } elseif (($blueprint['phase'] ?? '') === EDU_NARRATIVE_V2_PHASE) {
+        $choiceMeta = eduNarrativeV2RestoreMeta($blueprint, $quest, $dialogue);
+        if ($choiceMeta !== null) {
+            $statePayload = array_merge($statePayload, $choiceMeta);
+        }
     }
 } elseif (eduQuestUsesNarrativeBridge($quest) && ($blueprint['phase'] ?? '') === 'narrative_bridge') {
     $choiceMeta = eduNarrativeBridgeRestoreChoiceMeta($blueprint, $quest, $dialogue);

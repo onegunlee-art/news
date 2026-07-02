@@ -87,3 +87,19 @@ export function eduQuestFlowPath(opts: {
 export function filledThoughtBoardCount(board: EduThoughtBoardSlot[]): number {
   return board.filter(s => s.filled).length
 }
+
+/** 옛 axis_guide/card 세션이 v2 UI와 섞인 경우 */
+export function narrativeV2SessionIsPolluted(
+  blueprint: Pick<EduBlueprint, 'phase'> | null | undefined,
+  dialogue: Array<{ role?: string; turn_id?: string | null }> | null | undefined,
+  pollutedFlag?: boolean
+): boolean {
+  if (pollutedFlag) return true
+  const turns = dialogue ?? []
+  if (turns.length === 0) return false
+  if ((blueprint?.phase ?? '') !== EDU_NARRATIVE_BRIDGE_V2) return true
+  return turns.some(t => {
+    const tid = (t.turn_id ?? '').trim()
+    return tid !== '' && tid !== 'narrative_v2'
+  })
+}

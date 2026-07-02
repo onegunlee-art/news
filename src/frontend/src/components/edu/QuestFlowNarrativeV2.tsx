@@ -9,7 +9,7 @@ import EduQuestComboContinue from './EduQuestComboContinue'
 import EduQuestCompletionCelebration from './EduQuestCompletionCelebration'
 import EduQuestHomeButton from './EduQuestHomeButton'
 import EduThoughtBoardPanel from './EduThoughtBoardPanel'
-import { filledThoughtBoardCount } from '../../constants/eduNarrativeBridge'
+import { filledThoughtBoardCount, narrativeV2SessionIsPolluted } from '../../constants/eduNarrativeBridge'
 import { eduGame, eduGameClasses } from '../../constants/eduGameTheme'
 import { eduCoachLevelByNumber, type EduCoachLevelInfo } from '../../constants/eduCoachLevel'
 import {
@@ -272,9 +272,19 @@ export default function QuestFlowNarrativeV2() {
           setProgressPct(100)
           return
         }
-        if (!initCalledRef.current && (state.dialogue?.length ?? 0) === 0) {
+        const polluted = narrativeV2SessionIsPolluted(
+          state.blueprint,
+          state.dialogue,
+          state.narrative_v2_polluted
+        )
+        const shouldInit =
+          !initCalledRef.current && ((state.dialogue?.length ?? 0) === 0 || polluted)
+        if (shouldInit) {
           initCalledRef.current = true
-          const res = await eduApi.sendChat(sid, { action: 'narrative_v2_init' })
+          const res = await eduApi.sendChat(sid, {
+            action: 'narrative_v2_init',
+            ...(polluted ? { force_reset: true } : {}),
+          })
           if (!cancelled) await handleChatResponse(res, sid)
         }
       } catch (e) {

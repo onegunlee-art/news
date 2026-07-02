@@ -263,10 +263,45 @@ function eduNarrativeV2PresentNode(array $blueprint, array $quest, array $script
     ];
 }
 
+/** @param array<string, mixed> $blueprint @param list<array<string, mixed>> $dialogue */
+function eduNarrativeV2SessionIsPolluted(array $blueprint, array $dialogue): bool
+{
+    if ($dialogue === []) {
+        return false;
+    }
+
+    $phase = (string) ($blueprint['phase'] ?? '');
+    if ($phase !== EDU_NARRATIVE_V2_PHASE) {
+        return true;
+    }
+
+    foreach ($dialogue as $turn) {
+        if (!is_array($turn)) {
+            continue;
+        }
+        $tid = trim((string) ($turn['turn_id'] ?? ''));
+        if ($tid !== '' && $tid !== 'narrative_v2') {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 /** @param array<string, mixed> $blueprint @param array<string, mixed> $quest */
-function eduNarrativeV2HandleInit(array $blueprint, array $quest): array
+function eduNarrativeV2HandleInit(array $blueprint, array $quest, bool $forceReset = false): array
 {
     $script = eduNarrativeV2LoadScript();
+    if ($forceReset) {
+        $blueprint = eduNarrativeV2InitBlueprint(eduBlueprintDefaults(), $script);
+        $nodeId = (string) ($blueprint['narrative_v2_node'] ?? $script['start_node']);
+
+        $present = eduNarrativeV2PresentNode($blueprint, $quest, $script, $nodeId);
+        $present['session_reset'] = true;
+
+        return $present;
+    }
+
     $phase = (string) ($blueprint['phase'] ?? '');
     $nodeId = trim((string) ($blueprint['narrative_v2_node'] ?? ''));
     if ($phase !== EDU_NARRATIVE_V2_PHASE || $nodeId === '') {

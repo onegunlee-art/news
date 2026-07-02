@@ -216,6 +216,8 @@ export interface EduChatResponse {
   board_pulse_layer?: string | null
   narrative_turn_count?: number
   narrative_v2_input_mode?: string
+  narrative_v2_polluted?: boolean
+  narrative_v2_session_reset?: boolean
   board_diff?: { first: string; latest: string; lines: string[] } | null
 }
 
@@ -291,6 +293,8 @@ export interface EduSessionState {
   board_pulse_layer?: string | null
   narrative_turn_count?: number
   narrative_v2_input_mode?: string
+  narrative_v2_polluted?: boolean
+  narrative_v2_session_reset?: boolean
 }
 
 export interface EduCompletedSession {
@@ -631,6 +635,7 @@ export const eduApi = {
       stance_changed?: boolean
       new_stance?: string
       choice_id?: string
+      force_reset?: boolean
     }
   ) =>
     eduFetch<EduChatResponse>('/api/edu/session/chat.php', {

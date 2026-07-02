@@ -110,7 +110,11 @@ $response = [
 // --- narrative_bridge_v2 (630 생각판) ---
 if (eduQuestUsesNarrativeV2($quest) && in_array($action, ['narrative_v2_init', 'narrative_v2_choice', 'narrative_v2_message'], true)) {
     if ($action === 'narrative_v2_init') {
-        $result = eduNarrativeV2HandleInit($blueprint, $quest);
+        $forceReset = !empty($body['force_reset']) || eduNarrativeV2SessionIsPolluted($blueprint, $dialogue);
+        if ($forceReset) {
+            $dialogue = [];
+        }
+        $result = eduNarrativeV2HandleInit($blueprint, $quest, $forceReset);
     } elseif ($action === 'narrative_v2_choice') {
         $choiceId = trim((string) ($body['choice_id'] ?? ''));
         if ($choiceId === '') {
@@ -155,6 +159,9 @@ if (eduQuestUsesNarrativeV2($quest) && in_array($action, ['narrative_v2_init', '
         'blueprint' => $blueprint,
     ]), $blueprint, $result['choices'], $assistantMessage);
     $payload['narrative_v2_input_mode'] = (string) ($result['input_mode'] ?? '');
+    if (!empty($result['session_reset'])) {
+        $payload['narrative_v2_session_reset'] = true;
+    }
 
     eduSendJson($payload);
 }
