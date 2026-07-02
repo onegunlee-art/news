@@ -1,6 +1,13 @@
 import { useEffect, useRef, useCallback } from 'react'
 
-const INTERVAL_MS = 5 * 60 * 1000 // 5분
+const INTERVAL_MS = 60 * 1000 // 1분 (배포 직후 모바일 PWA 반영)
+
+declare const __APP_BUILD_VERSION__: number
+
+const BUNDLE_VERSION =
+  typeof __APP_BUILD_VERSION__ === 'number' && Number.isFinite(__APP_BUILD_VERSION__)
+    ? __APP_BUILD_VERSION__
+    : null
 
 export function useVersionCheck() {
   const baseVersion = useRef<number | null>(null)
@@ -19,26 +26,40 @@ export function useVersionCheck() {
     }
   }, [])
 
+  const reloadForUpdate = useCallback(() => {
+    if (isReloading.current) return
+    isReloading.current = true
+    window.location.reload()
+  }, [])
+
   const checkAndReload = useCallback(async () => {
     if (isReloading.current) return
     const latest = await fetchVersion()
-    if (latest === null || baseVersion.current === null) return
-    if (latest !== baseVersion.current) {
-      isReloading.current = true
-      window.location.reload()
+    if (latest === null) return
+
+    if (BUNDLE_VERSION !== null && latest !== BUNDLE_VERSION) {
+      reloadForUpdate()
+      return
     }
-  }, [fetchVersion])
+
+    if (baseVersion.current !== null && latest !== baseVersion.current) {
+      reloadForUpdate()
+      return
+    }
+
+    baseVersion.current = latest
+  }, [fetchVersion, reloadForUpdate])
 
   useEffect(() => {
-    fetchVersion().then((v) => {
-      if (v !== null) baseVersion.current = v
-    })
+    void checkAndReload()
 
-    const id = setInterval(checkAndReload, INTERVAL_MS)
+    const id = setInterval(() => {
+      void checkAndReload()
+    }, INTERVAL_MS)
 
     function onVisibilityChange() {
       if (document.visibilityState === 'visible') {
-        checkAndReload()
+        void checkAndReload()
       }
     }
     document.addEventListener('visibilitychange', onVisibilityChange)
@@ -47,5 +68,29 @@ export function useVersionCheck() {
       clearInterval(id)
       document.removeEventListener('visibilitychange', onVisibilityChange)
     }
-  }, [fetchVersion, checkAndReload])
+  }, [checkAndReload])
+
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return
+
+    let refreshing = false
+    const onControllerChange = () => {
+      if (refreshing) return
+      refreshing = true
+      window.location.reload()
+    }
+    navigator.serviceWorker.addEventListener('controllerchange', onControllerChange)
+
+    const pingUpdate = () => {
+      navigator.serviceWorker.getRegistration().then(reg => reg?.update()).catch(() => {})
+    }
+    pingUpdate()
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') pingUpdate()
+    })
+
+    return () => {
+      navigator.serviceWorker.removeEventListener('controllerchange', onControllerChange)
+    }
+  }, [])
 }

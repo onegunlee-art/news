@@ -4,13 +4,20 @@ import path from 'path'
 import fs from 'fs'
 
 function versionJsonPlugin() {
+  const buildVersion = Date.now()
   return {
     name: 'version-json',
+    config() {
+      return {
+        define: {
+          __APP_BUILD_VERSION__: JSON.stringify(buildVersion),
+        },
+      }
+    },
     closeBundle() {
-      const version = { v: Date.now() }
       fs.writeFileSync(
         path.resolve(__dirname, '../../public/version.json'),
-        JSON.stringify(version),
+        JSON.stringify({ v: buildVersion }),
       )
     },
   }

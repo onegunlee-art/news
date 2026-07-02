@@ -1,11 +1,11 @@
 /**
  * the gist. — Service Worker
- * - /assets/* (Vite 해시 번들): stale-while-revalidate 캐시로 재방문 즉시 로드
- * - 그 외: 네트워크 통과 (뉴스 HTML/API 신신도)
- * v2: 캐시 버전 bump — PWA 모바일 옛 번들 방지
+ * - /assets/* (Vite 해시 번들): network-first + offline cache fallback
+ * - 그 외: 네트워크 통과 (뉴스 HTML/API 신선도)
+ * v3: stale-while-revalidate 제거 — PWA가 옛 해시 번들을 즉시 반환하던 문제 수정
  */
-const ASSETS_CACHE = 'gist-assets-v2'
-const LEGACY_CACHES = ['gist-assets-v1']
+const ASSETS_CACHE = 'gist-assets-v3'
+const LEGACY_CACHES = ['gist-assets-v1', 'gist-assets-v2']
 const ASSETS_PREFIX = '/assets/'
 
 self.addEventListener('install', (event) => {
@@ -31,20 +31,18 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return
 
   event.respondWith(
-    caches.open(ASSETS_CACHE).then((cache) =>
-      cache.match(event.request).then((cached) => {
-        const networkPromise = fetch(event.request).then((response) => {
-          if (response.ok) {
-            cache.put(event.request, response.clone())
-          }
-          return response
-        })
-        if (cached) {
-          networkPromise.catch(() => {})
-          return cached
+    caches.open(ASSETS_CACHE).then(async (cache) => {
+      try {
+        const response = await fetch(event.request)
+        if (response.ok) {
+          cache.put(event.request, response.clone())
         }
-        return networkPromise
-      }),
-    ),
+        return response
+      } catch {
+        const cached = await cache.match(event.request)
+        if (cached) return cached
+        throw new Error('asset fetch failed')
+      }
+    }),
   )
 })
