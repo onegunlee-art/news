@@ -304,6 +304,7 @@ function eduPublicQuestPayload(array $quest): array
         'hook_full' => $hints['hook_full'] ?? null,
         'cover_image_url' => eduResolveCoverImageUrl($rawArticles, $imageMap),
         'articles' => $articles,
+        'coach_mode' => $hints['coach_mode'] ?? null,
         'fsm_stages' => $quest['fsm_stages'] ?? ['commit', 'hammer', 'reflection', 'writing', 'growth'],
     ];
 }
@@ -483,8 +484,22 @@ function eduQuestHammerHints(array $quest): array
     if (is_string($hints)) {
         $hints = json_decode($hints, true) ?: [];
     }
+    if (!is_array($hints)) {
+        $hints = [];
+    }
 
-    return is_array($hints) ? $hints : [];
+    if (($quest['quest_code'] ?? '') === 'Q-AUTO-NUKE-630' && ($hints['coach_mode'] ?? '') === '') {
+        $draftPath = eduFindProjectRoot() . 'docs/hinge_quest_drafts/AUTO-630-min.json';
+        if (is_file($draftPath)) {
+            $draft = json_decode((string) file_get_contents($draftPath), true);
+            $draftMode = is_array($draft) ? ($draft['hammer_hints']['coach_mode'] ?? '') : '';
+            if (is_string($draftMode) && $draftMode !== '') {
+                $hints['coach_mode'] = $draftMode;
+            }
+        }
+    }
+
+    return $hints;
 }
 
 function eduMatchStudentAxisFromText(string $text, array $quest): ?array

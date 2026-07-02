@@ -1,0 +1,192 @@
+{
+  "quest_code": "Q-AUTO-NUKE-630",
+  "hinge_map": {
+    "side_a": "핵무기가 있으면 재래식 공격과 전쟁 확대를 막을 수 있는가",
+    "side_b": "값싼 드론과 재래식 공격 앞에서 핵 억지력이 흔들린다",
+    "shake_prompt": "값싼 드론 떼가 비싼 방어망을 뚫었다 — 핵은 계속 최강일까?"
+  },
+  "start_node": "step_0",
+  "shake_suffix": "근데 말이야, 최근에 이상한 일이 있었어.\n\n이란과 이스라엘이 부딪쳤을 때 —\n수백억짜리 미사일 방어망을, **몇 만 원짜리 드론 떼**가 뚫었대.\n값싸고 작은 무기가 비싸고 강한 무기를 이긴 거야.\n\n그럼... 핵처럼 '강하고 비싼 무기'는\n앞으로도 계속 최강일까?",
+  "nodes": {
+    "step_0": {
+      "step_index": 0,
+      "role": "narrative",
+      "coach_text": "1945년 이후로 이상한 일이 하나 있어.\n핵을 가진 나라끼리는 — 단 한 번도 전면전을 안 했대.\n미국도, 소련도, 중국도... 서로 으르렁댔지만 진짜 큰 전쟁은 없었어.\n\n왜 그랬을까?",
+      "choices": [
+        { "id": "nuclear_fear", "label": "핵이 무서워서", "next": "step_1_nuclear_fear" },
+        { "id": "just_luck", "label": "운이 좋았을 뿐", "next": "step_1_just_luck" },
+        { "id": "other_reason", "label": "다른 이유가 있어", "next": "step_1_other_reason" }
+      ]
+    },
+    "step_1_nuclear_fear": {
+      "step_index": 1,
+      "role": "bridge_receive",
+      "coach_text": "맞아. 서로 '건드리면 나도 죽는다'는 걸 아니까 못 건드리는 거지.\n이걸 **'핵 억지력'** 이라고 불러. 강한 무기가 전쟁을 막는다는 거야.\n\n자, 그럼 네 생각을 물어볼게.\n핵이 정말 전쟁을 막는 힘이라고 보면 —\n우리나라도 핵을 가지는 게 안전할까?",
+      "choices": [
+        { "id": "want_nuclear", "label": "가지는 게 안전해", "next": "step_2_nuclear_fear_want_nuclear" },
+        { "id": "no_nuclear", "label": "안 가지는 게 나아", "next": "step_2_nuclear_fear_no_nuclear" },
+        { "id": "not_sure", "label": "잘 모르겠어", "next": "step_2_nuclear_fear_not_sure" }
+      ]
+    },
+    "step_1_just_luck": {
+      "step_index": 1,
+      "role": "bridge_receive",
+      "coach_text": "그럴 수도 있지. 우연이라고 보는 사람도 있어.\n근데 많은 사람은 '핵이 무서워서'라고 말해 — 그걸 **'핵 억지력'** 이라고 부르거든.\n서로 건드리면 같이 망한다는 생각으로 전쟁을 막는 거야.\n\n자, 그럼 네 생각을 물어볼게.\n핵이 전쟁을 막는 힘이라고 보면 —\n우리나라도 핵을 가지는 게 안전할까?",
+      "choices": [
+        { "id": "want_nuclear", "label": "가지는 게 안전해", "next": "step_2_just_luck_want_nuclear" },
+        { "id": "no_nuclear", "label": "안 가지는 게 나아", "next": "step_2_just_luck_no_nuclear" },
+        { "id": "not_sure", "label": "잘 모르겠어", "next": "step_2_just_luck_not_sure" }
+      ]
+    },
+    "step_1_other_reason": {
+      "step_index": 1,
+      "role": "bridge_receive",
+      "coach_text": "다른 이유가 있을 수도 있지. 경제, 동맹, 여러 가지겠지.\n그중 하나로 **'핵 억지력'** 이야 — '건드리면 나도 같이 망한다'는 생각으로 전쟁을 막는 거야.\n\n자, 그럼 네 생각을 물어볼게.\n핵이 정말 그런 힘이라면 —\n우리나라도 핵을 가지는 게 안전할까?",
+      "choices": [
+        { "id": "want_nuclear", "label": "가지는 게 안전해", "next": "step_2_other_reason_want_nuclear" },
+        { "id": "no_nuclear", "label": "안 가지는 게 나아", "next": "step_2_other_reason_no_nuclear" },
+        { "id": "not_sure", "label": "잘 모르겠어", "next": "step_2_other_reason_not_sure" }
+      ]
+    },
+    "step_2_nuclear_fear_want_nuclear": {
+      "step_index": 2,
+      "role": "stance_receive",
+      "receive_text": "그렇게 볼 수 있지. 억지력이 있으면 아무도 우릴 못 건드릴 테니까.\n너는 '강한 무기 = 안전'이라고 본 거네.",
+      "append_shake": true,
+      "choices": [
+        { "id": "might_shake", "label": "흔들릴 것 같아", "next": "step_4_might_shake" },
+        { "id": "still_strong", "label": "그래도 핵이 세지", "next": "step_4_still_strong" },
+        { "id": "never_thought", "label": "생각 못 해봤어", "next": "step_4_never_thought" }
+      ]
+    },
+    "step_2_nuclear_fear_no_nuclear": {
+      "step_index": 2,
+      "role": "stance_receive",
+      "receive_text": "음, 신중하네. 핵이 있으면 오히려 위험해질 수도 있다는 거지?\n그것도 일리 있어.",
+      "append_shake": true,
+      "choices": [
+        { "id": "might_shake", "label": "흔들릴 것 같아", "next": "step_4_might_shake" },
+        { "id": "still_strong", "label": "그래도 핵이 세지", "next": "step_4_still_strong" },
+        { "id": "never_thought", "label": "생각 못 해봤어", "next": "step_4_never_thought" }
+      ]
+    },
+    "step_2_nuclear_fear_not_sure": {
+      "step_index": 2,
+      "role": "stance_receive",
+      "receive_text": "잘 모르겠다 — 솔직하네.\n이런 건 한 번에 답하기 어렵지.",
+      "append_shake": true,
+      "choices": [
+        { "id": "might_shake", "label": "흔들릴 것 같아", "next": "step_4_might_shake" },
+        { "id": "still_strong", "label": "그래도 핵이 세지", "next": "step_4_still_strong" },
+        { "id": "never_thought", "label": "생각 못 해봤어", "next": "step_4_never_thought" }
+      ]
+    },
+    "step_2_just_luck_want_nuclear": {
+      "step_index": 2,
+      "role": "stance_receive",
+      "receive_text": "그렇게 볼 수 있지. 억지력이 있으면 아무도 우릴 못 건드릴 테니까.\n너는 '강한 무기 = 안전'이라고 본 거네.",
+      "append_shake": true,
+      "choices": [
+        { "id": "might_shake", "label": "흔들릴 것 같아", "next": "step_4_might_shake" },
+        { "id": "still_strong", "label": "그래도 핵이 세지", "next": "step_4_still_strong" },
+        { "id": "never_thought", "label": "생각 못 해봤어", "next": "step_4_never_thought" }
+      ]
+    },
+    "step_2_just_luck_no_nuclear": {
+      "step_index": 2,
+      "role": "stance_receive",
+      "receive_text": "음, 신중하네. 핵이 있으면 오히려 위험해질 수도 있다는 거지?\n그것도 일리 있어.",
+      "append_shake": true,
+      "choices": [
+        { "id": "might_shake", "label": "흔들릴 것 같아", "next": "step_4_might_shake" },
+        { "id": "still_strong", "label": "그래도 핵이 세지", "next": "step_4_still_strong" },
+        { "id": "never_thought", "label": "생각 못 해봤어", "next": "step_4_never_thought" }
+      ]
+    },
+    "step_2_just_luck_not_sure": {
+      "step_index": 2,
+      "role": "stance_receive",
+      "receive_text": "잘 모르겠다 — 솔직하네.\n이런 건 한 번에 답하기 어렵지.",
+      "append_shake": true,
+      "choices": [
+        { "id": "might_shake", "label": "흔들릴 것 같아", "next": "step_4_might_shake" },
+        { "id": "still_strong", "label": "그래도 핵이 세지", "next": "step_4_still_strong" },
+        { "id": "never_thought", "label": "생각 못 해봤어", "next": "step_4_never_thought" }
+      ]
+    },
+    "step_2_other_reason_want_nuclear": {
+      "step_index": 2,
+      "role": "stance_receive",
+      "receive_text": "그렇게 볼 수 있지. 억지력이 있으면 아무도 우릴 못 건드릴 테니까.\n너는 '강한 무기 = 안전'이라고 본 거네.",
+      "append_shake": true,
+      "choices": [
+        { "id": "might_shake", "label": "흔들릴 것 같아", "next": "step_4_might_shake" },
+        { "id": "still_strong", "label": "그래도 핵이 세지", "next": "step_4_still_strong" },
+        { "id": "never_thought", "label": "생각 못 해봤어", "next": "step_4_never_thought" }
+      ]
+    },
+    "step_2_other_reason_no_nuclear": {
+      "step_index": 2,
+      "role": "stance_receive",
+      "receive_text": "음, 신중하네. 핵이 있으면 오히려 위험해질 수도 있다는 거지?\n그것도 일리 있어.",
+      "append_shake": true,
+      "choices": [
+        { "id": "might_shake", "label": "흔들릴 것 같아", "next": "step_4_might_shake" },
+        { "id": "still_strong", "label": "그래도 핵이 세지", "next": "step_4_still_strong" },
+        { "id": "never_thought", "label": "생각 못 해봤어", "next": "step_4_never_thought" }
+      ]
+    },
+    "step_2_other_reason_not_sure": {
+      "step_index": 2,
+      "role": "stance_receive",
+      "receive_text": "잘 모르겠다 — 솔직하네.\n이런 건 한 번에 답하기 어렵지.",
+      "append_shake": true,
+      "choices": [
+        { "id": "might_shake", "label": "흔들릴 것 같아", "next": "step_4_might_shake" },
+        { "id": "still_strong", "label": "그래도 핵이 세지", "next": "step_4_still_strong" },
+        { "id": "never_thought", "label": "생각 못 해봤어", "next": "step_4_never_thought" }
+      ]
+    },
+    "step_4_might_shake": {
+      "step_index": 4,
+      "role": "follow_shake",
+      "coach_text": "오, 생각이 움직였네.\n그럼 아까 '핵이 있으면 안전하다'던 네 생각은 —\n지금도 똑같아, 아니면 좀 달라졌어?",
+      "choices": [
+        { "id": "changed_mind", "label": "좀 달라졌어", "next": "step_5" },
+        { "id": "still_valid", "label": "그래도 유효해", "next": "step_5" }
+      ]
+    },
+    "step_4_still_strong": {
+      "step_index": 4,
+      "role": "follow_shake",
+      "coach_text": "왜 그렇게 생각해?\n드론이 아무리 많아도 핵을 못 이기는 이유가 뭘까?",
+      "choices": [
+        { "id": "nuke_destroy", "label": "핵은 도시를 없애니까", "next": "step_5" },
+        { "id": "drone_defense", "label": "드론은 방어가 되니까", "next": "step_5" },
+        { "id": "own_words", "label": "직접 쓸게", "next": "step_5" }
+      ]
+    },
+    "step_4_never_thought": {
+      "step_index": 4,
+      "role": "follow_shake",
+      "coach_text": "괜찮아, 원래 이런 건 생각해본 적 없으면 어렵지.\n천천히 보자. 만약 적이 핵은 없지만\n드론 수천 대가 있다면 — 핵이 그걸 막을 수 있을까?",
+      "choices": [
+        { "id": "cant_stop", "label": "못 막을 것 같아", "next": "step_5" },
+        { "id": "can_stop", "label": "막을 수 있어", "next": "step_5" }
+      ]
+    },
+    "step_5": {
+      "step_index": 5,
+      "role": "wrap_up",
+      "coach_text": "지금까지 네 생각을 따라와 봤어.\n처음엔 '강한 핵이 있으면 안전하다'고 봤는데,\n드론 이야기를 듣고 — 조금 흔들렸지?\n\n근데 이게 틀린 게 아니야. 오히려 반대야.\n'강한 게 늘 최강은 아니다'를 스스로 발견한 거거든.\n\n자, 이제 네가 따진 걸 한 편의 글로 써볼까?\n핵은 안전을 줄까, 아니면 그 힘이 흔들리고 있을까 —\n**네 결론**을 써봐.",
+      "choices": [
+        { "id": "go_compose", "label": "글 쓰러 가기", "next": "step_compose" }
+      ]
+    },
+    "step_compose": {
+      "step_index": 5,
+      "role": "compose_handoff",
+      "terminal": true
+    }
+  }
+}

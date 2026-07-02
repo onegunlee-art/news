@@ -9,6 +9,7 @@ require_once __DIR__ . '/../lib/eduAuth.php';
 require_once __DIR__ . '/../lib/eduQuest.php';
 require_once __DIR__ . '/../lib/eduBlueprint.php';
 require_once __DIR__ . '/../lib/eduCoachGuide.php';
+require_once __DIR__ . '/../lib/eduCoachGuideNarrativeBridge.php';
 
 handleOptionsRequest();
 setCorsHeaders();
@@ -112,13 +113,20 @@ $statePayload = [
     'quest' => eduPublicQuestPayload(array_merge($quest, ['articles' => $quest['articles'] ?? []])),
     'blueprint' => $blueprint,
     'dialogue' => $dialogue,
-    'progress_pct' => eduQuestUsesAxisGuide($quest)
+    'progress_pct' => eduQuestUsesNarrativeBridge($quest)
+        ? eduNarrativeBridgeProgress($blueprint)
+        : (eduQuestUsesAxisGuide($quest)
         ? max(eduCoachGuideProgress($blueprint), eduBlueprintProgress($blueprint))
-        : eduBlueprintProgress($blueprint),
+        : eduBlueprintProgress($blueprint)),
     'essay' => $essay,
 ];
 
-if (eduQuestUsesAxisGuide($quest) && ($blueprint['phase'] ?? '') === 'guide_axis') {
+if (eduQuestUsesNarrativeBridge($quest) && ($blueprint['phase'] ?? '') === 'narrative_bridge') {
+    $choiceMeta = eduNarrativeBridgeRestoreChoiceMeta($blueprint, $quest, $dialogue);
+    if ($choiceMeta !== null) {
+        $statePayload = array_merge($statePayload, $choiceMeta);
+    }
+} elseif (eduQuestUsesAxisGuide($quest) && ($blueprint['phase'] ?? '') === 'guide_axis') {
     for ($i = count($dialogue) - 1; $i >= 0; $i--) {
         if (($dialogue[$i]['role'] ?? '') === 'assistant') {
             $choiceMeta = eduCoachGuideChoiceMeta(

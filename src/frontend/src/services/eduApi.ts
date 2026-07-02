@@ -154,6 +154,12 @@ export interface EduBlueprint {
   guide_axis_pending_why?: { axis_id: string; choice: string } | null
   /** 코치 깊이 L1~5 — 세션 freeze 후 읽기 전용 */
   coach_level?: number
+  /** narrative_bridge_v1 — 630 prototype */
+  narrative_node?: string | null
+  narrative_step?: number
+  narrative_depth?: number
+  narrative_complete?: boolean
+  last_choice_id?: string | null
 }
 
 export interface EduChatResponse {
@@ -180,6 +186,11 @@ export interface EduChatResponse {
   choice_question_text?: string
   /** 서술형 카드 — 입력 위 한 줄 고정 라벨 */
   narrative_prompt?: string
+  /** narrative_bridge_v1 */
+  narrative_step?: number
+  narrative_choices?: Array<{ id: string; label: string }>
+  narrative_complete?: boolean
+  coach_mode?: string
 }
 
 export interface EduEssaySection {
@@ -246,6 +257,10 @@ export interface EduSessionState {
   choice_question?: boolean
   options?: string[]
   choice_question_text?: string
+  narrative_step?: number
+  narrative_choices?: Array<{ id: string; label: string }>
+  narrative_complete?: boolean
+  coach_mode?: string | null
 }
 
 export interface EduCompletedSession {
@@ -277,6 +292,7 @@ export interface EduQuest {
   hook_short?: string | null
   hook_full?: string | null
   cover_image_url?: string | null
+  coach_mode?: string | null
   articles: EduQuestArticle[]
 }
 
@@ -577,7 +593,14 @@ export const eduApi = {
 
   sendChat: (
     sessionId: string,
-    payload: { message?: string; action?: string; stance?: 'pro' | 'con'; stance_changed?: boolean; new_stance?: string }
+    payload: {
+      message?: string
+      action?: string
+      stance?: 'pro' | 'con'
+      stance_changed?: boolean
+      new_stance?: string
+      choice_id?: string
+    }
   ) =>
     eduFetch<EduChatResponse>('/api/edu/session/chat.php', {
       method: 'POST',

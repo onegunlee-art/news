@@ -33,6 +33,12 @@ function eduBlueprintDefaults(): array
         'phase' => 'stance',
         'exchange_count' => 0,
         'ready_for_compose' => false,
+        'narrative_node' => null,
+        'narrative_step' => 0,
+        'narrative_depth' => 0,
+        'narrative_choices' => [],
+        'narrative_complete' => false,
+        'last_choice_id' => null,
     ];
 }
 
@@ -76,6 +82,12 @@ function eduBlueprintProgress(array $blueprint): int
 {
     if (!empty($blueprint['ready_for_compose']) || (string) ($blueprint['phase'] ?? '') === 'compose') {
         return 100;
+    }
+
+    if ((string) ($blueprint['phase'] ?? '') === 'narrative_bridge') {
+        require_once __DIR__ . '/eduCoachGuideNarrativeBridge.php';
+
+        return eduNarrativeBridgeProgress($blueprint);
     }
 
     $weights = [
@@ -136,6 +148,7 @@ function eduBlueprintStage(array $blueprint): string
         'reflection' => 'reflection',
         'compose' => 'compose',
         'completed' => 'completed',
+        'narrative_bridge' => 'commit',
         default => 'commit',
     };
 }
