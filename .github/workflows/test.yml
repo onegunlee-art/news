@@ -64,6 +64,12 @@ jobs:
       - name: EDU quest combo static test (Phase 2)
         run: php tools/edu_quest_combo_static_test.php
 
+      - name: EDU narrative bridge v1 static test (630)
+        run: php tools/edu_narrative_bridge_630_static_test.php
+
+      - name: EDU narrative bridge v2 static test (630)
+        run: php tools/edu_narrative_v2_630_static_test.php
+
       - name: EDU brand refresh static test
         run: php tools/edu_brand_refresh_static_test.php
 

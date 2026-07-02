@@ -90,10 +90,10 @@ $questOther = [
 ];
 
 ok('narrative bridge ON for 630+flag', eduQuestUsesNarrativeBridge($questOn));
-ok('narrative bridge ON for 630 via draft overlay', eduQuestUsesNarrativeBridge($questOff));
+ok('narrative bridge OFF when draft is v2', !eduQuestUsesNarrativeBridge($questOff));
 ok('narrative bridge OFF for 150', !eduQuestUsesNarrativeBridge($questOther));
 ok('axis guide OFF when narrative ON', !eduQuestUsesAxisGuide($questOn));
-ok('axis guide OFF for 630 when narrative draft overlay', !eduQuestUsesAxisGuide($questOff));
+ok('axis guide OFF for 630 when draft v2 overlay', !eduQuestUsesAxisGuide($questOff));
 
 $init = eduNarrativeBridgeHandleInit(eduBlueprintDefaults(), $questOn);
 ok('init phase', ($init['blueprint']['phase'] ?? '') === 'narrative_bridge');

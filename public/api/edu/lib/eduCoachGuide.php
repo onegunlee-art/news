@@ -14,6 +14,7 @@ require_once __DIR__ . '/eduCoachGuideMiddle.php';
 require_once __DIR__ . '/eduCoachGuideUpper.php';
 require_once __DIR__ . '/eduCoachGuideColumnist.php';
 require_once __DIR__ . '/eduCoachGuideNarrativeBridge.php';
+require_once __DIR__ . '/eduCoachGuideNarrativeV2.php';
 
 const EDU_COACH_GUIDE_QUEST_CODE = 'Q-AUTO-NUKE-630';
 const EDU_COACH_GUIDE_QUEST_CODE_DC_150 = 'Q-AUTO-DC-150';
@@ -26,7 +27,7 @@ const EDU_COACH_GUIDE_FACT_DISPLAY = 'summary';
 /** @param array<string, mixed> $quest */
 function eduQuestUsesAxisGuide(array $quest): bool
 {
-    if (eduQuestUsesNarrativeBridge($quest)) {
+    if (eduQuestUsesNarrativeBridge($quest) || eduQuestUsesNarrativeV2($quest)) {
         return false;
     }
     if (($quest['quest_code'] ?? '') === EDU_COACH_GUIDE_QUEST_CODE) {

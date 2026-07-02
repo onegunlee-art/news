@@ -39,6 +39,12 @@ function eduBlueprintDefaults(): array
         'narrative_choices' => [],
         'narrative_complete' => false,
         'last_choice_id' => null,
+        'narrative_v2_node' => null,
+        'narrative_turn_count' => 0,
+        'thought_board' => [],
+        'board_pulse_layer' => null,
+        'narrative_version' => null,
+        'hero_sentence_seed' => null,
     ];
 }
 
@@ -88,6 +94,12 @@ function eduBlueprintProgress(array $blueprint): int
         require_once __DIR__ . '/eduCoachGuideNarrativeBridge.php';
 
         return eduNarrativeBridgeProgress($blueprint);
+    }
+
+    if ((string) ($blueprint['phase'] ?? '') === 'narrative_bridge_v2') {
+        require_once __DIR__ . '/eduCoachGuideNarrativeV2.php';
+
+        return eduNarrativeV2Progress($blueprint);
     }
 
     $weights = [
@@ -149,6 +161,7 @@ function eduBlueprintStage(array $blueprint): string
         'compose' => 'compose',
         'completed' => 'completed',
         'narrative_bridge' => 'commit',
+        'narrative_bridge_v2' => 'commit',
         default => 'commit',
     };
 }

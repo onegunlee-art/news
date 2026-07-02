@@ -7,7 +7,7 @@
     "conflict_summary": "핵무기는 전쟁을 막는 최후의 억지력으로 여겨지지만 값싼 드론과 재래식 공격 앞에서는 그 억지력이 약해지고 새로운 방어·비공격 규범이 더 중요해지고 있다",
     "hammer_hints": {
         "mode": "adversarial",
-        "coach_mode": "narrative_bridge_v1",
+        "coach_mode": "narrative_bridge_v2",
         "quest_frame": "myth_bust",
         "time_anchor": "",
         "hook_short": "핵무기가 있으면 재래식 공격과 전쟁 확대를 정말 막을 수 있을까?",

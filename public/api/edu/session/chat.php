@@ -12,6 +12,7 @@ require_once __DIR__ . '/../lib/eduConfig.php';
 require_once __DIR__ . '/../lib/eduBlueprint.php';
 require_once __DIR__ . '/../lib/eduCoachGuide.php';
 require_once __DIR__ . '/../lib/eduCoachGuideNarrativeBridge.php';
+require_once __DIR__ . '/../lib/eduCoachGuideNarrativeV2.php';
 require_once __DIR__ . '/../lib/eduCoachLevel.php';
 require_once __DIR__ . '/../lib/eduCoachGuideElementary.php';
 require_once __DIR__ . '/../lib/eduAgents.php';
@@ -106,6 +107,58 @@ $response = [
     'should_compose' => false,
 ];
 
+// --- narrative_bridge_v2 (630 생각판) ---
+if (eduQuestUsesNarrativeV2($quest) && in_array($action, ['narrative_v2_init', 'narrative_v2_choice', 'narrative_v2_message'], true)) {
+    if ($action === 'narrative_v2_init') {
+        $result = eduNarrativeV2HandleInit($blueprint, $quest);
+    } elseif ($action === 'narrative_v2_choice') {
+        $choiceId = trim((string) ($body['choice_id'] ?? ''));
+        if ($choiceId === '') {
+            eduSendError('choice_id required');
+        }
+        try {
+            $result = eduNarrativeV2HandleChoice($blueprint, $quest, $choiceId);
+        } catch (InvalidArgumentException $e) {
+            eduSendError($e->getMessage(), 400);
+        }
+    } else {
+        if ($message === '') {
+            eduSendError('message required');
+        }
+        try {
+            $result = eduNarrativeV2HandleMessage($blueprint, $quest, $message);
+        } catch (InvalidArgumentException $e) {
+            eduSendError($e->getMessage(), 400);
+        }
+    }
+
+    $blueprint = $result['blueprint'];
+    $assistantMessage = $result['message'];
+    $studentLabel = trim((string) ($result['student_label'] ?? ''));
+
+    if ($studentLabel !== '') {
+        $dialogue = eduAppendDialogue($dialogue, 'student', $studentLabel, null, EDU_NARRATIVE_V2_PHASE);
+    }
+    if ($assistantMessage !== '') {
+        $dialogue = eduAppendDialogue($dialogue, 'assistant', $assistantMessage, 'narrative_v2', (string) ($blueprint['phase'] ?? EDU_NARRATIVE_V2_PHASE));
+    }
+    eduSaveBlueprint($supabase, $sessionId, $blueprint, $dialogue);
+
+    $payload = eduNarrativeV2AttachResponseFields(array_merge($response, [
+        'stage' => eduBlueprintStage($blueprint),
+        'phase' => $blueprint['phase'] ?? EDU_NARRATIVE_V2_PHASE,
+        'assistant_message' => $assistantMessage,
+        'progress_pct' => eduNarrativeV2Progress($blueprint),
+        'ui_hint' => $result['ui_hint'],
+        'should_compose' => $result['should_compose'],
+        'board_diff' => $result['board_diff'] ?? null,
+        'blueprint' => $blueprint,
+    ]), $blueprint, $result['choices'], $assistantMessage);
+    $payload['narrative_v2_input_mode'] = (string) ($result['input_mode'] ?? '');
+
+    eduSendJson($payload);
+}
+
 // --- narrative_bridge_v1 (630 prototype) ---
 if (eduQuestUsesNarrativeBridge($quest) && in_array($action, ['narrative_init', 'narrative_choice'], true)) {
     if ($action === 'narrative_init') {
@@ -166,8 +219,8 @@ if ($action === 'submit_opening') {
         eduSendError('opening already submitted', 400);
     }
 
-    if (eduQuestUsesNarrativeBridge($quest)) {
-        eduSendError('630 narrative bridge uses narrative_init, not submit_opening', 400);
+    if (eduQuestUsesNarrativeBridge($quest) || eduQuestUsesNarrativeV2($quest)) {
+        eduSendError('630 narrative bridge uses narrative_v2_init, not submit_opening', 400);
     }
 
     $hints = eduQuestHammerHints($quest);
@@ -281,7 +334,7 @@ if ($action === 'select_stance') {
     ]));
 }
 
-if ($message === '' && !in_array($action, ['confirm_reflection', 'narrative_init', 'narrative_choice'], true)) {
+if ($message === '' && !in_array($action, ['confirm_reflection', 'narrative_init', 'narrative_choice', 'narrative_v2_init', 'narrative_v2_choice'], true)) {
     eduSendError('message required');
 }
 

@@ -116,6 +116,21 @@ class GistStyleComposer
             $reflection = [];
         }
 
+        $thoughtBoardBlock = '';
+        $board = $blueprint['thought_board'] ?? [];
+        if (is_array($board) && $board !== []) {
+            $lines = [];
+            foreach ($board as $row) {
+                if (!is_array($row) || empty($row['filled'])) {
+                    continue;
+                }
+                $lines[] = ($row['index'] ?? '') . '. ' . ($row['heading'] ?? '') . ': ' . ($row['text'] ?? '');
+            }
+            if ($lines !== []) {
+                $thoughtBoardBlock = "생각판(학생이 쌓은 뼈대):\n" . implode("\n", $lines);
+            }
+        }
+
         if (!function_exists('eduQuestCoachProfile') && function_exists('eduFindProjectRoot')) {
             require_once eduFindProjectRoot() . 'public/api/edu/lib/eduQuestConfig.php';
         }
@@ -142,6 +157,7 @@ class GistStyleComposer
             'rebuttal' => (string) ($blueprint['rebuttal'] ?? ''),
             'counter_argument' => (string) ($blueprint['counter_argument'] ?? ''),
             'reflection_lines' => $reflection,
+            'thought_board_block' => $thoughtBoardBlock,
             'dialogue_text' => $dialogueText,
             'quest' => $quest,
             'narration_block' => $narrationBlock,
@@ -204,6 +220,7 @@ PROMPT;
 반론에 대한 생각: {$ctx['rebuttal']}
 3줄 정리:
 {$reflectionText}
+{$ctx['thought_board_block']}
 
 대화:
 {$ctx['dialogue_text']}
@@ -629,7 +646,7 @@ MSG;
     {
         return is_array($structure)
             && !empty($structure['sections'])
-            && ($structure['generated_by'] ?? '') === 'llm'
+            && in_array($structure['generated_by'] ?? '', ['llm', 'thought_board_v2'], true)
             && !$this->isComposeFailure($structure);
     }
 

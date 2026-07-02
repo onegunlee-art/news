@@ -135,6 +135,18 @@ export interface EduStructurePreview {
   student_stance?: string
 }
 
+export interface EduThoughtBoardSlot {
+  layer_id: string
+  index: number
+  label: string
+  heading: string
+  scqa_key: string
+  role?: string
+  text: string
+  filled: boolean
+  turn?: number | null
+}
+
 export interface EduBlueprint {
   stance?: 'pro' | 'con' | null
   reason?: string
@@ -160,6 +172,13 @@ export interface EduBlueprint {
   narrative_depth?: number
   narrative_complete?: boolean
   last_choice_id?: string | null
+  /** narrative_bridge_v2 */
+  narrative_v2_node?: string | null
+  narrative_turn_count?: number
+  thought_board?: EduThoughtBoardSlot[]
+  board_pulse_layer?: string | null
+  narrative_version?: string | null
+  hero_sentence_seed?: string | null
 }
 
 export interface EduChatResponse {
@@ -191,6 +210,12 @@ export interface EduChatResponse {
   narrative_choices?: Array<{ id: string; label: string }>
   narrative_complete?: boolean
   coach_mode?: string
+  /** narrative_bridge_v2 */
+  thought_board?: EduThoughtBoardSlot[]
+  board_pulse_layer?: string | null
+  narrative_turn_count?: number
+  narrative_v2_input_mode?: string
+  board_diff?: { first: string; latest: string; lines: string[] } | null
 }
 
 export interface EduEssaySection {
@@ -261,6 +286,10 @@ export interface EduSessionState {
   narrative_choices?: Array<{ id: string; label: string }>
   narrative_complete?: boolean
   coach_mode?: string | null
+  thought_board?: EduThoughtBoardSlot[]
+  board_pulse_layer?: string | null
+  narrative_turn_count?: number
+  narrative_v2_input_mode?: string
 }
 
 export interface EduCompletedSession {
