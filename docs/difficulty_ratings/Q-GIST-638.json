@@ -1,0 +1,25 @@
+{
+    "quest_code": "Q-GIST-638",
+    "difficulty_level": 3,
+    "difficulty_score": 58,
+    "label_ko": "논객",
+    "label_en": "Debater",
+    "signals": {
+        "topic_familiarity": "medium",
+        "concept_abstraction": "mixed",
+        "background_knowledge": "medium",
+        "hinge_complexity": "moderate",
+        "vocabulary_difficulty": "medium"
+    },
+    "reasons": [
+        "AI 자체는 친숙하지만, '경제적 효과를 누가 먼저 측정·연구하느냐'는 관점은 중고등학생에게 한 단계 더 낯설다.",
+        "대학 경제학계, 정부 통계기관, 중앙은행, 빅테크 연구소의 역할 차이를 이해해야 해 배경지식이 조금 필요하다.",
+        "데이터 부족, 기술 회의론, 이해상충, 공공성 약화처럼 여러 개념이 연결되지만 고도의 전문 이론 수준은 아니다.",
+        "구체적 사건 설명보다 연구 공백과 제도적 구조를 해석하는 글이라 L1~L2보다는 추상적이다.",
+        "다만 RSI·양자안보처럼 매우 낯선 전문 영역은 아니어서 L4~L5까지는 아니다."
+    ],
+    "student_frame_ko": "논객 단계 · 익숙한 AI 이슈를 제도와 이해관계까지 연결해 읽는 글",
+    "source": "llm",
+    "classified_at": "2026-07-02T16:57:10+09:00",
+    "prompt_version": "llm-v1"
+}

@@ -1,0 +1,27 @@
+{
+    "quest_code": "Q-GIST-645",
+    "difficulty_level": 5,
+    "difficulty_score": 82,
+    "label_ko": "칼럼니스트",
+    "label_en": "Columnist",
+    "signals": {
+        "topic_familiarity": "low",
+        "concept_abstraction": "abstract",
+        "background_knowledge": "high",
+        "hinge_complexity": "multilayer",
+        "vocabulary_difficulty": "hard"
+    },
+    "reasons": [
+        "양자기술·암호 해독·국가안보를 함께 이해해야 해 중고등학생에게 주제 친숙도가 낮다.",
+        "현재의 암호화 데이터 수집과 미래의 양자컴퓨터 해독 가능성을 연결하는 추상적 시간 구조가 있다.",
+        "핵 억지, 군사기술 변화, 사이버 안보 등 배경지식이 있어야 논지를 더 잘 따라갈 수 있다.",
+        "‘미래 기술 패권’처럼 보이지만 실제로는 ‘지금 시작해야 할 안보 위기’라는 다층 경첩이 있다.",
+        "양자, 암호화, 양자내성 암호, 인증키 같은 전문 어휘가 포함되어 있다."
+    ],
+    "student_frame_ko": "분석가 단계 · 낯선 기술·안보 맥락을 배경지식과 함께 따라가야 하는 글",
+    "source": "llm",
+    "classified_at": "2026-07-02T16:55:44+09:00",
+    "prompt_version": "llm-v1",
+    "quantile_adjusted": true,
+    "quantile_from_level": 4
+}

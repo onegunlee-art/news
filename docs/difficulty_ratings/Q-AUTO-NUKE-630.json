@@ -1,0 +1,24 @@
+{
+    "quest_code": "Q-AUTO-NUKE-630",
+    "difficulty_level": 3,
+    "difficulty_score": 58,
+    "label_ko": "논객",
+    "label_en": "Debater",
+    "signals": {
+        "topic_familiarity": "medium",
+        "concept_abstraction": "mixed",
+        "background_knowledge": "medium",
+        "hinge_complexity": "moderate",
+        "vocabulary_difficulty": "medium"
+    },
+    "reasons": [
+        "핵무기와 전쟁 억지는 학생들에게 완전히 낯설진 않지만 기본적인 국제정치 배경지식이 있으면 더 잘 이해된다.",
+        "‘핵 억지력’과 ‘재래식 공격’, ‘규범’의 대비를 이해해야 해 구체 사건보다는 개념 연결이 필요하다.",
+        "드론의 확산이 핵무기의 전략적 의미를 바꾼다는 논지는 단순 찬반보다 한 단계 더 복합적이다.",
+        "다만 재귀적 자기개선이나 양자안보처럼 고도 전문 이론 수준은 아니어서 L4까지는 아니다."
+    ],
+    "student_frame_ko": "논객 단계 · 익숙한 안보 이슈지만 개념 연결이 필요한 글",
+    "source": "llm",
+    "classified_at": "2026-07-02T16:54:44+09:00",
+    "prompt_version": "llm-v1"
+}

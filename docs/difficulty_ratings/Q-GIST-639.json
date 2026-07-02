@@ -1,0 +1,25 @@
+{
+    "quest_code": "Q-GIST-639",
+    "difficulty_level": 2,
+    "difficulty_score": 56,
+    "label_ko": "질문자",
+    "label_en": "Questioner",
+    "signals": {
+        "topic_familiarity": "medium",
+        "concept_abstraction": "mixed",
+        "background_knowledge": "medium",
+        "hinge_complexity": "moderate",
+        "vocabulary_difficulty": "medium"
+    },
+    "reasons": [
+        "자동차·전기차·중국 경쟁은 익숙한 시사 주제지만, 미국 빅3와 보호무역의 맥락은 추가 배경지식이 조금 필요하다",
+        "당장 수익을 지키는 전략과 장기 경쟁력 약화 사이의 trade-off를 이해해야 해 단순 찬반보다 한 단계 복합적이다",
+        "전기차 전환, 관세, 글로벌 산업 재편 같은 경제·산업 개념이 섞여 있어 중학생에게는 다소 어렵고 고등학생은 따라갈 수 있는 수준이다"
+    ],
+    "student_frame_ko": "논객 단계 · 익숙한 산업 이슈지만 이해관계와 장기 흐름을 함께 봐야 하는 글",
+    "source": "llm",
+    "classified_at": "2026-07-02T16:55:15+09:00",
+    "prompt_version": "llm-v1",
+    "quantile_adjusted": true,
+    "quantile_from_level": 3
+}

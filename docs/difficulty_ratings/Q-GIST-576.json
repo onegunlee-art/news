@@ -1,0 +1,24 @@
+{
+    "quest_code": "Q-GIST-576",
+    "difficulty_level": 3,
+    "difficulty_score": 58,
+    "label_ko": "논객",
+    "label_en": "Debater",
+    "signals": {
+        "topic_familiarity": "medium",
+        "concept_abstraction": "mixed",
+        "background_knowledge": "medium",
+        "hinge_complexity": "moderate",
+        "vocabulary_difficulty": "medium"
+    },
+    "reasons": [
+        "미국 텍사스의 기업 유치와 산업 이동이라는 주제는 한국 중고등학생에게 아주 친숙하진 않지만 뉴스 맥락으로는 따라갈 수 있다.",
+        "세금·규제·에너지·재법인화·인재 유치·정치 리스크가 함께 얽혀 있어 단순 찬반보다 한 단계 높은 이해가 필요하다.",
+        "미국 주(州) 간 경쟁, 기업 본사 이전, 산업 인프라 같은 배경지식이 조금 있어야 핵심 논지를 더 잘 잡을 수 있다.",
+        "다만 재귀적 자기개선이나 양자안보처럼 고도로 추상적이거나 전문 이론 중심은 아니어서 L4까지는 아니다."
+    ],
+    "student_frame_ko": "논객 단계 · 시사 이슈를 여러 조건과 이해관계로 연결해 보는 글",
+    "source": "llm",
+    "classified_at": "2026-07-02T16:56:19+09:00",
+    "prompt_version": "llm-v1"
+}

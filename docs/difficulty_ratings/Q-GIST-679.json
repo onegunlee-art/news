@@ -1,0 +1,26 @@
+{
+    "quest_code": "Q-GIST-679",
+    "difficulty_level": 5,
+    "difficulty_score": 72,
+    "label_ko": "칼럼니스트",
+    "label_en": "Columnist",
+    "signals": {
+        "topic_familiarity": "low",
+        "concept_abstraction": "abstract",
+        "background_knowledge": "high",
+        "hinge_complexity": "multilayer",
+        "vocabulary_difficulty": "hard"
+    },
+    "reasons": [
+        "컴퓨팅 파워를 금융자산으로 본다는 발상 자체가 중고등학생에게 낯설다.",
+        "GPU 표준화, 장기 고객 계약, 지급보증, 현금흐름, 임대료 지수 등 금융·기술 개념을 함께 이해해야 한다.",
+        "단순히 AI 인프라를 설명하는 글이 아니라 자산화·상품화 메커니즘을 따라가야 해서 추상도가 높다.",
+        "과거 클라우드 거래 실험 실패와 현재 시장 변화까지 비교해야 해 경첩 구조가 다층적이다."
+    ],
+    "student_frame_ko": "분석가 단계 · 낯선 기술-금융 연결을 이해해야 하는 글",
+    "source": "llm",
+    "classified_at": "2026-07-02T16:55:29+09:00",
+    "prompt_version": "llm-v1",
+    "quantile_adjusted": true,
+    "quantile_from_level": 4
+}

@@ -1,0 +1,25 @@
+{
+    "quest_code": "Q-GIST-620",
+    "difficulty_level": 5,
+    "difficulty_score": 90,
+    "label_ko": "칼럼니스트",
+    "label_en": "Columnist",
+    "signals": {
+        "topic_familiarity": "low",
+        "concept_abstraction": "abstract",
+        "background_knowledge": "high",
+        "hinge_complexity": "multilayer",
+        "vocabulary_difficulty": "hard"
+    },
+    "reasons": [
+        "재귀적 자기개선(RSI) 자체가 중고등학생에게 매우 낯선 AI 안전·시스템 개념이다.",
+        "단순한 AI 활용이 아니라 모델이 다음 모델을 설계하는 닫힌 루프를 이해해야 해 추상도가 높다.",
+        "초지능, 통제 불능, 컴퓨팅 자원, 데이터센터, 검증 가능성 같은 여러 기술적 병목을 함께 봐야 한다.",
+        "위험 과장론과 현실 제약론을 동시에 비교하는 다층적 구조라 경첩 복잡도가 높다.",
+        "앵커 예시에서 '재귀적 자기개선(RSI)'는 L4~L5의 대표 고난도 주제로 제시되어 있다."
+    ],
+    "student_frame_ko": "칼럼니스트 단계 · 낯선 AI 이론과 시스템 병목을 함께 다뤄 배경지식이 많이 필요한 글",
+    "source": "llm",
+    "classified_at": "2026-07-02T16:56:15+09:00",
+    "prompt_version": "llm-v1"
+}

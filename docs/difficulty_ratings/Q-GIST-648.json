@@ -1,0 +1,24 @@
+{
+    "quest_code": "Q-GIST-648",
+    "difficulty_level": 3,
+    "difficulty_score": 58,
+    "label_ko": "논객",
+    "label_en": "Debater",
+    "signals": {
+        "topic_familiarity": "medium",
+        "concept_abstraction": "mixed",
+        "background_knowledge": "medium",
+        "hinge_complexity": "moderate",
+        "vocabulary_difficulty": "medium"
+    },
+    "reasons": [
+        "미국 주식시장 자체는 뉴스로 익숙하지만 옵션·헤지·콜옵션·풋옵션 같은 금융 개념은 중고등학생에게 다소 낯설다.",
+        "단순히 '주가가 비싸다'를 넘어서 시장 심리와 투기적 도취를 구분하는 개념 연결이 필요하다.",
+        "배경지식이 전혀 없으면 어렵지만, 주식시장과 버블에 대한 기본 이해가 있으면 따라갈 수 있다.",
+        "전문 이론보다는 시사적 금융 해석에 가까워 L4보다는 낮지만, 일상형 주제인 L1~L2보다는 한 단계 어렵다."
+    ],
+    "student_frame_ko": "논객 단계 · 익숙한 경제 뉴스지만 금융 개념과 시장 심리 연결이 필요함",
+    "source": "llm",
+    "classified_at": "2026-07-02T16:57:28+09:00",
+    "prompt_version": "llm-v1"
+}

@@ -1,0 +1,26 @@
+{
+    "quest_code": "Q-GIST-646",
+    "difficulty_level": 1,
+    "difficulty_score": 34,
+    "label_ko": "관찰자",
+    "label_en": "Observer",
+    "signals": {
+        "topic_familiarity": "high",
+        "concept_abstraction": "mixed",
+        "background_knowledge": "low",
+        "hinge_complexity": "moderate",
+        "vocabulary_difficulty": "easy"
+    },
+    "reasons": [
+        "AI가 글을 쓰는 문제는 중고등학생에게 매우 친숙한 주제다.",
+        "창작 생산성 증가와 콘텐츠 과잉·신뢰 하락을 함께 보는 구조라 단순 찬반보다는 한 단계 더 생각이 필요하다.",
+        "책 시장·전자책 사례를 이해하면 되므로 전문 배경지식은 많이 필요하지 않다.",
+        "핵심 개념이 추상 이론보다 일상적 AI 활용과 시장 변화에 가까워 접근성이 높다."
+    ],
+    "student_frame_ko": "질문자 단계 · 익숙한 AI 이슈를 한 걸음 더 생각해보는 글",
+    "source": "llm",
+    "classified_at": "2026-07-02T16:55:37+09:00",
+    "prompt_version": "llm-v1",
+    "quantile_adjusted": true,
+    "quantile_from_level": 2
+}

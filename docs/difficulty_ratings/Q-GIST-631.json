@@ -1,0 +1,25 @@
+{
+    "quest_code": "Q-GIST-631",
+    "difficulty_level": 3,
+    "difficulty_score": 58,
+    "label_ko": "논객",
+    "label_en": "Debater",
+    "signals": {
+        "topic_familiarity": "medium",
+        "concept_abstraction": "mixed",
+        "background_knowledge": "medium",
+        "hinge_complexity": "moderate",
+        "vocabulary_difficulty": "medium"
+    },
+    "reasons": [
+        "중국의 대규모 개발사업은 뉴스에서 접할 수 있지만, '흰 코끼리'와 관료 평가 구조를 함께 이해해야 해 친숙도는 중간 수준입니다.",
+        "겉보기에 장기계획이 강한 국가라는 이미지와 실제 인센티브 왜곡을 대비하는 구조라 단순 사건 설명보다 한 단계 추론이 필요합니다.",
+        "중국 정치체제, 지방정부, 중앙-지방 관계에 대한 약간의 배경지식이 있으면 훨씬 쉽게 읽히지만 필수 전문지식까지는 아닙니다.",
+        "보여주기식 투자, 정치적 성과 경쟁, 비효율적 자원 배분이 연결되는 경첩 구조가 있어 이해관계 연결이 필요합니다.",
+        "전문 이론 글은 아니지만 '정치적 업적관', '지속 가능성', '효율' 같은 시사 어휘를 소화해야 합니다."
+    ],
+    "student_frame_ko": "논객 단계 · 친숙한 국제 이슈지만 정치 구조와 인센티브를 함께 봐야 하는 글",
+    "source": "llm",
+    "classified_at": "2026-07-02T16:56:50+09:00",
+    "prompt_version": "llm-v1"
+}

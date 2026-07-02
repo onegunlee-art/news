@@ -1,0 +1,27 @@
+{
+    "quest_code": "Q-GIST-680",
+    "difficulty_level": 1,
+    "difficulty_score": 39,
+    "label_ko": "관찰자",
+    "label_en": "Observer",
+    "signals": {
+        "topic_familiarity": "high",
+        "concept_abstraction": "mixed",
+        "background_knowledge": "low",
+        "hinge_complexity": "moderate",
+        "vocabulary_difficulty": "medium"
+    },
+    "reasons": [
+        "AI와 데이터센터는 학생들에게 비교적 익숙한 기술 이슈다.",
+        "주민 반발, 전력 사용, 생활권 문제처럼 구체적인 갈등 구조라 추상도가 아주 높지 않다.",
+        "미국 지역 사례가 나오지만 핵심 이해에 필요한 배경지식은 많지 않다.",
+        "AI 경쟁력 확보와 지역 주민 피해 우려를 함께 봐야 해서 단순 찬반보다는 한 단계 더 복합적이다.",
+        "송전선로·인허가 같은 표현은 약간 낯설 수 있지만 전체 어휘 난도는 높지 않다."
+    ],
+    "student_frame_ko": "질문자 단계 · 익숙한 기술 이슈를 생활권 갈등과 연결해 생각해보는 글",
+    "source": "llm",
+    "classified_at": "2026-07-02T16:55:26+09:00",
+    "prompt_version": "llm-v1",
+    "quantile_adjusted": true,
+    "quantile_from_level": 2
+}

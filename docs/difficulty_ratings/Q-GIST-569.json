@@ -1,0 +1,27 @@
+{
+    "quest_code": "Q-GIST-569",
+    "difficulty_level": 1,
+    "difficulty_score": 38,
+    "label_ko": "관찰자",
+    "label_en": "Observer",
+    "signals": {
+        "topic_familiarity": "high",
+        "concept_abstraction": "mixed",
+        "background_knowledge": "medium",
+        "hinge_complexity": "moderate",
+        "vocabulary_difficulty": "medium"
+    },
+    "reasons": [
+        "일론 머스크, 트럼프, 양당 체제처럼 학생들에게 비교적 익숙한 인물·정치 뉴스 소재를 다룬다.",
+        "핵심 질문이 '산업 혁신과 정치 혁신은 왜 다른가'라서 완전한 일상 주제는 아니지만 추적 가능한 수준이다.",
+        "미국 정치 제도, 정부 보조금, 공적 제도 같은 배경지식이 조금 필요하나 전문 이론 수준은 아니다.",
+        "찬반이 단순하지 않고 산업에서의 성공과 정치에서의 퇴행을 대비시키는 구조가 있어 L1보다는 한 단계 높다.",
+        "제도, 정체성 정치, 양당 체제 같은 용어가 나오지만 고도 전문 용어나 추상 이론 중심 글은 아니다."
+    ],
+    "student_frame_ko": "질문자 단계 · 익숙한 인물과 시사 이슈를 바탕으로 조금만 배경지식이 있으면 따라갈 수 있는 글",
+    "source": "llm",
+    "classified_at": "2026-07-02T16:56:58+09:00",
+    "prompt_version": "llm-v1",
+    "quantile_adjusted": true,
+    "quantile_from_level": 2
+}

@@ -1,0 +1,26 @@
+{
+    "quest_code": "Q-GIST-688",
+    "difficulty_level": 1,
+    "difficulty_score": 38,
+    "label_ko": "관찰자",
+    "label_en": "Observer",
+    "signals": {
+        "topic_familiarity": "high",
+        "concept_abstraction": "mixed",
+        "background_knowledge": "medium",
+        "hinge_complexity": "moderate",
+        "vocabulary_difficulty": "medium"
+    },
+    "reasons": [
+        "AI 규제와 일자리 불안은 중고등학생에게 비교적 친숙한 주제다.",
+        "핵심 쟁점이 '찬반'을 넘어서 비용과 이익의 분배로 이동해 약간의 정치경제 관점이 필요하다.",
+        "데이터센터, 지정학적 우위, 수용성 같은 표현은 다소 낯설 수 있지만 전체 논지는 따라가기 어렵지 않다.",
+        "기술 봉쇄의 손실과 정밀 규제의 필요성을 함께 보는 정도의 중간 수준 경첩 복잡도가 있다."
+    ],
+    "student_frame_ko": "질문자 단계 · 익숙한 AI 이슈를 한 걸음 더 생각해보는 글",
+    "source": "llm",
+    "classified_at": "2026-07-02T16:57:14+09:00",
+    "prompt_version": "llm-v1",
+    "quantile_adjusted": true,
+    "quantile_from_level": 2
+}

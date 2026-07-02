@@ -1,0 +1,26 @@
+{
+    "quest_code": "Q-GIST-673",
+    "difficulty_level": 5,
+    "difficulty_score": 72,
+    "label_ko": "칼럼니스트",
+    "label_en": "Columnist",
+    "signals": {
+        "topic_familiarity": "medium",
+        "concept_abstraction": "mixed",
+        "background_knowledge": "high",
+        "hinge_complexity": "multilayer",
+        "vocabulary_difficulty": "hard"
+    },
+    "reasons": [
+        "미중 기술패권 경쟁이라는 익숙한 틀은 있지만, 바이오테크·임상시험 데이터·라이선싱 규제는 중고등학생에게 비교적 낯선 전문 맥락이다.",
+        "안보 경쟁, 신약 공급망, 환자 접근성, 국내 정책 실패를 함께 비교해야 해 경첩이 다층적이다.",
+        "FDA, NIH, 임상 데이터 인정, 라이선스 계약 같은 제도·전문 용어를 이해하려면 배경지식이 꽤 필요하다.",
+        "단순히 중국을 막을지 말지의 찬반이 아니라, 대외 규제가 오히려 자국 혁신과 치료 속도를 해칠 수 있다는 역설 구조를 따라가야 한다."
+    ],
+    "student_frame_ko": "분석가 단계 · 익숙한 미중 경쟁 주제이지만 바이오 산업·규제·보건정책 배경지식이 필요한 글",
+    "source": "llm",
+    "classified_at": "2026-07-02T16:57:32+09:00",
+    "prompt_version": "llm-v1",
+    "quantile_adjusted": true,
+    "quantile_from_level": 4
+}

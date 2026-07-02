@@ -1,0 +1,24 @@
+{
+    "quest_code": "Q-GIST-668",
+    "difficulty_level": 3,
+    "difficulty_score": 58,
+    "label_ko": "논객",
+    "label_en": "Debater",
+    "signals": {
+        "topic_familiarity": "medium",
+        "concept_abstraction": "mixed",
+        "background_knowledge": "medium",
+        "hinge_complexity": "multilayer",
+        "vocabulary_difficulty": "medium"
+    },
+    "reasons": [
+        "대만·미중 관계는 뉴스에서 자주 보이지만 중고등학생에게 완전히 일상적 주제는 아니라서 친숙도가 중간입니다.",
+        "전쟁 여부만이 아니라 미국의 신뢰성, 대만의 방위 의지, 친미 여론, 아시아 동맹망 변화까지 연결해야 해 경첩 복잡도가 높습니다.",
+        "직접 침공보다 심리전·외교적 압박으로 질서를 재편한다는 발상은 다소 추상적이지만, 구체적인 국제정치 사례에 기반해 L5급 이론 수준은 아닙니다.",
+        "미중 정상회담, 전략적 모호성, 억지와 신뢰 같은 배경지식이 조금 필요해 배경지식 요구가 중간 수준입니다."
+    ],
+    "student_frame_ko": "논객 단계 · 익숙한 국제 이슈지만 여러 이해관계와 전략 연결이 필요함",
+    "source": "llm",
+    "classified_at": "2026-07-02T16:56:00+09:00",
+    "prompt_version": "llm-v1"
+}

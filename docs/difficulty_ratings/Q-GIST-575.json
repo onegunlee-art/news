@@ -1,0 +1,24 @@
+{
+    "quest_code": "Q-GIST-575",
+    "difficulty_level": 4,
+    "difficulty_score": 68,
+    "label_ko": "분석가",
+    "label_en": "Analyst",
+    "signals": {
+        "topic_familiarity": "medium",
+        "concept_abstraction": "mixed",
+        "background_knowledge": "high",
+        "hinge_complexity": "multilayer",
+        "vocabulary_difficulty": "medium"
+    },
+    "reasons": [
+        "철도 경쟁 자체는 이해 가능하지만 독일·이탈리아 철도 시장 구조와 제도 맥락은 중고등학생에게 낯선 편이다.",
+        "핵심 경첩이 단순한 경쟁 찬반이 아니라 인프라 노후화, 선로 접근 승인, 정치·제도 조건으로 이어지는 다층 구조다.",
+        "도이체반 독점, 장거리 철도 시장, 선로 접근 제도 같은 배경지식이 있어야 논지를 제대로 따라가기 쉽다.",
+        "경제·공공서비스·규제 체계를 함께 봐야 해서 일반 생활형 기사보다 한 단계 높은 분석이 필요하다."
+    ],
+    "student_frame_ko": "분석가 단계 · 낯선 제도와 인프라 구조를 함께 이해해야 하는 글",
+    "source": "llm",
+    "classified_at": "2026-07-02T16:55:56+09:00",
+    "prompt_version": "llm-v1"
+}

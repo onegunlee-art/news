@@ -1,0 +1,25 @@
+{
+    "quest_code": "Q-GIST-666",
+    "difficulty_level": 2,
+    "difficulty_score": 55,
+    "label_ko": "질문자",
+    "label_en": "Questioner",
+    "signals": {
+        "topic_familiarity": "medium",
+        "concept_abstraction": "mixed",
+        "background_knowledge": "medium",
+        "hinge_complexity": "moderate",
+        "vocabulary_difficulty": "medium"
+    },
+    "reasons": [
+        "금리·은행·대출 같은 소재는 뉴스에서 익숙하지만 일본의 초저금리 역사와 은행 수익구조를 함께 알아야 한다.",
+        "단기금리와 장기금리 차이, 채권 손실, 메가뱅크와 소형은행의 차별적 영향 등 개념 연결이 필요하다.",
+        "단순히 '금리 오르면 좋다'가 아니라 은행 규모별로 효과가 다르다는 점에서 이해관계가 한 단계 더 복합적이다."
+    ],
+    "student_frame_ko": "논객 단계 · 익숙한 경제 뉴스이지만 금리 구조와 은행별 차이를 함께 이해해야 하는 글",
+    "source": "llm",
+    "classified_at": "2026-07-02T16:57:02+09:00",
+    "prompt_version": "llm-v1",
+    "quantile_adjusted": true,
+    "quantile_from_level": 3
+}

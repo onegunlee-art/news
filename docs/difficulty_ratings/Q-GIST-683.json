@@ -1,0 +1,27 @@
+{
+    "quest_code": "Q-GIST-683",
+    "difficulty_level": 4,
+    "difficulty_score": 60,
+    "label_ko": "분석가",
+    "label_en": "Analyst",
+    "signals": {
+        "topic_familiarity": "medium",
+        "concept_abstraction": "mixed",
+        "background_knowledge": "medium",
+        "hinge_complexity": "multilayer",
+        "vocabulary_difficulty": "medium"
+    },
+    "reasons": [
+        "브렉시트와 영국 총리 교체는 일반 국제정치 이슈로 완전히 낯설진 않지만, 한국 중고등학생에게는 일상적으로 친숙한 주제는 아니다.",
+        "정치적 안전, 경제 성장, 시장 신뢰, 생활수준, 정당성 위기, EU 재연계가 서로 연결되어 있어 단순 찬반보다 한 단계 복합적이다.",
+        "브렉시트의 역사적 맥락, 영국 선거제도, 스타머·존슨·트러스 시기의 배경을 알면 이해가 쉬워져 배경지식 요구가 중간 이상이다.",
+        "내용은 구체적 사건에서 출발하지만 실제 판단은 제도·경제·정치 정당성의 연결을 다뤄 추상 요소도 섞여 있다.",
+        "전문 이론 글 수준은 아니지만 시장 압박, 위임, 재결합 같은 시사 어휘를 따라가야 해 L1~L2보다는 어렵다."
+    ],
+    "student_frame_ko": "논객 단계 · 일반 시사 이슈를 여러 맥락과 연결해 생각해보는 글",
+    "source": "llm",
+    "classified_at": "2026-07-02T16:57:41+09:00",
+    "prompt_version": "llm-v1",
+    "quantile_adjusted": true,
+    "quantile_from_level": 3
+}

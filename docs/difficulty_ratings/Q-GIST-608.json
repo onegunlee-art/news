@@ -1,0 +1,26 @@
+{
+    "quest_code": "Q-GIST-608",
+    "difficulty_level": 2,
+    "difficulty_score": 55,
+    "label_ko": "질문자",
+    "label_en": "Questioner",
+    "signals": {
+        "topic_familiarity": "medium",
+        "concept_abstraction": "mixed",
+        "background_knowledge": "medium",
+        "hinge_complexity": "moderate",
+        "vocabulary_difficulty": "medium"
+    },
+    "reasons": [
+        "노동시장·금리·인플레이션은 시사에서 자주 보이지만 중고등학생에게 완전히 일상적인 주제는 아니다.",
+        "고용지표와 연준의 금리 결정이 어떻게 연결되는지 이해하려면 경제 배경지식이 어느 정도 필요하다.",
+        "‘지금은 과열이 아니지만 조금 더 뜨거워지면 금리 인상을 고민한다’는 조건부 판단 구조가 있어 단순 찬반보다 한 단계 복합적이다.",
+        "비농업 고용, 인플레이션, 노동공급, 연준 같은 경제 어휘가 등장해 초입 독자에게는 약간 어렵다."
+    ],
+    "student_frame_ko": "논객 단계 · 익숙한 경제 뉴스이지만 지표와 금리의 연결을 생각해야 하는 글",
+    "source": "llm",
+    "classified_at": "2026-07-02T16:56:41+09:00",
+    "prompt_version": "llm-v1",
+    "quantile_adjusted": true,
+    "quantile_from_level": 3
+}

@@ -1,0 +1,26 @@
+{
+    "quest_code": "Q-GIST-665",
+    "difficulty_level": 1,
+    "difficulty_score": 38,
+    "label_ko": "관찰자",
+    "label_en": "Observer",
+    "signals": {
+        "topic_familiarity": "medium",
+        "concept_abstraction": "mixed",
+        "background_knowledge": "medium",
+        "hinge_complexity": "moderate",
+        "vocabulary_difficulty": "medium"
+    },
+    "reasons": [
+        "AI 경쟁이라는 주제는 중고등학생에게 비교적 익숙하지만, 중국 AI 기업과 모델명은 다소 낯설다.",
+        "핵심 쟁점이 '누가 더 성능이 좋은가'를 넘어 비용 효율·개방성·접근 지속성으로 확장돼 있어 약간의 개념 전환이 필요하다.",
+        "Open Weights, 모델 성능 비교, 기업·정부에 의한 접근 차단 가능성 같은 배경을 조금 알면 훨씬 쉽게 읽힌다.",
+        "그래도 재귀적 자기개선이나 양자안보처럼 고도 추상 이론은 아니어서 L4 이상으로 보긴 어렵다."
+    ],
+    "student_frame_ko": "질문자 단계 · 익숙한 AI 이슈에 약간의 배경지식이 있으면 따라갈 수 있는 글",
+    "source": "llm",
+    "classified_at": "2026-07-02T16:56:04+09:00",
+    "prompt_version": "llm-v1",
+    "quantile_adjusted": true,
+    "quantile_from_level": 2
+}

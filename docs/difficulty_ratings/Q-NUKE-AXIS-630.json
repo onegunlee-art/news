@@ -1,0 +1,24 @@
+{
+    "quest_code": "Q-NUKE-AXIS-630",
+    "difficulty_level": 3,
+    "difficulty_score": 58,
+    "label_ko": "논객",
+    "label_en": "Debater",
+    "signals": {
+        "topic_familiarity": "medium",
+        "concept_abstraction": "mixed",
+        "background_knowledge": "medium",
+        "hinge_complexity": "moderate",
+        "vocabulary_difficulty": "medium"
+    },
+    "reasons": [
+        "핵무장과 안보는 학생들에게 낯설지 않은 시사 주제지만, 억지력·재래식 공격·전략자산 같은 개념 연결이 필요하다",
+        "우크라이나-러시아 전쟁 사례를 바탕으로 핵이 전쟁을 막는지 따지는 구조라 단순 찬반보다 한 단계 복합적이다",
+        "드론이 핵 억지력을 약화시킬 수 있다는 논지는 익숙한 뉴스 소재 위에 안보 개념을 얹어 이해해야 한다",
+        "전문 이론 중심의 고도 추상 주제는 아니지만 국제정치와 군사 배경지식이 어느 정도 있어야 따라가기 쉽다"
+    ],
+    "student_frame_ko": "논객 단계 · 익숙한 안보 이슈지만 개념들을 연결해 생각해야 하는 글",
+    "source": "llm",
+    "classified_at": "2026-07-02T16:54:47+09:00",
+    "prompt_version": "llm-v1"
+}

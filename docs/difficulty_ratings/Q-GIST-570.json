@@ -1,0 +1,26 @@
+{
+    "quest_code": "Q-GIST-570",
+    "difficulty_level": 2,
+    "difficulty_score": 57,
+    "label_ko": "질문자",
+    "label_en": "Questioner",
+    "signals": {
+        "topic_familiarity": "medium",
+        "concept_abstraction": "mixed",
+        "background_knowledge": "medium",
+        "hinge_complexity": "moderate",
+        "vocabulary_difficulty": "medium"
+    },
+    "reasons": [
+        "중국·일본 경제 비교는 시사적으로 익숙할 수 있지만, 디플레이션과 장기 금리의 의미를 알아야 이해가 깊어집니다.",
+        "핵심 개념이 일상 주제보다 추상적이며 물가·임금·소비·기대의 선순환 같은 경제 메커니즘 연결이 필요합니다.",
+        "중국의 반등이 특정 업종에만 집중되고 내수 회복으로 이어지지 않는다는 점을 따라가려면 여러 경제 변수의 관계를 봐야 합니다.",
+        "전문 이론 수준은 아니지만 일반 중고등학생에게는 배경지식이 조금 필요한 편이라 L3가 적절합니다."
+    ],
+    "student_frame_ko": "논객 단계 · 친숙한 국제경제 이슈지만 개념 연결이 필요한 글",
+    "source": "llm",
+    "classified_at": "2026-07-02T16:57:06+09:00",
+    "prompt_version": "llm-v1",
+    "quantile_adjusted": true,
+    "quantile_from_level": 3
+}

@@ -1,0 +1,26 @@
+{
+    "quest_code": "Q-GIST-676",
+    "difficulty_level": 4,
+    "difficulty_score": 63,
+    "label_ko": "분석가",
+    "label_en": "Analyst",
+    "signals": {
+        "topic_familiarity": "medium",
+        "concept_abstraction": "mixed",
+        "background_knowledge": "medium",
+        "hinge_complexity": "multilayer",
+        "vocabulary_difficulty": "medium"
+    },
+    "reasons": [
+        "전쟁·미국 군사력은 익숙한 시사 주제지만, 드론·AI·전쟁의 경제학·조직 개혁을 함께 이해해야 합니다.",
+        "단순히 '미국이 강하다\/약하다'가 아니라 비싼 첨단무기와 값싼 대량 드론의 대비, 기술 우위의 지속 가능성, 군 조직 변화까지 연결됩니다.",
+        "국제 안보와 군사 기술에 대한 기본 배경이 있으면 더 잘 읽히지만, 극도로 전문적이거나 이론적인 글은 아닙니다.",
+        "스텔스, 정밀유도무기, 디지털 전력 같은 용어가 나오지만 중고등학생이 시사 맥락에서 도전 가능한 수준입니다."
+    ],
+    "student_frame_ko": "논객 단계 · 익숙한 국제 이슈지만 여러 개념과 이해관계를 연결해 읽어야 하는 글",
+    "source": "llm",
+    "classified_at": "2026-07-02T16:57:36+09:00",
+    "prompt_version": "llm-v1",
+    "quantile_adjusted": true,
+    "quantile_from_level": 3
+}

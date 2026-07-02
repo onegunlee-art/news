@@ -1,0 +1,26 @@
+{
+    "quest_code": "Q-GIST-622",
+    "difficulty_level": 5,
+    "difficulty_score": 74,
+    "label_ko": "칼럼니스트",
+    "label_en": "Columnist",
+    "signals": {
+        "topic_familiarity": "low",
+        "concept_abstraction": "abstract",
+        "background_knowledge": "high",
+        "hinge_complexity": "multilayer",
+        "vocabulary_difficulty": "medium"
+    },
+    "reasons": [
+        "걸프 지역·AI 인프라·첨단 칩 수출 통제라는 낯선 국제정치·기술안보 맥락을 알아야 이해가 쉽다",
+        "단순한 투자 찬반이 아니라 에너지·자본·규제·전쟁 위험·디지털 의존성·경제안보·법적 책임이 연쇄적으로 연결된다",
+        "데이터센터를 물리적 표적과 글로벌 디지털 기반시설로 동시에 보는 시스템적 시각이 필요하다",
+        "주제는 시사적이지만 한국 청소년에게는 일상적이지 않고 중동 지역 배경지식이 요구된다"
+    ],
+    "student_frame_ko": "분석가 단계 · 낯선 지역과 기술안보를 함께 이해해야 하는 글",
+    "source": "llm",
+    "classified_at": "2026-07-02T16:57:25+09:00",
+    "prompt_version": "llm-v1",
+    "quantile_adjusted": true,
+    "quantile_from_level": 4
+}

@@ -1,0 +1,25 @@
+{
+    "quest_code": "Q-GIST-580",
+    "difficulty_level": 4,
+    "difficulty_score": 72,
+    "label_ko": "분석가",
+    "label_en": "Analyst",
+    "signals": {
+        "topic_familiarity": "low",
+        "concept_abstraction": "mixed",
+        "background_knowledge": "high",
+        "hinge_complexity": "multilayer",
+        "vocabulary_difficulty": "medium"
+    },
+    "reasons": [
+        "대외원조, 공여국, 개발·보건 예산 같은 주제는 중고등학생에게 일상적으로 친숙한 편이 아니다.",
+        "미국·유럽의 예산 축소가 감염병·아동 사망·개발 전략 재설계로 이어지는 국제 시스템 이해가 필요하다.",
+        "쟁점이 '원조 축소=후퇴' 대 '선택과 집중+자립 역량 강화'로 단순 찬반이 아니라 정책 구조를 따진다.",
+        "빈곤·보건·교육·자립 역량·목표 분산 등 여러 요소를 함께 연결해야 이해할 수 있다.",
+        "전문 이론 수준은 아니지만 국제개발 분야의 배경지식이 없으면 따라가기 다소 어렵다."
+    ],
+    "student_frame_ko": "분석가 단계 · 낯선 국제개발 맥락과 정책 구조 이해가 필요한 글",
+    "source": "llm",
+    "classified_at": "2026-07-02T16:56:37+09:00",
+    "prompt_version": "llm-v1"
+}

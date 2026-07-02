@@ -258,13 +258,16 @@ jobs:
             tools/ "$REMOTE:$DEST/tools/"
 
           ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" \
-            "mkdir -p $DEST/docs/hinge_quest_drafts $DEST/docs/axis_extractions $DEST/docs/structure_diagnoses $DEST/docs/level_depth_verify && sudo chown -R \$(whoami):\$(whoami) $DEST/docs/hinge_quest_drafts $DEST/docs/axis_extractions $DEST/docs/structure_diagnoses $DEST/docs/level_depth_verify 2>/dev/null || true"
+            "mkdir -p $DEST/docs/hinge_quest_drafts $DEST/docs/axis_extractions $DEST/docs/structure_diagnoses $DEST/docs/level_depth_verify $DEST/docs/difficulty_ratings && sudo chown -R \$(whoami):\$(whoami) $DEST/docs/hinge_quest_drafts $DEST/docs/axis_extractions $DEST/docs/structure_diagnoses $DEST/docs/level_depth_verify $DEST/docs/difficulty_ratings 2>/dev/null || true"
           rsync -avz \
             -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
             docs/hinge_quest_drafts/ "$REMOTE:$DEST/docs/hinge_quest_drafts/"
           rsync -avz \
             -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
             docs/structure_diagnoses/ "$REMOTE:$DEST/docs/structure_diagnoses/"
+          rsync -avz \
+            -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
+            docs/difficulty_ratings/ "$REMOTE:$DEST/docs/difficulty_ratings/"
 
           ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" "mkdir -p $DEST/docs && sudo chown \$(whoami):\$(whoami) $DEST/docs 2>/dev/null || true"
           rsync -avz \
@@ -436,8 +439,8 @@ jobs:
             sudo chmod -R 775 /var/www/thegist/storage/
             sudo ln -sf /var/www/thegist/storage /var/www/thegist/public/storage
             # P2-A1 hinge CLI (ubuntu SSH) — writable dirs under www-data-owned tree
-            sudo mkdir -p docs/hinge_extractions docs/hinge_reviews docs/hinge_quest_drafts docs/axis_extractions docs/structure_diagnoses storage/logs
-            sudo chown -R ubuntu:ubuntu docs/hinge_extractions docs/hinge_reviews docs/hinge_quest_drafts docs/axis_extractions docs/structure_diagnoses
+            sudo mkdir -p docs/hinge_extractions docs/hinge_reviews docs/hinge_quest_drafts docs/axis_extractions docs/structure_diagnoses docs/difficulty_ratings storage/logs
+            sudo chown -R ubuntu:ubuntu docs/hinge_extractions docs/hinge_reviews docs/hinge_quest_drafts docs/axis_extractions docs/structure_diagnoses docs/difficulty_ratings
             sudo chown ubuntu:www-data storage/logs
             sudo chmod 775 storage/logs
             sudo systemctl restart php8.2-fpm

@@ -1,0 +1,26 @@
+{
+    "quest_code": "Q-GIST-577",
+    "difficulty_level": 2,
+    "difficulty_score": 56,
+    "label_ko": "질문자",
+    "label_en": "Questioner",
+    "signals": {
+        "topic_familiarity": "medium",
+        "concept_abstraction": "mixed",
+        "background_knowledge": "medium",
+        "hinge_complexity": "moderate",
+        "vocabulary_difficulty": "medium"
+    },
+    "reasons": [
+        "중국 외교와 국제관계는 뉴스에서 자주 보이지만 중고등학생에게 완전히 일상적인 주제는 아니다.",
+        "겉으로는 영향력 확대처럼 보이지만 실제로는 느슨한 파트너십이라는 구분을 이해해야 해 단순 찬반보다 한 단계 복합적이다.",
+        "동맹, 파트너십, 핵심 이익 같은 국제정치 개념에 대한 기본 배경지식이 있으면 훨씬 쉽게 읽힌다.",
+        "낯선 전문 이론 수준은 아니어서 L4보다는 낮지만, 단순 생활 밀착형 주제인 L1~L2보다는 어렵다."
+    ],
+    "student_frame_ko": "논객 단계 · 익숙한 국제 뉴스이지만 관계의 깊이와 외교 개념을 연결해 봐야 하는 글",
+    "source": "llm",
+    "classified_at": "2026-07-02T16:56:33+09:00",
+    "prompt_version": "llm-v1",
+    "quantile_adjusted": true,
+    "quantile_from_level": 3
+}

@@ -1,0 +1,27 @@
+{
+    "quest_code": "Q-GIST-662",
+    "difficulty_level": 1,
+    "difficulty_score": 38,
+    "label_ko": "관찰자",
+    "label_en": "Observer",
+    "signals": {
+        "topic_familiarity": "high",
+        "concept_abstraction": "mixed",
+        "background_knowledge": "low",
+        "hinge_complexity": "moderate",
+        "vocabulary_difficulty": "medium"
+    },
+    "reasons": [
+        "플라스틱·쓰레기·환경오염은 중고등학생에게 매우 친숙한 주제다.",
+        "핵심 주장도 일상적 문제에서 출발해 미세플라스틱, 건강, 기후로 확장되는 방식이라 접근이 어렵지 않다.",
+        "다만 폐기물 처리만이 아니라 생산 증가·유해 화학물질·탄소배출이 연결된 구조적 위기라는 점에서 단순 찬반보다 한 단계 더 생각이 필요하다.",
+        "미세플라스틱, 탄소배출 같은 용어는 익숙한 편이지만 완전히 초등적인 수준은 아니어서 어휘 난도는 중간 정도다.",
+        "낯선 지역 전문지식이나 고도 이론 없이도 이해 가능하므로 L1보다는 약간 높고, L3 이상처럼 복잡한 배경지식은 요구하지 않는다."
+    ],
+    "student_frame_ko": "질문자 단계 · 친숙한 환경 이슈를 조금 더 구조적으로 생각해보는 글",
+    "source": "llm",
+    "classified_at": "2026-07-02T16:54:56+09:00",
+    "prompt_version": "llm-v1",
+    "quantile_adjusted": true,
+    "quantile_from_level": 2
+}

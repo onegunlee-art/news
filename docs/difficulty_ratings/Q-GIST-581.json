@@ -1,0 +1,26 @@
+{
+    "quest_code": "Q-GIST-581",
+    "difficulty_level": 5,
+    "difficulty_score": 76,
+    "label_ko": "칼럼니스트",
+    "label_en": "Columnist",
+    "signals": {
+        "topic_familiarity": "low",
+        "concept_abstraction": "abstract",
+        "background_knowledge": "high",
+        "hinge_complexity": "multilayer",
+        "vocabulary_difficulty": "medium"
+    },
+    "reasons": [
+        "이주를 개인 선택의 문제를 넘어 본국 민주주의 약화와 수용국 권위주의 자극까지 연결해 보는 관점이 중고등학생에게는 낯설다.",
+        "‘민주주의 유출’, ‘정치적 자본’처럼 추상 개념을 이해해야 해 단순한 찬반보다 한 단계 어렵다.",
+        "송출국-수용국-정치 성향 변화가 연쇄적으로 연결되는 다층 구조라 경첩 복잡도가 높다.",
+        "국제 이주, 민주주의, 권위주의, 반이민 정치에 대한 배경지식이 어느 정도 있어야 글의 핵심이 잘 잡힌다."
+    ],
+    "student_frame_ko": "분석가 단계 · 낯선 사회정치 메커니즘을 따라가야 하는 글",
+    "source": "llm",
+    "classified_at": "2026-07-02T16:56:30+09:00",
+    "prompt_version": "llm-v1",
+    "quantile_adjusted": true,
+    "quantile_from_level": 4
+}

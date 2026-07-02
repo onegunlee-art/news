@@ -1,0 +1,26 @@
+{
+    "quest_code": "Q-GIST-618",
+    "difficulty_level": 5,
+    "difficulty_score": 73,
+    "label_ko": "칼럼니스트",
+    "label_en": "Columnist",
+    "signals": {
+        "topic_familiarity": "medium",
+        "concept_abstraction": "abstract",
+        "background_knowledge": "high",
+        "hinge_complexity": "multilayer",
+        "vocabulary_difficulty": "medium"
+    },
+    "reasons": [
+        "미국 주도 자유주의 국제질서라는 주제는 일반 뉴스보다 추상적이고 중고등학생에게 친숙도가 높지 않다.",
+        "제2차 세계대전 이후 국제질서, 미국 패권, 리더십, 개혁과 철수의 선택을 이해하려면 국제정치 배경지식이 필요하다.",
+        "단순 찬반이 아니라 질서의 성과·한계·복원 가능성·미국의 역량과 정치적 선택을 함께 따져야 해 경첩 구조가 복합적이다.",
+        "어휘 자체가 아주 전문적이진 않지만 '자유주의 국제질서', '리더십 위기', '복원 가능' 같은 추상 개념을 따라가야 한다."
+    ],
+    "student_frame_ko": "분석가 단계 · 국제질서와 미국 리더십처럼 배경지식이 필요한 주제",
+    "source": "llm",
+    "classified_at": "2026-07-02T16:57:17+09:00",
+    "prompt_version": "llm-v1",
+    "quantile_adjusted": true,
+    "quantile_from_level": 4
+}

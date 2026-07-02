@@ -1,0 +1,26 @@
+{
+    "quest_code": "Q-GIST-633",
+    "difficulty_level": 1,
+    "difficulty_score": 37,
+    "label_ko": "관찰자",
+    "label_en": "Observer",
+    "signals": {
+        "topic_familiarity": "high",
+        "concept_abstraction": "mixed",
+        "background_knowledge": "low",
+        "hinge_complexity": "moderate",
+        "vocabulary_difficulty": "medium"
+    },
+    "reasons": [
+        "AI 활용과 기업 생산성 논쟁은 중고등학생에게 비교적 친숙한 주제다.",
+        "핵심 쟁점이 '많이 쓰기'에서 '비용 통제와 효율'로 바뀐다는 구조라 따라가기는 어렵지 않다.",
+        "에이전트형 AI·추론형 모델·토큰 비용 같은 용어는 약간의 설명이 필요해 L1보다는 높다.",
+        "기업 예산, 사용량, 청구서 증가의 연결을 이해해야 하지만 고도 추상 이론이나 낯선 지역 배경은 요구되지 않는다."
+    ],
+    "student_frame_ko": "질문자 단계 · 익숙한 AI 이슈를 한 걸음 더 생각해보는 글",
+    "source": "llm",
+    "classified_at": "2026-07-02T16:56:12+09:00",
+    "prompt_version": "llm-v1",
+    "quantile_adjusted": true,
+    "quantile_from_level": 2
+}

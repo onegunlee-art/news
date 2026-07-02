@@ -1,0 +1,26 @@
+{
+    "quest_code": "Q-AUTO-IRAN-196",
+    "difficulty_level": 2,
+    "difficulty_score": 58,
+    "label_ko": "질문자",
+    "label_en": "Questioner",
+    "signals": {
+        "topic_familiarity": "medium",
+        "concept_abstraction": "mixed",
+        "background_knowledge": "medium",
+        "hinge_complexity": "moderate",
+        "vocabulary_difficulty": "medium"
+    },
+    "reasons": [
+        "핵무기와 이란 문제는 뉴스에서 접할 수 있는 주제지만 중고등학생에게 완전히 일상적이진 않다.",
+        "우라늄 농축, 정권 붕괴, 억제 같은 개념은 약간의 국제정치·안보 배경지식이 필요하다.",
+        "단순 찬반이 아니라 전쟁·외교·정권교체 각각의 한계를 비교해야 해서 논리 연결이 여러 단계다.",
+        "다만 재귀적 자기개선이나 양자안보처럼 고도로 추상적이거나 전문적인 글은 아니어서 L4까지는 아니다."
+    ],
+    "student_frame_ko": "논객 단계 · 익숙한 국제 이슈지만 여러 선택지와 한계를 함께 따져봐야 하는 글",
+    "source": "llm",
+    "classified_at": "2026-07-02T16:55:11+09:00",
+    "prompt_version": "llm-v1",
+    "quantile_adjusted": true,
+    "quantile_from_level": 3
+}

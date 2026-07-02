@@ -1,0 +1,25 @@
+{
+    "quest_code": "Q-AUTO-DC-150",
+    "difficulty_level": 1,
+    "difficulty_score": 22,
+    "label_ko": "관찰자",
+    "label_en": "Observer",
+    "signals": {
+        "topic_familiarity": "high",
+        "concept_abstraction": "concrete",
+        "background_knowledge": "low",
+        "hinge_complexity": "simple",
+        "vocabulary_difficulty": "easy"
+    },
+    "reasons": [
+        "전기요금과 AI 데이터센터는 중고등학생에게도 뉴스로 접하기 쉬운 친숙한 주제입니다.",
+        "핵심 질문이 '누가 전기세 상승의 원인인가'로 비교적 구체적이고 일상과 직접 연결됩니다.",
+        "전력망·에너지시장이라는 배경이 조금 필요하지만, 글의 출발점 자체는 직관적이라 큰 사전지식 없이 따라갈 수 있습니다.",
+        "경첩도 'AI가 원인처럼 보이지만 실제로는 더 큰 구조적 요인이 있다'는 단일 반전 구조라 복잡도가 높지 않습니다.",
+        "전문 이론이나 고도 추상 개념보다 사례와 숫자 중심으로 설명되어 접근성이 높습니다."
+    ],
+    "student_frame_ko": "관찰자 단계 · 시작하기 좋은 글 (친숙한 주제)",
+    "source": "llm",
+    "classified_at": "2026-07-02T16:55:04+09:00",
+    "prompt_version": "llm-v1"
+}

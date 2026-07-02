@@ -1,0 +1,26 @@
+{
+    "quest_code": "Q-GIST-671",
+    "difficulty_level": 5,
+    "difficulty_score": 72,
+    "label_ko": "칼럼니스트",
+    "label_en": "Columnist",
+    "signals": {
+        "topic_familiarity": "low",
+        "concept_abstraction": "abstract",
+        "background_knowledge": "high",
+        "hinge_complexity": "multilayer",
+        "vocabulary_difficulty": "medium"
+    },
+    "reasons": [
+        "유럽 통합, 주권, 포퓰리즘 민족주의처럼 중고등학생에게 다소 낯선 국제정치 맥락이 중심이다.",
+        "에너지·국방·AI를 묶어 유럽이 왜 더 통합돼야 하는지 설명하려면 제도와 국제질서에 대한 추상적 이해가 필요하다.",
+        "미국·러시아·중국과의 관계, 내부 경제 불안과 이민 갈등까지 여러 층위의 요인이 함께 연결된다.",
+        "단순한 찬반이 아니라 외부 압박과 내부 균열이 어떻게 유럽연합의 구조 문제로 이어지는지 따라가야 한다."
+    ],
+    "student_frame_ko": "분석가 단계 · 낯선 국제정치와 통합 구조를 이해해야 하는 글",
+    "source": "llm",
+    "classified_at": "2026-07-02T16:55:00+09:00",
+    "prompt_version": "llm-v1",
+    "quantile_adjusted": true,
+    "quantile_from_level": 4
+}

@@ -1,0 +1,27 @@
+{
+    "quest_code": "Q-GIST-670",
+    "difficulty_level": 1,
+    "difficulty_score": 34,
+    "label_ko": "관찰자",
+    "label_en": "Observer",
+    "signals": {
+        "topic_familiarity": "high",
+        "concept_abstraction": "mixed",
+        "background_knowledge": "medium",
+        "hinge_complexity": "moderate",
+        "vocabulary_difficulty": "medium"
+    },
+    "reasons": [
+        "AI가 일자리를 대체할 수 있다는 주제는 중고등학생에게 이미 익숙한 편이다.",
+        "정부가 실직 노동자를 어떻게 지원해야 하는지 묻는 구조라 일상적 문제의식에서 시작할 수 있다.",
+        "다만 미국의 TAA 제도와 무역 자유화라는 배경은 약간의 추가 설명이 필요하다.",
+        "생산성 향상이라는 장점과 노동자·지역사회 피해라는 단점을 함께 봐야 해 단순 찬반보다는 한 단계 복합적이다.",
+        "전문 이론보다는 정책 사례 중심이라 L3 이상으로 갈 정도의 추상성은 크지 않다."
+    ],
+    "student_frame_ko": "질문자 단계 · 익숙한 AI 일자리 이슈에 정책 배경을 조금 더해 생각해보는 글",
+    "source": "llm",
+    "classified_at": "2026-07-02T16:56:54+09:00",
+    "prompt_version": "llm-v1",
+    "quantile_adjusted": true,
+    "quantile_from_level": 2
+}

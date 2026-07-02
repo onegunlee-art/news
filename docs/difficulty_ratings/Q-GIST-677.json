@@ -1,0 +1,25 @@
+{
+    "quest_code": "Q-GIST-677",
+    "difficulty_level": 4,
+    "difficulty_score": 61,
+    "label_ko": "분석가",
+    "label_en": "Analyst",
+    "signals": {
+        "topic_familiarity": "medium",
+        "concept_abstraction": "mixed",
+        "background_knowledge": "medium",
+        "hinge_complexity": "moderate",
+        "vocabulary_difficulty": "medium"
+    },
+    "reasons": [
+        "중국·미국·국제질서라는 주제는 익숙한 편이지만, 동맹·다자주의·안보 보증 같은 국제정치 개념을 함께 이해해야 한다.",
+        "겉보기 이미지와 실제 전략의 차이, 평시 영향력과 위기 시 책임의 차이를 구분해야 해 단순 찬반보다 한 단계 복합적이다.",
+        "낯선 전문 이론까지는 아니지만 국제정치 배경지식이 어느 정도 있어야 핵심 주장에 쉽게 접근할 수 있다."
+    ],
+    "student_frame_ko": "논객 단계 · 익숙한 국제 이슈지만 여러 개념을 연결해 읽어야 하는 글",
+    "source": "llm",
+    "classified_at": "2026-07-02T16:55:22+09:00",
+    "prompt_version": "llm-v1",
+    "quantile_adjusted": true,
+    "quantile_from_level": 3
+}

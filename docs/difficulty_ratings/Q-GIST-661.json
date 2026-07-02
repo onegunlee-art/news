@@ -1,0 +1,24 @@
+{
+    "quest_code": "Q-GIST-661",
+    "difficulty_level": 3,
+    "difficulty_score": 60,
+    "label_ko": "논객",
+    "label_en": "Debater",
+    "signals": {
+        "topic_familiarity": "medium",
+        "concept_abstraction": "mixed",
+        "background_knowledge": "medium",
+        "hinge_complexity": "multilayer",
+        "vocabulary_difficulty": "medium"
+    },
+    "reasons": [
+        "극우 부상 자체는 뉴스에서 접할 수 있는 시사 주제지만 프랑스 정치 맥락은 중고등학생에게 아주 친숙하진 않다.",
+        "이민·치안, 실업·복지, 주류 정치 실패, 반극우 연합 약화, EU 질서 충격까지 여러 층위를 함께 연결해야 한다.",
+        "프랑스 대선 제도와 마크롱 임기 제한, RN의 위치, 유럽 정치 질서에 대한 기본 배경지식이 조금 필요하다.",
+        "완전한 전문 이론 글은 아니지만 단순 찬반보다 구조적 원인과 파급효과를 따지는 논객형 글이다."
+    ],
+    "student_frame_ko": "논객 단계 · 익숙한 시사 이슈를 여러 원인과 결과로 연결해 읽는 글",
+    "source": "llm",
+    "classified_at": "2026-07-02T16:55:41+09:00",
+    "prompt_version": "llm-v1"
+}

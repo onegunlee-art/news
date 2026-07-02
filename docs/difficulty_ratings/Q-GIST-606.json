@@ -1,0 +1,24 @@
+{
+    "quest_code": "Q-GIST-606",
+    "difficulty_level": 4,
+    "difficulty_score": 72,
+    "label_ko": "분석가",
+    "label_en": "Analyst",
+    "signals": {
+        "topic_familiarity": "low",
+        "concept_abstraction": "mixed",
+        "background_knowledge": "high",
+        "hinge_complexity": "multilayer",
+        "vocabulary_difficulty": "medium"
+    },
+    "reasons": [
+        "UAE·OPEC+·이란 전쟁·걸프 집단 외교처럼 중고등학생에게 낯선 중동 지정학 맥락이 많이 필요하다.",
+        "‘전략적 자율성’과 ‘의존 심화’의 역설을 이해하려면 단순 찬반보다 외교 구조와 동맹 관계를 함께 봐야 한다.",
+        "미국·이스라엘·아랍 이웃 사이의 관계 변화가 연쇄적으로 연결되어 경첩 복잡도가 높다.",
+        "용어 자체는 아주 전문적이진 않지만, 국제정치 배경지식 없이는 핵심 논지를 따라가기 어렵다."
+    ],
+    "student_frame_ko": "분석가 단계 · 낯선 지역과 외교 구도를 이해해야 하는 글",
+    "source": "llm",
+    "classified_at": "2026-07-02T16:56:22+09:00",
+    "prompt_version": "llm-v1"
+}

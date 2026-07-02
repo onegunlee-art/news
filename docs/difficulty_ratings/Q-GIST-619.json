@@ -1,0 +1,24 @@
+{
+    "quest_code": "Q-GIST-619",
+    "difficulty_level": 4,
+    "difficulty_score": 72,
+    "label_ko": "분석가",
+    "label_en": "Analyst",
+    "signals": {
+        "topic_familiarity": "low",
+        "concept_abstraction": "abstract",
+        "background_knowledge": "high",
+        "hinge_complexity": "multilayer",
+        "vocabulary_difficulty": "hard"
+    },
+    "reasons": [
+        "자유 항행, 호르무즈 해협, 지역거부 전략 등 중고등학생에게 낯선 국제안보·해양질서 맥락이 중심이다.",
+        "단순 군사력 비교가 아니라 저가 공격-고가 방어의 비용 비대칭, 정밀타격, 산업·무역 수단의 부상까지 연결해 이해해야 한다.",
+        "제2차 세계대전 이후의 해양 질서와 미국 해군 패권에 대한 배경지식이 있으면 훨씬 읽기 쉽다.",
+        "구체 사건에서 출발하지만 핵심은 '열린 바다의 시대가 끝나는 구조 변화'라는 추상적 시스템 해석에 있다."
+    ],
+    "student_frame_ko": "분석가 단계 · 낯선 국제질서와 구조 변화를 따라가야 하는 글",
+    "source": "llm",
+    "classified_at": "2026-07-02T16:57:21+09:00",
+    "prompt_version": "llm-v1"
+}

@@ -2,7 +2,8 @@
 /**
  * EDU 퀘스트 난이도 (L1~L5) — 코치 레벨과 동일 명칭·체계
  *
- * eduQuestFilter strength score + 경첩/축 복잡도 → difficulty_level
+ * ★ 판정: eduQuestDifficultyLlm.php (LLM, 품질≠난이도)
+ * @deprecated eduQuestDeriveDifficultyLevel — filter 품질 점수, 변별 실패 (audit v1)
  */
 declare(strict_types=1);
 

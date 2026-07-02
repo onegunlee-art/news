@@ -1,0 +1,26 @@
+{
+    "quest_code": "Q-GIST-612",
+    "difficulty_level": 2,
+    "difficulty_score": 54,
+    "label_ko": "질문자",
+    "label_en": "Questioner",
+    "signals": {
+        "topic_familiarity": "medium",
+        "concept_abstraction": "mixed",
+        "background_knowledge": "medium",
+        "hinge_complexity": "moderate",
+        "vocabulary_difficulty": "medium"
+    },
+    "reasons": [
+        "미국-이란 관계와 군사 개입은 일반 시사 주제이지만 중고등학생에게 아주 친숙한 일상 주제는 아니다.",
+        "반정부 정서와 외부 군사개입 지지를 구분하는 정치적 판단이 필요해 단순 찬반보다 한 단계 복합적이다.",
+        "도덕적 명분, 정권교체, 현지 동의 같은 개념을 이해하려면 기본적인 국제정치 배경지식이 어느 정도 필요하다.",
+        "본문의 핵심은 사건 자체보다 '주민의 불만이 외세 개입 지지로 이어지는가'라는 논리 검토에 있어 추상도가 중간 이상이다."
+    ],
+    "student_frame_ko": "논객 단계 · 국제정치 이슈를 여러 관점으로 연결해 생각해야 하는 글",
+    "source": "llm",
+    "classified_at": "2026-07-02T16:55:19+09:00",
+    "prompt_version": "llm-v1",
+    "quantile_adjusted": true,
+    "quantile_from_level": 3
+}

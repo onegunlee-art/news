@@ -1,0 +1,25 @@
+{
+    "quest_code": "Q-AUTO-YOUTH-288",
+    "difficulty_level": 1,
+    "difficulty_score": 22,
+    "label_ko": "관찰자",
+    "label_en": "Observer",
+    "signals": {
+        "topic_familiarity": "high",
+        "concept_abstraction": "mixed",
+        "background_knowledge": "low",
+        "hinge_complexity": "moderate",
+        "vocabulary_difficulty": "easy"
+    },
+    "reasons": [
+        "청소년의 AI 사용은 중고등학생에게 매우 친숙한 주제다.",
+        "핵심 질문이 전면 금지 vs 올바른 사용 교육으로 직관적이라 시작 장벽이 낮다.",
+        "사회적·정서적 환경에 따라 영향이 달라진다는 경첩은 약간의 해석이 필요하지만 고도 추상은 아니다.",
+        "전문 이론이나 낯선 국제 맥락 없이도 이해 가능하다.",
+        "어휘와 문장도 비교적 쉬워 중고등학생이 접근하기 좋다."
+    ],
+    "student_frame_ko": "관찰자 단계 · 시작하기 좋은 글 (친숙한 주제)",
+    "source": "llm",
+    "classified_at": "2026-07-02T16:55:07+09:00",
+    "prompt_version": "llm-v1"
+}

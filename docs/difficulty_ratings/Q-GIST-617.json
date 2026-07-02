@@ -1,0 +1,24 @@
+{
+    "quest_code": "Q-GIST-617",
+    "difficulty_level": 3,
+    "difficulty_score": 58,
+    "label_ko": "논객",
+    "label_en": "Debater",
+    "signals": {
+        "topic_familiarity": "medium",
+        "concept_abstraction": "mixed",
+        "background_knowledge": "medium",
+        "hinge_complexity": "moderate",
+        "vocabulary_difficulty": "medium"
+    },
+    "reasons": [
+        "논문 조작 자체는 이해 가능하지만 중국 과학계의 연구 인센티브 구조와 정치적 통제까지 함께 봐야 해 단순 사건보다 한 단계 어렵다.",
+        "개별 연구자의 비윤리 문제를 넘어 승진·연구비·현금 보상·대형 연구실 문화가 연결되는 구조적 설명이 필요하다.",
+        "중국의 학계·당국 통제 맥락은 한국 중고등학생에게 아주 친숙하진 않아 약간의 배경지식이 요구된다.",
+        "전문 과학 내용보다 제도와 시스템 분석이 중심이어서 완전 추상적이진 않지만 여러 이해관계를 연결해야 한다."
+    ],
+    "student_frame_ko": "논객 단계 · 익숙한 ‘부정행위’ 주제에서 한 걸음 더 나아가 구조적 원인을 따져보는 글",
+    "source": "llm",
+    "classified_at": "2026-07-02T16:55:48+09:00",
+    "prompt_version": "llm-v1"
+}

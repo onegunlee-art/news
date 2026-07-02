@@ -1,0 +1,25 @@
+{
+    "quest_code": "Q-GIST-567",
+    "difficulty_level": 4,
+    "difficulty_score": 72,
+    "label_ko": "분석가",
+    "label_en": "Analyst",
+    "signals": {
+        "topic_familiarity": "low",
+        "concept_abstraction": "abstract",
+        "background_knowledge": "high",
+        "hinge_complexity": "multilayer",
+        "vocabulary_difficulty": "medium"
+    },
+    "reasons": [
+        "우주 산업과 과세권의 결합은 중고등학생에게 매우 낯선 주제다.",
+        "세금 자체는 익숙하지만 우주조약, 우주선 등록, 국가별 과세권처럼 국제법·조세 체계가 함께 얽혀 있어 추상도가 높다.",
+        "‘우주는 공동 영역’이라는 원칙과 ‘국가가 세금을 매기려는 현실’이 충돌해 단순 찬반보다 구조적 이해가 필요하다.",
+        "민간 우주기업, 주권 경쟁, 조세회피 문제까지 이어져 이해관계가 여러 층으로 연결된다.",
+        "전문 용어가 아주 난해한 편은 아니지만, 배경지식 없이는 논점을 잡기 어렵다."
+    ],
+    "student_frame_ko": "분석가 단계 · 낯선 국제법·조세 시스템을 함께 이해해야 하는 글",
+    "source": "llm",
+    "classified_at": "2026-07-02T16:56:26+09:00",
+    "prompt_version": "llm-v1"
+}

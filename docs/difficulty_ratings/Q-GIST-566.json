@@ -1,0 +1,24 @@
+{
+    "quest_code": "Q-GIST-566",
+    "difficulty_level": 4,
+    "difficulty_score": 72,
+    "label_ko": "분석가",
+    "label_en": "Analyst",
+    "signals": {
+        "topic_familiarity": "low",
+        "concept_abstraction": "mixed",
+        "background_knowledge": "high",
+        "hinge_complexity": "multilayer",
+        "vocabulary_difficulty": "medium"
+    },
+    "reasons": [
+        "인도 재벌 아다니 그룹, 미국 형사 혐의, 인도 규제당국, BJP 등 중고등학생에게는 낯선 해외 경제·정치 맥락이 많다.",
+        "핵심 판단이 개인의 사업 역량과 외부 제도·정치 환경의 영향력을 구분하는 구조라 단순 사건 이해를 넘어선다.",
+        "사법 리스크, 규제, 경쟁사 부진, 정치적 순풍이 어떻게 반등으로 연결되는지 여러 요인을 함께 따라가야 한다.",
+        "어휘 자체가 아주 전문적이진 않지만 재벌, 형사 혐의, 규제당국, 정경유착 같은 시사 용어에 대한 배경지식이 필요하다."
+    ],
+    "student_frame_ko": "분석가 단계 · 낯선 해외 경제·정치 맥락과 여러 외부 요인을 함께 읽어야 하는 글",
+    "source": "llm",
+    "classified_at": "2026-07-02T16:56:44+09:00",
+    "prompt_version": "llm-v1"
+}
