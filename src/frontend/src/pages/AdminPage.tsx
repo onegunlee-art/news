@@ -169,6 +169,18 @@ const buildAiOriginalForSave = (
   return aiResult;
 };
 
+/** FA + 플래그 on일 때 analyze / analyze_content POST body에 prompt_track 포함 */
+const buildFaPromptTrackPayload = (
+  enableFaPromptB: boolean,
+  url: string,
+  faPromptTrack: 'A' | 'B',
+): { prompt_track?: 'A' | 'B' } => {
+  if (enableFaPromptB && isFaArticleUrl(url)) {
+    return { prompt_track: faPromptTrack };
+  }
+  return {};
+};
+
 // 텍스트 정제 함수 - 복사/붙여넣기 시 문제 될 수 있는 문자 변환
 const sanitizeText = (text: string): string => {
   return text
@@ -2134,9 +2146,7 @@ const AdminPage: React.FC = () => {
                                 enable_interpret: false,
                                 enable_learning: false,
                                 use_persona: usePersonaExperiment,
-                                ...(enableFaPromptB && isFaArticleUrl(articleUrl)
-                                  ? { prompt_track: faPromptTrack }
-                                  : {}),
+                                ...buildFaPromptTrackPayload(enableFaPromptB, articleUrl, faPromptTrack),
                               }),
                             });
                             clearTimeout(startTimer);
@@ -2349,6 +2359,7 @@ const AdminPage: React.FC = () => {
                                 enable_interpret: false,
                                 enable_learning: false,
                                 use_persona: usePersonaExperiment,
+                                ...buildFaPromptTrackPayload(enableFaPromptB, articleUrl, faPromptTrack),
                               }),
                             });
                             const startData = await startRes.json();
