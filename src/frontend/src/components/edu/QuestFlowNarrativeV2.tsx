@@ -74,6 +74,31 @@ function parseCoachCardContent(content: string): {
   return { question: question || content, snippets }
 }
 
+function resolveCoachPrompt(
+  dialogue: EduDialogueTurn[],
+  fallback = ''
+): string {
+  for (let i = dialogue.length - 1; i >= 0; i--) {
+    if (dialogue[i].role === 'assistant') {
+      const text = (dialogue[i].content ?? '').trim()
+      if (text !== '') return text
+    }
+  }
+  return fallback.trim()
+}
+
+function resolveCoachPromptFromApi(
+  res: Pick<EduChatResponse, 'assistant_message' | 'choice_question_text'> & {
+    dialogue?: EduDialogueTurn[]
+  }
+): string {
+  const fromDialogue = resolveCoachPrompt(res.dialogue ?? [])
+  if (fromDialogue !== '') return fromDialogue
+  const fromAssistant = (res.assistant_message ?? '').trim()
+  if (fromAssistant !== '') return fromAssistant
+  return (res.choice_question_text ?? '').trim()
+}
+
 function lastAssistantIndex(dialogue: EduDialogueTurn[]): number {
   for (let i = dialogue.length - 1; i >= 0; i--) {
     if (dialogue[i].role === 'assistant') return i
@@ -131,6 +156,7 @@ export default function QuestFlowNarrativeV2() {
   const [dialogue, setDialogue] = useState<EduDialogueTurn[]>([])
   const [board, setBoard] = useState<EduThoughtBoardSlot[]>([])
   const [choices, setChoices] = useState<Choice[]>([])
+  const [coachPrompt, setCoachPrompt] = useState('')
   const [inputMode, setInputMode] = useState('')
   const [textInput, setTextInput] = useState('')
   const [inputFocused, setInputFocused] = useState(false)
@@ -167,6 +193,8 @@ export default function QuestFlowNarrativeV2() {
     if (res.narrative_turn_count != null) setTurnCount(res.narrative_turn_count)
     setChoices(resolveChoices(res))
     setInputMode(resolveInputMode(res))
+    const prompt = resolveCoachPromptFromApi(res)
+    if (prompt !== '') setCoachPrompt(prompt)
     const pulse = res.board_pulse_layer ?? res.blueprint?.board_pulse_layer ?? null
     if (pulse) {
       setPulseLayer(pulse)
@@ -177,7 +205,8 @@ export default function QuestFlowNarrativeV2() {
   const syncSessionState = useCallback(async (sid: string) => {
     const state = await eduApi.getSessionState(sid)
     setQuest(state.quest)
-    setDialogue(state.dialogue ?? [])
+    const nextDialogue = state.dialogue ?? []
+    setDialogue(nextDialogue)
     setProgressPct(state.progress_pct)
     setPhase(state.blueprint?.phase ?? 'narrative_bridge_v2')
     setBoard(state.thought_board ?? state.blueprint?.thought_board ?? [])
@@ -186,6 +215,8 @@ export default function QuestFlowNarrativeV2() {
     setInputMode(
       (state.narrative_v2_input_mode ?? state.blueprint?.narrative_v2_input_mode ?? '').trim()
     )
+    const prompt = resolveCoachPrompt(nextDialogue, state.choice_question_text ?? '')
+    if (prompt !== '') setCoachPrompt(prompt)
     return state
   }, [])
 
@@ -229,12 +260,12 @@ export default function QuestFlowNarrativeV2() {
 
   const handleChatResponse = useCallback(
     async (res: EduChatResponse, sid: string) => {
-      await syncSessionState(sid)
       applyResponse(res)
       if (shouldTriggerEduCompose(res)) {
         composeStartedRef.current = true
         await handleCompose(sid)
       }
+      await syncSessionState(sid)
     },
     [applyResponse, handleCompose, syncSessionState]
   )
@@ -347,9 +378,10 @@ export default function QuestFlowNarrativeV2() {
 
   const coachIndex = lastAssistantIndex(dialogue)
   const coachTurn = coachIndex >= 0 ? dialogue[coachIndex] : null
+  const coachMessage = (coachTurn?.content ?? '').trim() || coachPrompt
   const cardContent = useMemo(
-    () => parseCoachCardContent(coachTurn?.content ?? ''),
-    [coachTurn?.content]
+    () => parseCoachCardContent(coachMessage),
+    [coachMessage]
   )
   const cardParagraphs = splitCoachParagraphs(cardContent.question)
   const cardKey = `${phase}-${coachIndex}-${dialogue.length}-${inputMode}-${choices.map(c => c.id).join('|')}`

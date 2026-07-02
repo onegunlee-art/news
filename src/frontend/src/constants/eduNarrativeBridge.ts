@@ -91,7 +91,7 @@ export function filledThoughtBoardCount(board: EduThoughtBoardSlot[]): number {
 /** 옛 axis_guide/card 세션이 v2 UI와 섞인 경우 */
 export function narrativeV2SessionIsPolluted(
   blueprint: Pick<EduBlueprint, 'phase'> | null | undefined,
-  dialogue: Array<{ role?: string; turn_id?: string | null }> | null | undefined,
+  dialogue: Array<{ role?: string; turn_id?: string | null; agent?: string | null }> | null | undefined,
   pollutedFlag?: boolean
 ): boolean {
   if (pollutedFlag) return true
@@ -99,7 +99,11 @@ export function narrativeV2SessionIsPolluted(
   if (turns.length === 0) return false
   if ((blueprint?.phase ?? '') !== EDU_NARRATIVE_BRIDGE_V2) return true
   return turns.some(t => {
+    const agent = (t.agent ?? '').trim()
+    if (agent === 'narrative_v2') return false
     const tid = (t.turn_id ?? '').trim()
-    return tid !== '' && tid !== 'narrative_v2'
+    if (tid === 'narrative_v2') return false
+    if (tid !== '' && !/^t-\d+$/.test(tid)) return true
+    return agent !== '' && agent !== 'narrative_v2'
   })
 }

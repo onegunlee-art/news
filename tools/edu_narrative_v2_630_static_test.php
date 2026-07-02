@@ -107,7 +107,11 @@ ok('polluted: legacy turn_id', eduNarrativeV2SessionIsPolluted(
 ok('clean: empty dialogue', !eduNarrativeV2SessionIsPolluted(['phase' => 'guide_axis'], []));
 ok('clean: v2 dialogue', !eduNarrativeV2SessionIsPolluted(
     ['phase' => EDU_NARRATIVE_V2_PHASE],
-    [['role' => 'assistant', 'content' => '1945', 'turn_id' => 'narrative_v2']]
+    [['role' => 'assistant', 'content' => '1945', 'turn_id' => 't-1', 'agent' => 'narrative_v2']]
+));
+ok('clean: v2 agent marker', !eduNarrativeV2SessionIsPolluted(
+    ['phase' => EDU_NARRATIVE_V2_PHASE],
+    [['role' => 'assistant', 'content' => '1945', 'turn_id' => 't-2', 'agent' => 'narrative_v2']]
 ));
 
 $resetInit = eduNarrativeV2HandleInit($legacyBp, $questV2, true);
@@ -120,6 +124,7 @@ $v2Ui = is_file($root . '/src/frontend/src/components/edu/QuestFlowNarrativeV2.t
     : '';
 ok('V2 auto reset on pollution', str_contains($v2Ui, 'narrativeV2SessionIsPolluted'));
 ok('V2 force_reset payload', str_contains($v2Ui, 'force_reset'));
+ok('V2 coach prompt fallback', str_contains($v2Ui, 'choice_question_text'));
 
 echo "\nResult: {$pass} passed, {$fail} failed\n";
 exit($fail > 0 ? 1 : 0);

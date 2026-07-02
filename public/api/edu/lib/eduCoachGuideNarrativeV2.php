@@ -279,8 +279,18 @@ function eduNarrativeV2SessionIsPolluted(array $blueprint, array $dialogue): boo
         if (!is_array($turn)) {
             continue;
         }
+        $agent = trim((string) ($turn['agent'] ?? ''));
+        if ($agent === 'narrative_v2') {
+            continue;
+        }
         $tid = trim((string) ($turn['turn_id'] ?? ''));
-        if ($tid !== '' && $tid !== 'narrative_v2') {
+        if ($tid === 'narrative_v2') {
+            continue;
+        }
+        if ($tid !== '' && !preg_match('/^t-\d+$/', $tid)) {
+            return true;
+        }
+        if ($agent !== '' && $agent !== 'narrative_v2') {
             return true;
         }
     }
