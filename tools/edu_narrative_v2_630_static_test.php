@@ -68,6 +68,12 @@ ok('essay structure from board', ($structure['generated_by'] ?? '') === 'thought
 ok('structure sections >= 6', count($structure['sections'] ?? []) >= 6);
 ok('composer accepts prebuilt', eduNarrativeV2HasPrebuiltStructure(eduNarrativeV2BuildComposeBlueprint($bp, $questV2)));
 
+$bpSynth = eduNarrativeV2InitBlueprint(eduBlueprintDefaults(), $script);
+$bpSynth['narrative_v2_node'] = 'n_synth_0';
+$bpSynth['phase'] = EDU_NARRATIVE_V2_PHASE;
+$restore = eduNarrativeV2RestoreMeta($bpSynth, $questV2, [['role' => 'assistant', 'content' => 'test']]);
+ok('state restore text input mode', is_array($restore) && ($restore['narrative_v2_input_mode'] ?? '') === 'text');
+
 $paths = eduNarrativeV2EnumeratePaths($script, (string) $script['start_node']);
 ok('paths enumerated', count($paths) >= 1);
 echo 'INFO path_count=' . count($paths) . "\n";
@@ -77,7 +83,9 @@ $ui = is_file($root . '/src/frontend/src/components/edu/QuestFlowNarrativeV2.tsx
     : '';
 ok('V2 UI exists', $ui !== '');
 ok('thought board panel', str_contains($ui, 'EduThoughtBoardPanel'));
-ok('mobile keyboard inset', str_contains($ui, 'keyboardInset'));
+ok('mobile keyboard inset', str_contains($ui, 'useVisualViewportLayout'));
+ok('card snippet parsing', str_contains($ui, 'parseCoachCardContent'));
+ok('article snippet card', str_contains($ui, 'EduArticleSnippetCard'));
 
 $page = is_file($root . '/src/frontend/src/pages/edu/QuestFlowPage.tsx')
     ? (string) file_get_contents($root . '/src/frontend/src/pages/edu/QuestFlowPage.tsx')

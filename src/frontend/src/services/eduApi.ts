@@ -174,6 +174,7 @@ export interface EduBlueprint {
   last_choice_id?: string | null
   /** narrative_bridge_v2 */
   narrative_v2_node?: string | null
+  narrative_v2_input_mode?: string | null
   narrative_turn_count?: number
   thought_board?: EduThoughtBoardSlot[]
   board_pulse_layer?: string | null

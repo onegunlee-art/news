@@ -40,6 +40,7 @@ function eduBlueprintDefaults(): array
         'narrative_complete' => false,
         'last_choice_id' => null,
         'narrative_v2_node' => null,
+        'narrative_v2_input_mode' => null,
         'narrative_turn_count' => 0,
         'thought_board' => [],
         'board_pulse_layer' => null,

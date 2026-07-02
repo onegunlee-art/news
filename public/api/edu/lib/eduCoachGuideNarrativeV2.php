@@ -248,6 +248,7 @@ function eduNarrativeV2PresentNode(array $blueprint, array $quest, array $script
     $blueprint = eduMergeBlueprint($blueprint, [
         'narrative_v2_node' => $nodeId,
         'board_pulse_layer' => $pulse !== '' ? $pulse : null,
+        'narrative_v2_input_mode' => $inputMode !== '' ? $inputMode : null,
     ]);
 
     return [
@@ -564,7 +565,10 @@ function eduNarrativeV2RestoreMeta(array $blueprint, array $quest, array $dialog
     }
     $present = eduNarrativeV2PresentNode($blueprint, $quest, $script, $nodeId);
 
-    return eduNarrativeV2AttachResponseFields([], $present['blueprint'], $present['choices'], $present['message']);
+    return eduNarrativeV2AttachResponseFields([
+        'input_mode' => (string) ($present['input_mode'] ?? ''),
+        'board_diff' => $present['board_diff'] ?? null,
+    ], $present['blueprint'], $present['choices'], $present['message']);
 }
 
 /** @param list<array<string, mixed>> $paths @param array<string, mixed> $script */
