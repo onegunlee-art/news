@@ -11,36 +11,55 @@ const EDU_NARRATIVE_V2_QUEST_CODE = 'Q-AUTO-NUKE-630';
 const EDU_NARRATIVE_V2_MODE = 'narrative_bridge_v2';
 const EDU_NARRATIVE_V2_SCRIPT = 'docs/coach_scripts/630_narrative_v2.json';
 const EDU_NARRATIVE_V2_PHASE = 'narrative_bridge_v2';
+const EDU_NARRATIVE_V2_SCRIPT_DIR = 'docs/coach_scripts';
 
 /** @param array<string, mixed> $quest */
 function eduQuestUsesNarrativeV2(array $quest): bool
 {
-    if (($quest['quest_code'] ?? '') !== EDU_NARRATIVE_V2_QUEST_CODE) {
+    $hints = eduQuestHammerHints($quest);
+    if (($hints['coach_mode'] ?? '') !== EDU_NARRATIVE_V2_MODE) {
         return false;
     }
-    $hints = eduQuestHammerHints($quest);
+    $code = (string) ($quest['quest_code'] ?? '');
+    if ($code === EDU_NARRATIVE_V2_QUEST_CODE) {
+        return true;
+    }
 
-    return ($hints['coach_mode'] ?? '') === EDU_NARRATIVE_V2_MODE;
+    return is_file(eduNarrativeV2ScriptPath($code));
 }
 
-/** @return array<string, mixed> */
-function eduNarrativeV2LoadScript(): array
+function eduNarrativeV2ScriptPath(string $questCode): string
 {
-    static $cached = null;
-    if (is_array($cached)) {
-        return $cached;
+    if ($questCode === EDU_NARRATIVE_V2_QUEST_CODE) {
+        return eduFindProjectRoot() . EDU_NARRATIVE_V2_SCRIPT;
     }
-    $path = eduFindProjectRoot() . EDU_NARRATIVE_V2_SCRIPT;
+    $safe = preg_replace('/[^a-zA-Z0-9._-]+/', '_', $questCode) ?: 'unknown';
+
+    return eduFindProjectRoot() . EDU_NARRATIVE_V2_SCRIPT_DIR . '/' . $safe . '_narrative_v2.json';
+}
+
+/** @param array<string, mixed> $quest @return array<string, mixed> */
+function eduNarrativeV2LoadScript(array $quest): array
+{
+    static $cache = [];
+    $code = (string) ($quest['quest_code'] ?? '');
+    if ($code === '') {
+        throw new RuntimeException('Quest code required for narrative v2 script');
+    }
+    if (isset($cache[$code])) {
+        return $cache[$code];
+    }
+    $path = eduNarrativeV2ScriptPath($code);
     if (!is_file($path)) {
-        throw new RuntimeException('Narrative v2 script missing');
+        throw new RuntimeException('Narrative v2 script missing: ' . $code);
     }
     $raw = json_decode((string) file_get_contents($path), true);
     if (!is_array($raw) || empty($raw['nodes']) || empty($raw['start_node'])) {
-        throw new RuntimeException('Invalid narrative v2 script');
+        throw new RuntimeException('Invalid narrative v2 script: ' . $code);
     }
-    $cached = $raw;
+    $cache[$code] = $raw;
 
-    return $cached;
+    return $cache[$code];
 }
 
 /** @param array<string, mixed> $script @return list<array<string, mixed>> */
@@ -301,7 +320,7 @@ function eduNarrativeV2SessionIsPolluted(array $blueprint, array $dialogue): boo
 /** @param array<string, mixed> $blueprint @param array<string, mixed> $quest */
 function eduNarrativeV2HandleInit(array $blueprint, array $quest, bool $forceReset = false): array
 {
-    $script = eduNarrativeV2LoadScript();
+    $script = eduNarrativeV2LoadScript($quest);
     if ($forceReset) {
         $blueprint = eduNarrativeV2InitBlueprint(eduBlueprintDefaults(), $script);
         $nodeId = (string) ($blueprint['narrative_v2_node'] ?? $script['start_node']);
@@ -360,7 +379,7 @@ function eduNarrativeV2ApplyChoiceSideEffects(array &$blueprint, array $quest, a
 /** @param array<string, mixed> $blueprint @param array<string, mixed> $quest */
 function eduNarrativeV2HandleChoice(array $blueprint, array $quest, string $choiceId): array
 {
-    $script = eduNarrativeV2LoadScript();
+    $script = eduNarrativeV2LoadScript($quest);
     $nodeId = trim((string) ($blueprint['narrative_v2_node'] ?? ''));
     if ($nodeId === '') {
         $init = eduNarrativeV2HandleInit($blueprint, $quest);
@@ -413,7 +432,7 @@ function eduNarrativeV2HandleChoice(array $blueprint, array $quest, string $choi
 /** @param array<string, mixed> $blueprint @param array<string, mixed> $quest */
 function eduNarrativeV2HandleMessage(array $blueprint, array $quest, string $message): array
 {
-    $script = eduNarrativeV2LoadScript();
+    $script = eduNarrativeV2LoadScript($quest);
     $nodeId = trim((string) ($blueprint['narrative_v2_node'] ?? ''));
     $node = eduNarrativeV2GetNode($script, $nodeId);
     if ($node === null) {
@@ -602,7 +621,7 @@ function eduNarrativeV2RestoreMeta(array $blueprint, array $quest, array $dialog
     if ((string) ($blueprint['phase'] ?? '') !== EDU_NARRATIVE_V2_PHASE || !empty($blueprint['ready_for_compose'])) {
         return null;
     }
-    $script = eduNarrativeV2LoadScript();
+    $script = eduNarrativeV2LoadScript($quest);
     $nodeId = trim((string) ($blueprint['narrative_v2_node'] ?? $script['start_node']));
     $node = eduNarrativeV2GetNode($script, $nodeId);
     if ($node === null) {

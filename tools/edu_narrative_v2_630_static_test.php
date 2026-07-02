@@ -36,7 +36,7 @@ $quest150 = ['quest_code' => 'Q-AUTO-DC-150', 'hammer_hints' => []];
 
 echo "=== 630 narrative v2 static test ===\n\n";
 
-$script = eduNarrativeV2LoadScript();
+$script = eduNarrativeV2LoadScript($questV2);
 ok('script loaded', ($script['version'] ?? '') === 'narrative_bridge_v2');
 ok('6 layers defined', count($script['layers'] ?? []) === 6);
 

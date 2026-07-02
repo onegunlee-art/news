@@ -18,7 +18,7 @@ export function questUsesNarrativeBridgeV2(
   quest: Pick<EduQuest, 'quest_code' | 'coach_mode'> | null | undefined
 ): boolean {
   if (!quest) return false
-  return quest.quest_code === EDU_NARRATIVE_BRIDGE_QUEST_CODE && quest.coach_mode === EDU_NARRATIVE_BRIDGE_V2
+  return quest.coach_mode === EDU_NARRATIVE_BRIDGE_V2
 }
 
 /** @deprecated use questUsesNarrativeBridgeV1 */
