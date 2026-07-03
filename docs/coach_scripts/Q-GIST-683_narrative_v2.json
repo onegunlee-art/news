@@ -55,142 +55,142 @@
     "nodes": {
         "n_intro": {
             "layer": "intro",
-            "coach_text": "브렉시트 얘기를 다시 꺼내지 않는 게 정말 영국 정치를 안정시키는 길일까?\n\n많은 사람은 \"브렉시트를 존중하며 더 이상 다시 싸우지 않는 것이 영국 정치에 유리한가\"라고 생각해.\n\n브렉시트를 더 이상 쟁점화하지 않고 존중하는 것이 정치적으로 안전해 보이지만, 그러나 영국의 성장·시장 신뢰·생활수준을 회복하려면 EU와의 더 긴밀한 재결합을 정면으로 말해야 한다\n\n왜 그렇게 생각할까?",
+            "coach_text": "총리는 바뀌었지만 영국 정치의 큰 짐은 그대로 남아 있다는 해석이 나와. 스타머는 큰 의석을 얻었지만 득표율은 33.7%였고, 많은 유권자는 열광보다 ‘혼란을 끝낼 차분한 관리자’를 원했다는 거지. 그렇다면 브렉시트 얘기를 다시 꺼내지 않는 게 정말 영국 정치를 안정시키는 길일까?",
             "choices": [
                 {
                     "id": "nuclear_fear",
-                    "label": "A 쪽이 더 와닿아",
+                    "label": "또 싸우기 싫어서, 그냥 건드리지 않는 게 낫다",
                     "next": "n_stance_bridge_fear"
                 },
                 {
                     "id": "just_luck",
-                    "label": "B 쪽도 설명돼",
+                    "label": "지금은 조용히 관리만 잘하면 버틸 수 있다",
                     "next": "n_stance_bridge_luck"
                 },
                 {
                     "id": "other_reason",
-                    "label": "다른 이유",
+                    "label": "다른 이유가 더 크다고 본다",
                     "next": "n_stance_bridge_other"
                 }
             ]
         },
         "n_stance_bridge_fear": {
             "layer": "stance",
-            "coach_text": "좋아, 브렉시트를 존중하며 더 이상 다시 싸우지 않는 것이 영국 정치에 유리한가에서 시작해보자.\n영국 스타머 총리의 사임 발표, 그리고 늦게 도착한 브렉시트 청구서 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아. 그럼 네 입장은 어느 쪽에 더 가까워? 브렉시트를 존중하고 다시 전면 쟁점화하지 않는 편이 정치적으로 낫다고 보니, 아니면 비용이 커지는 만큼 재연계를 더 분명히 말해야 한다고 보니?",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "다시 크게 다투지 않는 편이 낫다",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "브렉시트를 존중하며 더 이상 다시 싸우지 않는 것이 영국 정치에 유리한가"
+                        "text": "① 입장: 브렉시트를 다시 정면 쟁점화하지 않는 편이 정치적으로 유리하다"
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "재연계를 더 솔직하게 말해야 한다",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "브렉시트를 존중하며 더 이상 다시 싸우지 않는 것이 영국 정치에 유리한가"
+                        "text": "① 입장: 정치적 부담이 있어도 EU와의 경제 재연계를 더 분명히 말해야 한다"
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "둘 다 일리가 있어서 아직 반반이다",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "브렉시트를 존중하며 더 이상 다시 싸우지 않는 것이 영국 정치에 유리한가"
+                        "text": "① 입장: 안정과 재연계 사이에서 아직 판단이 갈린다"
                     }
                 }
             ]
         },
         "n_stance_bridge_luck": {
             "layer": "stance",
-            "coach_text": "좋아, 브렉시트를 존중하며 더 이상 다시 싸우지 않는 것이 영국 정치에 유리한가에서 시작해보자.\n영국 스타머 총리의 사임 발표, 그리고 늦게 도착한 브렉시트 청구서 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아. 그럼 한쪽으로 먼저 서 보자. 당장은 브렉시트를 덮고 관리에 집중하는 편이 낫다고 보니, 아니면 결국 비용 문제를 정면으로 다뤄야 한다고 보니?",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "당장은 덮고 관리하는 편이 낫다",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "브렉시트를 존중하며 더 이상 다시 싸우지 않는 것이 영국 정치에 유리한가"
+                        "text": "① 입장: 당장은 브렉시트를 다시 흔들지 않고 관리하는 편이 낫다"
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "결국 비용을 정면으로 다뤄야 한다",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "브렉시트를 존중하며 더 이상 다시 싸우지 않는 것이 영국 정치에 유리한가"
+                        "text": "① 입장: 관리만으로는 부족하고 브렉시트 비용을 정면으로 다뤄야 한다"
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "아직 어느 쪽이 더 현실적인지 모르겠다",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "브렉시트를 존중하며 더 이상 다시 싸우지 않는 것이 영국 정치에 유리한가"
+                        "text": "① 입장: 관리와 정면 대응 중 어느 쪽이 현실적인지 아직 유보한다"
                     }
                 }
             ]
         },
         "n_stance_bridge_other": {
             "layer": "stance",
-            "coach_text": "좋아, 브렉시트를 존중하며 더 이상 다시 싸우지 않는 것이 영국 정치에 유리한가에서 시작해보자.\n영국 스타머 총리의 사임 발표, 그리고 늦게 도착한 브렉시트 청구서 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아, 네가 보는 다른 이유를 염두에 두고도 먼저 방향을 정해 보자. 브렉시트를 더는 크게 다투지 않는 편이 낫다고 보니, 아니면 경제 문제 때문에 재연계를 더 또렷하게 말해야 한다고 보니?",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "더는 크게 다투지 않는 편이 낫다",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "브렉시트를 존중하며 더 이상 다시 싸우지 않는 것이 영국 정치에 유리한가"
+                        "text": "① 입장: 브렉시트를 다시 크게 쟁점화하지 않는 편이 낫다"
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "재연계를 더 또렷하게 말해야 한다",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "브렉시트를 존중하며 더 이상 다시 싸우지 않는 것이 영국 정치에 유리한가"
+                        "text": "① 입장: 경제 회복을 위해 재연계를 더 분명히 제시해야 한다"
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "판단을 더 해봐야 한다",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "브렉시트를 존중하며 더 이상 다시 싸우지 않는 것이 영국 정치에 유리한가"
+                        "text": "① 입장: 아직은 판단 보류, 더 따져봐야 한다"
                     }
                 }
             ]
         },
         "n_stance_card": {
             "layer": "stance",
-            "coach_text": "좋아, 네 입장이 잡혔어. (판에 적혔지)\n근데 그냥 믿는 것과 따지는 건 다르잖아. 하나씩 파보자.\n\n왜 핵이 있으면 안전하다고 생각해?",
+            "coach_text": "좋아, 입장을 세웠네. 그 선택을 떠받치는 핵심 이유는 뭐야?",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "cant_touch",
-                    "label": "아무도 못 건드려서",
+                    "label": "브렉시트는 다시 건드리면 정치적 반발이 너무 크다",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "stop_war",
-                    "label": "전쟁을 막아서",
+                    "label": "유권자들은 이 논쟁보다 생활 안정과 질서 회복을 더 원한다",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 말해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -198,22 +198,22 @@
         },
         "n_stance_card_no": {
             "layer": "stance",
-            "coach_text": "신중하네. 네 입장이 판에 잡혔어.\n왜 핵 없이도 괜찮다고 보는지 — 이유를 따져보자.",
+            "coach_text": "좋아, 그 입장을 왜 택했는지 한 번 더 선명하게 해보자.",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "alliance",
-                    "label": "동맹이 있어서",
+                    "label": "경제 비용이 커지는데도 회피하면 더 큰 대가를 치른다",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "danger",
-                    "label": "핵이 오히려 위험해서",
+                    "label": "현실이 바뀌었는데 정치가 못 따라가면 정당성 문제가 생긴다",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 말해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -221,22 +221,22 @@
         },
         "n_stance_card_half": {
             "layer": "stance",
-            "coach_text": "솔직하네. 입장이 판에 잡혔어.\n왜 그렇게 반반으로 보는지 — 이유를 따져보자.",
+            "coach_text": "좋아, 아직 반반이라면 왜 망설이는지부터 잡아보자.",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "not_sure",
-                    "label": "장단이 있어서",
+                    "label": "정치적 안정도 중요하고 경제 회복도 중요해서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "need_more",
-                    "label": "더 알아봐야 해서",
+                    "label": "여론 변화와 실제 경제 효과를 더 봐야 해서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 고민을 직접 말해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -244,273 +244,273 @@
         },
         "n_reason_why2": {
             "layer": "reason",
-            "coach_text": "그렇지. 근데 '왜' 못 건드릴까? 상대 입장에서 생각하면?",
+            "coach_text": "좋아. 그 이유를 조금 더 구체화해 보자. 네 생각을 가장 잘 받쳐주는 근거는 뭐야?",
             "choices": [
                 {
                     "id": "fear_revenge",
-                    "label": "보복이 무서워서",
+                    "label": "브렉시트를 다시 꺼내면 정치적 역풍이 커질 수 있다",
                     "next": "n_reason_card",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 브렉시트를 존중하며 더 이상 다시 싸우지 않는 것이 영국 정치에 유리한가"
+                        "text": "② 근거: 브렉시트 재쟁점화는 정치적 역풍과 분열을 키울 수 있다"
                     }
                 },
                 {
                     "id": "intl_pressure",
-                    "label": "국제사회 비난",
+                    "label": "성장·시장 신뢰·생활수준 문제를 풀려면 경제 재연계가 필요하다",
                     "next": "n_reason_card_intl",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 브렉시트를 존중하며 더 이상 다시 싸우지 않는 것이 영국 정치에 유리한가"
+                        "text": "② 근거: 성장과 시장 신뢰 회복을 위해 EU와의 경제 재연계가 필요하다"
                     }
                 },
                 {
                     "id": "unsure_reason",
-                    "label": "음...",
+                    "label": "아직 어떤 근거가 더 중요한지 헷갈린다",
                     "next": "n_reason_card",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 브렉시트를 존중하며 더 이상 다시 싸우지 않는 것이 영국 정치에 유리한가"
+                        "text": "② 근거: 정치 안정과 경제 비용 중 무엇이 더 큰지 아직 판단 중이다"
                     }
                 }
             ]
         },
         "n_reason_card": {
             "layer": "reason",
-            "coach_text": "완벽해. 이제 '입장'에 '근거'가 붙었어. **판을 봐** — 생각이 서기 시작했지?",
+            "coach_text": "좋아. 지금 생각판에 ① 입장, ② 근거가 쌓였어. 다음은 그 주장이 언제까지 통하는지, 조건을 더 따져보자.",
             "board_pulse": "reason",
             "choices": [
                 {
                     "id": "see_board",
-                    "label": "판 보니까 그렇네",
+                    "label": "조건과 한계를 따져보자",
                     "next": "n_depth_0"
                 }
             ]
         },
         "n_reason_card_intl": {
             "layer": "reason",
-            "coach_text": "그것도 근거가 될 수 있지. 판에 적혔어. **판을 봐.**",
+            "coach_text": "좋아. 입장과 근거가 연결됐어. 이제 네 주장에 필요한 조건이나 예외를 더 붙여보자.",
             "board_pulse": "reason",
             "choices": [
                 {
                     "id": "see_board",
-                    "label": "판 보니까 그렇네",
+                    "label": "조건을 더 붙여보자",
                     "next": "n_depth_0"
                 }
             ]
         },
         "n_depth_0": {
             "layer": "depth",
-            "coach_text": "한 걸음 더.\n브렉시트를 더 이상 쟁점화하지 않고 존중하는 것이 정치적으로 안전해 보이지만, 그러나 영국의 성장·시장 신뢰·생활수준을 회복하려면 EU와의 더 긴밀한 재결합을 …\n\n예외 상황은 없을까?",
+            "coach_text": "여기서 한 단계 더. ‘브렉시트를 더는 쟁점화하지 않는 전략’은 앞으로도 계속 통할까, 아니면 어느 시점부터는 버티기 어려워질까?",
             "choices": [
                 {
                     "id": "wont_work",
-                    "label": "안 통할 것 같아",
+                    "label": "시간이 갈수록 버티기 어려워질 것 같다",
                     "next": "n_depth_1"
                 },
                 {
                     "id": "still_works",
-                    "label": "그래도 통해",
+                    "label": "당분간은 그래도 통할 수 있다",
                     "next": "n_depth_1"
                 },
                 {
                     "id": "hard_depth",
-                    "label": "어렵다",
+                    "label": "상황에 따라 달라질 것 같다",
                     "next": "n_depth_1"
                 }
             ]
         },
         "n_depth_1": {
             "layer": "depth",
-            "coach_text": "그럼 네 입장('핵=안전')은 — 무조건 맞는 건 아니게 되네?",
+            "coach_text": "좋아. 그럼 조건을 붙여 보자. 어느 경우에 네 판단이 더 설득력 있어져?",
             "choices": [
                 {
                     "id": "conditional",
-                    "label": "조건이 있네",
+                    "label": "경제 지표 악화나 시장 압박이 커지면 더는 회피하기 어렵다",
                     "next": "n_depth_card",
                     "emit_card": {
                         "layer": "depth",
-                        "text": "조건이 있다 — 항상 통하지는 않음"
+                        "text": "③ 깊이: 정치적 침묵은 가능하지만 경제 비용과 시장 압박이 커지면 한계가 온다"
                     }
                 },
                 {
                     "id": "mostly_ok",
-                    "label": "그래도 대부분 맞아",
+                    "label": "그래도 유권자들이 재가입 논쟁보다 안정 자체를 더 원하면 유지될 수 있다",
                     "next": "n_depth_card_mostly",
                     "emit_card": {
                         "layer": "depth",
-                        "text": "조건이 있다 — 항상 통하지는 않음"
+                        "text": "③ 깊이: 경제 부담이 있어도 유권자가 안정 우선을 택하면 회피 전략이 당분간 유지될 수 있다"
                     }
                 }
             ]
         },
         "n_depth_card": {
             "layer": "depth",
-            "coach_text": "봐, 처음엔 '핵=안전'이었는데 이제 '조건부'로 정교해졌어. **판을 봐.** 이게 따지는 거야.",
+            "coach_text": "좋아. 이제 네 입장은 ‘언제 맞고 언제 흔들리는지’까지 보이기 시작했어.",
             "board_pulse": "depth",
             "choices": [
                 {
                     "id": "depth_ok",
-                    "label": "맞아, 정교해졌네",
+                    "label": "이제 반대 방향 질문도 받아보자",
                     "next": "n_counter_0"
                 }
             ]
         },
         "n_depth_card_mostly": {
             "layer": "depth",
-            "coach_text": "그래도 '대부분'과 '항상'은 다르지. 판에 적혔어.",
+            "coach_text": "좋아. 조건이 붙으니 생각이 더 입체적이 됐어.",
             "board_pulse": "depth",
             "choices": [
                 {
                     "id": "depth_ok",
-                    "label": "계속 가보자",
+                    "label": "반대 방향에서 흔들어 보자",
                     "next": "n_counter_0"
                 }
             ]
         },
         "n_counter_0": {
             "layer": "counter",
-            "coach_text": "그런데도 최신 YouGov 조사에서 56%가 브렉시트 탈퇴가 잘못이었다고 답했고, 글은 브렉시트로 영국 장기 GDP가 약 4% 줄었다고 보는데 그냥 덮어두는 게 해결일까?\n\n여론은 이미 바뀌고 있지만 브렉시트의 경제 비용이 본격화되면서, 이를 회피하는 정치가 오히려 성장 부진·시장 압박·정당성 위기를 키우고 있어 EU와의 경제 재연계가 필요하다는 점\n\n네가 아까 말한 입장 — 이 이야기에도 그대로 맞을까?",
+            "coach_text": "그런데도 최신 YouGov 조사에서 56%가 브렉시트 탈퇴가 잘못이었다고 답했고, 글은 브렉시트로 영국 장기 GDP가 약 4% 줄었다고 보는데 그냥 덮어두는 게 해결일까?",
             "choices": [
                 {
                     "id": "might_shake",
-                    "label": "흔들릴 것 같아",
+                    "label": "그 수치들을 보면 회피가 오래가긴 어려워 보인다",
                     "next": "n_counter_still"
                 },
                 {
                     "id": "nuke_different",
-                    "label": "그래도 핵은 달라",
+                    "label": "그래도 여론 변화와 실제 정치 행동은 다를 수 있다",
                     "next": "n_counter_why"
                 },
                 {
                     "id": "unsure_counter",
-                    "label": "모르겠어",
+                    "label": "흔들리긴 하지만 아직 판단은 어렵다",
                     "next": "n_counter_drone"
                 }
             ]
         },
         "n_counter_why": {
             "layer": "counter",
-            "coach_text": "왜 그렇게 봐? (답 강요 없어 — 네 생각대로)",
+            "coach_text": "왜 그렇게 느꼈어? 여론 변화와 경제 비용이 쌓이면 정치도 결국 말을 바꿔야 하는 걸까?",
             "choices": [
                 {
                     "id": "destruction",
-                    "label": "파괴력이 차원이 달라",
+                    "label": "생활수준과 성장 문제가 계속되면 결국 외면하기 어렵다",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "can_defend",
-                    "label": "드론은 막을 수 있어",
+                    "label": "정치권은 표현을 바꿔서라도 사실상 재연계를 추진할 수 있다",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_still": {
             "layer": "counter",
-            "coach_text": "솔직하네. 그래도 핵만큼 무서운 게 있을까?",
+            "coach_text": "반대로, 여론이 바뀌어도 정치가 끝까지 모호하게 버틸 수 있다고 보는 거야?",
             "choices": [
                 {
                     "id": "maybe_not",
-                    "label": "없을 수도",
+                    "label": "완전히는 못 버티고 언젠가는 선명한 선택을 요구받을 것 같다",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "still_nuke",
-                    "label": "핵이 제일 무서워",
+                    "label": "그래도 직접적인 브렉시트 재논쟁은 피하려 할 것 같다",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_drone": {
             "layer": "counter",
-            "coach_text": "괜찮아. 천천히 보자. 드론 수천 대 vs 핵 — 뭐가 더 실제로 쓰일까?",
+            "coach_text": "그럼 핵심은 뭘까? 정책 내용은 가까워져도, 정치 언어만 계속 피하는 방식이 오래 유지될 수 있을까?",
             "choices": [
                 {
                     "id": "drones_real",
-                    "label": "드론이 더 현실적",
+                    "label": "내용과 언어의 괴리가 커지면 정당성 문제가 생길 수 있다",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "nuke_deter",
-                    "label": "핵이 억지해",
+                    "label": "유권자들이 결과만 체감하면 표현의 모호함은 버틸 수도 있다",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_hard": {
             "layer": "counter",
-            "coach_text": "일리 있어. 근데 — '쓸 수 있느냐'는 다른 문제 아닐까?\n핵을 진짜 쏘면 자기도 끝이잖아.",
+            "coach_text": "좋아, 이제 반론을 한 줄로 잡아보자. 방금 질문이 네 원래 입장을 어떻게 흔들었어?",
             "choices": [
                 {
                     "id": "true_hard",
-                    "label": "그건 그렇네",
+                    "label": "정치적 안전만 따지다 경제 현실 대응이 늦어질 수 있다는 점이 걸린다",
                     "next": "n_counter_card",
                     "emit_card": {
                         "layer": "counter",
-                        "text": "여론은 이미 바뀌고 있지만 브렉시트의 경제 비용이 본격화되면서, 이를 회피하는 정치가 오…"
+                        "text": "④ 반론: 브렉시트를 덮어두는 정치가 오히려 성장 부진과 정당성 위기를 키울 수 있다"
                     }
                 },
                 {
                     "id": "still_deter",
-                    "label": "그래도 억지는 돼",
+                    "label": "그래도 현실 대응은 하되, 브렉시트 자체를 다시 전면전으로 만들 필요는 없다고 본다",
                     "next": "n_counter_card_deter",
                     "emit_card": {
                         "layer": "counter",
-                        "text": "여론은 이미 바뀌고 있지만 브렉시트의 경제 비용이 본격화되면서, 이를 회피하는 정치가 오…"
+                        "text": "④ 반론: 경제 현실은 인정해도 브렉시트 재논쟁의 정치적 비용은 여전히 크다"
                     }
                 }
             ]
         },
         "n_counter_card": {
             "layer": "counter",
-            "coach_text": "반론과 네 답이 판에 쌓였어. **판을 봐.**",
+            "coach_text": "좋아. 이제 생각판에 네 입장과 그 입장을 흔드는 질문이 함께 놓였어.",
             "board_pulse": "counter",
             "choices": [
                 {
                     "id": "counter_ok",
-                    "label": "계속 정리하자",
+                    "label": "이제 내 입장을 다시 다듬어보자",
                     "next": "n_refine_0"
                 }
             ]
         },
         "n_counter_card_deter": {
             "layer": "counter",
-            "coach_text": "그 관점도 판에 적혔어.",
+            "coach_text": "좋아. 반론을 받아도 네 중심이 어디에 있는지 보이네.",
             "board_pulse": "counter",
             "choices": [
                 {
                     "id": "counter_ok",
-                    "label": "계속 정리하자",
+                    "label": "그럼 수정된 입장을 정리해보자",
                     "next": "n_refine_0"
                 }
             ]
         },
         "n_refine_0": {
             "layer": "refine",
-            "coach_text": "자, **판을 다시 봐.** 처음 생각에서 많이 왔어.\n① 입장 → ② 근거 → ③ 깊이 → ④ 반론\n이제 네 생각을 다시 정리하면, 어떻게 바뀌었어?",
+            "coach_text": "생각판을 보면, 처음 입장을 그대로 밀기보다 조금 손볼 수도 있겠지. 지금이라면 어떻게 다시 말하고 싶어?",
             "board_diff": true,
             "choices": [
                 {
                     "id": "limits",
-                    "label": "핵은 안전을 주지만 한계가 있다",
+                    "label": "브렉시트를 존중하되, 경제 재연계 필요성은 더 솔직하게 말해야 한다",
                     "next": "n_refine_card",
                     "emit_card": {
                         "layer": "refine",
-                        "text": "처음 생각보다 정교해졌다"
+                        "text": "⑤ 재정립: 브렉시트 자체를 되돌리자는 말보다 경제 재연계를 현실 과제로 분명히 말해야 한다"
                     }
                 },
                 {
                     "id": "still_best",
-                    "label": "여전히 핵이 최선이다",
+                    "label": "그래도 정치 안정이 우선이라 표현은 최대한 신중해야 한다",
                     "next": "n_refine_card_best",
                     "emit_card": {
                         "layer": "refine",
-                        "text": "처음 생각보다 정교해졌다"
+                        "text": "⑤ 재정립: 경제 대응은 하더라도 브렉시트 재쟁점화는 최대한 피하는 게 낫다"
                     }
                 },
                 {
                     "id": "refine_free",
-                    "label": "직접 쓸게",
+                    "label": "내 식으로 다시 정리해볼게",
                     "next": "n_refine_input",
                     "input_mode": "text",
                     "emit_card_on_message": {
@@ -521,31 +521,31 @@
         },
         "n_refine_card": {
             "layer": "refine",
-            "coach_text": "스스로 여기까지 왔어. 처음 '핵=안전'에서 훨씬 정교해졌지?",
+            "coach_text": "좋아. 처음보다 훨씬 정교해졌어. 이제 마지막으로 한 문장 결론을 만들 차례야.",
             "board_pulse": "refine",
             "choices": [
                 {
                     "id": "refine_ok",
-                    "label": "맞아",
+                    "label": "종합 문장으로 가보자",
                     "next": "n_synth_0"
                 }
             ]
         },
         "n_refine_card_best": {
             "layer": "refine",
-            "coach_text": "네 정리가 판에 적혔어. 한번 더 따져보자.",
+            "coach_text": "좋아. 네 입장이 유지되더라도 어떤 한계를 의식하는지는 분명해졌어.",
             "board_pulse": "refine",
             "choices": [
                 {
                     "id": "refine_ok",
-                    "label": "계속",
+                    "label": "이제 최종 정리해보자",
                     "next": "n_synth_0"
                 }
             ]
         },
         "n_refine_input": {
             "layer": "refine",
-            "coach_text": "네 말로 정리해 봐 — 지금 네 생각은?",
+            "coach_text": "좋아. 생각판 ①입장 ②근거 ③깊이 ④반론을 보고, 네 입장을 한 번 다시 써봐. 무엇을 유지하고 무엇을 고쳤는지 드러나면 좋아.",
             "input_mode": "text",
             "emit_card_on_message": {
                 "layer": "refine"
@@ -554,7 +554,7 @@
         },
         "n_synth_0": {
             "layer": "synthesis",
-            "coach_text": "마지막. 이 모든 걸 **한 문장**으로 — 네 결론은?\n(직접 써 봐)",
+            "coach_text": "이제 종합해 보자. ‘브렉시트를 다시 꺼내지 않는 것이 정치적으로 안전해 보이지만, 왜 그것만으로는 부족할 수 있는지’가 드러나게 2~3문장으로 써봐.",
             "input_mode": "text",
             "emit_card_on_message": {
                 "layer": "synthesis"
@@ -563,21 +563,23 @@
         },
         "n_synth_compose": {
             "layer": "synthesis",
-            "coach_text": "이게 네가 10분 넘게 따져서 만든 결론이야.\n누가 준 게 아니라, **네가 쌓은 거**지.\n자 — 이 생각판을 바탕으로 한 편의 글을 써볼까?\n판에 있는 ①~⑥이 그대로 네 글의 뼈대가 될 거야.",
+            "coach_text": "좋아. 생각판의 흐름이 다 모였어. 마지막 문장만 또렷하게 만들면 된다.",
             "board_pulse": "synthesis",
             "choices": [
                 {
                     "id": "go_compose",
-                    "label": "글 쓰러 가기",
+                    "label": "최종 답안을 만들자",
                     "next": "n_compose"
                 }
             ]
         },
         "n_compose": {
             "layer": "synthesis",
-            "terminal": true
+            "terminal": true,
+            "coach_text": "최종 정리: 처음엔 브렉시트를 다시 싸우지 않는 편이 정치적으로 안전해 보여도, 여론 변화와 경제 비용이 커질수록 그 회피 전략은 한계에 부딪힐 수 있어. 그래서 영국 정치가 정말 안정되려면 브렉시트를 덮는 데 그치지 말고, 성장과 생활수준 회복을 위한 EU와의 경제 재연계를 더 정면으로 설명할 수 있는지가 중요해."
         }
     },
-    "llm_followup_fallback": "그렇구나. 한 가지만 더 — 그 말을 한 문장으로 정리하면?",
-    "generated_by": "narrative_v2_generate_rule_v1"
+    "generated_by": "narrative_v2_generate_llm_v2",
+    "llm_followup_fallback": "좋아, 그 이유를 한 문장으로 줄이면 네 입장을 떠받치는 핵심이 뭐라고 볼 수 있을까?",
+    "llm_philosophy_notes": "입장→근거→조건→반론→재정립→종합의 6층을 유지했고, 반론은 결론 대신 질문으로 흔들도록 구성했다."
 }

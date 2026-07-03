@@ -55,142 +55,142 @@
     "nodes": {
         "n_intro": {
             "layer": "intro",
-            "coach_text": "미국이 세계 질서를 떠맡는 건 이제 끝내고 손 떼는 게 맞을까?\n\n많은 사람은 \"자유주의 국제질서가 이미 끝났고 미국은 그 부담에서 벗어나야 하는가?\"라고 생각해.\n\n자유주의 국제질서가 끝났고 미국은 그 부담에서 벗어나야 한다는 인식이 커지고 있지만, 그러나 본문은 미국의 역량과 이해관계상 그 질서는 아직 복원 가능하며 철수보다 개혁이 더 필요하다고 말한다\n\n왜 그렇게 생각할까?",
+            "coach_text": "전후 미국이 떠받쳐 온 국제질서는 완벽하지 않았지만, 지난 80년은 세계사로 보면 드물게 큰 전쟁이 억제되고 교역과 번영이 넓게 이어진 시기였어. 그런데 요즘은 그 질서가 이미 끝났고 미국도 더는 그 부담을 질 필요가 없다는 말이 커지고 있지. 너는 왜 이런 체념이 힘을 얻는다고 봐?",
             "choices": [
                 {
                     "id": "nuclear_fear",
-                    "label": "A 쪽이 더 와닿아",
+                    "label": "전쟁·분쟁이 계속돼서 질서가 이미 무너진 것 같아",
                     "next": "n_stance_bridge_fear"
                 },
                 {
                     "id": "just_luck",
-                    "label": "B 쪽도 설명돼",
+                    "label": "그 안정은 질서 덕분보다 운이 좋았던 거 아닐까",
                     "next": "n_stance_bridge_luck"
                 },
                 {
                     "id": "other_reason",
-                    "label": "다른 이유",
+                    "label": "미국이 감당할 비용과 부담이 너무 커 보여",
                     "next": "n_stance_bridge_other"
                 }
             ]
         },
         "n_stance_bridge_fear": {
             "layer": "stance",
-            "coach_text": "좋아, 자유주의 국제질서가 이미 끝났고 미국은 그 부담에서 벗어나야 하는가?에서 시작해보자.\n미국 주도 글로벌 질서가 끝났다는 체념에 대한 반론 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "그렇게 보면 '질서가 있어도 전쟁은 계속 났다'는 회의가 생길 수 있지. 그럼 지금 질문에는 어디에 더 가까워?",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "미국은 이제 손을 떼는 쪽이 맞아",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "자유주의 국제질서가 이미 끝났고 미국은 그 부담에서 벗어나야 하는가?"
+                        "text": "① 입장: 미국은 글로벌 질서 부담에서 벗어나야 한다"
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "그래도 미국의 역할은 아직 필요해",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "자유주의 국제질서가 이미 끝났고 미국은 그 부담에서 벗어나야 하는가?"
+                        "text": "① 입장: 미국의 리더십은 여전히 필요하다"
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "둘 다 맞는 말 같아 아직 유보할래",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "자유주의 국제질서가 이미 끝났고 미국은 그 부담에서 벗어나야 하는가?"
+                        "text": "① 입장: 미국의 후퇴와 유지 사이에서 판단이 유보된다"
                     }
                 }
             ]
         },
         "n_stance_bridge_luck": {
             "layer": "stance",
-            "coach_text": "좋아, 자유주의 국제질서가 이미 끝났고 미국은 그 부담에서 벗어나야 하는가?에서 시작해보자.\n미국 주도 글로벌 질서가 끝났다는 체념에 대한 반론 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "만약 지난 안정이 질서의 성과라기보다 우연의 결과였다면, 굳이 미국이 계속 떠받칠 이유도 약해 보일 수 있어. 지금 네 기본 입장은 어디에 가까워?",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "미국은 이제 손을 떼는 쪽이 맞아",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "자유주의 국제질서가 이미 끝났고 미국은 그 부담에서 벗어나야 하는가?"
+                        "text": "① 입장: 미국은 글로벌 질서 부담에서 벗어나야 한다"
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "그래도 미국의 역할은 아직 필요해",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "자유주의 국제질서가 이미 끝났고 미국은 그 부담에서 벗어나야 하는가?"
+                        "text": "① 입장: 미국의 리더십은 여전히 필요하다"
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "성과가 있었는지는 더 따져봐야 해",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "자유주의 국제질서가 이미 끝났고 미국은 그 부담에서 벗어나야 하는가?"
+                        "text": "① 입장: 질서의 성과와 필요성 판단을 더 보류한다"
                     }
                 }
             ]
         },
         "n_stance_bridge_other": {
             "layer": "stance",
-            "coach_text": "좋아, 자유주의 국제질서가 이미 끝났고 미국은 그 부담에서 벗어나야 하는가?에서 시작해보자.\n미국 주도 글로벌 질서가 끝났다는 체념에 대한 반론 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "비용과 피로감이 크다는 감각은 많은 사람을 움직이지. 그럼 그 부담을 생각했을 때, 미국은 앞으로 어떤 태도를 취해야 한다고 봐?",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "부담이 큰 만큼 더 물러나야 해",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "자유주의 국제질서가 이미 끝났고 미국은 그 부담에서 벗어나야 하는가?"
+                        "text": "① 입장: 과도한 부담 때문에 미국은 후퇴해야 한다"
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "부담이 있어도 완전히 물러나면 안 돼",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "자유주의 국제질서가 이미 끝났고 미국은 그 부담에서 벗어나야 하는가?"
+                        "text": "① 입장: 부담이 있어도 미국의 핵심 역할은 유지돼야 한다"
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "유지하되 범위와 방식은 줄일 수 있어",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "자유주의 국제질서가 이미 끝났고 미국은 그 부담에서 벗어나야 하는가?"
+                        "text": "① 입장: 미국 역할은 조정이 필요하지만 전면 후퇴는 아니다"
                     }
                 }
             ]
         },
         "n_stance_card": {
             "layer": "stance",
-            "coach_text": "좋아, 네 입장이 잡혔어. (판에 적혔지)\n근데 그냥 믿는 것과 따지는 건 다르잖아. 하나씩 파보자.\n\n왜 핵이 있으면 안전하다고 생각해?",
+            "coach_text": "좋아, 1번 칸에 입장이 놓였어. 그 입장을 떠받치는 첫 이유는 뭐야?",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "cant_touch",
-                    "label": "아무도 못 건드려서",
+                    "label": "미국이 계속 개입할수록 얻는 것보다 잃는 게 커 보여",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "stop_war",
-                    "label": "전쟁을 막아서",
+                    "label": "질서가 있었다 해도 전쟁을 막지 못했잖아",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 말해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -198,22 +198,22 @@
         },
         "n_stance_card_no": {
             "layer": "stance",
-            "coach_text": "신중하네. 네 입장이 판에 잡혔어.\n왜 핵 없이도 괜찮다고 보는지 — 이유를 따져보자.",
+            "coach_text": "좋아, 1번 칸에 입장이 들어갔어. 왜 그쪽이 더 맞다고 느꼈는지 골라보자.",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "alliance",
-                    "label": "동맹이 있어서",
+                    "label": "동맹과 규칙이 무너지면 더 큰 불안이 생길 것 같아",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "danger",
-                    "label": "핵이 오히려 위험해서",
+                    "label": "미국이 빠진 빈자리를 더 위험한 세력이 메울 수 있어",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 말해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -221,22 +221,22 @@
         },
         "n_stance_card_half": {
             "layer": "stance",
-            "coach_text": "솔직하네. 입장이 판에 잡혔어.\n왜 그렇게 반반으로 보는지 — 이유를 따져보자.",
+            "coach_text": "좋아, 1번 칸에 유보 입장이 놓였어. 아직 망설이는 핵심 이유는 뭐야?",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "not_sure",
-                    "label": "장단이 있어서",
+                    "label": "질서의 성과와 실패가 둘 다 보여서 판단이 어려워",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "need_more",
-                    "label": "더 알아봐야 해서",
+                    "label": "미국이 남을 때와 물러날 때의 비용을 더 비교해야 해",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 말해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -244,273 +244,273 @@
         },
         "n_reason_why2": {
             "layer": "reason",
-            "coach_text": "그렇지. 근데 '왜' 못 건드릴까? 상대 입장에서 생각하면?",
+            "coach_text": "그 이유를 한 단계 더 내려가 보자. 네 판단의 바닥에는 어떤 생각이 깔려 있어?",
             "choices": [
                 {
                     "id": "fear_revenge",
-                    "label": "보복이 무서워서",
+                    "label": "미국의 과도한 역할이 오히려 반발과 갈등을 키운다고 봐",
                     "next": "n_reason_card",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 자유주의 국제질서가 이미 끝났고 미국은 그 부담에서 벗어나야 하는가?"
+                        "text": "② 근거: 미국의 과도한 개입은 반발과 갈등을 키울 수 있다"
                     }
                 },
                 {
                     "id": "intl_pressure",
-                    "label": "국제사회 비난",
+                    "label": "규칙과 동맹이 있어도 결국 각국은 자기 이익대로 움직여",
                     "next": "n_reason_card_intl",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 자유주의 국제질서가 이미 끝났고 미국은 그 부담에서 벗어나야 하는가?"
+                        "text": "② 근거: 국제질서는 규칙보다 각국의 이해관계에 더 크게 흔들린다"
                     }
                 },
                 {
                     "id": "unsure_reason",
-                    "label": "음...",
+                    "label": "아직 어떤 이유가 가장 핵심인지 정리가 덜 됐어",
                     "next": "n_reason_card",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 자유주의 국제질서가 이미 끝났고 미국은 그 부담에서 벗어나야 하는가?"
+                        "text": "② 근거: 판단의 핵심 근거를 아직 더 가려야 한다"
                     }
                 }
             ]
         },
         "n_reason_card": {
             "layer": "reason",
-            "coach_text": "완벽해. 이제 '입장'에 '근거'가 붙었어. **판을 봐** — 생각이 서기 시작했지?",
+            "coach_text": "좋아, 2번 칸에 근거가 들어갔어. 이제 그 근거가 어떤 조건에서 더 강해지는지 보자.",
             "board_pulse": "reason",
             "choices": [
                 {
                     "id": "see_board",
-                    "label": "판 보니까 그렇네",
+                    "label": "다음으로 넘어가서 조건을 따져볼래",
                     "next": "n_depth_0"
                 }
             ]
         },
         "n_reason_card_intl": {
             "layer": "reason",
-            "coach_text": "그것도 근거가 될 수 있지. 판에 적혔어. **판을 봐.**",
+            "coach_text": "좋아, 2번 칸이 채워졌어. 이제 그 생각이 언제 맞고 언제 약해지는지 살펴보자.",
             "board_pulse": "reason",
             "choices": [
                 {
                     "id": "see_board",
-                    "label": "판 보니까 그렇네",
+                    "label": "조건과 예외를 따져볼래",
                     "next": "n_depth_0"
                 }
             ]
         },
         "n_depth_0": {
             "layer": "depth",
-            "coach_text": "한 걸음 더.\n자유주의 국제질서가 끝났고 미국은 그 부담에서 벗어나야 한다는 인식이 커지고 있지만, 그러나 본문은 미국의 역량과 이해관계상 그 질서는 아직 복원 가능하며 철수…\n\n예외 상황은 없을까?",
+            "coach_text": "여기서 한 칸 더 깊게 가보자. 미국이 정말 뒤로 물러선다면, 그 이후 질서는 어떻게 굴러갈까?",
             "choices": [
                 {
                     "id": "wont_work",
-                    "label": "안 통할 것 같아",
+                    "label": "각국이 제각각 움직여서 더 불안정해질 것 같아",
                     "next": "n_depth_1"
                 },
                 {
                     "id": "still_works",
-                    "label": "그래도 통해",
+                    "label": "미국이 덜 나서도 지역별 균형은 어느 정도 유지될 수 있어",
                     "next": "n_depth_1"
                 },
                 {
                     "id": "hard_depth",
-                    "label": "어렵다",
+                    "label": "상황마다 달라서 단정하기 어려워",
                     "next": "n_depth_1"
                 }
             ]
         },
         "n_depth_1": {
             "layer": "depth",
-            "coach_text": "그럼 네 입장('핵=안전')은 — 무조건 맞는 건 아니게 되네?",
+            "coach_text": "좋아. 그 판단이 맞으려면 어떤 조건이 붙는다고 볼래?",
             "choices": [
                 {
                     "id": "conditional",
-                    "label": "조건이 있네",
+                    "label": "미국이 줄이더라도 동맹·무역·억제 장치는 남아 있어야 해",
                     "next": "n_depth_card",
                     "emit_card": {
                         "layer": "depth",
-                        "text": "조건이 있다 — 항상 통하지는 않음"
+                        "text": "③ 깊이: 미국 역할 축소가 가능하더라도 동맹과 규칙의 뼈대는 유지돼야 한다"
                     }
                 },
                 {
                     "id": "mostly_ok",
-                    "label": "그래도 대부분 맞아",
+                    "label": "미국 비중이 줄어도 다른 국가들이 어느 정도 메울 수 있어",
                     "next": "n_depth_card_mostly",
                     "emit_card": {
                         "layer": "depth",
-                        "text": "조건이 있다 — 항상 통하지는 않음"
+                        "text": "③ 깊이: 미국 후퇴 뒤에도 다른 행위자들이 질서 일부를 대체할 수 있다"
                     }
                 }
             ]
         },
         "n_depth_card": {
             "layer": "depth",
-            "coach_text": "봐, 처음엔 '핵=안전'이었는데 이제 '조건부'로 정교해졌어. **판을 봐.** 이게 따지는 거야.",
+            "coach_text": "좋아, 3번 칸에는 '조건'이 붙었어. 네 생각이 더 정교해졌네.",
             "board_pulse": "depth",
             "choices": [
                 {
                     "id": "depth_ok",
-                    "label": "맞아, 정교해졌네",
+                    "label": "이제 반대쪽 흔들림도 받아볼래",
                     "next": "n_counter_0"
                 }
             ]
         },
         "n_depth_card_mostly": {
             "layer": "depth",
-            "coach_text": "그래도 '대부분'과 '항상'은 다르지. 판에 적혔어.",
+            "coach_text": "좋아, 3번 칸에 예외와 전망이 들어갔어. 이제 본문이 던지는 흔들림을 보자.",
             "board_pulse": "depth",
             "choices": [
                 {
                     "id": "depth_ok",
-                    "label": "계속 가보자",
+                    "label": "반론 질문으로 넘어갈래",
                     "next": "n_counter_0"
                 }
             ]
         },
         "n_counter_0": {
             "layer": "counter",
-            "coach_text": "그렇게만 보기엔 본문이 미국 후퇴 시 한국·폴란드·사우디·터키·일본에서 핵무장 유인이 커질 수 있다고 짚는데, 부담을 줄이려다 더 큰 위험이 생길 수 있다는 점은 어떻게 볼래?\n\n미국 주도 질서는 불완전했어도 지난 80년간 드문 안정과 번영을 떠받쳤고, 미국의 리더십 위기는 역량 소멸보다 정치적 선택의 문제이므로 포기보다 개혁·보완이 해법이다.\n\n네가 아까 말한 입장 — 이 이야기에도 그대로 맞을까?",
+            "coach_text": "그렇게만 보기엔 본문이 미국 후퇴 시 한국·폴란드·사우디·터키·일본 같은 나라들에서 자체 무장 유인이 커질 수 있다고 짚어. 부담을 줄이려다 오히려 지역 불안과 연쇄 경쟁이 커질 수도 있다면, 네 생각은 어디서 흔들려?",
             "choices": [
                 {
                     "id": "might_shake",
-                    "label": "흔들릴 것 같아",
+                    "label": "맞아, 후퇴의 비용이 생각보다 클 수 있겠네",
                     "next": "n_counter_still"
                 },
                 {
                     "id": "nuke_different",
-                    "label": "그래도 핵은 달라",
+                    "label": "그래도 그 가능성이 곧 미국 지속 역할의 근거는 아닐 수 있어",
                     "next": "n_counter_why"
                 },
                 {
                     "id": "unsure_counter",
-                    "label": "모르겠어",
+                    "label": "그 위험이 실제로 얼마나 큰지 아직 모르겠어",
                     "next": "n_counter_drone"
                 }
             ]
         },
         "n_counter_why": {
             "layer": "counter",
-            "coach_text": "왜 그렇게 봐? (답 강요 없어 — 네 생각대로)",
+            "coach_text": "왜 그 지점이 흔들렸어? 미국이 빠질 때 가장 커질 위험은 뭐라고 봐?",
             "choices": [
                 {
                     "id": "destruction",
-                    "label": "파괴력이 차원이 달라",
+                    "label": "안보 불안이 번지면 여러 나라가 더 공격적으로 움직일 수 있어서",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "can_defend",
-                    "label": "드론은 막을 수 있어",
+                    "label": "각국이 스스로 방어하려다 오히려 경쟁이 커질 수 있어서",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_still": {
             "layer": "counter",
-            "coach_text": "솔직하네. 그래도 핵만큼 무서운 게 있을까?",
+            "coach_text": "반대로 아직 안 흔들린다면, 그 위험을 왜 결정적이라고 보지 않는 거야?",
             "choices": [
                 {
                     "id": "maybe_not",
-                    "label": "없을 수도",
+                    "label": "과장됐을 수 있고 각국이 쉽게 그런 선택을 하진 않을 거야",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "still_nuke",
-                    "label": "핵이 제일 무서워",
+                    "label": "위험이 있더라도 미국이 계속 떠안는 비용도 너무 커",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_drone": {
             "layer": "counter",
-            "coach_text": "괜찮아. 천천히 보자. 드론 수천 대 vs 핵 — 뭐가 더 실제로 쓰일까?",
+            "coach_text": "판단이 어렵다면 이렇게도 물을 수 있어. 미국 리더십이 줄어든 자리를 규칙과 지역 협력이 메울 수 있을까, 아니면 오히려 계산이 거칠어질까?",
             "choices": [
                 {
                     "id": "drones_real",
-                    "label": "드론이 더 현실적",
+                    "label": "지역 협력만으로는 빈자리를 다 메우기 어려울 것 같아",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "nuke_deter",
-                    "label": "핵이 억지해",
+                    "label": "미국이 아니어도 새로운 균형은 만들어질 수 있어",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_hard": {
             "layer": "counter",
-            "coach_text": "일리 있어. 근데 — '쓸 수 있느냐'는 다른 문제 아닐까?\n핵을 진짜 쏘면 자기도 끝이잖아.",
+            "coach_text": "좋아, 이제 반대쪽 질문을 받아본 뒤 네 생각을 한 줄로 잡아보자. 이 흔들림을 어떻게 적어둘래?",
             "choices": [
                 {
                     "id": "true_hard",
-                    "label": "그건 그렇네",
+                    "label": "미국 후퇴는 비용 절감이 아니라 더 큰 불안의 시작일 수 있어",
                     "next": "n_counter_card",
                     "emit_card": {
                         "layer": "counter",
-                        "text": "미국 주도 질서는 불완전했어도 지난 80년간 드문 안정과 번영을 떠받쳤고, 미국의 리더십…"
+                        "text": "④ 반론: 미국 후퇴는 부담 축소보다 연쇄 불안과 경쟁을 키울 수 있다"
                     }
                 },
                 {
                     "id": "still_deter",
-                    "label": "그래도 억지는 돼",
+                    "label": "위험은 있어도 미국의 기존 방식 유지가 답인지도 별개야",
                     "next": "n_counter_card_deter",
                     "emit_card": {
                         "layer": "counter",
-                        "text": "미국 주도 질서는 불완전했어도 지난 80년간 드문 안정과 번영을 떠받쳤고, 미국의 리더십…"
+                        "text": "④ 반론: 후퇴의 위험을 인정해도 기존 미국식 질서 유지가 자동으로 정답은 아니다"
                     }
                 }
             ]
         },
         "n_counter_card": {
             "layer": "counter",
-            "coach_text": "반론과 네 답이 판에 쌓였어. **판을 봐.**",
+            "coach_text": "좋아, 4번 칸에 흔들림이 들어갔어. 이제 네 입장을 다시 세워보자.",
             "board_pulse": "counter",
             "choices": [
                 {
                     "id": "counter_ok",
-                    "label": "계속 정리하자",
+                    "label": "내 입장을 조정해볼래",
                     "next": "n_refine_0"
                 }
             ]
         },
         "n_counter_card_deter": {
             "layer": "counter",
-            "coach_text": "그 관점도 판에 적혔어.",
+            "coach_text": "좋아, 4번 칸이 채워졌어. 반론을 받고도 남은 생각을 정리해보자.",
             "board_pulse": "counter",
             "choices": [
                 {
                     "id": "counter_ok",
-                    "label": "계속 정리하자",
+                    "label": "입장을 다시 다듬어볼래",
                     "next": "n_refine_0"
                 }
             ]
         },
         "n_refine_0": {
             "layer": "refine",
-            "coach_text": "자, **판을 다시 봐.** 처음 생각에서 많이 왔어.\n① 입장 → ② 근거 → ③ 깊이 → ④ 반론\n이제 네 생각을 다시 정리하면, 어떻게 바뀌었어?",
+            "coach_text": "지금까지의 생각판을 보면 '완전한 철수'와 '기존 방식 고수' 사이에 다른 답도 보여. 그렇다면 너는 입장을 어떻게 재정립하겠어?",
             "board_diff": true,
             "choices": [
                 {
                     "id": "limits",
-                    "label": "핵은 안전을 주지만 한계가 있다",
+                    "label": "미국은 물러나기보다 역할의 방식과 범위를 고쳐야 해",
                     "next": "n_refine_card",
                     "emit_card": {
                         "layer": "refine",
-                        "text": "처음 생각보다 정교해졌다"
+                        "text": "⑤ 재정립: 미국의 전면 후퇴보다 부담 분담과 질서 개혁이 필요하다"
                     }
                 },
                 {
                     "id": "still_best",
-                    "label": "여전히 핵이 최선이다",
+                    "label": "불완전해도 지금 질서의 뼈대는 유지하는 편이 낫다고 봐",
                     "next": "n_refine_card_best",
                     "emit_card": {
                         "layer": "refine",
-                        "text": "처음 생각보다 정교해졌다"
+                        "text": "⑤ 재정립: 결함이 있어도 미국 주도 질서의 기본 틀은 지키는 편이 낫다"
                     }
                 },
                 {
                     "id": "refine_free",
-                    "label": "직접 쓸게",
+                    "label": "내 말로 다시 정리해볼게",
                     "next": "n_refine_input",
                     "input_mode": "text",
                     "emit_card_on_message": {
@@ -521,31 +521,31 @@
         },
         "n_refine_card": {
             "layer": "refine",
-            "coach_text": "스스로 여기까지 왔어. 처음 '핵=안전'에서 훨씬 정교해졌지?",
+            "coach_text": "좋아, 5번 칸에서 입장이 한 번 더 다듬어졌어.",
             "board_pulse": "refine",
             "choices": [
                 {
                     "id": "refine_ok",
-                    "label": "맞아",
+                    "label": "마지막으로 전체 판단을 묶어보자",
                     "next": "n_synth_0"
                 }
             ]
         },
         "n_refine_card_best": {
             "layer": "refine",
-            "coach_text": "네 정리가 판에 적혔어. 한번 더 따져보자.",
+            "coach_text": "좋아, 5번 칸이 정리됐어. 이제 처음 질문으로 돌아가 결론을 묶어보자.",
             "board_pulse": "refine",
             "choices": [
                 {
                     "id": "refine_ok",
-                    "label": "계속",
+                    "label": "종합 문장으로 넘어갈래",
                     "next": "n_synth_0"
                 }
             ]
         },
         "n_refine_input": {
             "layer": "refine",
-            "coach_text": "네 말로 정리해 봐 — 지금 네 생각은?",
+            "coach_text": "좋아. 생각판을 보고, 처음 입장에서 무엇이 유지됐고 무엇이 바뀌었는지 한두 문장으로 적어봐.",
             "input_mode": "text",
             "emit_card_on_message": {
                 "layer": "refine"
@@ -554,7 +554,7 @@
         },
         "n_synth_0": {
             "layer": "synthesis",
-            "coach_text": "마지막. 이 모든 걸 **한 문장**으로 — 네 결론은?\n(직접 써 봐)",
+            "coach_text": "이제 1~5번 칸을 바탕으로 6번 종합을 써보자. '미국이 세계 질서를 떠맡는 건 이제 끝내고 손 떼는 게 맞을까?'에 대해, 전면 철수와 개혁·보완 사이의 판단이 드러나게 네 결론을 적어봐.",
             "input_mode": "text",
             "emit_card_on_message": {
                 "layer": "synthesis"
@@ -563,21 +563,23 @@
         },
         "n_synth_compose": {
             "layer": "synthesis",
-            "coach_text": "이게 네가 10분 넘게 따져서 만든 결론이야.\n누가 준 게 아니라, **네가 쌓은 거**지.\n자 — 이 생각판을 바탕으로 한 편의 글을 써볼까?\n판에 있는 ①~⑥이 그대로 네 글의 뼈대가 될 거야.",
+            "coach_text": "좋아, 이제 네 생각판이 거의 완성됐어. 마지막 문장으로 정리하자.",
             "board_pulse": "synthesis",
             "choices": [
                 {
                     "id": "go_compose",
-                    "label": "글 쓰러 가기",
+                    "label": "최종 답안을 완성할래",
                     "next": "n_compose"
                 }
             ]
         },
         "n_compose": {
             "layer": "synthesis",
-            "terminal": true
+            "terminal": true,
+            "coach_text": "좋아. 네 생각은 '질서의 한계 인정 → 후퇴의 위험 검토 → 개혁인지 철수인지 판단' 흐름으로 정리됐어. 이제 그 결론을 자신 있게 제출하면 돼."
         }
     },
-    "llm_followup_fallback": "그렇구나. 한 가지만 더 — 그 말을 한 문장으로 정리하면?",
-    "generated_by": "narrative_v2_generate_rule_v1"
+    "generated_by": "narrative_v2_generate_llm_v2",
+    "llm_followup_fallback": "좋아, 그 이유를 생각판에 올릴 수 있게 더 짧게 말하면 뭐라고 할 수 있을까?",
+    "llm_philosophy_notes": "통념에서 출발해 본문이 드러내는 복잡한 진실로 흔들고, 결론은 학생이 스스로 재정립하도록 질문 중심으로 구성했다."
 }

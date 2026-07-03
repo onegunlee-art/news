@@ -55,142 +55,142 @@
     "nodes": {
         "n_intro": {
             "layer": "intro",
-            "coach_text": "중동 전쟁이 나면 중국 태양광 회사들은 당연히 더 잘나가게 될까?\n\n많은 사람은 \"중동 전쟁으로 에너지 시장이 흔들릴 때 중국 태양광 산업이 수혜를 보는가\"라고 생각해.\n\n중동 전쟁으로 에너지 시장이 흔들리면 중국 태양광 산업이 반사이익을 볼 것 같지만, 실제로는 내수 둔화·과잉공급·보호무역이 겹친 구조적 위기라 전쟁 특수로는 구할 수 없다\n\n왜 그렇게 생각할까?",
+            "coach_text": "중동 전쟁이 터지면 석유·가스 가격이 흔들리고, 대체에너지 기대도 함께 커지곤 해. 그래서 중국처럼 태양광 패널을 많이 만드는 나라가 반사이익을 볼 것처럼 느껴져. 그런데 정말 전쟁만 나면 중국 태양광 회사들은 당연히 더 잘나가게 될까?",
             "choices": [
                 {
                     "id": "nuclear_fear",
-                    "label": "A 쪽이 더 와닿아",
+                    "label": "에너지 불안이 커지면 태양광 수요가 늘 것 같아",
                     "next": "n_stance_bridge_fear"
                 },
                 {
                     "id": "just_luck",
-                    "label": "B 쪽도 설명돼",
+                    "label": "전쟁 특수로 잠깐 수출이 늘 수는 있을 것 같아",
                     "next": "n_stance_bridge_luck"
                 },
                 {
                     "id": "other_reason",
-                    "label": "다른 이유",
+                    "label": "다른 이유가 더 있을 것 같아",
                     "next": "n_stance_bridge_other"
                 }
             ]
         },
         "n_stance_bridge_fear": {
             "layer": "stance",
-            "coach_text": "좋아, 중동 전쟁으로 에너지 시장이 흔들릴 때 중국 태양광 산업이 수혜를 보는가에서 시작해보자.\n혼란에 빠진 중국의 태양광 산업 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아, 에너지 불안이 태양광 수요를 밀 수 있다는 쪽에서 시작해 보자. 그래도 최종적으로는 어떻게 보니?",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "전쟁이 나면 중국 태양광 산업이 꽤 수혜를 본다",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "중동 전쟁으로 에너지 시장이 흔들릴 때 중국 태양광 산업이 수혜를 보는가"
+                        "text": "① 입장: 에너지 불안이 커질수록 중국 태양광 산업은 수혜를 볼 가능성이 크다."
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "그렇게 단순하게 수혜라고 보긴 어렵다",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "중동 전쟁으로 에너지 시장이 흔들릴 때 중국 태양광 산업이 수혜를 보는가"
+                        "text": "① 입장: 전쟁이 나도 중국 태양광 산업을 바로 수혜 산업으로 보긴 어렵다."
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "일부는 수혜지만 전체는 잘 모르겠다",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "중동 전쟁으로 에너지 시장이 흔들릴 때 중국 태양광 산업이 수혜를 보는가"
+                        "text": "① 입장: 단기 수혜는 있을 수 있지만 전체 산업은 별개일 수 있다."
                     }
                 }
             ]
         },
         "n_stance_bridge_luck": {
             "layer": "stance",
-            "coach_text": "좋아, 중동 전쟁으로 에너지 시장이 흔들릴 때 중국 태양광 산업이 수혜를 보는가에서 시작해보자.\n혼란에 빠진 중국의 태양광 산업 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아, 전쟁 특수는 있어도 잠깐일 수 있다는 감각이 있네. 그러면 네 기본 입장은 뭐야?",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "그래도 전체적으로는 수혜 쪽에 가깝다",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "중동 전쟁으로 에너지 시장이 흔들릴 때 중국 태양광 산업이 수혜를 보는가"
+                        "text": "① 입장: 전쟁 특수가 중국 태양광 산업 전반에 도움을 줄 수 있다."
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "잠깐 반짝일 뿐, 전체 수혜로 보긴 어렵다",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "중동 전쟁으로 에너지 시장이 흔들릴 때 중국 태양광 산업이 수혜를 보는가"
+                        "text": "① 입장: 일시적 수출 증가는 있어도 산업 전반의 수혜로 보긴 어렵다."
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "단기와 장기를 나눠서 봐야 할 것 같다",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "중동 전쟁으로 에너지 시장이 흔들릴 때 중국 태양광 산업이 수혜를 보는가"
+                        "text": "① 입장: 단기 효과와 구조적 문제를 함께 봐야 한다."
                     }
                 }
             ]
         },
         "n_stance_bridge_other": {
             "layer": "stance",
-            "coach_text": "좋아, 중동 전쟁으로 에너지 시장이 흔들릴 때 중국 태양광 산업이 수혜를 보는가에서 시작해보자.\n혼란에 빠진 중국의 태양광 산업 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아, 다른 변수가 더 중요하다고 본 거네. 그럼 지금 네 입장을 하나 골라 보자.",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "그래도 전쟁이 나면 중국 태양광 산업엔 도움이 된다",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "중동 전쟁으로 에너지 시장이 흔들릴 때 중국 태양광 산업이 수혜를 보는가"
+                        "text": "① 입장: 전쟁으로 흔들린 에너지 시장은 중국 태양광 산업에 도움을 줄 수 있다."
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "전쟁보다 산업 내부 문제가 더 커 보여",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "중동 전쟁으로 에너지 시장이 흔들릴 때 중국 태양광 산업이 수혜를 보는가"
+                        "text": "① 입장: 전쟁보다 중국 태양광 산업 내부의 구조적 문제가 더 크다."
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "둘 다 있어서 한쪽으로 단정하긴 어렵다",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "중동 전쟁으로 에너지 시장이 흔들릴 때 중국 태양광 산업이 수혜를 보는가"
+                        "text": "① 입장: 전쟁 효과와 산업 구조 문제를 함께 봐야 한다."
                     }
                 }
             ]
         },
         "n_stance_card": {
             "layer": "stance",
-            "coach_text": "좋아, 네 입장이 잡혔어. (판에 적혔지)\n근데 그냥 믿는 것과 따지는 건 다르잖아. 하나씩 파보자.\n\n왜 핵이 있으면 안전하다고 생각해?",
+            "coach_text": "좋아, 이제 왜 그렇게 보는지 가장 가까운 이유를 골라 보자.",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "cant_touch",
-                    "label": "아무도 못 건드려서",
+                    "label": "에너지 가격이 불안할수록 태양광 같은 대체재가 주목받아서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "stop_war",
-                    "label": "전쟁을 막아서",
+                    "label": "중국은 생산량이 워낙 커서 수요만 늘면 바로 이익을 볼 것 같아서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 말해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -198,22 +198,22 @@
         },
         "n_stance_card_no": {
             "layer": "stance",
-            "coach_text": "신중하네. 네 입장이 판에 잡혔어.\n왜 핵 없이도 괜찮다고 보는지 — 이유를 따져보자.",
+            "coach_text": "좋아, 수혜라고 보기 어렵다는 쪽이네. 그 이유를 가장 가깝게 골라 볼래?",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "alliance",
-                    "label": "동맹이 있어서",
+                    "label": "겉으론 수요가 늘어도 산업 안쪽 문제가 더 커 보여서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "danger",
-                    "label": "핵이 오히려 위험해서",
+                    "label": "전쟁 특수는 잠깐이어도 공급 과잉 같은 문제는 계속 남아서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 말해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -221,22 +221,22 @@
         },
         "n_stance_card_half": {
             "layer": "stance",
-            "coach_text": "솔직하네. 입장이 판에 잡혔어.\n왜 그렇게 반반으로 보는지 — 이유를 따져보자.",
+            "coach_text": "좋아, 반반이라고 본 거네. 어떤 점 때문에 망설여져?",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "not_sure",
-                    "label": "장단이 있어서",
+                    "label": "수출은 늘 수 있는데 산업 전체가 좋아질지는 모르겠어",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "need_more",
-                    "label": "더 알아봐야 해서",
+                    "label": "단기 뉴스와 장기 구조를 따로 봐야 할 것 같아",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 생각을 직접 말해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -244,273 +244,273 @@
         },
         "n_reason_why2": {
             "layer": "reason",
-            "coach_text": "그렇지. 근데 '왜' 못 건드릴까? 상대 입장에서 생각하면?",
+            "coach_text": "좋아. 그 이유를 조금 더 구체화해 보자. 뭐가 핵심이라고 보니?",
             "choices": [
                 {
                     "id": "fear_revenge",
-                    "label": "보복이 무서워서",
+                    "label": "에너지 불안이 생기면 태양광 수요가 먼저 튈 수 있어서",
                     "next": "n_reason_card",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 중동 전쟁으로 에너지 시장이 흔들릴 때 중국 태양광 산업이 수혜를 보는가"
+                        "text": "② 근거: 에너지 시장이 흔들리면 대체에너지 수요가 늘 수 있다."
                     }
                 },
                 {
                     "id": "intl_pressure",
-                    "label": "국제사회 비난",
+                    "label": "중국은 생산능력이 커서 늘어난 주문을 빠르게 받기 쉬워서",
                     "next": "n_reason_card_intl",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 중동 전쟁으로 에너지 시장이 흔들릴 때 중국 태양광 산업이 수혜를 보는가"
+                        "text": "② 근거: 중국의 거대한 생산능력은 갑작스런 수요 증가에 대응하기 쉽다."
                     }
                 },
                 {
                     "id": "unsure_reason",
-                    "label": "음...",
+                    "label": "수요 증가는 있어도 어디까지 갈지는 잘 모르겠어",
                     "next": "n_reason_card",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 중동 전쟁으로 에너지 시장이 흔들릴 때 중국 태양광 산업이 수혜를 보는가"
+                        "text": "② 근거: 전쟁이 수요를 자극할 수는 있지만 효과의 크기는 불확실하다."
                     }
                 }
             ]
         },
         "n_reason_card": {
             "layer": "reason",
-            "coach_text": "완벽해. 이제 '입장'에 '근거'가 붙었어. **판을 봐** — 생각이 서기 시작했지?",
+            "coach_text": "좋아, 지금 생각판에 네 근거가 올라갔어. 다음엔 그 근거가 언제까지 통하는지 따져 보자.",
             "board_pulse": "reason",
             "choices": [
                 {
                     "id": "see_board",
-                    "label": "판 보니까 그렇네",
+                    "label": "다음으로 가기",
                     "next": "n_depth_0"
                 }
             ]
         },
         "n_reason_card_intl": {
             "layer": "reason",
-            "coach_text": "그것도 근거가 될 수 있지. 판에 적혔어. **판을 봐.**",
+            "coach_text": "좋아, 근거가 좀 더 선명해졌어. 이제 그 근거가 산업 전체에도 그대로 이어지는지 보자.",
             "board_pulse": "reason",
             "choices": [
                 {
                     "id": "see_board",
-                    "label": "판 보니까 그렇네",
+                    "label": "더 따져보기",
                     "next": "n_depth_0"
                 }
             ]
         },
         "n_depth_0": {
             "layer": "depth",
-            "coach_text": "한 걸음 더.\n항상 그렇게만 될까? 예외는 없을까?",
+            "coach_text": "에너지 불안이 수요를 자극해도, 그게 중국 태양광 산업 전체를 살리는 데까지 이어질까?",
             "choices": [
                 {
                     "id": "wont_work",
-                    "label": "안 통할 것 같아",
+                    "label": "아니, 수요가 늘어도 구조 문제를 덮긴 어려울 것 같아",
                     "next": "n_depth_1"
                 },
                 {
                     "id": "still_works",
-                    "label": "그래도 통해",
+                    "label": "그래도 큰 수요가 들어오면 버틸 힘은 생길 것 같아",
                     "next": "n_depth_1"
                 },
                 {
                     "id": "hard_depth",
-                    "label": "어렵다",
+                    "label": "어느 정도 조건을 나눠서 봐야 할 것 같아",
                     "next": "n_depth_1"
                 }
             ]
         },
         "n_depth_1": {
             "layer": "depth",
-            "coach_text": "그럼 네 입장('핵=안전')은 — 무조건 맞는 건 아니게 되네?",
+            "coach_text": "좋아, 그럼 조건을 붙여 보자. 어떤 식으로 정리할 수 있을까?",
             "choices": [
                 {
                     "id": "conditional",
-                    "label": "조건이 있네",
+                    "label": "수출은 늘 수 있지만 내수 둔화와 전력망 병목은 따로 남는다",
                     "next": "n_depth_card",
                     "emit_card": {
                         "layer": "depth",
-                        "text": "조건이 있다 — 항상 통하지는 않음"
+                        "text": "③ 깊이: 전쟁이 수출을 자극해도 내수 둔화와 전력망 병목은 별개로 남는다."
                     }
                 },
                 {
                     "id": "mostly_ok",
-                    "label": "그래도 대부분 맞아",
+                    "label": "구조 문제는 있어도 단기 수요 증가가 숨통을 틔울 수 있다",
                     "next": "n_depth_card_mostly",
                     "emit_card": {
                         "layer": "depth",
-                        "text": "조건이 있다 — 항상 통하지는 않음"
+                        "text": "③ 깊이: 구조 문제 속에서도 단기 수요 증가는 일부 기업에 버팀목이 될 수 있다."
                     }
                 }
             ]
         },
         "n_depth_card": {
             "layer": "depth",
-            "coach_text": "봐, 처음엔 '핵=안전'이었는데 이제 '조건부'로 정교해졌어. **판을 봐.** 이게 따지는 거야.",
+            "coach_text": "좋아, 이제 '언제는 맞고 언제는 안 맞는지'가 보이기 시작했어. 다음엔 반대쪽 사실로 한번 흔들어 보자.",
             "board_pulse": "depth",
             "choices": [
                 {
                     "id": "depth_ok",
-                    "label": "맞아, 정교해졌네",
+                    "label": "흔들어 보기",
                     "next": "n_counter_0"
                 }
             ]
         },
         "n_depth_card_mostly": {
             "layer": "depth",
-            "coach_text": "그래도 '대부분'과 '항상'은 다르지. 판에 적혔어.",
+            "coach_text": "좋아, 단기 효과 가능성은 잡았어. 그런데 그 효과가 정말 충분한지는 아직 남아 있지. 한번 흔들어 보자.",
             "board_pulse": "depth",
             "choices": [
                 {
                     "id": "depth_ok",
-                    "label": "계속 가보자",
+                    "label": "반론 보기",
                     "next": "n_counter_0"
                 }
             ]
         },
         "n_counter_0": {
             "layer": "counter",
-            "coach_text": "그렇게 보기엔 중국은 올해 1~2월 태양광 발전량의 약 9%를 버렸고, 연간 생산능력은 1,000GW가 넘는데 2025년 전 세계 설치량은 600GW 수준이었어.\n\n전쟁이 동남아와 아프리카 수요를 일부 자극하긴 했어도, 중국 태양광 산업의 핵심 문제는 전력망 병목, 공급 과잉, 정책 후퇴, 보호무역이 겹친 구조적 불균형이다\n\n네가 아까 말한 입장 — 이 이야기에도 그대로 맞을까?",
+            "coach_text": "그렇게 보기엔 중국은 올해 1~2월 태양광 발전량의 약 9%를 버렸고, 연간 생산능력은 1,000GW가 넘는데 2025년 전 세계 설치량은 600GW 수준이었어. 이런 숫자를 보면 전쟁 수요만으로 산업이 살아난다고 말할 수 있을까?",
             "choices": [
                 {
                     "id": "might_shake",
-                    "label": "흔들릴 것 같아",
+                    "label": "듣고 보니 공급 과잉과 병목이 더 커 보여",
                     "next": "n_counter_still"
                 },
                 {
                     "id": "nuke_different",
-                    "label": "그래도 핵은 달라",
+                    "label": "그래도 전쟁이 만든 추가 수요는 무시 못 할 것 같아",
                     "next": "n_counter_why"
                 },
                 {
                     "id": "unsure_counter",
-                    "label": "모르겠어",
+                    "label": "조금 흔들리지만 아직 판단은 어렵다",
                     "next": "n_counter_drone"
                 }
             ]
         },
         "n_counter_why": {
             "layer": "counter",
-            "coach_text": "왜 그렇게 봐? (답 강요 없어 — 네 생각대로)",
+            "coach_text": "무엇이 더 걸리는 거야? 전력망 병목, 과잉공급, 정책 후퇴, 보호무역 중에서 뭐가 가장 크게 보이니?",
             "choices": [
                 {
                     "id": "destruction",
-                    "label": "파괴력이 차원이 달라",
+                    "label": "만들어도 다 못 쓰는 전력망 병목이 가장 치명적으로 보여",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "can_defend",
-                    "label": "드론은 막을 수 있어",
+                    "label": "너무 많이 만들어 가격과 수익성이 무너지는 공급 과잉이 커 보여",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_still": {
             "layer": "counter",
-            "coach_text": "솔직하네. 그래도 핵만큼 무서운 게 있을까?",
+            "coach_text": "그럼에도 전쟁 특수를 더 보게 되는 이유는 뭐야? 그 효과가 구조 문제보다 오래갈 수 있다고 보는 거야?",
             "choices": [
                 {
                     "id": "maybe_not",
-                    "label": "없을 수도",
+                    "label": "아니, 오래가긴 어렵고 잠깐 버티는 정도일 것 같아",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "still_nuke",
-                    "label": "핵이 제일 무서워",
+                    "label": "응, 단기라도 시장 분위기를 바꾸는 힘은 있다고 봐",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_drone": {
             "layer": "counter",
-            "coach_text": "괜찮아. 천천히 보자. 드론 수천 대 vs 핵 — 뭐가 더 실제로 쓰일까?",
+            "coach_text": "판단이 어려운 건 자연스러워. 그렇다면 수출 증가와 산업 회복은 같은 말일까, 아니면 다른 층위의 이야기일까?",
             "choices": [
                 {
                     "id": "drones_real",
-                    "label": "드론이 더 현실적",
+                    "label": "다르지, 수출이 늘어도 산업 전체 회복과는 별개일 수 있어",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "nuke_deter",
-                    "label": "핵이 억지해",
+                    "label": "어느 정도 연결되긴 해서 완전히 떼긴 어려워",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_hard": {
             "layer": "counter",
-            "coach_text": "일리 있어. 근데 — '쓸 수 있느냐'는 다른 문제 아닐까?\n핵을 진짜 쏘면 자기도 끝이잖아.",
+            "coach_text": "좋아, 이제 반대 사실을 한 줄로 잡아 보자. 네 생각을 가장 흔드는 문장은 뭐야?",
             "choices": [
                 {
                     "id": "true_hard",
-                    "label": "그건 그렇네",
+                    "label": "전쟁 수요가 있어도 과잉공급과 병목이 너무 커서 산업 전체를 구하긴 어렵다",
                     "next": "n_counter_card",
                     "emit_card": {
                         "layer": "counter",
-                        "text": "전쟁이 동남아와 아프리카 수요를 일부 자극하긴 했어도, 중국 태양광 산업의 핵심 문제는 …"
+                        "text": "④ 반론: 전쟁 수요가 생겨도 과잉공급·전력망 병목·보호무역이 겹치면 산업 전체 회복은 어렵다."
                     }
                 },
                 {
                     "id": "still_deter",
-                    "label": "그래도 억지는 돼",
+                    "label": "구조 문제는 크지만 단기 수출 증가는 일부 숨통을 틔울 수 있다",
                     "next": "n_counter_card_deter",
                     "emit_card": {
                         "layer": "counter",
-                        "text": "전쟁이 동남아와 아프리카 수요를 일부 자극하긴 했어도, 중국 태양광 산업의 핵심 문제는 …"
+                        "text": "④ 반론: 구조 문제 속에서도 전쟁이 만든 단기 수요는 일부 기업엔 도움이 될 수 있다."
                     }
                 }
             ]
         },
         "n_counter_card": {
             "layer": "counter",
-            "coach_text": "반론과 네 답이 판에 쌓였어. **판을 봐.**",
+            "coach_text": "좋아, 반대쪽 사실이 생각판에 올라갔어. 이제 처음 입장을 어떻게 고쳐 쓸지 보자.",
             "board_pulse": "counter",
             "choices": [
                 {
                     "id": "counter_ok",
-                    "label": "계속 정리하자",
+                    "label": "입장 다듬기",
                     "next": "n_refine_0"
                 }
             ]
         },
         "n_counter_card_deter": {
             "layer": "counter",
-            "coach_text": "그 관점도 판에 적혔어.",
+            "coach_text": "좋아, 완전히 뒤집진 않았지만 중요한 흔들림은 잡았어. 이제 네 입장을 더 정확하게 다듬어 보자.",
             "board_pulse": "counter",
             "choices": [
                 {
                     "id": "counter_ok",
-                    "label": "계속 정리하자",
+                    "label": "정리해 보기",
                     "next": "n_refine_0"
                 }
             ]
         },
         "n_refine_0": {
             "layer": "refine",
-            "coach_text": "자, **판을 다시 봐.** 처음 생각에서 많이 왔어.\n① 입장 → ② 근거 → ③ 깊이 → ④ 반론\n이제 네 생각을 다시 정리하면, 어떻게 바뀌었어?",
+            "coach_text": "지금 생각판을 보면, 처음의 '전쟁이 나면 수혜'라는 말에 어떤 단서가 붙어야 더 정확해질까?",
             "board_diff": true,
             "choices": [
                 {
                     "id": "limits",
-                    "label": "핵은 안전을 주지만 한계가 있다",
+                    "label": "수혜는 일부·단기일 수 있고, 구조 위기를 해결하진 못한다고 봐",
                     "next": "n_refine_card",
                     "emit_card": {
                         "layer": "refine",
-                        "text": "처음 생각보다 정교해졌다"
+                        "text": "⑤ 재정립: 전쟁은 일부 단기 수요를 만들 수 있지만 중국 태양광 산업의 구조 위기를 해결하진 못한다."
                     }
                 },
                 {
                     "id": "still_best",
-                    "label": "여전히 핵이 최선이다",
+                    "label": "구조 문제는 있어도 전쟁이 수요를 밀어주는 건 사실이라고 봐",
                     "next": "n_refine_card_best",
                     "emit_card": {
                         "layer": "refine",
-                        "text": "처음 생각보다 정교해졌다"
+                        "text": "⑤ 재정립: 구조 문제에도 불구하고 전쟁이 만든 수요 증가는 분명한 플러스 요인이다."
                     }
                 },
                 {
                     "id": "refine_free",
-                    "label": "직접 쓸게",
+                    "label": "내 문장으로 다시 정리해볼게",
                     "next": "n_refine_input",
                     "input_mode": "text",
                     "emit_card_on_message": {
@@ -521,31 +521,31 @@
         },
         "n_refine_card": {
             "layer": "refine",
-            "coach_text": "스스로 여기까지 왔어. 처음 '핵=안전'에서 훨씬 정교해졌지?",
+            "coach_text": "좋아, 처음보다 훨씬 정교해졌어. 이제 마지막으로 한 문단 결론을 만들 준비가 됐어.",
             "board_pulse": "refine",
             "choices": [
                 {
                     "id": "refine_ok",
-                    "label": "맞아",
+                    "label": "최종 정리로",
                     "next": "n_synth_0"
                 }
             ]
         },
         "n_refine_card_best": {
             "layer": "refine",
-            "coach_text": "네 정리가 판에 적혔어. 한번 더 따져보자.",
+            "coach_text": "좋아, 플러스 요인을 인정하되 범위를 나누는 방향이 보이네. 이제 최종 문장으로 묶어 보자.",
             "board_pulse": "refine",
             "choices": [
                 {
                     "id": "refine_ok",
-                    "label": "계속",
+                    "label": "종합하기",
                     "next": "n_synth_0"
                 }
             ]
         },
         "n_refine_input": {
             "layer": "refine",
-            "coach_text": "네 말로 정리해 봐 — 지금 네 생각은?",
+            "coach_text": "좋아. 생각판을 보고 네 입장을 한 문장으로 다시 써 봐. 처음보다 더 정확해지면 돼.",
             "input_mode": "text",
             "emit_card_on_message": {
                 "layer": "refine"
@@ -554,7 +554,7 @@
         },
         "n_synth_0": {
             "layer": "synthesis",
-            "coach_text": "마지막. 이 모든 걸 **한 문장**으로 — 네 결론은?\n(직접 써 봐)",
+            "coach_text": "이제 마지막이야. '중동 전쟁이 나면 중국 태양광 산업은 당연히 더 잘나가게 되는가?'에 대해, 단기 효과와 구조적 문제를 함께 넣어 2~3문장으로 정리해 봐.",
             "input_mode": "text",
             "emit_card_on_message": {
                 "layer": "synthesis"
@@ -563,21 +563,23 @@
         },
         "n_synth_compose": {
             "layer": "synthesis",
-            "coach_text": "이게 네가 10분 넘게 따져서 만든 결론이야.\n누가 준 게 아니라, **네가 쌓은 거**지.\n자 — 이 생각판을 바탕으로 한 편의 글을 써볼까?\n판에 있는 ①~⑥이 그대로 네 글의 뼈대가 될 거야.",
+            "coach_text": "좋아, 생각판의 ①~⑤가 모였어. 이제 그 흐름을 바탕으로 최종 답안을 만들자.",
             "board_pulse": "synthesis",
             "choices": [
                 {
                     "id": "go_compose",
-                    "label": "글 쓰러 가기",
+                    "label": "최종 답안 보기",
                     "next": "n_compose"
                 }
             ]
         },
         "n_compose": {
             "layer": "synthesis",
-            "terminal": true
+            "terminal": true,
+            "coach_text": "정리하면, 중동 전쟁으로 에너지 시장이 흔들릴 때 중국 태양광 산업이 일부 단기 수요를 얻을 수는 있어. 하지만 산업 전체로 보면 내수 둔화, 전력망 병목, 과잉공급, 정책 후퇴와 보호무역이 겹친 구조적 위기가 더 커서, 전쟁 특수만으로는 근본 회복을 기대하기 어렵다고 볼 수 있어."
         }
     },
-    "llm_followup_fallback": "그렇구나. 한 가지만 더 — 그 말을 한 문장으로 정리하면?",
-    "generated_by": "narrative_v2_generate_rule_v1"
+    "generated_by": "narrative_v2_generate_llm_v2",
+    "llm_followup_fallback": "좋아, 그 이유를 한마디로 줄이면 무엇이 가장 핵심인지 같이 잡아보자.",
+    "llm_philosophy_notes": "입장→근거→깊이→반론→재정립→종합의 6층을 지키고, 반론은 질문으로 흔들되 학생 결론을 대신 단정하지 않도록 작성했다."
 }

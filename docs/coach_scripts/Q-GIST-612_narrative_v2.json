@@ -55,142 +55,142 @@
     "nodes": {
         "n_intro": {
             "layer": "intro",
-            "coach_text": "이란 사람들이 정부를 싫어하면 정말 미국의 군사 개입도 반길까?\n\n많은 사람은 \"이란 국민들이 미국의 개입을 해방으로 환영할 것인가\"라고 생각해.\n\n이란 국민들이 미국의 개입을 해방으로 환영할 것인가라는 질문처럼 보이지만, 그러나 본문은 현지의 반정부 정서가 곧 외부의 폭력적 개입 동의가 아니며 그 동의는 확인 가능한 정치적 사실이어야 한다고 말한다\n\n왜 그렇게 생각할까?",
+            "coach_text": "트럼프는 이란 공습을 정당화하며, 이란인들이 미국의 개입을 자유의 기회로 받아들일 거라고 말했어. 하지만 정부에 대한 분노가 크다는 사실과 외부의 폭격까지 반긴다는 판단은 같은 말이 아닐 수 있어. 너는 사람들이 왜 미국의 개입을 환영할 거라고 생각하는지, 가장 먼저 뭐가 떠올라?",
             "choices": [
                 {
                     "id": "nuclear_fear",
-                    "label": "A 쪽이 더 와닿아",
+                    "label": "정부가 너무 억압적이라 밖에서라도 바꿔주길 바랄 것 같아",
                     "next": "n_stance_bridge_fear"
                 },
                 {
                     "id": "just_luck",
-                    "label": "B 쪽도 설명돼",
+                    "label": "반정부 시위가 많았으니 미국이 오면 기회라고 볼 수도 있어",
                     "next": "n_stance_bridge_luck"
                 },
                 {
                     "id": "other_reason",
-                    "label": "다른 이유",
+                    "label": "다른 이유가 떠올라",
                     "next": "n_stance_bridge_other"
                 }
             ]
         },
         "n_stance_bridge_fear": {
             "layer": "stance",
-            "coach_text": "좋아, 이란 국민들이 미국의 개입을 해방으로 환영할 것인가에서 시작해보자.\n미국은 이란 국민들에게 해방자로 환영받을 것인가 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아, 억압이 심하면 외부 개입을 반길 거라는 생각에서 출발하는구나. 그럼 네 입장은 어디에 더 가까워?",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "대체로 환영할 것 같아",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "이란 국민들이 미국의 개입을 해방으로 환영할 것인가"
+                        "text": "① 입장: 이란 국민들은 미국 개입을 대체로 환영할 것이다"
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "환영한다고 보긴 어려워",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "이란 국민들이 미국의 개입을 해방으로 환영할 것인가"
+                        "text": "① 입장: 이란 국민들이 미국 개입을 환영한다고 단정하긴 어렵다"
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "사람마다 많이 갈릴 것 같아",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "이란 국민들이 미국의 개입을 해방으로 환영할 것인가"
+                        "text": "① 입장: 환영 여부는 집단과 상황에 따라 크게 갈릴 것이다"
                     }
                 }
             ]
         },
         "n_stance_bridge_luck": {
             "layer": "stance",
-            "coach_text": "좋아, 이란 국민들이 미국의 개입을 해방으로 환영할 것인가에서 시작해보자.\n미국은 이란 국민들에게 해방자로 환영받을 것인가 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아, 시위와 정권 불만이 외부 개입의 기회로 이어질 수 있다고 본 거네. 그럼 지금 네 입장을 골라보자.",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "대체로 환영할 것 같아",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "이란 국민들이 미국의 개입을 해방으로 환영할 것인가"
+                        "text": "① 입장: 이란 국민들은 미국 개입을 대체로 환영할 것이다"
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "환영한다고 보긴 어려워",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "이란 국민들이 미국의 개입을 해방으로 환영할 것인가"
+                        "text": "① 입장: 이란 국민들이 미국 개입을 환영한다고 단정하긴 어렵다"
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "사람마다 많이 갈릴 것 같아",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "이란 국민들이 미국의 개입을 해방으로 환영할 것인가"
+                        "text": "① 입장: 환영 여부는 집단과 상황에 따라 크게 갈릴 것이다"
                     }
                 }
             ]
         },
         "n_stance_bridge_other": {
             "layer": "stance",
-            "coach_text": "좋아, 이란 국민들이 미국의 개입을 해방으로 환영할 것인가에서 시작해보자.\n미국은 이란 국민들에게 해방자로 환영받을 것인가 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아, 네가 떠올린 다른 이유를 바탕으로 입장을 먼저 정해보자. 어디에 더 가까워?",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "대체로 환영할 것 같아",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "이란 국민들이 미국의 개입을 해방으로 환영할 것인가"
+                        "text": "① 입장: 이란 국민들은 미국 개입을 대체로 환영할 것이다"
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "환영한다고 보긴 어려워",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "이란 국민들이 미국의 개입을 해방으로 환영할 것인가"
+                        "text": "① 입장: 이란 국민들이 미국 개입을 환영한다고 단정하긴 어렵다"
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "사람마다 많이 갈릴 것 같아",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "이란 국민들이 미국의 개입을 해방으로 환영할 것인가"
+                        "text": "① 입장: 환영 여부는 집단과 상황에 따라 크게 갈릴 것이다"
                     }
                 }
             ]
         },
         "n_stance_card": {
             "layer": "stance",
-            "coach_text": "좋아, 네 입장이 잡혔어. (판에 적혔지)\n근데 그냥 믿는 것과 따지는 건 다르잖아. 하나씩 파보자.\n\n왜 핵이 있으면 안전하다고 생각해?",
+            "coach_text": "좋아, ① 입장은 올라갔어. 이제 왜 그렇게 보는지 가장 핵심 이유를 붙여보자.",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "cant_touch",
-                    "label": "아무도 못 건드려서",
+                    "label": "정권이 너무 강해서 외부 충격 없이는 안 바뀔 것 같아",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "stop_war",
-                    "label": "전쟁을 막아서",
+                    "label": "억압을 끝낼 기회라면 반길 사람도 많을 것 같아",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 말해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -198,22 +198,22 @@
         },
         "n_stance_card_no": {
             "layer": "stance",
-            "coach_text": "신중하네. 네 입장이 판에 잡혔어.\n왜 핵 없이도 괜찮다고 보는지 — 이유를 따져보자.",
+            "coach_text": "좋아, ① 입장은 올라갔어. 이제 환영하기 어렵다고 본 이유를 붙여보자.",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "alliance",
-                    "label": "동맹이 있어서",
+                    "label": "정부가 싫어도 외국의 폭격은 또 다른 문제라고 볼 수 있어",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "danger",
-                    "label": "핵이 오히려 위험해서",
+                    "label": "민간인 피해와 혼란이 커서 쉽게 반기기 어렵다고 봐",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 말해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -221,22 +221,22 @@
         },
         "n_stance_card_half": {
             "layer": "stance",
-            "coach_text": "솔직하네. 입장이 판에 잡혔어.\n왜 그렇게 반반으로 보는지 — 이유를 따져보자.",
+            "coach_text": "좋아, ① 입장은 올라갔어. 이제 왜 반응이 갈릴 거라고 보는지 말해보자.",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "not_sure",
-                    "label": "장단이 있어서",
+                    "label": "정부는 싫어도 미국 개입은 불안하게 느낄 수 있어",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "need_more",
-                    "label": "더 알아봐야 해서",
+                    "label": "실제로 현지 사람들이 뭘 원하는지 더 알아야 해",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 말해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -244,273 +244,273 @@
         },
         "n_reason_why2": {
             "layer": "reason",
-            "coach_text": "그렇지. 근데 '왜' 못 건드릴까? 상대 입장에서 생각하면?",
+            "coach_text": "좋아. 그 이유를 한 걸음 더 밀어보자. 네 생각을 받쳐주는 근거는 뭐야?",
             "choices": [
                 {
                     "id": "fear_revenge",
-                    "label": "보복이 무서워서",
+                    "label": "정권에 대한 분노가 커서 외부 도움이라도 원할 수 있어",
                     "next": "n_reason_card",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 이란 국민들이 미국의 개입을 해방으로 환영할 것인가"
+                        "text": "② 근거: 정권에 대한 강한 반감이 외부 개입 지지로 이어질 수 있다"
                     }
                 },
                 {
                     "id": "intl_pressure",
-                    "label": "국제사회 비난",
+                    "label": "외부 압박이 있어야 내부 변화가 가능하다고 볼 수 있어",
                     "next": "n_reason_card_intl",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 이란 국민들이 미국의 개입을 해방으로 환영할 것인가"
+                        "text": "② 근거: 외부 압박이 정권 변화를 여는 계기가 될 수 있다"
                     }
                 },
                 {
                     "id": "unsure_reason",
-                    "label": "음...",
+                    "label": "아직 근거를 더 생각해보고 싶어",
                     "next": "n_reason_card",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 이란 국민들이 미국의 개입을 해방으로 환영할 것인가"
+                        "text": "② 근거: 환영 여부를 판단할 근거가 아직 충분하지 않다"
                     }
                 }
             ]
         },
         "n_reason_card": {
             "layer": "reason",
-            "coach_text": "완벽해. 이제 '입장'에 '근거'가 붙었어. **판을 봐** — 생각이 서기 시작했지?",
+            "coach_text": "좋아, ② 근거가 보드에 붙었어. 이제 그 근거가 언제 더 맞고 언제 덜 맞는지도 살펴보자.",
             "board_pulse": "reason",
             "choices": [
                 {
                     "id": "see_board",
-                    "label": "판 보니까 그렇네",
+                    "label": "다음으로 갈게",
                     "next": "n_depth_0"
                 }
             ]
         },
         "n_reason_card_intl": {
             "layer": "reason",
-            "coach_text": "그것도 근거가 될 수 있지. 판에 적혔어. **판을 봐.**",
+            "coach_text": "좋아, ② 근거가 정리됐어. 이제 그 근거가 어떤 조건에서 설득력 있는지 더 따져보자.",
             "board_pulse": "reason",
             "choices": [
                 {
                     "id": "see_board",
-                    "label": "판 보니까 그렇네",
+                    "label": "계속 생각해볼게",
                     "next": "n_depth_0"
                 }
             ]
         },
         "n_depth_0": {
             "layer": "depth",
-            "coach_text": "한 걸음 더.\n항상 그렇게만 될까? 예외는 없을까?",
+            "coach_text": "같은 반정부 정서라도 모두가 외부 군사 개입을 지지하진 않을 수 있어. 너는 이 점이 네 생각에 얼마나 영향을 준다고 봐?",
             "choices": [
                 {
                     "id": "wont_work",
-                    "label": "안 통할 것 같아",
+                    "label": "그 말을 들으면 환영한다고 단정하긴 어려워 보여",
                     "next": "n_depth_1"
                 },
                 {
                     "id": "still_works",
-                    "label": "그래도 통해",
+                    "label": "그래도 전체적으로는 환영 쪽이 더 많을 수 있어",
                     "next": "n_depth_1"
                 },
                 {
                     "id": "hard_depth",
-                    "label": "어렵다",
+                    "label": "상황에 따라 달라질 것 같아",
                     "next": "n_depth_1"
                 }
             ]
         },
         "n_depth_1": {
             "layer": "depth",
-            "coach_text": "그럼 네 입장('핵=안전')은 — 무조건 맞는 건 아니게 되네?",
+            "coach_text": "좋아. 그럼 네 입장을 한 번 조건까지 넣어서 더 정교하게 말해보자.",
             "choices": [
                 {
                     "id": "conditional",
-                    "label": "조건이 있네",
+                    "label": "현지에서 실제 지지가 확인될 때만 그런 말이 가능해",
                     "next": "n_depth_card",
                     "emit_card": {
                         "layer": "depth",
-                        "text": "조건이 있다 — 항상 통하지는 않음"
+                        "text": "③ 깊이: 반정부 정서만으로는 부족하고 실제 지지 확인이 필요하다"
                     }
                 },
                 {
                     "id": "mostly_ok",
-                    "label": "그래도 대부분 맞아",
+                    "label": "직접 확인이 어렵더라도 정황상 추정은 가능하다고 봐",
                     "next": "n_depth_card_mostly",
                     "emit_card": {
                         "layer": "depth",
-                        "text": "조건이 있다 — 항상 통하지는 않음"
+                        "text": "③ 깊이: 직접 확인이 어렵더라도 정황으로 어느 정도 추정할 수 있다"
                     }
                 }
             ]
         },
         "n_depth_card": {
             "layer": "depth",
-            "coach_text": "봐, 처음엔 '핵=안전'이었는데 이제 '조건부'로 정교해졌어. **판을 봐.** 이게 따지는 거야.",
+            "coach_text": "좋아, ③ 깊이까지 들어왔어. 이제 본문이 던지는 흔들림을 받아볼 차례야.",
             "board_pulse": "depth",
             "choices": [
                 {
                     "id": "depth_ok",
-                    "label": "맞아, 정교해졌네",
+                    "label": "반론으로 가보자",
                     "next": "n_counter_0"
                 }
             ]
         },
         "n_depth_card_mostly": {
             "layer": "depth",
-            "coach_text": "그래도 '대부분'과 '항상'은 다르지. 판에 적혔어.",
+            "coach_text": "좋아, ③ 깊이가 붙었어. 이제 네 생각을 흔들 수 있는 질문을 만나보자.",
             "board_pulse": "depth",
             "choices": [
                 {
                     "id": "depth_ok",
-                    "label": "계속 가보자",
+                    "label": "다음 질문 보기",
                     "next": "n_counter_0"
                 }
             ]
         },
         "n_counter_0": {
             "layer": "counter",
-            "coach_text": "하지만 본문은 2023년 미국 성인 3,360명 실험에서도 현지 지지가 개입 찬성률을 19%포인트나 바꿨다고 하면서, 이란처럼 권위주의 체제에서는 그런 동의를 확인하지 않은 채 있다고 주장할 수 없다고 말해.\n\n반정부 정서가 있어도 미국·이스라엘의 폭력적 정권교체 지지로 이어진다고 볼 수 없고, 현지 동의는 추상적 명분이 아니라 실제로 확인해야 할 정치적 사실이다\n\n네가 아까 말한 입장 — 이 이야기에도 그대로 맞을까?",
+            "coach_text": "하지만 본문은 현지 지지가 개입 찬성률을 크게 바꾼다고 하면서, 권위주의 체제에선 그런 동의를 확인하지 않은 채 있다고 말할 수 없다고 했어. 그렇다면 '정부를 싫어한다'는 사실만으로 '미국 개입을 반긴다'고 넘어가도 될까?",
             "choices": [
                 {
                     "id": "might_shake",
-                    "label": "흔들릴 것 같아",
+                    "label": "그건 좀 건너뛴 판단 같아",
                     "next": "n_counter_still"
                 },
                 {
                     "id": "nuke_different",
-                    "label": "그래도 핵은 달라",
+                    "label": "그래도 어느 정도는 추론할 수 있지 않을까",
                     "next": "n_counter_why"
                 },
                 {
                     "id": "unsure_counter",
-                    "label": "모르겠어",
+                    "label": "나도 여기서 좀 헷갈려",
                     "next": "n_counter_drone"
                 }
             ]
         },
         "n_counter_why": {
             "layer": "counter",
-            "coach_text": "왜 그렇게 봐? (답 강요 없어 — 네 생각대로)",
+            "coach_text": "왜 건너뛴 판단처럼 느껴졌어? 어떤 점이 가장 걸려?",
             "choices": [
                 {
                     "id": "destruction",
-                    "label": "파괴력이 차원이 달라",
+                    "label": "정권 반대와 외국의 폭격 지지는 전혀 다른 선택이니까",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "can_defend",
-                    "label": "드론은 막을 수 있어",
+                    "label": "실제 동의 없이 해방이라고 말하면 명분만 앞설 수 있으니까",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_still": {
             "layer": "counter",
-            "coach_text": "솔직하네. 그래도 핵만큼 무서운 게 있을까?",
+            "coach_text": "그래도 추론할 수 있다고 본다면, 어디까지는 가능하고 어디서부터는 위험한 일반화일까?",
             "choices": [
                 {
                     "id": "maybe_not",
-                    "label": "없을 수도",
+                    "label": "대충 분위기는 짐작해도 환영한다고 단정하면 안 될 것 같아",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "still_nuke",
-                    "label": "핵이 제일 무서워",
+                    "label": "불완전해도 반정부 정서가 강하면 찬성 가능성은 읽을 수 있어",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_drone": {
             "layer": "counter",
-            "coach_text": "괜찮아. 천천히 보자. 드론 수천 대 vs 핵 — 뭐가 더 실제로 쓰일까?",
+            "coach_text": "헷갈린다는 건 중요한 신호야. 그럼 확인되지 않은 동의를 정치 지도자가 대신 말해버리면 어떤 문제가 생길까?",
             "choices": [
                 {
                     "id": "drones_real",
-                    "label": "드론이 더 현실적",
+                    "label": "현지 사람들의 실제 뜻이 지워질 수 있어",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "nuke_deter",
-                    "label": "핵이 억지해",
+                    "label": "도덕적 명분이 사실처럼 포장될 수 있어",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_hard": {
             "layer": "counter",
-            "coach_text": "일리 있어. 근데 — '쓸 수 있느냐'는 다른 문제 아닐까?\n핵을 진짜 쏘면 자기도 끝이잖아.",
+            "coach_text": "좋아. 이제 반론을 한 줄로 붙여보자. 네 기존 입장을 가장 세게 흔드는 문장은 뭐야?",
             "choices": [
                 {
                     "id": "true_hard",
-                    "label": "그건 그렇네",
+                    "label": "반정부 정서가 있다고 해서 외부의 폭력적 개입 동의까지 뜻하진 않아",
                     "next": "n_counter_card",
                     "emit_card": {
                         "layer": "counter",
-                        "text": "반정부 정서가 있어도 미국·이스라엘의 폭력적 정권교체 지지로 이어진다고 볼 수 없고, 현…"
+                        "text": "④ 반론: 정권 반대와 외부 군사 개입 지지는 같은 뜻이 아니다"
                     }
                 },
                 {
                     "id": "still_deter",
-                    "label": "그래도 억지는 돼",
+                    "label": "동의 확인은 어렵지만, 정황만으로도 어느 정도는 읽을 수 있어",
                     "next": "n_counter_card_deter",
                     "emit_card": {
                         "layer": "counter",
-                        "text": "반정부 정서가 있어도 미국·이스라엘의 폭력적 정권교체 지지로 이어진다고 볼 수 없고, 현…"
+                        "text": "④ 반론: 직접 확인이 어렵더라도 정황 추정의 여지는 남아 있다"
                     }
                 }
             ]
         },
         "n_counter_card": {
             "layer": "counter",
-            "coach_text": "반론과 네 답이 판에 쌓였어. **판을 봐.**",
+            "coach_text": "좋아, ④ 반론이 올라갔어. 이제 네 처음 입장을 이 반론까지 반영해서 다시 다듬어보자.",
             "board_pulse": "counter",
             "choices": [
                 {
                     "id": "counter_ok",
-                    "label": "계속 정리하자",
+                    "label": "입장 다시 정리하기",
                     "next": "n_refine_0"
                 }
             ]
         },
         "n_counter_card_deter": {
             "layer": "counter",
-            "coach_text": "그 관점도 판에 적혔어.",
+            "coach_text": "좋아, ④ 반론이 붙었어. 이제 흔들린 만큼 네 입장을 더 정확하게 손봐보자.",
             "board_pulse": "counter",
             "choices": [
                 {
                     "id": "counter_ok",
-                    "label": "계속 정리하자",
+                    "label": "재정립해볼게",
                     "next": "n_refine_0"
                 }
             ]
         },
         "n_refine_0": {
             "layer": "refine",
-            "coach_text": "자, **판을 다시 봐.** 처음 생각에서 많이 왔어.\n① 입장 → ② 근거 → ③ 깊이 → ④ 반론\n이제 네 생각을 다시 정리하면, 어떻게 바뀌었어?",
+            "coach_text": "생각판을 보면 처음엔 '환영할까'에 집중했지만, 지금은 '그 동의를 어떻게 확인하느냐'가 중요해졌어. 그러면 네 입장은 어떻게 다시 말할래?",
             "board_diff": true,
             "choices": [
                 {
                     "id": "limits",
-                    "label": "핵은 안전을 주지만 한계가 있다",
+                    "label": "환영 가능성은 있어도 실제 지지 확인 없이는 해방이라고 말하기 어려워",
                     "next": "n_refine_card",
                     "emit_card": {
                         "layer": "refine",
-                        "text": "처음 생각보다 정교해졌다"
+                        "text": "⑤ 재정립: 환영 가능성과 실제 동의는 구분해서 봐야 한다"
                     }
                 },
                 {
                     "id": "still_best",
-                    "label": "여전히 핵이 최선이다",
+                    "label": "완전한 확인은 없어도 반정부 정서가 강하면 환영 추정은 가능해",
                     "next": "n_refine_card_best",
                     "emit_card": {
                         "layer": "refine",
-                        "text": "처음 생각보다 정교해졌다"
+                        "text": "⑤ 재정립: 직접 확인은 부족해도 반정부 정서로 일정한 추정은 가능하다"
                     }
                 },
                 {
                     "id": "refine_free",
-                    "label": "직접 쓸게",
+                    "label": "내 말로 다시 정리해볼게",
                     "next": "n_refine_input",
                     "input_mode": "text",
                     "emit_card_on_message": {
@@ -521,31 +521,31 @@
         },
         "n_refine_card": {
             "layer": "refine",
-            "coach_text": "스스로 여기까지 왔어. 처음 '핵=안전'에서 훨씬 정교해졌지?",
+            "coach_text": "좋아, ⑤ 재정립이 됐어. 마지막으로 이 글이 말하는 핵심을 한 문장으로 묶어보자.",
             "board_pulse": "refine",
             "choices": [
                 {
                     "id": "refine_ok",
-                    "label": "맞아",
+                    "label": "종합하러 가기",
                     "next": "n_synth_0"
                 }
             ]
         },
         "n_refine_card_best": {
             "layer": "refine",
-            "coach_text": "네 정리가 판에 적혔어. 한번 더 따져보자.",
+            "coach_text": "좋아, ⑤ 재정립이 올라갔어. 이제 네 최종 판단을 더 또렷하게 묶어보자.",
             "board_pulse": "refine",
             "choices": [
                 {
                     "id": "refine_ok",
-                    "label": "계속",
+                    "label": "마무리하자",
                     "next": "n_synth_0"
                 }
             ]
         },
         "n_refine_input": {
             "layer": "refine",
-            "coach_text": "네 말로 정리해 봐 — 지금 네 생각은?",
+            "coach_text": "좋아. 반론까지 반영해서 네 입장을 한두 문장으로 다시 써봐. 처음 생각과 무엇이 달라졌는지도 드러나면 좋아.",
             "input_mode": "text",
             "emit_card_on_message": {
                 "layer": "refine"
@@ -554,7 +554,7 @@
         },
         "n_synth_0": {
             "layer": "synthesis",
-            "coach_text": "마지막. 이 모든 걸 **한 문장**으로 — 네 결론은?\n(직접 써 봐)",
+            "coach_text": "이제 ①~⑤를 보고 ⑥ 종합을 써보자. 질문은 '이란 국민들이 미국의 개입을 해방으로 환영할 것인가'였지만, 본문이 왜 그 질문을 더 복잡하게 바꾸는지 네 말로 정리해봐.",
             "input_mode": "text",
             "emit_card_on_message": {
                 "layer": "synthesis"
@@ -563,21 +563,23 @@
         },
         "n_synth_compose": {
             "layer": "synthesis",
-            "coach_text": "이게 네가 10분 넘게 따져서 만든 결론이야.\n누가 준 게 아니라, **네가 쌓은 거**지.\n자 — 이 생각판을 바탕으로 한 편의 글을 써볼까?\n판에 있는 ①~⑥이 그대로 네 글의 뼈대가 될 거야.",
+            "coach_text": "좋아, 생각판 재료가 모였어. 마지막 답안을 만들 준비가 됐어.",
             "board_pulse": "synthesis",
             "choices": [
                 {
                     "id": "go_compose",
-                    "label": "글 쓰러 가기",
+                    "label": "최종 답안 만들기",
                     "next": "n_compose"
                 }
             ]
         },
         "n_compose": {
             "layer": "synthesis",
-            "terminal": true
+            "terminal": true,
+            "coach_text": "잘했어. 이제 네 답안은 '반정부 정서'와 '외부 군사 개입에 대한 실제 동의'를 구분해서 설명할 수 있어야 해. 그 차이를 살려 마무리하면 돼."
         }
     },
-    "llm_followup_fallback": "그렇구나. 한 가지만 더 — 그 말을 한 문장으로 정리하면?",
-    "generated_by": "narrative_v2_generate_rule_v1"
+    "generated_by": "narrative_v2_generate_llm_v2",
+    "llm_followup_fallback": "좋아, 그 이유도 생각판에 잘 들어가. 그 말이 왜 네 입장을 받쳐주는지 한 번만 더 또렷하게 붙여보자.",
+    "llm_philosophy_notes": "입장-근거-깊이-반론-재정립-종합의 6층을 유지했고, 반론은 결론 대신 질문으로 흔들도록 작성했다."
 }

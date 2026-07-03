@@ -55,142 +55,142 @@
     "nodes": {
         "n_intro": {
             "layer": "intro",
-            "coach_text": "미국 자동차회사들은 관세와 인기 많은 픽업트럭만으로 중국 전기차를 계속 막아낼 수 있을까?\n\n많은 사람은 \"미국 자동차업체들이 관세와 자국의 픽업트럭·SUV 수요를 바탕으로 중국 전기차를 막아내며 경쟁력을 유지할 수 있는가\"라고 생각해.\n\n미국 자동차업체들은 보호무역과 내연기관 중심 전략으로 당장 수익을 지키고 있지만, 그러나 그럴수록 전기차 전환과 중국발 경쟁에서 장기 관련성을 잃을 수 있다\n\n왜 그렇게 생각할까?",
+            "coach_text": "미국 빅3는 지금도 픽업트럭과 SUV로 큰 수익을 내고 있고, 관세 같은 보호장벽도 버티는 데 도움을 줍니다. 하지만 세계 자동차산업의 흐름은 전기차와 중국 쪽으로 빠르게 기울고 있습니다. 그럼 미국 자동차회사들은 관세와 인기 많은 픽업트럭만으로 중국 전기차를 계속 막아낼 수 있을까?",
             "choices": [
                 {
                     "id": "nuclear_fear",
-                    "label": "A 쪽이 더 와닿아",
+                    "label": "당분간은 충분히 막아낼 수 있을 것 같아",
                     "next": "n_stance_bridge_fear"
                 },
                 {
                     "id": "just_luck",
-                    "label": "B 쪽도 설명돼",
+                    "label": "버티는 건 가능해도 오래가긴 어려울 것 같아",
                     "next": "n_stance_bridge_luck"
                 },
                 {
                     "id": "other_reason",
-                    "label": "다른 이유",
+                    "label": "잘 모르겠어, 더 따져봐야 할 것 같아",
                     "next": "n_stance_bridge_other"
                 }
             ]
         },
         "n_stance_bridge_fear": {
             "layer": "stance",
-            "coach_text": "좋아, 미국 자동차업체들이 관세와 자국의 픽업트럭·SUV 수요를 바탕으로 중국 전기차를 막아내며 경쟁력을 유지할 수 있는가에서 시작해보자.\n미국 자동차 기업들이 겪어야 할 성장통 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아, 우선 네 생각은 '당장은 버틸 힘이 있다' 쪽이네. 지금 입장을 가장 가까운 말로 골라보자.",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "미국 업체들은 경쟁력을 꽤 오래 유지할 수 있어",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "미국 자동차업체들이 관세와 자국의 픽업트럭·SUV 수요를 바탕으로 중국 전기차를 막아내며 경쟁력을 유지할 …"
+                        "text": "① 입장: 미국 업체들은 보호장벽과 자국 수요로 경쟁력을 꽤 오래 유지할 수 있다."
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "겉으로만 버티는 거고 장기적으론 불안해",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "미국 자동차업체들이 관세와 자국의 픽업트럭·SUV 수요를 바탕으로 중국 전기차를 막아내며 경쟁력을 유지할 …"
+                        "text": "① 입장: 지금 버티는 것처럼 보여도 장기 경쟁력은 불안하다."
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "단기와 장기를 나눠서 봐야 할 것 같아",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "미국 자동차업체들이 관세와 자국의 픽업트럭·SUV 수요를 바탕으로 중국 전기차를 막아내며 경쟁력을 유지할 …"
+                        "text": "① 입장: 단기 수익 방어와 장기 경쟁력은 다르게 봐야 한다."
                     }
                 }
             ]
         },
         "n_stance_bridge_luck": {
             "layer": "stance",
-            "coach_text": "좋아, 미국 자동차업체들이 관세와 자국의 픽업트럭·SUV 수요를 바탕으로 중국 전기차를 막아내며 경쟁력을 유지할 수 있는가에서 시작해보자.\n미국 자동차 기업들이 겪어야 할 성장통 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아, 너는 '지금 전략이 오래가진 않을 수 있다'는 쪽에 더 가까워 보이네. 네 입장을 한 번 골라보자.",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "미국 업체들은 경쟁력을 꽤 오래 유지할 수 있어",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "미국 자동차업체들이 관세와 자국의 픽업트럭·SUV 수요를 바탕으로 중국 전기차를 막아내며 경쟁력을 유지할 …"
+                        "text": "① 입장: 미국 업체들은 보호장벽과 자국 수요로 경쟁력을 꽤 오래 유지할 수 있다."
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "겉으로만 버티는 거고 장기적으론 불안해",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "미국 자동차업체들이 관세와 자국의 픽업트럭·SUV 수요를 바탕으로 중국 전기차를 막아내며 경쟁력을 유지할 …"
+                        "text": "① 입장: 지금 버티는 것처럼 보여도 장기 경쟁력은 불안하다."
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "단기와 장기를 나눠서 봐야 할 것 같아",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "미국 자동차업체들이 관세와 자국의 픽업트럭·SUV 수요를 바탕으로 중국 전기차를 막아내며 경쟁력을 유지할 …"
+                        "text": "① 입장: 단기 수익 방어와 장기 경쟁력은 다르게 봐야 한다."
                     }
                 }
             ]
         },
         "n_stance_bridge_other": {
             "layer": "stance",
-            "coach_text": "좋아, 미국 자동차업체들이 관세와 자국의 픽업트럭·SUV 수요를 바탕으로 중국 전기차를 막아내며 경쟁력을 유지할 수 있는가에서 시작해보자.\n미국 자동차 기업들이 겪어야 할 성장통 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아, 아직 판단을 열어두고 있네. 그럴수록 먼저 지금 마음이 어디에 가까운지 잡아보는 게 좋아.",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "미국 업체들은 경쟁력을 꽤 오래 유지할 수 있어",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "미국 자동차업체들이 관세와 자국의 픽업트럭·SUV 수요를 바탕으로 중국 전기차를 막아내며 경쟁력을 유지할 …"
+                        "text": "① 입장: 미국 업체들은 보호장벽과 자국 수요로 경쟁력을 꽤 오래 유지할 수 있다."
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "겉으로만 버티는 거고 장기적으론 불안해",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "미국 자동차업체들이 관세와 자국의 픽업트럭·SUV 수요를 바탕으로 중국 전기차를 막아내며 경쟁력을 유지할 …"
+                        "text": "① 입장: 지금 버티는 것처럼 보여도 장기 경쟁력은 불안하다."
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "단기와 장기를 나눠서 봐야 할 것 같아",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "미국 자동차업체들이 관세와 자국의 픽업트럭·SUV 수요를 바탕으로 중국 전기차를 막아내며 경쟁력을 유지할 …"
+                        "text": "① 입장: 단기 수익 방어와 장기 경쟁력은 다르게 봐야 한다."
                     }
                 }
             ]
         },
         "n_stance_card": {
             "layer": "stance",
-            "coach_text": "좋아, 네 입장이 잡혔어. (판에 적혔지)\n근데 그냥 믿는 것과 따지는 건 다르잖아. 하나씩 파보자.\n\n왜 핵이 있으면 안전하다고 생각해?",
+            "coach_text": "좋아, ① 입장이 올라갔어. 그렇게 보는 가장 큰 이유는 뭐야?",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "cant_touch",
-                    "label": "아무도 못 건드려서",
+                    "label": "미국 시장은 관세와 규제로 쉽게 못 들어와서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "stop_war",
-                    "label": "전쟁을 막아서",
+                    "label": "픽업트럭·SUV 같은 강한 수요가 있어서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 말해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -198,22 +198,22 @@
         },
         "n_stance_card_no": {
             "layer": "stance",
-            "coach_text": "신중하네. 네 입장이 판에 잡혔어.\n왜 핵 없이도 괜찮다고 보는지 — 이유를 따져보자.",
+            "coach_text": "좋아, ① 입장이 올라갔어. 장기적으로 불안하다고 본 핵심 이유를 골라보자.",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "alliance",
-                    "label": "동맹이 있어서",
+                    "label": "전기차 전환이 늦어지면 흐름을 놓칠 수 있어서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "danger",
-                    "label": "핵이 오히려 위험해서",
+                    "label": "보호장벽에 기대면 경쟁력이 약해질 수 있어서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 말해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -221,22 +221,22 @@
         },
         "n_stance_card_half": {
             "layer": "stance",
-            "coach_text": "솔직하네. 입장이 판에 잡혔어.\n왜 그렇게 반반으로 보는지 — 이유를 따져보자.",
+            "coach_text": "좋아, ① 입장이 올라갔어. 단기와 장기를 나눠 봐야 한다면, 어떤 점이 가장 걸려?",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "not_sure",
-                    "label": "장단이 있어서",
+                    "label": "지금 수익은 강한데 미래 준비는 애매해서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "need_more",
-                    "label": "더 알아봐야 해서",
+                    "label": "미국 시장과 세계 시장 흐름이 달라 보여서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 생각을 직접 말해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -244,273 +244,273 @@
         },
         "n_reason_why2": {
             "layer": "reason",
-            "coach_text": "그렇지. 근데 '왜' 못 건드릴까? 상대 입장에서 생각하면?",
+            "coach_text": "좋아. 그 이유를 조금 더 구체화해보자. 무엇이 실제로 경쟁력을 갈라놓는다고 봐?",
             "choices": [
                 {
                     "id": "fear_revenge",
-                    "label": "보복이 무서워서",
+                    "label": "자국 시장에서 돈을 버는 구조 자체가 방어막이 돼",
                     "next": "n_reason_card",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 미국 자동차업체들이 관세와 자국의 픽업트럭·SUV 수요를 바탕으로 중국…"
+                        "text": "② 근거: 북미의 픽업트럭·SUV 수익 구조가 미국 업체들의 방어막이 된다."
                     }
                 },
                 {
                     "id": "intl_pressure",
-                    "label": "국제사회 비난",
+                    "label": "전기차와 중국 중심의 세계 흐름이 더 중요해",
                     "next": "n_reason_card_intl",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 미국 자동차업체들이 관세와 자국의 픽업트럭·SUV 수요를 바탕으로 중국…"
+                        "text": "② 근거: 산업의 중심이 전기차와 중국으로 옮겨가며 기존 전략의 힘이 약해진다."
                     }
                 },
                 {
                     "id": "unsure_reason",
-                    "label": "음...",
+                    "label": "둘 다 맞는 말 같아서 아직 고민돼",
                     "next": "n_reason_card",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 미국 자동차업체들이 관세와 자국의 픽업트럭·SUV 수요를 바탕으로 중국…"
+                        "text": "② 근거: 미국 내 수익 구조와 세계 시장 변화가 동시에 영향을 준다."
                     }
                 }
             ]
         },
         "n_reason_card": {
             "layer": "reason",
-            "coach_text": "완벽해. 이제 '입장'에 '근거'가 붙었어. **판을 봐** — 생각이 서기 시작했지?",
+            "coach_text": "좋아, ② 근거가 보드에 올라갔어. 이제 그 근거가 언제까지 유효한지 더 따져보자.",
             "board_pulse": "reason",
             "choices": [
                 {
                     "id": "see_board",
-                    "label": "판 보니까 그렇네",
+                    "label": "다음으로 갈게",
                     "next": "n_depth_0"
                 }
             ]
         },
         "n_reason_card_intl": {
             "layer": "reason",
-            "coach_text": "그것도 근거가 될 수 있지. 판에 적혔어. **판을 봐.**",
+            "coach_text": "좋아, ② 근거가 보드에 올라갔어. 이제 그 흐름이 미국 업체들에 어떤 조건에서 더 크게 작용하는지 보자.",
             "board_pulse": "reason",
             "choices": [
                 {
                     "id": "see_board",
-                    "label": "판 보니까 그렇네",
+                    "label": "다음으로 갈게",
                     "next": "n_depth_0"
                 }
             ]
         },
         "n_depth_0": {
             "layer": "depth",
-            "coach_text": "한 걸음 더.\n항상 그렇게만 될까? 예외는 없을까?",
+            "coach_text": "여기서 한 걸음 더. 관세와 인기 차종 전략이 앞으로도 계속 통할까?",
             "choices": [
                 {
                     "id": "wont_work",
-                    "label": "안 통할 것 같아",
+                    "label": "시간이 갈수록 효과가 약해질 것 같아",
                     "next": "n_depth_1"
                 },
                 {
                     "id": "still_works",
-                    "label": "그래도 통해",
+                    "label": "꽤 오랫동안은 여전히 통할 것 같아",
                     "next": "n_depth_1"
                 },
                 {
                     "id": "hard_depth",
-                    "label": "어렵다",
+                    "label": "어떤 조건이 붙는지 봐야 할 것 같아",
                     "next": "n_depth_1"
                 }
             ]
         },
         "n_depth_1": {
             "layer": "depth",
-            "coach_text": "그럼 네 입장('핵=안전')은 — 무조건 맞는 건 아니게 되네?",
+            "coach_text": "좋아, 그럼 조건을 붙여보자. 어떤 식으로 정리할 수 있을까?",
             "choices": [
                 {
                     "id": "conditional",
-                    "label": "조건이 있네",
+                    "label": "북미 수익은 지키되 전동화 전환이 따라와야 해",
                     "next": "n_depth_card",
                     "emit_card": {
                         "layer": "depth",
-                        "text": "조건이 있다 — 항상 통하지는 않음"
+                        "text": "③ 깊이: 자국 수익이 있어도 전동화 전환이 늦으면 장기 경쟁력은 약해질 수 있다."
                     }
                 },
                 {
                     "id": "mostly_ok",
-                    "label": "그래도 대부분 맞아",
+                    "label": "미국 시장이 큰 만큼 당분간은 기존 전략이 유효해",
                     "next": "n_depth_card_mostly",
                     "emit_card": {
                         "layer": "depth",
-                        "text": "조건이 있다 — 항상 통하지는 않음"
+                        "text": "③ 깊이: 미국 내 강한 수요와 보호장벽 덕분에 기존 전략은 당분간 유지될 수 있다."
                     }
                 }
             ]
         },
         "n_depth_card": {
             "layer": "depth",
-            "coach_text": "봐, 처음엔 '핵=안전'이었는데 이제 '조건부'로 정교해졌어. **판을 봐.** 이게 따지는 거야.",
+            "coach_text": "좋아, ③ 깊이 카드까지 쌓였어. 이제 네 생각을 흔들 수 있는 장면을 만나보자.",
             "board_pulse": "depth",
             "choices": [
                 {
                     "id": "depth_ok",
-                    "label": "맞아, 정교해졌네",
+                    "label": "좋아, 가보자",
                     "next": "n_counter_0"
                 }
             ]
         },
         "n_depth_card_mostly": {
             "layer": "depth",
-            "coach_text": "그래도 '대부분'과 '항상'은 다르지. 판에 적혔어.",
+            "coach_text": "좋아, ③ 깊이 카드까지 쌓였어. 이제 반대 쪽에서 보면 어떤 숫자와 흐름이 보이는지 살펴보자.",
             "board_pulse": "depth",
             "choices": [
                 {
                     "id": "depth_ok",
-                    "label": "계속 가보자",
+                    "label": "좋아, 가보자",
                     "next": "n_counter_0"
                 }
             ]
         },
         "n_counter_0": {
             "layer": "counter",
-            "coach_text": "그렇게 보기엔 이미 미국 빅3의 자국 시장 점유율이 90%를 넘던 시절에서 40% 안팎으로 내려왔고, 멕시코 수입시장에선 중국차 비중이 15%까지 올라왔잖아.\n\n보호장벽은 일시적 유예기간일 뿐이고, 전동화 지연과 중국 업체 및 중국과 경쟁하며 강해진 글로벌 업체들의 진입으로 미국 빅3의 장기 경쟁력은 더 약해질 수 있다\n\n네가 아까 말한 입장 — 이 이야기에도 그대로 맞을까?",
+            "coach_text": "그렇게 보기엔 이미 미국 빅3의 자국 시장 점유율이 90%를 넘던 시절에서 40% 안팎으로 내려왔고, 멕시코 수입시장에선 중국차 비중이 15%까지 올라왔잖아. 이런 흐름은 네 생각을 좀 흔들어?",
             "choices": [
                 {
                     "id": "might_shake",
-                    "label": "흔들릴 것 같아",
+                    "label": "응, 장기적으로는 꽤 흔들리는 숫자 같아",
                     "next": "n_counter_still"
                 },
                 {
                     "id": "nuke_different",
-                    "label": "그래도 핵은 달라",
+                    "label": "그래도 미국 본토 시장은 아직 다르게 볼 수 있어",
                     "next": "n_counter_why"
                 },
                 {
                     "id": "unsure_counter",
-                    "label": "모르겠어",
+                    "label": "어떻게 연결해야 할지 아직 헷갈려",
                     "next": "n_counter_drone"
                 }
             ]
         },
         "n_counter_why": {
             "layer": "counter",
-            "coach_text": "왜 그렇게 봐? (답 강요 없어 — 네 생각대로)",
+            "coach_text": "왜 그렇게 느꼈어? 그 숫자가 말해주는 건 시장 변화일까, 아니면 전략 지연일까?",
             "choices": [
                 {
                     "id": "destruction",
-                    "label": "파괴력이 차원이 달라",
+                    "label": "보호장벽만으로는 장기 경쟁력을 못 만든다는 뜻 같아",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "can_defend",
-                    "label": "드론은 막을 수 있어",
+                    "label": "아직 미국 안에서는 방어할 시간이 남았다는 뜻 같아",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_still": {
             "layer": "counter",
-            "coach_text": "솔직하네. 그래도 핵만큼 무서운 게 있을까?",
+            "coach_text": "그래도 미국 본토 시장은 다르다고 했지. 그런데 세계 시장의 변화가 쌓이면 미국 업체들에도 결국 돌아오지 않을까?",
             "choices": [
                 {
                     "id": "maybe_not",
-                    "label": "없을 수도",
+                    "label": "맞아, 결국 외면하긴 어려울 것 같아",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "still_nuke",
-                    "label": "핵이 제일 무서워",
+                    "label": "아니, 미국 시장 규모가 커서 버틸 수도 있어",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_drone": {
             "layer": "counter",
-            "coach_text": "괜찮아. 천천히 보자. 드론 수천 대 vs 핵 — 뭐가 더 실제로 쓰일까?",
+            "coach_text": "헷갈릴 수 있어. 그렇다면 이렇게 바꿔 물어볼게. 자국 시장에서 잘 버는 것과 세계 산업의 중심에서 밀려나는 건 동시에 가능하지 않을까?",
             "choices": [
                 {
                     "id": "drones_real",
-                    "label": "드론이 더 현실적",
+                    "label": "응, 국내 수익과 글로벌 경쟁력은 다를 수 있어",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "nuke_deter",
-                    "label": "핵이 억지해",
+                    "label": "아직은 같은 방향으로 볼 수도 있을 것 같아",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_hard": {
             "layer": "counter",
-            "coach_text": "일리 있어. 근데 — '쓸 수 있느냐'는 다른 문제 아닐까?\n핵을 진짜 쏘면 자기도 끝이잖아.",
+            "coach_text": "좋아, 이제 반론을 한 줄로 잡아보자. 네 기존 생각을 가장 세게 흔드는 말은 뭐야?",
             "choices": [
                 {
                     "id": "true_hard",
-                    "label": "그건 그렇네",
+                    "label": "보호장벽은 시간만 벌어줄 뿐 근본 경쟁력은 못 대신해",
                     "next": "n_counter_card",
                     "emit_card": {
                         "layer": "counter",
-                        "text": "보호장벽은 일시적 유예기간일 뿐이고, 전동화 지연과 중국 업체 및 중국과 경쟁하며 강해진…"
+                        "text": "④ 반론: 보호장벽은 유예기간일 뿐, 전동화 지연을 가리진 못한다."
                     }
                 },
                 {
                     "id": "still_deter",
-                    "label": "그래도 억지는 돼",
+                    "label": "그래도 큰 내수시장 덕분에 쉽게 밀리진 않을 수 있어",
                     "next": "n_counter_card_deter",
                     "emit_card": {
                         "layer": "counter",
-                        "text": "보호장벽은 일시적 유예기간일 뿐이고, 전동화 지연과 중국 업체 및 중국과 경쟁하며 강해진…"
+                        "text": "④ 반론: 세계 흐름이 바뀌어도 미국 내수시장의 힘은 쉽게 사라지지 않는다."
                     }
                 }
             ]
         },
         "n_counter_card": {
             "layer": "counter",
-            "coach_text": "반론과 네 답이 판에 쌓였어. **판을 봐.**",
+            "coach_text": "좋아, ④ 반론 카드가 올라갔어. 이제 처음 생각을 그대로 둘지, 조금 고쳐볼지 정리해보자.",
             "board_pulse": "counter",
             "choices": [
                 {
                     "id": "counter_ok",
-                    "label": "계속 정리하자",
+                    "label": "정리해볼게",
                     "next": "n_refine_0"
                 }
             ]
         },
         "n_counter_card_deter": {
             "layer": "counter",
-            "coach_text": "그 관점도 판에 적혔어.",
+            "coach_text": "좋아, ④ 반론 카드가 올라갔어. 이제 반론을 반영해서 네 입장을 더 정교하게 만들어보자.",
             "board_pulse": "counter",
             "choices": [
                 {
                     "id": "counter_ok",
-                    "label": "계속 정리하자",
+                    "label": "정리해볼게",
                     "next": "n_refine_0"
                 }
             ]
         },
         "n_refine_0": {
             "layer": "refine",
-            "coach_text": "자, **판을 다시 봐.** 처음 생각에서 많이 왔어.\n① 입장 → ② 근거 → ③ 깊이 → ④ 반론\n이제 네 생각을 다시 정리하면, 어떻게 바뀌었어?",
+            "coach_text": "보드를 보면 단기 방어와 장기 경쟁력이 같이 보이지? 이제 네 입장을 다시 세우면 어디쯤이야?",
             "board_diff": true,
             "choices": [
                 {
                     "id": "limits",
-                    "label": "핵은 안전을 주지만 한계가 있다",
+                    "label": "지금 전략은 효과가 있지만 한계가 분명해",
                     "next": "n_refine_card",
                     "emit_card": {
                         "layer": "refine",
-                        "text": "처음 생각보다 정교해졌다"
+                        "text": "⑤ 재정립: 현재 전략은 단기 수익엔 유효하지만 장기 경쟁력엔 한계가 있다."
                     }
                 },
                 {
                     "id": "still_best",
-                    "label": "여전히 핵이 최선이다",
+                    "label": "한계가 있어도 당장은 이 전략이 가장 현실적이야",
                     "next": "n_refine_card_best",
                     "emit_card": {
                         "layer": "refine",
-                        "text": "처음 생각보다 정교해졌다"
+                        "text": "⑤ 재정립: 한계는 있지만 미국 업체들엔 당분간 현재 전략이 가장 현실적이다."
                     }
                 },
                 {
                     "id": "refine_free",
-                    "label": "직접 쓸게",
+                    "label": "내 말로 다시 정리해볼게",
                     "next": "n_refine_input",
                     "input_mode": "text",
                     "emit_card_on_message": {
@@ -521,31 +521,31 @@
         },
         "n_refine_card": {
             "layer": "refine",
-            "coach_text": "스스로 여기까지 왔어. 처음 '핵=안전'에서 훨씬 정교해졌지?",
+            "coach_text": "좋아, ⑤ 재정립 카드가 올라갔어. 마지막으로 이 생각을 한 문장 결론으로 묶어보자.",
             "board_pulse": "refine",
             "choices": [
                 {
                     "id": "refine_ok",
-                    "label": "맞아",
+                    "label": "마무리하자",
                     "next": "n_synth_0"
                 }
             ]
         },
         "n_refine_card_best": {
             "layer": "refine",
-            "coach_text": "네 정리가 판에 적혔어. 한번 더 따져보자.",
+            "coach_text": "좋아, ⑤ 재정립 카드가 올라갔어. 마지막으로 단기와 장기를 함께 담아 한 문장으로 묶어보자.",
             "board_pulse": "refine",
             "choices": [
                 {
                     "id": "refine_ok",
-                    "label": "계속",
+                    "label": "마무리하자",
                     "next": "n_synth_0"
                 }
             ]
         },
         "n_refine_input": {
             "layer": "refine",
-            "coach_text": "네 말로 정리해 봐 — 지금 네 생각은?",
+            "coach_text": "좋아. 보드를 보고 네 입장을 한 번 더 다듬어 써봐. 단기 수익, 보호장벽, 전기차 전환 중 무엇을 중심에 둘지도 함께 생각해봐.",
             "input_mode": "text",
             "emit_card_on_message": {
                 "layer": "refine"
@@ -554,7 +554,7 @@
         },
         "n_synth_0": {
             "layer": "synthesis",
-            "coach_text": "마지막. 이 모든 걸 **한 문장**으로 — 네 결론은?\n(직접 써 봐)",
+            "coach_text": "이제 ⑥ 종합이야. '미국 자동차회사들은 관세와 인기 차종으로 당장은 버티지만, 장기 경쟁력은 무엇에 달려 있는가'에 답하듯 2~3문장으로 정리해봐.",
             "input_mode": "text",
             "emit_card_on_message": {
                 "layer": "synthesis"
@@ -563,21 +563,23 @@
         },
         "n_synth_compose": {
             "layer": "synthesis",
-            "coach_text": "이게 네가 10분 넘게 따져서 만든 결론이야.\n누가 준 게 아니라, **네가 쌓은 거**지.\n자 — 이 생각판을 바탕으로 한 편의 글을 써볼까?\n판에 있는 ①~⑥이 그대로 네 글의 뼈대가 될 거야.",
+            "coach_text": "좋아, 생각판의 흐름이 다 모였어. 마지막 답안을 완성해보자.",
             "board_pulse": "synthesis",
             "choices": [
                 {
                     "id": "go_compose",
-                    "label": "글 쓰러 가기",
+                    "label": "최종 정리 보기",
                     "next": "n_compose"
                 }
             ]
         },
         "n_compose": {
             "layer": "synthesis",
-            "terminal": true
+            "terminal": true,
+            "coach_text": "좋아. 네 결론은 '보호무역과 픽업트럭·SUV 중심 전략이 미국 업체들의 단기 수익은 지켜주지만, 전동화 전환과 글로벌 경쟁 대응이 늦어지면 장기 경쟁력은 오히려 약해질 수 있다'로 모아볼 수 있겠네."
         }
     },
-    "llm_followup_fallback": "그렇구나. 한 가지만 더 — 그 말을 한 문장으로 정리하면?",
-    "generated_by": "narrative_v2_generate_rule_v1"
+    "generated_by": "narrative_v2_generate_llm_v2",
+    "llm_followup_fallback": "좋아, 그 이유도 의미 있어. 그 생각이 단기 수익을 말하는지, 장기 경쟁력을 말하는지 한 번만 더 나눠보자.",
+    "llm_philosophy_notes": "입장-근거-깊이-반론-재정립-종합의 6층을 유지했고, 반론은 질문으로 흔들되 학생 결론을 대신 단정하지 않도록 작성했다."
 }

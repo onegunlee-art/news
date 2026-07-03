@@ -55,142 +55,142 @@
     "nodes": {
         "n_intro": {
             "layer": "intro",
-            "coach_text": "금리가 오르면 일본 은행들은 다 같이 좋아지는 걸까?\n\n많은 사람은 \"금리 상승은 일본 은행권 전반에 호재인가\"라고 생각해.\n\n일본의 금리 정상화는 은행권의 황금기처럼 보이지만 그 이익은 메가뱅크에 쏠리고 소형은행은 저금리 시절 쌓인 채권 손실에 눌린다\n\n왜 그렇게 생각할까?",
+            "coach_text": "일본은행이 금리를 1%까지 올리며 30년 넘은 초저금리 시대가 사실상 끝나고 있어요. 보통 은행은 예금금리보다 대출금리가 더 빨리 좋아지면 본업 수익이 늘 수 있죠. 그래서 일본 은행주도 크게 올랐는데, 정말 일본 은행들은 다 같이 좋아지는 걸까요?",
             "choices": [
                 {
                     "id": "nuclear_fear",
-                    "label": "A 쪽이 더 와닿아",
+                    "label": "응, 금리 오르면 은행엔 전반적으로 좋은 일 같아",
                     "next": "n_stance_bridge_fear"
                 },
                 {
                     "id": "just_luck",
-                    "label": "B 쪽도 설명돼",
+                    "label": "주가가 너무 앞서간 것 같아, 마냥 좋아 보이진 않아",
                     "next": "n_stance_bridge_luck"
                 },
                 {
                     "id": "other_reason",
-                    "label": "다른 이유",
+                    "label": "잘 모르겠어, 다른 기준으로 봐야 할 것 같아",
                     "next": "n_stance_bridge_other"
                 }
             ]
         },
         "n_stance_bridge_fear": {
             "layer": "stance",
-            "coach_text": "좋아, 금리 상승은 일본 은행권 전반에 호재인가에서 시작해보자.\n일본 초저금리 시대의 종식, '불균등한' 황금기의 도래 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아요. 우선 네 출발점을 잡아보자. 지금은 '금리 상승이 일본 은행권 전반에 호재인가'에 대해 어디에 더 가까운지 골라봐.",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "대체로 호재라고 봐",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "금리 상승은 일본 은행권 전반에 호재인가"
+                        "text": "① 입장: 금리 상승은 일본 은행권 전반에 대체로 호재다"
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "전반적 호재라고 보긴 어려워",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "금리 상승은 일본 은행권 전반에 호재인가"
+                        "text": "① 입장: 금리 상승이 모든 일본 은행에 고르게 좋은 건 아니다"
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "좋은 면도 있지만 다 같진 않을 것 같아",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "금리 상승은 일본 은행권 전반에 호재인가"
+                        "text": "① 입장: 금리 상승의 효과는 은행마다 다를 수 있다"
                     }
                 }
             ]
         },
         "n_stance_bridge_luck": {
             "layer": "stance",
-            "coach_text": "좋아, 금리 상승은 일본 은행권 전반에 호재인가에서 시작해보자.\n일본 초저금리 시대의 종식, '불균등한' 황금기의 도래 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아. 그러면 네 입장을 먼저 선명하게 세워보자. '금리 상승이 일본 은행권 전반에 호재인가'에 지금은 어디쯤 서 있니?",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "그래도 전체적으로는 호재 같아",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "금리 상승은 일본 은행권 전반에 호재인가"
+                        "text": "① 입장: 금리 상승은 일본 은행권 전반에 대체로 호재다"
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "아니, 전반적 호재라고 하긴 어려워",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "금리 상승은 일본 은행권 전반에 호재인가"
+                        "text": "① 입장: 금리 상승이 모든 일본 은행에 고르게 좋은 건 아니다"
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "반반이야, 은행마다 다를 듯해",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "금리 상승은 일본 은행권 전반에 호재인가"
+                        "text": "① 입장: 금리 상승의 효과는 은행마다 다를 수 있다"
                     }
                 }
             ]
         },
         "n_stance_bridge_other": {
             "layer": "stance",
-            "coach_text": "좋아, 금리 상승은 일본 은행권 전반에 호재인가에서 시작해보자.\n일본 초저금리 시대의 종식, '불균등한' 황금기의 도래 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아. 헷갈릴수록 먼저 현재 위치를 찍는 게 중요해. 지금 네 생각은 어느 쪽에 더 가까워?",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "일단은 전반적 호재 쪽",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "금리 상승은 일본 은행권 전반에 호재인가"
+                        "text": "① 입장: 금리 상승은 일본 은행권 전반에 대체로 호재다"
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "일단은 전반적 호재는 아니라는 쪽",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "금리 상승은 일본 은행권 전반에 호재인가"
+                        "text": "① 입장: 금리 상승이 모든 일본 은행에 고르게 좋은 건 아니다"
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "아직은 중간, 차이가 있을 것 같아",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "금리 상승은 일본 은행권 전반에 호재인가"
+                        "text": "① 입장: 금리 상승의 효과는 은행마다 다를 수 있다"
                     }
                 }
             ]
         },
         "n_stance_card": {
             "layer": "stance",
-            "coach_text": "좋아, 네 입장이 잡혔어. (판에 적혔지)\n근데 그냥 믿는 것과 따지는 건 다르잖아. 하나씩 파보자.\n\n왜 핵이 있으면 안전하다고 생각해?",
+            "coach_text": "좋아, ① 입장이 올라갔어. 그 입장을 떠받치는 가장 큰 이유는 뭐야?",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "cant_touch",
-                    "label": "아무도 못 건드려서",
+                    "label": "예대금리 차가 벌어지면 은행 본업 수익이 좋아지니까",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "stop_war",
-                    "label": "전쟁을 막아서",
+                    "label": "주가가 크게 오른 걸 보면 시장도 호재로 보는 것 같아서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 써볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -198,22 +198,22 @@
         },
         "n_stance_card_no": {
             "layer": "stance",
-            "coach_text": "신중하네. 네 입장이 판에 잡혔어.\n왜 핵 없이도 괜찮다고 보는지 — 이유를 따져보자.",
+            "coach_text": "좋아, ① 입장이 올라갔어. 왜 전반적 호재라고 보긴 어렵다고 생각해?",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "alliance",
-                    "label": "동맹이 있어서",
+                    "label": "은행마다 자산 구조와 예금 기반이 달라서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "danger",
-                    "label": "핵이 오히려 위험해서",
+                    "label": "금리 상승이 오히려 기존 채권 손실을 드러낼 수 있어서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 써볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -221,22 +221,22 @@
         },
         "n_stance_card_half": {
             "layer": "stance",
-            "coach_text": "솔직하네. 입장이 판에 잡혔어.\n왜 그렇게 반반으로 보는지 — 이유를 따져보자.",
+            "coach_text": "좋아, ① 입장이 올라갔어. 네가 반반이라고 느끼는 핵심 이유는 뭐야?",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "not_sure",
-                    "label": "장단이 있어서",
+                    "label": "수익 개선 요인도 있지만 부담도 같이 커질 것 같아서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "need_more",
-                    "label": "더 알아봐야 해서",
+                    "label": "대형은행과 소형은행을 나눠 봐야 할 것 같아서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 써볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -244,273 +244,273 @@
         },
         "n_reason_why2": {
             "layer": "reason",
-            "coach_text": "그렇지. 근데 '왜' 못 건드릴까? 상대 입장에서 생각하면?",
+            "coach_text": "좋아. 그 이유를 한 걸음 더 구체화해보자. 네 생각을 가장 잘 받쳐주는 근거는 뭐야?",
             "choices": [
                 {
                     "id": "fear_revenge",
-                    "label": "보복이 무서워서",
+                    "label": "금리 차 확대가 은행 이익 개선으로 바로 이어질 수 있어",
                     "next": "n_reason_card",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 금리 상승은 일본 은행권 전반에 호재인가"
+                        "text": "② 근거: 금리 정상화로 예대금리 차가 커지면 은행 본업 수익이 개선될 수 있다"
                     }
                 },
                 {
                     "id": "intl_pressure",
-                    "label": "국제사회 비난",
+                    "label": "모든 은행이 같은 속도로 좋아지진 않을 수 있어",
                     "next": "n_reason_card_intl",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 금리 상승은 일본 은행권 전반에 호재인가"
+                        "text": "② 근거: 금리 상승의 효과는 은행 규모·예금 기반·보유자산 구조에 따라 다르게 나타난다"
                     }
                 },
                 {
                     "id": "unsure_reason",
-                    "label": "음...",
+                    "label": "아직 근거를 더 생각해보고 싶어",
                     "next": "n_reason_card",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 금리 상승은 일본 은행권 전반에 호재인가"
+                        "text": "② 근거: 금리 상승의 효과를 판단하려면 은행별 조건을 더 봐야 한다"
                     }
                 }
             ]
         },
         "n_reason_card": {
             "layer": "reason",
-            "coach_text": "완벽해. 이제 '입장'에 '근거'가 붙었어. **판을 봐** — 생각이 서기 시작했지?",
+            "coach_text": "좋아, ② 근거가 보드에 올라갔어. 이제 그 근거가 언제 더 잘 맞는지 생각해보자.",
             "board_pulse": "reason",
             "choices": [
                 {
                     "id": "see_board",
-                    "label": "판 보니까 그렇네",
+                    "label": "다음으로",
                     "next": "n_depth_0"
                 }
             ]
         },
         "n_reason_card_intl": {
             "layer": "reason",
-            "coach_text": "그것도 근거가 될 수 있지. 판에 적혔어. **판을 봐.**",
+            "coach_text": "좋아, ② 근거가 정리됐어. 이제 어떤 조건에서 차이가 더 벌어지는지 보자.",
             "board_pulse": "reason",
             "choices": [
                 {
                     "id": "see_board",
-                    "label": "판 보니까 그렇네",
+                    "label": "다음으로",
                     "next": "n_depth_0"
                 }
             ]
         },
         "n_depth_0": {
             "layer": "depth",
-            "coach_text": "한 걸음 더.\n항상 그렇게만 될까? 예외는 없을까?",
+            "coach_text": "그럼 더 따져보자. 금리 상승 효과가 은행마다 갈리는 핵심은 어디에 있을까?",
             "choices": [
                 {
                     "id": "wont_work",
-                    "label": "안 통할 것 같아",
+                    "label": "기존에 쌓아둔 저수익 채권 부담",
                     "next": "n_depth_1"
                 },
                 {
                     "id": "still_works",
-                    "label": "그래도 통해",
+                    "label": "튼튼한 예금 기반과 고객 흡수력",
                     "next": "n_depth_1"
                 },
                 {
                     "id": "hard_depth",
-                    "label": "어렵다",
+                    "label": "둘 다 함께 봐야 할 것 같아",
                     "next": "n_depth_1"
                 }
             ]
         },
         "n_depth_1": {
             "layer": "depth",
-            "coach_text": "그럼 네 입장('핵=안전')은 — 무조건 맞는 건 아니게 되네?",
+            "coach_text": "좋아. 네 생각을 조건까지 붙여서 말해보면 어느 쪽에 더 가까워?",
             "choices": [
                 {
                     "id": "conditional",
-                    "label": "조건이 있네",
+                    "label": "금리 상승은 크고 강한 은행일수록 유리해 보여",
                     "next": "n_depth_card",
                     "emit_card": {
                         "layer": "depth",
-                        "text": "조건이 있다 — 항상 통하지는 않음"
+                        "text": "③ 깊이: 금리 상승의 이익은 예금 기반과 자산 여력이 큰 대형은행에 더 크게 돌아갈 수 있다"
                     }
                 },
                 {
                     "id": "mostly_ok",
-                    "label": "그래도 대부분 맞아",
+                    "label": "그래도 시간 지나면 대부분 은행이 어느 정도는 좋아질 수 있어",
                     "next": "n_depth_card_mostly",
                     "emit_card": {
                         "layer": "depth",
-                        "text": "조건이 있다 — 항상 통하지는 않음"
+                        "text": "③ 깊이: 차이는 있어도 장기적으로는 다수 은행이 금리 정상화의 수혜를 볼 가능성이 있다"
                     }
                 }
             ]
         },
         "n_depth_card": {
             "layer": "depth",
-            "coach_text": "봐, 처음엔 '핵=안전'이었는데 이제 '조건부'로 정교해졌어. **판을 봐.** 이게 따지는 거야.",
+            "coach_text": "좋아, ③ 깊이 카드가 올라갔어. 이제 반대쪽 사실이 네 생각을 흔드는지 보자.",
             "board_pulse": "depth",
             "choices": [
                 {
                     "id": "depth_ok",
-                    "label": "맞아, 정교해졌네",
+                    "label": "흔들림 보러 가기",
                     "next": "n_counter_0"
                 }
             ]
         },
         "n_depth_card_mostly": {
             "layer": "depth",
-            "coach_text": "그래도 '대부분'과 '항상'은 다르지. 판에 적혔어.",
+            "coach_text": "좋아, ③ 깊이가 정리됐어. 이제 다른 숫자를 보면 생각이 달라질지도 볼까.",
             "board_pulse": "depth",
             "choices": [
                 {
                     "id": "depth_ok",
-                    "label": "계속 가보자",
+                    "label": "흔들림 보러 가기",
                     "next": "n_counter_0"
                 }
             ]
         },
         "n_counter_0": {
             "layer": "counter",
-            "coach_text": "그런데 2022년 이후 61개 지방은행의 예금 증가율은 6%에 그친 반면 메가뱅크는 17% 늘었고, 신킨은행의 엔화 채권 손실은 위험가중자산의 약 4%였다는 점도 봐야 하지 않을까?\n\n은행 호황처럼 보여도 금리 상승의 과실은 규모와 디지털 경쟁력을 갖춘 대형은행에 집중되고, 지방·소형은행은 팔기 어려운 저수익 채권의 평가손실과 약한 예금 기반 때문에 더 취약해…\n\n네가 아까 말한 입장 — 이 이야기에도 그대로 맞을까?",
+            "coach_text": "그런데 2022년 이후 61개 지방은행의 예금 증가율은 6%에 그친 반면 메가뱅크는 17% 늘었고, 신킨은행의 엔화 채권 손실은 위험가중자산의 약 4%였다는 점도 봐야 하지 않을까?",
             "choices": [
                 {
                     "id": "might_shake",
-                    "label": "흔들릴 것 같아",
+                    "label": "응, 그 숫자들을 보면 전반적 호재라는 말이 흔들려",
                     "next": "n_counter_still"
                 },
                 {
                     "id": "nuke_different",
-                    "label": "그래도 핵은 달라",
+                    "label": "그래도 금리 상승의 큰 방향은 여전히 호재 같아",
                     "next": "n_counter_why"
                 },
                 {
                     "id": "unsure_counter",
-                    "label": "모르겠어",
+                    "label": "숫자가 의미하는 바를 더 생각해봐야겠어",
                     "next": "n_counter_drone"
                 }
             ]
         },
         "n_counter_why": {
             "layer": "counter",
-            "coach_text": "왜 그렇게 봐? (답 강요 없어 — 네 생각대로)",
+            "coach_text": "어느 지점이 가장 걸렸어?",
             "choices": [
                 {
                     "id": "destruction",
-                    "label": "파괴력이 차원이 달라",
+                    "label": "대형은행으로 예금이 더 몰린다는 점",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "can_defend",
-                    "label": "드론은 막을 수 있어",
+                    "label": "소형은행은 채권 손실을 버티기 더 어렵다는 점",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_still": {
             "layer": "counter",
-            "coach_text": "솔직하네. 그래도 핵만큼 무서운 게 있을까?",
+            "coach_text": "그렇다면 이런 차이가 있어도 '전반적 호재'라는 표현은 그대로 괜찮을까?",
             "choices": [
                 {
                     "id": "maybe_not",
-                    "label": "없을 수도",
+                    "label": "아마 그대로 쓰긴 어렵겠어",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "still_nuke",
-                    "label": "핵이 제일 무서워",
+                    "label": "그래도 큰 흐름은 호재라고 볼 수 있어",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_drone": {
             "layer": "counter",
-            "coach_text": "괜찮아. 천천히 보자. 드론 수천 대 vs 핵 — 뭐가 더 실제로 쓰일까?",
+            "coach_text": "그 숫자들을 보면, 금리 상승의 이익이 누구에게 더 먼저 가는지 다시 봐야 하지 않을까?",
             "choices": [
                 {
                     "id": "drones_real",
-                    "label": "드론이 더 현실적",
+                    "label": "응, 메가뱅크 쏠림을 더 봐야 할 것 같아",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "nuke_deter",
-                    "label": "핵이 억지해",
+                    "label": "아니, 결국 다른 은행도 뒤따라 좋아질 수 있다고 봐",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_hard": {
             "layer": "counter",
-            "coach_text": "일리 있어. 근데 — '쓸 수 있느냐'는 다른 문제 아닐까?\n핵을 진짜 쏘면 자기도 끝이잖아.",
+            "coach_text": "좋아. 그 흔들림을 한 문장으로 잡아보자. 지금 네 생각을 가장 흔드는 포인트는 뭐야?",
             "choices": [
                 {
                     "id": "true_hard",
-                    "label": "그건 그렇네",
+                    "label": "금리 상승의 과실이 대형은행에 집중될 수 있다는 점",
                     "next": "n_counter_card",
                     "emit_card": {
                         "layer": "counter",
-                        "text": "은행 호황처럼 보여도 금리 상승의 과실은 규모와 디지털 경쟁력을 갖춘 대형은행에 집중되고…"
+                        "text": "④ 반론: 금리 상승이 은행 호황처럼 보여도 실제 과실은 메가뱅크에 더 집중될 수 있다"
                     }
                 },
                 {
                     "id": "still_deter",
-                    "label": "그래도 억지는 돼",
+                    "label": "소형은행의 손실이 있어도 전체 흐름을 바꾸진 않을 수 있다는 점",
                     "next": "n_counter_card_deter",
                     "emit_card": {
                         "layer": "counter",
-                        "text": "은행 호황처럼 보여도 금리 상승의 과실은 규모와 디지털 경쟁력을 갖춘 대형은행에 집중되고…"
+                        "text": "④ 반론: 은행별 취약성은 있어도 금리 정상화의 큰 방향 자체를 뒤집진 않을 수 있다"
                     }
                 }
             ]
         },
         "n_counter_card": {
             "layer": "counter",
-            "coach_text": "반론과 네 답이 판에 쌓였어. **판을 봐.**",
+            "coach_text": "좋아, ④ 반론이 올라갔어. 이제 처음 입장을 그대로 둘지, 조금 고칠지 정리해보자.",
             "board_pulse": "counter",
             "choices": [
                 {
                     "id": "counter_ok",
-                    "label": "계속 정리하자",
+                    "label": "정리하러 가기",
                     "next": "n_refine_0"
                 }
             ]
         },
         "n_counter_card_deter": {
             "layer": "counter",
-            "coach_text": "그 관점도 판에 적혔어.",
+            "coach_text": "좋아, ④ 반론이 보드에 들어왔어. 이제 네 입장을 얼마나 수정할지 생각해보자.",
             "board_pulse": "counter",
             "choices": [
                 {
                     "id": "counter_ok",
-                    "label": "계속 정리하자",
+                    "label": "정리하러 가기",
                     "next": "n_refine_0"
                 }
             ]
         },
         "n_refine_0": {
             "layer": "refine",
-            "coach_text": "자, **판을 다시 봐.** 처음 생각에서 많이 왔어.\n① 입장 → ② 근거 → ③ 깊이 → ④ 반론\n이제 네 생각을 다시 정리하면, 어떻게 바뀌었어?",
+            "coach_text": "보드를 보면 처음 생각에서 어디를 가장 손보고 싶어?",
             "board_diff": true,
             "choices": [
                 {
                     "id": "limits",
-                    "label": "핵은 안전을 주지만 한계가 있다",
+                    "label": "전반적 호재라는 말에 조건을 붙이고 싶어",
                     "next": "n_refine_card",
                     "emit_card": {
                         "layer": "refine",
-                        "text": "처음 생각보다 정교해졌다"
+                        "text": "⑤ 재정립: 금리 상승은 호재일 수 있지만 그 혜택은 은행 규모와 체력에 따라 크게 갈린다"
                     }
                 },
                 {
                     "id": "still_best",
-                    "label": "여전히 핵이 최선이다",
+                    "label": "차이가 있어도 큰 방향은 호재라고 유지하고 싶어",
                     "next": "n_refine_card_best",
                     "emit_card": {
                         "layer": "refine",
-                        "text": "처음 생각보다 정교해졌다"
+                        "text": "⑤ 재정립: 은행별 편차는 있어도 금리 정상화는 일본 은행권에 대체로 긍정적이다"
                     }
                 },
                 {
                     "id": "refine_free",
-                    "label": "직접 쓸게",
+                    "label": "내 말로 다시 정리해볼게",
                     "next": "n_refine_input",
                     "input_mode": "text",
                     "emit_card_on_message": {
@@ -521,31 +521,31 @@
         },
         "n_refine_card": {
             "layer": "refine",
-            "coach_text": "스스로 여기까지 왔어. 처음 '핵=안전'에서 훨씬 정교해졌지?",
+            "coach_text": "좋아, ⑤ 재정립이 잡혔어. 이제 마지막으로 전체 그림을 한 문장으로 묶어보자.",
             "board_pulse": "refine",
             "choices": [
                 {
                     "id": "refine_ok",
-                    "label": "맞아",
+                    "label": "종합하러 가기",
                     "next": "n_synth_0"
                 }
             ]
         },
         "n_refine_card_best": {
             "layer": "refine",
-            "coach_text": "네 정리가 판에 적혔어. 한번 더 따져보자.",
+            "coach_text": "좋아, ⑤ 재정립이 올라갔어. 이제 네 최종 문장을 만들어보자.",
             "board_pulse": "refine",
             "choices": [
                 {
                     "id": "refine_ok",
-                    "label": "계속",
+                    "label": "종합하러 가기",
                     "next": "n_synth_0"
                 }
             ]
         },
         "n_refine_input": {
             "layer": "refine",
-            "coach_text": "네 말로 정리해 봐 — 지금 네 생각은?",
+            "coach_text": "좋아. 보드의 ①~④를 보고, 네 입장을 어떻게 고쳐 말할지 한두 문장으로 적어봐.",
             "input_mode": "text",
             "emit_card_on_message": {
                 "layer": "refine"
@@ -554,7 +554,7 @@
         },
         "n_synth_0": {
             "layer": "synthesis",
-            "coach_text": "마지막. 이 모든 걸 **한 문장**으로 — 네 결론은?\n(직접 써 봐)",
+            "coach_text": "이제 마지막이야. ① 입장, ② 근거, ③ 조건, ④ 흔들림, ⑤ 재정립을 이어서 '금리 상승은 일본 은행권 전반에 호재인가'에 대한 네 최종 답을 써봐.",
             "input_mode": "text",
             "emit_card_on_message": {
                 "layer": "synthesis"
@@ -563,21 +563,23 @@
         },
         "n_synth_compose": {
             "layer": "synthesis",
-            "coach_text": "이게 네가 10분 넘게 따져서 만든 결론이야.\n누가 준 게 아니라, **네가 쌓은 거**지.\n자 — 이 생각판을 바탕으로 한 편의 글을 써볼까?\n판에 있는 ①~⑥이 그대로 네 글의 뼈대가 될 거야.",
+            "coach_text": "좋아, 생각판이 다 찼어. 마지막 문장으로 완성해보자.",
             "board_pulse": "synthesis",
             "choices": [
                 {
                     "id": "go_compose",
-                    "label": "글 쓰러 가기",
+                    "label": "최종 답 쓰기",
                     "next": "n_compose"
                 }
             ]
         },
         "n_compose": {
             "layer": "synthesis",
-            "terminal": true
+            "terminal": true,
+            "coach_text": "잘 왔어. 네 결론은 '금리 상승은 은행권의 황금기처럼 보이지만, 실제 이익은 메가뱅크에 더 쏠리고 소형은행은 채권 손실과 약한 예금 기반 때문에 더 취약할 수 있다'는 긴장을 얼마나 담아내느냐에 달려 있어."
         }
     },
-    "llm_followup_fallback": "그렇구나. 한 가지만 더 — 그 말을 한 문장으로 정리하면?",
-    "generated_by": "narrative_v2_generate_rule_v1"
+    "generated_by": "narrative_v2_generate_llm_v2",
+    "llm_followup_fallback": "좋아, 그 이유를 보드에 맞게 더 짧게 적으면 네 입장이 더 선명해질 거야.",
+    "llm_philosophy_notes": "학생이 직접 입장을 세우고 수정하게 했고, 반론 단계는 숫자를 바탕으로 흔드는 질문형으로만 구성했다."
 }

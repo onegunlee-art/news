@@ -55,142 +55,142 @@
     "nodes": {
         "n_intro": {
             "layer": "intro",
-            "coach_text": "중국은 원래 장기 계획을 잘 세우고 끝까지 밀어붙이는 나라일까?\n\n많은 사람은 \"중국은 5개년 계획과 강한 국가 동원력으로 장기 목표를 일관되게 추진하는가\"라고 생각해.\n\n중국은 장기 계획에 능한 나라처럼 보이지만 실제로는 관료 평가와 충성 경쟁 때문에 보이지 않는 기반 투자보다 눈에 띄는 낭비성 사업이 반복된다\n\n왜 그렇게 생각할까?",
+            "coach_text": "중국은 5개년 계획, 대규모 인프라, 빠른 집행력 때문에 장기 목표를 꾸준히 밀어붙이는 나라처럼 자주 보입니다. 그런데 실제 현장에서는 거대한 공항, 한산한 전시장, 수요와 어긋난 기술단지, 이용이 적은 상징 사업도 반복됐습니다. 그렇다면 중국은 정말 장기 계획에 강한 나라일까?",
             "choices": [
                 {
                     "id": "nuclear_fear",
-                    "label": "A 쪽이 더 와닿아",
+                    "label": "국가가 강하게 밀면 장기 계획도 잘 된다고 봐",
                     "next": "n_stance_bridge_fear"
                 },
                 {
                     "id": "just_luck",
-                    "label": "B 쪽도 설명돼",
+                    "label": "겉으로만 그래 보였을 수도 있다고 봐",
                     "next": "n_stance_bridge_luck"
                 },
                 {
                     "id": "other_reason",
-                    "label": "다른 이유",
+                    "label": "다른 이유가 더 클 것 같아",
                     "next": "n_stance_bridge_other"
                 }
             ]
         },
         "n_stance_bridge_fear": {
             "layer": "stance",
-            "coach_text": "좋아, 중국은 5개년 계획과 강한 국가 동원력으로 장기 목표를 일관되게 추진하는가에서 시작해보자.\n흰 코끼리로 가득한 중국 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아. 강한 동원력과 일관된 계획이 실제 성과로 이어진다고 보는 쪽이네. 지금 네 입장을 가장 가깝게 골라보자.",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "대체로 그렇다",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "중국은 5개년 계획과 강한 국가 동원력으로 장기 목표를 일관되게 추진하는가"
+                        "text": "① 입장: 중국은 장기 계획을 비교적 일관되게 추진한다"
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "대체로 아니다",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "중국은 5개년 계획과 강한 국가 동원력으로 장기 목표를 일관되게 추진하는가"
+                        "text": "① 입장: 중국은 장기 계획 국가처럼 보이지만 실제론 왜곡이 크다"
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "반반이다",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "중국은 5개년 계획과 강한 국가 동원력으로 장기 목표를 일관되게 추진하는가"
+                        "text": "① 입장: 장기 계획 능력도 있지만 실제 집행은 자주 흔들린다"
                     }
                 }
             ]
         },
         "n_stance_bridge_luck": {
             "layer": "stance",
-            "coach_text": "좋아, 중국은 5개년 계획과 강한 국가 동원력으로 장기 목표를 일관되게 추진하는가에서 시작해보자.\n흰 코끼리로 가득한 중국 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아. 겉모습과 실제 운영이 다를 수 있다고 보는 거네. 지금 네 입장을 가장 가깝게 골라보자.",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "대체로 그렇다",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "중국은 5개년 계획과 강한 국가 동원력으로 장기 목표를 일관되게 추진하는가"
+                        "text": "① 입장: 중국은 장기 계획을 비교적 일관되게 추진한다"
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "대체로 아니다",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "중국은 5개년 계획과 강한 국가 동원력으로 장기 목표를 일관되게 추진하는가"
+                        "text": "① 입장: 중국은 장기 계획 국가처럼 보이지만 실제론 왜곡이 크다"
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "반반이다",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "중국은 5개년 계획과 강한 국가 동원력으로 장기 목표를 일관되게 추진하는가"
+                        "text": "① 입장: 장기 계획 능력도 있지만 실제 집행은 자주 흔들린다"
                     }
                 }
             ]
         },
         "n_stance_bridge_other": {
             "layer": "stance",
-            "coach_text": "좋아, 중국은 5개년 계획과 강한 국가 동원력으로 장기 목표를 일관되게 추진하는가에서 시작해보자.\n흰 코끼리로 가득한 중국 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아. 다른 변수도 중요하다고 보는 거네. 그래도 출발점이 될 입장은 하나 잡아보자.",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "대체로 그렇다",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "중국은 5개년 계획과 강한 국가 동원력으로 장기 목표를 일관되게 추진하는가"
+                        "text": "① 입장: 중국은 장기 계획을 비교적 일관되게 추진한다"
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "대체로 아니다",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "중국은 5개년 계획과 강한 국가 동원력으로 장기 목표를 일관되게 추진하는가"
+                        "text": "① 입장: 중국은 장기 계획 국가처럼 보이지만 실제론 왜곡이 크다"
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "반반이다",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "중국은 5개년 계획과 강한 국가 동원력으로 장기 목표를 일관되게 추진하는가"
+                        "text": "① 입장: 장기 계획 능력도 있지만 실제 집행은 자주 흔들린다"
                     }
                 }
             ]
         },
         "n_stance_card": {
             "layer": "stance",
-            "coach_text": "좋아, 네 입장이 잡혔어. (판에 적혔지)\n근데 그냥 믿는 것과 따지는 건 다르잖아. 하나씩 파보자.\n\n왜 핵이 있으면 안전하다고 생각해?",
+            "coach_text": "좋아, ① 입장이 올라갔어. 그렇게 본 가장 큰 이유는 뭐야?",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "cant_touch",
-                    "label": "아무도 못 건드려서",
+                    "label": "국가가 오래 끌고 가는 계획 능력이 커 보여서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "stop_war",
-                    "label": "전쟁을 막아서",
+                    "label": "눈에 띄는 대형 사업 성과가 실제로 많아 보여서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 말해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -198,22 +198,22 @@
         },
         "n_stance_card_no": {
             "layer": "stance",
-            "coach_text": "신중하네. 네 입장이 판에 잡혔어.\n왜 핵 없이도 괜찮다고 보는지 — 이유를 따져보자.",
+            "coach_text": "좋아, ① 입장이 올라갔어. 그렇게 본 가장 큰 이유는 뭐야?",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "alliance",
-                    "label": "동맹이 있어서",
+                    "label": "보여주기식 사업이 너무 자주 반복돼서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "danger",
-                    "label": "핵이 오히려 위험해서",
+                    "label": "현장보다 상부 평가를 더 의식하는 구조 같아서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 말해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -221,22 +221,22 @@
         },
         "n_stance_card_half": {
             "layer": "stance",
-            "coach_text": "솔직하네. 입장이 판에 잡혔어.\n왜 그렇게 반반으로 보는지 — 이유를 따져보자.",
+            "coach_text": "좋아, ① 입장이 올라갔어. 어느 부분이 아직 반반으로 남아 있어?",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "not_sure",
-                    "label": "장단이 있어서",
+                    "label": "계획은 길게 세우지만 실행은 왜곡될 수 있어서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "need_more",
-                    "label": "더 알아봐야 해서",
+                    "label": "성공 사례와 낭비 사례가 둘 다 보여서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 생각을 직접 말해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -244,273 +244,273 @@
         },
         "n_reason_why2": {
             "layer": "reason",
-            "coach_text": "그렇지. 근데 '왜' 못 건드릴까? 상대 입장에서 생각하면?",
+            "coach_text": "좋아. 그 이유를 조금 더 파보자. 왜 그런 현상이 생긴다고 봐?",
             "choices": [
                 {
                     "id": "fear_revenge",
-                    "label": "보복이 무서워서",
+                    "label": "간부들이 빨리 보이는 숫자 성과를 내야 해서",
                     "next": "n_reason_card",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 중국은 5개년 계획과 강한 국가 동원력으로 장기 목표를 일관되게 추진하…"
+                        "text": "② 근거: 간부 평가는 빨리 보이는 정량 성과를 밀어준다"
                     }
                 },
                 {
                     "id": "intl_pressure",
-                    "label": "국제사회 비난",
+                    "label": "상부에 충성 경쟁을 하며 상징 사업을 키워서",
                     "next": "n_reason_card_intl",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 중국은 5개년 계획과 강한 국가 동원력으로 장기 목표를 일관되게 추진하…"
+                        "text": "② 근거: 충성 경쟁이 눈에 띄는 상징 사업을 부추긴다"
                     }
                 },
                 {
                     "id": "unsure_reason",
-                    "label": "음...",
+                    "label": "아직 한 가지로 정리하긴 어렵다",
                     "next": "n_reason_card",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 중국은 5개년 계획과 강한 국가 동원력으로 장기 목표를 일관되게 추진하…"
+                        "text": "② 근거: 원인은 단순하지 않고 여러 구조가 겹친다"
                     }
                 }
             ]
         },
         "n_reason_card": {
             "layer": "reason",
-            "coach_text": "완벽해. 이제 '입장'에 '근거'가 붙었어. **판을 봐** — 생각이 서기 시작했지?",
+            "coach_text": "좋아, ② 근거가 보드에 올라갔어. 이제 한 번 더 들어가 보자.",
             "board_pulse": "reason",
             "choices": [
                 {
                     "id": "see_board",
-                    "label": "판 보니까 그렇네",
+                    "label": "더 따져볼게",
                     "next": "n_depth_0"
                 }
             ]
         },
         "n_reason_card_intl": {
             "layer": "reason",
-            "coach_text": "그것도 근거가 될 수 있지. 판에 적혔어. **판을 봐.**",
+            "coach_text": "좋아, ② 근거가 보드에 올라갔어. 이제 그 구조가 실제 집행을 어떻게 바꾸는지 보자.",
             "board_pulse": "reason",
             "choices": [
                 {
                     "id": "see_board",
-                    "label": "판 보니까 그렇네",
+                    "label": "다음으로 갈게",
                     "next": "n_depth_0"
                 }
             ]
         },
         "n_depth_0": {
             "layer": "depth",
-            "coach_text": "한 걸음 더. '보복이 무서워서'가 — 항상 통할까?\n상대가 잃을 게 없다면? 예를 들어 테러 집단처럼.",
+            "coach_text": "그렇다면 중국의 장기 계획도 결국 현장에서는 달라질 수 있겠네. 어느 쪽에 더 가까워?",
             "choices": [
                 {
                     "id": "wont_work",
-                    "label": "안 통할 것 같아",
+                    "label": "장기 계획이 있어도 현장 왜곡이 커서 잘 안 통한다",
                     "next": "n_depth_1"
                 },
                 {
                     "id": "still_works",
-                    "label": "그래도 통해",
+                    "label": "왜곡이 있어도 전체적으론 꽤 작동한다",
                     "next": "n_depth_1"
                 },
                 {
                     "id": "hard_depth",
-                    "label": "어렵다",
+                    "label": "상황에 따라 다를 것 같다",
                     "next": "n_depth_1"
                 }
             ]
         },
         "n_depth_1": {
             "layer": "depth",
-            "coach_text": "그럼 네 입장('핵=안전')은 — 무조건 맞는 건 아니게 되네?",
+            "coach_text": "좋아. 그 판단에 조건을 붙여보자.",
             "choices": [
                 {
                     "id": "conditional",
-                    "label": "조건이 있네",
+                    "label": "보이지 않는 기반 투자보다 과시형 사업일 때 왜곡이 커진다",
                     "next": "n_depth_card",
                     "emit_card": {
                         "layer": "depth",
-                        "text": "조건이 있다 — 항상 통하지는 않음"
+                        "text": "③ 깊이: 특히 눈에 띄는 사업일수록 장기 계획이 보여주기로 변질될 수 있다"
                     }
                 },
                 {
                     "id": "mostly_ok",
-                    "label": "그래도 대부분 맞아",
+                    "label": "왜곡이 있어도 중앙이 계속 조정하면 어느 정도는 굴러간다",
                     "next": "n_depth_card_mostly",
                     "emit_card": {
                         "layer": "depth",
-                        "text": "조건이 있다 — 항상 통하지는 않음"
+                        "text": "③ 깊이: 왜곡이 있어도 중앙 통제로 전체 방향은 유지될 수 있다"
                     }
                 }
             ]
         },
         "n_depth_card": {
             "layer": "depth",
-            "coach_text": "봐, 처음엔 '핵=안전'이었는데 이제 '조건부'로 정교해졌어. **판을 봐.** 이게 따지는 거야.",
+            "coach_text": "좋아, ③ 깊이가 올라갔어. 이제 네 생각을 흔들어 볼 차례야.",
             "board_pulse": "depth",
             "choices": [
                 {
                     "id": "depth_ok",
-                    "label": "맞아, 정교해졌네",
+                    "label": "흔들기 질문 보러 가기",
                     "next": "n_counter_0"
                 }
             ]
         },
         "n_depth_card_mostly": {
             "layer": "depth",
-            "coach_text": "그래도 '대부분'과 '항상'은 다르지. 판에 적혔어.",
+            "coach_text": "좋아, ③ 깊이가 올라갔어. 이제 반대 방향에서 한 번 흔들어 보자.",
             "board_pulse": "depth",
             "choices": [
                 {
                     "id": "depth_ok",
-                    "label": "계속 가보자",
+                    "label": "질문 받아볼게",
                     "next": "n_counter_0"
                 }
             ]
         },
         "n_counter_0": {
             "layer": "counter",
-            "coach_text": "그렇게만 보기엔 칭다오에서 도시계획가들이 터널을 원했는데도 시장이 상징성이 큰 16억 달러 교량까지 함께 지어 결국 교량은 이용 부족 적자를 냈다는 사례가 있어.\n\n실제로는 간부들의 정량 평가, 상부에 대한 충성 경쟁, 3~4년 순환보직, 아래로부터의 견제 부재가 결합해 장기 전략이 단기적이고 가시적인 '보여주기식 프로젝트'로 왜곡된다\n\n네가 아까 말한 입장 — 이 이야기에도 그대로 맞을까?",
+            "coach_text": "그렇게만 보기엔 칭다오에서 도시계획가들이 터널을 원했는데도 시장이 상징성이 큰 16억 달러 교량까지 함께 지어 결국 교량은 이용 부족 적자를 냈다는 사례가 있어. 이런 사례를 보면 중국의 장기 계획 이미지는 얼마나 믿을 만할까?",
             "choices": [
                 {
                     "id": "might_shake",
-                    "label": "흔들릴 것 같아",
+                    "label": "생각보다 많이 흔들린다",
                     "next": "n_counter_still"
                 },
                 {
                     "id": "nuke_different",
-                    "label": "그래도 핵은 달라",
+                    "label": "그건 일부 사례일 수도 있다",
                     "next": "n_counter_why"
                 },
                 {
                     "id": "unsure_counter",
-                    "label": "모르겠어",
+                    "label": "아직 판단이 어렵다",
                     "next": "n_counter_drone"
                 }
             ]
         },
         "n_counter_why": {
             "layer": "counter",
-            "coach_text": "왜 그렇게 봐? (답 강요 없어 — 네 생각대로)",
+            "coach_text": "왜 그렇게 느꼈어? 그 사례는 단순한 실수일까, 아니면 구조 문제를 보여주는 걸까?",
             "choices": [
                 {
                     "id": "destruction",
-                    "label": "파괴력이 차원이 달라",
+                    "label": "구조 문제를 드러낸다고 본다",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "can_defend",
-                    "label": "드론은 막을 수 있어",
+                    "label": "여전히 일반화하긴 이르다고 본다",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_still": {
             "layer": "counter",
-            "coach_text": "솔직하네. 그래도 핵만큼 무서운 게 있을까?",
+            "coach_text": "그래도 중국이 장기 계획을 잘한다는 이미지는 꽤 강해. 그 이미지와 이런 낭비 사례는 함께 성립할 수 있을까?",
             "choices": [
                 {
                     "id": "maybe_not",
-                    "label": "없을 수도",
+                    "label": "함께 보기 어렵다",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "still_nuke",
-                    "label": "핵이 제일 무서워",
+                    "label": "어느 정도는 함께 볼 수 있다",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_drone": {
             "layer": "counter",
-            "coach_text": "괜찮아. 천천히 보자. 드론 수천 대 vs 핵 — 뭐가 더 실제로 쓰일까?",
+            "coach_text": "만약 중앙도 이런 문제를 알고 반복해서 경고했다면, 그건 통제력이 있다는 뜻일까, 아니면 문제가 계속된다는 뜻일까?",
             "choices": [
                 {
                     "id": "drones_real",
-                    "label": "드론이 더 현실적",
+                    "label": "문제가 구조적이라 계속된다는 뜻에 가깝다",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "nuke_deter",
-                    "label": "핵이 억지해",
+                    "label": "그래도 중앙이 바로잡으려는 힘은 있다는 뜻이다",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_hard": {
             "layer": "counter",
-            "coach_text": "일리 있어. 근데 — '쓸 수 있느냐'는 다른 문제 아닐까?\n핵을 진짜 쏘면 자기도 끝이잖아.",
+            "coach_text": "여기서 한 번 더. 간부들이 3~4년 안에 눈에 띄는 성과를 보여야 하고, 아래로부터 견제도 약하다면, 긴 호흡의 계획이 왜 짧은 성과 경쟁으로 바뀔 수 있을까?",
             "choices": [
                 {
                     "id": "true_hard",
-                    "label": "그건 그렇네",
+                    "label": "평가 구조가 장기 계획을 단기 과시로 비틀 수 있어서",
                     "next": "n_counter_card",
                     "emit_card": {
                         "layer": "counter",
-                        "text": "실제로는 간부들의 정량 평가, 상부에 대한 충성 경쟁, 3~4년 순환보직, 아래로부터의 …"
+                        "text": "④ 반론: 강한 국가도 평가와 충성 경쟁 때문에 장기 전략을 보여주기 사업으로 왜곡할 수 있다"
                     }
                 },
                 {
                     "id": "still_deter",
-                    "label": "그래도 억지는 돼",
+                    "label": "그래도 중앙의 큰 방향은 완전히 사라지지 않아서",
                     "next": "n_counter_card_deter",
                     "emit_card": {
                         "layer": "counter",
-                        "text": "실제로는 간부들의 정량 평가, 상부에 대한 충성 경쟁, 3~4년 순환보직, 아래로부터의 …"
+                        "text": "④ 반론: 왜곡이 있어도 중앙 목표 자체가 완전히 없어지는 것은 아닐 수 있다"
                     }
                 }
             ]
         },
         "n_counter_card": {
             "layer": "counter",
-            "coach_text": "반론과 네 답이 판에 쌓였어. **판을 봐.**",
+            "coach_text": "좋아, ④ 반론이 올라갔어. 이제 처음 생각을 그대로 둘지, 조금 고칠지 정리해보자.",
             "board_pulse": "counter",
             "choices": [
                 {
                     "id": "counter_ok",
-                    "label": "계속 정리하자",
+                    "label": "정리해볼게",
                     "next": "n_refine_0"
                 }
             ]
         },
         "n_counter_card_deter": {
             "layer": "counter",
-            "coach_text": "그 관점도 판에 적혔어.",
+            "coach_text": "좋아, ④ 반론이 올라갔어. 이제 네 입장을 다시 다듬어 보자.",
             "board_pulse": "counter",
             "choices": [
                 {
                     "id": "counter_ok",
-                    "label": "계속 정리하자",
+                    "label": "재정립하러 가기",
                     "next": "n_refine_0"
                 }
             ]
         },
         "n_refine_0": {
             "layer": "refine",
-            "coach_text": "자, **판을 다시 봐.** 처음 생각에서 많이 왔어.\n① 입장 → ② 근거 → ③ 깊이 → ④ 반론\n이제 네 생각을 다시 정리하면, 어떻게 바뀌었어?",
+            "coach_text": "생각판을 보면 처음 입장과 흔들기 질문이 같이 보여. 지금 네 생각은 어떻게 바뀌었어?",
             "board_diff": true,
             "choices": [
                 {
                     "id": "limits",
-                    "label": "핵은 안전을 주지만 한계가 있다",
+                    "label": "장기 계획 능력은 있지만 구조적 한계가 크다",
                     "next": "n_refine_card",
                     "emit_card": {
                         "layer": "refine",
-                        "text": "처음 생각보다 정교해졌다"
+                        "text": "⑤ 재정립: 중국은 장기 계획을 세우지만 관료 구조 때문에 실행이 자주 왜곡된다"
                     }
                 },
                 {
                     "id": "still_best",
-                    "label": "여전히 핵이 최선이다",
+                    "label": "그래도 전체적으로는 장기 추진력이 더 크다",
                     "next": "n_refine_card_best",
                     "emit_card": {
                         "layer": "refine",
-                        "text": "처음 생각보다 정교해졌다"
+                        "text": "⑤ 재정립: 왜곡 사례가 있어도 중국의 장기 추진력 자체는 여전히 강하다고 본다"
                     }
                 },
                 {
                     "id": "refine_free",
-                    "label": "직접 쓸게",
+                    "label": "내 말로 다시 정리해볼게",
                     "next": "n_refine_input",
                     "input_mode": "text",
                     "emit_card_on_message": {
@@ -521,31 +521,31 @@
         },
         "n_refine_card": {
             "layer": "refine",
-            "coach_text": "스스로 여기까지 왔어. 처음 '핵=안전'에서 훨씬 정교해졌지?",
+            "coach_text": "좋아, ⑤ 재정립이 올라갔어. 마지막으로 한 문장 결론을 준비해보자.",
             "board_pulse": "refine",
             "choices": [
                 {
                     "id": "refine_ok",
-                    "label": "맞아",
+                    "label": "종합하러 가기",
                     "next": "n_synth_0"
                 }
             ]
         },
         "n_refine_card_best": {
             "layer": "refine",
-            "coach_text": "네 정리가 판에 적혔어. 한번 더 따져보자.",
+            "coach_text": "좋아, ⑤ 재정립이 올라갔어. 이제 근거와 반론을 함께 묶어보자.",
             "board_pulse": "refine",
             "choices": [
                 {
                     "id": "refine_ok",
-                    "label": "계속",
+                    "label": "마무리하러 가기",
                     "next": "n_synth_0"
                 }
             ]
         },
         "n_refine_input": {
             "layer": "refine",
-            "coach_text": "네 말로 정리해 봐 — 지금 네 생각은?",
+            "coach_text": "좋아. 지금 생각판을 보고, 처음 입장에서 무엇을 남기고 무엇을 고칠지 한두 문장으로 적어봐.",
             "input_mode": "text",
             "emit_card_on_message": {
                 "layer": "refine"
@@ -554,7 +554,7 @@
         },
         "n_synth_0": {
             "layer": "synthesis",
-            "coach_text": "마지막. 이 모든 걸 **한 문장**으로 — 네 결론은?\n(직접 써 봐)",
+            "coach_text": "이제 ⑥ 종합이야. '중국은 장기 계획에 능한 나라처럼 보이지만…'으로 시작해도 좋아. 네 최종 판단을 한두 문장으로 적어봐.",
             "input_mode": "text",
             "emit_card_on_message": {
                 "layer": "synthesis"
@@ -563,21 +563,23 @@
         },
         "n_synth_compose": {
             "layer": "synthesis",
-            "coach_text": "이게 네가 10분 넘게 따져서 만든 결론이야.\n누가 준 게 아니라, **네가 쌓은 거**지.\n자 — 이 생각판을 바탕으로 한 편의 글을 써볼까?\n판에 있는 ①~⑥이 그대로 네 글의 뼈대가 될 거야.",
+            "coach_text": "좋아, 이제 보드의 ①~⑤를 바탕으로 마지막 문장을 완성해보자.",
             "board_pulse": "synthesis",
             "choices": [
                 {
                     "id": "go_compose",
-                    "label": "글 쓰러 가기",
+                    "label": "최종 답안 만들기",
                     "next": "n_compose"
                 }
             ]
         },
         "n_compose": {
             "layer": "synthesis",
-            "terminal": true
+            "terminal": true,
+            "coach_text": "잘했어. 네 결론은 '겉으로 보이는 장기 계획 이미지'와 '실제 관료 구조가 만드는 왜곡'을 함께 본 답이야. 생각판 6칸이 연결됐는지 확인해보자."
         }
     },
-    "llm_followup_fallback": "그렇구나. 한 가지만 더 — 그 말을 한 문장으로 정리하면?",
-    "generated_by": "narrative_v2_generate_rule_v1"
+    "generated_by": "narrative_v2_generate_llm_v2",
+    "llm_followup_fallback": "좋아. 그 말을 생각판에 맞게 바꾸면, 네 입장과 이유가 더 또렷해질 수 있겠네.",
+    "llm_philosophy_notes": "반론은 질문으로만 흔들고, 학생이 직접 재정립·종합하도록 구성했으며 ①입장~⑥종합 흐름을 모두 살렸다."
 }

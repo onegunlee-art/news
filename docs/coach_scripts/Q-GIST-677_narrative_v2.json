@@ -55,142 +55,142 @@
     "nodes": {
         "n_intro": {
             "layer": "intro",
-            "coach_text": "중국이 미국 대신 세계 질서를 이끌 새 리더가 될 수 있을까?\n\n많은 사람은 \"중국이 미국이 물러난 자리를 메울 새로운 국제질서의 책임자가 될 수 있는가\"라고 생각해.\n\n중국이 다자주의 수호자이자 미국 공백을 메울 대안처럼 보이지만, 그러나 실제로는 비용과 책임을 피하는 느슨한 파트너십만 추구해 위기 때 결속력 있는 질서를 만들지 못한다\n\n왜 그렇게 생각할까?",
+            "coach_text": "겉으로 보면 중국은 다자주의를 말하고, 개발도상국의 목소리를 대변하며 미국의 빈자리를 메울 대안처럼 보이기도 해요. 그런데 실제로는 영향력은 넓히되 비용과 책임은 최소화하려는 모습도 함께 보입니다. 그렇다면 중국이 미국 대신 세계 질서를 이끌 새 리더가 될 수 있을까요?",
             "choices": [
                 {
                     "id": "nuclear_fear",
-                    "label": "A 쪽이 더 와닿아",
+                    "label": "중국의 외교 영향력이 커 보여서",
                     "next": "n_stance_bridge_fear"
                 },
                 {
                     "id": "just_luck",
-                    "label": "B 쪽도 설명돼",
+                    "label": "미국이 물러나니 자연스럽게 빈자리를 채울 것 같아서",
                     "next": "n_stance_bridge_luck"
                 },
                 {
                     "id": "other_reason",
-                    "label": "다른 이유",
+                    "label": "다른 이유가 떠올라",
                     "next": "n_stance_bridge_other"
                 }
             ]
         },
         "n_stance_bridge_fear": {
             "layer": "stance",
-            "coach_text": "좋아, 중국이 미국이 물러난 자리를 메울 새로운 국제질서의 책임자가 될 수 있는가에서 시작해보자.\n'차이나 퍼스트'가 실패하는 까닭 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "영향력이 커 보인다는 점에서 시작했네요. 그럼 지금 생각은 어느 쪽에 더 가까운가요?",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "그럴 수 있다고 봐",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "중국이 미국이 물러난 자리를 메울 새로운 국제질서의 책임자가 될 수 있는가"
+                        "text": "① 입장: 중국은 미국 공백을 메울 새 리더가 될 수 있다."
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "어렵다고 봐",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "중국이 미국이 물러난 자리를 메울 새로운 국제질서의 책임자가 될 수 있는가"
+                        "text": "① 입장: 중국이 미국 공백을 안정적으로 메우긴 어렵다."
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "일부는 가능하지만 한계가 있어 보여",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "중국이 미국이 물러난 자리를 메울 새로운 국제질서의 책임자가 될 수 있는가"
+                        "text": "① 입장: 중국은 영향력은 키울 수 있어도 질서의 책임자가 되긴 불확실하다."
                     }
                 }
             ]
         },
         "n_stance_bridge_luck": {
             "layer": "stance",
-            "coach_text": "좋아, 중국이 미국이 물러난 자리를 메울 새로운 국제질서의 책임자가 될 수 있는가에서 시작해보자.\n'차이나 퍼스트'가 실패하는 까닭 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "미국의 빈자리가 생기면 누군가 채울 거라는 생각이군요. 그 자리를 중국이 맡을 수 있는지, 일단 입장을 골라볼까요?",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "그럴 수 있다고 봐",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "중국이 미국이 물러난 자리를 메울 새로운 국제질서의 책임자가 될 수 있는가"
+                        "text": "① 입장: 중국은 미국 공백을 메울 새 리더가 될 수 있다."
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "어렵다고 봐",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "중국이 미국이 물러난 자리를 메울 새로운 국제질서의 책임자가 될 수 있는가"
+                        "text": "① 입장: 중국이 미국 공백을 안정적으로 메우긴 어렵다."
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "일부는 가능하지만 한계가 있어 보여",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "중국이 미국이 물러난 자리를 메울 새로운 국제질서의 책임자가 될 수 있는가"
+                        "text": "① 입장: 중국은 영향력은 키울 수 있어도 질서의 책임자가 되긴 불확실하다."
                     }
                 }
             ]
         },
         "n_stance_bridge_other": {
             "layer": "stance",
-            "coach_text": "좋아, 중국이 미국이 물러난 자리를 메울 새로운 국제질서의 책임자가 될 수 있는가에서 시작해보자.\n'차이나 퍼스트'가 실패하는 까닭 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아요. 그 이유를 바탕으로, 지금의 기본 입장을 먼저 잡아보죠.",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "그럴 수 있다고 봐",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "중국이 미국이 물러난 자리를 메울 새로운 국제질서의 책임자가 될 수 있는가"
+                        "text": "① 입장: 중국은 미국 공백을 메울 새 리더가 될 수 있다."
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "어렵다고 봐",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "중국이 미국이 물러난 자리를 메울 새로운 국제질서의 책임자가 될 수 있는가"
+                        "text": "① 입장: 중국이 미국 공백을 안정적으로 메우긴 어렵다."
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "일부는 가능하지만 한계가 있어 보여",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "중국이 미국이 물러난 자리를 메울 새로운 국제질서의 책임자가 될 수 있는가"
+                        "text": "① 입장: 중국은 영향력은 키울 수 있어도 질서의 책임자가 되긴 불확실하다."
                     }
                 }
             ]
         },
         "n_stance_card": {
             "layer": "stance",
-            "coach_text": "좋아, 네 입장이 잡혔어. (판에 적혔지)\n근데 그냥 믿는 것과 따지는 건 다르잖아. 하나씩 파보자.\n\n왜 핵이 있으면 안전하다고 생각해?",
+            "coach_text": "좋아요, ① 입장이 올라갔어요. 그렇게 보는 가장 큰 이유는 무엇인가요?",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "cant_touch",
-                    "label": "아무도 못 건드려서",
+                    "label": "경제력과 외교 네트워크가 커서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "stop_war",
-                    "label": "전쟁을 막아서",
+                    "label": "미국이 빠지면 대안이 거의 없어서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 말해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -198,22 +198,22 @@
         },
         "n_stance_card_no": {
             "layer": "stance",
-            "coach_text": "신중하네. 네 입장이 판에 잡혔어.\n왜 핵 없이도 괜찮다고 보는지 — 이유를 따져보자.",
+            "coach_text": "좋아요, ① 입장이 보이네요. 중국이 새 질서의 책임자가 되기 어렵다고 보는 핵심 이유는 뭔가요?",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "alliance",
-                    "label": "동맹이 있어서",
+                    "label": "책임보다 자국 이익을 먼저 둘 것 같아서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "danger",
-                    "label": "핵이 오히려 위험해서",
+                    "label": "위기 때 믿고 따를 결속 구조가 약해서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 말해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -221,22 +221,22 @@
         },
         "n_stance_card_half": {
             "layer": "stance",
-            "coach_text": "솔직하네. 입장이 판에 잡혔어.\n왜 그렇게 반반으로 보는지 — 이유를 따져보자.",
+            "coach_text": "좋아요, 절반쯤 열린 입장이군요. 어디가 특히 걸리나요?",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "not_sure",
-                    "label": "장단이 있어서",
+                    "label": "평시 영향력과 위기 대응은 다를 것 같아",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "need_more",
-                    "label": "더 알아봐야 해서",
+                    "label": "겉이미지와 실제 행동이 같은지 더 봐야 해",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 생각을 직접 말해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -244,273 +244,273 @@
         },
         "n_reason_why2": {
             "layer": "reason",
-            "coach_text": "그렇지. 근데 '왜' 못 건드릴까? 상대 입장에서 생각하면?",
+            "coach_text": "그 이유를 한 번 더 밀어볼게요. 왜 그렇게 이어진다고 보나요?",
             "choices": [
                 {
                     "id": "fear_revenge",
-                    "label": "보복이 무서워서",
+                    "label": "영향력 확대에는 적극적이지만 책임은 피하려 해서",
                     "next": "n_reason_card",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 중국이 미국이 물러난 자리를 메울 새로운 국제질서의 책임자가 될 수 있…"
+                        "text": "② 근거: 중국은 영향력은 넓히려 하지만 비용과 책임은 최소화하려는 경향이 있다."
                     }
                 },
                 {
                     "id": "intl_pressure",
-                    "label": "국제사회 비난",
+                    "label": "파트너십은 많아도 안보 보증 같은 결속은 약해서",
                     "next": "n_reason_card_intl",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 중국이 미국이 물러난 자리를 메울 새로운 국제질서의 책임자가 될 수 있…"
+                        "text": "② 근거: 느슨한 파트너십은 많지만 위기 때 집단적 힘을 묶어내는 구조는 약하다."
                     }
                 },
                 {
                     "id": "unsure_reason",
-                    "label": "음...",
+                    "label": "아직 근거를 더 정리해보고 싶어",
                     "next": "n_reason_card",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 중국이 미국이 물러난 자리를 메울 새로운 국제질서의 책임자가 될 수 있…"
+                        "text": "② 근거: 중국의 역할을 판단하려면 영향력과 책임의 차이를 더 따져봐야 한다."
                     }
                 }
             ]
         },
         "n_reason_card": {
             "layer": "reason",
-            "coach_text": "완벽해. 이제 '입장'에 '근거'가 붙었어. **판을 봐** — 생각이 서기 시작했지?",
+            "coach_text": "좋아요. 이제 ① 입장과 ② 근거가 연결됐어요. 다음에는 그 근거가 언제 더 설득력 있는지 조건을 따져볼게요.",
             "board_pulse": "reason",
             "choices": [
                 {
                     "id": "see_board",
-                    "label": "판 보니까 그렇네",
+                    "label": "다음으로 갈게",
                     "next": "n_depth_0"
                 }
             ]
         },
         "n_reason_card_intl": {
             "layer": "reason",
-            "coach_text": "그것도 근거가 될 수 있지. 판에 적혔어. **판을 봐.**",
+            "coach_text": "좋아요. ② 근거가 올라왔네요. 이제 이 말이 모든 상황에 다 맞는지, 아니면 특정 조건에서만 맞는지 살펴보죠.",
             "board_pulse": "reason",
             "choices": [
                 {
                     "id": "see_board",
-                    "label": "판 보니까 그렇네",
+                    "label": "조건을 따져볼게",
                     "next": "n_depth_0"
                 }
             ]
         },
         "n_depth_0": {
             "layer": "depth",
-            "coach_text": "한 걸음 더.\n중국이 다자주의 수호자이자 미국 공백을 메울 대안처럼 보이지만, 그러나 실제로는 비용과 책임을 피하는 느슨한 파트너십만 추구해 위기 때 결속력 있는 질서를 만들…\n\n예외 상황은 없을까?",
+            "coach_text": "한 걸음 더 들어가 볼게요. 중국식 파트너십이 많아도 실제 질서 운영에는 한계가 있다고 보나요, 아니면 그래도 어느 정도는 작동한다고 보나요?",
             "choices": [
                 {
                     "id": "wont_work",
-                    "label": "안 통할 것 같아",
+                    "label": "위기 상황에선 잘 안 통할 것 같아",
                     "next": "n_depth_1"
                 },
                 {
                     "id": "still_works",
-                    "label": "그래도 통해",
+                    "label": "그래도 평시에는 꽤 작동할 수 있어",
                     "next": "n_depth_1"
                 },
                 {
                     "id": "hard_depth",
-                    "label": "어렵다",
+                    "label": "상황에 따라 다를 것 같아",
                     "next": "n_depth_1"
                 }
             ]
         },
         "n_depth_1": {
             "layer": "depth",
-            "coach_text": "그럼 네 입장('핵=안전')은 — 무조건 맞는 건 아니게 되네?",
+            "coach_text": "좋아요. 그럼 어느 조건에서 판단이 갈린다고 보나요?",
             "choices": [
                 {
                     "id": "conditional",
-                    "label": "조건이 있네",
+                    "label": "평시엔 통하지만 안보 위기에서는 한계가 커",
                     "next": "n_depth_card",
                     "emit_card": {
                         "layer": "depth",
-                        "text": "조건이 있다 — 항상 통하지는 않음"
+                        "text": "③ 깊이: 중국식 파트너십은 평시 영향력 확대엔 유리하지만 위기 대응력은 약할 수 있다."
                     }
                 },
                 {
                     "id": "mostly_ok",
-                    "label": "그래도 대부분 맞아",
+                    "label": "강한 동맹이 없어도 이해관계만 맞으면 어느 정도 굴러가",
                     "next": "n_depth_card_mostly",
                     "emit_card": {
                         "layer": "depth",
-                        "text": "조건이 있다 — 항상 통하지는 않음"
+                        "text": "③ 깊이: 결속이 느슨해도 이해관계가 맞는 동안에는 질서 유지 기능을 일부 할 수 있다."
                     }
                 }
             ]
         },
         "n_depth_card": {
             "layer": "depth",
-            "coach_text": "봐, 처음엔 '핵=안전'이었는데 이제 '조건부'로 정교해졌어. **판을 봐.** 이게 따지는 거야.",
+            "coach_text": "좋아요. ③에서 '언제 통하고 언제 흔들리는지'가 보이기 시작했어요.",
             "board_pulse": "depth",
             "choices": [
                 {
                     "id": "depth_ok",
-                    "label": "맞아, 정교해졌네",
+                    "label": "다음 질문 보기",
                     "next": "n_counter_0"
                 }
             ]
         },
         "n_depth_card_mostly": {
             "layer": "depth",
-            "coach_text": "그래도 '대부분'과 '항상'은 다르지. 판에 적혔어.",
+            "coach_text": "좋아요. ③ 깊이까지 왔어요. 이제 반대쪽 사실이 이 생각을 얼마나 흔드는지 볼 차례예요.",
             "board_pulse": "depth",
             "choices": [
                 {
                     "id": "depth_ok",
-                    "label": "계속 가보자",
+                    "label": "흔들림을 보자",
                     "next": "n_counter_0"
                 }
             ]
         },
         "n_counter_0": {
             "layer": "counter",
-            "coach_text": "그렇게 보일 수 있지만, 중국은 100개가 넘는 파트너십을 맺고도 2023년 바그너 반란 때 푸틴에게 노골적 연대를 보이지 않았다는 점은 어떻게 봐야 할까?\n\n중국의 '차이나 퍼스트'식 파트너십은 평시 영향력 확대에는 유리하지만, 위기에서는 안보 보증과 집단적 힘을 제공하지 않아 불안정한 '무주도 시대'를 낳는다\n\n네가 아까 말한 입장 — 이 이야기에도 그대로 맞을까?",
+            "coach_text": "이제 한번 흔들어볼게요. 그렇게 보일 수 있지만, 중국은 100개가 넘는 파트너십을 맺고도 2023년 바그너 반란 때 푸틴에게 노골적 연대를 보이지 않았다는 점은 어떻게 봐야 할까?",
             "choices": [
                 {
                     "id": "might_shake",
-                    "label": "흔들릴 것 같아",
+                    "label": "그건 책임 회피처럼 보여서 좀 흔들려",
                     "next": "n_counter_still"
                 },
                 {
                     "id": "nuke_different",
-                    "label": "그래도 핵은 달라",
+                    "label": "그래도 모든 위기에 깊게 개입할 필요는 없지",
                     "next": "n_counter_why"
                 },
                 {
                     "id": "unsure_counter",
-                    "label": "모르겠어",
+                    "label": "그 사례를 어떻게 해석해야 할지 아직 헷갈려",
                     "next": "n_counter_drone"
                 }
             ]
         },
         "n_counter_why": {
             "layer": "counter",
-            "coach_text": "왜 그렇게 봐? (답 강요 없어 — 네 생각대로)",
+            "coach_text": "왜 그 사례가 중요하다고 보나요?",
             "choices": [
                 {
                     "id": "destruction",
-                    "label": "파괴력이 차원이 달라",
+                    "label": "진짜 리더라면 위기 때 더 분명한 보증이 보여야 해서",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "can_defend",
-                    "label": "드론은 막을 수 있어",
+                    "label": "평소 친하다고 해도 위기 책임까지 지는 건 다른 문제라서",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_still": {
             "layer": "counter",
-            "coach_text": "솔직하네. 그래도 핵만큼 무서운 게 있을까?",
+            "coach_text": "그렇다면 느슨한 파트너십만으로도 국제질서를 붙들 수 있을까요?",
             "choices": [
                 {
                     "id": "maybe_not",
-                    "label": "없을 수도",
+                    "label": "아마 어렵겠지",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "still_nuke",
-                    "label": "핵이 제일 무서워",
+                    "label": "그래도 완전히 불가능하진 않을 거야",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_drone": {
             "layer": "counter",
-            "coach_text": "괜찮아. 천천히 보자. 드론 수천 대 vs 핵 — 뭐가 더 실제로 쓰일까?",
+            "coach_text": "그 사례가 보여주는 건, 영향력과 책임이 꼭 함께 가지는 않는다는 뜻일까요?",
             "choices": [
                 {
                     "id": "drones_real",
-                    "label": "드론이 더 현실적",
+                    "label": "응, 관계는 많아도 책임지는 질서는 다를 수 있어",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "nuke_deter",
-                    "label": "핵이 억지해",
+                    "label": "아니, 조심스럽게 움직인다고 리더십이 없는 건 아니야",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_hard": {
             "layer": "counter",
-            "coach_text": "일리 있어. 근데 — '쓸 수 있느냐'는 다른 문제 아닐까?\n핵을 진짜 쏘면 자기도 끝이잖아.",
+            "coach_text": "지금까지를 바탕으로, 이 반론이 네 원래 생각을 어디까지 흔드나요?",
             "choices": [
                 {
                     "id": "true_hard",
-                    "label": "그건 그렇네",
+                    "label": "꽤 흔들려. 평시 영향력과 위기 리더십은 다르네",
                     "next": "n_counter_card",
                     "emit_card": {
                         "layer": "counter",
-                        "text": "중국의 '차이나 퍼스트'식 파트너십은 평시 영향력 확대에는 유리하지만, 위기에서는 안보 …"
+                        "text": "④ 반론: 중국은 대안처럼 보이지만 위기 때 안보 보증과 집단적 힘을 제공하지 못할 수 있다."
                     }
                 },
                 {
                     "id": "still_deter",
-                    "label": "그래도 억지는 돼",
+                    "label": "조금만 흔들려. 그래도 대안 가능성은 남아 있어",
                     "next": "n_counter_card_deter",
                     "emit_card": {
                         "layer": "counter",
-                        "text": "중국의 '차이나 퍼스트'식 파트너십은 평시 영향력 확대에는 유리하지만, 위기에서는 안보 …"
+                        "text": "④ 반론: 위기 대응의 한계가 있어도 중국의 대안적 역할 가능성까지 사라지는 것은 아니다."
                     }
                 }
             ]
         },
         "n_counter_card": {
             "layer": "counter",
-            "coach_text": "반론과 네 답이 판에 쌓였어. **판을 봐.**",
+            "coach_text": "좋아요. ④ 반론이 들어오면서 생각판이 더 입체적이 됐어요.",
             "board_pulse": "counter",
             "choices": [
                 {
                     "id": "counter_ok",
-                    "label": "계속 정리하자",
+                    "label": "내 입장을 다시 정리해볼게",
                     "next": "n_refine_0"
                 }
             ]
         },
         "n_counter_card_deter": {
             "layer": "counter",
-            "coach_text": "그 관점도 판에 적혔어.",
+            "coach_text": "좋아요. 완전히 뒤집히진 않았지만, 조건과 한계가 더 선명해졌네요.",
             "board_pulse": "counter",
             "choices": [
                 {
                     "id": "counter_ok",
-                    "label": "계속 정리하자",
+                    "label": "다시 정리하러 가기",
                     "next": "n_refine_0"
                 }
             ]
         },
         "n_refine_0": {
             "layer": "refine",
-            "coach_text": "자, **판을 다시 봐.** 처음 생각에서 많이 왔어.\n① 입장 → ② 근거 → ③ 깊이 → ④ 반론\n이제 네 생각을 다시 정리하면, 어떻게 바뀌었어?",
+            "coach_text": "이제 생각판 차이를 보고 입장을 다시 세워볼까요. 반론까지 보고 나니, 지금 결론은 어디에 더 가까워졌나요?",
             "board_diff": true,
             "choices": [
                 {
                     "id": "limits",
-                    "label": "핵은 안전을 주지만 한계가 있다",
+                    "label": "중국은 영향력은 키워도 질서의 책임자 역할엔 한계가 있어",
                     "next": "n_refine_card",
                     "emit_card": {
                         "layer": "refine",
-                        "text": "처음 생각보다 정교해졌다"
+                        "text": "⑤ 재정립: 중국은 평시 파트너십 확대에는 강하지만 위기 질서를 책임질 리더십에는 한계가 있다."
                     }
                 },
                 {
                     "id": "still_best",
-                    "label": "여전히 핵이 최선이다",
+                    "label": "한계가 있어도 미국 공백을 메울 대안으로는 여전히 유력해",
                     "next": "n_refine_card_best",
                     "emit_card": {
                         "layer": "refine",
-                        "text": "처음 생각보다 정교해졌다"
+                        "text": "⑤ 재정립: 중국의 책임 한계는 보이지만 대안 세력으로서의 가능성은 여전히 크다."
                     }
                 },
                 {
                     "id": "refine_free",
-                    "label": "직접 쓸게",
+                    "label": "내 말로 다시 정리해볼게",
                     "next": "n_refine_input",
                     "input_mode": "text",
                     "emit_card_on_message": {
@@ -521,31 +521,31 @@
         },
         "n_refine_card": {
             "layer": "refine",
-            "coach_text": "스스로 여기까지 왔어. 처음 '핵=안전'에서 훨씬 정교해졌지?",
+            "coach_text": "좋아요. ⑤ 재정립이 올라갔어요. 이제 마지막으로 한 문장 결론을 만들 차례예요.",
             "board_pulse": "refine",
             "choices": [
                 {
                     "id": "refine_ok",
-                    "label": "맞아",
+                    "label": "최종 정리로 가기",
                     "next": "n_synth_0"
                 }
             ]
         },
         "n_refine_card_best": {
             "layer": "refine",
-            "coach_text": "네 정리가 판에 적혔어. 한번 더 따져보자.",
+            "coach_text": "좋아요. 반론을 거친 뒤에도 입장이 남아 있네요. 이제 그 이유까지 묶어 최종 결론으로 가보죠.",
             "board_pulse": "refine",
             "choices": [
                 {
                     "id": "refine_ok",
-                    "label": "계속",
+                    "label": "최종 정리로 가기",
                     "next": "n_synth_0"
                 }
             ]
         },
         "n_refine_input": {
             "layer": "refine",
-            "coach_text": "네 말로 정리해 봐 — 지금 네 생각은?",
+            "coach_text": "좋아요. 생각판을 보고, 반론을 거친 뒤의 입장을 한두 문장으로 다시 말해보세요.",
             "input_mode": "text",
             "emit_card_on_message": {
                 "layer": "refine"
@@ -554,7 +554,7 @@
         },
         "n_synth_0": {
             "layer": "synthesis",
-            "coach_text": "마지막. 이 모든 걸 **한 문장**으로 — 네 결론은?\n(직접 써 봐)",
+            "coach_text": "이제 ⑥ 종합이에요. '중국이 미국 대신 세계 질서를 이끌 새 리더가 될 수 있는가'에 대해, 겉으로 보이는 강점과 실제 한계를 함께 넣어 네 결론을 써보세요.",
             "input_mode": "text",
             "emit_card_on_message": {
                 "layer": "synthesis"
@@ -563,21 +563,23 @@
         },
         "n_synth_compose": {
             "layer": "synthesis",
-            "coach_text": "이게 네가 10분 넘게 따져서 만든 결론이야.\n누가 준 게 아니라, **네가 쌓은 거**지.\n자 — 이 생각판을 바탕으로 한 편의 글을 써볼까?\n판에 있는 ①~⑥이 그대로 네 글의 뼈대가 될 거야.",
+            "coach_text": "좋아요. 입장, 근거, 조건, 반론, 재정립이 다 모였어요. 마지막 답안을 완성해볼까요?",
             "board_pulse": "synthesis",
             "choices": [
                 {
                     "id": "go_compose",
-                    "label": "글 쓰러 가기",
+                    "label": "최종 답안 만들기",
                     "next": "n_compose"
                 }
             ]
         },
         "n_compose": {
             "layer": "synthesis",
-            "terminal": true
+            "terminal": true,
+            "coach_text": "정리 끝. 네 답안에는 '왜 중국이 대안처럼 보이는지'와 '왜 위기 때는 무주도적 불안을 낳는지'가 함께 들어가면 좋아요."
         }
     },
-    "llm_followup_fallback": "그렇구나. 한 가지만 더 — 그 말을 한 문장으로 정리하면?",
-    "generated_by": "narrative_v2_generate_rule_v1"
+    "generated_by": "narrative_v2_generate_llm_v2",
+    "llm_followup_fallback": "좋아요. 그 말은 네가 중국의 가능성만이 아니라 책임과 위기 대응까지 함께 보고 있다는 뜻이네요.",
+    "llm_philosophy_notes": "통념에서 출발해 본문이 드러내는 복잡한 진실로 흔들어 가되, 반론은 질문으로만 던지고 학생 결론을 대신 말하지 않도록 구성했습니다."
 }

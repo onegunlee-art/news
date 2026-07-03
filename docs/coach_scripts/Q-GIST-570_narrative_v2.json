@@ -55,142 +55,142 @@
     "nodes": {
         "n_intro": {
             "layer": "intro",
-            "coach_text": "중국 물가가 다시 오르면 디플레이션에서도 곧 벗어나는 걸까?\n\n많은 사람은 \"중국의 물가 반등이 디플레이션 탈출로 이어질 수 있는가\"라고 생각해.\n\n중국도 전쟁과 AI 투자 붐으로 물가가 반등하고 있지만, 그러나 그 반등이 일본처럼 임금·소비·기대의 선순환으로 이어지지 못하고 있다\n\n왜 그렇게 생각할까?",
+            "coach_text": "일본은 한때 디플레이션의 상징처럼 불렸지만, 최근엔 조금씩 그 굴레에서 벗어나는 모습이 보여. 반면 중국은 부동산 침체 이후 물가와 금리 흐름에서 과거 일본과 닮은 장면을 보인다는 분석이 나와. 그럼 중국 물가가 다시 오르면 디플레이션에서도 곧 벗어나는 걸까?",
             "choices": [
                 {
                     "id": "nuclear_fear",
-                    "label": "A 쪽이 더 와닿아",
+                    "label": "물가가 오르면 탈출 신호로 볼 수 있을 것 같아",
                     "next": "n_stance_bridge_fear"
                 },
                 {
                     "id": "just_luck",
-                    "label": "B 쪽도 설명돼",
+                    "label": "일시 반등일 뿐, 아직은 모르겠어",
                     "next": "n_stance_bridge_luck"
                 },
                 {
                     "id": "other_reason",
-                    "label": "다른 이유",
+                    "label": "다른 기준을 더 봐야 판단할 수 있어",
                     "next": "n_stance_bridge_other"
                 }
             ]
         },
         "n_stance_bridge_fear": {
             "layer": "stance",
-            "coach_text": "좋아, 중국의 물가 반등이 디플레이션 탈출로 이어질 수 있는가에서 시작해보자.\n중국의 디플레이션 탈출, 과거 일본의 교훈 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아, 너는 물가 반등을 꽤 중요한 신호로 보는 쪽이네. 지금 생각을 가장 가까운 입장으로 골라보자.",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "반등이 이어지면 디플레이션 탈출 가능성이 크다",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "중국의 물가 반등이 디플레이션 탈출로 이어질 수 있는가"
+                        "text": "① 입장: 물가 반등은 디플레이션 탈출의 유력한 신호다"
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "물가가 올라도 탈출이라고 보긴 이르다",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "중국의 물가 반등이 디플레이션 탈출로 이어질 수 있는가"
+                        "text": "① 입장: 물가 반등만으로는 디플레이션 탈출이라 보기 어렵다"
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "반등은 의미 있지만 아직 단정은 어렵다",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "중국의 물가 반등이 디플레이션 탈출로 이어질 수 있는가"
+                        "text": "① 입장: 물가 반등은 의미 있지만 탈출 여부는 더 봐야 한다"
                     }
                 }
             ]
         },
         "n_stance_bridge_luck": {
             "layer": "stance",
-            "coach_text": "좋아, 중국의 물가 반등이 디플레이션 탈출로 이어질 수 있는가에서 시작해보자.\n중국의 디플레이션 탈출, 과거 일본의 교훈 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아, 너는 이번 반등을 바로 큰 전환으로 보긴 조심스러운 쪽이네. 지금 생각과 가장 가까운 입장을 골라보자.",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "반등이 이어지면 디플레이션 탈출 가능성이 크다",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "중국의 물가 반등이 디플레이션 탈출로 이어질 수 있는가"
+                        "text": "① 입장: 물가 반등은 디플레이션 탈출의 유력한 신호다"
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "물가가 올라도 탈출이라고 보긴 이르다",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "중국의 물가 반등이 디플레이션 탈출로 이어질 수 있는가"
+                        "text": "① 입장: 물가 반등만으로는 디플레이션 탈출이라 보기 어렵다"
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "반등은 의미 있지만 아직 단정은 어렵다",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "중국의 물가 반등이 디플레이션 탈출로 이어질 수 있는가"
+                        "text": "① 입장: 물가 반등은 의미 있지만 탈출 여부는 더 봐야 한다"
                     }
                 }
             ]
         },
         "n_stance_bridge_other": {
             "layer": "stance",
-            "coach_text": "좋아, 중국의 물가 반등이 디플레이션 탈출로 이어질 수 있는가에서 시작해보자.\n중국의 디플레이션 탈출, 과거 일본의 교훈 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아, 너는 물가 말고 다른 지표도 함께 봐야 한다고 느꼈네. 그 관점을 가장 잘 담는 입장을 골라보자.",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "반등이 이어지면 디플레이션 탈출 가능성이 크다",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "중국의 물가 반등이 디플레이션 탈출로 이어질 수 있는가"
+                        "text": "① 입장: 물가 반등은 디플레이션 탈출의 유력한 신호다"
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "물가가 올라도 탈출이라고 보긴 이르다",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "중국의 물가 반등이 디플레이션 탈출로 이어질 수 있는가"
+                        "text": "① 입장: 물가 반등만으로는 디플레이션 탈출이라 보기 어렵다"
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "반등은 의미 있지만 아직 단정은 어렵다",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "중국의 물가 반등이 디플레이션 탈출로 이어질 수 있는가"
+                        "text": "① 입장: 물가 반등은 의미 있지만 탈출 여부는 더 봐야 한다"
                     }
                 }
             ]
         },
         "n_stance_card": {
             "layer": "stance",
-            "coach_text": "좋아, 네 입장이 잡혔어. (판에 적혔지)\n근데 그냥 믿는 것과 따지는 건 다르잖아. 하나씩 파보자.\n\n왜 핵이 있으면 안전하다고 생각해?",
+            "coach_text": "좋아. 왜 그렇게 보는지, 가장 큰 이유를 하나 골라보자.",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "cant_touch",
-                    "label": "아무도 못 건드려서",
+                    "label": "전쟁 특수와 투자 붐이 물가를 끌어올릴 수 있어서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "stop_war",
-                    "label": "전쟁을 막아서",
+                    "label": "물가가 오르면 경기 전체가 살아난 신호일 수 있어서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 말해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -198,22 +198,22 @@
         },
         "n_stance_card_no": {
             "layer": "stance",
-            "coach_text": "신중하네. 네 입장이 판에 잡혔어.\n왜 핵 없이도 괜찮다고 보는지 — 이유를 따져보자.",
+            "coach_text": "좋아. 왜 아직 이르다고 보는지, 가장 가까운 이유를 골라보자.",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "alliance",
-                    "label": "동맹이 있어서",
+                    "label": "오른 물가가 생활 전반의 회복으로 퍼진 건 아닌 것 같아서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "danger",
-                    "label": "핵이 오히려 위험해서",
+                    "label": "고용·임금·소비가 살아나지 않으면 탈출이라 보기 어려워서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 말해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -221,22 +221,22 @@
         },
         "n_stance_card_half": {
             "layer": "stance",
-            "coach_text": "솔직하네. 입장이 판에 잡혔어.\n왜 그렇게 반반으로 보는지 — 이유를 따져보자.",
+            "coach_text": "좋아. 아직 단정하지 않는 이유를 골라보자.",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "not_sure",
-                    "label": "장단이 있어서",
+                    "label": "물가 반등은 보이지만 내수 회복은 약해 보여서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "need_more",
-                    "label": "더 알아봐야 해서",
+                    "label": "임금·소비·기대심리까지 봐야 할 것 같아서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 생각을 직접 말해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -244,273 +244,273 @@
         },
         "n_reason_why2": {
             "layer": "reason",
-            "coach_text": "그렇지. 근데 '왜' 못 건드릴까? 상대 입장에서 생각하면?",
+            "coach_text": "좋아, 그 이유를 조금 더 구체화해보자. 무엇이 탈출 여부를 가르는 핵심이라고 봐?",
             "choices": [
                 {
                     "id": "fear_revenge",
-                    "label": "보복이 무서워서",
+                    "label": "물가 상승이 임금과 소비로 이어지느냐가 핵심이야",
                     "next": "n_reason_card",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 중국의 물가 반등이 디플레이션 탈출로 이어질 수 있는가"
+                        "text": "② 근거: 물가 반등이 임금·소비로 이어져야 진짜 탈출에 가깝다"
                     }
                 },
                 {
                     "id": "intl_pressure",
-                    "label": "국제사회 비난",
+                    "label": "반등이 일부 업종에만 몰렸는지가 중요해",
                     "next": "n_reason_card_intl",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 중국의 물가 반등이 디플레이션 탈출로 이어질 수 있는가"
+                        "text": "② 근거: 에너지·수출·자본집약 업종에만 몰린 반등은 한계가 있다"
                     }
                 },
                 {
                     "id": "unsure_reason",
-                    "label": "음...",
+                    "label": "아직 어떤 기준이 제일 중요한지 헷갈려",
                     "next": "n_reason_card",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 중국의 물가 반등이 디플레이션 탈출로 이어질 수 있는가"
+                        "text": "② 근거: 탈출 판단 기준이 아직 분명하진 않다"
                     }
                 }
             ]
         },
         "n_reason_card": {
             "layer": "reason",
-            "coach_text": "완벽해. 이제 '입장'에 '근거'가 붙었어. **판을 봐** — 생각이 서기 시작했지?",
+            "coach_text": "좋아, 이제 ① 입장과 ② 근거가 생각판에 올라왔어. 다음엔 그 기준에 조건을 붙여 더 깊게 보자.",
             "board_pulse": "reason",
             "choices": [
                 {
                     "id": "see_board",
-                    "label": "판 보니까 그렇네",
+                    "label": "생각판 보고 다음으로",
                     "next": "n_depth_0"
                 }
             ]
         },
         "n_reason_card_intl": {
             "layer": "reason",
-            "coach_text": "그것도 근거가 될 수 있지. 판에 적혔어. **판을 봐.**",
+            "coach_text": "좋아, 지금까지는 '어디서 오른 물가인가'라는 기준이 잡혔어. 이제 그 반등이 언제 의미 있어지는지 따져보자.",
             "board_pulse": "reason",
             "choices": [
                 {
                     "id": "see_board",
-                    "label": "판 보니까 그렇네",
+                    "label": "생각판 보고 다음으로",
                     "next": "n_depth_0"
                 }
             ]
         },
         "n_depth_0": {
             "layer": "depth",
-            "coach_text": "한 걸음 더.\n항상 그렇게만 될까? 예외는 없을까?",
+            "coach_text": "그럼 물가가 올라도 왜 바로 탈출로 이어지지 않을 수 있을까?",
             "choices": [
                 {
                     "id": "wont_work",
-                    "label": "안 통할 것 같아",
+                    "label": "고용과 임금으로 안 번지면 한계가 있어",
                     "next": "n_depth_1"
                 },
                 {
                     "id": "still_works",
-                    "label": "그래도 통해",
+                    "label": "그래도 반등이 시작되면 점차 퍼질 수 있어",
                     "next": "n_depth_1"
                 },
                 {
                     "id": "hard_depth",
-                    "label": "어렵다",
+                    "label": "상황에 따라 다를 것 같아",
                     "next": "n_depth_1"
                 }
             ]
         },
         "n_depth_1": {
             "layer": "depth",
-            "coach_text": "그럼 네 입장('핵=안전')은 — 무조건 맞는 건 아니게 되네?",
+            "coach_text": "좋아. 그 생각에 조건을 한 줄 더 붙여보자.",
             "choices": [
                 {
                     "id": "conditional",
-                    "label": "조건이 있네",
+                    "label": "임금 상승과 소비 회복이 따라올 때만 의미가 커져",
                     "next": "n_depth_card",
                     "emit_card": {
                         "layer": "depth",
-                        "text": "조건이 있다 — 항상 통하지는 않음"
+                        "text": "③ 깊이: 물가 반등도 임금·소비 회복이 따라와야 탈출로 이어질 수 있다"
                     }
                 },
                 {
                     "id": "mostly_ok",
-                    "label": "그래도 대부분 맞아",
+                    "label": "처음엔 좁아도 시간이 지나면 경기 전반으로 번질 수 있어",
                     "next": "n_depth_card_mostly",
                     "emit_card": {
                         "layer": "depth",
-                        "text": "조건이 있다 — 항상 통하지는 않음"
+                        "text": "③ 깊이: 초기 반등이 좁아도 점차 전체 경제로 확산될 가능성은 있다"
                     }
                 }
             ]
         },
         "n_depth_card": {
             "layer": "depth",
-            "coach_text": "봐, 처음엔 '핵=안전'이었는데 이제 '조건부'로 정교해졌어. **판을 봐.** 이게 따지는 거야.",
+            "coach_text": "좋아, 이제 네 생각에 '어떤 조건에서 맞는가'가 붙었어. 다음엔 기사 속 복잡한 사실로 한 번 흔들어볼게.",
             "board_pulse": "depth",
             "choices": [
                 {
                     "id": "depth_ok",
-                    "label": "맞아, 정교해졌네",
+                    "label": "다음 질문 받아볼게",
                     "next": "n_counter_0"
                 }
             ]
         },
         "n_depth_card_mostly": {
             "layer": "depth",
-            "coach_text": "그래도 '대부분'과 '항상'은 다르지. 판에 적혔어.",
+            "coach_text": "좋아, 반등의 확산 가능성까지 넣었네. 이제 그 낙관을 흔드는 기사 속 대목을 같이 보자.",
             "board_pulse": "depth",
             "choices": [
                 {
                     "id": "depth_ok",
-                    "label": "계속 가보자",
+                    "label": "다음 질문 받아볼게",
                     "next": "n_counter_0"
                 }
             ]
         },
         "n_counter_0": {
             "layer": "counter",
-            "coach_text": "그렇게 보기엔 4월 중국 소매판매가 전년 대비 0.2% 증가에 그쳤고, 기사도 AI 수혜 업종이 자본집약적이라 일자리와 임금으로 잘 안 번진다고 했어.\n\n본문은 중국의 반등이 에너지·수출·자본집약 업종에 좁게 집중돼 고용과 임금, 소비를 살리지 못하고, 정책도 이를 지속적 내수 회복으로 굳히려 하지 않는다고 보여준다\n\n네가 아까 말한 입장 — 이 이야기에도 그대로 맞을까?",
+            "coach_text": "그렇게 보기엔 4월 중국 소매판매가 전년 대비 0.2% 증가에 그쳤고, 기사도 AI 수혜 업종이 자본집약적이라 일자리와 임금으로 잘 안 번진다고 했어. 그렇다면 지금 물가 반등은 생각보다 좁은 현상 아닐까?",
             "choices": [
                 {
                     "id": "might_shake",
-                    "label": "흔들릴 것 같아",
+                    "label": "맞아, 그 점은 내 생각을 좀 흔들어",
                     "next": "n_counter_still"
                 },
                 {
                     "id": "nuke_different",
-                    "label": "그래도 핵은 달라",
+                    "label": "그래도 물가 반등 자체의 의미는 남아 있다고 봐",
                     "next": "n_counter_why"
                 },
                 {
                     "id": "unsure_counter",
-                    "label": "모르겠어",
+                    "label": "어느 쪽으로 봐야 할지 아직 모르겠어",
                     "next": "n_counter_drone"
                 }
             ]
         },
         "n_counter_why": {
             "layer": "counter",
-            "coach_text": "왜 그렇게 봐? (답 강요 없어 — 네 생각대로)",
+            "coach_text": "왜 흔들렸는지 하나 골라볼래?",
             "choices": [
                 {
                     "id": "destruction",
-                    "label": "파괴력이 차원이 달라",
+                    "label": "소비가 약하면 체감 회복이 아니라는 점 때문이야",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "can_defend",
-                    "label": "드론은 막을 수 있어",
+                    "label": "일자리와 임금으로 안 번지면 지속성이 약해 보여서야",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_still": {
             "layer": "counter",
-            "coach_text": "솔직하네. 그래도 핵만큼 무서운 게 있을까?",
+            "coach_text": "그래도 의미가 남는다고 본 이유는 뭐야?",
             "choices": [
                 {
                     "id": "maybe_not",
-                    "label": "없을 수도",
+                    "label": "좁은 반등이라도 방향 전환의 시작일 수 있어서",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "still_nuke",
-                    "label": "핵이 제일 무서워",
+                    "label": "정책이나 시간이 붙으면 내수로 이어질 수도 있어서",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_drone": {
             "layer": "counter",
-            "coach_text": "괜찮아. 천천히 보자. 드론 수천 대 vs 핵 — 뭐가 더 실제로 쓰일까?",
+            "coach_text": "헷갈리는 지점이 뭐야?",
             "choices": [
                 {
                     "id": "drones_real",
-                    "label": "드론이 더 현실적",
+                    "label": "지금 지표는 약한데 앞으로 확산될 수도 있어서",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "nuke_deter",
-                    "label": "핵이 억지해",
+                    "label": "물가 반등과 내수 부진이 동시에 보여서 판단이 어려워",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_hard": {
             "layer": "counter",
-            "coach_text": "일리 있어. 근데 — '쓸 수 있느냐'는 다른 문제 아닐까?\n핵을 진짜 쏘면 자기도 끝이잖아.",
+            "coach_text": "좋아. 그 흔들림까지 포함해서, 지금 네 생각을 더 정확히 고르면 어느 쪽이야?",
             "choices": [
                 {
                     "id": "true_hard",
-                    "label": "그건 그렇네",
+                    "label": "반등은 있지만 아직 일본식 선순환과는 거리가 있어",
                     "next": "n_counter_card",
                     "emit_card": {
                         "layer": "counter",
-                        "text": "본문은 중국의 반등이 에너지·수출·자본집약 업종에 좁게 집중돼 고용과 임금, 소비를 살리…"
+                        "text": "④ 반론: 현재 반등은 고용·임금·소비로 이어지지 않아 탈출 신호로 보기 어렵다"
                     }
                 },
                 {
                     "id": "still_deter",
-                    "label": "그래도 억지는 돼",
+                    "label": "한계는 있어도 반등의 출발점이라는 뜻은 남아 있어",
                     "next": "n_counter_card_deter",
                     "emit_card": {
                         "layer": "counter",
-                        "text": "본문은 중국의 반등이 에너지·수출·자본집약 업종에 좁게 집중돼 고용과 임금, 소비를 살리…"
+                        "text": "④ 반론: 반등이 좁더라도 향후 확산 가능성까지 닫힌 것은 아니다"
                     }
                 }
             ]
         },
         "n_counter_card": {
             "layer": "counter",
-            "coach_text": "반론과 네 답이 판에 쌓였어. **판을 봐.**",
+            "coach_text": "좋아, 이제 네 입장을 흔드는 사실도 생각판에 올렸어. 마지막으로 그걸 반영해 입장을 다시 다듬어보자.",
             "board_pulse": "counter",
             "choices": [
                 {
                     "id": "counter_ok",
-                    "label": "계속 정리하자",
+                    "label": "입장 다시 정리해볼게",
                     "next": "n_refine_0"
                 }
             ]
         },
         "n_counter_card_deter": {
             "layer": "counter",
-            "coach_text": "그 관점도 판에 적혔어.",
+            "coach_text": "좋아, 반론을 받았지만 네가 남겨두고 싶은 가능성도 보였어. 이제 균형 있게 다시 정리해보자.",
             "board_pulse": "counter",
             "choices": [
                 {
                     "id": "counter_ok",
-                    "label": "계속 정리하자",
+                    "label": "입장 다시 정리해볼게",
                     "next": "n_refine_0"
                 }
             ]
         },
         "n_refine_0": {
             "layer": "refine",
-            "coach_text": "자, **판을 다시 봐.** 처음 생각에서 많이 왔어.\n① 입장 → ② 근거 → ③ 깊이 → ④ 반론\n이제 네 생각을 다시 정리하면, 어떻게 바뀌었어?",
+            "coach_text": "생각판을 보면, 처음보다 조건이 더 또렷해졌어. 지금 네 입장을 어떻게 다듬고 싶어?",
             "board_diff": true,
             "choices": [
                 {
                     "id": "limits",
-                    "label": "핵은 안전을 주지만 한계가 있다",
+                    "label": "물가 반등만으로는 부족하고 내수 회복이 붙어야 해",
                     "next": "n_refine_card",
                     "emit_card": {
                         "layer": "refine",
-                        "text": "처음 생각보다 정교해졌다"
+                        "text": "⑤ 재정립: 물가 반등은 출발점일 수 있지만 내수 회복 없이는 탈출로 보기 어렵다"
                     }
                 },
                 {
                     "id": "still_best",
-                    "label": "여전히 핵이 최선이다",
+                    "label": "한계가 있어도 반등 자체는 긍정적 신호야",
                     "next": "n_refine_card_best",
                     "emit_card": {
                         "layer": "refine",
-                        "text": "처음 생각보다 정교해졌다"
+                        "text": "⑤ 재정립: 현재 반등은 제한적이지만 탈출 가능성을 보여주는 신호이긴 하다"
                     }
                 },
                 {
                     "id": "refine_free",
-                    "label": "직접 쓸게",
+                    "label": "내 말로 다시 정리해볼게",
                     "next": "n_refine_input",
                     "input_mode": "text",
                     "emit_card_on_message": {
@@ -521,31 +521,31 @@
         },
         "n_refine_card": {
             "layer": "refine",
-            "coach_text": "스스로 여기까지 왔어. 처음 '핵=안전'에서 훨씬 정교해졌지?",
+            "coach_text": "좋아, 이제 거의 네 문장이 됐어. 마지막으로 전체 생각을 한 번에 묶어보자.",
             "board_pulse": "refine",
             "choices": [
                 {
                     "id": "refine_ok",
-                    "label": "맞아",
+                    "label": "최종 정리로 갈게",
                     "next": "n_synth_0"
                 }
             ]
         },
         "n_refine_card_best": {
             "layer": "refine",
-            "coach_text": "네 정리가 판에 적혔어. 한번 더 따져보자.",
+            "coach_text": "좋아, 반등의 의미와 한계를 함께 담았네. 이제 마지막 한 문장으로 종합해보자.",
             "board_pulse": "refine",
             "choices": [
                 {
                     "id": "refine_ok",
-                    "label": "계속",
+                    "label": "최종 정리로 갈게",
                     "next": "n_synth_0"
                 }
             ]
         },
         "n_refine_input": {
             "layer": "refine",
-            "coach_text": "네 말로 정리해 봐 — 지금 네 생각은?",
+            "coach_text": "좋아. 물가 반등의 의미와 한계를 둘 다 넣어서, 지금 네 입장을 한두 문장으로 다시 써봐.",
             "input_mode": "text",
             "emit_card_on_message": {
                 "layer": "refine"
@@ -554,7 +554,7 @@
         },
         "n_synth_0": {
             "layer": "synthesis",
-            "coach_text": "마지막. 이 모든 걸 **한 문장**으로 — 네 결론은?\n(직접 써 봐)",
+            "coach_text": "마지막이야. '중국 물가가 다시 오르면 디플레이션에서도 곧 벗어나는가'에 대해, 일본과의 차이까지 넣어 네 결론을 한두 문장으로 써봐.",
             "input_mode": "text",
             "emit_card_on_message": {
                 "layer": "synthesis"
@@ -563,21 +563,23 @@
         },
         "n_synth_compose": {
             "layer": "synthesis",
-            "coach_text": "이게 네가 10분 넘게 따져서 만든 결론이야.\n누가 준 게 아니라, **네가 쌓은 거**지.\n자 — 이 생각판을 바탕으로 한 편의 글을 써볼까?\n판에 있는 ①~⑥이 그대로 네 글의 뼈대가 될 거야.",
+            "coach_text": "좋아, 생각판의 ①~⑤가 모였어. 이제 네 최종 답을 완성하자.",
             "board_pulse": "synthesis",
             "choices": [
                 {
                     "id": "go_compose",
-                    "label": "글 쓰러 가기",
+                    "label": "최종 답안 만들기",
                     "next": "n_compose"
                 }
             ]
         },
         "n_compose": {
             "layer": "synthesis",
-            "terminal": true
+            "terminal": true,
+            "coach_text": "정리 완료. 네 결론은 '물가 반등'만 보지 않고, 그것이 임금·고용·소비로 이어지는지까지 따져 본 답이 됐어. 그게 바로 기사 속 복잡한 진실을 반영한 판단이야."
         }
     },
-    "llm_followup_fallback": "그렇구나. 한 가지만 더 — 그 말을 한 문장으로 정리하면?",
-    "generated_by": "narrative_v2_generate_rule_v1"
+    "generated_by": "narrative_v2_generate_llm_v2",
+    "llm_followup_fallback": "좋아, 그 이유를 생각판에 올릴 수 있게 짧게 한 문장으로 다듬어볼래?",
+    "llm_philosophy_notes": "입장→근거→깊이→반론→재정립→종합의 6층 흐름을 지키고, 반론은 질문으로 흔들되 학생 결론을 대신 말하지 않도록 작성했다."
 }

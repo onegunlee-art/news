@@ -55,142 +55,142 @@
     "nodes": {
         "n_intro": {
             "layer": "intro",
-            "coach_text": "머스크가 자동차와 우주를 바꿨다면 정치도 혁신할 수 있는 걸까?\n\n많은 사람은 \"일론 머스크가 산업에서 보여준 혁신을 정치에서도 해낼 수 있는가\"라고 생각해.\n\n일론 머스크는 산업에서는 미래를 여는 파괴적 혁신가이지만 정치에서는 낡은 선동·거래·정체성 정치에 기대며 제도를 약화시키는 퇴행적 행위자다\n\n왜 그렇게 생각할까?",
+            "coach_text": "머스크는 자동차와 우주 산업에서 기존 판을 흔들며 새 경쟁을 만든 인물로 자주 말해져요. 그런데 기사에서는 정치에선 그런 새 제도 실험보다, 더 거칠고 익숙한 정치 문법을 반복한다고 봅니다. 그렇다면 머스크가 산업에서 보인 혁신을 정치에서도 해낼 수 있을까요?",
             "choices": [
                 {
                     "id": "nuclear_fear",
-                    "label": "A 쪽이 더 와닿아",
+                    "label": "정치도 결국 강한 자가 흔드는 판 같아서",
                     "next": "n_stance_bridge_fear"
                 },
                 {
                     "id": "just_luck",
-                    "label": "B 쪽도 설명돼",
+                    "label": "산업의 성공 방식이 정치에도 통할 것 같아서",
                     "next": "n_stance_bridge_luck"
                 },
                 {
                     "id": "other_reason",
-                    "label": "다른 이유",
+                    "label": "다른 이유가 있어",
                     "next": "n_stance_bridge_other"
                 }
             ]
         },
         "n_stance_bridge_fear": {
             "layer": "stance",
-            "coach_text": "좋아, 일론 머스크가 산업에서 보여준 혁신을 정치에서도 해낼 수 있는가에서 시작해보자.\n일론 머스크는 왜 정치 분야에서는 혁신적이지 않은가 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아요. 먼저 지금 생각을 골라보자. 머스크는 정치에서도 혁신할 수 있다고 보나요?",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "어느 정도 할 수 있다고 봐",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "일론 머스크가 산업에서 보여준 혁신을 정치에서도 해낼 수 있는가"
+                        "text": "① 입장: 머스크는 정치에서도 혁신할 수 있다"
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "정치에서는 다르다고 봐",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "일론 머스크가 산업에서 보여준 혁신을 정치에서도 해낼 수 있는가"
+                        "text": "① 입장: 머스크는 정치에서는 혁신적이지 않다"
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "반반이야, 아직 판단이 어려워",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "일론 머스크가 산업에서 보여준 혁신을 정치에서도 해낼 수 있는가"
+                        "text": "① 입장: 머스크의 정치 혁신 가능성은 아직 유보적이다"
                     }
                 }
             ]
         },
         "n_stance_bridge_luck": {
             "layer": "stance",
-            "coach_text": "좋아, 일론 머스크가 산업에서 보여준 혁신을 정치에서도 해낼 수 있는가에서 시작해보자.\n일론 머스크는 왜 정치 분야에서는 혁신적이지 않은가 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아요. 그럼 지금 기준으로 입장을 먼저 잡아보자. 머스크는 정치에서도 혁신할 수 있다고 보나요?",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "할 수 있다고 봐",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "일론 머스크가 산업에서 보여준 혁신을 정치에서도 해낼 수 있는가"
+                        "text": "① 입장: 머스크는 정치에서도 혁신할 수 있다"
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "정치에선 어렵다고 봐",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "일론 머스크가 산업에서 보여준 혁신을 정치에서도 해낼 수 있는가"
+                        "text": "① 입장: 머스크는 정치에서는 혁신적이지 않다"
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "좀 더 따져봐야 해",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "일론 머스크가 산업에서 보여준 혁신을 정치에서도 해낼 수 있는가"
+                        "text": "① 입장: 머스크의 정치 혁신 가능성은 아직 유보적이다"
                     }
                 }
             ]
         },
         "n_stance_bridge_other": {
             "layer": "stance",
-            "coach_text": "좋아, 일론 머스크가 산업에서 보여준 혁신을 정치에서도 해낼 수 있는가에서 시작해보자.\n일론 머스크는 왜 정치 분야에서는 혁신적이지 않은가 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아요. 네 이유를 바탕으로 먼저 입장을 골라보자. 머스크는 정치에서도 혁신할 수 있다고 보나요?",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "대체로 그렇다",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "일론 머스크가 산업에서 보여준 혁신을 정치에서도 해낼 수 있는가"
+                        "text": "① 입장: 머스크는 정치에서도 혁신할 수 있다"
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "대체로 아니다",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "일론 머스크가 산업에서 보여준 혁신을 정치에서도 해낼 수 있는가"
+                        "text": "① 입장: 머스크는 정치에서는 혁신적이지 않다"
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "아직 모르겠다",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "일론 머스크가 산업에서 보여준 혁신을 정치에서도 해낼 수 있는가"
+                        "text": "① 입장: 머스크의 정치 혁신 가능성은 아직 유보적이다"
                     }
                 }
             ]
         },
         "n_stance_card": {
             "layer": "stance",
-            "coach_text": "좋아, 네 입장이 잡혔어. (판에 적혔지)\n근데 그냥 믿는 것과 따지는 건 다르잖아. 하나씩 파보자.\n\n왜 핵이 있으면 안전하다고 생각해?",
+            "coach_text": "좋아, ① 입장이 올라갔어. 그렇게 보는 가장 큰 까닭은 뭐야?",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "cant_touch",
-                    "label": "아무도 못 건드려서",
+                    "label": "기존 판을 깨는 능력이 정치에도 통할 것 같아",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "stop_war",
-                    "label": "전쟁을 막아서",
+                    "label": "거대한 영향력과 자원이 변화를 밀 수 있어 보여",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 말해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -198,22 +198,22 @@
         },
         "n_stance_card_no": {
             "layer": "stance",
-            "coach_text": "신중하네. 네 입장이 판에 잡혔어.\n왜 핵 없이도 괜찮다고 보는지 — 이유를 따져보자.",
+            "coach_text": "좋아, ① 입장이 올라갔어. 왜 정치에서는 혁신적이지 않다고 느꼈어?",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "alliance",
-                    "label": "동맹이 있어서",
+                    "label": "새 제도보다 기존 정치 문법을 반복하는 것 같아",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "danger",
-                    "label": "핵이 오히려 위험해서",
+                    "label": "영향력은 큰데 공론장을 더 거칠게 만드는 것 같아",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 말해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -221,22 +221,22 @@
         },
         "n_stance_card_half": {
             "layer": "stance",
-            "coach_text": "솔직하네. 입장이 판에 잡혔어.\n왜 그렇게 반반으로 보는지 — 이유를 따져보자.",
+            "coach_text": "좋아, ① 입장이 올라갔어. 아직 망설이는 핵심 이유는 뭐야?",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "not_sure",
-                    "label": "장단이 있어서",
+                    "label": "산업 혁신가라는 점은 무시하기 어려워서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "need_more",
-                    "label": "더 알아봐야 해서",
+                    "label": "정치에서 한 일이 혁신인지 선동인지 헷갈려서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 생각을 직접 말해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -244,273 +244,273 @@
         },
         "n_reason_why2": {
             "layer": "reason",
-            "coach_text": "그렇지. 근데 '왜' 못 건드릴까? 상대 입장에서 생각하면?",
+            "coach_text": "좋아. 그 이유를 한 걸음 더 좁혀보자. 기사 맥락을 보면 무엇이 가장 중요해 보여?",
             "choices": [
                 {
                     "id": "fear_revenge",
-                    "label": "보복이 무서워서",
+                    "label": "신당을 말했지만 양당 체제를 흔드는 꾸준한 실험은 없었다",
                     "next": "n_reason_card",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 일론 머스크가 산업에서 보여준 혁신을 정치에서도 해낼 수 있는가"
+                        "text": "② 근거: 말은 컸지만 양당 체제를 흔드는 지속적 실험으로 이어지지 않았다"
                     }
                 },
                 {
                     "id": "intl_pressure",
-                    "label": "국제사회 비난",
+                    "label": "새 제도 설계보다 선동적 개입에 가까워 보였다",
                     "next": "n_reason_card_intl",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 일론 머스크가 산업에서 보여준 혁신을 정치에서도 해낼 수 있는가"
+                        "text": "② 근거: 정치 개입이 제도 혁신보다 선동과 동원에 가까워 보인다"
                     }
                 },
                 {
                     "id": "unsure_reason",
-                    "label": "음...",
+                    "label": "정부와 제도의 도움으로 큰 사람이 제도를 약하게 만드는 점",
                     "next": "n_reason_card",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 일론 머스크가 산업에서 보여준 혁신을 정치에서도 해낼 수 있는가"
+                        "text": "② 근거: 공적 제도의 도움으로 성장한 인물이 오히려 제도를 약화시키는 모순이 있다"
                     }
                 }
             ]
         },
         "n_reason_card": {
             "layer": "reason",
-            "coach_text": "완벽해. 이제 '입장'에 '근거'가 붙었어. **판을 봐** — 생각이 서기 시작했지?",
+            "coach_text": "좋아, ② 근거가 선명해졌어. 이제 그 근거가 언제 더 설득력 있는지도 생각해보자.",
             "board_pulse": "reason",
             "choices": [
                 {
                     "id": "see_board",
-                    "label": "판 보니까 그렇네",
+                    "label": "다음으로 갈게",
                     "next": "n_depth_0"
                 }
             ]
         },
         "n_reason_card_intl": {
             "layer": "reason",
-            "coach_text": "그것도 근거가 될 수 있지. 판에 적혔어. **판을 봐.**",
+            "coach_text": "좋아, ② 근거가 올라갔어. 이제 그 근거를 조금 더 깊게 따져보자.",
             "board_pulse": "reason",
             "choices": [
                 {
                     "id": "see_board",
-                    "label": "판 보니까 그렇네",
+                    "label": "더 생각해볼게",
                     "next": "n_depth_0"
                 }
             ]
         },
         "n_depth_0": {
             "layer": "depth",
-            "coach_text": "한 걸음 더.\n항상 그렇게만 될까? 예외는 없을까?",
+            "coach_text": "머스크의 정치 개입이 혁신처럼 보이려면 뭐가 더 필요할까?",
             "choices": [
                 {
                     "id": "wont_work",
-                    "label": "안 통할 것 같아",
+                    "label": "지속되는 제도 변화가 보여야 해",
                     "next": "n_depth_1"
                 },
                 {
                     "id": "still_works",
-                    "label": "그래도 통해",
+                    "label": "기존 정치와 다른 참여 방식이 보여야 해",
                     "next": "n_depth_1"
                 },
                 {
                     "id": "hard_depth",
-                    "label": "어렵다",
+                    "label": "판단 기준이 아직 어렵다",
                     "next": "n_depth_1"
                 }
             ]
         },
         "n_depth_1": {
             "layer": "depth",
-            "coach_text": "그럼 네 입장('핵=안전')은 — 무조건 맞는 건 아니게 되네?",
+            "coach_text": "좋아. 그럼 네 기준을 ③ 깊이 카드로 정리해보자.",
             "choices": [
                 {
                     "id": "conditional",
-                    "label": "조건이 있네",
+                    "label": "단발성 화제보다 제도를 바꾸는 지속성이 있어야 해",
                     "next": "n_depth_card",
                     "emit_card": {
                         "layer": "depth",
-                        "text": "조건이 있다 — 항상 통하지는 않음"
+                        "text": "③ 깊이: 정치 혁신은 화제성이 아니라 지속적인 제도 변화로 판단해야 한다"
                     }
                 },
                 {
                     "id": "mostly_ok",
-                    "label": "그래도 대부분 맞아",
+                    "label": "사람을 모으는 힘만으론 혁신이라 보기 어려워",
                     "next": "n_depth_card_mostly",
                     "emit_card": {
                         "layer": "depth",
-                        "text": "조건이 있다 — 항상 통하지는 않음"
+                        "text": "③ 깊이: 영향력이나 동원력만으로는 정치 혁신이라고 보기 어렵다"
                     }
                 }
             ]
         },
         "n_depth_card": {
             "layer": "depth",
-            "coach_text": "봐, 처음엔 '핵=안전'이었는데 이제 '조건부'로 정교해졌어. **판을 봐.** 이게 따지는 거야.",
+            "coach_text": "좋아, ③ 깊이까지 올라왔어. 이제 반대쪽에서 한번 흔들어보자.",
             "board_pulse": "depth",
             "choices": [
                 {
                     "id": "depth_ok",
-                    "label": "맞아, 정교해졌네",
+                    "label": "반론 보러 가기",
                     "next": "n_counter_0"
                 }
             ]
         },
         "n_depth_card_mostly": {
             "layer": "depth",
-            "coach_text": "그래도 '대부분'과 '항상'은 다르지. 판에 적혔어.",
+            "coach_text": "좋아, ③ 깊이가 정리됐어. 이제 기사 쪽 문제제기로 너의 생각을 흔들어볼게.",
             "board_pulse": "depth",
             "choices": [
                 {
                     "id": "depth_ok",
-                    "label": "계속 가보자",
+                    "label": "질문 받아볼게",
                     "next": "n_counter_0"
                 }
             ]
         },
         "n_counter_0": {
             "layer": "counter",
-            "coach_text": "그런데 본문은 그가 경합주 유권자들에게 거액의 복권식 지급을 제시하고 독일에선 극우 AfD에 힘을 실었다고 말하는데, 이게 정말 새로운 정치 실험일까?\n\n그의 정치 개입은 새로운 제도나 경쟁을 만드는 실험이 아니라 매표성 유인, 미디어 사유화, 백인 피해의식 동원 같은 오래된 정치 문법의 디지털 확장에 가깝다\n\n네가 아까 말한 입장 — 이 이야기에도 그대로 맞을까?",
+            "coach_text": "그런데 본문은 그가 경합주 유권자들에게 거액의 복권식 지급을 제시하고, 독일에선 극우 AfD에 힘을 실었다고 말해요. 이게 정말 새로운 정치 실험일까?",
             "choices": [
                 {
                     "id": "might_shake",
-                    "label": "흔들릴 것 같아",
+                    "label": "듣고 보니 새로움보다 익숙한 유인 같아",
                     "next": "n_counter_still"
                 },
                 {
                     "id": "nuke_different",
-                    "label": "그래도 핵은 달라",
+                    "label": "그래도 디지털 시대 방식이라 다를 수도 있어",
                     "next": "n_counter_why"
                 },
                 {
                     "id": "unsure_counter",
-                    "label": "모르겠어",
+                    "label": "아직 뭐가 다른지 잘 모르겠어",
                     "next": "n_counter_drone"
                 }
             ]
         },
         "n_counter_why": {
             "layer": "counter",
-            "coach_text": "왜 그렇게 봐? (답 강요 없어 — 네 생각대로)",
+            "coach_text": "왜 익숙한 정치 문법처럼 느껴질까?",
             "choices": [
                 {
                     "id": "destruction",
-                    "label": "파괴력이 차원이 달라",
+                    "label": "돈으로 관심과 표심을 자극하는 방식처럼 보여서",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "can_defend",
-                    "label": "드론은 막을 수 있어",
+                    "label": "정체성 불만을 키워 지지층을 모으는 방식 같아서",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_still": {
             "layer": "counter",
-            "coach_text": "솔직하네. 그래도 핵만큼 무서운 게 있을까?",
+            "coach_text": "반대로, 디지털 시대의 새 실험이라고 볼 여지는 정말 없을까?",
             "choices": [
                 {
                     "id": "maybe_not",
-                    "label": "없을 수도",
+                    "label": "형식만 새롭고 내용은 오래된 정치 같아",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "still_nuke",
-                    "label": "핵이 제일 무서워",
+                    "label": "플랫폼을 통한 직접 정치라는 점은 새로워 보여",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_drone": {
             "layer": "counter",
-            "coach_text": "괜찮아. 천천히 보자. 드론 수천 대 vs 핵 — 뭐가 더 실제로 쓰일까?",
+            "coach_text": "헷갈린다면 이렇게 물어볼 수 있어. 새 도구를 썼다는 사실만으로 정치도 새로워진 걸까?",
             "choices": [
                 {
                     "id": "drones_real",
-                    "label": "드론이 더 현실적",
+                    "label": "아니, 목적과 방식이 낡으면 혁신이라 보기 어려워",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "nuke_deter",
-                    "label": "핵이 억지해",
+                    "label": "도구가 판을 바꾸면 그것도 혁신일 수 있어",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_hard": {
             "layer": "counter",
-            "coach_text": "일리 있어. 근데 — '쓸 수 있느냐'는 다른 문제 아닐까?\n핵을 진짜 쏘면 자기도 끝이잖아.",
+            "coach_text": "좋아. 지금 흔들린 지점을 ④ 반론 카드로 잡아보자. 어느 쪽이 더 남아 있니?",
             "choices": [
                 {
                     "id": "true_hard",
-                    "label": "그건 그렇네",
+                    "label": "새 플랫폼이라도 내용이 낡으면 혁신이 아닐 수 있어",
                     "next": "n_counter_card",
                     "emit_card": {
                         "layer": "counter",
-                        "text": "그의 정치 개입은 새로운 제도나 경쟁을 만드는 실험이 아니라 매표성 유인, 미디어 사유화…"
+                        "text": "④ 반론: 디지털 형식을 썼더라도 내용이 매표성 유인과 정체성 동원이면 새 정치라 보기 어렵다"
                     }
                 },
                 {
                     "id": "still_deter",
-                    "label": "그래도 억지는 돼",
+                    "label": "도구와 접근 방식의 새로움은 아직 따져볼 여지가 있어",
                     "next": "n_counter_card_deter",
                     "emit_card": {
                         "layer": "counter",
-                        "text": "그의 정치 개입은 새로운 제도나 경쟁을 만드는 실험이 아니라 매표성 유인, 미디어 사유화…"
+                        "text": "④ 반론: 형식과 접근의 새로움이 정치 혁신으로 이어지는지 더 따져볼 필요가 있다"
                     }
                 }
             ]
         },
         "n_counter_card": {
             "layer": "counter",
-            "coach_text": "반론과 네 답이 판에 쌓였어. **판을 봐.**",
+            "coach_text": "좋아, ④ 반론이 올라갔어. 이제 처음 입장을 그대로 둘지, 조금 고칠지 정리해보자.",
             "board_pulse": "counter",
             "choices": [
                 {
                     "id": "counter_ok",
-                    "label": "계속 정리하자",
+                    "label": "입장 다듬기",
                     "next": "n_refine_0"
                 }
             ]
         },
         "n_counter_card_deter": {
             "layer": "counter",
-            "coach_text": "그 관점도 판에 적혔어.",
+            "coach_text": "좋아, ④ 반론이 생겼어. 이제 네 생각을 더 정확하게 다시 세워보자.",
             "board_pulse": "counter",
             "choices": [
                 {
                     "id": "counter_ok",
-                    "label": "계속 정리하자",
+                    "label": "정리하러 가기",
                     "next": "n_refine_0"
                 }
             ]
         },
         "n_refine_0": {
             "layer": "refine",
-            "coach_text": "자, **판을 다시 봐.** 처음 생각에서 많이 왔어.\n① 입장 → ② 근거 → ③ 깊이 → ④ 반론\n이제 네 생각을 다시 정리하면, 어떻게 바뀌었어?",
+            "coach_text": "생각판을 보면 처음 입장과 반론이 같이 있어. 지금 네 입장은 어떻게 다듬어지고 있니?",
             "board_diff": true,
             "choices": [
                 {
                     "id": "limits",
-                    "label": "핵은 안전을 주지만 한계가 있다",
+                    "label": "산업 혁신가여도 정치에선 한계가 크다고 보게 됐어",
                     "next": "n_refine_card",
                     "emit_card": {
                         "layer": "refine",
-                        "text": "처음 생각보다 정교해졌다"
+                        "text": "⑤ 재정립: 산업 혁신 능력이 곧 정치 혁신으로 이어지지는 않는다"
                     }
                 },
                 {
                     "id": "still_best",
-                    "label": "여전히 핵이 최선이다",
+                    "label": "그래도 잠재력은 있지만 아직 방식이 문제라고 보게 됐어",
                     "next": "n_refine_card_best",
                     "emit_card": {
                         "layer": "refine",
-                        "text": "처음 생각보다 정교해졌다"
+                        "text": "⑤ 재정립: 머스크에게 정치 혁신 잠재력은 있지만 현재 개입 방식은 낡은 정치에 가깝다"
                     }
                 },
                 {
                     "id": "refine_free",
-                    "label": "직접 쓸게",
+                    "label": "내 말로 직접 정리할게",
                     "next": "n_refine_input",
                     "input_mode": "text",
                     "emit_card_on_message": {
@@ -521,31 +521,31 @@
         },
         "n_refine_card": {
             "layer": "refine",
-            "coach_text": "스스로 여기까지 왔어. 처음 '핵=안전'에서 훨씬 정교해졌지?",
+            "coach_text": "좋아, ⑤ 재정립이 또렷해졌어. 마지막으로 한 문장 결론만 남았어.",
             "board_pulse": "refine",
             "choices": [
                 {
                     "id": "refine_ok",
-                    "label": "맞아",
+                    "label": "최종 정리할게",
                     "next": "n_synth_0"
                 }
             ]
         },
         "n_refine_card_best": {
             "layer": "refine",
-            "coach_text": "네 정리가 판에 적혔어. 한번 더 따져보자.",
+            "coach_text": "좋아, ⑤ 재정립이 올라갔어. 이제 생각판 전체를 묶어 결론을 만들어보자.",
             "board_pulse": "refine",
             "choices": [
                 {
                     "id": "refine_ok",
-                    "label": "계속",
+                    "label": "결론 쓰기",
                     "next": "n_synth_0"
                 }
             ]
         },
         "n_refine_input": {
             "layer": "refine",
-            "coach_text": "네 말로 정리해 봐 — 지금 네 생각은?",
+            "coach_text": "좋아. 생각판을 보고 네 입장을 한 번 더 다듬어 적어봐. 처음 생각에서 무엇이 바뀌었는지 짧게 써도 좋아.",
             "input_mode": "text",
             "emit_card_on_message": {
                 "layer": "refine"
@@ -554,7 +554,7 @@
         },
         "n_synth_0": {
             "layer": "synthesis",
-            "coach_text": "마지막. 이 모든 걸 **한 문장**으로 — 네 결론은?\n(직접 써 봐)",
+            "coach_text": "이제 ⑥ 종합이야. '머스크가 산업에선 혁신가일 수 있지만 정치에선 왜 혁신적으로 보기 어려운지'를 한두 문장으로 정리해봐.",
             "input_mode": "text",
             "emit_card_on_message": {
                 "layer": "synthesis"
@@ -563,21 +563,23 @@
         },
         "n_synth_compose": {
             "layer": "synthesis",
-            "coach_text": "이게 네가 10분 넘게 따져서 만든 결론이야.\n누가 준 게 아니라, **네가 쌓은 거**지.\n자 — 이 생각판을 바탕으로 한 편의 글을 써볼까?\n판에 있는 ①~⑥이 그대로 네 글의 뼈대가 될 거야.",
+            "coach_text": "좋아, 재료는 다 모였어. 마지막 답안을 완성해보자.",
             "board_pulse": "synthesis",
             "choices": [
                 {
                     "id": "go_compose",
-                    "label": "글 쓰러 가기",
+                    "label": "최종 답안 보기",
                     "next": "n_compose"
                 }
             ]
         },
         "n_compose": {
             "layer": "synthesis",
-            "terminal": true
+            "terminal": true,
+            "coach_text": "정리하면, 머스크는 산업에서는 새 경쟁과 미래를 연 인물이지만 정치에서는 제도를 새로 설계하기보다 돈, 플랫폼 영향력, 정체성 자극 같은 익숙한 정치 문법을 디지털로 확장한 쪽에 가깝다고 볼 수 있어. 그래서 정치 개입은 혁신이라기보다 제도를 약하게 만드는 퇴행으로 읽힐 수 있어."
         }
     },
-    "llm_followup_fallback": "그렇구나. 한 가지만 더 — 그 말을 한 문장으로 정리하면?",
-    "generated_by": "narrative_v2_generate_rule_v1"
+    "generated_by": "narrative_v2_generate_llm_v2",
+    "llm_followup_fallback": "좋아, 그 이유도 생각판에 붙일 수 있어. 그 말이 네 입장을 어떻게 더 선명하게 만드는지만 한 번 더 떠올려보자.",
+    "llm_philosophy_notes": "입장-근거-깊이-반론-재정립-종합의 6층을 유지했고, 반론은 질문으로만 흔들고 코치가 학생 결론을 대신 강요하지 않도록 작성했다."
 }

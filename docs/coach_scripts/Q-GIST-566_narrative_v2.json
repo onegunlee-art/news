@@ -55,142 +55,142 @@
     "nodes": {
         "n_intro": {
             "layer": "intro",
-            "coach_text": "아다니가 다시 최고 부자가 된 건 그냥 실력이 좋아서라고 봐야 할까?\n\n많은 사람은 \"아다니의 복귀는 결국 그의 사업 실력과 승리의 결과인가\"라고 생각해.\n\n아다니의 반등은 그의 사업 경쟁력이 입증된 결과처럼 보이지만, 그러나 본문은 그 상승세가 미국 사건 정리와 인도 규제·정치 환경, 경쟁사 부진 같은 외부 순풍에 크게 기대고 있음을 보여준다\n\n왜 그렇게 생각할까?",
+            "coach_text": "고탐 아다니는 인도의 대표 재벌이지만, 늘 정경유착 논란과 함께 평가받아 왔어요. 그런데도 큰 위기마다 빠져나오며 다시 반등해 왔고, 이번에도 미국 관련 사법 리스크가 크게 옅어졌죠. 그럼 아다니가 다시 최고 부자 반열로 올라선 건 그냥 실력이 좋아서라고 봐야 할까?",
             "choices": [
                 {
                     "id": "nuclear_fear",
-                    "label": "A 쪽이 더 와닿아",
+                    "label": "결국 사업 실력이 있었기 때문 같아",
                     "next": "n_stance_bridge_fear"
                 },
                 {
                     "id": "just_luck",
-                    "label": "B 쪽도 설명돼",
+                    "label": "운이나 외부 환경 영향이 더 커 보여",
                     "next": "n_stance_bridge_luck"
                 },
                 {
                     "id": "other_reason",
-                    "label": "다른 이유",
+                    "label": "둘 말고 다른 이유도 있는 것 같아",
                     "next": "n_stance_bridge_other"
                 }
             ]
         },
         "n_stance_bridge_fear": {
             "layer": "stance",
-            "coach_text": "좋아, 아다니의 복귀는 결국 그의 사업 실력과 승리의 결과인가에서 시작해보자.\n인도 아다니 그룹의 사법 리스크 해소 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아, 일단 너는 아다니의 반등을 실력 쪽에서 보고 있네. 그 생각에 더 가까운 쪽을 골라 보자.",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "대체로 실력의 승리라고 봐",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "아다니의 복귀는 결국 그의 사업 실력과 승리의 결과인가"
+                        "text": "① 입장: 아다니의 반등은 주로 그의 사업 실력과 생존력의 결과라고 본다."
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "아니, 실력만으로 보긴 어려워",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "아다니의 복귀는 결국 그의 사업 실력과 승리의 결과인가"
+                        "text": "① 입장: 아다니의 반등을 실력의 승리로만 보기는 어렵다."
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "실력도 있고 외부 도움도 컸어",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "아다니의 복귀는 결국 그의 사업 실력과 승리의 결과인가"
+                        "text": "① 입장: 아다니의 반등에는 실력과 외부 조건이 함께 작용했다."
                     }
                 }
             ]
         },
         "n_stance_bridge_luck": {
             "layer": "stance",
-            "coach_text": "좋아, 아다니의 복귀는 결국 그의 사업 실력과 승리의 결과인가에서 시작해보자.\n인도 아다니 그룹의 사법 리스크 해소 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아, 너는 외부 조건 쪽을 더 크게 보고 있네. 지금 생각에 가장 가까운 쪽을 골라 보자.",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "그래도 핵심은 결국 본인 역량이야",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "아다니의 복귀는 결국 그의 사업 실력과 승리의 결과인가"
+                        "text": "① 입장: 외부 조건이 있었어도 핵심은 아다니의 사업 역량이라고 본다."
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "반등의 핵심은 외부 환경이었어",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "아다니의 복귀는 결국 그의 사업 실력과 승리의 결과인가"
+                        "text": "① 입장: 아다니의 반등은 주로 외부 환경 변화에 기대고 있다고 본다."
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "둘을 떼어 놓고 보긴 어려워",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "아다니의 복귀는 결국 그의 사업 실력과 승리의 결과인가"
+                        "text": "① 입장: 아다니의 반등은 실력과 외부 환경이 섞인 결과라고 본다."
                     }
                 }
             ]
         },
         "n_stance_bridge_other": {
             "layer": "stance",
-            "coach_text": "좋아, 아다니의 복귀는 결국 그의 사업 실력과 승리의 결과인가에서 시작해보자.\n인도 아다니 그룹의 사법 리스크 해소 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아, 단순히 실력 대 운으로만 보지 않는 거네. 그럼 지금 네 판단과 가장 가까운 입장을 골라 보자.",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "그래도 결론은 실력 쪽에 가까워",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "아다니의 복귀는 결국 그의 사업 실력과 승리의 결과인가"
+                        "text": "① 입장: 여러 요소가 있지만 최종적으로는 아다니의 역량이 더 중요했다고 본다."
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "그래도 결론은 외부 조건 쪽이 더 커",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "아다니의 복귀는 결국 그의 사업 실력과 승리의 결과인가"
+                        "text": "① 입장: 여러 요소가 있지만 최종적으로는 외부 조건의 힘이 더 컸다고 본다."
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "아직 한쪽으로 단정하긴 어려워",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "아다니의 복귀는 결국 그의 사업 실력과 승리의 결과인가"
+                        "text": "① 입장: 아직은 실력과 외부 조건의 비중을 단정하기 어렵다."
                     }
                 }
             ]
         },
         "n_stance_card": {
             "layer": "stance",
-            "coach_text": "좋아, 네 입장이 잡혔어. (판에 적혔지)\n근데 그냥 믿는 것과 따지는 건 다르잖아. 하나씩 파보자.\n\n왜 핵이 있으면 안전하다고 생각해?",
+            "coach_text": "좋아, 입장을 세웠어. 그럼 왜 그렇게 보는지 첫 근거를 붙여 보자.",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "cant_touch",
-                    "label": "아무도 못 건드려서",
+                    "label": "위기 때마다 버티고 돌아오는 운영 능력이 보여",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "stop_war",
-                    "label": "전쟁을 막아서",
+                    "label": "큰 사건 뒤에도 시장 신뢰를 회복한 점이 커",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 적어볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -198,22 +198,22 @@
         },
         "n_stance_card_no": {
             "layer": "stance",
-            "coach_text": "신중하네. 네 입장이 판에 잡혔어.\n왜 핵 없이도 괜찮다고 보는지 — 이유를 따져보자.",
+            "coach_text": "좋아, 실력만으로 보긴 어렵다는 입장이네. 그 판단의 첫 근거를 골라 보자.",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "alliance",
-                    "label": "동맹이 있어서",
+                    "label": "사법 리스크가 풀린 게 반등의 직접 계기였어",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "danger",
-                    "label": "핵이 오히려 위험해서",
+                    "label": "규제·정치 환경이 우호적이었던 점이 커",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 적어볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -221,22 +221,22 @@
         },
         "n_stance_card_half": {
             "layer": "stance",
-            "coach_text": "솔직하네. 입장이 판에 잡혔어.\n왜 그렇게 반반으로 보는지 — 이유를 따져보자.",
+            "coach_text": "좋아, 양쪽을 함께 보고 있네. 지금 네 생각을 가장 잘 보여 주는 이유를 골라 보자.",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "not_sure",
-                    "label": "장단이 있어서",
+                    "label": "실력이 없었으면 못 버텼겠지만 환경 도움도 컸어",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "need_more",
-                    "label": "더 알아봐야 해서",
+                    "label": "반등 시점이 외부 변수와 너무 겹쳐 보여",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 적어볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -244,273 +244,273 @@
         },
         "n_reason_why2": {
             "layer": "reason",
-            "coach_text": "그렇지. 근데 '왜' 못 건드릴까? 상대 입장에서 생각하면?",
+            "coach_text": "좋아. 이제 그 이유를 조금 더 분해해 보자. 무엇이 가장 결정적이었다고 보니?",
             "choices": [
                 {
                     "id": "fear_revenge",
-                    "label": "보복이 무서워서",
+                    "label": "미국 사건 정리로 가장 큰 불확실성이 걷혔어",
                     "next": "n_reason_card",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 아다니의 복귀는 결국 그의 사업 실력과 승리의 결과인가"
+                        "text": "② 근거: 미국 형사 혐의 철회와 SEC 합의로 해외 사법 리스크가 크게 줄었다."
                     }
                 },
                 {
                     "id": "intl_pressure",
-                    "label": "국제사회 비난",
+                    "label": "인도 규제·정치 환경이 반등을 받쳐줬어",
                     "next": "n_reason_card_intl",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 아다니의 복귀는 결국 그의 사업 실력과 승리의 결과인가"
+                        "text": "② 근거: 인도 규제당국의 사실상 면죄부와 정치적 순풍이 반등을 뒷받침했다."
                     }
                 },
                 {
                     "id": "unsure_reason",
-                    "label": "음...",
+                    "label": "경쟁사 흐름까지 함께 봐야 할 것 같아",
                     "next": "n_reason_card",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 아다니의 복귀는 결국 그의 사업 실력과 승리의 결과인가"
+                        "text": "② 근거: 아다니의 반등은 경쟁사 부진 같은 상대적 환경 변화와도 연결된다."
                     }
                 }
             ]
         },
         "n_reason_card": {
             "layer": "reason",
-            "coach_text": "완벽해. 이제 '입장'에 '근거'가 붙었어. **판을 봐** — 생각이 서기 시작했지?",
+            "coach_text": "좋아, 근거가 생각판에 올라갔어. 이제 그 근거가 언제 더 설득력 있는지 조건을 따져 보자.",
             "board_pulse": "reason",
             "choices": [
                 {
                     "id": "see_board",
-                    "label": "판 보니까 그렇네",
+                    "label": "다음으로 갈게",
                     "next": "n_depth_0"
                 }
             ]
         },
         "n_reason_card_intl": {
             "layer": "reason",
-            "coach_text": "그것도 근거가 될 수 있지. 판에 적혔어. **판을 봐.**",
+            "coach_text": "좋아, 근거가 선명해졌어. 이제 그 말이 어떤 조건에서 더 맞는지 한 단계 깊게 들어가 보자.",
             "board_pulse": "reason",
             "choices": [
                 {
                     "id": "see_board",
-                    "label": "판 보니까 그렇네",
+                    "label": "조건을 따져볼게",
                     "next": "n_depth_0"
                 }
             ]
         },
         "n_depth_0": {
             "layer": "depth",
-            "coach_text": "한 걸음 더.\n아다니의 반등은 그의 사업 경쟁력이 입증된 결과처럼 보이지만, 그러나 본문은 그 상승세가 미국 사건 정리와 인도 규제·정치 환경, 경쟁사 부진 같은 외부 순풍에…\n\n예외 상황은 없을까?",
+            "coach_text": "만약 반등의 핵심이 외부 순풍이라면, 그걸 곧바로 아다니의 실력 입증으로 읽어도 될까?",
             "choices": [
                 {
                     "id": "wont_work",
-                    "label": "안 통할 것 같아",
+                    "label": "그건 좀 어려워 보여",
                     "next": "n_depth_1"
                 },
                 {
                     "id": "still_works",
-                    "label": "그래도 통해",
+                    "label": "그래도 실력의 일부로 볼 수 있어",
                     "next": "n_depth_1"
                 },
                 {
                     "id": "hard_depth",
-                    "label": "어렵다",
+                    "label": "상황을 더 나눠서 봐야 해",
                     "next": "n_depth_1"
                 }
             ]
         },
         "n_depth_1": {
             "layer": "depth",
-            "coach_text": "그럼 네 입장('핵=안전')은 — 무조건 맞는 건 아니게 되네?",
+            "coach_text": "좋아. 그럼 어떤 조건에서 그렇게 말할 수 있는지 골라 보자.",
             "choices": [
                 {
                     "id": "conditional",
-                    "label": "조건이 있네",
+                    "label": "외부 도움 뒤에도 실제 사업 성과가 이어질 때만 그래",
                     "next": "n_depth_card",
                     "emit_card": {
                         "layer": "depth",
-                        "text": "조건이 있다 — 항상 통하지는 않음"
+                        "text": "③ 깊이: 외부 리스크 해소 뒤에도 실적과 경쟁력이 계속 좋아질 때 비로소 실력 입증에 가깝다."
                     }
                 },
                 {
                     "id": "mostly_ok",
-                    "label": "그래도 대부분 맞아",
+                    "label": "큰 위기 뒤에 살아남는 것 자체가 이미 역량이야",
                     "next": "n_depth_card_mostly",
                     "emit_card": {
                         "layer": "depth",
-                        "text": "조건이 있다 — 항상 통하지는 않음"
+                        "text": "③ 깊이: 외부 조건이 있어도 위기 관리와 생존 자체를 사업 역량의 일부로 볼 수 있다."
                     }
                 }
             ]
         },
         "n_depth_card": {
             "layer": "depth",
-            "coach_text": "봐, 처음엔 '핵=안전'이었는데 이제 '조건부'로 정교해졌어. **판을 봐.** 이게 따지는 거야.",
+            "coach_text": "좋아, 조건이 붙으니 생각이 더 정교해졌어. 이제 반대쪽에서 한 번 흔들어 보자.",
             "board_pulse": "depth",
             "choices": [
                 {
                     "id": "depth_ok",
-                    "label": "맞아, 정교해졌네",
+                    "label": "반론으로 가보자",
                     "next": "n_counter_0"
                 }
             ]
         },
         "n_depth_card_mostly": {
             "layer": "depth",
-            "coach_text": "그래도 '대부분'과 '항상'은 다르지. 판에 적혔어.",
+            "coach_text": "좋아, 네 기준이 보이기 시작해. 이제 본문이 드러내는 다른 면에서 질문을 던져 볼게.",
             "board_pulse": "depth",
             "choices": [
                 {
                     "id": "depth_ok",
-                    "label": "계속 가보자",
+                    "label": "질문 받아볼게",
                     "next": "n_counter_0"
                 }
             ]
         },
         "n_counter_0": {
             "layer": "counter",
-            "coach_text": "그런데 2026년 5월 미국 법무부가 형사 혐의를 철회하고 SEC도 유죄 인정 없이 1,800만 달러에 합의한 점을 보면, 이 반등이 사업 성과만으로 설명될까?\n\n본문이 드러내는 것은 아다니의 반등이 사업 성과 자체보다 미국의 형사 혐의 철회와 합의, 인도 규제당국의 사실상 면죄부, 경쟁사 릴라이언스 부진, BJP의 정치적 순풍 같은 외부…\n\n네가 아까 말한 입장 — 이 이야기에도 그대로 맞을까?",
+            "coach_text": "그런데 2026년 5월 미국 법무부가 형사 혐의를 철회하고 SEC도 유죄 인정 없이 1,800만 달러에 합의한 점을 보면, 이 반등이 사업 성과만으로 설명될까?",
             "choices": [
                 {
                     "id": "might_shake",
-                    "label": "흔들릴 것 같아",
+                    "label": "맞아, 그 대목은 생각을 흔들어",
                     "next": "n_counter_still"
                 },
                 {
                     "id": "nuke_different",
-                    "label": "그래도 핵은 달라",
+                    "label": "그래도 그게 전부는 아닌 것 같아",
                     "next": "n_counter_why"
                 },
                 {
                     "id": "unsure_counter",
-                    "label": "모르겠어",
+                    "label": "어디까지 봐야 할지 아직 헷갈려",
                     "next": "n_counter_drone"
                 }
             ]
         },
         "n_counter_why": {
             "layer": "counter",
-            "coach_text": "왜 그렇게 봐? (답 강요 없어 — 네 생각대로)",
+            "coach_text": "왜 흔들린다고 느꼈어? 무엇이 가장 크게 걸리니?",
             "choices": [
                 {
                     "id": "destruction",
-                    "label": "파괴력이 차원이 달라",
+                    "label": "핵심 계기가 사업 성과보다 사건 정리처럼 보여서",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "can_defend",
-                    "label": "드론은 막을 수 있어",
+                    "label": "규제·정치 환경이 너무 우호적으로 맞물려 보여서",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_still": {
             "layer": "counter",
-            "coach_text": "솔직하네. 그래도 핵만큼 무서운 게 있을까?",
+            "coach_text": "그래도 전부는 아니라고 본다면, 외부 도움 속에서도 남는 아다니 쪽 요소는 뭐라고 보니?",
             "choices": [
                 {
                     "id": "maybe_not",
-                    "label": "없을 수도",
+                    "label": "위기 뒤에도 사업을 유지한 운영 능력",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "still_nuke",
-                    "label": "핵이 제일 무서워",
+                    "label": "외부 기회를 실제 반등으로 연결한 실행력",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_drone": {
             "layer": "counter",
-            "coach_text": "괜찮아. 천천히 보자. 드론 수천 대 vs 핵 — 뭐가 더 실제로 쓰일까?",
+            "coach_text": "헷갈린다면 이렇게 볼 수도 있어. 사건 정리, 규제 환경, 경쟁사 부진이 함께 작동했다면 무엇이 주원인인지 가르기 더 어려운 걸까?",
             "choices": [
                 {
                     "id": "drones_real",
-                    "label": "드론이 더 현실적",
+                    "label": "응, 그래서 실력 단독 설명은 약해 보여",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "nuke_deter",
-                    "label": "핵이 억지해",
+                    "label": "그래도 여러 조건을 묶는 중심엔 본인 역량이 있을 수 있어",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_hard": {
             "layer": "counter",
-            "coach_text": "일리 있어. 근데 — '쓸 수 있느냐'는 다른 문제 아닐까?\n핵을 진짜 쏘면 자기도 끝이잖아.",
+            "coach_text": "좋아. 그럼 반대쪽 질문을 한 줄로 붙여 보자. 네 원래 입장을 가장 세게 흔드는 포인트는 뭐야?",
             "choices": [
                 {
                     "id": "true_hard",
-                    "label": "그건 그렇네",
+                    "label": "반등 시점이 외부 사건 해소와 너무 정확히 맞물려 있어",
                     "next": "n_counter_card",
                     "emit_card": {
                         "layer": "counter",
-                        "text": "본문이 드러내는 것은 아다니의 반등이 사업 성과 자체보다 미국의 형사 혐의 철회와 합의,…"
+                        "text": "④ 반론: 이번 반등은 사업 실력의 자연스러운 증명이라기보다 외부 리스크 해소의 효과일 수 있다."
                     }
                 },
                 {
                     "id": "still_deter",
-                    "label": "그래도 억지는 돼",
+                    "label": "순풍이 있었어도 그걸 살린 사람은 결국 아다니야",
                     "next": "n_counter_card_deter",
                     "emit_card": {
                         "layer": "counter",
-                        "text": "본문이 드러내는 것은 아다니의 반등이 사업 성과 자체보다 미국의 형사 혐의 철회와 합의,…"
+                        "text": "④ 반론: 외부 조건이 유리해도 그것을 실제 반등으로 바꾸는 능력은 별개일 수 있다."
                     }
                 }
             ]
         },
         "n_counter_card": {
             "layer": "counter",
-            "coach_text": "반론과 네 답이 판에 쌓였어. **판을 봐.**",
+            "coach_text": "좋아, 반론 카드까지 올라왔어. 이제 처음 생각을 조금 고쳐 잡아 보자.",
             "board_pulse": "counter",
             "choices": [
                 {
                     "id": "counter_ok",
-                    "label": "계속 정리하자",
+                    "label": "입장을 다듬어볼게",
                     "next": "n_refine_0"
                 }
             ]
         },
         "n_counter_card_deter": {
             "layer": "counter",
-            "coach_text": "그 관점도 판에 적혔어.",
+            "coach_text": "좋아, 흔들림을 거친 뒤에도 남는 기준이 보이네. 이제 네 입장을 다시 정리해 보자.",
             "board_pulse": "counter",
             "choices": [
                 {
                     "id": "counter_ok",
-                    "label": "계속 정리하자",
+                    "label": "다시 정리해볼게",
                     "next": "n_refine_0"
                 }
             ]
         },
         "n_refine_0": {
             "layer": "refine",
-            "coach_text": "자, **판을 다시 봐.** 처음 생각에서 많이 왔어.\n① 입장 → ② 근거 → ③ 깊이 → ④ 반론\n이제 네 생각을 다시 정리하면, 어떻게 바뀌었어?",
+            "coach_text": "생각판을 보면, 처음의 단순한 판단에서 조건과 예외가 많이 붙었어. 지금은 어떻게 정리하고 싶어?",
             "board_diff": true,
             "choices": [
                 {
                     "id": "limits",
-                    "label": "핵은 안전을 주지만 한계가 있다",
+                    "label": "실력은 인정하지만 이번 반등은 외부 조건 의존이 커",
                     "next": "n_refine_card",
                     "emit_card": {
                         "layer": "refine",
-                        "text": "처음 생각보다 정교해졌다"
+                        "text": "⑤ 재정립: 아다니의 역량은 있어도 이번 반등은 미국 사건 정리와 규제·정치 환경 같은 외부 조건의 비중이 컸다."
                     }
                 },
                 {
                     "id": "still_best",
-                    "label": "여전히 핵이 최선이다",
+                    "label": "외부 도움은 있었지만 결국 핵심은 본인 역량이야",
                     "next": "n_refine_card_best",
                     "emit_card": {
                         "layer": "refine",
-                        "text": "처음 생각보다 정교해졌다"
+                        "text": "⑤ 재정립: 외부 순풍이 있었어도 이를 반등으로 연결한 핵심은 아다니의 위기 대응과 실행력이라고 본다."
                     }
                 },
                 {
                     "id": "refine_free",
-                    "label": "직접 쓸게",
+                    "label": "내 말로 다시 써볼게",
                     "next": "n_refine_input",
                     "input_mode": "text",
                     "emit_card_on_message": {
@@ -521,31 +521,31 @@
         },
         "n_refine_card": {
             "layer": "refine",
-            "coach_text": "스스로 여기까지 왔어. 처음 '핵=안전'에서 훨씬 정교해졌지?",
+            "coach_text": "좋아, 재정립 카드가 올라갔어. 마지막으로 전체를 한 문장으로 묶어 보자.",
             "board_pulse": "refine",
             "choices": [
                 {
                     "id": "refine_ok",
-                    "label": "맞아",
+                    "label": "종합하러 가자",
                     "next": "n_synth_0"
                 }
             ]
         },
         "n_refine_card_best": {
             "layer": "refine",
-            "coach_text": "네 정리가 판에 적혔어. 한번 더 따져보자.",
+            "coach_text": "좋아, 수정된 입장이 선명해졌어. 이제 근거와 반론을 함께 넣어 종합해 보자.",
             "board_pulse": "refine",
             "choices": [
                 {
                     "id": "refine_ok",
-                    "label": "계속",
+                    "label": "종합해볼게",
                     "next": "n_synth_0"
                 }
             ]
         },
         "n_refine_input": {
             "layer": "refine",
-            "coach_text": "네 말로 정리해 봐 — 지금 네 생각은?",
+            "coach_text": "좋아. 생각판의 ①입장~④반론을 보고, 네 판단을 한 번 다시 써 봐. 무엇은 인정하고 무엇은 보류할지 드러나면 좋아.",
             "input_mode": "text",
             "emit_card_on_message": {
                 "layer": "refine"
@@ -554,7 +554,7 @@
         },
         "n_synth_0": {
             "layer": "synthesis",
-            "coach_text": "마지막. 이 모든 걸 **한 문장**으로 — 네 결론은?\n(직접 써 봐)",
+            "coach_text": "이제 마지막이야. '아다니의 반등은 실력의 승리처럼 보이지만, 실제로는 무엇이 얼마나 작용했는가'에 답하는 2~3문장 종합을 써 봐.",
             "input_mode": "text",
             "emit_card_on_message": {
                 "layer": "synthesis"
@@ -563,21 +563,23 @@
         },
         "n_synth_compose": {
             "layer": "synthesis",
-            "coach_text": "이게 네가 10분 넘게 따져서 만든 결론이야.\n누가 준 게 아니라, **네가 쌓은 거**지.\n자 — 이 생각판을 바탕으로 한 편의 글을 써볼까?\n판에 있는 ①~⑥이 그대로 네 글의 뼈대가 될 거야.",
+            "coach_text": "좋아, 생각판이 다 찼어. 마지막 답안을 매끈하게 완성해 보자.",
             "board_pulse": "synthesis",
             "choices": [
                 {
                     "id": "go_compose",
-                    "label": "글 쓰러 가기",
+                    "label": "최종 답안 만들기",
                     "next": "n_compose"
                 }
             ]
         },
         "n_compose": {
             "layer": "synthesis",
-            "terminal": true
+            "terminal": true,
+            "coach_text": "정리해 보면, 아다니의 반등을 순수한 실력의 승리로만 보긴 어려워. 본문은 미국 형사 혐의 철회와 SEC 합의, 인도의 규제·정치 환경, 경쟁사 부진 같은 외부 조건이 큰 역할을 했다고 보여 주니까. 다만 그런 순풍을 실제 반등으로 연결한 위기 대응력과 실행력까지 완전히 지울 수는 없겠지."
         }
     },
-    "llm_followup_fallback": "그렇구나. 한 가지만 더 — 그 말을 한 문장으로 정리하면?",
-    "generated_by": "narrative_v2_generate_rule_v1"
+    "generated_by": "narrative_v2_generate_llm_v2",
+    "llm_followup_fallback": "좋아, 그 이유도 의미 있어. 그 말을 한 단계 더 밀어 보면, 네가 보기에 아다니의 반등을 설명한 핵심은 사업 자체의 힘이야, 아니면 사건 정리와 환경 변화야?",
+    "llm_philosophy_notes": "반론은 질문으로만 흔들고, 학생이 실력 중심·외부 조건 중심·혼합 입장을 스스로 재정립하도록 ①~⑥ 생각판 흐름에 맞춰 작성했다."
 }

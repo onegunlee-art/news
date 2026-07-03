@@ -55,142 +55,142 @@
     "nodes": {
         "n_intro": {
             "layer": "intro",
-            "coach_text": "유럽은 각자 나라답게 움직여야 살아남을까?\n\n많은 사람은 \"유럽이 살아남는 길은 통합을 줄이고 각국이 자국 주권 중심으로 대응하는가\"라고 생각해.\n\n유럽은 주권국가들의 연합이지만 살아남으려면 에너지·국방·AI에서 사실상 하나의 국가처럼 더 깊게 통합돼야 한다\n\n왜 그렇게 생각할까?",
+            "coach_text": "유럽은 원래 주권국가들의 연합이지만, 지금은 미국의 보호 약화 가능성, 러시아의 전쟁 압박, 중국의 기술 경쟁, 내부 포퓰리즘이 한꺼번에 겹치고 있어. 글은 이런 상황에서 유럽이 느슨한 연합으로는 버티기 어렵다고 봐. 왜 유럽은 각자 움직이는 쪽이 더 낫다고 느껴질까?",
             "choices": [
                 {
                     "id": "nuclear_fear",
-                    "label": "A 쪽이 더 와닿아",
+                    "label": "위기일수록 각국이 자기 판단으로 빨리 움직여야 해서",
                     "next": "n_stance_bridge_fear"
                 },
                 {
                     "id": "just_luck",
-                    "label": "B 쪽도 설명돼",
+                    "label": "지금까지 버틴 건 공동체 힘보다 운과 외부 보호 덕이 커 보여서",
                     "next": "n_stance_bridge_luck"
                 },
                 {
                     "id": "other_reason",
-                    "label": "다른 이유",
+                    "label": "다른 이유가 더 떠올라",
                     "next": "n_stance_bridge_other"
                 }
             ]
         },
         "n_stance_bridge_fear": {
             "layer": "stance",
-            "coach_text": "좋아, 유럽이 살아남는 길은 통합을 줄이고 각국이 자국 주권 중심으로 대응하는가에서 시작해보자.\n유럽이 살아남을 유일한 길 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아. 그럼 출발점을 더 분명히 해보자. 결국 유럽은 통합을 더 줄여야 할까, 아니면 더 깊게 묶여야 할까?",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "각국 주권 중심 대응이 더 낫다",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "유럽이 살아남는 길은 통합을 줄이고 각국이 자국 주권 중심으로 대응하는가"
+                        "text": "① 입장: 유럽은 각국이 주권 중심으로 움직여야 더 잘 버틴다"
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "더 깊은 공동 대응이 필요하다",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "유럽이 살아남는 길은 통합을 줄이고 각국이 자국 주권 중심으로 대응하는가"
+                        "text": "① 입장: 유럽은 에너지·방위·AI에서 더 깊게 통합돼야 한다"
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "둘 다 필요해서 아직 단정하기 어렵다",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "유럽이 살아남는 길은 통합을 줄이고 각국이 자국 주권 중심으로 대응하는가"
+                        "text": "① 입장: 주권과 통합 사이에서 어느 쪽이 핵심인지 더 따져봐야 한다"
                     }
                 }
             ]
         },
         "n_stance_bridge_luck": {
             "layer": "stance",
-            "coach_text": "좋아, 유럽이 살아남는 길은 통합을 줄이고 각국이 자국 주권 중심으로 대응하는가에서 시작해보자.\n유럽이 살아남을 유일한 길 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아. 그 해석을 바탕으로 보면, 앞으로도 유럽은 각자 버텨야 할까, 아니면 이제는 더 묶여야 할까?",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "각국이 따로 판단하는 쪽이 현실적이다",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "유럽이 살아남는 길은 통합을 줄이고 각국이 자국 주권 중심으로 대응하는가"
+                        "text": "① 입장: 유럽은 공동체보다 각국의 자율 대응이 더 현실적이다"
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "외부 보호가 약해질수록 더 묶여야 한다",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "유럽이 살아남는 길은 통합을 줄이고 각국이 자국 주권 중심으로 대응하는가"
+                        "text": "① 입장: 외부 보호가 흔들릴수록 유럽은 더 깊은 통합이 필요하다"
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "아직은 어느 쪽이 더 나은지 애매하다",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "유럽이 살아남는 길은 통합을 줄이고 각국이 자국 주권 중심으로 대응하는가"
+                        "text": "① 입장: 유럽의 생존 전략은 자율성과 통합의 균형을 더 봐야 한다"
                     }
                 }
             ]
         },
         "n_stance_bridge_other": {
             "layer": "stance",
-            "coach_text": "좋아, 유럽이 살아남는 길은 통합을 줄이고 각국이 자국 주권 중심으로 대응하는가에서 시작해보자.\n유럽이 살아남을 유일한 길 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아, 네 이유를 바탕으로 핵심 입장을 골라보자. 유럽은 살아남으려면 어느 쪽에 더 가까워 보여?",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "각국이 주권 중심으로 움직여야 한다",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "유럽이 살아남는 길은 통합을 줄이고 각국이 자국 주권 중심으로 대응하는가"
+                        "text": "① 입장: 유럽은 느슨한 연합으로 남고 각국이 중심이 돼야 한다"
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "사실상 하나처럼 더 통합돼야 한다",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "유럽이 살아남는 길은 통합을 줄이고 각국이 자국 주권 중심으로 대응하는가"
+                        "text": "① 입장: 유럽은 분야별로 사실상 단일국가처럼 행동해야 한다"
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "둘 사이를 더 따져봐야 한다",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "유럽이 살아남는 길은 통합을 줄이고 각국이 자국 주권 중심으로 대응하는가"
+                        "text": "① 입장: 유럽의 길은 주권과 통합의 긴장을 함께 봐야 한다"
                     }
                 }
             ]
         },
         "n_stance_card": {
             "layer": "stance",
-            "coach_text": "좋아, 네 입장이 잡혔어. (판에 적혔지)\n근데 그냥 믿는 것과 따지는 건 다르잖아. 하나씩 파보자.\n\n왜 핵이 있으면 안전하다고 생각해?",
+            "coach_text": "좋아, 입장을 세웠어. 왜 각국 주권 중심 대응이 더 낫다고 보니?",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "cant_touch",
-                    "label": "아무도 못 건드려서",
+                    "label": "안보·에너지 같은 건 결국 국가가 직접 책임져야 해서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "stop_war",
-                    "label": "전쟁을 막아서",
+                    "label": "만장일치와 공동 의사결정이 너무 느려 위기에 못 버텨서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 말해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -198,22 +198,22 @@
         },
         "n_stance_card_no": {
             "layer": "stance",
-            "coach_text": "신중하네. 네 입장이 판에 잡혔어.\n왜 핵 없이도 괜찮다고 보는지 — 이유를 따져보자.",
+            "coach_text": "좋아, 통합 쪽 입장을 잡았네. 왜 더 깊은 공동 대응이 필요하다고 보니?",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "alliance",
-                    "label": "동맹이 있어서",
+                    "label": "한 나라씩 대응하면 미국·러시아·중국 압박을 못 버텨서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "danger",
-                    "label": "핵이 오히려 위험해서",
+                    "label": "에너지·방위·AI는 따로 움직일수록 더 취약해져서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 말해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -221,22 +221,22 @@
         },
         "n_stance_card_half": {
             "layer": "stance",
-            "coach_text": "솔직하네. 입장이 판에 잡혔어.\n왜 그렇게 반반으로 보는지 — 이유를 따져보자.",
+            "coach_text": "좋아, 유보한 이유를 잡아보자. 뭐가 가장 헷갈리니?",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "not_sure",
-                    "label": "장단이 있어서",
+                    "label": "통합이 필요해 보여도 민주적 정당성과 주권 손실이 걸려",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "need_more",
-                    "label": "더 알아봐야 해서",
+                    "label": "분야마다 답이 달라 보여 한쪽으로 못 가겠어",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 고민을 직접 말해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -244,273 +244,273 @@
         },
         "n_reason_why2": {
             "layer": "reason",
-            "coach_text": "그렇지. 근데 '왜' 못 건드릴까? 상대 입장에서 생각하면?",
+            "coach_text": "좋아. 그 이유를 조금 더 구조적으로 잡아보자. 네 판단을 받쳐주는 핵심 근거는 뭐야?",
             "choices": [
                 {
                     "id": "fear_revenge",
-                    "label": "보복이 무서워서",
+                    "label": "위기가 겹칠수록 중앙보다 현장 가까운 국가가 더 빨리 대응할 수 있어서",
                     "next": "n_reason_card",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 유럽이 살아남는 길은 통합을 줄이고 각국이 자국 주권 중심으로 대응하는가"
+                        "text": "② 근거: 복합 위기에서는 각국의 빠른 자율 대응이 공동 결정보다 효율적일 수 있다"
                     }
                 },
                 {
                     "id": "intl_pressure",
-                    "label": "국제사회 비난",
+                    "label": "외부 압박이 동시에 커질수록 자원과 전략을 공동으로 묶어야 해서",
                     "next": "n_reason_card_intl",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 유럽이 살아남는 길은 통합을 줄이고 각국이 자국 주권 중심으로 대응하는가"
+                        "text": "② 근거: 미국·러시아·중국에 동시에 대응하려면 유럽 차원의 공동 자원과 전략이 필요하다"
                     }
                 },
                 {
                     "id": "unsure_reason",
-                    "label": "음...",
+                    "label": "아직 어떤 근거가 가장 중요한지 정리 중이야",
                     "next": "n_reason_card",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 유럽이 살아남는 길은 통합을 줄이고 각국이 자국 주권 중심으로 대응하는가"
+                        "text": "② 근거: 유럽의 생존 조건을 판단할 핵심 기준부터 더 정리해야 한다"
                     }
                 }
             ]
         },
         "n_reason_card": {
             "layer": "reason",
-            "coach_text": "완벽해. 이제 '입장'에 '근거'가 붙었어. **판을 봐** — 생각이 서기 시작했지?",
+            "coach_text": "좋아. 지금까지 나온 근거를 생각판에 올렸어. 다음은 그 근거가 언제 강해지고 언제 약해지는지 따져보자.",
             "board_pulse": "reason",
             "choices": [
                 {
                     "id": "see_board",
-                    "label": "판 보니까 그렇네",
+                    "label": "조건과 한계를 따져볼게",
                     "next": "n_depth_0"
                 }
             ]
         },
         "n_reason_card_intl": {
             "layer": "reason",
-            "coach_text": "그것도 근거가 될 수 있지. 판에 적혔어. **판을 봐.**",
+            "coach_text": "좋아. 공동 대응 쪽 근거가 생각판에 올라갔어. 이제 그 논리가 어떤 조건에서 더 설득력 있는지 보자.",
             "board_pulse": "reason",
             "choices": [
                 {
                     "id": "see_board",
-                    "label": "판 보니까 그렇네",
+                    "label": "조건과 예외를 따져볼게",
                     "next": "n_depth_0"
                 }
             ]
         },
         "n_depth_0": {
             "layer": "depth",
-            "coach_text": "한 걸음 더.\n유럽은 주권국가들의 연합이지만 살아남으려면 에너지·국방·AI에서 사실상 하나의 국가처럼 더 깊게 통합돼야 한다\n\n예외 상황은 없을까?",
+            "coach_text": "그 근거가 항상 맞는 건 아닐 수도 있어. 어디서부터 힘이 약해질까?",
             "choices": [
                 {
                     "id": "wont_work",
-                    "label": "안 통할 것 같아",
+                    "label": "통합이 너무 깊어지면 각국 현실을 못 따라가서 오히려 안 맞을 수 있어",
                     "next": "n_depth_1"
                 },
                 {
                     "id": "still_works",
-                    "label": "그래도 통해",
+                    "label": "그래도 큰 위기일수록 공동 대응 논리는 더 강해진다고 봐",
                     "next": "n_depth_1"
                 },
                 {
                     "id": "hard_depth",
-                    "label": "어렵다",
+                    "label": "분야별로 다르게 봐야 해서 단순히 말하긴 어려워",
                     "next": "n_depth_1"
                 }
             ]
         },
         "n_depth_1": {
             "layer": "depth",
-            "coach_text": "그럼 네 입장('핵=안전')은 — 무조건 맞는 건 아니게 되네?",
+            "coach_text": "좋아. 그럼 네 입장을 한 단계 더 정교하게 해보자. 어떤 조건이 붙어야 하니?",
             "choices": [
                 {
                     "id": "conditional",
-                    "label": "조건이 있네",
+                    "label": "에너지·방위·AI처럼 초국경 영역만 공동 대응하고 나머지는 각국이 맡아야 해",
                     "next": "n_depth_card",
                     "emit_card": {
                         "layer": "depth",
-                        "text": "조건이 있다 — 항상 통하지는 않음"
+                        "text": "③ 깊이: 통합은 전면적일 필요는 없고, 초국경 핵심 분야에 한해 선택적으로 깊어질 수 있다"
                     }
                 },
                 {
                     "id": "mostly_ok",
-                    "label": "그래도 대부분 맞아",
+                    "label": "속도와 규모가 중요해진 시대라 핵심 분야에서는 거의 하나처럼 움직여야 해",
                     "next": "n_depth_card_mostly",
                     "emit_card": {
                         "layer": "depth",
-                        "text": "조건이 있다 — 항상 통하지는 않음"
+                        "text": "③ 깊이: 복합 위기 시대에는 핵심 전략 분야에서 사실상 단일 행위자처럼 움직여야 한다"
                     }
                 }
             ]
         },
         "n_depth_card": {
             "layer": "depth",
-            "coach_text": "봐, 처음엔 '핵=안전'이었는데 이제 '조건부'로 정교해졌어. **판을 봐.** 이게 따지는 거야.",
+            "coach_text": "좋아. 조건이 붙으니 네 입장이 더 선명해졌어. 이제 글이 던지는 복잡한 진실로 한번 흔들어보자.",
             "board_pulse": "depth",
             "choices": [
                 {
                     "id": "depth_ok",
-                    "label": "맞아, 정교해졌네",
+                    "label": "반론 질문을 받아볼게",
                     "next": "n_counter_0"
                 }
             ]
         },
         "n_depth_card_mostly": {
             "layer": "depth",
-            "coach_text": "그래도 '대부분'과 '항상'은 다르지. 판에 적혔어.",
+            "coach_text": "좋아. 네 논리의 범위가 더 분명해졌어. 이제 반대쪽 장면을 넣어보며 생각을 흔들어보자.",
             "board_pulse": "depth",
             "choices": [
                 {
                     "id": "depth_ok",
-                    "label": "계속 가보자",
+                    "label": "흔들리는 지점을 보자",
                     "next": "n_counter_0"
                 }
             ]
         },
         "n_counter_0": {
             "layer": "counter",
-            "coach_text": "그렇게만 보기엔 글은 트럼프의 그린란드 위협과 관세, 우크라이나 전쟁, 그리고 키프로스를 겨냥한 드론 공격까지 겹치면서 각국 군의 한계가 드러났다고 말해.\n\n미국의 보호 약화, 러시아·중국의 압박, 내부 포퓰리즘까지 겹친 구조적 위기 속에서 유럽은 만장일치를 버리고 공동 에너지·방위·AI 정책으로 사실상 단일국가처럼 행동해야 한다\n\n네가 아까 말한 입장 — 이 이야기에도 그대로 맞을까?",
+            "coach_text": "그렇게만 보기엔 글은 트럼프의 그린란드 위협과 관세, 우크라이나 전쟁, 그리고 키프로스를 겨냥한 드론 공격까지 겹치면서 각국 군의 한계가 드러났다고 말해. 이런 상황에서도 각국 중심 대응만으로 충분하다고 볼 수 있을까?",
             "choices": [
                 {
                     "id": "might_shake",
-                    "label": "흔들릴 것 같아",
+                    "label": "그 장면들을 보면 각국 단독 대응의 한계가 좀 흔들려",
                     "next": "n_counter_still"
                 },
                 {
                     "id": "nuke_different",
-                    "label": "그래도 핵은 달라",
+                    "label": "그래도 그런 위기일수록 각국 결단이 더 중요하다고 볼 수도 있어",
                     "next": "n_counter_why"
                 },
                 {
                     "id": "unsure_counter",
-                    "label": "모르겠어",
+                    "label": "어느 쪽으로 흔들려야 할지 아직 잘 모르겠어",
                     "next": "n_counter_drone"
                 }
             ]
         },
         "n_counter_why": {
             "layer": "counter",
-            "coach_text": "왜 그렇게 봐? (답 강요 없어 — 네 생각대로)",
+            "coach_text": "왜 그렇게 흔들렸어? 어떤 지점이 가장 걸렸니?",
             "choices": [
                 {
                     "id": "destruction",
-                    "label": "파괴력이 차원이 달라",
+                    "label": "위협이 여러 방향에서 동시에 오면 나라별 대응만으로는 구멍이 생길 것 같아서",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "can_defend",
-                    "label": "드론은 막을 수 있어",
+                    "label": "공동 조달·공동 방어가 없으면 규모와 지속성이 안 나올 것 같아서",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_still": {
             "layer": "counter",
-            "coach_text": "솔직하네. 그래도 핵만큼 무서운 게 있을까?",
+            "coach_text": "그래도 각국 중심 대응이 더 낫다고 본다면, 글이 말한 구조적 위기 앞에서도 그 판단이 유지될까?",
             "choices": [
                 {
                     "id": "maybe_not",
-                    "label": "없을 수도",
+                    "label": "완전히 유지되긴 어렵고, 적어도 몇몇 분야는 더 묶여야 할 것 같아",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "still_nuke",
-                    "label": "핵이 제일 무서워",
+                    "label": "여전히 최종 결정권은 국가에 있어야 한다는 생각이 더 커",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_drone": {
             "layer": "counter",
-            "coach_text": "괜찮아. 천천히 보자. 드론 수천 대 vs 핵 — 뭐가 더 실제로 쓰일까?",
+            "coach_text": "키프로스를 겨냥한 공격 같은 사례는 전통적 국경 방어만으로는 부족하다는 뜻일 수도 있어. 이런 장면은 통합 필요성을 더 키우는 신호일까?",
             "choices": [
                 {
                     "id": "drones_real",
-                    "label": "드론이 더 현실적",
+                    "label": "맞아, 위협 형태가 바뀌니 정보·방공·기술을 함께 묶어야 해 보여",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "nuke_deter",
-                    "label": "핵이 억지해",
+                    "label": "아니, 그런 위협일수록 각국이 자국 상황에 맞게 유연하게 대응해야 해 보여",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_hard": {
             "layer": "counter",
-            "coach_text": "일리 있어. 근데 — '쓸 수 있느냐'는 다른 문제 아닐까?\n핵을 진짜 쏘면 자기도 끝이잖아.",
+            "coach_text": "좋아. 이제 반론을 한 줄로 붙잡아보자. 네 처음 입장을 가장 세게 흔드는 질문은 뭐였어?",
             "choices": [
                 {
                     "id": "true_hard",
-                    "label": "그건 그렇네",
+                    "label": "외부 위협이 동시에 오는데 유럽이 계속 따로 움직여도 버틸 수 있나?",
                     "next": "n_counter_card",
                     "emit_card": {
                         "layer": "counter",
-                        "text": "미국의 보호 약화, 러시아·중국의 압박, 내부 포퓰리즘까지 겹친 구조적 위기 속에서 유럽…"
+                        "text": "④ 반론: 복합 외부 위협 앞에서 각국 분산 대응만으로는 유럽 전체의 생존을 보장하기 어렵다"
                     }
                 },
                 {
                     "id": "still_deter",
-                    "label": "그래도 억지는 돼",
+                    "label": "깊은 통합이 오히려 내부 반발과 비효율을 키우면 어떻게 하나?",
                     "next": "n_counter_card_deter",
                     "emit_card": {
                         "layer": "counter",
-                        "text": "미국의 보호 약화, 러시아·중국의 압박, 내부 포퓰리즘까지 겹친 구조적 위기 속에서 유럽…"
+                        "text": "④ 반론: 더 깊은 통합은 내부 포퓰리즘과 정당성 문제를 키워 역효과를 낼 수도 있다"
                     }
                 }
             ]
         },
         "n_counter_card": {
             "layer": "counter",
-            "coach_text": "반론과 네 답이 판에 쌓였어. **판을 봐.**",
+            "coach_text": "좋아. 이제 생각판에 반론도 올라갔어. 처음 입장을 그대로 둘지, 조건을 붙여 고칠지 정리해보자.",
             "board_pulse": "counter",
             "choices": [
                 {
                     "id": "counter_ok",
-                    "label": "계속 정리하자",
+                    "label": "입장을 다시 다듬어볼게",
                     "next": "n_refine_0"
                 }
             ]
         },
         "n_counter_card_deter": {
             "layer": "counter",
-            "coach_text": "그 관점도 판에 적혔어.",
+            "coach_text": "좋아. 반론이 선명해졌어. 이제 흔들린 만큼 네 입장을 어떻게 재정립할지 보자.",
             "board_pulse": "counter",
             "choices": [
                 {
                     "id": "counter_ok",
-                    "label": "계속 정리하자",
+                    "label": "재정립해볼게",
                     "next": "n_refine_0"
                 }
             ]
         },
         "n_refine_0": {
             "layer": "refine",
-            "coach_text": "자, **판을 다시 봐.** 처음 생각에서 많이 왔어.\n① 입장 → ② 근거 → ③ 깊이 → ④ 반론\n이제 네 생각을 다시 정리하면, 어떻게 바뀌었어?",
+            "coach_text": "생각판을 보면 한쪽만으로는 부족해 보여. 지금 네 입장을 어떻게 고쳐 쓰고 싶어?",
             "board_diff": true,
             "choices": [
                 {
                     "id": "limits",
-                    "label": "핵은 안전을 주지만 한계가 있다",
+                    "label": "각국 주권은 남기되 에너지·방위·AI는 더 강하게 공동화해야 해",
                     "next": "n_refine_card",
                     "emit_card": {
                         "layer": "refine",
-                        "text": "처음 생각보다 정교해졌다"
+                        "text": "⑤ 재정립: 유럽은 주권국가 연합을 유지하되 핵심 전략 분야에서는 통합을 깊여야 한다"
                     }
                 },
                 {
                     "id": "still_best",
-                    "label": "여전히 핵이 최선이다",
+                    "label": "문제가 있어도 최종적으로는 국가 중심 대응이 기본이어야 해",
                     "next": "n_refine_card_best",
                     "emit_card": {
                         "layer": "refine",
-                        "text": "처음 생각보다 정교해졌다"
+                        "text": "⑤ 재정립: 통합의 필요를 인정해도 최종 축은 각국의 주권적 결정이어야 한다"
                     }
                 },
                 {
                     "id": "refine_free",
-                    "label": "직접 쓸게",
+                    "label": "내 문장으로 다시 정리해볼게",
                     "next": "n_refine_input",
                     "input_mode": "text",
                     "emit_card_on_message": {
@@ -521,31 +521,31 @@
         },
         "n_refine_card": {
             "layer": "refine",
-            "coach_text": "스스로 여기까지 왔어. 처음 '핵=안전'에서 훨씬 정교해졌지?",
+            "coach_text": "좋아. 재정립 카드가 올라갔어. 이제 마지막으로 전체 생각을 한 문장 논지로 묶어보자.",
             "board_pulse": "refine",
             "choices": [
                 {
                     "id": "refine_ok",
-                    "label": "맞아",
+                    "label": "최종 정리로 갈게",
                     "next": "n_synth_0"
                 }
             ]
         },
         "n_refine_card_best": {
             "layer": "refine",
-            "coach_text": "네 정리가 판에 적혔어. 한번 더 따져보자.",
+            "coach_text": "좋아. 네 기준이 다시 정리됐어. 이제 처음 입장과 반론을 함께 담아 최종 논지로 묶어보자.",
             "board_pulse": "refine",
             "choices": [
                 {
                     "id": "refine_ok",
-                    "label": "계속",
+                    "label": "최종 문장으로 묶어볼게",
                     "next": "n_synth_0"
                 }
             ]
         },
         "n_refine_input": {
             "layer": "refine",
-            "coach_text": "네 말로 정리해 봐 — 지금 네 생각은?",
+            "coach_text": "좋아. 생각판을 보면서 ⑤ 재정립 문장을 네 말로 써봐. 무엇은 남기고, 무엇은 바꿔야 한다고 보니?",
             "input_mode": "text",
             "emit_card_on_message": {
                 "layer": "refine"
@@ -554,7 +554,7 @@
         },
         "n_synth_0": {
             "layer": "synthesis",
-            "coach_text": "마지막. 이 모든 걸 **한 문장**으로 — 네 결론은?\n(직접 써 봐)",
+            "coach_text": "이제 마지막이야. ①입장→②근거→③조건→④반론을 거쳐서, 유럽이 살아남으려면 어떻게 해야 한다는 생각이 들었는지 2~3문장으로 정리해봐.",
             "input_mode": "text",
             "emit_card_on_message": {
                 "layer": "synthesis"
@@ -563,21 +563,23 @@
         },
         "n_synth_compose": {
             "layer": "synthesis",
-            "coach_text": "이게 네가 10분 넘게 따져서 만든 결론이야.\n누가 준 게 아니라, **네가 쌓은 거**지.\n자 — 이 생각판을 바탕으로 한 편의 글을 써볼까?\n판에 있는 ①~⑥이 그대로 네 글의 뼈대가 될 거야.",
+            "coach_text": "좋아. 생각판 6칸을 바탕으로 최종 답안을 만들 준비가 됐어.",
             "board_pulse": "synthesis",
             "choices": [
                 {
                     "id": "go_compose",
-                    "label": "글 쓰러 가기",
+                    "label": "최종 답안 만들기",
                     "next": "n_compose"
                 }
             ]
         },
         "n_compose": {
             "layer": "synthesis",
-            "terminal": true
+            "terminal": true,
+            "coach_text": "좋아. 네 생각은 이렇게 올라왔어: 유럽은 주권국가들의 연합이지만, 복합 위기 속에서 어디까지 함께 움직여야 살아남는지 따져야 한다. 이제 생각판을 바탕으로 네 최종 답안을 완성해보자."
         }
     },
-    "llm_followup_fallback": "그렇구나. 한 가지만 더 — 그 말을 한 문장으로 정리하면?",
-    "generated_by": "narrative_v2_generate_rule_v1"
+    "generated_by": "narrative_v2_generate_llm_v2",
+    "llm_followup_fallback": "좋아. 그 이유를 생각판에 올릴 수 있게 한 문장으로 더 또렷하게 말해볼래?",
+    "llm_philosophy_notes": "반론은 질문으로만 흔들었고, 학생 결론을 대신 말하지 않으면서 ①~⑥ 생각판 흐름에 맞춰 통념과 글의 복잡한 진실을 대비했다."
 }

@@ -55,142 +55,142 @@
     "nodes": {
         "n_intro": {
             "layer": "intro",
-            "coach_text": "대외원조가 크게 줄면 가난한 나라의 발전도 끝나는 걸까?\n\n많은 사람은 \"대외원조가 줄면 개발도 함께 무너지는가\"라고 생각해.\n\n대외원조 축소는 개발의 후퇴처럼 보이지만, 그러나 원조를 핵심 분야에 좁히고 자립 역량 중심으로 재설계하면 더 적은 돈으로도 진전을 만들 수 있다\n\n왜 그렇게 생각할까?",
+            "coach_text": "2025년엔 미국의 USAID가 사실상 해체 수순에 들어가고, 프랑스·독일·영국도 개발·보건 예산을 크게 줄였어. 그 결과 전 세계 대외원조가 한 해 약 300억 달러 깎였고, 감염병 피해와 아동 사망 증가 우려도 커졌지. 그렇다면 대외원조가 크게 줄면 가난한 나라의 발전도 끝나는 걸까?",
             "choices": [
                 {
                     "id": "nuclear_fear",
-                    "label": "A 쪽이 더 와닿아",
+                    "label": "원조가 줄면 개발도 크게 무너질 것 같아",
                     "next": "n_stance_bridge_fear"
                 },
                 {
                     "id": "just_luck",
-                    "label": "B 쪽도 설명돼",
+                    "label": "지금까지 성과가 원조만의 힘은 아니었던 것 같아",
                     "next": "n_stance_bridge_luck"
                 },
                 {
                     "id": "other_reason",
-                    "label": "다른 이유",
+                    "label": "다른 이유가 더 중요하다고 봐",
                     "next": "n_stance_bridge_other"
                 }
             ]
         },
         "n_stance_bridge_fear": {
             "layer": "stance",
-            "coach_text": "좋아, 대외원조가 줄면 개발도 함께 무너지는가에서 시작해보자.\n대외원조(Foreign Aid)의 종말, 그리고 기회 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아, 원조 축소가 개발 후퇴로 이어질 수 있다는 걱정에서 출발했네. 지금 생각으로는 어느 쪽에 더 가까워?",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "원조가 줄면 개발도 대체로 무너진다고 봐",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "대외원조가 줄면 개발도 함께 무너지는가"
+                        "text": "① 입장: 원조 축소는 개발의 큰 후퇴로 이어진다"
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "꼭 그렇진 않다고 봐",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "대외원조가 줄면 개발도 함께 무너지는가"
+                        "text": "① 입장: 원조가 줄어도 개발은 다른 방식으로 이어질 수 있다"
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "일부는 맞고 일부는 아니라고 봐",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "대외원조가 줄면 개발도 함께 무너지는가"
+                        "text": "① 입장: 원조 축소의 충격은 크지만 결과는 설계에 달려 있다"
                     }
                 }
             ]
         },
         "n_stance_bridge_luck": {
             "layer": "stance",
-            "coach_text": "좋아, 대외원조가 줄면 개발도 함께 무너지는가에서 시작해보자.\n대외원조(Foreign Aid)의 종말, 그리고 기회 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아, 성과의 배경이 꼭 원조 액수만은 아닐 수 있다고 본 거네. 지금 네 입장을 하나로 골라보자.",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "그래도 원조가 줄면 개발은 크게 흔들린다고 봐",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "대외원조가 줄면 개발도 함께 무너지는가"
+                        "text": "① 입장: 원조 축소는 결국 개발 후퇴를 부를 가능성이 크다"
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "원조가 줄어도 개발이 꼭 멈추진 않는다고 봐",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "대외원조가 줄면 개발도 함께 무너지는가"
+                        "text": "① 입장: 개발 지속 여부는 원조 규모보다 방식에 달려 있다"
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "둘 다 있어서 아직 반반이야",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "대외원조가 줄면 개발도 함께 무너지는가"
+                        "text": "① 입장: 원조 축소는 위험하지만 재설계 여지도 있다"
                     }
                 }
             ]
         },
         "n_stance_bridge_other": {
             "layer": "stance",
-            "coach_text": "좋아, 대외원조가 줄면 개발도 함께 무너지는가에서 시작해보자.\n대외원조(Foreign Aid)의 종말, 그리고 기회 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아, 액수 말고도 다른 핵심 변수가 있다고 본 거네. 그 생각을 바탕으로 네 입장을 정해보자.",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "결국 원조 감소는 개발 붕괴 쪽에 가깝다고 봐",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "대외원조가 줄면 개발도 함께 무너지는가"
+                        "text": "① 입장: 원조 감소는 개발 기반을 약하게 만든다"
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "원조 감소가 곧 개발 붕괴는 아니라고 봐",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "대외원조가 줄면 개발도 함께 무너지는가"
+                        "text": "① 입장: 원조 축소와 개발 붕괴를 곧바로 같게 볼 수는 없다"
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "충격은 크지만 결과는 상황 따라 다르다고 봐",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "대외원조가 줄면 개발도 함께 무너지는가"
+                        "text": "① 입장: 원조 축소의 효과는 나라별 구조와 선택에 따라 달라진다"
                     }
                 }
             ]
         },
         "n_stance_card": {
             "layer": "stance",
-            "coach_text": "좋아, 네 입장이 잡혔어. (판에 적혔지)\n근데 그냥 믿는 것과 따지는 건 다르잖아. 하나씩 파보자.\n\n왜 핵이 있으면 안전하다고 생각해?",
+            "coach_text": "좋아. 왜 그렇게 생각했는지 가장 가까운 이유를 골라보자.",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "cant_touch",
-                    "label": "아무도 못 건드려서",
+                    "label": "보건·교육 같은 필수 서비스가 바로 타격받아서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "stop_war",
-                    "label": "전쟁을 막아서",
+                    "label": "가난한 나라들은 아직 외부 자금 의존이 커서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 말해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -198,22 +198,22 @@
         },
         "n_stance_card_no": {
             "layer": "stance",
-            "coach_text": "신중하네. 네 입장이 판에 잡혔어.\n왜 핵 없이도 괜찮다고 보는지 — 이유를 따져보자.",
+            "coach_text": "좋아. 원조가 줄어도 꼭 끝은 아니라는 쪽이네. 그 이유를 골라보자.",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "alliance",
-                    "label": "동맹이 있어서",
+                    "label": "중요한 분야에 집중하면 적은 돈으로도 성과를 낼 수 있어서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "danger",
-                    "label": "핵이 오히려 위험해서",
+                    "label": "문제는 돈 부족보다 자립 구조가 약했던 데 있다고 봐서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 말해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -221,22 +221,22 @@
         },
         "n_stance_card_half": {
             "layer": "stance",
-            "coach_text": "솔직하네. 입장이 판에 잡혔어.\n왜 그렇게 반반으로 보는지 — 이유를 따져보자.",
+            "coach_text": "좋아. 반반이라면 어떤 점이 아직 걸리는지 골라보자.",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "not_sure",
-                    "label": "장단이 있어서",
+                    "label": "단기 충격은 큰데 장기적으로는 바뀔 수도 있을 것 같아",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "need_more",
-                    "label": "더 알아봐야 해서",
+                    "label": "나라별로 자립 수준이 달라 한쪽으로 단정하기 어려워",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 생각을 직접 설명해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -244,273 +244,273 @@
         },
         "n_reason_why2": {
             "layer": "reason",
-            "coach_text": "그렇지. 근데 '왜' 못 건드릴까? 상대 입장에서 생각하면?",
+            "coach_text": "좋아. 그 입장을 떠받치는 근거를 한 번 더 좁혀보자. 네 생각에 더 가까운 건 뭐야?",
             "choices": [
                 {
                     "id": "fear_revenge",
-                    "label": "보복이 무서워서",
+                    "label": "갑자기 끊기면 병원·백신·학교 같은 기본 체계가 흔들릴 수 있어",
                     "next": "n_reason_card",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 대외원조가 줄면 개발도 함께 무너지는가"
+                        "text": "② 근거: 원조 급감은 보건·교육 같은 기본 서비스에 직접 충격을 준다"
                     }
                 },
                 {
                     "id": "intl_pressure",
-                    "label": "국제사회 비난",
+                    "label": "성과를 내려면 돈의 총액보다 어디에 집중하느냐가 더 중요해",
                     "next": "n_reason_card_intl",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 대외원조가 줄면 개발도 함께 무너지는가"
+                        "text": "② 근거: 개발 성과는 원조 규모보다 우선순위와 집중도에 달려 있다"
                     }
                 },
                 {
                     "id": "unsure_reason",
-                    "label": "음...",
+                    "label": "아직 어떤 근거가 더 센지 헷갈려",
                     "next": "n_reason_card",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 대외원조가 줄면 개발도 함께 무너지는가"
+                        "text": "② 근거: 단기 피해와 장기 재설계 가능성이 함께 보여 판단이 어렵다"
                     }
                 }
             ]
         },
         "n_reason_card": {
             "layer": "reason",
-            "coach_text": "완벽해. 이제 '입장'에 '근거'가 붙었어. **판을 봐** — 생각이 서기 시작했지?",
+            "coach_text": "좋아, ② 근거 카드가 올라갔어. 이제 그 이유가 언제 더 맞고 언제 약해지는지 보러 가자.",
             "board_pulse": "reason",
             "choices": [
                 {
                     "id": "see_board",
-                    "label": "판 보니까 그렇네",
+                    "label": "생각 더 깊게 보기",
                     "next": "n_depth_0"
                 }
             ]
         },
         "n_reason_card_intl": {
             "layer": "reason",
-            "coach_text": "그것도 근거가 될 수 있지. 판에 적혔어. **판을 봐.**",
+            "coach_text": "좋아, ② 근거 카드가 정리됐어. 이제 그 근거의 조건과 예외를 따져보자.",
             "board_pulse": "reason",
             "choices": [
                 {
                     "id": "see_board",
-                    "label": "판 보니까 그렇네",
+                    "label": "조건 따져보기",
                     "next": "n_depth_0"
                 }
             ]
         },
         "n_depth_0": {
             "layer": "depth",
-            "coach_text": "한 걸음 더.\n대외원조 축소는 개발의 후퇴처럼 보이지만, 그러나 원조를 핵심 분야에 좁히고 자립 역량 중심으로 재설계하면 더 적은 돈으로도 진전을 만들 수 있다\n\n예외 상황은 없을까?",
+            "coach_text": "같은 원조 축소라도 결과는 다를 수 있어. 무엇이 개발 지속 여부를 가를까?",
             "choices": [
                 {
                     "id": "wont_work",
-                    "label": "안 통할 것 같아",
+                    "label": "자립 기반이 약한 나라는 적은 원조로 버티기 어려워",
                     "next": "n_depth_1"
                 },
                 {
                     "id": "still_works",
-                    "label": "그래도 통해",
+                    "label": "핵심 분야에 집중하면 적은 원조로도 어느 정도 가능해",
                     "next": "n_depth_1"
                 },
                 {
                     "id": "hard_depth",
-                    "label": "어렵다",
+                    "label": "조건이 너무 많아서 쉽게 말하기 어려워",
                     "next": "n_depth_1"
                 }
             ]
         },
         "n_depth_1": {
             "layer": "depth",
-            "coach_text": "그럼 네 입장('핵=안전')은 — 무조건 맞는 건 아니게 되네?",
+            "coach_text": "좋아. 그럼 한 단계 더 들어가 보자. 네 생각은 어떤 조건을 붙여야 더 정확해질까?",
             "choices": [
                 {
                     "id": "conditional",
-                    "label": "조건이 있네",
+                    "label": "보건·빈곤·교육에 좁히고 현지 역량을 키울 때만 가능해",
                     "next": "n_depth_card",
                     "emit_card": {
                         "layer": "depth",
-                        "text": "조건이 있다 — 항상 통하지는 않음"
+                        "text": "③ 깊이: 적은 원조의 성과는 핵심 분야 집중과 현지 자립 역량 강화가 있을 때 가능하다"
                     }
                 },
                 {
                     "id": "mostly_ok",
-                    "label": "그래도 대부분 맞아",
+                    "label": "완벽하진 않아도 목표를 줄이면 대체로 효율이 나아질 수 있어",
                     "next": "n_depth_card_mostly",
                     "emit_card": {
                         "layer": "depth",
-                        "text": "조건이 있다 — 항상 통하지는 않음"
+                        "text": "③ 깊이: 목표 분산을 줄이면 적은 원조도 이전보다 효율적으로 쓰일 수 있다"
                     }
                 }
             ]
         },
         "n_depth_card": {
             "layer": "depth",
-            "coach_text": "봐, 처음엔 '핵=안전'이었는데 이제 '조건부'로 정교해졌어. **판을 봐.** 이게 따지는 거야.",
+            "coach_text": "좋아, 이제 네 생각에 조건이 붙었어. 다음은 이 관점을 흔드는 질문을 만나보자.",
             "board_pulse": "depth",
             "choices": [
                 {
                     "id": "depth_ok",
-                    "label": "맞아, 정교해졌네",
+                    "label": "반론 들어보기",
                     "next": "n_counter_0"
                 }
             ]
         },
         "n_depth_card_mostly": {
             "layer": "depth",
-            "coach_text": "그래도 '대부분'과 '항상'은 다르지. 판에 적혔어.",
+            "coach_text": "좋아, ③ 깊이 카드가 생겼어. 이제 이 생각이 어디서 흔들리는지 보자.",
             "board_pulse": "depth",
             "choices": [
                 {
                     "id": "depth_ok",
-                    "label": "계속 가보자",
+                    "label": "흔들리는 지점 보기",
                     "next": "n_counter_0"
                 }
             ]
         },
         "n_counter_0": {
             "layer": "counter",
-            "coach_text": "그렇게만 보기엔 2000년 이후 극빈 인구가 22억 명에서 8억4천만 명으로 줄었고, 글은 SDGs가 17개 목표 169개 세부목표로 퍼지며 비효율이 커졌다고 짚어, 돈의 양보다 어디에 어떻게 쓰는지가 더 중요하다고 말해.\n\n원조의 성과는 실제였지만 문제는 원조 자체보다 현지 자립을 못 만든 구조와 목표 분산에 있었고, 빈곤·보건·교육에 집중하며 자립 역량을 키우면 적은 원조로도 개발을 이어갈 수 있다\n\n네가 아까 말한 입장 — 이 이야기에도 그대로 맞을까?",
+            "coach_text": "그렇게만 보기엔 2000년 이후 극빈 인구가 22억 명에서 8억4천만 명으로 줄었고, 글은 SDGs가 17개 목표 169개 세부목표로 퍼지며 비효율이 커졌다고 짚어. 그렇다면 문제는 원조 감소 자체보다, 원조가 너무 넓게 퍼지고 자립을 못 만들었던 구조였던 걸까?",
             "choices": [
                 {
                     "id": "might_shake",
-                    "label": "흔들릴 것 같아",
+                    "label": "응, 그 점은 내 생각을 좀 흔들어",
                     "next": "n_counter_still"
                 },
                 {
                     "id": "nuke_different",
-                    "label": "그래도 핵은 달라",
+                    "label": "그래도 돈이 줄면 현실 피해가 너무 커서 다르게 보여",
                     "next": "n_counter_why"
                 },
                 {
                     "id": "unsure_counter",
-                    "label": "모르겠어",
+                    "label": "둘 다 맞는 말 같아서 아직 판단이 어려워",
                     "next": "n_counter_drone"
                 }
             ]
         },
         "n_counter_why": {
             "layer": "counter",
-            "coach_text": "왜 그렇게 봐? (답 강요 없어 — 네 생각대로)",
+            "coach_text": "어느 부분이 특히 흔들렸어?",
             "choices": [
                 {
                     "id": "destruction",
-                    "label": "파괴력이 차원이 달라",
+                    "label": "성과가 있었어도 구조가 자립을 못 만들었다는 점",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "can_defend",
-                    "label": "드론은 막을 수 있어",
+                    "label": "돈의 양보다 목표를 좁히는 게 더 중요할 수 있다는 점",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_still": {
             "layer": "counter",
-            "coach_text": "솔직하네. 그래도 핵만큼 무서운 게 있을까?",
+            "coach_text": "그래도 네 입장을 바로 바꾸긴 어렵다면, 무엇이 가장 걸려?",
             "choices": [
                 {
                     "id": "maybe_not",
-                    "label": "없을 수도",
+                    "label": "재설계가 맞더라도 당장 생길 피해는 무시하기 어려워",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "still_nuke",
-                    "label": "핵이 제일 무서워",
+                    "label": "자립 전환은 좋지만 가장 취약한 나라엔 시간이 부족할 수 있어",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_drone": {
             "layer": "counter",
-            "coach_text": "괜찮아. 천천히 보자. 드론 수천 대 vs 핵 — 뭐가 더 실제로 쓰일까?",
+            "coach_text": "망설이는 이유가 있다면, 어느 쪽 때문이야?",
             "choices": [
                 {
                     "id": "drones_real",
-                    "label": "드론이 더 현실적",
+                    "label": "집중과 자립이 중요하다는 말은 설득력 있어",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "nuke_deter",
-                    "label": "핵이 억지해",
+                    "label": "그래도 원조 축소의 즉각적 충격이 너무 크게 보여",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_hard": {
             "layer": "counter",
-            "coach_text": "일리 있어. 근데 — '쓸 수 있느냐'는 다른 문제 아닐까?\n핵을 진짜 쏘면 자기도 끝이잖아.",
+            "coach_text": "좋아. 그 흔들림을 반론 카드로 남겨보자. 지금 네 생각을 가장 잘 건드리는 문장은 뭐야?",
             "choices": [
                 {
                     "id": "true_hard",
-                    "label": "그건 그렇네",
+                    "label": "원조의 문제는 액수보다 분산된 목표와 약한 자립 구조였을 수 있어",
                     "next": "n_counter_card",
                     "emit_card": {
                         "layer": "counter",
-                        "text": "원조의 성과는 실제였지만 문제는 원조 자체보다 현지 자립을 못 만든 구조와 목표 분산에 …"
+                        "text": "④ 반론: 개발의 병목은 원조 감소만이 아니라 목표 분산과 자립 부재였을 수 있다"
                     }
                 },
                 {
                     "id": "still_deter",
-                    "label": "그래도 억지는 돼",
+                    "label": "그래도 재설계 논리만으로 당장 커지는 피해를 설명하긴 부족해",
                     "next": "n_counter_card_deter",
                     "emit_card": {
                         "layer": "counter",
-                        "text": "원조의 성과는 실제였지만 문제는 원조 자체보다 현지 자립을 못 만든 구조와 목표 분산에 …"
+                        "text": "④ 반론: 효율과 자립을 말해도 단기 생명·보건 피해는 쉽게 상쇄되지 않는다"
                     }
                 }
             ]
         },
         "n_counter_card": {
             "layer": "counter",
-            "coach_text": "반론과 네 답이 판에 쌓였어. **판을 봐.**",
+            "coach_text": "좋아, ④ 반론 카드가 올라갔어. 이제 처음 입장을 그대로 둘지, 조금 고쳐볼지 생각해보자.",
             "board_pulse": "counter",
             "choices": [
                 {
                     "id": "counter_ok",
-                    "label": "계속 정리하자",
+                    "label": "입장 다듬기",
                     "next": "n_refine_0"
                 }
             ]
         },
         "n_counter_card_deter": {
             "layer": "counter",
-            "coach_text": "그 관점도 판에 적혔어.",
+            "coach_text": "좋아, 반론이 선명해졌어. 이제 그 반론을 반영해서 네 입장을 다시 세워보자.",
             "board_pulse": "counter",
             "choices": [
                 {
                     "id": "counter_ok",
-                    "label": "계속 정리하자",
+                    "label": "다시 정리하기",
                     "next": "n_refine_0"
                 }
             ]
         },
         "n_refine_0": {
             "layer": "refine",
-            "coach_text": "자, **판을 다시 봐.** 처음 생각에서 많이 왔어.\n① 입장 → ② 근거 → ③ 깊이 → ④ 반론\n이제 네 생각을 다시 정리하면, 어떻게 바뀌었어?",
+            "coach_text": "지금 생각판엔 입장, 근거, 조건, 반론이 다 올라와 있어. 이걸 보고 네 입장을 어떻게 다시 세우고 싶어?",
             "board_diff": true,
             "choices": [
                 {
                     "id": "limits",
-                    "label": "핵은 안전을 주지만 한계가 있다",
+                    "label": "원조 축소는 위험하지만, 핵심 분야 집중과 자립 설계가 있으면 피해를 줄일 수 있어",
                     "next": "n_refine_card",
                     "emit_card": {
                         "layer": "refine",
-                        "text": "처음 생각보다 정교해졌다"
+                        "text": "⑤ 재정립: 원조 축소의 충격은 크지만, 집중과 자립 중심 재설계가 있으면 후퇴를 줄일 수 있다"
                     }
                 },
                 {
                     "id": "still_best",
-                    "label": "여전히 핵이 최선이다",
+                    "label": "재설계가 중요해도 원조 감소 자체가 너무 큰 후퇴라고 봐",
                     "next": "n_refine_card_best",
                     "emit_card": {
                         "layer": "refine",
-                        "text": "처음 생각보다 정교해졌다"
+                        "text": "⑤ 재정립: 구조 개편 필요성은 인정하지만 원조 급감의 피해가 더 결정적이라고 본다"
                     }
                 },
                 {
                     "id": "refine_free",
-                    "label": "직접 쓸게",
+                    "label": "내 말로 다시 정리해볼게",
                     "next": "n_refine_input",
                     "input_mode": "text",
                     "emit_card_on_message": {
@@ -521,31 +521,31 @@
         },
         "n_refine_card": {
             "layer": "refine",
-            "coach_text": "스스로 여기까지 왔어. 처음 '핵=안전'에서 훨씬 정교해졌지?",
+            "coach_text": "좋아, 재정립 카드가 올라갔어. 마지막으로 이 생각을 한 문장 주장으로 묶어보자.",
             "board_pulse": "refine",
             "choices": [
                 {
                     "id": "refine_ok",
-                    "label": "맞아",
+                    "label": "최종 정리로 가기",
                     "next": "n_synth_0"
                 }
             ]
         },
         "n_refine_card_best": {
             "layer": "refine",
-            "coach_text": "네 정리가 판에 적혔어. 한번 더 따져보자.",
+            "coach_text": "좋아, 네 기준이 분명해졌어. 이제 생각판 전체를 보고 최종 문장을 만들어보자.",
             "board_pulse": "refine",
             "choices": [
                 {
                     "id": "refine_ok",
-                    "label": "계속",
+                    "label": "최종 문장 만들기",
                     "next": "n_synth_0"
                 }
             ]
         },
         "n_refine_input": {
             "layer": "refine",
-            "coach_text": "네 말로 정리해 봐 — 지금 네 생각은?",
+            "coach_text": "좋아. 처음 입장에서 어디를 고쳤는지 드러나게, 네 입장을 한두 문장으로 다시 써볼래?",
             "input_mode": "text",
             "emit_card_on_message": {
                 "layer": "refine"
@@ -554,7 +554,7 @@
         },
         "n_synth_0": {
             "layer": "synthesis",
-            "coach_text": "마지막. 이 모든 걸 **한 문장**으로 — 네 결론은?\n(직접 써 봐)",
+            "coach_text": "이제 ①입장 ②근거 ③깊이 ④반론 ⑤재정립을 보고, ⑥종합 한 문장으로 답해보자. '대외원조가 크게 줄면 가난한 나라의 발전도 끝나는가'에 대한 네 최종 생각은 뭐야?",
             "input_mode": "text",
             "emit_card_on_message": {
                 "layer": "synthesis"
@@ -563,21 +563,23 @@
         },
         "n_synth_compose": {
             "layer": "synthesis",
-            "coach_text": "이게 네가 10분 넘게 따져서 만든 결론이야.\n누가 준 게 아니라, **네가 쌓은 거**지.\n자 — 이 생각판을 바탕으로 한 편의 글을 써볼까?\n판에 있는 ①~⑥이 그대로 네 글의 뼈대가 될 거야.",
+            "coach_text": "좋아, 마지막으로 한 번 더 다듬어서 네 문장을 완성해보자.",
             "board_pulse": "synthesis",
             "choices": [
                 {
                     "id": "go_compose",
-                    "label": "글 쓰러 가기",
+                    "label": "최종 답안 완성하기",
                     "next": "n_compose"
                 }
             ]
         },
         "n_compose": {
             "layer": "synthesis",
-            "terminal": true
+            "terminal": true,
+            "coach_text": "좋아. 네 결론은 '원조 축소의 충격은 분명 크지만, 개발의 지속 여부는 원조 총액만이 아니라 핵심 분야 집중, 목표 축소, 그리고 현지 자립 역량을 만들 수 있느냐에 달려 있다'는 쪽으로 정리될 수 있겠네. 이제 네 말투로 마무리하면 돼."
         }
     },
-    "llm_followup_fallback": "그렇구나. 한 가지만 더 — 그 말을 한 문장으로 정리하면?",
-    "generated_by": "narrative_v2_generate_rule_v1"
+    "generated_by": "narrative_v2_generate_llm_v2",
+    "llm_followup_fallback": "좋아, 그 이유를 생각판에 올릴 수 있게 핵심어로 한 번만 더 짧게 말해볼래?",
+    "llm_philosophy_notes": "입장은 학생이 고르게 두고, 반론은 side_b를 질문으로 흔들며, ①~⑥ 생각판 흐름에 맞춰 결론을 대신 단정하지 않도록 작성함"
 }

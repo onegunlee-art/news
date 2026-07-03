@@ -55,142 +55,142 @@
     "nodes": {
         "n_intro": {
             "layer": "intro",
-            "coach_text": "터키는 진짜 독립적으로 움직이려면 서방에서 더 멀어져야 할까?\n\n많은 사람은 \"전략적 자율성을 위해 서방과 러시아 사이에서 거리를 두며 독자 노선을 가는 것이 유리한가\"라고 생각해.\n\n터키가 전략적 자율성을 위해 서방과 거리를 둬야 한다는 인식이 있었지만, 그러나 실제로는 자율성을 유지하려면 오히려 나토와 서방에 더 가깝게 정렬해야 한다.\n\n왜 그렇게 생각할까?",
+            "coach_text": "튀르키예는 오랫동안 서방과 자주 부딪혔고, 러시아와 가까워지는 듯 보일 때마다 '이제 완전히 독자 노선으로 가는 것 아니냐'는 말이 나왔어. 그런데 최근엔 조용하지만 분명하게 다시 서방 쪽으로 무게중심을 옮기는 모습도 보여. 그렇다면 튀르키예는 진짜 독립적으로 움직이려면 서방에서 더 멀어져야 할까?",
             "choices": [
                 {
                     "id": "nuclear_fear",
-                    "label": "A 쪽이 더 와닿아",
+                    "label": "응, 자율성을 지키려면 서방과 거리를 둬야 해 보여",
                     "next": "n_stance_bridge_fear"
                 },
                 {
                     "id": "just_luck",
-                    "label": "B 쪽도 설명돼",
+                    "label": "꼭 그런 건 아니고 상황 따라 줄타기하는 것 같아",
                     "next": "n_stance_bridge_luck"
                 },
                 {
                     "id": "other_reason",
-                    "label": "다른 이유",
+                    "label": "다른 이유가 더 큰 것 같아",
                     "next": "n_stance_bridge_other"
                 }
             ]
         },
         "n_stance_bridge_fear": {
             "layer": "stance",
-            "coach_text": "좋아, 전략적 자율성을 위해 서방과 러시아 사이에서 거리를 두며 독자 노선을 가는 것이 유리한가에서 시작해보자.\n튀르키예의 조용한 줄서기 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아. 그럼 너의 첫 입장을 먼저 잡아보자. 튀르키예가 전략적 자율성을 원한다면 어느 쪽이 더 유리하다고 봐?",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "서방과 거리를 두는 독자 노선이 더 유리해",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "전략적 자율성을 위해 서방과 러시아 사이에서 거리를 두며 독자 노선을 가는 것이 유리한가"
+                        "text": "① 입장: 자율성을 위해선 서방과 거리를 둔 독자 노선이 더 유리하다."
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "오히려 서방에 더 정렬하는 편이 유리해",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "전략적 자율성을 위해 서방과 러시아 사이에서 거리를 두며 독자 노선을 가는 것이 유리한가"
+                        "text": "① 입장: 자율성을 지키려면 오히려 서방에 더 정렬하는 편이 유리하다."
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "둘 다 필요해서 아직 단정하기 어려워",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "전략적 자율성을 위해 서방과 러시아 사이에서 거리를 두며 독자 노선을 가는 것이 유리한가"
+                        "text": "① 입장: 독자 노선과 서방 정렬 사이에서 아직 판단이 유보된다."
                     }
                 }
             ]
         },
         "n_stance_bridge_luck": {
             "layer": "stance",
-            "coach_text": "좋아, 전략적 자율성을 위해 서방과 러시아 사이에서 거리를 두며 독자 노선을 가는 것이 유리한가에서 시작해보자.\n튀르키예의 조용한 줄서기 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아. 줄타기처럼 보인다는 감각을 갖고, 네 입장을 한 번 더 또렷하게 골라보자.",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "그래도 독자 노선이 더 유리해 보여",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "전략적 자율성을 위해 서방과 러시아 사이에서 거리를 두며 독자 노선을 가는 것이 유리한가"
+                        "text": "① 입장: 자율성을 위해선 독자 노선이 더 유리하다고 본다."
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "결국 서방 정렬이 더 현실적이야 보여",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "전략적 자율성을 위해 서방과 러시아 사이에서 거리를 두며 독자 노선을 가는 것이 유리한가"
+                        "text": "① 입장: 자율성을 유지하려면 결국 서방 정렬이 더 현실적이라고 본다."
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "아직은 반반이야",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "전략적 자율성을 위해 서방과 러시아 사이에서 거리를 두며 독자 노선을 가는 것이 유리한가"
+                        "text": "① 입장: 아직은 어느 쪽이 더 유리한지 반반으로 본다."
                     }
                 }
             ]
         },
         "n_stance_bridge_other": {
             "layer": "stance",
-            "coach_text": "좋아, 전략적 자율성을 위해 서방과 러시아 사이에서 거리를 두며 독자 노선을 가는 것이 유리한가에서 시작해보자.\n튀르키예의 조용한 줄서기 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아. 네가 본 다른 이유를 염두에 두고도, 지금 단계에선 어느 쪽에 더 기울어?",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "독자 노선 쪽에 더 기울어",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "전략적 자율성을 위해 서방과 러시아 사이에서 거리를 두며 독자 노선을 가는 것이 유리한가"
+                        "text": "① 입장: 우선은 독자 노선 쪽이 자율성에 더 유리하다고 본다."
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "서방 정렬 쪽에 더 기울어",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "전략적 자율성을 위해 서방과 러시아 사이에서 거리를 두며 독자 노선을 가는 것이 유리한가"
+                        "text": "① 입장: 우선은 서방 정렬 쪽이 자율성 유지에 더 유리하다고 본다."
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "아직 판단 보류야",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "전략적 자율성을 위해 서방과 러시아 사이에서 거리를 두며 독자 노선을 가는 것이 유리한가"
+                        "text": "① 입장: 아직은 판단을 보류한다."
                     }
                 }
             ]
         },
         "n_stance_card": {
             "layer": "stance",
-            "coach_text": "좋아, 네 입장이 잡혔어. (판에 적혔지)\n근데 그냥 믿는 것과 따지는 건 다르잖아. 하나씩 파보자.\n\n왜 핵이 있으면 안전하다고 생각해?",
+            "coach_text": "좋아, ① 입장이 올라갔어. 왜 독자 노선이 더 유리하다고 느꼈는지 가장 가까운 이유를 골라줘.",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "cant_touch",
-                    "label": "아무도 못 건드려서",
+                    "label": "한쪽에 묶이지 않아야 스스로 결정할 수 있어서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "stop_war",
-                    "label": "전쟁을 막아서",
+                    "label": "서방과 러시아 사이 거리 두기가 협상력을 키울 것 같아서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 말해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -198,22 +198,22 @@
         },
         "n_stance_card_no": {
             "layer": "stance",
-            "coach_text": "신중하네. 네 입장이 판에 잡혔어.\n왜 핵 없이도 괜찮다고 보는지 — 이유를 따져보자.",
+            "coach_text": "좋아, ① 입장이 올라갔어. 왜 서방 정렬이 더 유리하다고 느꼈는지 골라보자.",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "alliance",
-                    "label": "동맹이 있어서",
+                    "label": "경제·기술·안보 기반이 결국 서방에 더 연결돼 있어서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "danger",
-                    "label": "핵이 오히려 위험해서",
+                    "label": "거리를 두다 제재나 안보 공백이 더 커질 수 있어서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 말해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -221,22 +221,22 @@
         },
         "n_stance_card_half": {
             "layer": "stance",
-            "coach_text": "솔직하네. 입장이 판에 잡혔어.\n왜 그렇게 반반으로 보는지 — 이유를 따져보자.",
+            "coach_text": "좋아, ① 입장이 올라갔어. 아직 유보라면 그 이유는 뭐에 가까워?",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "not_sure",
-                    "label": "장단이 있어서",
+                    "label": "독자성도 필요하지만 서방 기반도 무시 못 해서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "need_more",
-                    "label": "더 알아봐야 해서",
+                    "label": "경제와 안보 중 뭐가 더 결정적인지 더 봐야 해서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 생각을 직접 말해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -244,273 +244,273 @@
         },
         "n_reason_why2": {
             "layer": "reason",
-            "coach_text": "그렇지. 근데 '왜' 못 건드릴까? 상대 입장에서 생각하면?",
+            "coach_text": "좋아. 그 이유를 조금 더 구체화해보자. 네 생각과 가장 가까운 쪽은 뭐야?",
             "choices": [
                 {
                     "id": "fear_revenge",
-                    "label": "보복이 무서워서",
+                    "label": "자율성은 외부 간섭을 줄일 때 생긴다고 봐",
                     "next": "n_reason_card",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 전략적 자율성을 위해 서방과 러시아 사이에서 거리를 두며 독자 노선을 …"
+                        "text": "② 근거: 한쪽 진영에 덜 묶여야 스스로 결정할 공간이 커진다."
                     }
                 },
                 {
                     "id": "intl_pressure",
-                    "label": "국제사회 비난",
+                    "label": "현실 자원은 서방 연결망 안에 있어서 그게 더 중요해",
                     "next": "n_reason_card_intl",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 전략적 자율성을 위해 서방과 러시아 사이에서 거리를 두며 독자 노선을 …"
+                        "text": "② 근거: 경제·기술·안보 자원이 서방 연결망에 있어 실제 선택지도 거기서 나온다."
                     }
                 },
                 {
                     "id": "unsure_reason",
-                    "label": "음...",
+                    "label": "둘 다 맞는 말 같아 아직 정리 중이야",
                     "next": "n_reason_card",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 전략적 자율성을 위해 서방과 러시아 사이에서 거리를 두며 독자 노선을 …"
+                        "text": "② 근거: 자율성과 의존 사이의 긴장을 아직 저울질하는 중이다."
                     }
                 }
             ]
         },
         "n_reason_card": {
             "layer": "reason",
-            "coach_text": "완벽해. 이제 '입장'에 '근거'가 붙었어. **판을 봐** — 생각이 서기 시작했지?",
+            "coach_text": "좋아, ② 근거가 보드에 올라갔어. 이제 그 근거가 언제 더 설득력 있는지 한 번 따져보자.",
             "board_pulse": "reason",
             "choices": [
                 {
                     "id": "see_board",
-                    "label": "판 보니까 그렇네",
+                    "label": "다음으로 생각 이어가기",
                     "next": "n_depth_0"
                 }
             ]
         },
         "n_reason_card_intl": {
             "layer": "reason",
-            "coach_text": "그것도 근거가 될 수 있지. 판에 적혔어. **판을 봐.**",
+            "coach_text": "좋아, ② 근거가 선명해졌어. 이제 그 근거가 어떤 조건에서 특히 강해지는지 보자.",
             "board_pulse": "reason",
             "choices": [
                 {
                     "id": "see_board",
-                    "label": "판 보니까 그렇네",
+                    "label": "조건까지 따져보기",
                     "next": "n_depth_0"
                 }
             ]
         },
         "n_depth_0": {
             "layer": "depth",
-            "coach_text": "한 걸음 더. '보복이 무서워서'가 — 항상 통할까?\n상대가 잃을 게 없다면? 예를 들어 테러 집단처럼.",
+            "coach_text": "독자 노선이든 서방 정렬이든, 항상 통하는 건 아닐 거야. 어디서 갈림길이 생긴다고 봐?",
             "choices": [
                 {
                     "id": "wont_work",
-                    "label": "안 통할 것 같아",
+                    "label": "안보 위기가 급하면 독자 노선만으로는 버티기 어려워",
                     "next": "n_depth_1"
                 },
                 {
                     "id": "still_works",
-                    "label": "그래도 통해",
+                    "label": "그래도 평소엔 거리 두기가 협상력에 도움이 돼",
                     "next": "n_depth_1"
                 },
                 {
                     "id": "hard_depth",
-                    "label": "어렵다",
+                    "label": "경제·방산·안보를 나눠서 봐야 할 것 같아",
                     "next": "n_depth_1"
                 }
             ]
         },
         "n_depth_1": {
             "layer": "depth",
-            "coach_text": "그럼 네 입장('핵=안전')은 — 무조건 맞는 건 아니게 되네?",
+            "coach_text": "좋아. 그럼 네 생각을 조건이나 범위까지 넣어서 한 단계 깊게 잡아보자.",
             "choices": [
                 {
                     "id": "conditional",
-                    "label": "조건이 있네",
+                    "label": "평소엔 줄타기가 가능해도 위기 대응은 서방 기반이 필요해",
                     "next": "n_depth_card",
                     "emit_card": {
                         "layer": "depth",
-                        "text": "조건이 있다 — 항상 통하지는 않음"
+                        "text": "③ 깊이: 평시의 자율적 줄타기와 위기 시의 실제 대응 능력은 다를 수 있다."
                     }
                 },
                 {
                     "id": "mostly_ok",
-                    "label": "그래도 대부분 맞아",
+                    "label": "대체로 서방 기반이 중요하지만 분야별로는 차이가 있어",
                     "next": "n_depth_card_mostly",
                     "emit_card": {
                         "layer": "depth",
-                        "text": "조건이 있다 — 항상 통하지는 않음"
+                        "text": "③ 깊이: 경제·방산·안보를 나눠 보면 서방 의존의 강도와 의미가 다르게 드러난다."
                     }
                 }
             ]
         },
         "n_depth_card": {
             "layer": "depth",
-            "coach_text": "봐, 처음엔 '핵=안전'이었는데 이제 '조건부'로 정교해졌어. **판을 봐.** 이게 따지는 거야.",
+            "coach_text": "좋아, ③ 깊이 카드가 올라갔어. 이제 네 생각을 흔들 수 있는 장면을 만나보자.",
             "board_pulse": "depth",
             "choices": [
                 {
                     "id": "depth_ok",
-                    "label": "맞아, 정교해졌네",
+                    "label": "반론 보기",
                     "next": "n_counter_0"
                 }
             ]
         },
         "n_depth_card_mostly": {
             "layer": "depth",
-            "coach_text": "그래도 '대부분'과 '항상'은 다르지. 판에 적혔어.",
+            "coach_text": "좋아, ③에서 조건과 범위가 생겼어. 이제 그 생각이 어디서 흔들리는지 보자.",
             "board_pulse": "depth",
             "choices": [
                 {
                     "id": "depth_ok",
-                    "label": "계속 가보자",
+                    "label": "흔들리는 지점 보기",
                     "next": "n_counter_0"
                 }
             ]
         },
         "n_counter_0": {
             "layer": "counter",
-            "coach_text": "그렇게만 보기엔 2026년 2월 이란 미사일이 터키 영공에 들어왔을 때 S-400은 무용지물이었고 실제 방어는 나토 연계 방공체계가 했다는 대목을 어떻게 볼래?\n\n터키의 경제 생존, 방산 회복, 제재 리스크 관리, 실제 안보 대응을 따져보면 서방의 기술·자본·집단방위에 묶여 있어 오히려 서방 정렬이 자율성 유지에 더 유리하다는 점\n\n네가 아까 말한 입장 — 이 이야기에도 그대로 맞을까?",
+            "coach_text": "그렇게만 보기엔 2026년 2월 이란 미사일이 터키 영공에 들어왔을 때 S-400은 무용지물이었고 실제 방어는 나토 연계 방공체계가 했다는 대목을 어떻게 볼래?",
             "choices": [
                 {
                     "id": "might_shake",
-                    "label": "흔들릴 것 같아",
+                    "label": "그 장면은 내 생각을 좀 흔들어",
                     "next": "n_counter_still"
                 },
                 {
                     "id": "nuke_different",
-                    "label": "그래도 핵은 달라",
+                    "label": "그래도 한 사례만으로 전체를 바꾸긴 어려워",
                     "next": "n_counter_why"
                 },
                 {
                     "id": "unsure_counter",
-                    "label": "모르겠어",
+                    "label": "어떻게 해석해야 할지 아직 모르겠어",
                     "next": "n_counter_drone"
                 }
             ]
         },
         "n_counter_why": {
             "layer": "counter",
-            "coach_text": "왜 그렇게 봐? (답 강요 없어 — 네 생각대로)",
+            "coach_text": "좋아. 무엇 때문에 흔들린다고 느꼈어?",
             "choices": [
                 {
                     "id": "destruction",
-                    "label": "파괴력이 차원이 달라",
+                    "label": "실제 안보 대응은 연결된 체계가 있어야 가능해 보여서",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "can_defend",
-                    "label": "드론은 막을 수 있어",
+                    "label": "겉으론 독자 노선이어도 핵심 순간엔 서방 도움이 결정적이어서",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_still": {
             "layer": "counter",
-            "coach_text": "솔직하네. 그래도 핵만큼 무서운 게 있을까?",
+            "coach_text": "좋아. 그럼에도 아직 전체 판단을 바꾸기 어렵다고 본 이유는 뭐야?",
             "choices": [
                 {
                     "id": "maybe_not",
-                    "label": "없을 수도",
+                    "label": "일회성 사건일 수 있고 장기 전략과는 다를 수 있어서",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "still_nuke",
-                    "label": "핵이 제일 무서워",
+                    "label": "안보 하나만으로 외교·경제 전체 노선을 정하긴 어려워서",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_drone": {
             "layer": "counter",
-            "coach_text": "괜찮아. 천천히 보자. 드론 수천 대 vs 핵 — 뭐가 더 실제로 쓰일까?",
+            "coach_text": "좋아. 아직 헷갈린다면, 이 사례가 '상징적 장면'인지 '구조적 현실'인지가 핵심일까?",
             "choices": [
                 {
                     "id": "drones_real",
-                    "label": "드론이 더 현실적",
+                    "label": "구조적 현실을 보여준 장면 같아",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "nuke_deter",
-                    "label": "핵이 억지해",
+                    "label": "상징은 크지만 해석은 더 조심해야 할 것 같아",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_hard": {
             "layer": "counter",
-            "coach_text": "일리 있어. 근데 — '쓸 수 있느냐'는 다른 문제 아닐까?\n핵을 진짜 쏘면 자기도 끝이잖아.",
+            "coach_text": "그렇다면 이런 질문은 어때? 독자 노선이 말의 자율성은 키워도, 실제 방어·기술·자본이 서방 연결망에 묶여 있다면 그걸 여전히 자율성이라고 부를 수 있을까?",
             "choices": [
                 {
                     "id": "true_hard",
-                    "label": "그건 그렇네",
+                    "label": "그 질문은 중요해, 자율성의 뜻부터 다시 봐야 할 듯해",
                     "next": "n_counter_card",
                     "emit_card": {
                         "layer": "counter",
-                        "text": "터키의 경제 생존, 방산 회복, 제재 리스크 관리, 실제 안보 대응을 따져보면 서방의 기…"
+                        "text": "④ 반론: 말의 거리 두기와 실제 대응 능력의 기반은 다를 수 있다."
                     }
                 },
                 {
                     "id": "still_deter",
-                    "label": "그래도 억지는 돼",
+                    "label": "그래도 자율성은 선택지를 넓히는 데 의미가 있다고 봐",
                     "next": "n_counter_card_deter",
                     "emit_card": {
                         "layer": "counter",
-                        "text": "터키의 경제 생존, 방산 회복, 제재 리스크 관리, 실제 안보 대응을 따져보면 서방의 기…"
+                        "text": "④ 반론: 서방 기반이 중요해도 독자적 선택 공간 자체의 가치는 남아 있다."
                     }
                 }
             ]
         },
         "n_counter_card": {
             "layer": "counter",
-            "coach_text": "반론과 네 답이 판에 쌓였어. **판을 봐.**",
+            "coach_text": "좋아, ④ 반론이 올라갔어. 이제 처음 입장을 그대로 둘지, 조금 고쳐볼지 정리해보자.",
             "board_pulse": "counter",
             "choices": [
                 {
                     "id": "counter_ok",
-                    "label": "계속 정리하자",
+                    "label": "입장 다시 다듬기",
                     "next": "n_refine_0"
                 }
             ]
         },
         "n_counter_card_deter": {
             "layer": "counter",
-            "coach_text": "그 관점도 판에 적혔어.",
+            "coach_text": "좋아, ④에서 중요한 흔들림이 생겼어. 이제 그걸 반영해 입장을 재정립해보자.",
             "board_pulse": "counter",
             "choices": [
                 {
                     "id": "counter_ok",
-                    "label": "계속 정리하자",
+                    "label": "재정립으로 가기",
                     "next": "n_refine_0"
                 }
             ]
         },
         "n_refine_0": {
             "layer": "refine",
-            "coach_text": "자, **판을 다시 봐.** 처음 생각에서 많이 왔어.\n① 입장 → ② 근거 → ③ 깊이 → ④ 반론\n이제 네 생각을 다시 정리하면, 어떻게 바뀌었어?",
+            "coach_text": "보드를 보면, 자율성의 이미지와 자율성의 실제 조건이 조금 다르게 보이지? 지금 네 입장을 어떻게 다듬고 싶어?",
             "board_diff": true,
             "choices": [
                 {
                     "id": "limits",
-                    "label": "핵은 안전을 주지만 한계가 있다",
+                    "label": "독자 노선엔 한계가 있고 자율성도 기반이 있어야 가능해",
                     "next": "n_refine_card",
                     "emit_card": {
                         "layer": "refine",
-                        "text": "처음 생각보다 정교해졌다"
+                        "text": "⑤ 재정립: 자율성은 거리 두기만이 아니라 실제 버틸 기반이 있을 때 유지된다."
                     }
                 },
                 {
                     "id": "still_best",
-                    "label": "여전히 핵이 최선이다",
+                    "label": "그래도 독자 노선의 가치가 더 크다고 보고 싶어",
                     "next": "n_refine_card_best",
                     "emit_card": {
                         "layer": "refine",
-                        "text": "처음 생각보다 정교해졌다"
+                        "text": "⑤ 재정립: 서방 기반의 필요를 인정해도 독자 노선의 전략적 가치는 남는다."
                     }
                 },
                 {
                     "id": "refine_free",
-                    "label": "직접 쓸게",
+                    "label": "내 말로 다시 정리해볼게",
                     "next": "n_refine_input",
                     "input_mode": "text",
                     "emit_card_on_message": {
@@ -521,31 +521,31 @@
         },
         "n_refine_card": {
             "layer": "refine",
-            "coach_text": "스스로 여기까지 왔어. 처음 '핵=안전'에서 훨씬 정교해졌지?",
+            "coach_text": "좋아, ⑤ 재정립이 올라갔어. 이제 마지막으로 네 결론을 한 문장 논지로 묶어보자.",
             "board_pulse": "refine",
             "choices": [
                 {
                     "id": "refine_ok",
-                    "label": "맞아",
+                    "label": "최종 정리하러 가기",
                     "next": "n_synth_0"
                 }
             ]
         },
         "n_refine_card_best": {
             "layer": "refine",
-            "coach_text": "네 정리가 판에 적혔어. 한번 더 따져보자.",
+            "coach_text": "좋아, ⑤에서 네 기준이 분명해졌어. 이제 여러 층을 묶어 최종 판단을 만들어보자.",
             "board_pulse": "refine",
             "choices": [
                 {
                     "id": "refine_ok",
-                    "label": "계속",
+                    "label": "종합하러 가기",
                     "next": "n_synth_0"
                 }
             ]
         },
         "n_refine_input": {
             "layer": "refine",
-            "coach_text": "네 말로 정리해 봐 — 지금 네 생각은?",
+            "coach_text": "좋아. 보드의 ①~④를 보고, 네 입장을 어떻게 고쳐 쓸지 한두 문장으로 적어봐.",
             "input_mode": "text",
             "emit_card_on_message": {
                 "layer": "refine"
@@ -554,7 +554,7 @@
         },
         "n_synth_0": {
             "layer": "synthesis",
-            "coach_text": "마지막. 이 모든 걸 **한 문장**으로 — 네 결론은?\n(직접 써 봐)",
+            "coach_text": "이제 ⑥ 종합이야. '튀르키예가 전략적 자율성을 지키려면 서방에서 멀어져야 하는가?'에 대해, 네 최종 답을 근거와 조건까지 넣어 2~3문장으로 정리해봐.",
             "input_mode": "text",
             "emit_card_on_message": {
                 "layer": "synthesis"
@@ -563,21 +563,23 @@
         },
         "n_synth_compose": {
             "layer": "synthesis",
-            "coach_text": "이게 네가 10분 넘게 따져서 만든 결론이야.\n누가 준 게 아니라, **네가 쌓은 거**지.\n자 — 이 생각판을 바탕으로 한 편의 글을 써볼까?\n판에 있는 ①~⑥이 그대로 네 글의 뼈대가 될 거야.",
+            "coach_text": "좋아. 생각판이 다 찼어. 마지막 문장으로 네 논지를 완성해보자.",
             "board_pulse": "synthesis",
             "choices": [
                 {
                     "id": "go_compose",
-                    "label": "글 쓰러 가기",
+                    "label": "최종 답안 만들기",
                     "next": "n_compose"
                 }
             ]
         },
         "n_compose": {
             "layer": "synthesis",
-            "terminal": true
+            "terminal": true,
+            "coach_text": "잘했어. 처음의 직감에서 시작해서, 근거를 세우고, 조건을 따지고, 반론에 흔들린 뒤 다시 네 입장을 재정립했어. 이제 네 결론은 '독자성의 이미지'가 아니라 '실제로 자율성을 떠받치는 조건'까지 본 답이 됐어."
         }
     },
-    "llm_followup_fallback": "그렇구나. 한 가지만 더 — 그 말을 한 문장으로 정리하면?",
-    "generated_by": "narrative_v2_generate_rule_v1"
+    "generated_by": "narrative_v2_generate_llm_v2",
+    "llm_followup_fallback": "좋아, 그 생각도 ②나 ⑤에 들어갈 수 있어. 핵심이 자율성의 이미지인지, 실제 기반인지 한 번 더 또렷하게 잡아보자.",
+    "llm_philosophy_notes": "반론은 질문으로 흔들고, 결론은 학생이 스스로 재정립하도록 ①~⑥ 생각판 흐름에 맞춰 구성했다."
 }

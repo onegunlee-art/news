@@ -55,142 +55,142 @@
     "nodes": {
         "n_intro": {
             "layer": "intro",
-            "coach_text": "이주는 그냥 개인에게 더 나은 기회가 되는 좋은 일일까?\n\n많은 사람은 \"이주가 좋은가 나쁜가\"라고 생각해.\n\n이주는 개인의 자유롭고 합리적인 선택이지만 동시에 본국의 민주주의 성향 인구를 빼내 권위주의를 강화하고 수용국의 반이민 권위주의까지 자극할 수 있다\n\n왜 그렇게 생각할까?",
+            "coach_text": "사람들은 더 나은 일자리, 교육, 안전을 찾아 국경을 넘습니다. 2015년부터 2019년 사이에는 4,500만 명이 더 민주적인 나라로 이동했어요. 그런데 이런 이동이 개인에게는 합리적이어도, 왜 어떤 경우엔 권위주의를 돕는 흐름이 될 수 있을까요?",
             "choices": [
                 {
                     "id": "nuclear_fear",
-                    "label": "A 쪽이 더 와닿아",
+                    "label": "떠나는 사람들이 본국의 변화를 이끌 힘을 빼가기 때문",
                     "next": "n_stance_bridge_fear"
                 },
                 {
                     "id": "just_luck",
-                    "label": "B 쪽도 설명돼",
+                    "label": "그냥 더 좋은 나라로 가는 자연스러운 이동일 뿐 같아서",
                     "next": "n_stance_bridge_luck"
                 },
                 {
                     "id": "other_reason",
-                    "label": "다른 이유",
+                    "label": "다른 이유가 있을 것 같아",
                     "next": "n_stance_bridge_other"
                 }
             ]
         },
         "n_stance_bridge_fear": {
             "layer": "stance",
-            "coach_text": "좋아, 이주가 좋은가 나쁜가에서 시작해보자.\n이주(Migration)가 권위주의를 돕는 메커니즘 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아요. 그럼 출발점을 먼저 잡아보자. 너는 이주를 전체적으로 보면 어떤 쪽에 더 가깝다고 봐?",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "대체로 좋은 일에 가깝다",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "이주가 좋은가 나쁜가"
+                        "text": "① 입장: 이주는 대체로 좋은 일에 가깝다"
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "대체로 문제를 키울 수 있다",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "이주가 좋은가 나쁜가"
+                        "text": "① 입장: 이주는 대체로 문제를 키울 수 있다"
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "좋기도 하고 해롭기도 하다",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "이주가 좋은가 나쁜가"
+                        "text": "① 입장: 이주는 양면적이다"
                     }
                 }
             ]
         },
         "n_stance_bridge_luck": {
             "layer": "stance",
-            "coach_text": "좋아, 이주가 좋은가 나쁜가에서 시작해보자.\n이주(Migration)가 권위주의를 돕는 메커니즘 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아. 개인 선택으로 보면 자연스러워 보여도, 사회 전체 효과는 따로 볼 수 있지. 너의 첫 입장은 어디에 가까워?",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "그래도 대체로 좋은 일이다",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "이주가 좋은가 나쁜가"
+                        "text": "① 입장: 이주는 대체로 좋은 일이다"
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "생각보다 정치적으로 해로울 수 있다",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "이주가 좋은가 나쁜가"
+                        "text": "① 입장: 이주는 정치적으로 해로울 수 있다"
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "개인에겐 좋지만 사회적 비용도 있다",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "이주가 좋은가 나쁜가"
+                        "text": "① 입장: 이주는 개인의 이익과 사회적 비용이 함께 있다"
                     }
                 }
             ]
         },
         "n_stance_bridge_other": {
             "layer": "stance",
-            "coach_text": "좋아, 이주가 좋은가 나쁜가에서 시작해보자.\n이주(Migration)가 권위주의를 돕는 메커니즘 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아, 네 감각을 출발점으로 삼아보자. 지금 너는 이주를 어떤 프레임으로 보고 있어?",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "기회를 넓히는 긍정적 이동",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "이주가 좋은가 나쁜가"
+                        "text": "① 입장: 이주는 기회를 넓히는 긍정적 이동이다"
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "민주주의에 구멍을 낼 수 있는 이동",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "이주가 좋은가 나쁜가"
+                        "text": "① 입장: 이주는 민주주의에 구멍을 낼 수 있다"
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "한쪽으로 단정하기 어렵다",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "이주가 좋은가 나쁜가"
+                        "text": "① 입장: 이주는 단정하기 어려운 양면적 현상이다"
                     }
                 }
             ]
         },
         "n_stance_card": {
             "layer": "stance",
-            "coach_text": "좋아, 네 입장이 잡혔어. (판에 적혔지)\n근데 그냥 믿는 것과 따지는 건 다르잖아. 하나씩 파보자.\n\n왜 핵이 있으면 안전하다고 생각해?",
+            "coach_text": "좋아, 1번 칸에 입장이 올라갔어. 왜 이주를 대체로 좋은 일이라고 보니?",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "cant_touch",
-                    "label": "아무도 못 건드려서",
+                    "label": "개인이 더 나은 삶을 선택할 자유가 있으니까",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "stop_war",
-                    "label": "전쟁을 막아서",
+                    "label": "기회가 많은 곳으로 가는 건 사회 전체에도 이익 같아서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 말해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -198,22 +198,22 @@
         },
         "n_stance_card_no": {
             "layer": "stance",
-            "coach_text": "신중하네. 네 입장이 판에 잡혔어.\n왜 핵 없이도 괜찮다고 보는지 — 이유를 따져보자.",
+            "coach_text": "좋아, 1번 칸에 입장이 보이네. 왜 이주가 문제를 키울 수 있다고 봤어?",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "alliance",
-                    "label": "동맹이 있어서",
+                    "label": "본국에서 바꿀 사람들까지 빠져나갈 수 있어서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "danger",
-                    "label": "핵이 오히려 위험해서",
+                    "label": "받아들이는 나라에서도 정치적 반발을 키울 수 있어서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 말해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -221,22 +221,22 @@
         },
         "n_stance_card_half": {
             "layer": "stance",
-            "coach_text": "솔직하네. 입장이 판에 잡혔어.\n왜 그렇게 반반으로 보는지 — 이유를 따져보자.",
+            "coach_text": "좋아, 입장을 절반쯤 열어뒀네. 지금 반반이라고 느끼는 핵심 이유는 뭐야?",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "not_sure",
-                    "label": "장단이 있어서",
+                    "label": "개인의 자유는 중요하지만 본국 손실도 커 보여서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "need_more",
-                    "label": "더 알아봐야 해서",
+                    "label": "누구에게 좋은지, 어느 시점에 볼지가 헷갈려서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 생각을 직접 정리해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -244,273 +244,273 @@
         },
         "n_reason_why2": {
             "layer": "reason",
-            "coach_text": "그렇지. 근데 '왜' 못 건드릴까? 상대 입장에서 생각하면?",
+            "coach_text": "좋아. 이제 한 걸음 더 들어가 보자. 글의 관점에서 보면, 이주가 권위주의를 돕는 메커니즘의 핵심은 뭐라고 잡을 수 있을까?",
             "choices": [
                 {
                     "id": "fear_revenge",
-                    "label": "보복이 무서워서",
+                    "label": "민주주의에 우호적인 사람들이 떠나며 본국의 정치적 자본이 줄어든다",
                     "next": "n_reason_card",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 이주가 좋은가 나쁜가"
+                        "text": "② 근거: 자유주의 성향 인구의 이탈이 본국의 정치적 자본을 약화시킨다"
                     }
                 },
                 {
                     "id": "intl_pressure",
-                    "label": "국제사회 비난",
+                    "label": "불만 세력이 빠져나가 정권에 가해질 압력이 줄어든다",
                     "next": "n_reason_card_intl",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 이주가 좋은가 나쁜가"
+                        "text": "② 근거: 이주가 권위주의 체제의 압력 배출 밸브가 될 수 있다"
                     }
                 },
                 {
                     "id": "unsure_reason",
-                    "label": "음...",
+                    "label": "둘 다 맞는 것 같지만 아직 선명하진 않다",
                     "next": "n_reason_card",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 이주가 좋은가 나쁜가"
+                        "text": "② 근거: 이주는 인구 이동이면서 동시에 정치적 성향의 이동이다"
                     }
                 }
             ]
         },
         "n_reason_card": {
             "layer": "reason",
-            "coach_text": "완벽해. 이제 '입장'에 '근거'가 붙었어. **판을 봐** — 생각이 서기 시작했지?",
+            "coach_text": "좋아. 2번 칸엔 '민주주의를 지탱할 사람들의 이탈'이 적혔어. 이제 이게 언제 더 크게 작동하는지 보러 가자.",
             "board_pulse": "reason",
             "choices": [
                 {
                     "id": "see_board",
-                    "label": "판 보니까 그렇네",
+                    "label": "다음으로",
                     "next": "n_depth_0"
                 }
             ]
         },
         "n_reason_card_intl": {
             "layer": "reason",
-            "coach_text": "그것도 근거가 될 수 있지. 판에 적혔어. **판을 봐.**",
+            "coach_text": "좋아. 2번 칸엔 '압력 배출 밸브'라는 관점이 올라갔어. 그럼 이 효과가 항상 큰지, 조건이 필요한지 따져보자.",
             "board_pulse": "reason",
             "choices": [
                 {
                     "id": "see_board",
-                    "label": "판 보니까 그렇네",
+                    "label": "조건 따져보기",
                     "next": "n_depth_0"
                 }
             ]
         },
         "n_depth_0": {
             "layer": "depth",
-            "coach_text": "한 걸음 더.\n이주는 개인의 자유롭고 합리적인 선택이지만 동시에 본국의 민주주의 성향 인구를 빼내 권위주의를 강화하고 수용국의 반이민 권위주의까지 자극할 수 있다\n\n예외 상황은 없을까?",
+            "coach_text": "그런데 늘 그렇게 이어질까? 사람들이 떠난다고 해서 본국 민주주의가 꼭 약해진다고 볼 수 있을까?",
             "choices": [
                 {
                     "id": "wont_work",
-                    "label": "안 통할 것 같아",
+                    "label": "항상 그런 건 아닐 것 같아",
                     "next": "n_depth_1"
                 },
                 {
                     "id": "still_works",
-                    "label": "그래도 통해",
+                    "label": "그래도 대체로 그런 효과가 있을 것 같아",
                     "next": "n_depth_1"
                 },
                 {
                     "id": "hard_depth",
-                    "label": "어렵다",
+                    "label": "어떤 조건에서 달라지는지가 중요해 보여",
                     "next": "n_depth_1"
                 }
             ]
         },
         "n_depth_1": {
             "layer": "depth",
-            "coach_text": "그럼 네 입장('핵=안전')은 — 무조건 맞는 건 아니게 되네?",
+            "coach_text": "좋아. 그럼 조건을 걸어보자. 어떤 경우에 이주가 민주주의 유출로 이어지고, 어떤 경우엔 덜 그럴까?",
             "choices": [
                 {
                     "id": "conditional",
-                    "label": "조건이 있네",
+                    "label": "떠나는 집단이 정치적으로 적극적일수록 영향이 클 것 같아",
                     "next": "n_depth_card",
                     "emit_card": {
                         "layer": "depth",
-                        "text": "조건이 있다 — 항상 통하지는 않음"
+                        "text": "③ 깊이: 이주 효과는 떠나는 집단의 정치 성향·참여도에 따라 달라진다"
                     }
                 },
                 {
                     "id": "mostly_ok",
-                    "label": "그래도 대부분 맞아",
+                    "label": "규모가 크고 대체 인력이 적을수록 본국 타격이 클 것 같아",
                     "next": "n_depth_card_mostly",
                     "emit_card": {
                         "layer": "depth",
-                        "text": "조건이 있다 — 항상 통하지는 않음"
+                        "text": "③ 깊이: 이주 효과는 이동 규모와 대체 가능성에 따라 커질 수 있다"
                     }
                 }
             ]
         },
         "n_depth_card": {
             "layer": "depth",
-            "coach_text": "봐, 처음엔 '핵=안전'이었는데 이제 '조건부'로 정교해졌어. **판을 봐.** 이게 따지는 거야.",
+            "coach_text": "좋아. 3번 칸에는 '조건에 따라 영향이 달라진다'가 들어갔어. 이제 반대편에서 한 번 흔들어보자.",
             "board_pulse": "depth",
             "choices": [
                 {
                     "id": "depth_ok",
-                    "label": "맞아, 정교해졌네",
+                    "label": "흔들리기",
                     "next": "n_counter_0"
                 }
             ]
         },
         "n_depth_card_mostly": {
             "layer": "depth",
-            "coach_text": "그래도 '대부분'과 '항상'은 다르지. 판에 적혔어.",
+            "coach_text": "좋아. 3번 칸엔 규모와 대체 가능성이라는 조건이 잡혔네. 이제 이 관점이 놓치는 걸 물어보자.",
             "board_pulse": "depth",
             "choices": [
                 {
                     "id": "depth_ok",
-                    "label": "계속 가보자",
+                    "label": "반론 보기",
                     "next": "n_counter_0"
                 }
             ]
         },
         "n_counter_0": {
             "layer": "counter",
-            "coach_text": "그렇게만 보기엔 2015~2019년 사이 4,500만 명이 더 민주적인 나라로 이동했고, 글은 이런 흐름이 본국의 불만 세력을 빼내 권위주의 체제의 '압력 배출 밸브'가 될 수 있다고 말해.\n\n이주는 개인에게는 정당한 선택이지만, 더 자유주의적 가치관을 가진 사람들이 떠나며 본국의 '민주주의 유출'이 생기고, 수용국에서는 그 존재가 반이민 포퓰리즘을 자극해 양쪽 모두의…\n\n네가 아까 말한 입장 — 이 이야기에도 그대로 맞을까?",
+            "coach_text": "그렇게만 보기엔, 더 자유주의적인 사람들이 떠나면 본국만 약해지는 게 아니라 수용국에서는 그 존재가 반이민 포퓰리즘을 자극해 민주주의를 흔들 수도 있다는데, 그러면 이주는 '그냥 좋은 기회'라고만 볼 수 있을까?",
             "choices": [
                 {
                     "id": "might_shake",
-                    "label": "흔들릴 것 같아",
+                    "label": "그 말이면 단순한 선악 구도는 흔들려",
                     "next": "n_counter_still"
                 },
                 {
                     "id": "nuke_different",
-                    "label": "그래도 핵은 달라",
+                    "label": "그래도 개인 선택까지 문제로 보긴 조심스러워",
                     "next": "n_counter_why"
                 },
                 {
                     "id": "unsure_counter",
-                    "label": "모르겠어",
+                    "label": "어디까지 연결해야 할지 아직 모르겠어",
                     "next": "n_counter_drone"
                 }
             ]
         },
         "n_counter_why": {
             "layer": "counter",
-            "coach_text": "왜 그렇게 봐? (답 강요 없어 — 네 생각대로)",
+            "coach_text": "왜 흔들린다고 느꼈어? 본국의 민주주의 유출과 수용국의 반이민 정치 사이에 어떤 연결이 있다고 본 거야?",
             "choices": [
                 {
                     "id": "destruction",
-                    "label": "파괴력이 차원이 달라",
+                    "label": "양쪽 모두에서 민주주의 친화 세력이 약해질 수 있어서",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "can_defend",
-                    "label": "드론은 막을 수 있어",
+                    "label": "개인 자유는 지켜도 정치적 후폭풍은 따로 생길 수 있어서",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_still": {
             "layer": "counter",
-            "coach_text": "솔직하네. 그래도 핵만큼 무서운 게 있을까?",
+            "coach_text": "개인 선택을 존중해야 한다는 점은 남아 있지. 그런데 그 선택이 모이면 체제 차원의 효과가 생긴다면, 개인의 자유와 집단적 결과를 완전히 떼어 볼 수 있을까?",
             "choices": [
                 {
                     "id": "maybe_not",
-                    "label": "없을 수도",
+                    "label": "완전히 떼어 보긴 어렵겠어",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "still_nuke",
-                    "label": "핵이 제일 무서워",
+                    "label": "그래도 우선은 개인 자유가 더 중요해 보여",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_drone": {
             "layer": "counter",
-            "coach_text": "괜찮아. 천천히 보자. 드론 수천 대 vs 핵 — 뭐가 더 실제로 쓰일까?",
+            "coach_text": "어디까지 연결해야 할지 헷갈릴 수 있어. 그런데 글은 이주를 단지 경제 이동이 아니라 가치관과 정치 성향의 이동으로도 보자고 해. 그렇게 보면 본국과 수용국 정치에 동시에 파장이 간다고 볼 수 있지 않을까?",
             "choices": [
                 {
                     "id": "drones_real",
-                    "label": "드론이 더 현실적",
+                    "label": "응, 그러면 양쪽 효과를 함께 봐야겠네",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "nuke_deter",
-                    "label": "핵이 억지해",
+                    "label": "그래도 그 연결은 아직 조금 멀게 느껴져",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_hard": {
             "layer": "counter",
-            "coach_text": "일리 있어. 근데 — '쓸 수 있느냐'는 다른 문제 아닐까?\n핵을 진짜 쏘면 자기도 끝이잖아.",
+            "coach_text": "좋아. 그럼 지금 반론을 한 줄로 잡아보자. 네 처음 입장을 가장 세게 흔드는 질문은 뭐였어?",
             "choices": [
                 {
                     "id": "true_hard",
-                    "label": "그건 그렇네",
+                    "label": "개인에게 좋은 선택이 집단에겐 민주주의 약화가 될 수 있지 않나?",
                     "next": "n_counter_card",
                     "emit_card": {
                         "layer": "counter",
-                        "text": "이주는 개인에게는 정당한 선택이지만, 더 자유주의적 가치관을 가진 사람들이 떠나며 본국의…"
+                        "text": "④ 반론: 개인의 합리적 선택이 양쪽 민주주의를 약화시킬 수도 있다"
                     }
                 },
                 {
                     "id": "still_deter",
-                    "label": "그래도 억지는 돼",
+                    "label": "자유로운 이동이 왜 오히려 권위주의의 숨통을 틔우지?",
                     "next": "n_counter_card_deter",
                     "emit_card": {
                         "layer": "counter",
-                        "text": "이주는 개인에게는 정당한 선택이지만, 더 자유주의적 가치관을 가진 사람들이 떠나며 본국의…"
+                        "text": "④ 반론: 자유로운 이주가 권위주의 체제의 압력 배출 밸브가 될 수 있다"
                     }
                 }
             ]
         },
         "n_counter_card": {
             "layer": "counter",
-            "coach_text": "반론과 네 답이 판에 쌓였어. **판을 봐.**",
+            "coach_text": "좋아. 4번 칸에 반론이 들어갔어. 이제 처음 입장을 버리지 않으면서도, 방금 흔들린 지점을 반영해 다시 세워보자.",
             "board_pulse": "counter",
             "choices": [
                 {
                     "id": "counter_ok",
-                    "label": "계속 정리하자",
+                    "label": "재정립하기",
                     "next": "n_refine_0"
                 }
             ]
         },
         "n_counter_card_deter": {
             "layer": "counter",
-            "coach_text": "그 관점도 판에 적혔어.",
+            "coach_text": "좋아. 반론이 꽤 강하네. 그럼 이제 '그래도'와 '하지만'을 함께 넣어서 입장을 다시 다듬어보자.",
             "board_pulse": "counter",
             "choices": [
                 {
                     "id": "counter_ok",
-                    "label": "계속 정리하자",
+                    "label": "다듬기",
                     "next": "n_refine_0"
                 }
             ]
         },
         "n_refine_0": {
             "layer": "refine",
-            "coach_text": "자, **판을 다시 봐.** 처음 생각에서 많이 왔어.\n① 입장 → ② 근거 → ③ 깊이 → ④ 반론\n이제 네 생각을 다시 정리하면, 어떻게 바뀌었어?",
+            "coach_text": "생각판을 보면, 이주를 무조건 좋다거나 나쁘다거나로 말하기가 어려워졌어. 지금 네 입장을 어떻게 다시 잡겠어?",
             "board_diff": true,
             "choices": [
                 {
                     "id": "limits",
-                    "label": "핵은 안전을 주지만 한계가 있다",
+                    "label": "개인 자유는 인정하되 민주주의 유출의 한계도 함께 봐야 해",
                     "next": "n_refine_card",
                     "emit_card": {
                         "layer": "refine",
-                        "text": "처음 생각보다 정교해졌다"
+                        "text": "⑤ 재정립: 이주는 정당한 자유지만 민주주의 유출의 비용을 함께 봐야 한다"
                     }
                 },
                 {
                     "id": "still_best",
-                    "label": "여전히 핵이 최선이다",
+                    "label": "문제가 있어도 개인의 이동 자유를 기본값으로 봐야 해",
                     "next": "n_refine_card_best",
                     "emit_card": {
                         "layer": "refine",
-                        "text": "처음 생각보다 정교해졌다"
+                        "text": "⑤ 재정립: 정치적 비용이 있어도 개인의 이동 자유는 기본적으로 중요하다"
                     }
                 },
                 {
                     "id": "refine_free",
-                    "label": "직접 쓸게",
+                    "label": "내 문장으로 다시 정리할게",
                     "next": "n_refine_input",
                     "input_mode": "text",
                     "emit_card_on_message": {
@@ -521,31 +521,31 @@
         },
         "n_refine_card": {
             "layer": "refine",
-            "coach_text": "스스로 여기까지 왔어. 처음 '핵=안전'에서 훨씬 정교해졌지?",
+            "coach_text": "좋아. 5번 칸이 생기니까 네 입장이 훨씬 정교해졌어. 이제 마지막으로 한 문장 결론을 만들 준비를 해보자.",
             "board_pulse": "refine",
             "choices": [
                 {
                     "id": "refine_ok",
-                    "label": "맞아",
+                    "label": "종합하러 가기",
                     "next": "n_synth_0"
                 }
             ]
         },
         "n_refine_card_best": {
             "layer": "refine",
-            "coach_text": "네 정리가 판에 적혔어. 한번 더 따져보자.",
+            "coach_text": "좋아. 처음 입장을 유지했지만 조건과 비용을 넣었네. 이제 그 균형을 한 문장 결론으로 묶어보자.",
             "board_pulse": "refine",
             "choices": [
                 {
                     "id": "refine_ok",
-                    "label": "계속",
+                    "label": "결론 만들기",
                     "next": "n_synth_0"
                 }
             ]
         },
         "n_refine_input": {
             "layer": "refine",
-            "coach_text": "네 말로 정리해 봐 — 지금 네 생각은?",
+            "coach_text": "좋아. '이주는 ___이지만, ___라는 점에서 ___'처럼 적어보면 더 선명해질 거야.",
             "input_mode": "text",
             "emit_card_on_message": {
                 "layer": "refine"
@@ -554,7 +554,7 @@
         },
         "n_synth_0": {
             "layer": "synthesis",
-            "coach_text": "마지막. 이 모든 걸 **한 문장**으로 — 네 결론은?\n(직접 써 봐)",
+            "coach_text": "이제 ①~⑤를 보고 ⑥ 종합을 써보자. 질문은 이거야: 이주는 그냥 개인에게 더 나은 기회가 되는 좋은 일일까?",
             "input_mode": "text",
             "emit_card_on_message": {
                 "layer": "synthesis"
@@ -563,21 +563,23 @@
         },
         "n_synth_compose": {
             "layer": "synthesis",
-            "coach_text": "이게 네가 10분 넘게 따져서 만든 결론이야.\n누가 준 게 아니라, **네가 쌓은 거**지.\n자 — 이 생각판을 바탕으로 한 편의 글을 써볼까?\n판에 있는 ①~⑥이 그대로 네 글의 뼈대가 될 거야.",
+            "coach_text": "좋아. 생각판이 다 찼어. 마지막으로 네 답을 완성 문장으로 제출해보자.",
             "board_pulse": "synthesis",
             "choices": [
                 {
                     "id": "go_compose",
-                    "label": "글 쓰러 가기",
+                    "label": "최종 답안 쓰기",
                     "next": "n_compose"
                 }
             ]
         },
         "n_compose": {
             "layer": "synthesis",
-            "terminal": true
+            "terminal": true,
+            "coach_text": "좋아. 네 결론은 '개인의 자유로운 선택'과 '민주주의 유출 및 반이민 정치의 파장'을 함께 본 답이야."
         }
     },
-    "llm_followup_fallback": "그렇구나. 한 가지만 더 — 그 말을 한 문장으로 정리하면?",
-    "generated_by": "narrative_v2_generate_rule_v1"
+    "generated_by": "narrative_v2_generate_llm_v2",
+    "llm_followup_fallback": "좋아, 그 이유를 2번 칸 근거로 짧게 붙여보자.",
+    "llm_philosophy_notes": "입장은 학생이 고르게 두고, 반론은 side_b를 질문으로 흔들며 결론을 대신 말하지 않도록 구성했다."
 }

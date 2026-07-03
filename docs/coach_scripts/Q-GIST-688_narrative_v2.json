@@ -55,142 +55,142 @@
     "nodes": {
         "n_intro": {
             "layer": "intro",
-            "coach_text": "AI를 막는 게 맞을까, 아니면 그냥 더 빨리 발전시키는 게 맞을까?\n\n많은 사람은 \"AI에 대한 반발과 규제 강화가 좋은가 나쁜가\"라고 생각해.\n\nAI 반발은 정당한 불안에서 나오지만 그러나 기술 자체를 마비시키면 큰 경제·사회적 이익과 지정학적 우위를 잃을 수 있다\n\n왜 그렇게 생각할까?",
+            "coach_text": "AI를 둘러싼 반발은 이제 인터넷 댓글 수준을 넘어서 정치 문제로 커지고 있어. 미국에선 데이터센터 반대로 약 1,000억달러 규모 프로젝트가 막혔고, 여론조사에선 유권자 약 40%가 AI를 대부분 산업에서 금지하길 원한다고 답했어. 그런데 정말 중요한 건, AI를 막을지 밀어줄지의 단순한 선택일까? 너는 왜 이런 반발이 커진다고 봐?",
             "choices": [
                 {
                     "id": "nuclear_fear",
-                    "label": "A 쪽이 더 와닿아",
+                    "label": "일자리·생활이 위협받는다는 불안 때문",
                     "next": "n_stance_bridge_fear"
                 },
                 {
                     "id": "just_luck",
-                    "label": "B 쪽도 설명돼",
+                    "label": "AI 기업만 이익 보고 시민은 비용을 떠안을까 봐",
                     "next": "n_stance_bridge_luck"
                 },
                 {
                     "id": "other_reason",
-                    "label": "다른 이유",
+                    "label": "다른 이유가 더 크다고 봐",
                     "next": "n_stance_bridge_other"
                 }
             ]
         },
         "n_stance_bridge_fear": {
             "layer": "stance",
-            "coach_text": "좋아, AI에 대한 반발과 규제 강화가 좋은가 나쁜가에서 시작해보자.\nAI에 대한 반발과 처방 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아, 정당한 불안이 반발의 출발점이라고 본 거네. 그럼 한 걸음 더 가보자. 그렇다고 AI 규제를 강하게 하는 쪽이 더 낫다고 봐, 아니면 너무 막으면 손해가 크다고 봐?",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "강한 규제가 더 낫다",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "AI에 대한 반발과 규제 강화가 좋은가 나쁜가"
+                        "text": "① 입장: AI는 강하게 규제하는 쪽이 낫다"
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "과한 규제는 손해가 더 크다",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "AI에 대한 반발과 규제 강화가 좋은가 나쁜가"
+                        "text": "① 입장: AI를 과하게 막으면 손해가 더 크다"
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "둘 다 맞는 면이 있어 보인다",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "AI에 대한 반발과 규제 강화가 좋은가 나쁜가"
+                        "text": "① 입장: 규제와 발전 사이에서 아직 반반이다"
                     }
                 }
             ]
         },
         "n_stance_bridge_luck": {
             "layer": "stance",
-            "coach_text": "좋아, AI에 대한 반발과 규제 강화가 좋은가 나쁜가에서 시작해보자.\nAI에 대한 반발과 처방 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아, 핵심은 기술 자체보다 이익과 비용의 배분이라고 본 거네. 그럼 네 입장은 어디에 더 가까워?",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "그래서 규제를 더 세게 해야 한다",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "AI에 대한 반발과 규제 강화가 좋은가 나쁜가"
+                        "text": "① 입장: 배분 문제가 크니 AI 규제를 강화해야 한다"
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "그래도 기술 자체를 막는 건 아니다",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "AI에 대한 반발과 규제 강화가 좋은가 나쁜가"
+                        "text": "① 입장: 배분 문제와 기술 봉쇄는 구분해야 한다"
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "배분도 중요하고 발전도 중요하다",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "AI에 대한 반발과 규제 강화가 좋은가 나쁜가"
+                        "text": "① 입장: 배분 문제와 기술 발전을 함께 봐야 한다"
                     }
                 }
             ]
         },
         "n_stance_bridge_other": {
             "layer": "stance",
-            "coach_text": "좋아, AI에 대한 반발과 규제 강화가 좋은가 나쁜가에서 시작해보자.\nAI에 대한 반발과 처방 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아, 네가 보는 다른 이유가 있네. 그 이유를 바탕으로 지금은 어느 쪽에 더 가까워?",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "AI를 더 강하게 막아야 한다",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "AI에 대한 반발과 규제 강화가 좋은가 나쁜가"
+                        "text": "① 입장: AI는 지금보다 더 강하게 막아야 한다"
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "AI를 너무 막는 건 아니다",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "AI에 대한 반발과 규제 강화가 좋은가 나쁜가"
+                        "text": "① 입장: AI를 과하게 막는 건 바람직하지 않다"
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "아직 한쪽으로 정하긴 어렵다",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "AI에 대한 반발과 규제 강화가 좋은가 나쁜가"
+                        "text": "① 입장: AI 규제 문제는 아직 판단이 유보된다"
                     }
                 }
             ]
         },
         "n_stance_card": {
             "layer": "stance",
-            "coach_text": "좋아, 네 입장이 잡혔어. (판에 적혔지)\n근데 그냥 믿는 것과 따지는 건 다르잖아. 하나씩 파보자.\n\n왜 핵이 있으면 안전하다고 생각해?",
+            "coach_text": "좋아, 1번 생각판에 네 입장이 올라갔어. 왜 그렇게 생각했는지 가장 가까운 이유를 골라보자.",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "cant_touch",
-                    "label": "아무도 못 건드려서",
+                    "label": "실직·요금·물 사용 같은 피해가 먼저 걱정돼서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "stop_war",
-                    "label": "전쟁을 막아서",
+                    "label": "위험한 기술은 미리 세게 막는 게 맞아서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 말해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -198,22 +198,22 @@
         },
         "n_stance_card_no": {
             "layer": "stance",
-            "coach_text": "신중하네. 네 입장이 판에 잡혔어.\n왜 핵 없이도 괜찮다고 보는지 — 이유를 따져보자.",
+            "coach_text": "좋아, 1번 생각판에 네 입장이 정리됐어. 그 입장을 떠받치는 이유는 뭐야?",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "alliance",
-                    "label": "동맹이 있어서",
+                    "label": "기술을 멈추면 경제적 이익을 놓칠 수 있어서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "danger",
-                    "label": "핵이 오히려 위험해서",
+                    "label": "다른 나라가 앞서가면 더 불리해질 수 있어서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 말해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -221,22 +221,22 @@
         },
         "n_stance_card_half": {
             "layer": "stance",
-            "coach_text": "솔직하네. 입장이 판에 잡혔어.\n왜 그렇게 반반으로 보는지 — 이유를 따져보자.",
+            "coach_text": "좋아, 1번 생각판에 네 현재 입장이 올라갔어. 아직 망설이는 이유를 골라보자.",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "not_sure",
-                    "label": "장단이 있어서",
+                    "label": "피해도 이익도 둘 다 커 보여서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "need_more",
-                    "label": "더 알아봐야 해서",
+                    "label": "정확한 기준 없이 찬반만 나누기 어려워서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 말해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -244,273 +244,273 @@
         },
         "n_reason_why2": {
             "layer": "reason",
-            "coach_text": "그렇지. 근데 '왜' 못 건드릴까? 상대 입장에서 생각하면?",
+            "coach_text": "좋아. 그 이유를 조금 더 또렷하게 해보자. 네 생각의 중심에는 뭐가 있어?",
             "choices": [
                 {
                     "id": "fear_revenge",
-                    "label": "보복이 무서워서",
+                    "label": "사람들이 생활 피해를 실제로 떠안을 수 있다는 점",
                     "next": "n_reason_card",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: AI에 대한 반발과 규제 강화가 좋은가 나쁜가"
+                        "text": "② 근거: AI 확산의 비용을 시민과 노동자가 떠안을 수 있다"
                     }
                 },
                 {
                     "id": "intl_pressure",
-                    "label": "국제사회 비난",
+                    "label": "기술을 막으면 국가 경쟁력이 약해질 수 있다는 점",
                     "next": "n_reason_card_intl",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: AI에 대한 반발과 규제 강화가 좋은가 나쁜가"
+                        "text": "② 근거: AI를 마비시키면 경제·전략적 기회를 잃을 수 있다"
                     }
                 },
                 {
                     "id": "unsure_reason",
-                    "label": "음...",
+                    "label": "아직 어떤 근거가 더 큰지 확신은 없다",
                     "next": "n_reason_card",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: AI에 대한 반발과 규제 강화가 좋은가 나쁜가"
+                        "text": "② 근거: 피해와 기회 중 무엇이 더 큰지 아직 판단 중이다"
                     }
                 }
             ]
         },
         "n_reason_card": {
             "layer": "reason",
-            "coach_text": "완벽해. 이제 '입장'에 '근거'가 붙었어. **판을 봐** — 생각이 서기 시작했지?",
+            "coach_text": "좋아, 이제 2번 근거 카드도 올라갔어. 다음엔 그 근거가 언제까지 맞는지, 조건을 따져보자.",
             "board_pulse": "reason",
             "choices": [
                 {
                     "id": "see_board",
-                    "label": "판 보니까 그렇네",
+                    "label": "다음으로 갈게",
                     "next": "n_depth_0"
                 }
             ]
         },
         "n_reason_card_intl": {
             "layer": "reason",
-            "coach_text": "그것도 근거가 될 수 있지. 판에 적혔어. **판을 봐.**",
+            "coach_text": "좋아, 2번 근거 카드가 또렷해졌어. 이제 그 근거가 항상 맞는지, 어떤 조건이 필요한지 생각해보자.",
             "board_pulse": "reason",
             "choices": [
                 {
                     "id": "see_board",
-                    "label": "판 보니까 그렇네",
+                    "label": "조건을 따져보자",
                     "next": "n_depth_0"
                 }
             ]
         },
         "n_depth_0": {
             "layer": "depth",
-            "coach_text": "한 걸음 더.\n항상 그렇게만 될까? 예외는 없을까?",
+            "coach_text": "여기서 한 층 더 내려가 보자. AI를 막거나 푸는 방식이 실제로도 잘 작동할까?",
             "choices": [
                 {
                     "id": "wont_work",
-                    "label": "안 통할 것 같아",
+                    "label": "무조건 막는 방식은 잘 안 먹힐 것 같아",
                     "next": "n_depth_1"
                 },
                 {
                     "id": "still_works",
-                    "label": "그래도 통해",
+                    "label": "강한 규제가 꽤 효과 있을 수도 있어",
                     "next": "n_depth_1"
                 },
                 {
                     "id": "hard_depth",
-                    "label": "어렵다",
+                    "label": "상황에 따라 다를 것 같아",
                     "next": "n_depth_1"
                 }
             ]
         },
         "n_depth_1": {
             "layer": "depth",
-            "coach_text": "그럼 네 입장('핵=안전')은 — 무조건 맞는 건 아니게 되네?",
+            "coach_text": "좋아. 그럼 네 생각을 조건까지 붙여서 말해보면 어떤 쪽이야?",
             "choices": [
                 {
                     "id": "conditional",
-                    "label": "조건이 있네",
+                    "label": "고위험만 강하게 규제하고 나머지는 정밀하게 봐야 해",
                     "next": "n_depth_card",
                     "emit_card": {
                         "layer": "depth",
-                        "text": "조건이 있다 — 항상 통하지는 않음"
+                        "text": "③ 깊이: 무조건 봉쇄보다 고위험 중심의 정밀 규제가 더 현실적이다"
                     }
                 },
                 {
                     "id": "mostly_ok",
-                    "label": "그래도 대부분 맞아",
+                    "label": "전체적으로는 폭넓은 규제가 더 안전하다고 봐",
                     "next": "n_depth_card_mostly",
                     "emit_card": {
                         "layer": "depth",
-                        "text": "조건이 있다 — 항상 통하지는 않음"
+                        "text": "③ 깊이: 위험이 넓게 퍼질 수 있으니 폭넓은 규제가 낫다"
                     }
                 }
             ]
         },
         "n_depth_card": {
             "layer": "depth",
-            "coach_text": "봐, 처음엔 '핵=안전'이었는데 이제 '조건부'로 정교해졌어. **판을 봐.** 이게 따지는 거야.",
+            "coach_text": "좋아, 3번 깊이 카드까지 채워졌어. 이제 네 생각을 흔들 수 있는 질문을 만나보자.",
             "board_pulse": "depth",
             "choices": [
                 {
                     "id": "depth_ok",
-                    "label": "맞아, 정교해졌네",
+                    "label": "흔들림도 보자",
                     "next": "n_counter_0"
                 }
             ]
         },
         "n_depth_card_mostly": {
             "layer": "depth",
-            "coach_text": "그래도 '대부분'과 '항상'은 다르지. 판에 적혔어.",
+            "coach_text": "좋아, 3번 깊이 카드가 올라갔어. 이제 반대쪽에서 어떤 질문이 들어올 수 있을지 보자.",
             "board_pulse": "depth",
             "choices": [
                 {
                     "id": "depth_ok",
-                    "label": "계속 가보자",
+                    "label": "반론으로 가보자",
                     "next": "n_counter_0"
                 }
             ]
         },
         "n_counter_0": {
             "layer": "counter",
-            "coach_text": "그렇게 단순한 찬반 문제만은 아니야—미국에서 데이터센터 반대로 약 1,000억달러 규모 프로젝트가 무산됐지만, 글은 해고·전력요금·물 사용은 정확한 통계로 따지고 사이버공격·생물테러 같은 고위험만 강하게 규제하자고 말해.\n\n문제는 찬반 자체보다 누가 비용을 치르고 누가 이익을 가져가느냐는 정치경제와, 무조건적 봉쇄 대신 보상·정밀 규제·통계·공공 활용으로 수용성을 만들어야 한다는 점\n\n네가 아까 말한 입장 — 이 이야기에도 그대로 맞을까?",
+            "coach_text": "그런데 이렇게도 물을 수 있지 않을까? 사람들의 불안이 정당하더라도, 기술 전체를 세게 묶어 버리면 큰 이익과 기회를 함께 잃는 건 아닐까?",
             "choices": [
                 {
                     "id": "might_shake",
-                    "label": "흔들릴 것 같아",
+                    "label": "그 질문은 좀 흔들린다",
                     "next": "n_counter_still"
                 },
                 {
                     "id": "nuke_different",
-                    "label": "그래도 핵은 달라",
+                    "label": "그래도 손해보다 위험 예방이 먼저다",
                     "next": "n_counter_why"
                 },
                 {
                     "id": "unsure_counter",
-                    "label": "모르겠어",
+                    "label": "아직 뭐가 더 큰지 모르겠다",
                     "next": "n_counter_drone"
                 }
             ]
         },
         "n_counter_why": {
             "layer": "counter",
-            "coach_text": "왜 그렇게 봐? (답 강요 없어 — 네 생각대로)",
+            "coach_text": "왜 그 질문이 흔들렸어? 기술을 멈출 때 잃는 게 꽤 크다고 느껴서일까, 아니면 다른 방식이 가능해 보여서일까?",
             "choices": [
                 {
                     "id": "destruction",
-                    "label": "파괴력이 차원이 달라",
+                    "label": "경제·사회적 이익을 너무 많이 놓칠 수 있어서",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "can_defend",
-                    "label": "드론은 막을 수 있어",
+                    "label": "전면 봉쇄 말고 더 정교한 대응이 가능해 보여서",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_still": {
             "layer": "counter",
-            "coach_text": "솔직하네. 그래도 핵만큼 무서운 게 있을까?",
+            "coach_text": "그래도 이렇게도 되묻고 싶어. 막는다고 해서 비용 문제나 불신이 정말 사라질까? 오히려 보상과 분배 문제가 남는 건 아닐까?",
             "choices": [
                 {
                     "id": "maybe_not",
-                    "label": "없을 수도",
+                    "label": "맞아, 규제만으로는 해결이 안 될 수 있어",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "still_nuke",
-                    "label": "핵이 제일 무서워",
+                    "label": "그래도 일단 멈추는 게 우선이라고 봐",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_drone": {
             "layer": "counter",
-            "coach_text": "괜찮아. 천천히 보자. 드론 수천 대 vs 핵 — 뭐가 더 실제로 쓰일까?",
+            "coach_text": "또 이런 질문도 가능해. 데이터센터 반대, 해고 불안, 전력·물 걱정이 섞여 있다면, 이걸 전부 'AI 찬반'으로만 묶는 게 너무 거칠지 않을까?",
             "choices": [
                 {
                     "id": "drones_real",
-                    "label": "드론이 더 현실적",
+                    "label": "맞아, 문제를 나눠서 봐야 할 것 같아",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "nuke_deter",
-                    "label": "핵이 억지해",
+                    "label": "아니, 그래도 전체 흐름을 강하게 눌러야 해",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_hard": {
             "layer": "counter",
-            "coach_text": "일리 있어. 근데 — '쓸 수 있느냐'는 다른 문제 아닐까?\n핵을 진짜 쏘면 자기도 끝이잖아.",
+            "coach_text": "그럼 반대편의 핵심 질문은 이거야. 정말 필요한 건 찬반 결판이 아니라, 누가 비용을 치르고 누가 이익을 가져가는지 따지고 고위험만 강하게 규제하는 설계 아닐까?",
             "choices": [
                 {
                     "id": "true_hard",
-                    "label": "그건 그렇네",
+                    "label": "그 질문은 중요해 보인다",
                     "next": "n_counter_card",
                     "emit_card": {
                         "layer": "counter",
-                        "text": "문제는 찬반 자체보다 누가 비용을 치르고 누가 이익을 가져가느냐는 정치경제와, 무조건적 …"
+                        "text": "④ 반론: 핵심은 찬반보다 비용·이익의 배분과 정밀 규제일 수 있다"
                     }
                 },
                 {
                     "id": "still_deter",
-                    "label": "그래도 억지는 돼",
+                    "label": "그래도 큰 방향은 강한 억제가 먼저라고 본다",
                     "next": "n_counter_card_deter",
                     "emit_card": {
                         "layer": "counter",
-                        "text": "문제는 찬반 자체보다 누가 비용을 치르고 누가 이익을 가져가느냐는 정치경제와, 무조건적 …"
+                        "text": "④ 반론 대응: 배분 문제를 인정해도 강한 규제가 우선이라는 생각은 남는다"
                     }
                 }
             ]
         },
         "n_counter_card": {
             "layer": "counter",
-            "coach_text": "반론과 네 답이 판에 쌓였어. **판을 봐.**",
+            "coach_text": "좋아, 4번 반론 카드가 올라갔어. 이제 흔들린 부분을 반영해서 네 입장을 다시 다듬어보자.",
             "board_pulse": "counter",
             "choices": [
                 {
                     "id": "counter_ok",
-                    "label": "계속 정리하자",
+                    "label": "입장을 다시 정리해볼게",
                     "next": "n_refine_0"
                 }
             ]
         },
         "n_counter_card_deter": {
             "layer": "counter",
-            "coach_text": "그 관점도 판에 적혔어.",
+            "coach_text": "좋아, 4번 반론 카드까지 채웠어. 이제도 처음 생각을 유지할지, 조금 고칠지 정리해보자.",
             "board_pulse": "counter",
             "choices": [
                 {
                     "id": "counter_ok",
-                    "label": "계속 정리하자",
+                    "label": "다듬어보자",
                     "next": "n_refine_0"
                 }
             ]
         },
         "n_refine_0": {
             "layer": "refine",
-            "coach_text": "자, **판을 다시 봐.** 처음 생각에서 많이 왔어.\n① 입장 → ② 근거 → ③ 깊이 → ④ 반론\n이제 네 생각을 다시 정리하면, 어떻게 바뀌었어?",
+            "coach_text": "지금 생각판을 보면 처음 입장과 반론이 같이 올라와 있어. 그래서 네 생각은 어떻게 달라졌어?",
             "board_diff": true,
             "choices": [
                 {
                     "id": "limits",
-                    "label": "핵은 안전을 주지만 한계가 있다",
+                    "label": "무조건 찬반보다 보상·통계·정밀 규제가 중요해 보인다",
                     "next": "n_refine_card",
                     "emit_card": {
                         "layer": "refine",
-                        "text": "처음 생각보다 정교해졌다"
+                        "text": "⑤ 재정립: AI는 전면 봉쇄보다 보상과 정밀 규제로 다뤄야 한다"
                     }
                 },
                 {
                     "id": "still_best",
-                    "label": "여전히 핵이 최선이다",
+                    "label": "그래도 강한 규제 중심이 더 낫다고 본다",
                     "next": "n_refine_card_best",
                     "emit_card": {
                         "layer": "refine",
-                        "text": "처음 생각보다 정교해졌다"
+                        "text": "⑤ 재정립: 반론을 들어도 강한 규제가 기본이어야 한다"
                     }
                 },
                 {
                     "id": "refine_free",
-                    "label": "직접 쓸게",
+                    "label": "내 말로 다시 정리해볼게",
                     "next": "n_refine_input",
                     "input_mode": "text",
                     "emit_card_on_message": {
@@ -521,31 +521,31 @@
         },
         "n_refine_card": {
             "layer": "refine",
-            "coach_text": "스스로 여기까지 왔어. 처음 '핵=안전'에서 훨씬 정교해졌지?",
+            "coach_text": "좋아, 5번 재정립 카드가 올라갔어. 이제 마지막으로 한 문장 결론을 만들 차례야.",
             "board_pulse": "refine",
             "choices": [
                 {
                     "id": "refine_ok",
-                    "label": "맞아",
+                    "label": "마무리하자",
                     "next": "n_synth_0"
                 }
             ]
         },
         "n_refine_card_best": {
             "layer": "refine",
-            "coach_text": "네 정리가 판에 적혔어. 한번 더 따져보자.",
+            "coach_text": "좋아, 5번 재정립 카드까지 채웠어. 이제 네 최종 판단을 문장으로 묶어보자.",
             "board_pulse": "refine",
             "choices": [
                 {
                     "id": "refine_ok",
-                    "label": "계속",
+                    "label": "최종 정리로 가자",
                     "next": "n_synth_0"
                 }
             ]
         },
         "n_refine_input": {
             "layer": "refine",
-            "coach_text": "네 말로 정리해 봐 — 지금 네 생각은?",
+            "coach_text": "좋아. 생각판을 보고, 처음보다 어떻게 생각이 달라졌는지 한두 문장으로 적어봐.",
             "input_mode": "text",
             "emit_card_on_message": {
                 "layer": "refine"
@@ -554,7 +554,7 @@
         },
         "n_synth_0": {
             "layer": "synthesis",
-            "coach_text": "마지막. 이 모든 걸 **한 문장**으로 — 네 결론은?\n(직접 써 봐)",
+            "coach_text": "이제 1~5번 생각판을 바탕으로 6번 종합을 만들자. 'AI를 막을지 말지'만 말하지 말고, 불안의 이유와 어떤 방식의 대응이 더 나은지도 넣어서 네 결론을 써봐.",
             "input_mode": "text",
             "emit_card_on_message": {
                 "layer": "synthesis"
@@ -563,21 +563,23 @@
         },
         "n_synth_compose": {
             "layer": "synthesis",
-            "coach_text": "이게 네가 10분 넘게 따져서 만든 결론이야.\n누가 준 게 아니라, **네가 쌓은 거**지.\n자 — 이 생각판을 바탕으로 한 편의 글을 써볼까?\n판에 있는 ①~⑥이 그대로 네 글의 뼈대가 될 거야.",
+            "coach_text": "좋아, 이제 생각판이 거의 다 모였어. 마지막 문장으로 네 관점을 완성해보자.",
             "board_pulse": "synthesis",
             "choices": [
                 {
                     "id": "go_compose",
-                    "label": "글 쓰러 가기",
+                    "label": "최종 문장 만들기",
                     "next": "n_compose"
                 }
             ]
         },
         "n_compose": {
             "layer": "synthesis",
-            "terminal": true
+            "terminal": true,
+            "coach_text": "정리 잘했어. 오늘 결론은 'AI 찬반' 자체보다, 불안을 만든 비용과 이익의 배분, 그리고 전면 봉쇄 대신 어떤 정밀한 규제와 보상이 가능한지까지 본 데 의미가 있어."
         }
     },
-    "llm_followup_fallback": "그렇구나. 한 가지만 더 — 그 말을 한 문장으로 정리하면?",
-    "generated_by": "narrative_v2_generate_rule_v1"
+    "generated_by": "narrative_v2_generate_llm_v2",
+    "llm_followup_fallback": "좋아, 그 이유도 생각판에 올릴 만한 근거야. 그 생각이 네 입장을 어떻게 떠받치는지 한 번만 더 또렷하게 잡아보자.",
+    "llm_philosophy_notes": "반론은 질문으로만 흔들고, 학생이 스스로 찬반을 넘어 배분·보상·정밀 규제로 재정립하도록 구성했다."
 }

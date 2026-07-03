@@ -55,142 +55,142 @@
     "nodes": {
         "n_intro": {
             "layer": "intro",
-            "coach_text": "청소년 AI 위험, 사용 시간만 보면 될까?\n\n많은 사람은 \"청소년 AI 사용은 시간 제한이나 금지로 관리해야 한다\"라고 생각해.\n\n청소년의 AI 위험은 사용 시간이 아니라, 각자의 사회적·정서적 환경 속에서 AI가 어떤 역할을 하느냐에 따라 달라진다\n\n왜 그렇게 생각할까?",
+            "coach_text": "2025년 미국의 대규모 조사에서는 청소년과 청년의 AI 사용을 단순히 시간만 보지 않고, 무엇에 쓰는지와 생활환경, 정서 상태까지 함께 살폈어. 결과는 같은 AI라도 누구에게는 기회가 되고, 누구에게는 정서적 의존에 가까운 역할을 하기도 했다는 점이었지. 그렇다면 청소년 AI 위험, 사용 시간만 보면 될까?",
             "choices": [
                 {
                     "id": "nuclear_fear",
-                    "label": "A 쪽이 더 와닿아",
+                    "label": "오래 쓰면 위험해질 수 있어서",
                     "next": "n_stance_bridge_fear"
                 },
                 {
                     "id": "just_luck",
-                    "label": "B 쪽도 설명돼",
+                    "label": "시간보다 각자 처한 상황이 더 중요해서",
                     "next": "n_stance_bridge_luck"
                 },
                 {
                     "id": "other_reason",
-                    "label": "다른 이유",
+                    "label": "다른 이유가 더 있을 것 같아서",
                     "next": "n_stance_bridge_other"
                 }
             ]
         },
         "n_stance_bridge_fear": {
             "layer": "stance",
-            "coach_text": "좋아, 청소년 AI 사용은 시간 제한이나 금지로 관리해야 한다에서 시작해보자.\n청소년 AI 사용에 대한 바람직한 관리 방안 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아, 우선은 '시간이 길수록 위험할 수 있다'는 생각에서 시작해보자. 그러면 관리 방식도 제한이나 금지 쪽이 맞는지 골라보자.",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "제한이나 금지가 필요하다고 본다",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "청소년 AI 사용은 시간 제한이나 금지로 관리해야 한다"
+                        "text": "① 입장: 청소년 AI 사용은 제한이나 금지로 관리해야 한다."
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "제한·금지만으로 보면 안 된다고 본다",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "청소년 AI 사용은 시간 제한이나 금지로 관리해야 한다"
+                        "text": "① 입장: 청소년 AI 관리는 시간 제한보다 맥락을 먼저 봐야 한다."
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "어느 한쪽으로 바로 정하긴 어렵다",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "청소년 AI 사용은 시간 제한이나 금지로 관리해야 한다"
+                        "text": "① 입장: 제한도 필요하지만 그것만으로는 부족할 수 있다."
                     }
                 }
             ]
         },
         "n_stance_bridge_luck": {
             "layer": "stance",
-            "coach_text": "좋아, 청소년 AI 사용은 시간 제한이나 금지로 관리해야 한다에서 시작해보자.\n청소년 AI 사용에 대한 바람직한 관리 방안 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아, 너는 시간보다 각자의 환경이 더 중요할 수 있다고 본 거네. 그럼 관리 방안에 대한 네 기본 입장을 골라보자.",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "그래도 제한이나 금지가 중심이어야 한다",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "청소년 AI 사용은 시간 제한이나 금지로 관리해야 한다"
+                        "text": "① 입장: 청소년 AI 사용은 제한이나 금지로 관리해야 한다."
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "제한보다 개인 상황을 보는 관리가 중요하다",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "청소년 AI 사용은 시간 제한이나 금지로 관리해야 한다"
+                        "text": "① 입장: 청소년 AI 관리는 시간 제한보다 맥락을 먼저 봐야 한다."
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "둘 다 함께 봐야 할 것 같다",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "청소년 AI 사용은 시간 제한이나 금지로 관리해야 한다"
+                        "text": "① 입장: 제한도 필요하지만 그것만으로는 부족할 수 있다."
                     }
                 }
             ]
         },
         "n_stance_bridge_other": {
             "layer": "stance",
-            "coach_text": "좋아, 청소년 AI 사용은 시간 제한이나 금지로 관리해야 한다에서 시작해보자.\n청소년 AI 사용에 대한 바람직한 관리 방안 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아, 다른 이유가 있다고 본 거네. 이제 청소년 AI를 어떻게 관리하는 게 바람직한지 네 입장을 먼저 세워보자.",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "제한이나 금지 중심으로 가야 한다",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "청소년 AI 사용은 시간 제한이나 금지로 관리해야 한다"
+                        "text": "① 입장: 청소년 AI 사용은 제한이나 금지로 관리해야 한다."
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "상황별 지원과 지도가 더 중요하다",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "청소년 AI 사용은 시간 제한이나 금지로 관리해야 한다"
+                        "text": "① 입장: 청소년 AI 관리는 시간 제한보다 맥락을 먼저 봐야 한다."
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "아직은 둘 사이에서 고민된다",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "청소년 AI 사용은 시간 제한이나 금지로 관리해야 한다"
+                        "text": "① 입장: 제한도 필요하지만 그것만으로는 부족할 수 있다."
                     }
                 }
             ]
         },
         "n_stance_card": {
             "layer": "stance",
-            "coach_text": "좋아, 네 입장이 잡혔어. (판에 적혔지)\n근데 그냥 믿는 것과 따지는 건 다르잖아. 하나씩 파보자.\n\n왜 핵이 있으면 안전하다고 생각해?",
+            "coach_text": "좋아, 1칸에 네 입장이 올라갔어. 왜 제한이나 금지가 필요하다고 보는지 가장 가까운 이유를 골라보자.",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "cant_touch",
-                    "label": "아무도 못 건드려서",
+                    "label": "청소년은 스스로 조절하기 어려울 수 있어서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "stop_war",
-                    "label": "전쟁을 막아서",
+                    "label": "과도한 사용이 학습·생활을 무너뜨릴 수 있어서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 말해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -198,22 +198,22 @@
         },
         "n_stance_card_no": {
             "layer": "stance",
-            "coach_text": "신중하네. 네 입장이 판에 잡혔어.\n왜 핵 없이도 괜찮다고 보는지 — 이유를 따져보자.",
+            "coach_text": "좋아, 1칸에 네 입장이 올라갔어. 왜 제한·금지만으로는 부족하다고 보는지 골라보자.",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "alliance",
-                    "label": "동맹이 있어서",
+                    "label": "같은 사용 시간이어도 영향이 다를 수 있어서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "danger",
-                    "label": "핵이 오히려 위험해서",
+                    "label": "AI가 누군가에겐 도움과 기회가 될 수 있어서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 말해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -221,22 +221,22 @@
         },
         "n_stance_card_half": {
             "layer": "stance",
-            "coach_text": "솔직하네. 입장이 판에 잡혔어.\n왜 그렇게 반반으로 보는지 — 이유를 따져보자.",
+            "coach_text": "좋아, 1칸에 네 입장이 올라갔어. 왜 아직 반반이라고 느끼는지 골라보자.",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "not_sure",
-                    "label": "장단이 있어서",
+                    "label": "위험도 있지만 도움도 있을 것 같아서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "need_more",
-                    "label": "더 알아봐야 해서",
+                    "label": "누구에게 어떻게 다른지 더 봐야 해서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 말해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -244,273 +244,273 @@
         },
         "n_reason_why2": {
             "layer": "reason",
-            "coach_text": "그렇지. 근데 '왜' 못 건드릴까? 상대 입장에서 생각하면?",
+            "coach_text": "좋아. 이제 네 주장의 근거를 한 번 더 또렷하게 해보자. 어떤 설명이 가장 잘 맞아?",
             "choices": [
                 {
                     "id": "fear_revenge",
-                    "label": "보복이 무서워서",
+                    "label": "문제는 사용량보다 외로움·스트레스 같은 배경일 수 있다",
                     "next": "n_reason_card",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 청소년 AI 사용은 시간 제한이나 금지로 관리해야 한다"
+                        "text": "② 근거: AI의 영향은 사용 시간보다 청소년의 정서·생활 배경에 따라 달라질 수 있다."
                     }
                 },
                 {
                     "id": "intl_pressure",
-                    "label": "국제사회 비난",
+                    "label": "같은 AI도 어떤 용도로 쓰는지가 더 중요하다",
                     "next": "n_reason_card_intl",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 청소년 AI 사용은 시간 제한이나 금지로 관리해야 한다"
+                        "text": "② 근거: 단순 사용 시간보다 사용 목적과 역할을 함께 봐야 한다."
                     }
                 },
                 {
                     "id": "unsure_reason",
-                    "label": "음...",
+                    "label": "아직 이유를 하나로 정리하긴 어렵다",
                     "next": "n_reason_card",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 청소년 AI 사용은 시간 제한이나 금지로 관리해야 한다"
+                        "text": "② 근거: 시간만으로 판단하기 어렵다는 점은 보이지만 이유는 더 생각 중이다."
                     }
                 }
             ]
         },
         "n_reason_card": {
             "layer": "reason",
-            "coach_text": "완벽해. 이제 '입장'에 '근거'가 붙었어. **판을 봐** — 생각이 서기 시작했지?",
+            "coach_text": "좋아, 2칸에 근거가 올라갔어. 이제 그 근거를 바탕으로 '언제 정말 위험해지는지'를 더 따져보자.",
             "board_pulse": "reason",
             "choices": [
                 {
                     "id": "see_board",
-                    "label": "판 보니까 그렇네",
+                    "label": "다음으로 생각 이어가기",
                     "next": "n_depth_0"
                 }
             ]
         },
         "n_reason_card_intl": {
             "layer": "reason",
-            "coach_text": "그것도 근거가 될 수 있지. 판에 적혔어. **판을 봐.**",
+            "coach_text": "좋아, 2칸에 근거가 올라갔어. 이제 AI가 어떤 조건에서 문제 또는 기회가 되는지 한 번 더 깊게 가보자.",
             "board_pulse": "reason",
             "choices": [
                 {
                     "id": "see_board",
-                    "label": "판 보니까 그렇네",
+                    "label": "깊이 생각해보기",
                     "next": "n_depth_0"
                 }
             ]
         },
         "n_depth_0": {
             "layer": "depth",
-            "coach_text": "한 걸음 더.\n항상 그렇게만 될까? 예외는 없을까?",
+            "coach_text": "그렇다면 청소년 AI를 시간 제한만으로 관리하는 방식은 충분할까?",
             "choices": [
                 {
                     "id": "wont_work",
-                    "label": "안 통할 것 같아",
+                    "label": "아니, 그것만으로는 잘 안 맞을 수 있다",
                     "next": "n_depth_1"
                 },
                 {
                     "id": "still_works",
-                    "label": "그래도 통해",
+                    "label": "그래도 기본 관리로는 꽤 효과가 있다",
                     "next": "n_depth_1"
                 },
                 {
                     "id": "hard_depth",
-                    "label": "어렵다",
+                    "label": "상황에 따라 다를 것 같다",
                     "next": "n_depth_1"
                 }
             ]
         },
         "n_depth_1": {
             "layer": "depth",
-            "coach_text": "그럼 네 입장('핵=안전')은 — 무조건 맞는 건 아니게 되네?",
+            "coach_text": "좋아. 그 생각을 3칸으로 정리해보자. 어떤 말이 네 생각에 더 가까워?",
             "choices": [
                 {
                     "id": "conditional",
-                    "label": "조건이 있네",
+                    "label": "외로움·스트레스·지원 부족이 있으면 AI 역할이 달라진다",
                     "next": "n_depth_card",
                     "emit_card": {
                         "layer": "depth",
-                        "text": "조건이 있다 — 항상 통하지는 않음"
+                        "text": "③ 깊이: 위험은 시간 자체보다 AI가 외로움, 스트레스, 관계 부족을 대신하는 상황에서 커질 수 있다."
                     }
                 },
                 {
                     "id": "mostly_ok",
-                    "label": "그래도 대부분 맞아",
+                    "label": "그래도 대부분은 일정한 제한이 있으면 괜찮다",
                     "next": "n_depth_card_mostly",
                     "emit_card": {
                         "layer": "depth",
-                        "text": "조건이 있다 — 항상 통하지는 않음"
+                        "text": "③ 깊이: 개인차가 있어도 기본적인 시간 제한은 넓게 적용할 수 있는 관리일 수 있다."
                     }
                 }
             ]
         },
         "n_depth_card": {
             "layer": "depth",
-            "coach_text": "봐, 처음엔 '핵=안전'이었는데 이제 '조건부'로 정교해졌어. **판을 봐.** 이게 따지는 거야.",
+            "coach_text": "좋아, 3칸까지 왔어. 이제 본문이 보여준 복잡한 점으로 네 생각을 살짝 흔들어보자.",
             "board_pulse": "depth",
             "choices": [
                 {
                     "id": "depth_ok",
-                    "label": "맞아, 정교해졌네",
+                    "label": "반론으로 가보기",
                     "next": "n_counter_0"
                 }
             ]
         },
         "n_depth_card_mostly": {
             "layer": "depth",
-            "coach_text": "그래도 '대부분'과 '항상'은 다르지. 판에 적혔어.",
+            "coach_text": "좋아, 3칸까지 정리됐어. 이제 '시간 제한만으로 충분한가'를 다시 흔드는 질문으로 넘어가보자.",
             "board_pulse": "depth",
             "choices": [
                 {
                     "id": "depth_ok",
-                    "label": "계속 가보자",
+                    "label": "흔들기 질문 보기",
                     "next": "n_counter_0"
                 }
             ]
         },
         "n_counter_0": {
             "layer": "counter",
-            "coach_text": "2025년 미국 대규모 조사에서 AI 효과는 사용 시간보다 개인의 삶의 조건과 정서적 환경에 따라 크게 달라졌다고 본문은 적는다.\n\n같은 AI라도 정서적·사회적 맥락에 따라 기회가 되기도 하고 정서적 대체재가 되기도 한다\n\n네가 아까 말한 입장 — 이 이야기에도 그대로 맞을까?",
+            "coach_text": "그런데 본문은 많이 쓴다고 꼭 더 위험한 것도 아니고, 적게 쓴다고 꼭 더 건강한 것도 아니었다고 했어. 그렇다면 사용 시간만으로 위험을 가르는 방식은 놓치는 게 있지 않을까?",
             "choices": [
                 {
                     "id": "might_shake",
-                    "label": "흔들릴 것 같아",
+                    "label": "맞아, 그 질문은 생각을 흔든다",
                     "next": "n_counter_still"
                 },
                 {
                     "id": "nuke_different",
-                    "label": "그래도 핵은 달라",
+                    "label": "그래도 시간 기준은 필요하다고 본다",
                     "next": "n_counter_why"
                 },
                 {
                     "id": "unsure_counter",
-                    "label": "모르겠어",
+                    "label": "아직 어떻게 봐야 할지 모르겠다",
                     "next": "n_counter_drone"
                 }
             ]
         },
         "n_counter_why": {
             "layer": "counter",
-            "coach_text": "왜 그렇게 봐? (답 강요 없어 — 네 생각대로)",
+            "coach_text": "무엇이 가장 걸렸어? 같은 시간을 써도 누군가는 학습 도구로, 누군가는 감정 기댈 곳으로 쓸 수 있다면 관리 기준도 달라져야 하지 않을까?",
             "choices": [
                 {
                     "id": "destruction",
-                    "label": "파괴력이 차원이 달라",
+                    "label": "응, AI가 대신하는 역할 자체를 봐야 할 것 같다",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "can_defend",
-                    "label": "드론은 막을 수 있어",
+                    "label": "그래도 공통 기준이 없으면 관리가 어려울 것 같다",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_still": {
             "layer": "counter",
-            "coach_text": "솔직하네. 그래도 핵만큼 무서운 게 있을까?",
+            "coach_text": "그렇다면 이렇게도 물을 수 있어. 누군가에게 AI가 기회이기도 하다면, 일괄 금지나 강한 제한은 도움이 필요한 청소년의 길까지 막을 수 있지 않을까?",
             "choices": [
                 {
                     "id": "maybe_not",
-                    "label": "없을 수도",
+                    "label": "맞아, 모두에게 똑같이 막는 건 거칠 수 있다",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "still_nuke",
-                    "label": "핵이 제일 무서워",
+                    "label": "그래도 우선 막아두는 편이 안전하다고 본다",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_drone": {
             "layer": "counter",
-            "coach_text": "괜찮아. 천천히 보자. 드론 수천 대 vs 핵 — 뭐가 더 실제로 쓰일까?",
+            "coach_text": "또 한편으론, 시간 제한이 있어도 외로움이나 스트레스가 그대로면 AI가 맡는 역할은 계속 커질 수 있지 않을까?",
             "choices": [
                 {
                     "id": "drones_real",
-                    "label": "드론이 더 현실적",
+                    "label": "맞아, 배경 문제를 함께 봐야 한다",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "nuke_deter",
-                    "label": "핵이 억지해",
+                    "label": "그래도 시간부터 줄이는 게 첫걸음일 수 있다",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_hard": {
             "layer": "counter",
-            "coach_text": "일리 있어. 근데 — '쓸 수 있느냐'는 다른 문제 아닐까?\n핵을 진짜 쏘면 자기도 끝이잖아.",
+            "coach_text": "좋아, 이제 4칸 반론을 골라보자. 어떤 흔들기가 네 생각을 가장 크게 건드렸어?",
             "choices": [
                 {
                     "id": "true_hard",
-                    "label": "그건 그렇네",
+                    "label": "AI 위험은 시간보다 그 아이의 환경과 감정 상태에 달릴 수 있다",
                     "next": "n_counter_card",
                     "emit_card": {
                         "layer": "counter",
-                        "text": "같은 AI라도 정서적·사회적 맥락에 따라 기회가 되기도 하고 정서적 대체재가 되기도 한다"
+                        "text": "④ 반론: 같은 사용 시간이어도 사회적·정서적 환경에 따라 AI의 영향은 크게 달라질 수 있다."
                     }
                 },
                 {
                     "id": "still_deter",
-                    "label": "그래도 억지는 돼",
+                    "label": "그래도 현실에서는 공통된 시간 기준이 가장 다루기 쉽다",
                     "next": "n_counter_card_deter",
                     "emit_card": {
                         "layer": "counter",
-                        "text": "같은 AI라도 정서적·사회적 맥락에 따라 기회가 되기도 하고 정서적 대체재가 되기도 한다"
+                        "text": "④ 반론: 개인차를 알아도 실제 관리에서는 시간 기준이 가장 간단한 수단일 수 있다."
                     }
                 }
             ]
         },
         "n_counter_card": {
             "layer": "counter",
-            "coach_text": "반론과 네 답이 판에 쌓였어. **판을 봐.**",
+            "coach_text": "좋아, 4칸에 흔들기가 들어갔어. 이제 네 처음 입장을 버리지 않으면서도 더 정교하게 바꿔볼래?",
             "board_pulse": "counter",
             "choices": [
                 {
                     "id": "counter_ok",
-                    "label": "계속 정리하자",
+                    "label": "내 입장 다듬기",
                     "next": "n_refine_0"
                 }
             ]
         },
         "n_counter_card_deter": {
             "layer": "counter",
-            "coach_text": "그 관점도 판에 적혔어.",
+            "coach_text": "좋아, 4칸까지 채웠어. 이제 반론을 본 뒤에도 네 주장을 어떻게 다시 세울지 생각해보자.",
             "board_pulse": "counter",
             "choices": [
                 {
                     "id": "counter_ok",
-                    "label": "계속 정리하자",
+                    "label": "재정립하기",
                     "next": "n_refine_0"
                 }
             ]
         },
         "n_refine_0": {
             "layer": "refine",
-            "coach_text": "자, **판을 다시 봐.** 처음 생각에서 많이 왔어.\n① 입장 → ② 근거 → ③ 깊이 → ④ 반론\n이제 네 생각을 다시 정리하면, 어떻게 바뀌었어?",
+            "coach_text": "생각판을 보면 처음 입장과 반론이 같이 보여. 이제 5칸에서는 네 주장을 어떻게 다듬고 싶어?",
             "board_diff": true,
             "choices": [
                 {
                     "id": "limits",
-                    "label": "핵은 안전을 주지만 한계가 있다",
+                    "label": "제한은 하되, 개인 상황을 함께 봐야 한다",
                     "next": "n_refine_card",
                     "emit_card": {
                         "layer": "refine",
-                        "text": "처음 생각보다 정교해졌다"
+                        "text": "⑤ 재정립: 기본 제한은 둘 수 있지만, 청소년의 정서·사회적 맥락을 함께 살피는 관리가 필요하다."
                     }
                 },
                 {
                     "id": "still_best",
-                    "label": "여전히 핵이 최선이다",
+                    "label": "그래도 제한·금지가 가장 분명한 기준이다",
                     "next": "n_refine_card_best",
                     "emit_card": {
                         "layer": "refine",
-                        "text": "처음 생각보다 정교해졌다"
+                        "text": "⑤ 재정립: 개인차가 있어도 우선은 제한·금지 중심 관리가 가장 현실적이라고 본다."
                     }
                 },
                 {
                     "id": "refine_free",
-                    "label": "직접 쓸게",
+                    "label": "내 말로 다시 정리해볼게",
                     "next": "n_refine_input",
                     "input_mode": "text",
                     "emit_card_on_message": {
@@ -521,31 +521,31 @@
         },
         "n_refine_card": {
             "layer": "refine",
-            "coach_text": "스스로 여기까지 왔어. 처음 '핵=안전'에서 훨씬 정교해졌지?",
+            "coach_text": "좋아, 5칸이 정리됐어. 마지막으로 네 최종 판단을 한 문장으로 묶어보자.",
             "board_pulse": "refine",
             "choices": [
                 {
                     "id": "refine_ok",
-                    "label": "맞아",
+                    "label": "최종 정리로 가기",
                     "next": "n_synth_0"
                 }
             ]
         },
         "n_refine_card_best": {
             "layer": "refine",
-            "coach_text": "네 정리가 판에 적혔어. 한번 더 따져보자.",
+            "coach_text": "좋아, 5칸이 정리됐어. 이제 제한 중심 입장을 유지하되 어떤 점을 인정하는지까지 담아보자.",
             "board_pulse": "refine",
             "choices": [
                 {
                     "id": "refine_ok",
-                    "label": "계속",
+                    "label": "최종 정리로 가기",
                     "next": "n_synth_0"
                 }
             ]
         },
         "n_refine_input": {
             "layer": "refine",
-            "coach_text": "네 말로 정리해 봐 — 지금 네 생각은?",
+            "coach_text": "좋아. 5칸 재정립을 네 말로 짧게 써봐. 처음 생각에서 무엇을 유지했고, 무엇을 고쳤는지 적어보면 돼.",
             "input_mode": "text",
             "emit_card_on_message": {
                 "layer": "refine"
@@ -554,7 +554,7 @@
         },
         "n_synth_0": {
             "layer": "synthesis",
-            "coach_text": "마지막. 이 모든 걸 **한 문장**으로 — 네 결론은?\n(직접 써 봐)",
+            "coach_text": "이제 1~5칸을 보고 6칸 종합을 써보자. '청소년 AI 사용은 어떻게 관리하는 게 바람직한가'에 대한 네 최종 입장을 2~3문장으로 정리해봐.",
             "input_mode": "text",
             "emit_card_on_message": {
                 "layer": "synthesis"
@@ -563,21 +563,23 @@
         },
         "n_synth_compose": {
             "layer": "synthesis",
-            "coach_text": "이게 네가 10분 넘게 따져서 만든 결론이야.\n누가 준 게 아니라, **네가 쌓은 거**지.\n자 — 이 생각판을 바탕으로 한 편의 글을 써볼까?\n판에 있는 ①~⑥이 그대로 네 글의 뼈대가 될 거야.",
+            "coach_text": "좋아, 생각판이 거의 완성됐어. 마지막 문장으로 네 답을 또렷하게 만들어보자.",
             "board_pulse": "synthesis",
             "choices": [
                 {
                     "id": "go_compose",
-                    "label": "글 쓰러 가기",
+                    "label": "최종 답안 만들기",
                     "next": "n_compose"
                 }
             ]
         },
         "n_compose": {
             "layer": "synthesis",
-            "terminal": true
+            "terminal": true,
+            "coach_text": "좋아. 네 생각은 '사용 시간'만이 아니라 'AI가 그 청소년 삶에서 어떤 역할을 하느냐'까지 보려는 쪽으로 깊어졌어. 이제 그 흐름대로 최종 답안을 완성하면 돼."
         }
     },
-    "llm_followup_fallback": "그렇구나. 한 가지만 더 — 그 말을 한 문장으로 정리하면?",
-    "generated_by": "narrative_v2_generate_rule_v1"
+    "generated_by": "narrative_v2_generate_llm_v2",
+    "llm_followup_fallback": "좋아, 그 이유도 생각판에 잘 들어갈 수 있어. 방금 말한 핵심이 시간 때문인지, 사용 맥락 때문인지 한 번만 더 분명히 해보자.",
+    "llm_philosophy_notes": "입장→근거→깊이→반론→재정립→종합의 6층을 유지했고, 반론은 결론 대신 질문으로만 흔들었습니다."
 }

@@ -55,142 +55,142 @@
     "nodes": {
         "n_intro": {
             "layer": "intro",
-            "coach_text": "미국 주식시장은 그냥 좀 비싼 걸까?\n\n많은 사람은 \"미국 증시가 단순히 고평가됐는가\"라고 생각해.\n\n미국 증시가 단순히 비싼가의 문제이지만, 실제로는 옵션 시장이 헤지보다 투기로 기울며 집단적 도취 국면으로 들어섰다\n\n왜 그렇게 생각할까?",
+            "coach_text": "미국 증시는 오래 올랐고, 그래서 비싸 보인다는 말이 많아요. 그런데 기사에서는 이제 단순한 고평가를 넘어, 옵션 시장에서 아주 짧은 베팅이 몰리며 분위기 자체가 달라졌다고 봅니다. 미국 주식시장은 그냥 좀 비싼 걸까?",
             "choices": [
                 {
                     "id": "nuclear_fear",
-                    "label": "A 쪽이 더 와닿아",
+                    "label": "응, 일단 비싸진 시장 같아",
                     "next": "n_stance_bridge_fear"
                 },
                 {
                     "id": "just_luck",
-                    "label": "B 쪽도 설명돼",
+                    "label": "아니, 그냥 비싼 수준은 넘은 듯해",
                     "next": "n_stance_bridge_luck"
                 },
                 {
                     "id": "other_reason",
-                    "label": "다른 이유",
+                    "label": "잘 모르겠어, 더 따져보고 싶어",
                     "next": "n_stance_bridge_other"
                 }
             ]
         },
         "n_stance_bridge_fear": {
             "layer": "stance",
-            "coach_text": "좋아, 미국 증시가 단순히 고평가됐는가에서 시작해보자.\n광란의 국면에 들어선 미국 주식시장 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아. 그럼 지금 시장을 어떻게 볼지 먼저 입장을 골라보자.",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "주로 고평가 시장이라고 본다",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "미국 증시가 단순히 고평가됐는가"
+                        "text": "① 입장: 지금 미국 증시는 주로 고평가 상태다"
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "고평가를 넘어 도취 국면에 가깝다",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "미국 증시가 단순히 고평가됐는가"
+                        "text": "① 입장: 지금 미국 증시는 고평가를 넘어 도취 국면에 가깝다"
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "둘 다 섞여 있어서 애매하다",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "미국 증시가 단순히 고평가됐는가"
+                        "text": "① 입장: 고평가와 도취가 섞여 있어 단정하기 어렵다"
                     }
                 }
             ]
         },
         "n_stance_bridge_luck": {
             "layer": "stance",
-            "coach_text": "좋아, 미국 증시가 단순히 고평가됐는가에서 시작해보자.\n광란의 국면에 들어선 미국 주식시장 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아. 너는 이미 단순 고평가를 넘었다고 느끼는구나. 그 느낌을 입장으로 잡아보자.",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "그래도 핵심은 고평가라고 본다",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "미국 증시가 단순히 고평가됐는가"
+                        "text": "① 입장: 핵심 문제는 여전히 고평가다"
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "이제는 도취 국면이 더 핵심 같다",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "미국 증시가 단순히 고평가됐는가"
+                        "text": "① 입장: 이제는 도취 국면이 더 핵심이다"
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "고평가와 도취가 함께 간다",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "미국 증시가 단순히 고평가됐는가"
+                        "text": "① 입장: 고평가와 도취가 함께 진행 중이다"
                     }
                 }
             ]
         },
         "n_stance_bridge_other": {
             "layer": "stance",
-            "coach_text": "좋아, 미국 증시가 단순히 고평가됐는가에서 시작해보자.\n광란의 국면에 들어선 미국 주식시장 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아. 헷갈릴수록 기준을 세우는 게 중요해. 지금 네 첫 입장을 골라보자.",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "일단 고평가 쪽에 무게를 둔다",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "미국 증시가 단순히 고평가됐는가"
+                        "text": "① 입장: 일단 고평가 쪽에 무게를 둔다"
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "일단 도취 국면 쪽에 무게를 둔다",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "미국 증시가 단순히 고평가됐는가"
+                        "text": "① 입장: 일단 도취 국면 쪽에 무게를 둔다"
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "아직 반반이다",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "미국 증시가 단순히 고평가됐는가"
+                        "text": "① 입장: 아직 고평가와 도취 사이에서 반반이다"
                     }
                 }
             ]
         },
         "n_stance_card": {
             "layer": "stance",
-            "coach_text": "좋아, 네 입장이 잡혔어. (판에 적혔지)\n근데 그냥 믿는 것과 따지는 건 다르잖아. 하나씩 파보자.\n\n왜 핵이 있으면 안전하다고 생각해?",
+            "coach_text": "좋아, ① 입장이 올라갔어. 왜 그렇게 보니?",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "cant_touch",
-                    "label": "아무도 못 건드려서",
+                    "label": "실적 기대를 너무 앞당겨 반영한 것 같아서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "stop_war",
-                    "label": "전쟁을 막아서",
+                    "label": "위험보다 더 오를 거란 믿음이 강해 보여서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 말해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -198,22 +198,22 @@
         },
         "n_stance_card_no": {
             "layer": "stance",
-            "coach_text": "신중하네. 네 입장이 판에 잡혔어.\n왜 핵 없이도 괜찮다고 보는지 — 이유를 따져보자.",
+            "coach_text": "좋아, ① 입장이 잡혔어. 그 판단의 가장 큰 이유는 뭐야?",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "alliance",
-                    "label": "동맹이 있어서",
+                    "label": "옵션 시장 분위기가 너무 공격적으로 보여서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "danger",
-                    "label": "핵이 오히려 위험해서",
+                    "label": "단순한 비쌈보다 군중 심리가 더 두드러져서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 말해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -221,22 +221,22 @@
         },
         "n_stance_card_half": {
             "layer": "stance",
-            "coach_text": "솔직하네. 입장이 판에 잡혔어.\n왜 그렇게 반반으로 보는지 — 이유를 따져보자.",
+            "coach_text": "좋아, ① 입장이 올라갔어. 아직 애매하다고 본 까닭은 뭐야?",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "not_sure",
-                    "label": "장단이 있어서",
+                    "label": "비싸긴 한데 버블 단정은 이른 것 같아서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "need_more",
-                    "label": "더 알아봐야 해서",
+                    "label": "가격 말고 심리 지표를 더 봐야 할 것 같아서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 말해볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -244,273 +244,273 @@
         },
         "n_reason_why2": {
             "layer": "reason",
-            "coach_text": "그렇지. 근데 '왜' 못 건드릴까? 상대 입장에서 생각하면?",
+            "coach_text": "좋아. 그 이유를 한 단계 더 구체화해보자. 어떤 근거가 가장 중요해?",
             "choices": [
                 {
                     "id": "fear_revenge",
-                    "label": "보복이 무서워서",
+                    "label": "당일 만기 같은 초단기 거래가 늘어난 점",
                     "next": "n_reason_card",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 미국 증시가 단순히 고평가됐는가"
+                        "text": "② 근거: 초단기 옵션 거래 증가가 과열 신호로 보인다"
                     }
                 },
                 {
                     "id": "intl_pressure",
-                    "label": "국제사회 비난",
+                    "label": "콜옵션 가격이 풋옵션 가격에 가까워진 점",
                     "next": "n_reason_card_intl",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 미국 증시가 단순히 고평가됐는가"
+                        "text": "② 근거: 헤지보다 상승 베팅이 강해졌다는 신호가 보인다"
                     }
                 },
                 {
                     "id": "unsure_reason",
-                    "label": "음...",
+                    "label": "아직 어떤 근거가 핵심인지 고민된다",
                     "next": "n_reason_card",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 미국 증시가 단순히 고평가됐는가"
+                        "text": "② 근거: 과열 판단의 핵심 근거를 더 가려봐야 한다"
                     }
                 }
             ]
         },
         "n_reason_card": {
             "layer": "reason",
-            "coach_text": "완벽해. 이제 '입장'에 '근거'가 붙었어. **판을 봐** — 생각이 서기 시작했지?",
+            "coach_text": "좋아, ② 근거가 보드에 올라갔어. 이제 이 근거가 네 입장을 어떻게 받쳐주는지 보자.",
             "board_pulse": "reason",
             "choices": [
                 {
                     "id": "see_board",
-                    "label": "판 보니까 그렇네",
+                    "label": "다음으로 생각 이어가기",
                     "next": "n_depth_0"
                 }
             ]
         },
         "n_reason_card_intl": {
             "layer": "reason",
-            "coach_text": "그것도 근거가 될 수 있지. 판에 적혔어. **판을 봐.**",
+            "coach_text": "좋아, ② 근거가 정리됐어. 이제 '왜 그게 중요한지'를 더 들어가 보자.",
             "board_pulse": "reason",
             "choices": [
                 {
                     "id": "see_board",
-                    "label": "판 보니까 그렇네",
+                    "label": "깊이 있게 따져보기",
                     "next": "n_depth_0"
                 }
             ]
         },
         "n_depth_0": {
             "layer": "depth",
-            "coach_text": "한 걸음 더. '보복이 무서워서'가 — 항상 통할까?\n상대가 잃을 게 없다면? 예를 들어 테러 집단처럼.",
+            "coach_text": "같은 옵션 과열이라도 해석은 갈릴 수 있어. 이 현상을 어떻게 읽고 싶어?",
             "choices": [
                 {
                     "id": "wont_work",
-                    "label": "안 통할 것 같아",
+                    "label": "짧은 베팅이 많아지면 시장 판단이 왜곡될 수 있어",
                     "next": "n_depth_1"
                 },
                 {
                     "id": "still_works",
-                    "label": "그래도 통해",
+                    "label": "그래도 활발한 거래가 꼭 도취라는 뜻은 아니야",
                     "next": "n_depth_1"
                 },
                 {
                     "id": "hard_depth",
-                    "label": "어렵다",
+                    "label": "상황에 따라 다를 것 같아",
                     "next": "n_depth_1"
                 }
             ]
         },
         "n_depth_1": {
             "layer": "depth",
-            "coach_text": "그럼 네 입장('핵=안전')은 — 무조건 맞는 건 아니게 되네?",
+            "coach_text": "좋아. 그럼 네 생각의 조건을 붙여보자.",
             "choices": [
                 {
                     "id": "conditional",
-                    "label": "조건이 있네",
+                    "label": "실적·유동성이 받쳐줄 때만 과열이 버틸 수 있다",
                     "next": "n_depth_card",
                     "emit_card": {
                         "layer": "depth",
-                        "text": "조건이 있다 — 항상 통하지는 않음"
+                        "text": "③ 깊이: 과열도 실적과 유동성이 받쳐줄 때만 지속될 수 있다"
                     }
                 },
                 {
                     "id": "mostly_ok",
-                    "label": "그래도 대부분 맞아",
+                    "label": "당장은 과열이어도 상승 흐름이 더 이어질 수 있다",
                     "next": "n_depth_card_mostly",
                     "emit_card": {
                         "layer": "depth",
-                        "text": "조건이 있다 — 항상 통하지는 않음"
+                        "text": "③ 깊이: 과열 신호가 있어도 당분간 상승 흐름은 이어질 수 있다"
                     }
                 }
             ]
         },
         "n_depth_card": {
             "layer": "depth",
-            "coach_text": "봐, 처음엔 '핵=안전'이었는데 이제 '조건부'로 정교해졌어. **판을 봐.** 이게 따지는 거야.",
+            "coach_text": "좋아, ③ 깊이가 추가됐어. 이제 네 입장은 '무조건'이 아니라 조건을 가진 생각이 됐어.",
             "board_pulse": "depth",
             "choices": [
                 {
                     "id": "depth_ok",
-                    "label": "맞아, 정교해졌네",
+                    "label": "이제 반대쪽도 들어보기",
                     "next": "n_counter_0"
                 }
             ]
         },
         "n_depth_card_mostly": {
             "layer": "depth",
-            "coach_text": "그래도 '대부분'과 '항상'은 다르지. 판에 적혔어.",
+            "coach_text": "좋아, ③ 깊이가 올라갔어. 이제 네 생각이 어느 조건에서 흔들릴지 보자.",
             "board_pulse": "depth",
             "choices": [
                 {
                     "id": "depth_ok",
-                    "label": "계속 가보자",
+                    "label": "반론으로 넘어가기",
                     "next": "n_counter_0"
                 }
             ]
         },
         "n_counter_0": {
             "layer": "counter",
-            "coach_text": "그런데 단순히 비싼 수준이라면 왜 보험에 가까운 풋보다 투기에 가까운 콜이 강해져서 나스닥 평균 콜옵션 가격이 평균 풋옵션 가격에 거의 근접했을까?\n\n옵션 시장에서 당일 만기 같은 초단기 상품 거래가 늘고 나스닥 평균 콜옵션 가격이 평균 풋옵션 가격에 거의 근접할 만큼, 시장은 고평가를 넘어 헤지보다 상승 베팅이 지배하는 도취…\n\n네가 아까 말한 입장 — 이 이야기에도 그대로 맞을까?",
+            "coach_text": "그런데 단순히 비싼 수준이라면 왜 보험에 가까운 풋보다 투기에 가까운 콜이 강해져서 나스닥 평균 콜옵션 가격이 평균 풋옵션 가격에 거의 근접했을까?",
             "choices": [
                 {
                     "id": "might_shake",
-                    "label": "흔들릴 것 같아",
+                    "label": "그건 그냥 낙관 심리가 너무 강해졌다는 뜻 아닐까",
                     "next": "n_counter_still"
                 },
                 {
                     "id": "nuke_different",
-                    "label": "그래도 핵은 달라",
+                    "label": "옵션 쏠림만으로 도취라고 보긴 이르지 않을까",
                     "next": "n_counter_why"
                 },
                 {
                     "id": "unsure_counter",
-                    "label": "모르겠어",
+                    "label": "그 지점은 나도 좀 흔들려",
                     "next": "n_counter_drone"
                 }
             ]
         },
         "n_counter_why": {
             "layer": "counter",
-            "coach_text": "왜 그렇게 봐? (답 강요 없어 — 네 생각대로)",
+            "coach_text": "좋아. 그럼 이렇게도 물을 수 있어. 위험을 막는 수요보다 더 오를 거라는 베팅이 앞선다면, 그건 단순 고평가와 어떻게 다를까?",
             "choices": [
                 {
                     "id": "destruction",
-                    "label": "파괴력이 차원이 달라",
+                    "label": "가격 판단을 넘어 군중 심리 문제로 보이기 시작해",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "can_defend",
-                    "label": "드론은 막을 수 있어",
+                    "label": "그래도 특정 구간의 거래 쏠림일 수도 있어",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_still": {
             "layer": "counter",
-            "coach_text": "솔직하네. 그래도 핵만큼 무서운 게 있을까?",
+            "coach_text": "그럴 수도 있어. 하지만 헤지보다 베팅이 앞서는 흐름이 계속된다면, '그냥 비싸다'는 말만으로 충분할까?",
             "choices": [
                 {
                     "id": "maybe_not",
-                    "label": "없을 수도",
+                    "label": "아니, 그 말만으로는 부족할 수 있어",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "still_nuke",
-                    "label": "핵이 제일 무서워",
+                    "label": "응, 아직은 고평가 설명으로도 가능해",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_drone": {
             "layer": "counter",
-            "coach_text": "괜찮아. 천천히 보자. 드론 수천 대 vs 핵 — 뭐가 더 실제로 쓰일까?",
+            "coach_text": "또 이렇게도 생각해볼 수 있어. 초단기 옵션 거래가 늘고 콜 가격이 풋에 바짝 붙는 모습은, 시장 참여자들이 위험보다 상승 욕망에 더 끌린다는 신호 아닐까?",
             "choices": [
                 {
                     "id": "drones_real",
-                    "label": "드론이 더 현실적",
+                    "label": "응, 도취 국면 신호처럼 보여",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "nuke_deter",
-                    "label": "핵이 억지해",
+                    "label": "아직은 과한 해석일 수도 있어",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_hard": {
             "layer": "counter",
-            "coach_text": "일리 있어. 근데 — '쓸 수 있느냐'는 다른 문제 아닐까?\n핵을 진짜 쏘면 자기도 끝이잖아.",
+            "coach_text": "좋아. 지금까지의 생각을 반론 카드로 한 줄로 잡아보자. 무엇이 너를 가장 흔들었어?",
             "choices": [
                 {
                     "id": "true_hard",
-                    "label": "그건 그렇네",
+                    "label": "옵션 시장은 이미 가격보다 심리를 더 보여주는 것 같아",
                     "next": "n_counter_card",
                     "emit_card": {
                         "layer": "counter",
-                        "text": "옵션 시장에서 당일 만기 같은 초단기 상품 거래가 늘고 나스닥 평균 콜옵션 가격이 평균 …"
+                        "text": "④ 반론: 옵션 시장의 쏠림은 단순 고평가보다 집단 심리를 더 드러낸다"
                     }
                 },
                 {
                     "id": "still_deter",
-                    "label": "그래도 억지는 돼",
+                    "label": "그래도 옵션 지표만으로 전체 시장을 단정하긴 어려워",
                     "next": "n_counter_card_deter",
                     "emit_card": {
                         "layer": "counter",
-                        "text": "옵션 시장에서 당일 만기 같은 초단기 상품 거래가 늘고 나스닥 평균 콜옵션 가격이 평균 …"
+                        "text": "④ 반론: 옵션 과열만으로 전체 시장을 도취라고 단정하긴 어렵다"
                     }
                 }
             ]
         },
         "n_counter_card": {
             "layer": "counter",
-            "coach_text": "반론과 네 답이 판에 쌓였어. **판을 봐.**",
+            "coach_text": "좋아, ④ 반론이 올라갔어. 이제 처음 입장을 그대로 둘지, 조금 고쳐볼지 생각해보자.",
             "board_pulse": "counter",
             "choices": [
                 {
                     "id": "counter_ok",
-                    "label": "계속 정리하자",
+                    "label": "입장 다시 정리하기",
                     "next": "n_refine_0"
                 }
             ]
         },
         "n_counter_card_deter": {
             "layer": "counter",
-            "coach_text": "그 관점도 판에 적혔어.",
+            "coach_text": "좋아, ④ 반론이 정리됐어. 흔들렸지만 완전히 뒤집히진 않았네. 이제 재정립해보자.",
             "board_pulse": "counter",
             "choices": [
                 {
                     "id": "counter_ok",
-                    "label": "계속 정리하자",
+                    "label": "내 입장 다듬기",
                     "next": "n_refine_0"
                 }
             ]
         },
         "n_refine_0": {
             "layer": "refine",
-            "coach_text": "자, **판을 다시 봐.** 처음 생각에서 많이 왔어.\n① 입장 → ② 근거 → ③ 깊이 → ④ 반론\n이제 네 생각을 다시 정리하면, 어떻게 바뀌었어?",
+            "coach_text": "보드를 보면 처음 생각과 흔들린 지점이 같이 보여. 지금 네 입장을 어떻게 다시 세우고 싶어?",
             "board_diff": true,
             "choices": [
                 {
                     "id": "limits",
-                    "label": "핵은 안전을 주지만 한계가 있다",
+                    "label": "고평가이긴 하지만 심리 과열 신호를 함께 봐야 해",
                     "next": "n_refine_card",
                     "emit_card": {
                         "layer": "refine",
-                        "text": "처음 생각보다 정교해졌다"
+                        "text": "⑤ 재정립: 고평가 판단에 옵션 시장의 심리 과열 신호를 함께 넣어야 한다"
                     }
                 },
                 {
                     "id": "still_best",
-                    "label": "여전히 핵이 최선이다",
+                    "label": "과열 신호가 있어도 아직은 고평가 해석이 중심이야",
                     "next": "n_refine_card_best",
                     "emit_card": {
                         "layer": "refine",
-                        "text": "처음 생각보다 정교해졌다"
+                        "text": "⑤ 재정립: 과열 신호를 인정해도 중심 해석은 아직 고평가다"
                     }
                 },
                 {
                     "id": "refine_free",
-                    "label": "직접 쓸게",
+                    "label": "내 말로 다시 정리해볼게",
                     "next": "n_refine_input",
                     "input_mode": "text",
                     "emit_card_on_message": {
@@ -521,31 +521,31 @@
         },
         "n_refine_card": {
             "layer": "refine",
-            "coach_text": "스스로 여기까지 왔어. 처음 '핵=안전'에서 훨씬 정교해졌지?",
+            "coach_text": "좋아, ⑤ 재정립이 올라갔어. 이제 마지막으로 전체 판단을 한 문장으로 묶어보자.",
             "board_pulse": "refine",
             "choices": [
                 {
                     "id": "refine_ok",
-                    "label": "맞아",
+                    "label": "최종 정리로 가기",
                     "next": "n_synth_0"
                 }
             ]
         },
         "n_refine_card_best": {
             "layer": "refine",
-            "coach_text": "네 정리가 판에 적혔어. 한번 더 따져보자.",
+            "coach_text": "좋아, ⑤ 재정립이 됐어. 이제 네 결론이 처음보다 더 정교해졌는지 보자.",
             "board_pulse": "refine",
             "choices": [
                 {
                     "id": "refine_ok",
-                    "label": "계속",
+                    "label": "종합하러 가기",
                     "next": "n_synth_0"
                 }
             ]
         },
         "n_refine_input": {
             "layer": "refine",
-            "coach_text": "네 말로 정리해 봐 — 지금 네 생각은?",
+            "coach_text": "좋아. 보드의 ①~④를 보고, 네 입장을 ⑤ 한 줄로 다시 써봐.",
             "input_mode": "text",
             "emit_card_on_message": {
                 "layer": "refine"
@@ -554,7 +554,7 @@
         },
         "n_synth_0": {
             "layer": "synthesis",
-            "coach_text": "마지막. 이 모든 걸 **한 문장**으로 — 네 결론은?\n(직접 써 봐)",
+            "coach_text": "이제 마지막이야. 미국 주식시장은 그냥 좀 비싼 걸까, 아니면 도취 국면에 더 가까울까? ①~⑤를 보고 ⑥ 종합 한 문장으로 써봐.",
             "input_mode": "text",
             "emit_card_on_message": {
                 "layer": "synthesis"
@@ -563,21 +563,23 @@
         },
         "n_synth_compose": {
             "layer": "synthesis",
-            "coach_text": "이게 네가 10분 넘게 따져서 만든 결론이야.\n누가 준 게 아니라, **네가 쌓은 거**지.\n자 — 이 생각판을 바탕으로 한 편의 글을 써볼까?\n판에 있는 ①~⑥이 그대로 네 글의 뼈대가 될 거야.",
+            "coach_text": "좋아, 쓴 내용을 바탕으로 최종 문장을 매끈하게 완성해보자.",
             "board_pulse": "synthesis",
             "choices": [
                 {
                     "id": "go_compose",
-                    "label": "글 쓰러 가기",
+                    "label": "최종 문장 완성하기",
                     "next": "n_compose"
                 }
             ]
         },
         "n_compose": {
             "layer": "synthesis",
-            "terminal": true
+            "terminal": true,
+            "coach_text": "좋아. 네 생각판이 완성됐어: ①입장 → ②근거 → ③깊이 → ④반론 → ⑤재정립 → ⑥종합."
         }
     },
-    "llm_followup_fallback": "그렇구나. 한 가지만 더 — 그 말을 한 문장으로 정리하면?",
-    "generated_by": "narrative_v2_generate_rule_v1"
+    "generated_by": "narrative_v2_generate_llm_v2",
+    "llm_followup_fallback": "좋아. 그 이유를 바탕으로 보드에 올라갈 한 줄 핵심만 다시 말해볼래?",
+    "llm_philosophy_notes": "통념인 '그냥 비싼가'에서 출발해, 옵션 시장의 투기 쏠림이라는 복잡한 진실로 질문으로만 흔들고 학생이 스스로 재정립하게 구성했다."
 }

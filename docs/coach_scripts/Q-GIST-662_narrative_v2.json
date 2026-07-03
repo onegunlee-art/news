@@ -55,142 +55,142 @@
     "nodes": {
         "n_intro": {
             "layer": "intro",
-            "coach_text": "플라스틱 문제는 그냥 쓰레기를 잘 치우면 되는 걸까?\n\n많은 사람은 \"플라스틱은 일상에 꼭 필요하고 주된 문제는 눈에 보이는 쓰레기를 어떻게 처리하느냐는 질문 프레임\"라고 생각해.\n\n플라스틱은 현대생활에 필수적인 편의재이지만, 그러나 지금의 생산·소비 구조를 유지하면 인체·생태계·기후를 함께 악화시키는 복합 위기가 커진다\n\n왜 그렇게 생각할까?",
+            "coach_text": "플라스틱은 포장재, 옷, 의료기기처럼 우리 생활 곳곳에 깊게 들어와 있어요. 그런데 문제는 길가 쓰레기만이 아니라, 미세플라스틱이 공기와 물, 음식, 심지어 인체 내부까지 퍼지고 있다는 점이에요. 그렇다면 플라스틱 문제는 그냥 쓰레기를 잘 치우면 되는 걸까요?",
             "choices": [
                 {
                     "id": "nuclear_fear",
-                    "label": "A 쪽이 더 와닿아",
+                    "label": "일단 쓰레기가 제일 큰 문제 같아",
                     "next": "n_stance_bridge_fear"
                 },
                 {
                     "id": "just_luck",
-                    "label": "B 쪽도 설명돼",
+                    "label": "너무 많이 만들어 쓰는 구조가 더 문제 같아",
                     "next": "n_stance_bridge_luck"
                 },
                 {
                     "id": "other_reason",
-                    "label": "다른 이유",
+                    "label": "다른 이유가 더 있을 것 같아",
                     "next": "n_stance_bridge_other"
                 }
             ]
         },
         "n_stance_bridge_fear": {
             "layer": "stance",
-            "coach_text": "좋아, 플라스틱은 일상에 꼭 필요하고 주된 문제는 눈에 보이는 쓰레기를 어떻게 처리하느냐는 질문 프레임에서 시작해보자.\n조용히 커져온 플라스틱의 복합적 위협 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아, 눈에 보이는 쓰레기부터 떠오를 수 있지. 그럼 지금 생각은 어느 쪽에 더 가까워?",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "우선은 처리와 재활용을 잘하면 된다고 봐",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "플라스틱은 일상에 꼭 필요하고 주된 문제는 눈에 보이는 쓰레기를 어떻게 처리하느냐는 질문 프레임"
+                        "text": "① 입장: 플라스틱 문제의 중심은 쓰레기 처리라고 본다"
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "처리만으로는 부족하다고 봐",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "플라스틱은 일상에 꼭 필요하고 주된 문제는 눈에 보이는 쓰레기를 어떻게 처리하느냐는 질문 프레임"
+                        "text": "① 입장: 플라스틱 문제는 처리만으로 설명되지 않는다고 본다"
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "둘 다 맞는 것 같아 아직 반반이야",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "플라스틱은 일상에 꼭 필요하고 주된 문제는 눈에 보이는 쓰레기를 어떻게 처리하느냐는 질문 프레임"
+                        "text": "① 입장: 처리 문제도 크지만 그것만은 아닐 수 있다고 본다"
                     }
                 }
             ]
         },
         "n_stance_bridge_luck": {
             "layer": "stance",
-            "coach_text": "좋아, 플라스틱은 일상에 꼭 필요하고 주된 문제는 눈에 보이는 쓰레기를 어떻게 처리하느냐는 질문 프레임에서 시작해보자.\n조용히 커져온 플라스틱의 복합적 위협 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아, 생산과 소비 구조를 먼저 본 거네. 그럼 지금 입장을 골라보자.",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "그래도 핵심은 잘 거두고 잘 재활용하는 거야",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "플라스틱은 일상에 꼭 필요하고 주된 문제는 눈에 보이는 쓰레기를 어떻게 처리하느냐는 질문 프레임"
+                        "text": "① 입장: 결국 중심 해법은 폐기물 관리라고 본다"
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "애초에 너무 많이 만들고 쓰는 게 핵심이야",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "플라스틱은 일상에 꼭 필요하고 주된 문제는 눈에 보이는 쓰레기를 어떻게 처리하느냐는 질문 프레임"
+                        "text": "① 입장: 생산·소비 구조 자체가 핵심 문제라고 본다"
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "처리와 생산 구조 둘 다 봐야 해",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "플라스틱은 일상에 꼭 필요하고 주된 문제는 눈에 보이는 쓰레기를 어떻게 처리하느냐는 질문 프레임"
+                        "text": "① 입장: 폐기와 생산 구조를 함께 봐야 한다고 본다"
                     }
                 }
             ]
         },
         "n_stance_bridge_other": {
             "layer": "stance",
-            "coach_text": "좋아, 플라스틱은 일상에 꼭 필요하고 주된 문제는 눈에 보이는 쓰레기를 어떻게 처리하느냐는 질문 프레임에서 시작해보자.\n조용히 커져온 플라스틱의 복합적 위협 — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아, 다른 이유를 떠올렸구나. 지금 생각을 가장 가깝게 고르면?",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "문제의 중심은 여전히 쓰레기 관리 같아",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "플라스틱은 일상에 꼭 필요하고 주된 문제는 눈에 보이는 쓰레기를 어떻게 처리하느냐는 질문 프레임"
+                        "text": "① 입장: 플라스틱 문제의 중심은 관리와 처리라고 본다"
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "보이지 않는 건강·환경 영향이 더 크다고 봐",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "플라스틱은 일상에 꼭 필요하고 주된 문제는 눈에 보이는 쓰레기를 어떻게 처리하느냐는 질문 프레임"
+                        "text": "① 입장: 보이지 않는 확산과 영향이 더 핵심이라고 본다"
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "아직은 한쪽으로 정하긴 어려워",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "플라스틱은 일상에 꼭 필요하고 주된 문제는 눈에 보이는 쓰레기를 어떻게 처리하느냐는 질문 프레임"
+                        "text": "① 입장: 문제의 중심을 더 따져봐야 한다고 본다"
                     }
                 }
             ]
         },
         "n_stance_card": {
             "layer": "stance",
-            "coach_text": "좋아, 네 입장이 잡혔어. (판에 적혔지)\n근데 그냥 믿는 것과 따지는 건 다르잖아. 하나씩 파보자.\n\n왜 핵이 있으면 안전하다고 생각해?",
+            "coach_text": "좋아. 왜 그렇게 생각했는지 가장 가까운 이유를 골라볼래?",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "cant_touch",
-                    "label": "아무도 못 건드려서",
+                    "label": "생활에 꼭 필요하니 우선 처리 쪽이 현실적이야",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "stop_war",
-                    "label": "전쟁을 막아서",
+                    "label": "눈에 보이는 오염부터 줄이는 게 중요해 보여",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 말해볼래",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -198,22 +198,22 @@
         },
         "n_stance_card_no": {
             "layer": "stance",
-            "coach_text": "신중하네. 네 입장이 판에 잡혔어.\n왜 핵 없이도 괜찮다고 보는지 — 이유를 따져보자.",
+            "coach_text": "좋아. 처리만으로 부족하다고 본 이유는 뭐야?",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "alliance",
-                    "label": "동맹이 있어서",
+                    "label": "너무 많이 생산되는 구조부터 바꿔야 해서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "danger",
-                    "label": "핵이 오히려 위험해서",
+                    "label": "미세플라스틱과 건강 영향이 걱정돼서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 말해볼래",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -221,22 +221,22 @@
         },
         "n_stance_card_half": {
             "layer": "stance",
-            "coach_text": "솔직하네. 입장이 판에 잡혔어.\n왜 그렇게 반반으로 보는지 — 이유를 따져보자.",
+            "coach_text": "좋아. 반반이라고 본 까닭은 뭐야?",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "not_sure",
-                    "label": "장단이 있어서",
+                    "label": "생활에 필요하지만 문제도 너무 커 보여",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "need_more",
-                    "label": "더 알아봐야 해서",
+                    "label": "처리만으로 되는지 아직 확신이 없어",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 생각을 직접 말해볼래",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -244,273 +244,273 @@
         },
         "n_reason_why2": {
             "layer": "reason",
-            "coach_text": "그렇지. 근데 '왜' 못 건드릴까? 상대 입장에서 생각하면?",
+            "coach_text": "그 이유를 한 걸음 더 밀어보자. 특히 어디가 중요하다고 보니?",
             "choices": [
                 {
                     "id": "fear_revenge",
-                    "label": "보복이 무서워서",
+                    "label": "계속 늘어나는 생산량이 문제야",
                     "next": "n_reason_card",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 플라스틱은 일상에 꼭 필요하고 주된 문제는 눈에 보이는 쓰레기를 어떻게…"
+                        "text": "② 근거: 버리는 양보다 계속 늘어나는 생산 자체가 더 큰 문제라고 본다"
                     }
                 },
                 {
                     "id": "intl_pressure",
-                    "label": "국제사회 비난",
+                    "label": "몸과 환경으로 퍼지는 영향이 문제야",
                     "next": "n_reason_card_intl",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 플라스틱은 일상에 꼭 필요하고 주된 문제는 눈에 보이는 쓰레기를 어떻게…"
+                        "text": "② 근거: 미세플라스틱과 유해물질이 환경과 인체로 스며드는 점이 중요하다고 본다"
                     }
                 },
                 {
                     "id": "unsure_reason",
-                    "label": "음...",
+                    "label": "아직 어떤 근거가 핵심인지 고민돼",
                     "next": "n_reason_card",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 플라스틱은 일상에 꼭 필요하고 주된 문제는 눈에 보이는 쓰레기를 어떻게…"
+                        "text": "② 근거: 처리, 생산, 건강 영향 중 무엇이 핵심인지 더 따져봐야 한다고 본다"
                     }
                 }
             ]
         },
         "n_reason_card": {
             "layer": "reason",
-            "coach_text": "완벽해. 이제 '입장'에 '근거'가 붙었어. **판을 봐** — 생각이 서기 시작했지?",
+            "coach_text": "좋아, ② 근거 카드가 올라갔어. 생각판을 보고 다음으로 넘어가자.",
             "board_pulse": "reason",
             "choices": [
                 {
                     "id": "see_board",
-                    "label": "판 보니까 그렇네",
+                    "label": "생각판 보고 계속할게",
                     "next": "n_depth_0"
                 }
             ]
         },
         "n_reason_card_intl": {
             "layer": "reason",
-            "coach_text": "그것도 근거가 될 수 있지. 판에 적혔어. **판을 봐.**",
+            "coach_text": "좋아, 근거가 더 분명해졌어. 생각판을 한번 보고 이어가자.",
             "board_pulse": "reason",
             "choices": [
                 {
                     "id": "see_board",
-                    "label": "판 보니까 그렇네",
+                    "label": "다음 질문으로 갈게",
                     "next": "n_depth_0"
                 }
             ]
         },
         "n_depth_0": {
             "layer": "depth",
-            "coach_text": "한 걸음 더.\n항상 그렇게만 될까? 예외는 없을까?",
+            "coach_text": "그럼 이렇게 물어볼 수 있겠네. 재활용과 쓰레기 수거만 잘해도 충분할까?",
             "choices": [
                 {
                     "id": "wont_work",
-                    "label": "안 통할 것 같아",
+                    "label": "아니, 그것만으로는 부족할 것 같아",
                     "next": "n_depth_1"
                 },
                 {
                     "id": "still_works",
-                    "label": "그래도 통해",
+                    "label": "그래도 꽤 효과는 있을 것 같아",
                     "next": "n_depth_1"
                 },
                 {
                     "id": "hard_depth",
-                    "label": "어렵다",
+                    "label": "상황에 따라 다를 것 같아",
                     "next": "n_depth_1"
                 }
             ]
         },
         "n_depth_1": {
             "layer": "depth",
-            "coach_text": "그럼 네 입장('핵=안전')은 — 무조건 맞는 건 아니게 되네?",
+            "coach_text": "좋아. 어느 조건에서 그렇게 본 거야?",
             "choices": [
                 {
                     "id": "conditional",
-                    "label": "조건이 있네",
+                    "label": "생산까지 같이 줄일 때 의미가 커져",
                     "next": "n_depth_card",
                     "emit_card": {
                         "layer": "depth",
-                        "text": "조건이 있다 — 항상 통하지는 않음"
+                        "text": "③ 깊이: 폐기물 관리의 효과는 생산 감축과 함께 갈 때 커진다고 본다"
                     }
                 },
                 {
                     "id": "mostly_ok",
-                    "label": "그래도 대부분 맞아",
+                    "label": "당장 할 수 있는 현실적 방법이라 중요해",
                     "next": "n_depth_card_mostly",
                     "emit_card": {
                         "layer": "depth",
-                        "text": "조건이 있다 — 항상 통하지는 않음"
+                        "text": "③ 깊이: 완전한 해법은 아니어도 지금 가능한 관리 정책이 중요하다고 본다"
                     }
                 }
             ]
         },
         "n_depth_card": {
             "layer": "depth",
-            "coach_text": "봐, 처음엔 '핵=안전'이었는데 이제 '조건부'로 정교해졌어. **판을 봐.** 이게 따지는 거야.",
+            "coach_text": "좋아, 조건이 붙으면서 생각이 더 정교해졌어.",
             "board_pulse": "depth",
             "choices": [
                 {
                     "id": "depth_ok",
-                    "label": "맞아, 정교해졌네",
+                    "label": "다음으로 가볼게",
                     "next": "n_counter_0"
                 }
             ]
         },
         "n_depth_card_mostly": {
             "layer": "depth",
-            "coach_text": "그래도 '대부분'과 '항상'은 다르지. 판에 적혔어.",
+            "coach_text": "좋아, 현실성과 한계를 함께 본 셈이야.",
             "board_pulse": "depth",
             "choices": [
                 {
                     "id": "depth_ok",
-                    "label": "계속 가보자",
+                    "label": "이어서 생각해볼게",
                     "next": "n_counter_0"
                 }
             ]
         },
         "n_counter_0": {
             "layer": "counter",
-            "coach_text": "하지만 재활용률이 9%에 불과하고, 지금 경로가 유지되면 2040년 오염 규모가 1억3천만 톤에서 2억8천만 톤으로 늘 수 있다면 단순한 쓰레기 처리 문제만으로 볼 수 있을까?\n\n문제의 핵심은 폐기물 처리만이 아니라 생산 증가, 미세플라스틱, 유해 화학물질, 탄소배출이 얽힌 구조적 위기이며 기존 정책과 기술만으로도 큰 폭의 감축이 가능하다\n\n네가 아까 말한 입장 — 이 이야기에도 그대로 맞을까?",
+            "coach_text": "하지만 재활용률이 9%에 불과하고, 지금 경로가 유지되면 2040년 오염 규모가 크게 늘 수 있다면 단순한 쓰레기 처리 문제만으로 볼 수 있을까?",
             "choices": [
                 {
                     "id": "might_shake",
-                    "label": "흔들릴 것 같아",
+                    "label": "맞아, 그 점은 생각이 좀 흔들려",
                     "next": "n_counter_still"
                 },
                 {
                     "id": "nuke_different",
-                    "label": "그래도 핵은 달라",
+                    "label": "그래도 처리 문제라는 틀은 유지할 수 있어",
                     "next": "n_counter_why"
                 },
                 {
                     "id": "unsure_counter",
-                    "label": "모르겠어",
+                    "label": "잘 모르겠어, 둘 다 가능해 보여",
                     "next": "n_counter_drone"
                 }
             ]
         },
         "n_counter_why": {
             "layer": "counter",
-            "coach_text": "왜 그렇게 봐? (답 강요 없어 — 네 생각대로)",
+            "coach_text": "무엇이 특히 너를 흔들었어?",
             "choices": [
                 {
                     "id": "destruction",
-                    "label": "파괴력이 차원이 달라",
+                    "label": "미세플라스틱이 몸속까지 들어간다는 점",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "can_defend",
-                    "label": "드론은 막을 수 있어",
+                    "label": "생산이 계속 늘면 처리만으로 못 따라간다는 점",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_still": {
             "layer": "counter",
-            "coach_text": "솔직하네. 그래도 핵만큼 무서운 게 있을까?",
+            "coach_text": "그래도 기존 생각을 유지한다면, 어떤 이유 때문일까?",
             "choices": [
                 {
                     "id": "maybe_not",
-                    "label": "없을 수도",
+                    "label": "당장 보이는 문제부터 해결해야 해서",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "still_nuke",
-                    "label": "핵이 제일 무서워",
+                    "label": "생산을 줄이기보다 관리 개선이 더 현실적이어서",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_drone": {
             "layer": "counter",
-            "coach_text": "괜찮아. 천천히 보자. 드론 수천 대 vs 핵 — 뭐가 더 실제로 쓰일까?",
+            "coach_text": "아직 헷갈린다면, 어느 지점이 더 판단을 어렵게 만드니?",
             "choices": [
                 {
                     "id": "drones_real",
-                    "label": "드론이 더 현실적",
+                    "label": "건강·환경 피해가 얼마나 큰지 가늠이 어려워",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "nuke_deter",
-                    "label": "핵이 억지해",
+                    "label": "줄이는 정책이 실제로 가능한지 확신이 없어",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_hard": {
             "layer": "counter",
-            "coach_text": "일리 있어. 근데 — '쓸 수 있느냐'는 다른 문제 아닐까?\n핵을 진짜 쏘면 자기도 끝이잖아.",
+            "coach_text": "좋아. 지금 반론을 한 줄로 잡아보면?",
             "choices": [
                 {
                     "id": "true_hard",
-                    "label": "그건 그렇네",
+                    "label": "처리만으로는 생산 증가와 보이지 않는 피해를 못 막을 수 있어",
                     "next": "n_counter_card",
                     "emit_card": {
                         "layer": "counter",
-                        "text": "문제의 핵심은 폐기물 처리만이 아니라 생산 증가, 미세플라스틱, 유해 화학물질, 탄소배출…"
+                        "text": "④ 반론: 플라스틱 문제는 폐기물 처리만이 아니라 생산 증가와 보이지 않는 피해가 얽힌 구조일 수 있다"
                     }
                 },
                 {
                     "id": "still_deter",
-                    "label": "그래도 억지는 돼",
+                    "label": "구조 문제를 알아도 당장 가능한 건 관리 개선부터일 수 있어",
                     "next": "n_counter_card_deter",
                     "emit_card": {
                         "layer": "counter",
-                        "text": "문제의 핵심은 폐기물 처리만이 아니라 생산 증가, 미세플라스틱, 유해 화학물질, 탄소배출…"
+                        "text": "④ 반론: 구조 문제가 크더라도 실제 대응은 폐기물 관리부터 시작할 수 있다고 본다"
                     }
                 }
             ]
         },
         "n_counter_card": {
             "layer": "counter",
-            "coach_text": "반론과 네 답이 판에 쌓였어. **판을 봐.**",
+            "coach_text": "좋아, ④ 반론 카드가 들어왔어. 이제 처음 생각을 어떻게 다듬을지 보자.",
             "board_pulse": "counter",
             "choices": [
                 {
                     "id": "counter_ok",
-                    "label": "계속 정리하자",
+                    "label": "정리해볼게",
                     "next": "n_refine_0"
                 }
             ]
         },
         "n_counter_card_deter": {
             "layer": "counter",
-            "coach_text": "그 관점도 판에 적혔어.",
+            "coach_text": "좋아, 반론을 받았지만 기존 입장의 강점도 남겨뒀네.",
             "board_pulse": "counter",
             "choices": [
                 {
                     "id": "counter_ok",
-                    "label": "계속 정리하자",
+                    "label": "다음으로 넘어갈게",
                     "next": "n_refine_0"
                 }
             ]
         },
         "n_refine_0": {
             "layer": "refine",
-            "coach_text": "자, **판을 다시 봐.** 처음 생각에서 많이 왔어.\n① 입장 → ② 근거 → ③ 깊이 → ④ 반론\n이제 네 생각을 다시 정리하면, 어떻게 바뀌었어?",
+            "coach_text": "생각판을 보면 처음 입장과 반론이 같이 보여. 이제 너의 입장을 어떻게 다시 말하고 싶어?",
             "board_diff": true,
             "choices": [
                 {
                     "id": "limits",
-                    "label": "핵은 안전을 주지만 한계가 있다",
+                    "label": "처리는 필요하지만 한계가 있으니 생산 감축도 봐야 해",
                     "next": "n_refine_card",
                     "emit_card": {
                         "layer": "refine",
-                        "text": "처음 생각보다 정교해졌다"
+                        "text": "⑤ 재정립: 폐기물 관리는 필요하지만, 생산과 소비 구조까지 함께 바꿔야 한다고 본다"
                     }
                 },
                 {
                     "id": "still_best",
-                    "label": "여전히 핵이 최선이다",
+                    "label": "구조 문제를 인정해도 출발점은 처리 개선이라고 봐",
                     "next": "n_refine_card_best",
                     "emit_card": {
                         "layer": "refine",
-                        "text": "처음 생각보다 정교해졌다"
+                        "text": "⑤ 재정립: 구조적 문제를 인정하되, 가장 현실적인 시작은 관리와 처리 개선이라고 본다"
                     }
                 },
                 {
                     "id": "refine_free",
-                    "label": "직접 쓸게",
+                    "label": "내 문장으로 다시 정리해볼래",
                     "next": "n_refine_input",
                     "input_mode": "text",
                     "emit_card_on_message": {
@@ -521,31 +521,31 @@
         },
         "n_refine_card": {
             "layer": "refine",
-            "coach_text": "스스로 여기까지 왔어. 처음 '핵=안전'에서 훨씬 정교해졌지?",
+            "coach_text": "좋아, 처음 생각이 더 입체적으로 바뀌었어.",
             "board_pulse": "refine",
             "choices": [
                 {
                     "id": "refine_ok",
-                    "label": "맞아",
+                    "label": "마지막 정리로 갈게",
                     "next": "n_synth_0"
                 }
             ]
         },
         "n_refine_card_best": {
             "layer": "refine",
-            "coach_text": "네 정리가 판에 적혔어. 한번 더 따져보자.",
+            "coach_text": "좋아, 입장을 유지하면서도 한계를 반영했네.",
             "board_pulse": "refine",
             "choices": [
                 {
                     "id": "refine_ok",
-                    "label": "계속",
+                    "label": "최종 정리해볼게",
                     "next": "n_synth_0"
                 }
             ]
         },
         "n_refine_input": {
             "layer": "refine",
-            "coach_text": "네 말로 정리해 봐 — 지금 네 생각은?",
+            "coach_text": "좋아. 생각판을 보고, 처음 입장을 반론까지 반영해서 한 문장으로 다시 써볼래?",
             "input_mode": "text",
             "emit_card_on_message": {
                 "layer": "refine"
@@ -554,7 +554,7 @@
         },
         "n_synth_0": {
             "layer": "synthesis",
-            "coach_text": "마지막. 이 모든 걸 **한 문장**으로 — 네 결론은?\n(직접 써 봐)",
+            "coach_text": "이제 ⑥ 종합이야. '플라스틱은 생활에 필요하지만, 왜 단순한 쓰레기 문제로만 볼 수 없는지'를 네 말로 짧게 정리해봐.",
             "input_mode": "text",
             "emit_card_on_message": {
                 "layer": "synthesis"
@@ -563,21 +563,23 @@
         },
         "n_synth_compose": {
             "layer": "synthesis",
-            "coach_text": "이게 네가 10분 넘게 따져서 만든 결론이야.\n누가 준 게 아니라, **네가 쌓은 거**지.\n자 — 이 생각판을 바탕으로 한 편의 글을 써볼까?\n판에 있는 ①~⑥이 그대로 네 글의 뼈대가 될 거야.",
+            "coach_text": "좋아, 생각판의 ①~⑤를 바탕으로 마지막 문장을 만들 준비가 됐어.",
             "board_pulse": "synthesis",
             "choices": [
                 {
                     "id": "go_compose",
-                    "label": "글 쓰러 가기",
+                    "label": "최종 문장 만들기",
                     "next": "n_compose"
                 }
             ]
         },
         "n_compose": {
             "layer": "synthesis",
-            "terminal": true
+            "terminal": true,
+            "coach_text": "정리하면, 플라스틱은 편리하고 필요한 재료이지만 문제는 버린 뒤 처리만이 아니라 계속 늘어나는 생산, 미세플라스틱의 확산, 건강과 생태계 영향, 탄소배출이 함께 얽혀 있다는 점까지 생각해볼 수 있어."
         }
     },
-    "llm_followup_fallback": "그렇구나. 한 가지만 더 — 그 말을 한 문장으로 정리하면?",
-    "generated_by": "narrative_v2_generate_rule_v1"
+    "generated_by": "narrative_v2_generate_llm_v2",
+    "llm_followup_fallback": "좋아, 그 이유를 생각판에 올릴 수 있게 핵심만 한 문장으로 말해볼래?",
+    "llm_philosophy_notes": "입장→근거→깊이→반론→재정립→종합의 6층을 유지했고, 반론은 결론 대신 질문으로 흔들도록 작성했다."
 }

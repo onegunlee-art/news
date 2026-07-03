@@ -55,142 +55,142 @@
     "nodes": {
         "n_intro": {
             "layer": "intro",
-            "coach_text": "텍사스가 잘나가는 이유는 그냥 세금이 낮고 전기가 싸서일까?\n\n많은 사람은 \"텍사스의 부상은 낮은 세금, 느슨한 규제, 풍부한 에너지 덕분인가\"라고 생각해.\n\n텍사스는 낮은 세금과 값싼 에너지 덕분에 기업 천국처럼 보이지만, 장기적으로는 숙련 인재를 끌고 붙잡을 문화적 매력과 정치적 리스크 관리가 더 중요하다\n\n왜 그렇게 생각할까?",
+            "coach_text": "텍사스는 최근 몇 년 사이 본사 이전, 일자리 증가, 투자 확대가 함께 나타나며 미국 기업 지도의 한 축으로 떠올랐어. 오스틴은 '실리콘 힐스', 금융권 이동은 '얄 스트리트'라고 불릴 정도지. 그런데 텍사스가 잘나가는 이유는 그냥 세금이 낮고 전기가 싸서일까?",
             "choices": [
                 {
                     "id": "nuclear_fear",
-                    "label": "A 쪽이 더 와닿아",
+                    "label": "맞아, 결국 비용이 싸서 기업이 몰리는 것 같아",
                     "next": "n_stance_bridge_fear"
                 },
                 {
                     "id": "just_luck",
-                    "label": "B 쪽도 설명돼",
+                    "label": "그것만으로 설명되진 않는 것 같아",
                     "next": "n_stance_bridge_luck"
                 },
                 {
                     "id": "other_reason",
-                    "label": "다른 이유",
+                    "label": "나는 다른 이유가 더 크다고 봐",
                     "next": "n_stance_bridge_other"
                 }
             ]
         },
         "n_stance_bridge_fear": {
             "layer": "stance",
-            "coach_text": "좋아, 텍사스의 부상은 낮은 세금, 느슨한 규제, 풍부한 에너지 덕분인가에서 시작해보자.\n실리콘 힐스(Silicon Hills), 얄 스트리트(Y'all Street)를 들어보셨… — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아. 그럼 지금 네 출발점은 '텍사스의 부상은 주로 낮은 세금·에너지 가격 덕분'에 가깝네. 일단 어느 쪽에 더 서 있는지 골라보자.",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "주된 이유는 역시 세금·에너지라고 본다",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "텍사스의 부상은 낮은 세금, 느슨한 규제, 풍부한 에너지 덕분인가"
+                        "text": "① 입장: 텍사스의 경쟁력은 주로 낮은 세금과 싼 에너지에서 나온다"
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "그보다 다른 구조적 요인이 더 중요하다고 본다",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "텍사스의 부상은 낮은 세금, 느슨한 규제, 풍부한 에너지 덕분인가"
+                        "text": "① 입장: 세금·에너지보다 더 넓은 구조가 텍사스 경쟁력을 만든다"
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "초반엔 맞지만 장기 설명으론 부족하다고 본다",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "텍사스의 부상은 낮은 세금, 느슨한 규제, 풍부한 에너지 덕분인가"
+                        "text": "① 입장: 세금·에너지는 출발점이지만 장기 경쟁력의 전부는 아니다"
                     }
                 }
             ]
         },
         "n_stance_bridge_luck": {
             "layer": "stance",
-            "coach_text": "좋아, 텍사스의 부상은 낮은 세금, 느슨한 규제, 풍부한 에너지 덕분인가에서 시작해보자.\n실리콘 힐스(Silicon Hills), 얄 스트리트(Y'all Street)를 들어보셨… — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아. 너는 이미 '세금이랑 전기값만으로는 설명이 부족하다'는 쪽이네. 그래도 생각을 분명히 잡아보자.",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "그래도 핵심 동력은 세금·에너지라고 본다",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "텍사스의 부상은 낮은 세금, 느슨한 규제, 풍부한 에너지 덕분인가"
+                        "text": "① 입장: 결국 중심 동력은 낮은 세금과 에너지다"
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "핵심은 더 넓어진 산업·제도 인프라라고 본다",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "텍사스의 부상은 낮은 세금, 느슨한 규제, 풍부한 에너지 덕분인가"
+                        "text": "① 입장: 텍사스의 힘은 이미 에너지 너머의 인프라 확장에 있다"
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "둘 다 중요하지만 단계마다 비중이 다르다고 본다",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "텍사스의 부상은 낮은 세금, 느슨한 규제, 풍부한 에너지 덕분인가"
+                        "text": "① 입장: 초기 유인은 세금·에너지, 장기 승부는 다른 요소가 가른다"
                     }
                 }
             ]
         },
         "n_stance_bridge_other": {
             "layer": "stance",
-            "coach_text": "좋아, 텍사스의 부상은 낮은 세금, 느슨한 규제, 풍부한 에너지 덕분인가에서 시작해보자.\n실리콘 힐스(Silicon Hills), 얄 스트리트(Y'all Street)를 들어보셨… — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아. 네가 보는 '다른 이유'가 뭔지 곧 구체화해보자. 먼저 큰 입장부터 정해보면 어때?",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "그래도 가장 큰 이유는 세금·에너지라고 본다",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "텍사스의 부상은 낮은 세금, 느슨한 규제, 풍부한 에너지 덕분인가"
+                        "text": "① 입장: 텍사스 부상의 핵심은 비용 경쟁력이다"
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "더 중요한 건 산업·법·금융 같은 인프라라고 본다",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "텍사스의 부상은 낮은 세금, 느슨한 규제, 풍부한 에너지 덕분인가"
+                        "text": "① 입장: 텍사스의 경쟁력은 이미 복합적 인프라로 넓어졌다"
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "비용과 인프라가 함께 작동한다고 본다",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "텍사스의 부상은 낮은 세금, 느슨한 규제, 풍부한 에너지 덕분인가"
+                        "text": "① 입장: 비용 경쟁력과 축적된 인프라가 함께 텍사스를 키웠다"
                     }
                 }
             ]
         },
         "n_stance_card": {
             "layer": "stance",
-            "coach_text": "좋아, 네 입장이 잡혔어. (판에 적혔지)\n근데 그냥 믿는 것과 따지는 건 다르잖아. 하나씩 파보자.\n\n왜 핵이 있으면 안전하다고 생각해?",
+            "coach_text": "좋아, ① 입장이 올라갔어. 이제 '왜 그렇게 보는지' 한 가지 이유를 붙여보자.",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "cant_touch",
-                    "label": "아무도 못 건드려서",
+                    "label": "기업은 결국 비용이 낮은 곳으로 움직인다고 봐",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "stop_war",
-                    "label": "전쟁을 막아서",
+                    "label": "에너지·기술·금융이 한곳에 모인 효과가 크다고 봐",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 적어볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -198,22 +198,22 @@
         },
         "n_stance_card_no": {
             "layer": "stance",
-            "coach_text": "신중하네. 네 입장이 판에 잡혔어.\n왜 핵 없이도 괜찮다고 보는지 — 이유를 따져보자.",
+            "coach_text": "좋아, ① 입장이 올라갔어. 그 입장을 떠받치는 이유를 하나 골라보자.",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "alliance",
-                    "label": "동맹이 있어서",
+                    "label": "기업은 세금보다 예측 가능한 산업 생태계를 본다고 생각해",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "danger",
-                    "label": "핵이 오히려 위험해서",
+                    "label": "본사 이전이 이어진 건 이미 인프라가 갖춰졌다는 뜻 같아",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 적어볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -221,22 +221,22 @@
         },
         "n_stance_card_half": {
             "layer": "stance",
-            "coach_text": "솔직하네. 입장이 판에 잡혔어.\n왜 그렇게 반반으로 보는지 — 이유를 따져보자.",
+            "coach_text": "좋아, ① 입장이 올라갔어. 이제 반반이라고 본 이유를 더 붙여보자.",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "not_sure",
-                    "label": "장단이 있어서",
+                    "label": "처음 끌어오는 힘은 비용, 남게 하는 힘은 생태계 같아",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "need_more",
-                    "label": "더 알아봐야 해서",
+                    "label": "단기 투자와 장기 정착의 기준이 다를 수 있어",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 적어볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -244,273 +244,273 @@
         },
         "n_reason_why2": {
             "layer": "reason",
-            "coach_text": "그렇지. 근데 '왜' 못 건드릴까? 상대 입장에서 생각하면?",
+            "coach_text": "좋아. 그 이유를 조금 더 또렷하게 만들자. 기사 흐름에 비춰 보면 무엇이 가장 큰 근거 같아?",
             "choices": [
                 {
                     "id": "fear_revenge",
-                    "label": "보복이 무서워서",
+                    "label": "값싼 에너지와 낮은 세금이 기업 이전을 먼저 밀어줬다",
                     "next": "n_reason_card",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 텍사스의 부상은 낮은 세금, 느슨한 규제, 풍부한 에너지 덕분인가"
+                        "text": "② 근거: 낮은 세금과 에너지 비용이 기업 이전의 직접 유인이 됐다"
                     }
                 },
                 {
                     "id": "intl_pressure",
-                    "label": "국제사회 비난",
+                    "label": "에너지·기술·금융·기업법 인프라가 함께 커진 게 더 중요하다",
                     "next": "n_reason_card_intl",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 텍사스의 부상은 낮은 세금, 느슨한 규제, 풍부한 에너지 덕분인가"
+                        "text": "② 근거: 텍사스의 경쟁력은 복합 인프라가 결합된 구조에서 나온다"
                     }
                 },
                 {
                     "id": "unsure_reason",
-                    "label": "음...",
+                    "label": "둘이 얽혀 있어서 하나만 고르기 어렵다",
                     "next": "n_reason_card",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: 텍사스의 부상은 낮은 세금, 느슨한 규제, 풍부한 에너지 덕분인가"
+                        "text": "② 근거: 비용 유인과 축적된 인프라가 함께 작동했다"
                     }
                 }
             ]
         },
         "n_reason_card": {
             "layer": "reason",
-            "coach_text": "완벽해. 이제 '입장'에 '근거'가 붙었어. **판을 봐** — 생각이 서기 시작했지?",
+            "coach_text": "좋아, ② 근거가 올라갔어. 생각판을 보고 다음엔 '언제까지 이 설명이 통하나'를 따져보자.",
             "board_pulse": "reason",
             "choices": [
                 {
                     "id": "see_board",
-                    "label": "판 보니까 그렇네",
+                    "label": "다음으로 넘어갈게",
                     "next": "n_depth_0"
                 }
             ]
         },
         "n_reason_card_intl": {
             "layer": "reason",
-            "coach_text": "그것도 근거가 될 수 있지. 판에 적혔어. **판을 봐.**",
+            "coach_text": "좋아, ② 근거가 올라갔어. 이제 그 근거가 장기적으로도 유지되는지 따져보자.",
             "board_pulse": "reason",
             "choices": [
                 {
                     "id": "see_board",
-                    "label": "판 보니까 그렇네",
+                    "label": "깊이 있게 가보자",
                     "next": "n_depth_0"
                 }
             ]
         },
         "n_depth_0": {
             "layer": "depth",
-            "coach_text": "한 걸음 더. '보복이 무서워서'가 — 항상 통할까?\n상대가 잃을 게 없다면? 예를 들어 테러 집단처럼.",
+            "coach_text": "여기서 한 단계 더. 텍사스의 강점이 앞으로도 계속 먹히려면 어떤 모습이어야 할까?",
             "choices": [
                 {
                     "id": "wont_work",
-                    "label": "안 통할 것 같아",
+                    "label": "비용만으론 오래 못 간다고 봐",
                     "next": "n_depth_1"
                 },
                 {
                     "id": "still_works",
-                    "label": "그래도 통해",
+                    "label": "당분간은 지금 강점만으로도 충분하다고 봐",
                     "next": "n_depth_1"
                 },
                 {
                     "id": "hard_depth",
-                    "label": "어렵다",
+                    "label": "상황에 따라 달라질 것 같아",
                     "next": "n_depth_1"
                 }
             ]
         },
         "n_depth_1": {
             "layer": "depth",
-            "coach_text": "그럼 네 입장('핵=안전')은 — 무조건 맞는 건 아니게 되네?",
+            "coach_text": "좋아. 그럼 조건을 붙여서 말해보자. 어느 설명이 더 네 생각에 가까워?",
             "choices": [
                 {
                     "id": "conditional",
-                    "label": "조건이 있네",
+                    "label": "숙련 인재를 끌고 붙잡아야 진짜 경쟁력이 된다",
                     "next": "n_depth_card",
                     "emit_card": {
                         "layer": "depth",
-                        "text": "조건이 있다 — 항상 통하지는 않음"
+                        "text": "③ 깊이: 장기 경쟁력은 비용보다 숙련 인재를 유치·정착시키는 힘에 달렸다"
                     }
                 },
                 {
                     "id": "mostly_ok",
-                    "label": "그래도 대부분 맞아",
+                    "label": "정치·문화 리스크만 관리하면 지금 모델도 꽤 강하다",
                     "next": "n_depth_card_mostly",
                     "emit_card": {
                         "layer": "depth",
-                        "text": "조건이 있다 — 항상 통하지는 않음"
+                        "text": "③ 깊이: 현재 모델은 강하지만 정치·문화 리스크 관리가 붙어야 한다"
                     }
                 }
             ]
         },
         "n_depth_card": {
             "layer": "depth",
-            "coach_text": "봐, 처음엔 '핵=안전'이었는데 이제 '조건부'로 정교해졌어. **판을 봐.** 이게 따지는 거야.",
+            "coach_text": "좋아, ③ 깊이가 올라갔어. 이제 네 생각을 살짝 흔들어볼 차례야.",
             "board_pulse": "depth",
             "choices": [
                 {
                     "id": "depth_ok",
-                    "label": "맞아, 정교해졌네",
+                    "label": "반론도 들어볼게",
                     "next": "n_counter_0"
                 }
             ]
         },
         "n_depth_card_mostly": {
             "layer": "depth",
-            "coach_text": "그래도 '대부분'과 '항상'은 다르지. 판에 적혔어.",
+            "coach_text": "좋아, ③ 깊이가 올라갔어. 이제 기사 속 다른 면을 가져와 보자.",
             "board_pulse": "depth",
             "choices": [
                 {
                     "id": "depth_ok",
-                    "label": "계속 가보자",
+                    "label": "흔들리는 지점도 보자",
                     "next": "n_counter_0"
                 }
             ]
         },
         "n_counter_0": {
             "layer": "counter",
-            "coach_text": "그렇게만 보기엔 기사도 텍사스가 2020~2025년 미국 순증 일자리의 약 5분의 1을 만들었지만, 동시에 보수적 정치 의제와 문화전쟁이 일부 인재를 밀어낼 수 있다고 짚어.\n\n기사의 핵심은 텍사스의 경쟁력이 이미 에너지·기술·금융·기업법 인프라로 넓어졌고, 앞으로의 승부처는 세금보다 숙련 인재와 문화·정치의 균형이라는 점이다\n\n네가 아까 말한 입장 — 이 이야기에도 그대로 맞을까?",
+            "coach_text": "그렇게만 보기엔 기사도 텍사스가 2020~2025년 미국 순증 일자리의 약 5분의 1을 만들었지만, 동시에 보수적 정치 의제와 문화전쟁이 일부 인재를 밀어낼 수 있다고 짚어. 그렇다면 세금과 전기값이 좋아도, 사람들이 오래 머물고 싶은 곳이 아니면 한계가 생기지 않을까?",
             "choices": [
                 {
                     "id": "might_shake",
-                    "label": "흔들릴 것 같아",
+                    "label": "응, 그 지점은 꽤 흔들려",
                     "next": "n_counter_still"
                 },
                 {
                     "id": "nuke_different",
-                    "label": "그래도 핵은 달라",
+                    "label": "그래도 기업 판단에선 여전히 비용이 더 클 수 있어",
                     "next": "n_counter_why"
                 },
                 {
                     "id": "unsure_counter",
-                    "label": "모르겠어",
+                    "label": "아직 어느 쪽이 더 큰지 모르겠어",
                     "next": "n_counter_drone"
                 }
             ]
         },
         "n_counter_why": {
             "layer": "counter",
-            "coach_text": "왜 그렇게 봐? (답 강요 없어 — 네 생각대로)",
+            "coach_text": "좋아. 그럼 왜 흔들렸는지 더 좁혀보자. 어떤 부분이 걸렸어?",
             "choices": [
                 {
                     "id": "destruction",
-                    "label": "파괴력이 차원이 달라",
+                    "label": "숙련 인재는 연봉만이 아니라 생활문화와 분위기도 보니까",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "can_defend",
-                    "label": "드론은 막을 수 있어",
+                    "label": "정치 리스크가 커지면 기업 이미지와 채용에도 부담이 될 수 있으니까",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_still": {
             "layer": "counter",
-            "coach_text": "솔직하네. 그래도 핵만큼 무서운 게 있을까?",
+            "coach_text": "좋아. 그런데도 네 생각이 크게 안 바뀌는 이유는 뭐야?",
             "choices": [
                 {
                     "id": "maybe_not",
-                    "label": "없을 수도",
+                    "label": "일자리와 투자 규모를 보면 아직은 장점이 더 커 보여",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "still_nuke",
-                    "label": "핵이 제일 무서워",
+                    "label": "기업은 결국 문화보다 운영비와 제도를 더 중시할 수도 있어",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_drone": {
             "layer": "counter",
-            "coach_text": "괜찮아. 천천히 보자. 드론 수천 대 vs 핵 — 뭐가 더 실제로 쓰일까?",
+            "coach_text": "좋아. 그럼 애매한 이유를 골라보자. 네가 망설이는 핵심은 뭐야?",
             "choices": [
                 {
                     "id": "drones_real",
-                    "label": "드론이 더 현실적",
+                    "label": "인재에게 중요한 것과 기업에게 중요한 것이 다를 수 있어",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "nuke_deter",
-                    "label": "핵이 억지해",
+                    "label": "단기 성과와 장기 지속성을 같은 잣대로 보기 어려워",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_hard": {
             "layer": "counter",
-            "coach_text": "일리 있어. 근데 — '쓸 수 있느냐'는 다른 문제 아닐까?\n핵을 진짜 쏘면 자기도 끝이잖아.",
+            "coach_text": "좋아. 이제 ④ 반론 카드를 올려보자. 지금 네 생각을 가장 잘 흔드는 문장은 어느 쪽이야?",
             "choices": [
                 {
                     "id": "true_hard",
-                    "label": "그건 그렇네",
+                    "label": "세금이 좋아도 인재가 떠나면 장기 경쟁력은 약해질 수 있다",
                     "next": "n_counter_card",
                     "emit_card": {
                         "layer": "counter",
-                        "text": "기사의 핵심은 텍사스의 경쟁력이 이미 에너지·기술·금융·기업법 인프라로 넓어졌고, 앞으로…"
+                        "text": "④ 반론: 비용 경쟁력만으로는 숙련 인재를 붙잡기 어려워 장기 우위가 흔들릴 수 있다"
                     }
                 },
                 {
                     "id": "still_deter",
-                    "label": "그래도 억지는 돼",
+                    "label": "정치·문화 논란이 있어도 당장은 구조적 이점이 더 클 수 있다",
                     "next": "n_counter_card_deter",
                     "emit_card": {
                         "layer": "counter",
-                        "text": "기사의 핵심은 텍사스의 경쟁력이 이미 에너지·기술·금융·기업법 인프라로 넓어졌고, 앞으로…"
+                        "text": "④ 반론: 문화·정치 리스크가 있어도 현재의 산업·비용 우위가 당분간 버팀목이 될 수 있다"
                     }
                 }
             ]
         },
         "n_counter_card": {
             "layer": "counter",
-            "coach_text": "반론과 네 답이 판에 쌓였어. **판을 봐.**",
+            "coach_text": "좋아, ④ 반론이 올라갔어. 이제 처음 입장을 그대로 둘지, 조금 고쳐볼지 정리해보자.",
             "board_pulse": "counter",
             "choices": [
                 {
                     "id": "counter_ok",
-                    "label": "계속 정리하자",
+                    "label": "입장을 다시 다듬어볼게",
                     "next": "n_refine_0"
                 }
             ]
         },
         "n_counter_card_deter": {
             "layer": "counter",
-            "coach_text": "그 관점도 판에 적혔어.",
+            "coach_text": "좋아, ④ 반론이 올라갔어. 이제 반론을 반영해서 네 입장을 재정립해보자.",
             "board_pulse": "counter",
             "choices": [
                 {
                     "id": "counter_ok",
-                    "label": "계속 정리하자",
+                    "label": "내 생각을 다시 세워볼게",
                     "next": "n_refine_0"
                 }
             ]
         },
         "n_refine_0": {
             "layer": "refine",
-            "coach_text": "자, **판을 다시 봐.** 처음 생각에서 많이 왔어.\n① 입장 → ② 근거 → ③ 깊이 → ④ 반론\n이제 네 생각을 다시 정리하면, 어떻게 바뀌었어?",
+            "coach_text": "생각판을 보면 처음엔 비용 얘기에서 시작했어도 지금은 인프라, 인재, 문화·정치까지 들어왔어. 그래서 지금 네 결론은 어떻게 다듬어지고 있어?",
             "board_diff": true,
             "choices": [
                 {
                     "id": "limits",
-                    "label": "핵은 안전을 주지만 한계가 있다",
+                    "label": "세금·에너지는 강점이지만 장기 승부는 인재와 리스크 관리에 달렸어",
                     "next": "n_refine_card",
                     "emit_card": {
                         "layer": "refine",
-                        "text": "처음 생각보다 정교해졌다"
+                        "text": "⑤ 재정립: 비용 우위는 출발점이고, 장기 경쟁력은 인재 유치와 정치·문화 균형이 가른다"
                     }
                 },
                 {
                     "id": "still_best",
-                    "label": "여전히 핵이 최선이다",
+                    "label": "그래도 텍사스의 기본 경쟁력은 여전히 비용과 제도 우위야",
                     "next": "n_refine_card_best",
                     "emit_card": {
                         "layer": "refine",
-                        "text": "처음 생각보다 정교해졌다"
+                        "text": "⑤ 재정립: 반론을 인정해도 텍사스의 중심 경쟁력은 여전히 비용·제도 우위다"
                     }
                 },
                 {
                     "id": "refine_free",
-                    "label": "직접 쓸게",
+                    "label": "내 말로 다시 정리해볼게",
                     "next": "n_refine_input",
                     "input_mode": "text",
                     "emit_card_on_message": {
@@ -521,31 +521,31 @@
         },
         "n_refine_card": {
             "layer": "refine",
-            "coach_text": "스스로 여기까지 왔어. 처음 '핵=안전'에서 훨씬 정교해졌지?",
+            "coach_text": "좋아, ⑤ 재정립이 올라갔어. 이제 마지막으로 한 문장 결론을 만들면 돼.",
             "board_pulse": "refine",
             "choices": [
                 {
                     "id": "refine_ok",
-                    "label": "맞아",
+                    "label": "종합하러 가자",
                     "next": "n_synth_0"
                 }
             ]
         },
         "n_refine_card_best": {
             "layer": "refine",
-            "coach_text": "네 정리가 판에 적혔어. 한번 더 따져보자.",
+            "coach_text": "좋아, ⑤ 재정립이 올라갔어. 이제 네 최종 판단을 한 문장으로 묶어보자.",
             "board_pulse": "refine",
             "choices": [
                 {
                     "id": "refine_ok",
-                    "label": "계속",
+                    "label": "최종 정리할게",
                     "next": "n_synth_0"
                 }
             ]
         },
         "n_refine_input": {
             "layer": "refine",
-            "coach_text": "네 말로 정리해 봐 — 지금 네 생각은?",
+            "coach_text": "좋아. 반론을 지나온 뒤의 네 입장을 한두 문장으로 다시 써봐.",
             "input_mode": "text",
             "emit_card_on_message": {
                 "layer": "refine"
@@ -554,7 +554,7 @@
         },
         "n_synth_0": {
             "layer": "synthesis",
-            "coach_text": "마지막. 이 모든 걸 **한 문장**으로 — 네 결론은?\n(직접 써 봐)",
+            "coach_text": "이제 ⑥ 종합이야. '텍사스의 부상은 무엇에서 시작됐고, 앞으로 무엇이 더 중요해지는가'를 포함해서 네 결론을 짧게 써봐.",
             "input_mode": "text",
             "emit_card_on_message": {
                 "layer": "synthesis"
@@ -563,21 +563,23 @@
         },
         "n_synth_compose": {
             "layer": "synthesis",
-            "coach_text": "이게 네가 10분 넘게 따져서 만든 결론이야.\n누가 준 게 아니라, **네가 쌓은 거**지.\n자 — 이 생각판을 바탕으로 한 편의 글을 써볼까?\n판에 있는 ①~⑥이 그대로 네 글의 뼈대가 될 거야.",
+            "coach_text": "좋아, 생각판이 거의 완성됐어. 마지막 답안으로 매끈하게 정리해보자.",
             "board_pulse": "synthesis",
             "choices": [
                 {
                     "id": "go_compose",
-                    "label": "글 쓰러 가기",
+                    "label": "최종 답안 만들기",
                     "next": "n_compose"
                 }
             ]
         },
         "n_compose": {
             "layer": "synthesis",
-            "terminal": true
+            "terminal": true,
+            "coach_text": "정리됐어. 처음의 통념에서 출발해 근거를 세우고, 장기 조건을 따지고, 반론으로 흔들린 뒤, 너만의 결론까지 왔어."
         }
     },
-    "llm_followup_fallback": "그렇구나. 한 가지만 더 — 그 말을 한 문장으로 정리하면?",
-    "generated_by": "narrative_v2_generate_rule_v1"
+    "generated_by": "narrative_v2_generate_llm_v2",
+    "llm_followup_fallback": "좋아. 그 이유를 한 문장으로 압축하면 네 입장이 더 또렷해질 거야.",
+    "llm_philosophy_notes": "통념 대 복잡한 진실의 구조를 유지하고, 반론은 질문으로 흔들되 학생 결론을 대신 말하지 않도록 작성함."
 }

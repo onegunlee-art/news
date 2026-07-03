@@ -55,142 +55,142 @@
     "nodes": {
         "n_intro": {
             "layer": "intro",
-            "coach_text": "AI가 다음 AI를 만들기 시작하면 정말 바로 인간 통제를 벗어나게 될까?\n\n많은 사람은 \"AI의 재귀적 자기개선이 곧 인간 통제를 벗어난 초지능 폭주로 이어지는가\"라고 생각해.\n\nAI의 재귀적 자기개선은 곧 통제 불능의 초지능 폭주로 이어질 것처럼 보이지만, 그러나 실제 속도와 위험은 컴퓨팅 자원·전력·데이터·검증 가능성 같은 병목에 묶여 있다.\n\n왜 그렇게 생각할까?",
+            "coach_text": "한 AI가 다음 세대 AI 개발을 돕는 흐름은 이미 일부 현실이 되고 있어. 기사에선 Claude가 자사 공개 코드의 80% 이상을 작성했다고 했고, AlphaEvolve는 데이터센터 전력 효율과 학습 속도 개선에도 기여했지. 그렇다면 AI가 다음 AI를 만들기 시작하면 정말 바로 인간 통제를 벗어나게 될까?",
             "choices": [
                 {
                     "id": "nuclear_fear",
-                    "label": "A 쪽이 더 와닿아",
+                    "label": "그럴까 봐 가장 걱정돼",
                     "next": "n_stance_bridge_fear"
                 },
                 {
                     "id": "just_luck",
-                    "label": "B 쪽도 설명돼",
+                    "label": "아직은 과장된 불안 같아",
                     "next": "n_stance_bridge_luck"
                 },
                 {
                     "id": "other_reason",
-                    "label": "다른 이유",
+                    "label": "다른 이유부터 떠올라",
                     "next": "n_stance_bridge_other"
                 }
             ]
         },
         "n_stance_bridge_fear": {
             "layer": "stance",
-            "coach_text": "좋아, AI의 재귀적 자기개선이 곧 인간 통제를 벗어난 초지능 폭주로 이어지는가에서 시작해보자.\nAI가 넥스트 AI를 설계하는 세상, 재귀적 자기개선(RSI) — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "그 불안에서 출발해 보자. 네 생각은 어느 쪽에 더 가까워?",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "RSI는 결국 통제 불능으로 갈 것 같아",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "AI의 재귀적 자기개선이 곧 인간 통제를 벗어난 초지능 폭주로 이어지는가"
+                        "text": "① 입장: RSI는 통제 불능의 초지능 폭주로 이어질 가능성이 크다."
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "바로 그렇게 되진 않을 것 같아",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "AI의 재귀적 자기개선이 곧 인간 통제를 벗어난 초지능 폭주로 이어지는가"
+                        "text": "① 입장: RSI가 곧바로 통제 불능으로 이어진다고 보긴 어렵다."
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "위험은 크지만 단정은 못 하겠어",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "AI의 재귀적 자기개선이 곧 인간 통제를 벗어난 초지능 폭주로 이어지는가"
+                        "text": "① 입장: RSI는 위험하지만 즉각적 폭주로 단정하긴 어렵다."
                     }
                 }
             ]
         },
         "n_stance_bridge_luck": {
             "layer": "stance",
-            "coach_text": "좋아, AI의 재귀적 자기개선이 곧 인간 통제를 벗어난 초지능 폭주로 이어지는가에서 시작해보자.\nAI가 넥스트 AI를 설계하는 세상, 재귀적 자기개선(RSI) — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아, 과장일 수 있다는 느낌에서 시작해 보자. 지금 네 입장은 어디에 가까워?",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "그래도 결국 위험한 방향으로 갈 것 같아",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "AI의 재귀적 자기개선이 곧 인간 통제를 벗어난 초지능 폭주로 이어지는가"
+                        "text": "① 입장: RSI는 결국 통제 불능의 초지능 폭주로 이어질 가능성이 크다."
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "현실 제약 때문에 바로 폭주하진 않을 것 같아",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "AI의 재귀적 자기개선이 곧 인간 통제를 벗어난 초지능 폭주로 이어지는가"
+                        "text": "① 입장: RSI가 곧바로 통제 불능으로 이어진다고 보긴 어렵다."
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "가능성은 열어 두고 싶어",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "AI의 재귀적 자기개선이 곧 인간 통제를 벗어난 초지능 폭주로 이어지는가"
+                        "text": "① 입장: RSI는 위험하지만 즉각적 폭주로 단정하긴 어렵다."
                     }
                 }
             ]
         },
         "n_stance_bridge_other": {
             "layer": "stance",
-            "coach_text": "좋아, AI의 재귀적 자기개선이 곧 인간 통제를 벗어난 초지능 폭주로 이어지는가에서 시작해보자.\nAI가 넥스트 AI를 설계하는 세상, 재귀적 자기개선(RSI) — 네 입장은 어느 쪽에 가까워?",
+            "coach_text": "좋아, 네가 떠올린 다른 관점도 중요해. 그걸 반영하면 입장은 어디쯤이야?",
             "choices": [
                 {
                     "id": "want_nuclear",
-                    "label": "가지는 게 안전해",
+                    "label": "결국 통제 밖으로 갈 가능성이 더 커 보여",
                     "next": "n_stance_card",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "AI의 재귀적 자기개선이 곧 인간 통제를 벗어난 초지능 폭주로 이어지는가"
+                        "text": "① 입장: RSI는 결국 통제 불능의 초지능 폭주로 이어질 가능성이 크다."
                     }
                 },
                 {
                     "id": "no_nuclear",
-                    "label": "안 가지는 게 나아",
+                    "label": "당장은 병목이 더 커 보여",
                     "next": "n_stance_card_no",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "AI의 재귀적 자기개선이 곧 인간 통제를 벗어난 초지능 폭주로 이어지는가"
+                        "text": "① 입장: RSI가 곧바로 통제 불능으로 이어진다고 보긴 어렵다."
                     }
                 },
                 {
                     "id": "half_half",
-                    "label": "반반이야",
+                    "label": "둘 다 보여서 아직 유보하고 싶어",
                     "next": "n_stance_card_half",
                     "emit_card": {
                         "layer": "stance",
-                        "text": "AI의 재귀적 자기개선이 곧 인간 통제를 벗어난 초지능 폭주로 이어지는가"
+                        "text": "① 입장: RSI는 위험하지만 즉각적 폭주로 단정하긴 어렵다."
                     }
                 }
             ]
         },
         "n_stance_card": {
             "layer": "stance",
-            "coach_text": "좋아, 네 입장이 잡혔어. (판에 적혔지)\n근데 그냥 믿는 것과 따지는 건 다르잖아. 하나씩 파보자.\n\n왜 핵이 있으면 안전하다고 생각해?",
+            "coach_text": "좋아, 왜 그렇게 보는지 가장 가까운 이유를 골라 보자.",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "cant_touch",
-                    "label": "아무도 못 건드려서",
+                    "label": "AI가 AI를 설계하면 인간이 따라잡기 어려워질 것 같아서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "stop_war",
-                    "label": "전쟁을 막아서",
+                    "label": "개선 속도가 누적되면 어느 순간 통제가 무의미해질 것 같아서",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 말해 볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -198,22 +198,22 @@
         },
         "n_stance_card_no": {
             "layer": "stance",
-            "coach_text": "신중하네. 네 입장이 판에 잡혔어.\n왜 핵 없이도 괜찮다고 보는지 — 이유를 따져보자.",
+            "coach_text": "좋아, 왜 바로 폭주로 보지 않는지 가장 가까운 이유를 골라 보자.",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "alliance",
-                    "label": "동맹이 있어서",
+                    "label": "AI가 좋아져도 결국 연산 자원과 인프라가 필요하니까",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "danger",
-                    "label": "핵이 오히려 위험해서",
+                    "label": "잘하는 일과 스스로 전면 개선하는 일은 다르니까",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 말해 볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -221,22 +221,22 @@
         },
         "n_stance_card_half": {
             "layer": "stance",
-            "coach_text": "솔직하네. 입장이 판에 잡혔어.\n왜 그렇게 반반으로 보는지 — 이유를 따져보자.",
+            "coach_text": "좋아, 유보하는 이유를 가장 잘 담는 쪽은 뭐야?",
             "board_pulse": "stance",
             "choices": [
                 {
                     "id": "not_sure",
-                    "label": "장단이 있어서",
+                    "label": "위험 신호는 보이는데 실제 속도는 잘 모르겠어",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "need_more",
-                    "label": "더 알아봐야 해서",
+                    "label": "기술 가능성과 현실 제약을 같이 더 봐야 할 것 같아",
                     "next": "n_reason_why2"
                 },
                 {
                     "id": "reason_free",
-                    "label": "직접 쓸게",
+                    "label": "내 이유를 직접 말해 볼게",
                     "next": "n_reason_why2",
                     "llm_followup": true
                 }
@@ -244,273 +244,273 @@
         },
         "n_reason_why2": {
             "layer": "reason",
-            "coach_text": "그렇지. 근데 '왜' 못 건드릴까? 상대 입장에서 생각하면?",
+            "coach_text": "그 생각을 한 단계 더 밀어 보자. 네 판단을 받치는 핵심 근거는 뭐야?",
             "choices": [
                 {
                     "id": "fear_revenge",
-                    "label": "보복이 무서워서",
+                    "label": "이미 AI가 연구·코딩 일부를 대신하니 개선 고리가 시작됐다고 봐",
                     "next": "n_reason_card",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: AI의 재귀적 자기개선이 곧 인간 통제를 벗어난 초지능 폭주로 이어지는가"
+                        "text": "② 근거: AI가 이미 코드와 연구개발 일부를 맡아 자기개선의 출발점이 보인다."
                     }
                 },
                 {
                     "id": "intl_pressure",
-                    "label": "국제사회 비난",
+                    "label": "성능 향상이 있어도 데이터센터·전력·칩이 속도를 묶는다고 봐",
                     "next": "n_reason_card_intl",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: AI의 재귀적 자기개선이 곧 인간 통제를 벗어난 초지능 폭주로 이어지는가"
+                        "text": "② 근거: 발전 속도는 성능 자체보다 연산 자원과 인프라 병목에 크게 좌우된다."
                     }
                 },
                 {
                     "id": "unsure_reason",
-                    "label": "음...",
+                    "label": "둘 다 맞는 것 같아 근거를 더 정리해 보고 싶어",
                     "next": "n_reason_card",
                     "emit_card": {
                         "layer": "reason",
-                        "text": "근거: AI의 재귀적 자기개선이 곧 인간 통제를 벗어난 초지능 폭주로 이어지는가"
+                        "text": "② 근거: 기술 진전과 현실 병목이 함께 작동해 판단이 쉽지 않다."
                     }
                 }
             ]
         },
         "n_reason_card": {
             "layer": "reason",
-            "coach_text": "완벽해. 이제 '입장'에 '근거'가 붙었어. **판을 봐** — 생각이 서기 시작했지?",
+            "coach_text": "좋아, 이제 생각판에 ① 입장과 ② 근거가 놓였어. 다음엔 그 근거가 언제까지 통하는지 따져 보자.",
             "board_pulse": "reason",
             "choices": [
                 {
                     "id": "see_board",
-                    "label": "판 보니까 그렇네",
+                    "label": "생각판 보고 더 들어가기",
                     "next": "n_depth_0"
                 }
             ]
         },
         "n_reason_card_intl": {
             "layer": "reason",
-            "coach_text": "그것도 근거가 될 수 있지. 판에 적혔어. **판을 봐.**",
+            "coach_text": "좋아, 입장과 근거가 연결됐어. 이제 그 근거가 항상 맞는지, 조건이 붙는지 살펴보자.",
             "board_pulse": "reason",
             "choices": [
                 {
                     "id": "see_board",
-                    "label": "판 보니까 그렇네",
+                    "label": "조건까지 따져 보기",
                     "next": "n_depth_0"
                 }
             ]
         },
         "n_depth_0": {
             "layer": "depth",
-            "coach_text": "한 걸음 더.\nAI의 재귀적 자기개선은 곧 통제 불능의 초지능 폭주로 이어질 것처럼 보이지만, 그러나 실제 속도와 위험은 컴퓨팅 자원·전력·데이터·검증 가능성 같은 병목에 묶…\n\n예외 상황은 없을까?",
+            "coach_text": "그 근거가 현실에서 끝까지 유지될까? 어떤 쪽이 더 가깝다고 봐?",
             "choices": [
                 {
                     "id": "wont_work",
-                    "label": "안 통할 것 같아",
+                    "label": "병목이 오래 남아서 즉각적 폭주는 어렵다고 봐",
                     "next": "n_depth_1"
                 },
                 {
                     "id": "still_works",
-                    "label": "그래도 통해",
+                    "label": "병목이 있어도 개선 속도는 계속 커질 수 있다고 봐",
                     "next": "n_depth_1"
                 },
                 {
                     "id": "hard_depth",
-                    "label": "어렵다",
+                    "label": "상황에 따라 달라질 것 같아",
                     "next": "n_depth_1"
                 }
             ]
         },
         "n_depth_1": {
             "layer": "depth",
-            "coach_text": "그럼 네 입장('핵=안전')은 — 무조건 맞는 건 아니게 되네?",
+            "coach_text": "좋아. 그럼 네 생각에 꼭 붙는 조건이나 예외는 뭐야?",
             "choices": [
                 {
                     "id": "conditional",
-                    "label": "조건이 있네",
+                    "label": "검증 가능한 좁은 영역에선 빨라져도 범용 개선은 다를 수 있어",
                     "next": "n_depth_card",
                     "emit_card": {
                         "layer": "depth",
-                        "text": "조건이 있다 — 항상 통하지는 않음"
+                        "text": "③ 깊이: 부분 자동화는 빨라질 수 있지만 범용적 자기개선 루프는 검증과 범위의 한계에 걸릴 수 있다."
                     }
                 },
                 {
                     "id": "mostly_ok",
-                    "label": "그래도 대부분 맞아",
+                    "label": "인프라 병목이 있어도 연구 자동화가 누적되면 속도는 비선형적으로 커질 수 있어",
                     "next": "n_depth_card_mostly",
                     "emit_card": {
                         "layer": "depth",
-                        "text": "조건이 있다 — 항상 통하지는 않음"
+                        "text": "③ 깊이: 완전한 폭발은 아니어도 연구 자동화의 누적 효과로 발전 속도는 크게 뛸 수 있다."
                     }
                 }
             ]
         },
         "n_depth_card": {
             "layer": "depth",
-            "coach_text": "봐, 처음엔 '핵=안전'이었는데 이제 '조건부'로 정교해졌어. **판을 봐.** 이게 따지는 거야.",
+            "coach_text": "좋아, 이제 단순 찬반이 아니라 조건이 붙기 시작했어. 다음엔 기사 속 다른 면이 네 생각을 흔드는지 볼까?",
             "board_pulse": "depth",
             "choices": [
                 {
                     "id": "depth_ok",
-                    "label": "맞아, 정교해졌네",
+                    "label": "다른 면으로 흔들려 보기",
                     "next": "n_counter_0"
                 }
             ]
         },
         "n_depth_card_mostly": {
             "layer": "depth",
-            "coach_text": "그래도 '대부분'과 '항상'은 다르지. 판에 적혔어.",
+            "coach_text": "좋아, 속도와 한계를 함께 보게 됐어. 이제 반대쪽 사실이 네 입장을 얼마나 흔드는지 보자.",
             "board_pulse": "depth",
             "choices": [
                 {
                     "id": "depth_ok",
-                    "label": "계속 가보자",
+                    "label": "반론 질문 받기",
                     "next": "n_counter_0"
                 }
             ]
         },
         "n_counter_0": {
             "layer": "counter",
-            "coach_text": "그렇게 단순하지 않은 게, 기사에서도 구글 딥마인드의 AlphaEvolve가 데이터센터 전력을 0.7% 절감하고 제미니 학습 속도를 1% 높였다고 하면서도 결국 발전 속도는 데이터센터와 연산 자원 병목에 묶인다고 했어.\n\n부분 자동화만으로도 AI 연구개발은 비선형적으로 빨라질 수 있지만, 완전한 자기개선 루프와 즉각적 지능 폭발은 컴퓨팅 자원, 데이터센터 증설, 검증 가능한 영역의 한계 같은 현실…\n\n네가 아까 말한 입장 — 이 이야기에도 그대로 맞을까?",
+            "coach_text": "그렇게 단순하지 않은 게, 기사에서도 AlphaEvolve가 전력 0.7% 절감, 학습 속도 1% 개선을 만들었지만 결국 발전 속도는 데이터센터와 연산 자원 병목에 묶인다고 했어. 그렇다면 'AI가 AI를 만든다 = 바로 지능 폭발'이라고 이어도 될까?",
             "choices": [
                 {
                     "id": "might_shake",
-                    "label": "흔들릴 것 같아",
+                    "label": "맞아, 그 등식은 너무 빠를 수도 있어",
                     "next": "n_counter_still"
                 },
                 {
                     "id": "nuke_different",
-                    "label": "그래도 핵은 달라",
+                    "label": "그래도 작은 개선이 쌓이면 병목을 밀어낼 수도 있어",
                     "next": "n_counter_why"
                 },
                 {
                     "id": "unsure_counter",
-                    "label": "모르겠어",
+                    "label": "아직 어느 쪽으로 흔들려야 할지 모르겠어",
                     "next": "n_counter_drone"
                 }
             ]
         },
         "n_counter_why": {
             "layer": "counter",
-            "coach_text": "왜 그렇게 봐? (답 강요 없어 — 네 생각대로)",
+            "coach_text": "왜 그렇게 느꼈어? 병목이 있다는 사실이 속도 예측을 바꾸는 핵심일까?",
             "choices": [
                 {
                     "id": "destruction",
-                    "label": "파괴력이 차원이 달라",
+                    "label": "응, 성능이 좋아도 물리적 자원이 없으면 바로 못 커지니까",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "can_defend",
-                    "label": "드론은 막을 수 있어",
+                    "label": "아니, 연구 자동화가 병목 자체를 줄일 수도 있으니까",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_still": {
             "layer": "counter",
-            "coach_text": "솔직하네. 그래도 핵만큼 무서운 게 있을까?",
+            "coach_text": "그렇다면 병목이 있어도 위험은 남는다고 보는 거네? 그 위험은 '즉시 폭주' 쪽에 더 가까워, 아니면 '가속된 발전' 쪽에 더 가까워?",
             "choices": [
                 {
                     "id": "maybe_not",
-                    "label": "없을 수도",
+                    "label": "즉시 폭주보단 가속된 발전 쪽이 더 맞는 것 같아",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "still_nuke",
-                    "label": "핵이 제일 무서워",
+                    "label": "그래도 결국 폭주 가능성까지 이어질 수 있다고 봐",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_drone": {
             "layer": "counter",
-            "coach_text": "괜찮아. 천천히 보자. 드론 수천 대 vs 핵 — 뭐가 더 실제로 쓰일까?",
+            "coach_text": "헷갈릴 수 있어. 그럼 질문을 바꿔 볼게. 부분 자동화 성과와 완전한 자기개선 루프는 같은 수준의 주장일까?",
             "choices": [
                 {
                     "id": "drones_real",
-                    "label": "드론이 더 현실적",
+                    "label": "아니, 부분 성과가 곧 완전한 루프를 뜻하진 않아",
                     "next": "n_counter_hard"
                 },
                 {
                     "id": "nuke_deter",
-                    "label": "핵이 억지해",
+                    "label": "그래도 부분 성과가 루프의 시작일 수는 있어",
                     "next": "n_counter_hard"
                 }
             ]
         },
         "n_counter_hard": {
             "layer": "counter",
-            "coach_text": "일리 있어. 근데 — '쓸 수 있느냐'는 다른 문제 아닐까?\n핵을 진짜 쏘면 자기도 끝이잖아.",
+            "coach_text": "좋아, 이제 네 입장을 한 번 흔들어 보자. 'AI가 다음 AI를 돕는다'는 사실과 '곧 통제 불능의 초지능 폭주가 온다'는 결론 사이에, 네가 새로 끼워 넣고 싶은 조건은 뭐야?",
             "choices": [
                 {
                     "id": "true_hard",
-                    "label": "그건 그렇네",
+                    "label": "컴퓨팅·전력·데이터·검증 가능성이 같이 풀려야 할 것 같아",
                     "next": "n_counter_card",
                     "emit_card": {
                         "layer": "counter",
-                        "text": "부분 자동화만으로도 AI 연구개발은 비선형적으로 빨라질 수 있지만, 완전한 자기개선 루프…"
+                        "text": "④ 반론: RSI의 위험을 말하더라도 실제 속도는 연산 자원, 전력, 데이터, 검증 가능성의 병목에 묶일 수 있다."
                     }
                 },
                 {
                     "id": "still_deter",
-                    "label": "그래도 억지는 돼",
+                    "label": "병목이 있어도 연구 자동화 누적이 그 제약을 빠르게 약화시킬 수 있어",
                     "next": "n_counter_card_deter",
                     "emit_card": {
                         "layer": "counter",
-                        "text": "부분 자동화만으로도 AI 연구개발은 비선형적으로 빨라질 수 있지만, 완전한 자기개선 루프…"
+                        "text": "④ 반론: 병목이 남아 있어도 연구 자동화의 누적 효과가 예상보다 큰 가속을 만들 수 있다."
                     }
                 }
             ]
         },
         "n_counter_card": {
             "layer": "counter",
-            "coach_text": "반론과 네 답이 판에 쌓였어. **판을 봐.**",
+            "coach_text": "좋아, ④ 반론 카드까지 올라왔어. 이제 처음 입장을 그대로 둘지, 조금 고쳐 쓸지 정리해 보자.",
             "board_pulse": "counter",
             "choices": [
                 {
                     "id": "counter_ok",
-                    "label": "계속 정리하자",
+                    "label": "입장 다시 다듬기",
                     "next": "n_refine_0"
                 }
             ]
         },
         "n_counter_card_deter": {
             "layer": "counter",
-            "coach_text": "그 관점도 판에 적혔어.",
+            "coach_text": "좋아, 흔들렸지만 완전히 뒤집히진 않았네. 이제 그 흔들림을 반영해서 입장을 더 정밀하게 바꿔 보자.",
             "board_pulse": "counter",
             "choices": [
                 {
                     "id": "counter_ok",
-                    "label": "계속 정리하자",
+                    "label": "정교하게 다시 쓰기",
                     "next": "n_refine_0"
                 }
             ]
         },
         "n_refine_0": {
             "layer": "refine",
-            "coach_text": "자, **판을 다시 봐.** 처음 생각에서 많이 왔어.\n① 입장 → ② 근거 → ③ 깊이 → ④ 반론\n이제 네 생각을 다시 정리하면, 어떻게 바뀌었어?",
+            "coach_text": "생각판을 보면, 처음보다 조건이 많이 붙었어. 지금 네 입장을 어떻게 재정립하고 싶어?",
             "board_diff": true,
             "choices": [
                 {
                     "id": "limits",
-                    "label": "핵은 안전을 주지만 한계가 있다",
+                    "label": "RSI는 위험하지만 속도와 범위는 현실 병목에 크게 좌우된다고 보겠어",
                     "next": "n_refine_card",
                     "emit_card": {
                         "layer": "refine",
-                        "text": "처음 생각보다 정교해졌다"
+                        "text": "⑤ 재정립: RSI의 위험은 인정하되 실제 전개 속도와 범위는 인프라와 검증의 병목을 함께 봐야 한다."
                     }
                 },
                 {
                     "id": "still_best",
-                    "label": "여전히 핵이 최선이다",
+                    "label": "병목이 있어도 결국 큰 위험으로 이어질 가능성을 더 크게 보겠어",
                     "next": "n_refine_card_best",
                     "emit_card": {
                         "layer": "refine",
-                        "text": "처음 생각보다 정교해졌다"
+                        "text": "⑤ 재정립: 현실 병목이 있어도 연구 자동화의 누적이 장기적으로 큰 통제 문제를 만들 수 있다."
                     }
                 },
                 {
                     "id": "refine_free",
-                    "label": "직접 쓸게",
+                    "label": "내 문장으로 다시 정리할래",
                     "next": "n_refine_input",
                     "input_mode": "text",
                     "emit_card_on_message": {
@@ -521,31 +521,31 @@
         },
         "n_refine_card": {
             "layer": "refine",
-            "coach_text": "스스로 여기까지 왔어. 처음 '핵=안전'에서 훨씬 정교해졌지?",
+            "coach_text": "좋아, 재정립 카드가 올라갔어. 이제 마지막으로 한 문장 결론을 만들어 보자.",
             "board_pulse": "refine",
             "choices": [
                 {
                     "id": "refine_ok",
-                    "label": "맞아",
+                    "label": "최종 정리로 가기",
                     "next": "n_synth_0"
                 }
             ]
         },
         "n_refine_card_best": {
             "layer": "refine",
-            "coach_text": "네 정리가 판에 적혔어. 한번 더 따져보자.",
+            "coach_text": "좋아, 네 입장이 더 선명해졌어. 이제 조건과 우려를 함께 담아 마지막 결론을 써 보자.",
             "board_pulse": "refine",
             "choices": [
                 {
                     "id": "refine_ok",
-                    "label": "계속",
+                    "label": "최종 문장 만들기",
                     "next": "n_synth_0"
                 }
             ]
         },
         "n_refine_input": {
             "layer": "refine",
-            "coach_text": "네 말로 정리해 봐 — 지금 네 생각은?",
+            "coach_text": "좋아. ①부터 ④까지를 보고, 처음 생각을 어떻게 고쳐 쓰고 싶은지 한두 문장으로 적어 봐.",
             "input_mode": "text",
             "emit_card_on_message": {
                 "layer": "refine"
@@ -554,7 +554,7 @@
         },
         "n_synth_0": {
             "layer": "synthesis",
-            "coach_text": "마지막. 이 모든 걸 **한 문장**으로 — 네 결론은?\n(직접 써 봐)",
+            "coach_text": "이제 종합해 보자. 'AI가 다음 AI를 만들기 시작하면 정말 바로 인간 통제를 벗어나게 될까?'라는 질문에, 네 최종 답을 2~3문장으로 써 봐. 위험과 병목을 둘 다 다루면 더 좋아.",
             "input_mode": "text",
             "emit_card_on_message": {
                 "layer": "synthesis"
@@ -563,21 +563,23 @@
         },
         "n_synth_compose": {
             "layer": "synthesis",
-            "coach_text": "이게 네가 10분 넘게 따져서 만든 결론이야.\n누가 준 게 아니라, **네가 쌓은 거**지.\n자 — 이 생각판을 바탕으로 한 편의 글을 써볼까?\n판에 있는 ①~⑥이 그대로 네 글의 뼈대가 될 거야.",
+            "coach_text": "좋아, 생각판 6층을 바탕으로 최종 답안을 다듬을 준비가 됐어.",
             "board_pulse": "synthesis",
             "choices": [
                 {
                     "id": "go_compose",
-                    "label": "글 쓰러 가기",
+                    "label": "최종 답안 완성하기",
                     "next": "n_compose"
                 }
             ]
         },
         "n_compose": {
             "layer": "synthesis",
-            "terminal": true
+            "terminal": true,
+            "coach_text": "잘했어. 네 답안은 '가능성'과 '현실 제약'을 함께 본 점이 핵심이야. 이제 ①입장→②근거→③조건→④흔들림→⑤재정립→⑥종합 흐름이 살아 있는지 확인해 보면 돼."
         }
     },
-    "llm_followup_fallback": "그렇구나. 한 가지만 더 — 그 말을 한 문장으로 정리하면?",
-    "generated_by": "narrative_v2_generate_rule_v1"
+    "generated_by": "narrative_v2_generate_llm_v2",
+    "llm_followup_fallback": "좋아, 그 이유를 생각판에 올릴 수 있게 핵심만 한 문장으로 줄여 볼래?",
+    "llm_philosophy_notes": "반론은 질문으로만 흔들고, 학생 결론을 대신 말하지 않으며, side_a의 직선적 불안을 side_b의 현실 병목과 조건으로 복잡하게 재구성했다."
 }
