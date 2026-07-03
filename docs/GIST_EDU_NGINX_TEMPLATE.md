@@ -37,6 +37,15 @@ server {
         include fastcgi_params;
     }
 
+    # EDU URL redirects — edu 서브도메인 전용 (www 미적용)
+    # SPA fallback location / 보다 위에 배치 (exact match 우선)
+    location = / {
+        return 302 /edu;
+    }
+    location = /admin {
+        return 302 /edu/admin;
+    }
+
     # SPA fallback
     location / {
         try_files $uri $uri/ /index.html;
@@ -83,6 +92,31 @@ sudo nginx -t && sudo systemctl reload nginx
 ## 검증
 
 ```bash
+# API health
 curl -I https://edu.thegist.co.kr/api/edu/health
 # 200 OK 확인
+
+# URL redirects (1단계 — edu 서브도메인만)
+curl -sSI https://edu.thegist.co.kr/ | grep -i '^HTTP\|^location'
+# HTTP/1.1 302, Location: /edu
+
+curl -sSI https://edu.thegist.co.kr/admin | grep -i '^HTTP\|^location'
+# HTTP/1.1 302, Location: /edu/admin
+
+# www 영향 없음
+curl -sSI https://www.thegist.co.kr/ | grep -i '^HTTP\|^location'
+# HTTP/1.1 200 (302 아님)
+
+curl -sSI https://www.thegist.co.kr/admin | grep -i '^HTTP\|^location'
+# HTTP/1.1 200 (본체 admin SPA)
+```
+
+로컬 검증: `powershell -File tools/edu_nginx_url_verify.ps1`
+
+## 롤백
+
+edu server block에서 `location = /`, `location = /admin` 두 블록 제거 후:
+
+```bash
+sudo nginx -t && sudo systemctl reload nginx
 ```
