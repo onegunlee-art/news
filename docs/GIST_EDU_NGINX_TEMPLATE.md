@@ -92,13 +92,13 @@ sudo ln -s /etc/nginx/sites-available/thegist-edu /etc/nginx/sites-enabled/
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
-### 기존 thegist-edu에 redirect만 추가 (수동)
+### 기존 edu nginx에 redirect만 추가 (수동)
 
 ```bash
-sudo nano /etc/nginx/sites-available/thegist-edu
-# "# SPA fallback" 또는 "location / {" 바로 위에 aws/thegist-edu-url-redirects.inc 붙여넣기
-sudo nginx -t && sudo systemctl reload nginx
-powershell -File tools/edu_nginx_url_verify.ps1   # Windows
+# EC2에서 (repo clone 경로 기준)
+sudo bash tools/edu_nginx_apply_url_redirects.sh aws/thegist-edu-url-redirects.inc
+# 또는 snippet을 /tmp/edu-url-snippet.inc 로 복사 후:
+sudo bash tools/edu_nginx_apply_url_redirects.sh /tmp/edu-url-snippet.inc
 ```
 
 ## 검증

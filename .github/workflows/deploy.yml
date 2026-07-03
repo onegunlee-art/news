@@ -373,38 +373,15 @@ jobs:
           ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" \
             'CONF=/etc/nginx/sites-available/thegist && sudo sed -i "/location \/ {/,/}/{s|try_files \$uri \$uri/ /index.html;|try_files \$uri \$uri/ /index.html;\n        add_header Cache-Control \"no-cache, no-store, must-revalidate\" always;\n        add_header Pragma \"no-cache\" always;|}" "$CONF" && sudo nginx -t && sudo systemctl reload nginx && echo "location / no-cache patched and nginx reloaded"'
 
-      # EDU 서브도메인 URL redirects — thegist-edu만 수정 (www/thegist 미적용)
-      - name: Ensure EDU URL redirects in thegist-edu Nginx
+      # EDU 서브도메인 URL redirects — edu.thegist.co.kr server 블록 자동 탐색 (www 미적용)
+      - name: Ensure EDU URL redirects in edu nginx
         run: |
           REMOTE="${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}"
           KEY="$HOME/.ssh/ec2_key"
-          EXISTS=$(ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" \
-            'test -f /etc/nginx/sites-available/thegist-edu && echo yes || echo no')
-          EXISTS=$(echo "$EXISTS" | tr -d '[:space:]')
-          if [ "$EXISTS" != "yes" ]; then
-            echo "⚠️ /etc/nginx/sites-available/thegist-edu not found — skipping EDU URL redirects"
-            exit 0
-          fi
-          HAS=$(ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" \
-            'grep -c "EDU URL redirects" /etc/nginx/sites-available/thegist-edu 2>/dev/null || echo 0')
-          HAS=$(echo "$HAS" | tr -d '[:space:]')
-          if [ "$HAS" != "0" ]; then
-            echo "EDU URL redirects already present — skipping"
-            exit 0
-          fi
-          echo "Adding EDU URL redirects to thegist-edu..."
-          printf '%s\n' \
-            '    # EDU URL redirects — edu 서브도메인 전용 (auto-added by CI)' \
-            '    location = / {' \
-            '        return 302 /edu;' \
-            '    }' \
-            '    location = /admin {' \
-            '        return 302 /edu/admin;' \
-            '    }' \
-            '' > /tmp/edu-url-snippet.conf
-          scp -i "$KEY" -o StrictHostKeyChecking=no /tmp/edu-url-snippet.conf "$REMOTE:/tmp/"
+          scp -i "$KEY" -o StrictHostKeyChecking=no aws/thegist-edu-url-redirects.inc "$REMOTE:/tmp/edu-url-snippet.inc"
+          scp -i "$KEY" -o StrictHostKeyChecking=no tools/edu_nginx_apply_url_redirects.sh "$REMOTE:/tmp/"
           ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" \
-            'CONF=/etc/nginx/sites-available/thegist-edu && sudo awk "/location \/ \{/{while((getline line < \"/tmp/edu-url-snippet.conf\") > 0) print line; close(\"/tmp/edu-url-snippet.conf\")} {print}" "$CONF" | sudo tee /tmp/thegist-edu-patched > /dev/null && sudo cp /tmp/thegist-edu-patched "$CONF" && sudo nginx -t && sudo systemctl reload nginx && echo "EDU URL redirects added and nginx reloaded"'
+            'sudo bash /tmp/edu_nginx_apply_url_redirects.sh /tmp/edu-url-snippet.inc'
 
       - name: Ensure required env vars in server .env
         env:
@@ -640,63 +617,44 @@ jobs:
           WWW="${{ env.SITE_URL }}"
           REMOTE="${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}"
           KEY="$HOME/.ssh/ec2_key"
-          EDU_CONF=$(ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" \
-            'test -f /etc/nginx/sites-available/thegist-edu && echo yes || echo no' 2>/dev/null || echo no)
-          EDU_CONF=$(echo "$EDU_CONF" | tr -d '[:space:]')
+          echo "--- nginx configs mentioning edu.thegist.co.kr ---"
+          ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" \
+            'grep -rl "edu\.thegist\.co\.kr" /etc/nginx/sites-enabled /etc/nginx/sites-available 2>/dev/null || echo "(none)"' || true
           edu_root_headers=$(curl -sSI --connect-timeout 15 --max-time 30 "$EDU/" 2>/dev/null || true)
           echo "--- $EDU/ ---"
           echo "$edu_root_headers" | head -15
-          if [ "$EDU_CONF" != "yes" ]; then
-            echo "⚠️ /etc/nginx/sites-available/thegist-edu not on server — apply docs/GIST_EDU_NGINX_TEMPLATE.md manually"
-            echo "⚠️ Skipping strict EDU redirect verify (non-blocking)"
-            exit 0
+          if ! echo "$edu_root_headers" | grep -qiE '^HTTP/.* 302'; then
+            echo "❌ edu / did not return 302 — run tools/edu_nginx_apply_url_redirects.sh on server or check nginx config"
+            exit 1
           fi
-          check_redirect() {
-            local url="$1"
-            local expect_loc="$2"
-            local headers
-            headers=$(curl -sSI --connect-timeout 15 --max-time 30 "$url" 2>/dev/null || true)
-            echo "--- $url ---"
-            echo "$headers" | head -15
-            if ! echo "$headers" | grep -qi '^HTTP/.* 302'; then
-              echo "❌ Expected 302 for $url"
-              return 1
-            fi
-            if ! echo "$headers" | grep -i "^location:" | grep -q "$expect_loc"; then
-              echo "❌ Expected Location containing $expect_loc for $url"
-              return 1
-            fi
-            echo "✅ $url → 302 $expect_loc"
-            return 0
-          }
-          check_no_redirect_200() {
-            local url="$1"
-            local code
+          if ! echo "$edu_root_headers" | grep -i "^location:" | grep -q "/edu"; then
+            echo "❌ edu / Location header missing /edu"
+            exit 1
+          fi
+          echo "✅ $EDU/ → 302 /edu"
+          edu_admin_headers=$(curl -sSI --connect-timeout 15 --max-time 30 "$EDU/admin" 2>/dev/null || true)
+          echo "--- $EDU/admin ---"
+          echo "$edu_admin_headers" | head -10
+          if ! echo "$edu_admin_headers" | grep -qiE '^HTTP/.* 302'; then
+            echo "❌ edu /admin did not return 302"
+            exit 1
+          fi
+          echo "✅ $EDU/admin → 302 /edu/admin"
+          for url in "$WWW/" "$WWW/admin"; do
             code=$(curl -sS -o /dev/null -w "%{http_code}" --connect-timeout 15 --max-time 30 "$url" 2>/dev/null) || true
             code=$(echo "$code" | tr -d '[:space:]')
-            echo "--- $url → HTTP $code ---"
             if [ "$code" != "200" ]; then
-              echo "❌ Expected 200 (no redirect) for $url, got $code"
-              return 1
+              echo "❌ Expected 200 for $url, got $code"
+              exit 1
             fi
             echo "✅ $url → 200 (www unaffected)"
-            return 0
-          }
-          fail=0
-          check_redirect "$EDU/" "/edu" || fail=1
-          check_redirect "$EDU/admin" "/edu/admin" || fail=1
-          check_no_redirect_200 "$WWW/" || fail=1
-          check_no_redirect_200 "$WWW/admin" || fail=1
+          done
           code=$(curl -sS -o /dev/null -w "%{http_code}" --connect-timeout 15 --max-time 30 "$EDU/edu" 2>/dev/null) || true
           code=$(echo "$code" | tr -d '[:space:]')
           if [ "$code" = "200" ]; then
             echo "✅ $EDU/edu → HTTP 200"
           else
             echo "❌ $EDU/edu → HTTP ${code:-none}"
-            fail=1
-          fi
-          if [ "$fail" != "0" ]; then
-            echo "❌ EDU URL redirect verify failed — check /etc/nginx/sites-available/thegist-edu"
             exit 1
           fi
 
