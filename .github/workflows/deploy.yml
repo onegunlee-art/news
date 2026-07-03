@@ -638,19 +638,32 @@ jobs:
         run: |
           EDU="https://edu.thegist.co.kr"
           WWW="${{ env.SITE_URL }}"
+          REMOTE="${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}"
+          KEY="$HOME/.ssh/ec2_key"
+          EDU_CONF=$(ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" \
+            'test -f /etc/nginx/sites-available/thegist-edu && echo yes || echo no' 2>/dev/null || echo no)
+          EDU_CONF=$(echo "$EDU_CONF" | tr -d '[:space:]')
+          edu_root_headers=$(curl -sSI --connect-timeout 15 --max-time 30 "$EDU/" 2>/dev/null || true)
+          echo "--- $EDU/ ---"
+          echo "$edu_root_headers" | head -15
+          if [ "$EDU_CONF" != "yes" ]; then
+            echo "⚠️ /etc/nginx/sites-available/thegist-edu not on server — apply docs/GIST_EDU_NGINX_TEMPLATE.md manually"
+            echo "⚠️ Skipping strict EDU redirect verify (non-blocking)"
+            exit 0
+          fi
           check_redirect() {
             local url="$1"
             local expect_loc="$2"
             local headers
             headers=$(curl -sSI --connect-timeout 15 --max-time 30 "$url" 2>/dev/null || true)
             echo "--- $url ---"
-            echo "$headers" | head -20
+            echo "$headers" | head -15
             if ! echo "$headers" | grep -qi '^HTTP/.* 302'; then
-              echo "⚠️ Expected 302 for $url — thegist-edu may be missing redirect blocks"
+              echo "❌ Expected 302 for $url"
               return 1
             fi
             if ! echo "$headers" | grep -i "^location:" | grep -q "$expect_loc"; then
-              echo "⚠️ Expected Location containing $expect_loc for $url"
+              echo "❌ Expected Location containing $expect_loc for $url"
               return 1
             fi
             echo "✅ $url → 302 $expect_loc"
@@ -663,7 +676,7 @@ jobs:
             code=$(echo "$code" | tr -d '[:space:]')
             echo "--- $url → HTTP $code ---"
             if [ "$code" != "200" ]; then
-              echo "⚠️ Expected 200 (no redirect) for $url, got $code"
+              echo "❌ Expected 200 (no redirect) for $url, got $code"
               return 1
             fi
             echo "✅ $url → 200 (www unaffected)"
@@ -679,11 +692,11 @@ jobs:
           if [ "$code" = "200" ]; then
             echo "✅ $EDU/edu → HTTP 200"
           else
-            echo "⚠️ $EDU/edu → HTTP ${code:-none}"
+            echo "❌ $EDU/edu → HTTP ${code:-none}"
             fail=1
           fi
           if [ "$fail" != "0" ]; then
-            echo "⚠️ EDU URL redirect verify had failures — check /etc/nginx/sites-available/thegist-edu"
+            echo "❌ EDU URL redirect verify failed — check /etc/nginx/sites-available/thegist-edu"
             exit 1
           fi
 

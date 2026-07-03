@@ -85,8 +85,20 @@ sudo certbot --nginx -d edu.thegist.co.kr
 # 3. 설정 파일 링크
 sudo ln -s /etc/nginx/sites-available/thegist-edu /etc/nginx/sites-enabled/
 
-# 4. nginx 검증 및 재시작
+# 4. URL redirect 스니펫 (기존 thegist-edu에 없을 때)
+#    aws/thegist-edu-url-redirects.inc 내용을 location / { ... } 위에 삽입
+
+# 5. nginx 검증 및 재시작
 sudo nginx -t && sudo systemctl reload nginx
+```
+
+### 기존 thegist-edu에 redirect만 추가 (수동)
+
+```bash
+sudo nano /etc/nginx/sites-available/thegist-edu
+# "# SPA fallback" 또는 "location / {" 바로 위에 aws/thegist-edu-url-redirects.inc 붙여넣기
+sudo nginx -t && sudo systemctl reload nginx
+powershell -File tools/edu_nginx_url_verify.ps1   # Windows
 ```
 
 ## 검증
