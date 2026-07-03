@@ -9,6 +9,18 @@ const BUNDLE_VERSION =
     ? __APP_BUILD_VERSION__
     : null
 
+async function purgeGistAssetCaches(): Promise<void> {
+  if (!('caches' in window)) return
+  try {
+    const keys = await caches.keys()
+    await Promise.all(
+      keys.filter((k) => k.startsWith('gist-assets-')).map((k) => caches.delete(k)),
+    )
+  } catch {
+    // reload proceeds even if purge fails
+  }
+}
+
 export function useVersionCheck() {
   const baseVersion = useRef<number | null>(null)
   const isReloading = useRef(false)
@@ -26,9 +38,10 @@ export function useVersionCheck() {
     }
   }, [])
 
-  const reloadForUpdate = useCallback(() => {
+  const reloadForUpdate = useCallback(async () => {
     if (isReloading.current) return
     isReloading.current = true
+    await purgeGistAssetCaches()
     window.location.reload()
   }, [])
 
@@ -38,12 +51,12 @@ export function useVersionCheck() {
     if (latest === null) return
 
     if (BUNDLE_VERSION !== null && latest !== BUNDLE_VERSION) {
-      reloadForUpdate()
+      await reloadForUpdate()
       return
     }
 
     if (baseVersion.current !== null && latest !== baseVersion.current) {
-      reloadForUpdate()
+      await reloadForUpdate()
       return
     }
 

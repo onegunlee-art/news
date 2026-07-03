@@ -5,6 +5,8 @@ import fs from 'fs'
 
 function versionJsonPlugin() {
   const buildVersion = Date.now()
+  const publicDir = path.resolve(__dirname, '../../public')
+
   return {
     name: 'version-json',
     config() {
@@ -16,9 +18,26 @@ function versionJsonPlugin() {
     },
     closeBundle() {
       fs.writeFileSync(
-        path.resolve(__dirname, '../../public/version.json'),
+        path.join(publicDir, 'version.json'),
         JSON.stringify({ v: buildVersion }),
       )
+
+      const swPath = path.join(publicDir, 'sw.js')
+      let swSource = fs.readFileSync(swPath, 'utf8')
+      const cachePlaceholder = "'gist-assets-__BUILD_VERSION__'"
+      const cacheLinePattern = /const ASSETS_CACHE = 'gist-assets-[^']+'/
+      const cacheValue = `'gist-assets-${buildVersion}'`
+
+      if (swSource.includes(cachePlaceholder)) {
+        swSource = swSource.replace(cachePlaceholder, cacheValue)
+      } else if (cacheLinePattern.test(swSource)) {
+        swSource = swSource.replace(cacheLinePattern, `const ASSETS_CACHE = ${cacheValue}`)
+      } else {
+        throw new Error(
+          'public/sw.js must contain gist-assets-__BUILD_VERSION__ placeholder for deploy cache busting',
+        )
+      }
+      fs.writeFileSync(swPath, swSource)
     },
   }
 }
