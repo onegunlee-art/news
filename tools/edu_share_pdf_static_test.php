@@ -1,6 +1,6 @@
 <?php
 /**
- * eduSharePdf static checks — desktop must not rely on navigator.share alone
+ * eduSharePdf static checks — Samsung text-share fallback
  *
  * Usage: php tools/edu_share_pdf_static_test.php
  */
@@ -12,11 +12,14 @@ $src = (string) file_get_contents($path);
 $errors = [];
 
 $needles = [
-    'eduSharePdfDeviceLikelySupportsFiles',
+    'SamsungBrowser',
+    'eduSharePdfIsMobileBrowser',
     'eduSharePdfCanShareFiles',
+    'eduSharePdfBuildTextSharePayload',
+    'eduSharePdfCanShareText',
     'triggerPdfDownload',
     'downloadPdfFile',
-    'return \'downloaded\'',
+    "return 'downloaded'",
 ];
 
 foreach ($needles as $needle) {
@@ -25,9 +28,14 @@ foreach ($needles as $needle) {
     }
 }
 
-// Must not retry text-only share after file share fails (desktop "try again" trap)
+// Text-only share fallback must exist (Samsung Internet)
+if (!str_contains($src, 'eduSharePdfBuildTextSharePayload(meta)')) {
+    $errors[] = 'missing text/url share fallback for Samsung Internet';
+}
+
+// Must not use old text-only share that triggers download before sheet
 if (preg_match('/PDF는 저장 후 카카오톡에서 파일로 첨부/', $src)) {
-    $errors[] = 'remove text-only navigator.share fallback (causes desktop retry popup)';
+    $errors[] = 'remove legacy text-share+download combo that skips share sheet';
 }
 
 if ($errors !== []) {
