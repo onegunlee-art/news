@@ -17,6 +17,7 @@ $required = [
     'public/api/edu/operator/me.php',
     'public/api/edu/operator/reports.php',
     'src/frontend/src/pages/edu/EduOperatorLoginPage.tsx',
+    'src/frontend/src/pages/edu/EduDashboardPage.tsx',
     'src/frontend/src/utils/eduOperatorSession.ts',
     'tools/edu_seed_operator.php',
 ];
@@ -31,8 +32,16 @@ $reportsPage = (string) file_get_contents($root . '/src/frontend/src/pages/edu/E
 if (str_contains($reportsPage, 'useAuthStore') || str_contains($reportsPage, "navigate('/login'")) {
     $errors[] = 'EduOperatorReportsPage must not use gist main auth/login';
 }
-if (!str_contains($reportsPage, '/edu/operator/login')) {
-    $errors[] = 'EduOperatorReportsPage must redirect to EDU operator login';
+if (!str_contains($reportsPage, '/edu/dashboard')) {
+    $errors[] = 'EduOperatorReportsPage must redirect legacy /edu/operator/reports to /edu/dashboard';
+}
+
+$dashboardPage = (string) file_get_contents($root . '/src/frontend/src/pages/edu/EduDashboardPage.tsx');
+if (str_contains($dashboardPage, 'useAuthStore') || str_contains($dashboardPage, "navigate('/login'")) {
+    $errors[] = 'EduDashboardPage must not use gist main auth/login';
+}
+if (!str_contains($dashboardPage, '/edu/operator/login')) {
+    $errors[] = 'EduDashboardPage must redirect to EDU operator login when unauthenticated';
 }
 
 $operatorApi = (string) file_get_contents($root . '/src/frontend/src/services/eduOperatorApi.ts');
@@ -56,6 +65,9 @@ if (!str_contains($menu, '리포트 관리') || !str_contains($menu, 'hasEduOper
 $app = (string) file_get_contents($root . '/src/frontend/src/App.tsx');
 if (!str_contains($app, '/edu/operator/login')) {
     $errors[] = 'App.tsx must register /edu/operator/login';
+}
+if (!str_contains($app, '/edu/dashboard')) {
+    $errors[] = 'App.tsx must register /edu/dashboard';
 }
 
 if ($errors !== []) {
