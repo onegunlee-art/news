@@ -43,9 +43,16 @@ function req(string $url, array $opts = []): array
         CURLOPT_CUSTOMREQUEST => $opts['method'] ?? 'GET',
         CURLOPT_POSTFIELDS => $opts['body'] ?? null,
     ]);
+    if (getenv('PHP_CURL_SSL_NO_VERIFY') === '1') {
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+    }
     $body = curl_exec($ch);
+    $err = curl_error($ch);
     $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
+    if ($body === false) {
+        return ['code' => 0, 'json' => [], 'raw' => $err !== '' ? $err : 'curl failed'];
+    }
     $json = is_string($body) ? json_decode($body, true) : null;
     return ['code' => $code, 'json' => is_array($json) ? $json : [], 'raw' => $body];
 }

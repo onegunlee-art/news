@@ -391,6 +391,7 @@ jobs:
           V_STEPPAY_WH: ${{ secrets.STEPPAY_WEBHOOK_SECRET }}
           V_NYT: ${{ secrets.NYT_API_KEY }}
           V_GUARDIAN: ${{ secrets.GUARDIAN_API_KEY }}
+          V_EDU_ADMIN: ${{ secrets.EDU_ADMIN_API_KEY }}
         run: |
           REMOTE="${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}"
           KEY="$HOME/.ssh/ec2_key"
@@ -421,6 +422,7 @@ jobs:
             ensure_env "STEPPAY_WEBHOOK_SECRET" "${V_STEPPAY_WH:-ws_nzwk99oqjj121exh}"
             ensure_env "NYT_API_KEY"            "${V_NYT:-esBGryyMeUL7hVbEHc45wO27jOStaudfaKYC6akW7RALg0P4}"
             ensure_env "GUARDIAN_API_KEY"       "${V_GUARDIAN:-}"
+            ensure_env "EDU_ADMIN_API_KEY"      "${V_EDU_ADMIN:-}"
             ensure_env "EDU_INSIGHT_DEBUG_STUDENT_IDS" "f88c2fc2-132c-4f0c-9c7f-aa60d3ec3c01"
             ensure_env "EDU_LEVEL_DEBUG_STUDENT_IDS"   "f88c2fc2-132c-4f0c-9c7f-aa60d3ec3c01"
             sudo chmod 644 "\$ENV_FILE" 2>/dev/null || true
