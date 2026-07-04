@@ -9,9 +9,11 @@ require_once __DIR__ . '/eduParentReportPdf.php';
 require_once __DIR__ . '/eduQuest.php';
 require_once __DIR__ . '/eduTier.php';
 require_once __DIR__ . '/eduCoachLevel.php';
+require_once __DIR__ . '/eduOperatorScope.php';
 
 function eduOperatorReportsHandle(
     \Agents\Services\SupabaseService $supabase,
+    array $operator,
     string $method,
     string $action,
     string $studentId,
@@ -21,7 +23,7 @@ function eduOperatorReportsHandle(
         $limit = min(100, max(1, (int) ($_GET['limit'] ?? 50)));
         $students = $supabase->select(
             'edu_students',
-            'status=eq.active&order=last_active_at.desc.nullslast,created_at.desc',
+            eduOperatorStudentsSelectFilter($operator),
             $limit
         ) ?? [];
 
@@ -59,6 +61,7 @@ function eduOperatorReportsHandle(
     }
 
     if ($action === 'preview') {
+        eduOperatorRequireStudentAccess($supabase, $operator, $studentId);
         try {
             $report = eduParentReportBuildPayload($supabase, $studentId, true);
         } catch (InvalidArgumentException $e) {
@@ -71,6 +74,7 @@ function eduOperatorReportsHandle(
     }
 
     if ($action === 'pdf' && $method === 'POST') {
+        eduOperatorRequireStudentAccess($supabase, $operator, $studentId);
         try {
             $report = eduParentReportBuildPayload($supabase, $studentId, true);
             $pdf = eduParentReportRenderPdf($report);

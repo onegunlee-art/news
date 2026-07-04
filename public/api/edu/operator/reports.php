@@ -16,7 +16,7 @@ handleOptionsRequest();
 setCorsHeaders();
 set_time_limit(180);
 
-eduRequireOperator();
+$operator = eduRequireOperator();
 
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 $action = $_GET['action'] ?? '';
@@ -42,4 +42,4 @@ if ($method === 'GET') {
     $studentId = trim((string) ($body['student_id'] ?? ''));
 }
 
-eduOperatorReportsHandle($supabase, $method, $action, $studentId, $body);
+eduOperatorReportsHandle($supabase, $operator, $method, $action, $studentId, $body);
