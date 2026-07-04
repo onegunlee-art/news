@@ -4,7 +4,7 @@ import { eduGame, eduGameClasses } from '../../constants/eduGameTheme'
 import { eduOperatorLogin } from '../../services/eduOperatorApi'
 import { setEduOperatorSession } from '../../utils/eduOperatorSession'
 
-const DEFAULT_RETURN = '/edu/operator/reports'
+const DEFAULT_RETURN = '/edu/dashboard'
 
 export default function EduOperatorLoginPage() {
   const navigate = useNavigate()
@@ -41,13 +41,13 @@ export default function EduOperatorLoginPage() {
         <p className="text-xs font-bold" style={{ color: eduGame.primary }}>
           gistudy · 운영자
         </p>
-        <h1 className="text-lg font-bold mt-0.5">리포트 관리 로그인</h1>
+        <h1 className="text-lg font-bold mt-0.5">교사·원장 로그인</h1>
       </header>
 
       <main className="flex-1 flex items-center justify-center px-4 py-8">
         <form onSubmit={(e) => void handleSubmit(e)} className="w-full max-w-sm space-y-4">
           <p className="text-sm" style={{ color: eduGame.muted }}>
-            EDU 부모 리포트 발송 전용 계정입니다. the gist 본체와 별도입니다.
+            학원 대시보드 전용 계정입니다. 학생 카카오 로그인과 별도입니다.
           </p>
 
           <div>

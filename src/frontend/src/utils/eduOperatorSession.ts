@@ -5,6 +5,9 @@ export type EduOperatorProfile = {
   id: string
   email: string
   display_name: string
+  role?: string | null
+  organization_id?: string | null
+  organization_name?: string | null
 }
 
 export function getEduOperatorToken(): string | null {
