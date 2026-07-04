@@ -79,6 +79,9 @@ jobs:
       - name: EDU admin account static test
         run: php tools/edu_admin_account_static_test.php
 
+      - name: EDU share PDF static test
+        run: php tools/edu_share_pdf_static_test.php
+
   # ========================================
   # TypeScript Type Check
   # ========================================

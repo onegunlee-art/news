@@ -114,6 +114,10 @@ export async function eduOperatorDownloadPdf(
     throw new Error(msg)
   }
   const blob = await res.blob()
+  const contentType = res.headers.get('Content-Type') ?? ''
+  if (!contentType.includes('application/pdf') && blob.size < 100) {
+    throw new Error('PDF 생성에 실패했습니다.')
+  }
   const disposition = res.headers.get('Content-Disposition') ?? ''
   const match = disposition.match(/filename="([^"]+)"/)
   const filename = match?.[1] ?? `gistudy-report-${studentId.slice(0, 8)}.pdf`

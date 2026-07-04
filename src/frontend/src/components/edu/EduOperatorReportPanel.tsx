@@ -5,9 +5,10 @@ type Props = {
   report: EduParentReportPayload
   loadingPdf: boolean
   onShare: () => void
+  onDownload: () => void
 }
 
-export default function EduOperatorReportPanel({ report, loadingPdf, onShare }: Props) {
+export default function EduOperatorReportPanel({ report, loadingPdf, onShare, onDownload }: Props) {
   return (
     <div className="space-y-4">
       <div className="rounded-xl p-4 text-white" style={{ backgroundColor: eduGame.ink }}>
@@ -107,7 +108,7 @@ export default function EduOperatorReportPanel({ report, loadingPdf, onShare }: 
         </div>
       </div>
 
-      <div className="pt-2">
+      <div className="pt-2 space-y-2">
         <button
           type="button"
           disabled={loadingPdf}
@@ -116,6 +117,15 @@ export default function EduOperatorReportPanel({ report, loadingPdf, onShare }: 
           style={{ backgroundColor: eduGame.primary, fontSize: eduGame.fontSize.button }}
         >
           {loadingPdf ? 'PDF 만드는 중…' : '리포트 공유하기'}
+        </button>
+        <button
+          type="button"
+          disabled={loadingPdf}
+          onClick={onDownload}
+          className="w-full py-2.5 rounded-xl border text-sm font-bold touch-manipulation"
+          style={{ borderColor: eduGame.border, color: eduGame.muted }}
+        >
+          PDF 저장 (다운로드)
         </button>
       </div>
     </div>

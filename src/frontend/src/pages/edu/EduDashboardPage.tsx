@@ -18,7 +18,7 @@ import {
   setEduOperatorSession,
   type EduOperatorProfile,
 } from '../../utils/eduOperatorSession'
-import { sharePdfFile, sharePdfResultMessage } from '../../utils/eduSharePdf'
+import { sharePdfFile, sharePdfResultMessage, downloadPdfFile } from '../../utils/eduSharePdf'
 
 const DASHBOARD_PATH = '/edu/dashboard'
 const LOGIN_PATH = '/edu/operator/login'
@@ -134,13 +134,29 @@ export default function EduDashboardPage() {
     const result = await fetchPdfBlob()
     if (!result || !report) return
 
-    const shareResult = await sharePdfFile(result.blob, result.filename, {
-      title: `${report.student_name} gistudy 리포트`,
-      text: report.cover.headline,
-    })
+    try {
+      const shareResult = await sharePdfFile(result.blob, result.filename, {
+        title: `${report.student_name} gistudy 리포트`,
+        text: report.cover.headline,
+      })
+      const hint = sharePdfResultMessage(shareResult)
+      if (hint) setShareHint(hint)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '공유 실패')
+    }
+  }
 
-    const hint = sharePdfResultMessage(shareResult)
-    if (hint) setShareHint(hint)
+  const handleDownload = async () => {
+    setShareHint('')
+    setError('')
+    const result = await fetchPdfBlob()
+    if (!result) return
+    try {
+      downloadPdfFile(result.blob, result.filename)
+      setShareHint('PDF 다운로드가 시작됐어요.')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'PDF 저장 실패')
+    }
   }
 
   const handleLogout = () => {
@@ -307,6 +323,7 @@ export default function EduDashboardPage() {
                     report={report}
                     loadingPdf={loadingPdf}
                     onShare={() => void handleShare()}
+                    onDownload={() => void handleDownload()}
                   />
                 ) : null}
               </>
