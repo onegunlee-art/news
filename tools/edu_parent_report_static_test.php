@@ -56,6 +56,7 @@ if (!str_contains($appTsx, '/edu/operator/login')) {
 $pdfPhp = (string) file_get_contents($root . '/public/api/edu/lib/eduParentReportPdf.php');
 $fontChecks = [
     'eduParentReportFontPaths',
+    'eduParentReportNormalizeInstalledFonts',
     'NotoSansKR-Regular.otf',
     'isFontSubsettingEnabled',
     'page-break-after: always',

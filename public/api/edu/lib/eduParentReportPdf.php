@@ -108,6 +108,43 @@ function eduParentReportRenderTags(array $tags): string
 HTML;
 }
 
+function eduParentReportNormalizeInstalledFonts(string $fontDir): void
+{
+    $path = $fontDir . '/installed-fonts.json';
+    if (!is_file($path)) {
+        return;
+    }
+
+    $data = json_decode((string) file_get_contents($path), true);
+    if (!is_array($data)) {
+        return;
+    }
+
+    $changed = false;
+    foreach ($data as $family => $variants) {
+        if (!is_array($variants)) {
+            continue;
+        }
+        foreach ($variants as $style => $fontPath) {
+            if (!is_string($fontPath)) {
+                continue;
+            }
+            $base = basename(str_replace('\\', '/', $fontPath));
+            if ($base !== $fontPath) {
+                $data[$family][$style] = $base;
+                $changed = true;
+            }
+        }
+    }
+
+    if ($changed) {
+        file_put_contents(
+            $path,
+            json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n"
+        );
+    }
+}
+
 function eduParentReportFontPaths(string $fontDir): array
 {
     $regular = $fontDir . '/noto_sans_kr_normal_4154c5fc06417469fb832dccd749acbf.ttf';
@@ -374,6 +411,7 @@ function eduParentReportCreateDompdf(string $fontDir): Dompdf
     if (is_dir($fontDir)) {
         $options->set('fontDir', $fontDir);
         $options->set('fontCache', $fontDir);
+        eduParentReportNormalizeInstalledFonts($fontDir);
     }
 
     $dompdf = new Dompdf($options);
@@ -421,6 +459,7 @@ function eduParentReportRenderPdf(array $payload): string
     $dompdf->loadHtml($html, 'UTF-8');
     $dompdf->setPaper('A4', 'portrait');
     $dompdf->render();
+    eduParentReportNormalizeInstalledFonts($fontDir);
 
     return (string) $dompdf->output();
 }

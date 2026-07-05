@@ -1,8 +1,8 @@
 {
     "noto sans kr": {
-        "normal": "C:\\Users\\My project\\News\/public\/fonts\/noto\/noto_sans_kr_normal_f720aac0493f6f2cdc1ac7555480ae45",
-        "bold": "noto_sans_kr_bold_b1d8ccaef03cabe0c50be6a406ebee03",
-        "italic": "C:\\Users\\My project\\News\/public\/fonts\/noto\/noto_sans_kr_normal_4154c5fc06417469fb832dccd749acbf",
-        "bold_italic": "C:\\Users\\My project\\News\/public\/fonts\/noto\/noto_sans_kr_bold_0d7f35a6e4e4fae0660a5ebb1ed33153"
+        "normal": "noto_sans_kr_normal_4154c5fc06417469fb832dccd749acbf",
+        "bold": "noto_sans_kr_bold_0d7f35a6e4e4fae0660a5ebb1ed33153",
+        "italic": "noto_sans_kr_normal_4154c5fc06417469fb832dccd749acbf",
+        "bold_italic": "noto_sans_kr_bold_0d7f35a6e4e4fae0660a5ebb1ed33153"
     }
 }
