@@ -1,6 +1,6 @@
 <?php
 /**
- * eduSharePdf static checks — Samsung text-share fallback
+ * edu share static checks — URL share (dashboard) + PDF download helper
  *
  * Usage: php tools/edu_share_pdf_static_test.php
  */
@@ -36,10 +36,26 @@ if (!is_file($diagPath)) {
     }
 }
 
+$urlSharePath = $root . '/src/frontend/src/utils/eduShareReportUrl.ts';
+if (!is_file($urlSharePath)) {
+    $errors[] = 'missing eduShareReportUrl.ts';
+} elseif (!str_contains((string) file_get_contents($urlSharePath), 'navigator.share')) {
+    $errors[] = 'eduShareReportUrl.ts must use navigator.share for URL';
+}
+
 $dashPath = $root . '/src/frontend/src/pages/edu/EduDashboardPage.tsx';
 $dashSrc = (string) file_get_contents($dashPath);
-if (!str_contains($dashSrc, 'eduShareDiagStart')) {
-    $errors[] = 'EduDashboardPage missing share diagnostics wiring';
+if (!str_contains($dashSrc, 'eduOperatorCreateReportShareLink')) {
+    $errors[] = 'EduDashboardPage must create report share link';
+}
+if (!str_contains($dashSrc, 'shareReportUrl')) {
+    $errors[] = 'EduDashboardPage must use shareReportUrl (URL share)';
+}
+if (str_contains($dashSrc, 'sharePdfFile')) {
+    $errors[] = 'EduDashboardPage must not use PDF file share';
+}
+if (!str_contains($dashSrc, 'downloadPdfFile')) {
+    $errors[] = 'EduDashboardPage must keep PDF download via downloadPdfFile';
 }
 
 foreach ($needles as $needle) {
