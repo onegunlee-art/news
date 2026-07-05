@@ -66,9 +66,8 @@ try {
 $pageCount = preg_match_all('/\/Type\s*\/Page\b/', $pdf);
 $hasFont = str_contains($pdf, '/Font');
 $size = strlen($pdf);
-
 echo "PDF → {$outPath}\n";
-echo "bytes={$size} pages≈{$pageCount} hasFont={$hasFont}\n";
+echo "bytes={$size} pages={$pageCount} hasFont=" . ($hasFont ? '1' : '0') . "\n";
 
 $fontDir = $root . '/public/fonts/noto';
 foreach (['NotoSansKR-Regular.otf', 'NotoSansKR-Bold.otf', 'NotoSansKR-Regular.ttf', 'NotoSansKR-Bold.ttf'] as $f) {

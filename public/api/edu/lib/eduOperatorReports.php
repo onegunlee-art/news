@@ -6,6 +6,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/eduParentReportData.php';
 require_once __DIR__ . '/eduParentReportPdf.php';
+require_once __DIR__ . '/eduParentReportShare.php';
 require_once __DIR__ . '/eduQuest.php';
 require_once __DIR__ . '/eduTier.php';
 require_once __DIR__ . '/eduCoachLevel.php';
@@ -56,7 +57,7 @@ function eduOperatorReportsHandle(
         eduSendJson(['success' => true, 'students' => $items, 'count' => count($items)]);
     }
 
-    if ($studentId === '' && in_array($action, ['preview', 'pdf'], true)) {
+    if ($studentId === '' && in_array($action, ['preview', 'pdf', 'share_link'], true)) {
         eduSendError('student_id required');
     }
 
@@ -71,6 +72,24 @@ function eduOperatorReportsHandle(
             eduSendError('Report preview failed', 500);
         }
         eduSendJson(['success' => true, 'report' => $report]);
+    }
+
+    if ($action === 'share_link' && $method === 'POST') {
+        try {
+            $share = eduParentReportShareCreateOrGet($supabase, $operator, $studentId);
+        } catch (InvalidArgumentException $e) {
+            eduSendError($e->getMessage(), 404);
+        } catch (Throwable $e) {
+            error_log('edu operator report share_link: ' . $e->getMessage());
+            eduSendError('Share link failed', 500);
+        }
+
+        eduSendJson([
+            'success' => true,
+            'share_url' => $share['share_url'],
+            'share_token' => $share['share_token'],
+            'created' => $share['created'],
+        ]);
     }
 
     if ($action === 'pdf' && $method === 'POST') {

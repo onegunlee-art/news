@@ -3,12 +3,20 @@ import type { EduParentReportPayload } from '../../services/eduOperatorApi'
 
 type Props = {
   report: EduParentReportPayload
-  loadingPdf: boolean
-  onShare: () => void
-  onDownload: () => void
+  loadingPdf?: boolean
+  onShare?: () => void
+  onDownload?: () => void
+  /** 공개 URL 페이지 — 공유/다운로드 버튼 숨김 */
+  publicView?: boolean
 }
 
-export default function EduOperatorReportPanel({ report, loadingPdf, onShare, onDownload }: Props) {
+export default function EduOperatorReportPanel({
+  report,
+  loadingPdf = false,
+  onShare,
+  onDownload,
+  publicView = false,
+}: Props) {
   return (
     <div className="space-y-4">
       <div className="rounded-xl p-4 text-white" style={{ backgroundColor: eduGame.ink }}>
@@ -108,26 +116,28 @@ export default function EduOperatorReportPanel({ report, loadingPdf, onShare, on
         </div>
       </div>
 
-      <div className="pt-2 space-y-2">
-        <button
-          type="button"
-          disabled={loadingPdf}
-          onClick={onShare}
-          className={`w-full py-3.5 ${eduGameClasses.btnPrimary} touch-manipulation`}
-          style={{ backgroundColor: eduGame.primary, fontSize: eduGame.fontSize.button }}
-        >
-          {loadingPdf ? 'PDF 만드는 중…' : '리포트 공유하기'}
-        </button>
-        <button
-          type="button"
-          disabled={loadingPdf}
-          onClick={onDownload}
-          className="w-full py-2.5 rounded-xl border text-sm font-bold touch-manipulation"
-          style={{ borderColor: eduGame.border, color: eduGame.muted }}
-        >
-          PDF 저장 (다운로드)
-        </button>
-      </div>
+      {!publicView && onShare && onDownload && (
+        <div className="pt-2 space-y-2">
+          <button
+            type="button"
+            disabled={loadingPdf}
+            onClick={onShare}
+            className={`w-full py-3.5 ${eduGameClasses.btnPrimary} touch-manipulation`}
+            style={{ backgroundColor: eduGame.primary, fontSize: eduGame.fontSize.button }}
+          >
+            {loadingPdf ? '링크 만드는 중…' : '리포트 링크 공유하기'}
+          </button>
+          <button
+            type="button"
+            disabled={loadingPdf}
+            onClick={onDownload}
+            className="w-full py-2.5 rounded-xl border text-sm font-bold touch-manipulation"
+            style={{ borderColor: eduGame.border, color: eduGame.muted }}
+          >
+            PDF 저장 (다운로드)
+          </button>
+        </div>
+      )}
     </div>
   )
 }

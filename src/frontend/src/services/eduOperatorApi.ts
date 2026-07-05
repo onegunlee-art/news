@@ -96,6 +96,25 @@ export async function eduOperatorPreviewReport(studentId: string): Promise<EduPa
   return data.report
 }
 
+export async function eduOperatorCreateReportShareLink(
+  studentId: string
+): Promise<{ share_url: string; share_token: string; created: boolean }> {
+  const res = await operatorFetch(`${BASE}?action=share_link&student_id=${encodeURIComponent(studentId)}`, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'share_link', student_id: studentId }),
+  })
+  const data = await parseJson<{
+    share_url: string
+    share_token: string
+    created: boolean
+  }>(res)
+  return {
+    share_url: data.share_url,
+    share_token: data.share_token,
+    created: data.created,
+  }
+}
+
 export async function eduOperatorDownloadPdf(
   studentId: string
 ): Promise<{ blob: Blob; filename: string }> {

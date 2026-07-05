@@ -76,6 +76,9 @@ jobs:
       - name: EDU parent report static test
         run: php tools/edu_parent_report_static_test.php
 
+      - name: EDU parent report share URL static test
+        run: php tools/edu_parent_report_share_static_test.php
+
       - name: EDU admin account static test
         run: php tools/edu_admin_account_static_test.php
 

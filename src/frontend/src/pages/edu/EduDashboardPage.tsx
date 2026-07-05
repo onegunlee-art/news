@@ -4,6 +4,7 @@ import EduOperatorReportPanel from '../../components/edu/EduOperatorReportPanel'
 import { eduGame } from '../../constants/eduGameTheme'
 import {
   eduOperatorDownloadPdf,
+  eduOperatorCreateReportShareLink,
   eduOperatorListStudents,
   eduOperatorPreviewReport,
   eduOperatorVerifySession,
@@ -18,13 +19,8 @@ import {
   setEduOperatorSession,
   type EduOperatorProfile,
 } from '../../utils/eduOperatorSession'
-import {
-  eduShareDiagEnabled,
-  eduShareDiagStart,
-  eduShareDiagStep,
-  eduShareDiagSummary,
-} from '../../utils/eduSharePdfDiagnose'
-import { sharePdfFile, sharePdfResultMessage, downloadPdfFile } from '../../utils/eduSharePdf'
+import { shareReportUrl, shareReportUrlMessage } from '../../utils/eduShareReportUrl'
+import { downloadPdfFile } from '../../utils/eduSharePdf'
 
 const DASHBOARD_PATH = '/edu/dashboard'
 const LOGIN_PATH = '/edu/operator/login'
@@ -52,9 +48,9 @@ export default function EduDashboardPage() {
   const [loadingList, setLoadingList] = useState(true)
   const [loadingPreview, setLoadingPreview] = useState(false)
   const [loadingPdf, setLoadingPdf] = useState(false)
+  const [loadingShare, setLoadingShare] = useState(false)
   const [error, setError] = useState('')
   const [shareHint, setShareHint] = useState('')
-  const [shareDiagUi, setShareDiagUi] = useState('')
 
   useEffect(() => {
     if (!hasEduOperatorSession()) {
@@ -137,43 +133,19 @@ export default function EduDashboardPage() {
   }
 
   const handleShare = async () => {
+    if (!selectedId || !report) return
     setShareHint('')
-    setShareDiagUi('')
-    const diag = eduShareDiagStart()
-    eduShareDiagStep(diag, 1, 'button click')
-
-    eduShareDiagStep(diag, 2, 'PDF fetch start')
-    const pdfT0 = performance.now()
-    const result = await fetchPdfBlob()
-    if (!result || !report) {
-      eduShareDiagStep(diag, 3, 'PDF fetch aborted', 'no blob or report')
-      if (eduShareDiagEnabled()) setShareDiagUi(eduShareDiagSummary(diag))
-      return
-    }
-    const fetchMs = Math.round(performance.now() - pdfT0)
-    eduShareDiagStep(
-      diag,
-      3,
-      'PDF fetch done',
-      `size=${result.blob.size} type=${result.blob.type || '?'} fetchMs=${fetchMs}`
-    )
-
+    setError('')
+    setLoadingShare(true)
     try {
-      const outcome = await sharePdfFile(
-        result.blob,
-        result.filename,
-        {
-          title: `${report.student_name} gistudy 리포트`,
-          text: report.cover.headline,
-        },
-        diag
-      )
-      const hint = sharePdfResultMessage(outcome.result, outcome.gestureBlocked)
+      const { share_url } = await eduOperatorCreateReportShareLink(selectedId)
+      const result = await shareReportUrl(share_url, report.student_name, report.cover.headline)
+      const hint = shareReportUrlMessage(result)
       if (hint) setShareHint(hint)
-      if (eduShareDiagEnabled()) setShareDiagUi(eduShareDiagSummary(outcome.diagnostics))
     } catch (e) {
-      setError(e instanceof Error ? e.message : '공유 실패')
-      if (eduShareDiagEnabled()) setShareDiagUi(eduShareDiagSummary(diag))
+      setError(e instanceof Error ? e.message : '링크 공유 실패')
+    } finally {
+      setLoadingShare(false)
     }
   }
 
@@ -352,7 +324,7 @@ export default function EduDashboardPage() {
                 ) : report ? (
                   <EduOperatorReportPanel
                     report={report}
-                    loadingPdf={loadingPdf}
+                    loadingPdf={loadingShare || loadingPdf}
                     onShare={() => void handleShare()}
                     onDownload={() => void handleDownload()}
                   />
@@ -373,14 +345,6 @@ export default function EduDashboardPage() {
         >
           {shareHint}
         </p>
-      )}
-      {shareDiagUi && (
-        <pre
-          className="max-w-5xl mx-auto px-4 pb-4 text-xs whitespace-pre-wrap break-all rounded-lg border mx-4 p-3"
-          style={{ borderColor: eduGame.border, backgroundColor: eduGame.surface, color: eduGame.muted }}
-        >
-          {shareDiagUi}
-        </pre>
       )}
     </div>
   )

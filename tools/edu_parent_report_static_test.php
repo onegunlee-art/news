@@ -59,7 +59,7 @@ $fontChecks = [
     'eduParentReportNormalizeInstalledFonts',
     'NotoSansKR-Regular.otf',
     'isFontSubsettingEnabled',
-    'page-break-after: always',
+    'page-break-before: always',
     'brand-dot',
 ];
 foreach ($fontChecks as $needle) {

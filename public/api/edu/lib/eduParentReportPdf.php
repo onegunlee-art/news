@@ -226,7 +226,10 @@ body {
   background: #1a1a1a;
   color: #ffffff;
   padding: 42pt 36pt 36pt;
-  page-break-after: always;
+}
+.content {
+  padding: 36pt 40pt 40pt;
+  page-break-before: always;
 }
 .cover-logo { width: 28pt; height: 28pt; vertical-align: middle; }
 .cover-logo-fallback { display: inline-block; }
@@ -258,9 +261,8 @@ body {
   margin-top: 24pt;
 }
 .cover-accent { color: #D85A30; }
-.content { padding: 36pt 40pt 40pt; }
-.section { margin-bottom: 24pt; }
 .letter-section { margin-bottom: 24pt; }
+.section { margin-bottom: 24pt; }
 .eyebrow {
   font-size: 9pt;
   font-weight: 700;
@@ -285,7 +287,7 @@ body {
   line-height: 1.55;
   margin: 6pt 0 0;
 }
-.ba-table { border-collapse: separate; border-spacing: 0; page-break-inside: avoid; }
+.ba-table { border-collapse: separate; border-spacing: 0; }
 .ba-card {
   border: 1.5pt solid #e8e8e8;
   border-radius: 8pt;
@@ -319,7 +321,6 @@ body {
   margin-top: 28pt;
   padding-top: 16pt;
   border-top: 2pt solid #1a1a1a;
-  page-break-inside: avoid;
 }
 .stats-grid { width: 100%; border-collapse: collapse; }
 .stats-grid td {
