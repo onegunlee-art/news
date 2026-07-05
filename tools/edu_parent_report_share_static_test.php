@@ -12,7 +12,7 @@ $errors = [];
 $files = [
     'database/migrations/edu_parent_report_shares.sql',
     'public/api/edu/lib/eduParentReportShare.php',
-    'public/api/edu/parent_report/view.php',
+    'public/api/edu/parent_report_view.php',
     'src/frontend/src/utils/eduShareReportUrl.ts',
     'src/frontend/src/pages/edu/EduParentReportPublicPage.tsx',
 ];
@@ -43,11 +43,17 @@ if (!str_contains($panel, '리포트 링크 공유하기')) {
     $errors[] = 'EduOperatorReportPanel must use link share label';
 }
 
-$shareLib = (string) file_get_contents($root . '/public/api/edu/lib/eduParentReportShare.php');
-foreach (['eduParentReportShareGenerateToken', '/report/', 'report_snapshot'] as $needle) {
-    if (!str_contains($shareLib, $needle)) {
-        $errors[] = "eduParentReportShare.php missing {$needle}";
-    }
+$viewPhp = (string) file_get_contents($root . '/public/api/edu/parent_report_view.php');
+if (str_contains($viewPhp, 'eduRequireOperator')) {
+    $errors[] = 'parent_report_view.php must not require operator auth';
+}
+if (!str_contains($viewPhp, 'eduParentReportShareFetchPublic')) {
+    $errors[] = 'parent_report_view.php must fetch by token only';
+}
+
+$publicPage = (string) file_get_contents($root . '/src/frontend/src/pages/edu/EduParentReportPublicPage.tsx');
+if (!str_contains($publicPage, 'parent_report_view.php')) {
+    $errors[] = 'EduParentReportPublicPage must call parent_report_view.php';
 }
 
 if ($errors !== []) {

@@ -20,9 +20,15 @@ export default function EduParentReportPublicPage() {
     void (async () => {
       try {
         const res = await fetch(
-          `/api/edu/parent_report/view.php?token=${encodeURIComponent(token)}`
+          `/api/edu/parent_report_view.php?token=${encodeURIComponent(token)}`
         )
-        const data = await res.json()
+        const raw = await res.text()
+        let data: { success?: boolean; error?: string; report?: EduParentReportPayload }
+        try {
+          data = JSON.parse(raw) as typeof data
+        } catch {
+          throw new Error(res.status === 401 ? '인증 오류 — 공개 API 경로 확인 필요' : '리포트 응답 형식 오류')
+        }
         if (!res.ok || !data.success) {
           throw new Error(data.error || '리포트를 불러오지 못했습니다.')
         }

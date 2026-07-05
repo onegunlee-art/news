@@ -4,9 +4,6 @@
  */
 declare(strict_types=1);
 
-require_once __DIR__ . '/eduParentReportData.php';
-require_once __DIR__ . '/eduOperatorScope.php';
-
 function eduParentReportShareBaseUrl(): string
 {
     $base = rtrim(getenv('EDU_FRONTEND_BASE') ?: 'https://edu.thegist.co.kr', '/');
@@ -35,6 +32,9 @@ function eduParentReportShareCreateOrGet(
     array $operator,
     string $studentId
 ): array {
+    require_once __DIR__ . '/eduParentReportData.php';
+    require_once __DIR__ . '/eduOperatorScope.php';
+
     eduOperatorRequireStudentAccess($supabase, $operator, $studentId);
 
     $existing = $supabase->select(
