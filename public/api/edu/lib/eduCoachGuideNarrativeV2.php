@@ -7,6 +7,8 @@ declare(strict_types=1);
 require_once __DIR__ . '/eduQuest.php';
 require_once __DIR__ . '/eduBlueprint.php';
 
+require_once __DIR__ . '/eduNarrativeV2InputQuality.php';
+
 const EDU_NARRATIVE_V2_QUEST_CODE = 'Q-AUTO-NUKE-630';
 const EDU_NARRATIVE_V2_MODE = 'narrative_bridge_v2';
 const EDU_NARRATIVE_V2_SCRIPT = 'docs/coach_scripts/630_narrative_v2.json';
@@ -444,6 +446,16 @@ function eduNarrativeV2HandleMessage(array $blueprint, array $quest, string $mes
         throw new InvalidArgumentException('message required');
     }
 
+    if (($node['input_mode'] ?? '') !== 'text') {
+        throw new InvalidArgumentException('text input not allowed on this step');
+    }
+
+    $coachQuestion = eduNarrativeV2NodeCoachText($node, $script, $blueprint);
+    $quality = eduNarrativeV2InputQualityEvaluate($text, $quest, $node, $blueprint, $coachQuestion);
+    if (!$quality['pass']) {
+        return eduNarrativeV2InputQualityRejectResponse($blueprint, $quest, $script, $nodeId, $node, $text, $quality);
+    }
+
     $turn = (int) ($blueprint['narrative_turn_count'] ?? 0) + 1;
     $board = is_array($blueprint['thought_board'] ?? null) ? $blueprint['thought_board'] : eduNarrativeV2DefaultThoughtBoard($script);
     $emit = $node['emit_card_on_message'] ?? null;
@@ -459,6 +471,7 @@ function eduNarrativeV2HandleMessage(array $blueprint, array $quest, string $mes
         'thought_board' => $board,
         'narrative_v2_log' => $log,
         'narrative_turn_count' => $turn,
+        'narrative_v2_input_quality' => eduNarrativeV2InputQualityReset(),
     ]);
 
     $nextId = trim((string) ($node['next_after_message'] ?? ''));

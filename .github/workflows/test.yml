@@ -73,6 +73,9 @@ jobs:
       - name: EDU essay assemble static test
         run: php tools/edu_essay_assemble_static_test.php
 
+      - name: EDU input quality static test
+        run: php tools/edu_input_quality_static_test.php
+
       - name: EDU brand refresh static test
         run: php tools/edu_brand_refresh_static_test.php
 
