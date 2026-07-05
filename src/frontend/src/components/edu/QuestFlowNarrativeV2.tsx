@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import CoachMessageText from './CoachMessageText'
 import EduArticleSnippetCard from './EduArticleSnippetCard'
 import EduCoachWaitingPanel from './EduCoachWaitingPanel'
+import EduEssayAssemblePanel from './EduEssayAssemblePanel'
 import EduEssayCompletionPanel from './EduEssayCompletionPanel'
 import EduQuestComboContinue from './EduQuestComboContinue'
 import EduQuestCompletionCelebration from './EduQuestCompletionCelebration'
@@ -187,6 +188,7 @@ export default function QuestFlowNarrativeV2() {
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [composing, setComposing] = useState(false)
+  const [assembling, setAssembling] = useState(false)
   const [completed, setCompleted] = useState(false)
   const [error, setError] = useState('')
   const [essay, setEssay] = useState<EssayArtifact | null>(null)
@@ -310,16 +312,24 @@ export default function QuestFlowNarrativeV2() {
     }
   }, [])
 
+  const handleAssembleComplete = useCallback(
+    (sid: string) => {
+      setAssembling(false)
+      composeStartedRef.current = true
+      void handleCompose(sid)
+    },
+    [handleCompose]
+  )
+
   const handleChatResponse = useCallback(
     async (res: EduChatResponse, sid: string) => {
       applyResponse(res)
       if (shouldTriggerEduCompose(res)) {
-        composeStartedRef.current = true
-        await handleCompose(sid)
+        setAssembling(true)
       }
       await syncSessionState(sid)
     },
-    [applyResponse, handleCompose, syncSessionState]
+    [applyResponse, syncSessionState]
   )
 
   useEffect(() => {
@@ -388,11 +398,10 @@ export default function QuestFlowNarrativeV2() {
   }, [inputMode])
 
   useEffect(() => {
-    if (!sessionId || loading || completed || composing || composeStartedRef.current) return
+    if (!sessionId || loading || completed || composing || assembling || composeStartedRef.current) return
     if (phase !== 'compose') return
-    composeStartedRef.current = true
-    void handleCompose(sessionId)
-  }, [sessionId, loading, completed, composing, phase, handleCompose])
+    setAssembling(true)
+  }, [sessionId, loading, completed, composing, assembling, phase])
 
   const handleChoice = async (choice: Choice) => {
     if (!sessionId || sending || completed) return
@@ -438,8 +447,12 @@ export default function QuestFlowNarrativeV2() {
   const cardParagraphs = splitCoachParagraphs(cardContent.question)
   const cardKey = `${phase}-${coachIndex}-${dialogue.length}-${inputMode}-${choices.map(c => c.id).join('|')}`
   const keyboardOpen = keyboardInset > 40 || inputFocused
-  const showTextInput = inputMode === 'text' && !composing
-  const waitingLabel = composing ? '생각판을 바탕으로 글을 쓰고 있어요…' : '코치가 읽는 중…'
+  const showTextInput = inputMode === 'text' && !composing && !assembling
+  const waitingLabel = assembling
+    ? '생각을 글로 엮는 중…'
+    : composing
+      ? '생각판을 바탕으로 글을 쓰고 있어요…'
+      : '코치가 읽는 중…'
 
   const displayName = getEduDisplayName()
   const filledCount = filledThoughtBoardCount(board)
@@ -479,7 +492,7 @@ export default function QuestFlowNarrativeV2() {
         <div className="flex items-center gap-2">
           <EduQuestHomeButton />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-bold">{quest?.quest_title ?? '핵 억지'}</p>
+            <p className="truncate text-sm font-bold">{quest?.quest_title ?? '오늘의 탐구'}</p>
             <p className="text-xs" style={{ color: eduGame.muted }}>
               {displayName} · {turnCount}턴 · 생각판 {filledCount}/6
             </p>
@@ -511,7 +524,7 @@ export default function QuestFlowNarrativeV2() {
             transition={{ duration: 0.22, ease: 'easeOut' }}
             className="flex-1 min-h-0 flex flex-col overflow-hidden"
           >
-            {sending || composing ? (
+            {sending || composing || assembling ? (
               <div className="flex-1 min-h-0 flex flex-col justify-center px-4 py-6">
                 <EduCoachWaitingPanel studentAnswer={lastStudentAnswer(dialogue)} label={waitingLabel} compact />
               </div>
@@ -580,11 +593,11 @@ export default function QuestFlowNarrativeV2() {
                 fontSize: eduGame.fontSize.body,
                 maxHeight: keyboardOpen ? '4.75rem' : '7rem',
               }}
-              disabled={sending || composing}
+              disabled={sending || composing || assembling}
             />
             <button
               type="button"
-              disabled={sending || composing || !textInput.trim()}
+              disabled={sending || composing || assembling || !textInput.trim()}
               onClick={() => void handleTextSubmit()}
               className={`${eduGameClasses.btnPrimary} w-full py-4`}
               style={{ backgroundColor: eduGame.primary, fontSize: eduGame.fontSize.button }}
@@ -598,7 +611,7 @@ export default function QuestFlowNarrativeV2() {
               <button
                 key={c.id}
                 type="button"
-                disabled={sending || composing}
+                disabled={sending || composing || assembling}
                 onClick={() => void handleChoice(c)}
                 className={`w-full py-4 px-4 rounded-2xl font-bold border-2 text-center active:scale-[0.98] transition-transform disabled:opacity-40 disabled:active:scale-100 ${eduGameClasses.textKo}`}
                 style={{
@@ -616,6 +629,14 @@ export default function QuestFlowNarrativeV2() {
           </div>
         ) : null}
       </footer>
+
+      {assembling && sessionId ? (
+        <EduEssayAssemblePanel
+          board={board}
+          questTitle={quest?.quest_title}
+          onComplete={() => handleAssembleComplete(sessionId)}
+        />
+      ) : null}
     </div>
   )
 }

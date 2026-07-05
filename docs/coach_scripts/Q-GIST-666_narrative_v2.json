@@ -568,7 +568,7 @@
             "choices": [
                 {
                     "id": "go_compose",
-                    "label": "최종 답 쓰기",
+                    "label": "글로 엮기",
                     "next": "n_compose"
                 }
             ]

@@ -528,7 +528,7 @@ function eduNarrativeV2EssayStructureFromBoard(array $board, array $quest): arra
     }
 
     return [
-        'title' => ($quest['quest_title'] ?? '핵 억지') . ' — 나의 탐구',
+        'title' => ($quest['quest_title'] ?? '오늘의 탐구') . ' — 나의 탐구',
         'subtitle' => $conclusion !== '' ? $conclusion : '대화로 쌓은 생각',
         'sections' => $sections,
         'conclusion_heading' => '결론',

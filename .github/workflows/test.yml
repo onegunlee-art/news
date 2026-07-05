@@ -70,6 +70,9 @@ jobs:
       - name: EDU narrative bridge v2 static test (630)
         run: php tools/edu_narrative_v2_630_static_test.php
 
+      - name: EDU essay assemble static test
+        run: php tools/edu_essay_assemble_static_test.php
+
       - name: EDU brand refresh static test
         run: php tools/edu_brand_refresh_static_test.php
 

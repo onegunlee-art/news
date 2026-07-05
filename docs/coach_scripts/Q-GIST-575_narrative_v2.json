@@ -554,7 +554,7 @@
         },
         "n_synth_0": {
             "layer": "synthesis",
-            "coach_text": "이제 ①입장~⑤재정립을 보고 ⑥종합을 만들 차례야. '독일 철도는 ___보다 ___이\/가 더 핵심이며, 경쟁의 효과는 ___에 달려 있다' 같은 틀로 네 최종 판단을 써볼래?",
+            "coach_text": "이제 ①입장~⑤재정립을 보고 ⑥종합을 만들 차례야. '독일 철도는 ___보다 ___이/가 더 핵심이며, 경쟁의 효과는 ___에 달려 있다' 같은 틀로 네 최종 판단을 써볼래?",
             "input_mode": "text",
             "emit_card_on_message": {
                 "layer": "synthesis"
@@ -568,7 +568,7 @@
             "choices": [
                 {
                     "id": "go_compose",
-                    "label": "최종 문장 완성하기",
+                    "label": "글로 엮기",
                     "next": "n_compose"
                 }
             ]
