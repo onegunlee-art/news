@@ -17,6 +17,7 @@ import {
   eduApi,
   getEduDisplayName,
   type EduChatResponse,
+  type EduComposeResponse,
   type EduDialogueTurn,
   type EduLevelUpPayload,
   type EduQuest,
@@ -187,8 +188,8 @@ export default function QuestFlowNarrativeV2() {
   const [phase, setPhase] = useState('narrative_bridge_v2')
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
-  const [composing, setComposing] = useState(false)
   const [assembling, setAssembling] = useState(false)
+  const [composeReady, setComposeReady] = useState(false)
   const [completed, setCompleted] = useState(false)
   const [error, setError] = useState('')
   const [essay, setEssay] = useState<EssayArtifact | null>(null)
@@ -203,6 +204,11 @@ export default function QuestFlowNarrativeV2() {
 
   const initCalledRef = useRef(false)
   const composeStartedRef = useRef(false)
+  const composeInFlightRef = useRef(false)
+  const composeDoneRef = useRef(false)
+  const animDoneRef = useRef(false)
+  const composeResultRef = useRef<EduComposeResponse | null>(null)
+  const composeErrorRef = useRef<string | null>(null)
   const comboRecordedRef = useRef(false)
   const boardPeekTimerRef = useRef<number | null>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -274,62 +280,98 @@ export default function QuestFlowNarrativeV2() {
     return state
   }, [])
 
-  const handleCompose = useCallback(async (sid: string) => {
-    setComposing(true)
-    setError('')
-    try {
-      const res = await eduApi.composeEssay(sid)
-      setCompleted(true)
-      if (!comboRecordedRef.current) {
-        comboRecordedRef.current = true
-        setTodayComboCount(recordTodayQuestCompletion())
-      }
-      setEssay({
-        title: res.title,
-        subtitle: res.subtitle,
-        sections: res.sections,
-        conclusion_heading: res.conclusion_heading,
-        conclusion_paragraphs: res.conclusion_paragraphs,
-        body_paragraphs: res.body_paragraphs,
-        narration_mode: res.narration_mode,
-        full_text: res.full_text ?? '',
-        hero_sentence: res.hero_sentence ?? null,
-        feedback: res.feedback ?? null,
-      })
-      setXpGained(res.xp_gained ?? 0)
-      setXpBreakdown(res.xp_breakdown ?? [])
-      if (res.tier) setTier(res.tier)
-      if (res.coach_level) setCoachLevel(res.coach_level)
-      if (res.level_up) setLevelUp(res.level_up)
-      setProgressPct(100)
-      setSaveStatus(res.saved ? 'saved' : 'idle')
-      setPlayEssayReveal(true)
-    } catch (e) {
-      composeStartedRef.current = false
-      setError(e instanceof Error ? e.message : '글 생성 실패')
-    } finally {
-      setComposing(false)
+  const applyComposeResult = useCallback((res: EduComposeResponse) => {
+    setCompleted(true)
+    if (!comboRecordedRef.current) {
+      comboRecordedRef.current = true
+      setTodayComboCount(recordTodayQuestCompletion())
     }
+    setEssay({
+      title: res.title,
+      subtitle: res.subtitle,
+      sections: res.sections,
+      conclusion_heading: res.conclusion_heading,
+      conclusion_paragraphs: res.conclusion_paragraphs,
+      body_paragraphs: res.body_paragraphs,
+      narration_mode: res.narration_mode,
+      full_text: res.full_text ?? '',
+      hero_sentence: res.hero_sentence ?? null,
+      feedback: res.feedback ?? null,
+    })
+    setXpGained(res.xp_gained ?? 0)
+    setXpBreakdown(res.xp_breakdown ?? [])
+    if (res.tier) setTier(res.tier)
+    if (res.coach_level) setCoachLevel(res.coach_level)
+    if (res.level_up) setLevelUp(res.level_up)
+    setProgressPct(100)
+    setSaveStatus(res.saved ? 'saved' : 'idle')
+    setPlayEssayReveal(true)
   }, [])
 
-  const handleAssembleComplete = useCallback(
+  const finishComposeFlow = useCallback(() => {
+    if (!composeDoneRef.current || !animDoneRef.current) return
+
+    setAssembling(false)
+    setComposeReady(false)
+
+    if (composeErrorRef.current) {
+      composeStartedRef.current = false
+      composeInFlightRef.current = false
+      setError(composeErrorRef.current)
+      return
+    }
+
+    if (composeResultRef.current) {
+      applyComposeResult(composeResultRef.current)
+    }
+  }, [applyComposeResult])
+
+  const startParallelCompose = useCallback(
     (sid: string) => {
-      setAssembling(false)
+      if (composeInFlightRef.current) return
+
+      composeInFlightRef.current = true
       composeStartedRef.current = true
-      void handleCompose(sid)
+      composeDoneRef.current = false
+      animDoneRef.current = false
+      composeResultRef.current = null
+      composeErrorRef.current = null
+      setComposeReady(false)
+      setAssembling(true)
+      setError('')
+
+      void eduApi
+        .composeEssay(sid)
+        .then(res => {
+          composeResultRef.current = res
+          composeDoneRef.current = true
+          setComposeReady(true)
+          finishComposeFlow()
+        })
+        .catch(e => {
+          composeErrorRef.current = e instanceof Error ? e.message : '글 생성 실패'
+          composeDoneRef.current = true
+          setComposeReady(true)
+          finishComposeFlow()
+        })
     },
-    [handleCompose]
+    [finishComposeFlow]
   )
+
+  const handleAnimComplete = useCallback(() => {
+    animDoneRef.current = true
+    finishComposeFlow()
+  }, [finishComposeFlow])
 
   const handleChatResponse = useCallback(
     async (res: EduChatResponse, sid: string) => {
       applyResponse(res)
       if (shouldTriggerEduCompose(res)) {
-        setAssembling(true)
+        startParallelCompose(sid)
       }
       await syncSessionState(sid)
     },
-    [applyResponse, syncSessionState]
+    [applyResponse, startParallelCompose, syncSessionState]
   )
 
   useEffect(() => {
@@ -398,20 +440,26 @@ export default function QuestFlowNarrativeV2() {
   }, [inputMode])
 
   useEffect(() => {
-    if (!sessionId || loading || completed || composing || assembling || composeStartedRef.current) return
+    if (!sessionId || loading || completed || assembling || composeStartedRef.current) return
     if (phase !== 'compose') return
-    setAssembling(true)
-  }, [sessionId, loading, completed, composing, assembling, phase])
+    startParallelCompose(sessionId)
+  }, [sessionId, loading, completed, assembling, phase, startParallelCompose])
 
   const handleChoice = async (choice: Choice) => {
     if (!sessionId || sending || completed) return
     setSending(true)
     setError('')
     setChoices([])
+    if (choice.id === 'go_compose') {
+      setAssembling(true)
+    }
     try {
       const res = await eduApi.sendChat(sessionId, { action: 'narrative_v2_choice', choice_id: choice.id })
       await handleChatResponse(res, sessionId)
     } catch (e) {
+      if (choice.id === 'go_compose') {
+        setAssembling(false)
+      }
       setError(e instanceof Error ? e.message : '선택 전송 실패')
       await syncSessionState(sessionId)
     } finally {
@@ -447,12 +495,8 @@ export default function QuestFlowNarrativeV2() {
   const cardParagraphs = splitCoachParagraphs(cardContent.question)
   const cardKey = `${phase}-${coachIndex}-${dialogue.length}-${inputMode}-${choices.map(c => c.id).join('|')}`
   const keyboardOpen = keyboardInset > 40 || inputFocused
-  const showTextInput = inputMode === 'text' && !composing && !assembling
-  const waitingLabel = assembling
-    ? '생각을 글로 엮는 중…'
-    : composing
-      ? '생각판을 바탕으로 글을 쓰고 있어요…'
-      : '코치가 읽는 중…'
+  const showTextInput = inputMode === 'text' && !assembling
+  const waitingLabel = sending ? '코치가 읽는 중…' : '탐구를 이어가고 있어요…'
 
   const displayName = getEduDisplayName()
   const filledCount = filledThoughtBoardCount(board)
@@ -524,7 +568,7 @@ export default function QuestFlowNarrativeV2() {
             transition={{ duration: 0.22, ease: 'easeOut' }}
             className="flex-1 min-h-0 flex flex-col overflow-hidden"
           >
-            {sending || composing || assembling ? (
+            {sending && !assembling ? (
               <div className="flex-1 min-h-0 flex flex-col justify-center px-4 py-6">
                 <EduCoachWaitingPanel studentAnswer={lastStudentAnswer(dialogue)} label={waitingLabel} compact />
               </div>
@@ -593,11 +637,11 @@ export default function QuestFlowNarrativeV2() {
                 fontSize: eduGame.fontSize.body,
                 maxHeight: keyboardOpen ? '4.75rem' : '7rem',
               }}
-              disabled={sending || composing || assembling}
+              disabled={sending || assembling}
             />
             <button
               type="button"
-              disabled={sending || composing || assembling || !textInput.trim()}
+              disabled={sending || assembling || !textInput.trim()}
               onClick={() => void handleTextSubmit()}
               className={`${eduGameClasses.btnPrimary} w-full py-4`}
               style={{ backgroundColor: eduGame.primary, fontSize: eduGame.fontSize.button }}
@@ -611,7 +655,7 @@ export default function QuestFlowNarrativeV2() {
               <button
                 key={c.id}
                 type="button"
-                disabled={sending || composing || assembling}
+                disabled={sending || assembling}
                 onClick={() => void handleChoice(c)}
                 className={`w-full py-4 px-4 rounded-2xl font-bold border-2 text-center active:scale-[0.98] transition-transform disabled:opacity-40 disabled:active:scale-100 ${eduGameClasses.textKo}`}
                 style={{
@@ -634,7 +678,8 @@ export default function QuestFlowNarrativeV2() {
         <EduEssayAssemblePanel
           board={board}
           questTitle={quest?.quest_title}
-          onComplete={() => handleAssembleComplete(sessionId)}
+          composeReady={composeReady}
+          onAnimComplete={handleAnimComplete}
         />
       ) : null}
     </div>

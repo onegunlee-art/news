@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { eduGame, eduGameClasses } from '../../constants/eduGameTheme'
 import type { EduThoughtBoardSlot } from '../../services/eduApi'
@@ -11,7 +11,10 @@ import {
 type Props = {
   board: EduThoughtBoardSlot[]
   questTitle?: string | null
-  onComplete: () => void
+  /** 백그라운드 composeEssay 완료 여부 */
+  composeReady: boolean
+  /** 조립 애니 시퀀스(최소 시간 포함) 종료 신호 */
+  onAnimComplete: () => void
   reducedMotion?: boolean
 }
 
@@ -95,28 +98,45 @@ function PieceChip({
   )
 }
 
-function TypingDraft({ text, reducedMotion, onDone }: { text: string; reducedMotion: boolean; onDone: () => void }) {
+function TypingDraft({
+  text,
+  reducedMotion,
+  composeReady,
+  onTypingDone,
+}: {
+  text: string
+  reducedMotion: boolean
+  composeReady: boolean
+  onTypingDone: () => void
+}) {
   const [visible, setVisible] = useState(reducedMotion ? text.length : 0)
+  const typingDoneReportedRef = useRef(false)
+  const typingDone = visible >= text.length
 
   useEffect(() => {
+    if (typingDoneReportedRef.current) return
+
     if (reducedMotion) {
       setVisible(text.length)
-      const t = window.setTimeout(onDone, 400)
+      typingDoneReportedRef.current = true
+      const t = window.setTimeout(onTypingDone, 400)
       return () => window.clearTimeout(t)
     }
 
-    if (visible >= text.length) {
-      const t = window.setTimeout(onDone, 600)
-      return () => window.clearTimeout(t)
+    if (typingDone) {
+      typingDoneReportedRef.current = true
+      onTypingDone()
+      return
     }
 
     const step = text.length > 180 ? 3 : text.length > 100 ? 2 : 1
     const delay = text.length > 180 ? 18 : 28
     const t = window.setTimeout(() => setVisible(v => Math.min(v + step, text.length)), delay)
     return () => window.clearTimeout(t)
-  }, [text, visible, reducedMotion, onDone])
+  }, [text, visible, typingDone, reducedMotion, onTypingDone])
 
   const shown = text.slice(0, visible)
+  const waitingForCompose = typingDone && !composeReady
 
   return (
     <motion.div
@@ -132,7 +152,7 @@ function TypingDraft({ text, reducedMotion, onDone }: { text: string; reducedMot
     >
       <p className={`text-base leading-relaxed whitespace-pre-wrap ${eduGameClasses.textKo}`} style={{ color: eduGame.ink }}>
         {shown}
-        {!reducedMotion && visible < text.length ? (
+        {!reducedMotion && (visible < text.length || waitingForCompose) ? (
           <span className="inline-block w-0.5 h-4 ml-0.5 align-middle animate-pulse" style={{ backgroundColor: eduGame.primary }} />
         ) : null}
       </p>
@@ -140,7 +160,13 @@ function TypingDraft({ text, reducedMotion, onDone }: { text: string; reducedMot
   )
 }
 
-export default function EduEssayAssemblePanel({ board, questTitle, onComplete, reducedMotion: reducedProp }: Props) {
+export default function EduEssayAssemblePanel({
+  board,
+  questTitle,
+  composeReady,
+  onAnimComplete,
+  reducedMotion: reducedProp,
+}: Props) {
   const systemReduced = usePrefersReducedMotion()
   const reducedMotion = reducedProp ?? systemReduced
   const pieces = useMemo(() => piecesFromThoughtBoard(board), [board])
@@ -148,13 +174,18 @@ export default function EduEssayAssemblePanel({ board, questTitle, onComplete, r
   const title = (questTitle ?? '').trim() || '오늘의 탐구'
 
   const [phase, setPhase] = useState<Phase>(reducedMotion ? 'typing' : 'scatter')
+  const [typingDone, setTypingDone] = useState(false)
 
   const advanceToAssemble = useCallback(() => setPhase('assemble'), [])
   const advanceToTyping = useCallback(() => setPhase('typing'), [])
-  const advanceToDone = useCallback(() => {
+  const markTypingDone = useCallback(() => setTypingDone(true), [])
+
+  useEffect(() => {
+    if (!typingDone || !composeReady) return
     setPhase('done')
-    onComplete()
-  }, [onComplete])
+    const t = window.setTimeout(onAnimComplete, reducedMotion ? 200 : 500)
+    return () => window.clearTimeout(t)
+  }, [typingDone, composeReady, reducedMotion, onAnimComplete])
 
   useEffect(() => {
     if (reducedMotion) return
@@ -201,9 +232,11 @@ export default function EduEssayAssemblePanel({ board, questTitle, onComplete, r
               ? '흩어진 생각을 모으는 중…'
               : phase === 'assemble'
                 ? '조각을 이어 붙이는 중…'
-                : phase === 'typing'
-                  ? '초안을 다듬는 중…'
-                  : '글을 쓰러 갑니다…'}
+                : typingDone && !composeReady
+                  ? '글을 마무리하는 중…'
+                  : phase === 'typing' || phase === 'done'
+                    ? '초안을 다듬는 중…'
+                    : '생각을 글로 엮는 중…'}
           </p>
         </header>
 
@@ -229,7 +262,12 @@ export default function EduEssayAssemblePanel({ board, questTitle, onComplete, r
               </motion.div>
             ) : (
               <motion.div key="draft" className="w-full">
-                <TypingDraft text={draft} reducedMotion={reducedMotion} onDone={advanceToDone} />
+                <TypingDraft
+                  text={draft}
+                  reducedMotion={reducedMotion}
+                  composeReady={composeReady}
+                  onTypingDone={markTypingDone}
+                />
               </motion.div>
             )}
           </AnimatePresence>
