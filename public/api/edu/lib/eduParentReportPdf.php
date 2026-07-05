@@ -108,6 +108,37 @@ function eduParentReportRenderTags(array $tags): string
 HTML;
 }
 
+function eduParentReportFontPaths(string $fontDir): array
+{
+    $regular = $fontDir . '/noto_sans_kr_normal_4154c5fc06417469fb832dccd749acbf.ttf';
+    $bold = $fontDir . '/noto_sans_kr_bold_0d7f35a6e4e4fae0660a5ebb1ed33153.ttf';
+
+    if (!is_file($regular)) {
+        foreach (glob($fontDir . '/noto_sans_kr_normal_*.ttf') ?: [] as $path) {
+            $regular = $path;
+            break;
+        }
+    }
+    if (!is_file($bold)) {
+        foreach (glob($fontDir . '/noto_sans_kr_bold_*.ttf') ?: [] as $path) {
+            $bold = $path;
+            break;
+        }
+    }
+
+    if (!is_file($regular) && is_file($fontDir . '/NotoSansKR-Regular.otf')) {
+        $regular = $fontDir . '/NotoSansKR-Regular.otf';
+    }
+    if (!is_file($bold) && is_file($fontDir . '/NotoSansKR-Bold.otf')) {
+        $bold = $fontDir . '/NotoSansKR-Bold.otf';
+    }
+
+    return [
+        'regular' => is_file($regular) ? $regular : null,
+        'bold' => is_file($bold) ? $bold : null,
+    ];
+}
+
 /** @param array<string, mixed> $payload */
 function eduParentReportRenderHtml(array $payload, string $brandMarkDataUri = ''): string
 {
@@ -130,7 +161,14 @@ function eduParentReportRenderHtml(array $payload, string $brandMarkDataUri = ''
 
     $logoHtml = $brandMarkDataUri !== ''
         ? '<img src="' . $brandMarkDataUri . '" class="cover-logo" alt="">'
-        : '';
+        : '<span class="brand-dot cover-logo-fallback"></span>';
+
+    $brandRow = <<<HTML
+<div class="cover-brand">
+  {$logoHtml}
+  <span class="brand-name">gistudy</span>
+</div>
+HTML;
 
     return <<<HTML
 <!DOCTYPE html>
@@ -138,19 +176,7 @@ function eduParentReportRenderHtml(array $payload, string $brandMarkDataUri = ''
 <head>
 <meta charset="UTF-8">
 <style>
-@page { margin: 0; }
-@font-face {
-  font-family: 'Noto Sans KR';
-  font-style: normal;
-  font-weight: 400;
-  src: url('fonts/noto/NotoSansKR-Regular.ttf') format('truetype');
-}
-@font-face {
-  font-family: 'Noto Sans KR';
-  font-style: normal;
-  font-weight: 700;
-  src: url('fonts/noto/NotoSansKR-Bold.ttf') format('truetype');
-}
+@page { margin: 0; size: A4 portrait; }
 body {
   font-family: 'Noto Sans KR', sans-serif;
   color: #1a1a1a;
@@ -162,73 +188,81 @@ body {
 .cover {
   background: #1a1a1a;
   color: #ffffff;
-  min-height: 780px;
-  padding: 56px 48px 48px;
+  padding: 42pt 36pt 36pt;
   page-break-after: always;
-  box-sizing: border-box;
 }
-.cover-logo { width: 36px; height: 36px; margin-bottom: 24px; }
-.cover-brand {
+.cover-logo { width: 28pt; height: 28pt; vertical-align: middle; }
+.cover-logo-fallback { display: inline-block; }
+.brand-dot {
+  display: inline-block;
+  width: 10pt;
+  height: 10pt;
+  background: #D85A30;
+  border-radius: 50%;
+  vertical-align: middle;
+}
+.cover-brand { margin-bottom: 36pt; line-height: 1.2; }
+.brand-name {
   font-size: 13pt;
   letter-spacing: 0.02em;
-  margin-bottom: 48px;
   color: #ffffff;
+  vertical-align: middle;
+  margin-left: 8pt;
 }
-.cover-brand em { color: #D85A30; font-style: normal; }
 .cover-headline {
   font-size: 26pt;
   font-weight: 700;
   line-height: 1.35;
-  margin: 0 0 20px;
-  max-width: 90%;
+  margin: 0 0 16pt;
 }
 .cover-sub {
   font-size: 11pt;
   color: #cccccc;
-  margin-top: 32px;
+  margin-top: 24pt;
 }
 .cover-accent { color: #D85A30; }
-.content { padding: 40px 44px 48px; }
-.section { margin-bottom: 28px; page-break-inside: avoid; }
+.content { padding: 36pt 40pt 40pt; }
+.section { margin-bottom: 24pt; }
+.letter-section { margin-bottom: 24pt; }
 .eyebrow {
   font-size: 9pt;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: #D85A30;
-  margin-bottom: 10px;
+  margin-bottom: 10pt;
 }
 .letter-title {
   font-size: 18pt;
   font-weight: 700;
-  margin: 0 0 16px;
+  margin: 0 0 14pt;
 }
-.letter-p { margin: 0 0 12px; }
+.letter-p { margin: 0 0 10pt; }
 .muted { color: #666666; }
 .quote-block {
-  border-left: 4px solid #D85A30;
-  padding: 14px 18px;
+  border-left: 4pt solid #D85A30;
+  padding: 12pt 16pt;
   background: #fef3ef;
   font-size: 12pt;
   font-weight: 700;
   line-height: 1.55;
-  margin: 8px 0 0;
+  margin: 6pt 0 0;
 }
-.ba-table { border-collapse: separate; border-spacing: 0; }
+.ba-table { border-collapse: separate; border-spacing: 0; page-break-inside: avoid; }
 .ba-card {
-  border: 1.5px solid #e8e8e8;
-  border-radius: 10px;
-  padding: 14px 12px;
+  border: 1.5pt solid #e8e8e8;
+  border-radius: 8pt;
+  padding: 12pt 10pt;
   background: #fafafa;
 }
 .ba-card.after { border-color: #D85A30; background: #fef3ef; }
-.ba-label { font-size: 8.5pt; color: #666; margin-bottom: 4px; }
+.ba-label { font-size: 8.5pt; color: #666; margin-bottom: 4pt; }
 .ba-label.accent { color: #D85A30; font-weight: 700; }
-.ba-quest { font-size: 8.5pt; color: #888; margin-bottom: 8px; }
+.ba-quest { font-size: 8.5pt; color: #888; margin-bottom: 8pt; }
 .ba-text { font-size: 10.5pt; font-weight: 700; line-height: 1.5; }
 .ba-arrow { font-size: 16pt; color: #D85A30; font-weight: 700; }
-.path-table td { width: 20%; padding: 6px 4px; }
-.step-mark { font-size: 14pt; font-weight: 700; color: #ccc; margin-bottom: 4px; }
+.path-table td { width: 20%; padding: 6pt 4pt; }
+.step-mark { font-size: 14pt; font-weight: 700; color: #ccc; margin-bottom: 4pt; }
 .step.done .step-mark { color: #D85A30; }
 .step.current .step-mark { color: #D85A30; font-size: 16pt; }
 .step-label { font-size: 8.5pt; font-weight: 700; color: #666; }
@@ -236,24 +270,24 @@ body {
 .tags { line-height: 1.9; }
 .tag {
   display: inline-block;
-  border: 1.5px solid #D85A30;
+  border: 1.5pt solid #D85A30;
   color: #1a1a1a;
-  border-radius: 999px;
-  padding: 4px 10px;
+  border-radius: 999pt;
+  padding: 4pt 10pt;
   font-size: 8.5pt;
   font-weight: 700;
-  margin: 0 6px 6px 0;
+  margin: 0 6pt 6pt 0;
 }
 .stats-bar {
-  margin-top: 32px;
-  padding-top: 18px;
-  border-top: 2px solid #1a1a1a;
+  margin-top: 28pt;
+  padding-top: 16pt;
+  border-top: 2pt solid #1a1a1a;
   page-break-inside: avoid;
 }
 .stats-grid { width: 100%; border-collapse: collapse; }
 .stats-grid td {
   text-align: center;
-  padding: 8px 6px;
+  padding: 8pt 6pt;
   vertical-align: top;
 }
 .stat-num {
@@ -262,9 +296,9 @@ body {
   color: #D85A30;
   line-height: 1.1;
 }
-.stat-label { font-size: 9pt; color: #666; margin-top: 4px; }
+.stat-label { font-size: 9pt; color: #666; margin-top: 4pt; }
 .footer {
-  margin-top: 24px;
+  margin-top: 20pt;
   font-size: 8pt;
   color: #999;
   text-align: center;
@@ -274,8 +308,7 @@ body {
 <body>
 
 <div class="cover">
-  {$logoHtml}
-  <div class="cover-brand"><em>●</em> gistudy</div>
+  {$brandRow}
   <h1 class="cover-headline">{$coverHeadline}</h1>
   <div class="cover-sub">
     <span class="cover-accent">{$name}</span> · {$grade}<br>
@@ -284,7 +317,7 @@ body {
 </div>
 
 <div class="content">
-  <div class="section">
+  <div class="letter-section">
     <div class="eyebrow">코치의 편지</div>
     <h2 class="letter-title">{$name}의 탐구 이야기</h2>
     {$letter}
@@ -319,7 +352,7 @@ body {
     </table>
   </div>
 
-  <div class="footer"><em>●</em> gistudy · 부모 리포트 · EDU</div>
+  <div class="footer"><span class="brand-dot"></span> gistudy · 부모 리포트 · EDU</div>
 </div>
 
 </body>
@@ -333,26 +366,40 @@ function eduParentReportCreateDompdf(string $fontDir): Dompdf
     $options->set('isHtml5ParserEnabled', true);
     $options->set('isRemoteEnabled', false);
     $options->set('defaultFont', 'Noto Sans KR');
-    $options->set('dpi', 150);
+    $options->set('dpi', 96);
     $options->set('isFontSubsettingEnabled', true);
 
     $chroot = dirname($fontDir);
     $options->set('chroot', $chroot);
     if (is_dir($fontDir)) {
         $options->set('fontDir', $fontDir);
+        $options->set('fontCache', $fontDir);
     }
 
     $dompdf = new Dompdf($options);
     $fontMetrics = $dompdf->getFontMetrics();
-    if (is_dir($fontDir)) {
-        $fontMetrics->registerFont(
-            ['family' => 'Noto Sans KR', 'style' => 'normal', 'weight' => 'normal'],
-            $fontDir . '/NotoSansKR-Regular.ttf'
-        );
-        $fontMetrics->registerFont(
-            ['family' => 'Noto Sans KR', 'style' => 'normal', 'weight' => 'bold'],
-            $fontDir . '/NotoSansKR-Bold.ttf'
-        );
+    $paths = eduParentReportFontPaths($fontDir);
+
+    if ($paths['regular'] !== null) {
+        try {
+            $fontMetrics->registerFont(
+                ['family' => 'Noto Sans KR', 'style' => 'normal', 'weight' => 'normal'],
+                $paths['regular']
+            );
+        } catch (Throwable $e) {
+            error_log('eduParentReportPdf: regular font register failed — ' . $e->getMessage());
+        }
+    }
+
+    if ($paths['bold'] !== null) {
+        try {
+            $fontMetrics->registerFont(
+                ['family' => 'Noto Sans KR', 'style' => 'normal', 'weight' => 'bold'],
+                $paths['bold']
+            );
+        } catch (Throwable $e) {
+            error_log('eduParentReportPdf: bold font register failed — ' . $e->getMessage());
+        }
     }
 
     return $dompdf;
@@ -368,13 +415,8 @@ function eduParentReportRenderPdf(array $payload): string
     require_once $root . 'vendor/autoload.php';
 
     $fontDir = $root . 'public/fonts/noto';
-    $faviconPath = $root . 'public/favicon-G-edu.svg';
-    $brandMarkDataUri = '';
-    if (is_file($faviconPath)) {
-        $brandMarkDataUri = 'data:image/svg+xml;base64,' . base64_encode((string) file_get_contents($faviconPath));
-    }
 
-    $html = eduParentReportRenderHtml($payload, $brandMarkDataUri);
+    $html = eduParentReportRenderHtml($payload);
     $dompdf = eduParentReportCreateDompdf($fontDir);
     $dompdf->loadHtml($html, 'UTF-8');
     $dompdf->setPaper('A4', 'portrait');

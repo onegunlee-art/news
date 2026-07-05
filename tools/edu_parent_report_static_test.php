@@ -53,6 +53,37 @@ if (!str_contains($appTsx, '/edu/operator/login')) {
     $errors[] = 'App.tsx must register /edu/operator/login route';
 }
 
+$pdfPhp = (string) file_get_contents($root . '/public/api/edu/lib/eduParentReportPdf.php');
+$fontChecks = [
+    'eduParentReportFontPaths',
+    'NotoSansKR-Regular.otf',
+    'isFontSubsettingEnabled',
+    'page-break-after: always',
+    'brand-dot',
+];
+foreach ($fontChecks as $needle) {
+    if (!str_contains($pdfPhp, $needle)) {
+        $errors[] = "eduParentReportPdf.php missing layout/font fix: {$needle}";
+    }
+}
+if (str_contains($pdfPhp, 'NotoSansKR-Regular.ttf')) {
+    $errors[] = 'eduParentReportPdf.php must not reference missing NotoSansKR-Regular.ttf';
+}
+if (str_contains($pdfPhp, 'favicon-G-edu.svg')) {
+    $errors[] = 'eduParentReportPdf.php must not use SVG logo (dompdf unreliable)';
+}
+if (str_contains($pdfPhp, 'favicon-192.png')) {
+    $errors[] = 'eduParentReportPdf.php must not require PNG logo (GD dependency)';
+}
+
+$installed = $root . '/public/fonts/noto/installed-fonts.json';
+if (is_file($installed)) {
+    $json = (string) file_get_contents($installed);
+    if (str_contains($json, ':\\') || str_contains($json, 'C:/')) {
+        $errors[] = 'installed-fonts.json must use relative font paths only';
+    }
+}
+
 if ($errors !== []) {
     fwrite(STDERR, "FAIL\n" . implode("\n", $errors) . "\n");
     exit(1);
