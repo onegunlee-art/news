@@ -1,10 +1,24 @@
+import {
+  eduShareDiagEnabled,
+  eduShareDiagError,
+  eduShareDiagFinish,
+  eduShareDiagStart,
+  eduShareDiagStep,
+  type EduShareDiag,
+} from './eduSharePdfDiagnose'
+
 export type EduSharePdfResult = 'shared' | 'downloaded' | 'cancelled'
 
 export type EduSharePdfMeta = {
   title: string
   text: string
-  /** Optional public URL (parent report view link, if available) */
   url?: string
+}
+
+export type EduSharePdfOutcome = {
+  result: EduSharePdfResult
+  diagnostics: EduShareDiag
+  gestureBlocked: boolean
 }
 
 function triggerPdfDownload(blob: Blob, filename: string): void {
@@ -23,7 +37,18 @@ function shareAbort(err: unknown): boolean {
   return (err as Error)?.name === 'AbortError'
 }
 
-/** Mobile browser — includes Samsung Internet (canShare(files) often false) */
+function isGestureError(err: unknown): boolean {
+  const e = err as Error
+  const name = e?.name ?? ''
+  const msg = (e?.message ?? '').toLowerCase()
+  return (
+    name === 'NotAllowedError' ||
+    msg.includes('gesture') ||
+    msg.includes('user denied') ||
+    msg.includes('permission')
+  )
+}
+
 export function eduSharePdfIsMobileBrowser(): boolean {
   if (typeof navigator === 'undefined') return false
   const ua = navigator.userAgent
@@ -81,17 +106,20 @@ export function eduSharePdfLooksValid(blob: Blob): boolean {
 }
 
 /**
- * PDF 공유 폴백 순서 (모바일):
- *   a) PDF 파일 share (canShare(files))
- *   b) 텍스트/URL share — Samsung Internet 등 파일 미지원
- *   c) 다운로드
- * 데스크탑: share 시도 없이 다운로드만
+ * PDF 공유 — diagnostics always logged to console.
+ * Pass existingDiag when PDF was fetched before share (measures gesture gap).
  */
 export async function sharePdfFile(
   blob: Blob,
   filename: string,
-  meta: EduSharePdfMeta
-): Promise<EduSharePdfResult> {
+  meta: EduSharePdfMeta,
+  existingDiag?: EduShareDiag
+): Promise<EduSharePdfOutcome> {
+  const diag = existingDiag ?? eduShareDiagStart()
+  let gestureBlocked = false
+
+  eduShareDiagStep(diag, 4, 'sharePdfFile enter', `blob=${blob.size} type=${blob.type || '?'}`)
+
   if (!eduSharePdfLooksValid(blob)) {
     throw new Error('PDF 파일이 비어 있거나 손상됐습니다.')
   }
@@ -100,50 +128,96 @@ export async function sharePdfFile(
     blob.type === 'application/pdf' ? blob : new Blob([blob], { type: 'application/pdf' })
   const file = new File([pdfBlob], filename, { type: 'application/pdf' })
 
-  if (!eduSharePdfIsMobileBrowser()) {
-    triggerPdfDownload(pdfBlob, filename)
-    return 'downloaded'
-  }
+  const isMobile = eduSharePdfIsMobileBrowser()
+  eduShareDiagStep(
+    diag,
+    5,
+    'device',
+    `mobile=${isMobile} ua=${typeof navigator !== 'undefined' ? navigator.userAgent.slice(0, 80) : '?'}`
+  )
 
-  // a) File share (best on iOS Safari, Android Chrome)
-  if (eduSharePdfCanShareFiles(file)) {
-    try {
-      await navigator.share({
-        title: meta.title,
-        text: meta.text,
-        files: [file],
-      })
-      return 'shared'
-    } catch (err) {
-      if (shareAbort(err)) return 'cancelled'
-    }
-  }
-
-  // b) Text / URL share — Samsung Internet and similar
+  const canFiles = eduSharePdfCanShareFiles(file)
   const textPayload = eduSharePdfBuildTextSharePayload(meta)
-  if (eduSharePdfCanSharePayload(textPayload)) {
-    try {
-      await navigator.share(textPayload)
-      return 'shared'
-    } catch (err) {
-      if (shareAbort(err)) return 'cancelled'
-    }
+  const canText = eduSharePdfCanSharePayload(textPayload)
+  eduShareDiagStep(
+    diag,
+    6,
+    'canShare',
+    `files=${canFiles} text=${canText} hasShare=${typeof navigator.share}`
+  )
+
+  if (!isMobile) {
+    eduShareDiagStep(diag, 7, 'branch', 'desktop → download')
+    triggerPdfDownload(pdfBlob, filename)
+    eduShareDiagFinish(diag, 'desktop_download', 'downloaded')
+    return { result: 'downloaded', diagnostics: diag, gestureBlocked: false }
   }
 
-  // c) Download fallback
+  if (canFiles) {
+    eduShareDiagStep(diag, 7, 'branch', 'a: file share')
+    try {
+      eduShareDiagStep(diag, 8, 'navigator.share files')
+      await navigator.share({ title: meta.title, text: meta.text, files: [file] })
+      eduShareDiagFinish(diag, 'file_share', 'shared')
+      return { result: 'shared', diagnostics: diag, gestureBlocked: false }
+    } catch (err) {
+      if (shareAbort(err)) {
+        eduShareDiagFinish(diag, 'file_share', 'cancelled')
+        return { result: 'cancelled', diagnostics: diag, gestureBlocked: false }
+      }
+      eduShareDiagError(diag, 'file_share', err)
+      if (isGestureError(err)) gestureBlocked = true
+    }
+  } else {
+    eduShareDiagStep(diag, 7, 'branch skip files', 'canShare(files)=false')
+  }
+
+  if (canText) {
+    eduShareDiagStep(diag, 7, 'branch', 'b: text share')
+    try {
+      eduShareDiagStep(diag, 8, 'navigator.share text')
+      await navigator.share(textPayload)
+      eduShareDiagFinish(diag, 'text_share', 'shared')
+      return { result: 'shared', diagnostics: diag, gestureBlocked: false }
+    } catch (err) {
+      if (shareAbort(err)) {
+        eduShareDiagFinish(diag, 'text_share', 'cancelled')
+        return { result: 'cancelled', diagnostics: diag, gestureBlocked: false }
+      }
+      eduShareDiagError(diag, 'text_share', err)
+      if (isGestureError(err)) gestureBlocked = true
+    }
+  } else {
+    eduShareDiagStep(diag, 7, 'branch skip text', 'canShare(text)=false')
+  }
+
+  eduShareDiagStep(diag, 7, 'branch', 'c: download fallback')
   triggerPdfDownload(pdfBlob, filename)
-  return 'downloaded'
+  eduShareDiagFinish(diag, 'download_fallback', 'downloaded')
+
+  if (gestureBlocked && eduShareDiagEnabled()) {
+    throw new Error(
+      `share blocked (${diag.lastError?.name}): PDF fetch 후 제스처 만료 가능 — trace ${diag.traceId}`
+    )
+  }
+
+  return { result: 'downloaded', diagnostics: diag, gestureBlocked }
 }
 
-export function sharePdfResultMessage(result: EduSharePdfResult): string | null {
+export function sharePdfResultMessage(
+  result: EduSharePdfResult,
+  gestureBlocked = false
+): string | null {
   if (result === 'shared' || result === 'cancelled') return null
+  if (gestureBlocked) {
+    return '공유 시트를 열지 못했습니다(제스처 만료 의심). PDF는 저장됐어요 — 카카오톡에서 파일로 첨부해 주세요.'
+  }
   if (eduSharePdfIsMobileBrowser()) {
     return '공유가 되지 않아 PDF를 저장했어요. 카카오톡 → 채팅 → + → 파일에서 PDF를 선택해 보내세요.'
   }
   return 'PDF 다운로드가 시작됐어요. 저장된 파일을 카카오톡 등으로 보내 주세요.'
 }
 
-/** Explicit download (secondary action) */
 export function downloadPdfFile(blob: Blob, filename: string): void {
   if (!eduSharePdfLooksValid(blob)) {
     throw new Error('PDF 파일이 비어 있거나 손상됐습니다.')

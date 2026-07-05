@@ -19,8 +19,28 @@ $needles = [
     'eduSharePdfCanShareText',
     'triggerPdfDownload',
     'downloadPdfFile',
-    "return 'downloaded'",
+    'eduShareDiagStep',
+    'isGestureError',
+    'NotAllowedError',
+    'gestureBlocked',
+    "return { result: 'downloaded', diagnostics: diag, gestureBlocked",
 ];
+
+$diagPath = $root . '/src/frontend/src/utils/eduSharePdfDiagnose.ts';
+if (!is_file($diagPath)) {
+    $errors[] = 'missing eduSharePdfDiagnose.ts';
+} else {
+    $diagSrc = (string) file_get_contents($diagPath);
+    if (!str_contains($diagSrc, 'share_debug')) {
+        $errors[] = 'eduSharePdfDiagnose.ts missing share_debug flag';
+    }
+}
+
+$dashPath = $root . '/src/frontend/src/pages/edu/EduDashboardPage.tsx';
+$dashSrc = (string) file_get_contents($dashPath);
+if (!str_contains($dashSrc, 'eduShareDiagStart')) {
+    $errors[] = 'EduDashboardPage missing share diagnostics wiring';
+}
 
 foreach ($needles as $needle) {
     if (!str_contains($src, $needle)) {

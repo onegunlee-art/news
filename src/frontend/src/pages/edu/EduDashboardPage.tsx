@@ -18,6 +18,12 @@ import {
   setEduOperatorSession,
   type EduOperatorProfile,
 } from '../../utils/eduOperatorSession'
+import {
+  eduShareDiagEnabled,
+  eduShareDiagStart,
+  eduShareDiagStep,
+  eduShareDiagSummary,
+} from '../../utils/eduSharePdfDiagnose'
 import { sharePdfFile, sharePdfResultMessage, downloadPdfFile } from '../../utils/eduSharePdf'
 
 const DASHBOARD_PATH = '/edu/dashboard'
@@ -48,6 +54,7 @@ export default function EduDashboardPage() {
   const [loadingPdf, setLoadingPdf] = useState(false)
   const [error, setError] = useState('')
   const [shareHint, setShareHint] = useState('')
+  const [shareDiagUi, setShareDiagUi] = useState('')
 
   useEffect(() => {
     if (!hasEduOperatorSession()) {
@@ -131,18 +138,42 @@ export default function EduDashboardPage() {
 
   const handleShare = async () => {
     setShareHint('')
+    setShareDiagUi('')
+    const diag = eduShareDiagStart()
+    eduShareDiagStep(diag, 1, 'button click')
+
+    eduShareDiagStep(diag, 2, 'PDF fetch start')
+    const pdfT0 = performance.now()
     const result = await fetchPdfBlob()
-    if (!result || !report) return
+    if (!result || !report) {
+      eduShareDiagStep(diag, 3, 'PDF fetch aborted', 'no blob or report')
+      if (eduShareDiagEnabled()) setShareDiagUi(eduShareDiagSummary(diag))
+      return
+    }
+    const fetchMs = Math.round(performance.now() - pdfT0)
+    eduShareDiagStep(
+      diag,
+      3,
+      'PDF fetch done',
+      `size=${result.blob.size} type=${result.blob.type || '?'} fetchMs=${fetchMs}`
+    )
 
     try {
-      const shareResult = await sharePdfFile(result.blob, result.filename, {
-        title: `${report.student_name} gistudy 리포트`,
-        text: report.cover.headline,
-      })
-      const hint = sharePdfResultMessage(shareResult)
+      const outcome = await sharePdfFile(
+        result.blob,
+        result.filename,
+        {
+          title: `${report.student_name} gistudy 리포트`,
+          text: report.cover.headline,
+        },
+        diag
+      )
+      const hint = sharePdfResultMessage(outcome.result, outcome.gestureBlocked)
       if (hint) setShareHint(hint)
+      if (eduShareDiagEnabled()) setShareDiagUi(eduShareDiagSummary(outcome.diagnostics))
     } catch (e) {
       setError(e instanceof Error ? e.message : '공유 실패')
+      if (eduShareDiagEnabled()) setShareDiagUi(eduShareDiagSummary(diag))
     }
   }
 
@@ -342,6 +373,14 @@ export default function EduDashboardPage() {
         >
           {shareHint}
         </p>
+      )}
+      {shareDiagUi && (
+        <pre
+          className="max-w-5xl mx-auto px-4 pb-4 text-xs whitespace-pre-wrap break-all rounded-lg border mx-4 p-3"
+          style={{ borderColor: eduGame.border, backgroundColor: eduGame.surface, color: eduGame.muted }}
+        >
+          {shareDiagUi}
+        </pre>
       )}
     </div>
   )
