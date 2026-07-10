@@ -1059,6 +1059,40 @@ class WebScraperService
     }
 
     /**
+     * 구독·뉴스레터·광고 CTA 등 비본문 소제목 후보인지 (대소문자 무관)
+     */
+    private function isNonArticleSubheading(string $text): bool
+    {
+        $patterns = [
+            '/\bsubscribe\b/i',
+            '/\bsign\s*[- ]?up\b/i',
+            '/\bnewsletter\b/i',
+            '/\bmost\s+read\s+by\s+subscribers\b/i',
+            '/\brecommended\s+for\s+you\b/i',
+            '/\bget\s+the\s+latest\b/i',
+            '/\badvertisement\b/i',
+            '/\balready\s+a\s+subscriber\b/i',
+            '/\bgift\s+subscriptions?\b/i',
+            '/\bdelivered\s+(?:free\s+)?to\s+your\s+inbox\b/i',
+            '/\benter\s+your\s+email\b/i',
+            '/\bour\s+editors\b.*\btop\s+picks\b/i',
+            '/\bkeep\s+reading\s+with\b/i',
+            '/\bread\s+more\s+from\b/i',
+            '/\bexplore\s+more\b/i',
+            '/\bview\s+all\s+\d*\s*(?:stories|articles)?\b/i',
+            '/\bmanage\s+account\b/i',
+        ];
+
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $text) === 1) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * ALL CAPS 또는 짧은 독립 라인이 소제목일 가능성 판단
      */
     private function isLikelySubheading(string $text): bool
@@ -1067,6 +1101,10 @@ class WebScraperService
         
         // 빈 문자열이면 아님
         if ($text === '') {
+            return false;
+        }
+
+        if ($this->isNonArticleSubheading($text)) {
             return false;
         }
         

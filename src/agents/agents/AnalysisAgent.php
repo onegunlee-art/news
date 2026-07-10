@@ -501,6 +501,7 @@ PROMPT;
    - 각 섹션 필드: section_title, section_title_ko, **summary** (3~5문장), **key_insight** (한 줄 핵심)
    - **summary·key_insight의 각 문장은 반드시 마침표(.)로 끝내고**, 한 문장 안에 줄바꿈을 넣지 마라 (조립 시 문장 단위 불릿으로 변환됨)
    - 최소 3개 섹션 (서론만 분석 금지)
+   - **구독·뉴스레터·광고·CTA 안내**(예: Subscribe to Foreign Affairs, Sign up, newsletter, Most read by subscribers)는 **섹션으로 분석하지 마라** — section_analysis에 넣지 말 것
 7. **key_points**: 4~6개. 각 1문장, 정책·전략 함의 중심
 8. **geopolitical_implication**: 3~4문장. 한국·동아시아·글로벌 질서와의 연결 (과장 금지)
 
