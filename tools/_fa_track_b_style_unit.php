@@ -28,9 +28,21 @@ $input = "1. TEST (TEST)\n  · indented bullet\n· normal bullet";
 $fixed = $normBullets->invoke($agent, $input);
 $results['bullet_indent_fixed'] = !preg_match('/^[ \t]+·/m', $fixed);
 
+$variantInput = "1. TEST (TEST)\n  • bullet char U+2022\n・ katakana middle dot\n- hyphen bullet";
+$variantFixed = $normBullets->invoke($agent, $variantInput);
+$results['bullet_variants_to_u00b7'] = !preg_match('/^[ \t]*[•・\-]/m', $variantFixed)
+    && preg_match('/^· /m', $variantFixed)
+    && mb_substr_count($variantFixed, '·') >= 3;
+
 $raw = "  · 멕시코는 정보 공유를 늘리고 있다.\n  · 추가 내용이다.";
 $clean = $normText->invoke($agent, $raw);
 $results['text_field_clean'] = str_starts_with($clean, '멕시코');
+
+$rawVariant = "  • 첫 문장이다.\n  ・ 둘째 문장이다.";
+$cleanVariant = $normText->invoke($agent, $rawVariant);
+$results['text_field_strips_bullet_variants'] = str_starts_with($cleanVariant, '첫 문장')
+    && str_contains($cleanVariant, '둘째 문장')
+    && !preg_match('/[•・]/u', $cleanVariant);
 
 $data = [
     'news_title' => '테스트 제목',

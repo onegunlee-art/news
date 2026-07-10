@@ -29,6 +29,9 @@ use Agents\Services\WebScraperService;
 
 class AnalysisAgent extends BaseAgent
 {
+    /** 게시 news.content 불릿 기준 — U+00B7 MIDDLE DOT (·) */
+    private const TRACK_B_BULLET_CHAR = "\u{00B7}";
+
     public function __construct(OpenAIService $openai, array $config = [])
     {
         parent::__construct($openai, $config);
@@ -593,6 +596,11 @@ PROMPT;
         return $data;
     }
 
+    private function trackBBulletPrefix(): string
+    {
+        return self::TRACK_B_BULLET_CHAR . ' ';
+    }
+
     /**
      * Track B GPT 출력 텍스트: trim + 내장 불릿/들여쓰기 prefix 제거
      */
@@ -609,25 +617,26 @@ PROMPT;
             if ($line === '') {
                 continue;
             }
-            $line = preg_replace('/^[·\-]\s*/u', '', $line) ?? $line;
+            $line = preg_replace('/^[·•・\-\*●◦]\s*/u', '', $line) ?? $line;
             $normalized[] = $line;
         }
         return implode(' ', $normalized);
     }
 
     /**
-     * Track B content_summary 조립 후: 불릿 줄 앞 들여쓰기 제거 (· 내용 형태 통일)
+     * Track B content_summary 조립 후: 게시글 기준 불릿(U+00B7 ·)로 통일 + 들여쓰기 제거
      */
     private function normalizeTrackBContentSummaryBullets(string $contentSummary): string
     {
         if ($contentSummary === '') {
             return '';
         }
+        $prefix = $this->trackBBulletPrefix();
         $lines = preg_split('/\r\n|\r|\n/', $contentSummary) ?: [$contentSummary];
         $out = [];
         foreach ($lines as $line) {
-            if (preg_match('/^[ \t]+·\s*/u', $line)) {
-                $line = preg_replace('/^[ \t]+·\s*/u', '· ', $line) ?? $line;
+            if (preg_match('/^[ \t]*[·•・\-\*●◦]\s*/u', $line)) {
+                $line = preg_replace('/^[ \t]*[·•・\-\*●◦]\s*/u', $prefix, $line) ?? $line;
             }
             $out[] = $line;
         }
@@ -692,9 +701,11 @@ PROMPT;
             $blocks[] = $subtitleLine;
         }
         
+        $bulletPrefix = $forTrackB ? $this->trackBBulletPrefix() : '· ';
+
         // 서론 요약 — 끝나고 한 줄 띄움
         if (!empty($data['introduction_summary'])) {
-            $blocks[] = "· " . trim($data['introduction_summary']);
+            $blocks[] = $bulletPrefix . trim($data['introduction_summary']);
         }
         
         // 섹션별 분석 — 각 소제목 앞·뒤 한 줄 띄움
@@ -723,12 +734,12 @@ PROMPT;
                     foreach ($sentences as $sentence) {
                         $sentence = trim($sentence);
                         if ($sentence) {
-                            $sectionLines[] = "· " . $sentence;
+                            $sectionLines[] = $bulletPrefix . $sentence;
                         }
                     }
                 }
                 if ($keyInsight && $keyInsight !== $summary) {
-                    $sectionLines[] = "· " . trim($keyInsight);
+                    $sectionLines[] = $bulletPrefix . trim($keyInsight);
                 }
                 if ($sectionLines !== []) {
                     $blocks[] = implode("\n", $sectionLines);
@@ -739,7 +750,7 @@ PROMPT;
         
         // 왜 중요한가 — 앞에 한 줄 띄움
         if (!empty($data['geopolitical_implication'])) {
-            $blocks[] = "왜 중요한가\n\n· " . trim($data['geopolitical_implication']);
+            $blocks[] = '왜 중요한가' . "\n\n" . $bulletPrefix . trim($data['geopolitical_implication']);
         }
         
         return implode("\n\n", $blocks);
