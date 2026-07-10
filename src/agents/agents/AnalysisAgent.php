@@ -150,7 +150,10 @@ SYS
             : ($data['original_title'] ?? null);
 
         $contentSummary = $this->buildContentSummaryFromSections($data);
-        
+        if ($track === 'B' && $isFA) {
+            $contentSummary = $this->normalizeTrackBContentSummaryBullets($contentSummary);
+        }
+
         $criticalAnalysis = [
             'why_important' => $data['geopolitical_implication'] ?? null,
         ];
@@ -493,10 +496,41 @@ PROMPT;
 5. **introduction_summary**: 2~3문장. 서론만 요약 (부제 번역 금지, subtitle_ko와 분리)
 6. **section_analysis**: 원문 소제목(ALL CAPS)을 section_title로 **그대로** 사용
    - 각 섹션 필드: section_title, section_title_ko, **summary** (3~5문장), **key_insight** (한 줄 핵심)
-   - summary 첫 문장에 해당 섹션 핵심 쟁점을 명시
    - 최소 3개 섹션 (서론만 분석 금지)
 7. **key_points**: 4~6개. 각 1문장, 정책·전략 함의 중심
 8. **geopolitical_implication**: 3~4문장. 한국·동아시아·글로벌 질서와의 연결 (과장 금지)
+
+[문체 규칙 — 도입 껍데기 금지]
+- introduction_summary, 각 섹션 summary, geopolitical_implication을 아래 상투적 도입 어구로 시작하지 마라:
+  - "이 글은 ~라고 본다 / 진단한다 / 주장한다"
+  - "필자는 / 저자는 ~라고 본다 / 평가한다 / 설명한다 / 지적한다"
+  - "이 섹션의 핵심 쟁점은 ~라는 점이다"
+  - "이 글의 함의는 (매우) 크다 / 분명하다"
+- 대신 **바로 내용(주어·사실·주장)부터** 자연스럽게 시작하라.
+- **억지로 단정형으로 바꾸지 마라.** 저자의 해석·평가는 그 성격을 유지하되(예: "~라는 평가다", "~로 볼 수 있다", "~라는 진단이다"), **매 문장을 "필자는/저자는"으로 열지 마라.** 여는 껍데기만 제거하는 것이 목적이다.
+- 비문이 생기지 않게 문장을 매끄럽게 다듬어라.
+
+[문체 규칙 — 요약 반복 불릿 금지]
+- summary 마지막 문장이나 key_insight에 앞의 불릿 내용을 그대로 다시 요약하는 마무리 문장을 붙이지 마라.
+  (금지 예: "강압 외교는 중남미에서 이민·안보·대중 견제 분야의 단기적 정책 성과로 이어지고 있다." — 앞 내용의 재요약)
+- key_insight는 summary와 중복되지 않는 **추가 한 줄**만 작성하라.
+
+[문체 예시]
+서론:
+- ❌ "이 글은 트럼프 2기 행정부가 중남미를 미국 외교의 핵심 무대로 끌어올리며 ... 추진하고 있다고 본다."
+- ✅ "트럼프 2기 행정부는 중남미를 미국 외교의 핵심 무대로 끌어올려 ... 추진하고 있다."
+
+섹션 첫 문장(메타 예고 제거):
+- ❌ "이 섹션의 핵심 쟁점은 트럼프의 강경 정책이 단기 성과를 냈다는 점이다. 필자는 베네수엘라 개입이 ..."
+- ✅ "베네수엘라 개입이 가장 눈에 띄는 사례이지만, 더 중요한 성과는 멕시코와의 안보 공조 확대라는 평가다."
+
+함의(왜 중요한가):
+- ❌ "이 글의 함의는 매우 크다. 미국이 더 이상 ..."
+- ✅ "미국이 더 이상 전 세계 동맹에 동일한 수준의 ..."
+
+불릿 머릿글(조립 시 · 로 변환됨 — summary/key_insight 본문에 들여쓰기·불릿 기호 넣지 마라):
+- ❌ "  · 멕시코는 정보 공유를 늘리고 ..."
+- ✅ "멕시코는 정보 공유를 늘리고 ..."
 
 JSON 필드명은 Track A와 **동일**하게 사용하세요.
 **금지 필드명**: section_content, why_important, critical_thinking (조립 파이프라인이 읽지 않음)
@@ -509,7 +543,15 @@ PROMPT;
     private function normalizeTrackBAnalysisData(array $data): array
     {
         if (empty($data['geopolitical_implication']) && !empty($data['why_important'])) {
-            $data['geopolitical_implication'] = trim((string) $data['why_important']);
+            $data['geopolitical_implication'] = $this->normalizeTrackBTextField((string) $data['why_important']);
+        }
+
+        if (!empty($data['introduction_summary'])) {
+            $data['introduction_summary'] = $this->normalizeTrackBTextField((string) $data['introduction_summary']);
+        }
+
+        if (!empty($data['geopolitical_implication'])) {
+            $data['geopolitical_implication'] = $this->normalizeTrackBTextField((string) $data['geopolitical_implication']);
         }
 
         if (!empty($data['section_analysis']) && is_array($data['section_analysis'])) {
@@ -517,23 +559,68 @@ PROMPT;
                 if (!is_array($section)) {
                     continue;
                 }
-                $summary = trim((string) ($section['summary'] ?? ''));
-                $content = trim((string) ($section['section_content'] ?? ''));
+                $summary = $this->normalizeTrackBTextField((string) ($section['summary'] ?? ''));
+                $content = $this->normalizeTrackBTextField((string) ($section['section_content'] ?? ''));
                 if ($summary === '' && $content !== '') {
                     $data['section_analysis'][$i]['summary'] = $content;
                     $summary = $content;
+                } else {
+                    $data['section_analysis'][$i]['summary'] = $summary;
                 }
-                $insight = trim((string) ($section['key_insight'] ?? ''));
+                $insight = $this->normalizeTrackBTextField((string) ($section['key_insight'] ?? ''));
                 if ($insight === '' && $summary !== '') {
                     $sentences = $this->splitIntoSentences($summary);
                     if ($sentences !== []) {
                         $data['section_analysis'][$i]['key_insight'] = trim((string) $sentences[0]);
                     }
+                } else {
+                    $data['section_analysis'][$i]['key_insight'] = $insight;
                 }
             }
         }
 
         return $data;
+    }
+
+    /**
+     * Track B GPT 출력 텍스트: trim + 내장 불릿/들여쓰기 prefix 제거
+     */
+    private function normalizeTrackBTextField(string $text): string
+    {
+        $text = trim($text);
+        if ($text === '') {
+            return '';
+        }
+        $lines = preg_split('/\r\n|\r|\n/', $text) ?: [$text];
+        $normalized = [];
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if ($line === '') {
+                continue;
+            }
+            $line = preg_replace('/^[·\-]\s*/u', '', $line) ?? $line;
+            $normalized[] = $line;
+        }
+        return implode(' ', $normalized);
+    }
+
+    /**
+     * Track B content_summary 조립 후: 불릿 줄 앞 들여쓰기 제거 (· 내용 형태 통일)
+     */
+    private function normalizeTrackBContentSummaryBullets(string $contentSummary): string
+    {
+        if ($contentSummary === '') {
+            return '';
+        }
+        $lines = preg_split('/\r\n|\r|\n/', $contentSummary) ?: [$contentSummary];
+        $out = [];
+        foreach ($lines as $line) {
+            if (preg_match('/^[ \t]+·\s*/u', $line)) {
+                $line = preg_replace('/^[ \t]+·\s*/u', '· ', $line) ?? $line;
+            }
+            $out[] = $line;
+        }
+        return implode("\n", $out);
     }
 
     /**
