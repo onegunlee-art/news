@@ -149,7 +149,7 @@ SYS
             ? $article->getTitle()
             : ($data['original_title'] ?? null);
 
-        $contentSummary = $this->buildContentSummaryFromSections($data);
+        $contentSummary = $this->buildContentSummaryFromSections($data, $track === 'B' && $isFA);
         if ($track === 'B' && $isFA) {
             $contentSummary = $this->normalizeTrackBContentSummaryBullets($contentSummary);
         }
@@ -496,6 +496,7 @@ PROMPT;
 5. **introduction_summary**: 2~3문장. 서론만 요약 (부제 번역 금지, subtitle_ko와 분리)
 6. **section_analysis**: 원문 소제목(ALL CAPS)을 section_title로 **그대로** 사용
    - 각 섹션 필드: section_title, section_title_ko, **summary** (3~5문장), **key_insight** (한 줄 핵심)
+   - **summary·key_insight의 각 문장은 반드시 마침표(.)로 끝내고**, 한 문장 안에 줄바꿈을 넣지 마라 (조립 시 문장 단위 불릿으로 변환됨)
    - 최소 3개 섹션 (서론만 분석 금지)
 7. **key_points**: 4~6개. 각 1문장, 정책·전략 함의 중심
 8. **geopolitical_implication**: 3~4문장. 한국·동아시아·글로벌 질서와의 연결 (과장 금지)
@@ -509,6 +510,12 @@ PROMPT;
 - 대신 **바로 내용(주어·사실·주장)부터** 자연스럽게 시작하라.
 - **억지로 단정형으로 바꾸지 마라.** 저자의 해석·평가는 그 성격을 유지하되(예: "~라는 평가다", "~로 볼 수 있다", "~라는 진단이다"), **매 문장을 "필자는/저자는"으로 열지 마라.** 여는 껍데기만 제거하는 것이 목적이다.
 - 비문이 생기지 않게 문장을 매끄럽게 다듬어라.
+
+[문체 규칙 — 문장 끝 귀속 상투구 금지]
+- 매 문장 끝에 저자·글 귀속 상투구를 반복하지 마라. (문장 **시작** 껍데기만 없앤 것으로 끝내지 마라.)
+  - 금지 예: "~다고 본다", "~라고 진단한다", "~로 제시된다", "~임을 보여준다", "~구상이다", "~논리다", "~문제의식이 제기된다", "~위기로 제시된다", "~평가된다", "~촉진자 역할이 요구된다고 본다"
+- 한 필드(introduction_summary·섹션 summary·geopolitical_implication) 안에서 저자 귀속 표현("~라는 평가다", "~로 볼 수 있다" 등)은 **최대 1회**만. 나머지 문장은 주장·사실·인과를 직접 서술하라.
+- **방향 A 유지:** 억지 단정형으로 뭉개지 마라. 가끔 한 번의 "~라는 평가다"는 허용하되, **매 문장마다** 끝 귀속을 붙이지 마라.
 
 [문체 규칙 — 요약 반복 불릿 금지]
 - summary 마지막 문장이나 key_insight에 앞의 불릿 내용을 그대로 다시 요약하는 마무리 문장을 붙이지 마라.
@@ -527,6 +534,10 @@ PROMPT;
 함의(왜 중요한가):
 - ❌ "이 글의 함의는 매우 크다. 미국이 더 이상 ..."
 - ✅ "미국이 더 이상 전 세계 동맹에 동일한 수준의 ..."
+
+문장 끝 귀속(반복 금지):
+- ❌ "유동성 위기가 도래했음을 보여준다. 개혁 우선순위로 다뤄야 한다는 구상이다. 촉진자 역할이 요구된다고 본다."
+- ✅ "유동성 위기가 핵심 쟁점으로 부상하고 있다. 개혁은 위기 대응보다 위기를 낳는 조건을 줄이는 쪽에 우선순위를 둬야 한다. 사무총장의 역할은 당사자를 모으고 대화를 유지하는 데 있다."
 
 불릿 머릿글(조립 시 · 로 변환됨 — summary/key_insight 본문에 들여쓰기·불릿 기호 넣지 마라):
 - ❌ "  · 멕시코는 정보 공유를 늘리고 ..."
@@ -569,7 +580,7 @@ PROMPT;
                 }
                 $insight = $this->normalizeTrackBTextField((string) ($section['key_insight'] ?? ''));
                 if ($insight === '' && $summary !== '') {
-                    $sentences = $this->splitIntoSentences($summary);
+                    $sentences = $this->splitIntoSentencesForTrackB($summary);
                     if ($sentences !== []) {
                         $data['section_analysis'][$i]['key_insight'] = trim((string) $sentences[0]);
                     }
@@ -662,7 +673,7 @@ PROMPT;
      * - 요점1
      * - 요점2
      */
-    private function buildContentSummaryFromSections(array $data): string
+    private function buildContentSummaryFromSections(array $data, bool $forTrackB = false): string
     {
         // 섹션 간 반드시 한 줄 띄우기: 블록 단위로 모아서 "\n\n"로 연결
         $blocks = [];
@@ -706,7 +717,9 @@ PROMPT;
                     }
                 }
                 if ($summary) {
-                    $sentences = $this->splitIntoSentences($summary);
+                    $sentences = $forTrackB
+                        ? $this->splitIntoSentencesForTrackB($summary)
+                        : $this->splitIntoSentences($summary);
                     foreach ($sentences as $sentence) {
                         $sentence = trim($sentence);
                         if ($sentence) {
@@ -757,6 +770,20 @@ PROMPT;
         $pattern = '/(?<=[.!?다요])\s+/u';
         $sentences = preg_split($pattern, $text, -1, PREG_SPLIT_NO_EMPTY);
         return $sentences ?: [$text];
+    }
+
+    /**
+     * Track B 전용 문장 분리 — 마침표·느낌표·물음표 종결만 (보다/데다 등 비종결 '다' 오분리 방지)
+     */
+    private function splitIntoSentencesForTrackB(string $text): array
+    {
+        $text = trim($text);
+        if ($text === '') {
+            return [];
+        }
+        $pattern = '/(?<=[.!?])\s+/u';
+        $sentences = preg_split($pattern, $text, -1, PREG_SPLIT_NO_EMPTY);
+        return $sentences !== [] ? array_values(array_filter(array_map('trim', $sentences))) : [$text];
     }
 
     /**
