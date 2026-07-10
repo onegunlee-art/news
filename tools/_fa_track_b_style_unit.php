@@ -26,13 +26,13 @@ $results['period_splits_two'] = count($period) === 2;
 
 $input = "1. TEST (TEST)\n  · indented bullet\n· normal bullet";
 $fixed = $normBullets->invoke($agent, $input);
-$results['bullet_indent_fixed'] = !preg_match('/^[ \t]+·/m', $fixed);
+$results['bullet_indent_fixed'] = !preg_match('/^[ \t]+•/m', $fixed);
 
 $variantInput = "1. TEST (TEST)\n  • bullet char U+2022\n・ katakana middle dot\n- hyphen bullet";
 $variantFixed = $normBullets->invoke($agent, $variantInput);
-$results['bullet_variants_to_u00b7'] = !preg_match('/^[ \t]*[•・\-]/m', $variantFixed)
-    && preg_match('/^· /m', $variantFixed)
-    && mb_substr_count($variantFixed, '·') >= 3;
+$results['bullet_variants_to_u2022'] = !preg_match('/^[ \t]*[·・\-]/m', $variantFixed)
+    && preg_match('/^• /m', $variantFixed)
+    && mb_substr_count($variantFixed, '•') >= 3;
 
 $raw = "  · 멕시코는 정보 공유를 늘리고 있다.\n  · 추가 내용이다.";
 $clean = $normText->invoke($agent, $raw);
@@ -42,7 +42,7 @@ $rawVariant = "  • 첫 문장이다.\n  ・ 둘째 문장이다.";
 $cleanVariant = $normText->invoke($agent, $rawVariant);
 $results['text_field_strips_bullet_variants'] = str_starts_with($cleanVariant, '첫 문장')
     && str_contains($cleanVariant, '둘째 문장')
-    && !preg_match('/[•・]/u', $cleanVariant);
+    && !preg_match('/[•・·]/u', $cleanVariant);
 
 $data = [
     'news_title' => '테스트 제목',
@@ -59,7 +59,8 @@ $data = [
 $cs = $build->invoke($agent, $data, false);
 $csB = $build->invoke($agent, $data, true);
 $results['nonfa_bullets_no_leading_space'] = !preg_match('/^[ \t]+·/m', $cs);
-$results['nonfa_trackB_flag_off_same_as_a'] = $cs === $csB;
+$results['nonfa_trackB_uses_u2022'] = (bool) preg_match('/^• /m', $csB);
+$results['nonfa_a_still_u00b7'] = (bool) preg_match('/^· /m', $cs) && !preg_match('/^• /m', $cs);
 $results['nonfa_bullet_prefix'] = (bool) preg_match('/^· /m', $cs);
 
 $diagPath = dirname(__DIR__) . '/docs/fa_track_b_section_diagnose.json';

@@ -29,8 +29,8 @@ use Agents\Services\WebScraperService;
 
 class AnalysisAgent extends BaseAgent
 {
-    /** 게시 news.content 불릿 기준 — U+00B7 MIDDLE DOT (·) */
-    private const TRACK_B_BULLET_CHAR = "\u{00B7}";
+    /** the gist 글쓰기 툴 list-disc 마커와 동일 문자 — U+2022 BULLET (•) */
+    private const TRACK_B_BULLET_CHAR = "\u{2022}";
 
     public function __construct(OpenAIService $openai, array $config = [])
     {
@@ -542,7 +542,7 @@ PROMPT;
 - ❌ "유동성 위기가 도래했음을 보여준다. 개혁 우선순위로 다뤄야 한다는 구상이다. 촉진자 역할이 요구된다고 본다."
 - ✅ "유동성 위기가 핵심 쟁점으로 부상하고 있다. 개혁은 위기 대응보다 위기를 낳는 조건을 줄이는 쪽에 우선순위를 둬야 한다. 사무총장의 역할은 당사자를 모으고 대화를 유지하는 데 있다."
 
-불릿 머릿글(조립 시 · 로 변환됨 — summary/key_insight 본문에 들여쓰기·불릿 기호 넣지 마라):
+불릿 머릿글(조립 시 • 로 변환됨 — summary/key_insight 본문에 들여쓰기·불릿 기호 넣지 마라):
 - ❌ "  · 멕시코는 정보 공유를 늘리고 ..."
 - ✅ "멕시코는 정보 공유를 늘리고 ..."
 
@@ -624,7 +624,7 @@ PROMPT;
     }
 
     /**
-     * Track B content_summary 조립 후: 게시글 기준 불릿(U+00B7 ·)로 통일 + 들여쓰기 제거
+     * Track B content_summary 조립 후: 글쓰기 툴 마커(U+2022 •)로 통일 + 들여쓰기 제거
      */
     private function normalizeTrackBContentSummaryBullets(string $contentSummary): string
     {
