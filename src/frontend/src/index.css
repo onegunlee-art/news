@@ -499,6 +499,35 @@ input, textarea, select {
   animation: edu-game-xp-in 0.4s ease-out 0.45s both;
 }
 
+/* gistudy PC narrative v2 redesign */
+@keyframes edu-pc-scan-bar {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(350%);
+  }
+}
+
+.edu-pc-scan-bar {
+  animation: edu-pc-scan-bar 1.4s ease-in-out infinite;
+}
+
+.edu-pc-choice-btn:hover:not(:disabled) {
+  transform: translateX(3px);
+  border-color: #e85d2c !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .edu-pc-scan-bar {
+    animation: none;
+    width: 66%;
+  }
+  .edu-pc-choice-btn:hover:not(:disabled) {
+    transform: none;
+  }
+}
+
 @keyframes edu-wait-student-in {
   from {
     opacity: 0;
