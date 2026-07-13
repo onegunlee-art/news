@@ -82,8 +82,8 @@ export async function eduOperatorVerifySession(): Promise<EduOperatorProfile> {
   return data.operator
 }
 
-export async function eduOperatorListStudents(): Promise<EduOperatorStudent[]> {
-  const res = await operatorFetch(`${BASE}?action=students`)
+export async function eduOperatorListStudents(limit = 300): Promise<EduOperatorStudent[]> {
+  const res = await operatorFetch(`${BASE}?action=students&limit=${limit}`)
   const data = await parseJson<{ students: EduOperatorStudent[] }>(res)
   return data.students ?? []
 }

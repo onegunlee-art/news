@@ -24,7 +24,7 @@ if (!$supabase->isConfigured()) {
 $orgMap = eduFetchOrganizationsMap($supabase);
 
 if ($method === 'GET') {
-    $limit = min(200, max(1, (int) ($_GET['limit'] ?? 100)));
+    $limit = min(300, max(1, (int) ($_GET['limit'] ?? 100)));
     $query = 'status=eq.active&order=last_active_at.desc.nullslast,created_at.desc';
 
     if (isset($_GET['unassigned']) && $_GET['unassigned'] === '1') {

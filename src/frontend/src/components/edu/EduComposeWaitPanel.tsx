@@ -57,7 +57,60 @@ function reflectionSlots(board: EduThoughtBoardSlot[]) {
   return { first, last }
 }
 
-/** compose 대기 — 3막(조각·응축·회고). 상태 전환 책임 없음(순수 view). */
+type ReflectionCardProps = {
+  first: EduThoughtBoardSlot | undefined
+  last: EduThoughtBoardSlot | undefined
+  turnCount: number
+  statusLine: string
+  wide: boolean
+}
+
+function ReflectionCard({ first, last, turnCount, statusLine, wide }: ReflectionCardProps) {
+  return (
+    <div
+      className={`w-full rounded-2xl border-2 px-4 py-4 space-y-3 ${wide ? 'max-w-lg' : 'max-w-md'}`}
+      style={{
+        borderColor: eduGame.primary,
+        backgroundColor: 'rgba(216, 90, 48, 0.08)',
+        boxShadow: '0 0 28px rgba(216, 90, 48, 0.28)',
+      }}
+    >
+      <p className="text-sm font-bold" style={{ color: '#f5f5f5' }}>
+        📌 처음:{' '}
+        <span style={{ color: eduGame.primary }}>
+          {first ? `${layerCircle(first.index)} ${first.label}` : '① 입장'}
+        </span>
+      </p>
+      {first?.filled && first.text.trim() ? (
+        <p className={`text-sm pl-1 ${eduGameClasses.textKo}`} style={{ color: '#ccc' }}>
+          {first.text.trim()}
+        </p>
+      ) : null}
+      <p className="text-sm font-bold pt-1" style={{ color: '#f5f5f5' }}>
+        지금:{' '}
+        <span style={{ color: eduGame.primary }}>
+          {last ? `${layerCircle(last.index)} ${last.label}` : '⑥ 종합'}
+        </span>
+      </p>
+      {last?.filled && last.text.trim() ? (
+        <p className={`text-sm pl-1 ${eduGameClasses.textKo}`} style={{ color: '#ccc' }}>
+          {last.text.trim()}
+        </p>
+      ) : null}
+      <p className="text-xs pt-1" style={{ color: '#888' }}>
+        {turnCount > 0 ? `${turnCount}턴 동안 생각을 여섯 번 세웠어` : '여섯 겹 생각을 글로 엮는 중'}
+      </p>
+      <p
+        className="text-center text-sm font-semibold pt-2 animate-pulse"
+        style={{ color: eduGame.primary, fontFamily: eduGame.fontBody }}
+      >
+        ✦ {statusLine}
+      </p>
+    </div>
+  )
+}
+
+/** compose 대기 — 조각 흩어짐 → 모임 → 회고 카드. 상태 전환 책임 없음(순수 view). */
 export default function EduComposeWaitPanel({
   board,
   questTitle,
@@ -75,7 +128,7 @@ export default function EduComposeWaitPanel({
   useEffect(() => {
     if (reducedMotion) return
     const t1 = window.setTimeout(() => setAct('gather'), 1000)
-    const t2 = window.setTimeout(() => setAct('reflect'), 3000)
+    const t2 = window.setTimeout(() => setAct('reflect'), 2500)
     return () => {
       window.clearTimeout(t1)
       window.clearTimeout(t2)
@@ -92,7 +145,7 @@ export default function EduComposeWaitPanel({
 
   const wide = layout === 'wide'
   const showPieces = act === 'scatter' || act === 'gather'
-  const gathered = act === 'gather' || act === 'reflect'
+  const gathered = act === 'gather'
 
   return (
     <div
@@ -125,148 +178,90 @@ export default function EduComposeWaitPanel({
         </header>
 
         <div className="flex-1 min-h-0 flex flex-col items-center justify-center gap-5 overflow-y-auto">
-          <AnimatePresence mode="wait">
-            {showPieces ? (
-              <motion.div
-                key="pieces"
-                className={`relative w-full flex items-center justify-center ${wide ? 'min-h-[280px]' : 'min-h-[220px]'}`}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-              >
-                {gathered ? (
-                  <motion.div
-                    className="absolute rounded-2xl border-2"
-                    style={{
-                      width: wide ? 200 : 160,
-                      height: wide ? 260 : 200,
-                      borderColor: eduGame.primary,
-                      backgroundColor: 'rgba(216, 90, 48, 0.12)',
-                      boxShadow: '0 0 32px rgba(216, 90, 48, 0.35)',
-                    }}
-                    initial={{ opacity: 0, scale: 0.85 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.5, ease: 'easeOut' }}
-                    aria-hidden
-                  />
-                ) : null}
-
-                <div
-                  className={`grid gap-3 w-full place-items-center ${
-                    wide ? 'grid-cols-3 max-w-2xl' : 'grid-cols-1 sm:grid-cols-2 max-w-md'
-                  }`}
-                >
-                  {pieces.map((piece, i) => {
-                    const offset = SCATTER_OFFSETS[i % SCATTER_OFFSETS.length]
-                    return (
-                      <motion.div
-                        key={piece.layerId}
-                        layout={!reducedMotion}
-                        initial={
-                          reducedMotion
-                            ? { opacity: 0 }
-                            : { opacity: 0, x: offset.x, y: offset.y, rotate: offset.rotate, scale: 0.9 }
-                        }
-                        animate={
-                          gathered
-                            ? {
-                                opacity: act === 'gather' ? 0.35 : 0,
-                                x: 0,
-                                y: 0,
-                                rotate: 0,
-                                scale: act === 'gather' ? 0.4 : 0.2,
-                              }
-                            : {
-                                opacity: 1,
-                                x: offset.x,
-                                y: offset.y,
-                                rotate: offset.rotate,
-                                scale: 1,
-                              }
-                        }
-                        transition={{ duration: reducedMotion ? 0.2 : 0.55, ease: 'easeOut' }}
-                        className="rounded-xl border-2 px-3 py-2.5 w-full max-w-[17rem]"
-                        style={{
-                          borderColor: eduGame.primary,
-                          backgroundColor: eduGame.primaryLight,
-                        }}
-                      >
-                        <p className="text-xs font-bold mb-1 truncate" style={{ color: eduGame.primary }}>
-                          {piece.index}. {piece.label}
-                        </p>
-                        <p
-                          className={`text-sm leading-snug line-clamp-2 ${eduGameClasses.textKo}`}
-                          style={{ color: eduGame.ink }}
-                        >
-                          {piece.displayText}
-                        </p>
-                      </motion.div>
-                    )
-                  })}
-                </div>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="reflect"
-                className="w-full max-w-md space-y-5"
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4 }}
-              >
+          <div
+            className={`relative w-full flex items-center justify-center ${wide ? 'min-h-[300px]' : 'min-h-[240px]'}`}
+          >
+            <AnimatePresence>
+              {showPieces ? (
                 <motion.div
-                  className="mx-auto rounded-2xl border-2 flex items-center justify-center"
-                  style={{
-                    width: wide ? 120 : 96,
-                    height: wide ? 150 : 120,
-                    borderColor: eduGame.primary,
-                    backgroundColor: 'rgba(216, 90, 48, 0.15)',
-                    boxShadow: '0 0 24px rgba(216, 90, 48, 0.3)',
-                  }}
-                  animate={{ scale: [1, 1.03, 1] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-                  aria-hidden
-                />
-
-                <div
-                  className="rounded-2xl border px-4 py-4 space-y-3"
-                  style={{ borderColor: eduGame.border, backgroundColor: 'rgba(255,255,255,0.04)' }}
+                  key="pieces"
+                  className="absolute inset-0 flex items-center justify-center"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0, scale: 0.92 }}
+                  transition={{ duration: reducedMotion ? 0.15 : 0.45 }}
                 >
-                  <p className="text-sm font-bold" style={{ color: '#f5f5f5' }}>
-                    📌 처음:{' '}
-                    <span style={{ color: eduGame.primary }}>
-                      {first ? `${layerCircle(first.index)} ${first.label}` : '① 입장'}
-                    </span>
-                  </p>
-                  {first?.filled && first.text.trim() ? (
-                    <p className={`text-sm pl-1 ${eduGameClasses.textKo}`} style={{ color: '#ccc' }}>
-                      {first.text.trim()}
-                    </p>
-                  ) : null}
-                  <p className="text-sm font-bold pt-1" style={{ color: '#f5f5f5' }}>
-                    지금:{' '}
-                    <span style={{ color: eduGame.primary }}>
-                      {last ? `${layerCircle(last.index)} ${last.label}` : '⑥ 종합'}
-                    </span>
-                  </p>
-                  {last?.filled && last.text.trim() ? (
-                    <p className={`text-sm pl-1 ${eduGameClasses.textKo}`} style={{ color: '#ccc' }}>
-                      {last.text.trim()}
-                    </p>
-                  ) : null}
-                  <p className="text-xs pt-2" style={{ color: '#888' }}>
-                    {turnCount > 0 ? `${turnCount}턴 동안 생각을 여섯 번 세웠어` : '여섯 겹 생각을 글로 엮는 중'}
-                  </p>
-                </div>
+                  <div
+                    className={`grid gap-3 w-full place-items-center ${
+                      wide ? 'grid-cols-3 max-w-2xl' : 'grid-cols-1 sm:grid-cols-2 max-w-md'
+                    }`}
+                  >
+                    {pieces.map((piece, i) => {
+                      const offset = SCATTER_OFFSETS[i % SCATTER_OFFSETS.length]
+                      return (
+                        <motion.div
+                          key={piece.layerId}
+                          layout={!reducedMotion}
+                          initial={
+                            reducedMotion
+                              ? { opacity: 0 }
+                              : { opacity: 0, x: offset.x, y: offset.y, rotate: offset.rotate, scale: 0.9 }
+                          }
+                          animate={
+                            gathered
+                              ? { opacity: 0, x: 0, y: 0, rotate: 0, scale: 0.3 }
+                              : {
+                                  opacity: 1,
+                                  x: offset.x,
+                                  y: offset.y,
+                                  rotate: offset.rotate,
+                                  scale: 1,
+                                }
+                          }
+                          transition={{ duration: reducedMotion ? 0.2 : 0.55, ease: 'easeOut' }}
+                          className="rounded-xl border-2 px-3 py-2.5 w-full max-w-[17rem]"
+                          style={{
+                            borderColor: eduGame.primary,
+                            backgroundColor: eduGame.primaryLight,
+                          }}
+                        >
+                          <p className="text-xs font-bold mb-1 truncate" style={{ color: eduGame.primary }}>
+                            {piece.index}. {piece.label}
+                          </p>
+                          <p
+                            className={`text-sm leading-snug line-clamp-2 ${eduGameClasses.textKo}`}
+                            style={{ color: eduGame.ink }}
+                          >
+                            {piece.displayText}
+                          </p>
+                        </motion.div>
+                      )
+                    })}
+                  </div>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
 
-                <p
-                  className="text-center text-sm font-semibold animate-pulse"
-                  style={{ color: eduGame.primary, fontFamily: eduGame.fontBody }}
+            <AnimatePresence>
+              {act === 'reflect' ? (
+                <motion.div
+                  key="reflect"
+                  className="w-full flex items-center justify-center px-1"
+                  initial={{ opacity: 0, y: 16, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ duration: reducedMotion ? 0.2 : 0.5, ease: 'easeOut' }}
                 >
-                  {STATUS_LINES[statusIdx]}
-                </p>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                  <ReflectionCard
+                    first={first}
+                    last={last}
+                    turnCount={turnCount}
+                    statusLine={STATUS_LINES[statusIdx]}
+                    wide={wide}
+                  />
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
     </div>

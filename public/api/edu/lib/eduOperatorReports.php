@@ -21,7 +21,7 @@ function eduOperatorReportsHandle(
     ?array $body = null
 ): void {
     if ($action === 'students' && $method === 'GET') {
-        $limit = min(100, max(1, (int) ($_GET['limit'] ?? 50)));
+        $limit = min(300, max(1, (int) ($_GET['limit'] ?? 300)));
         $students = $supabase->select(
             'edu_students',
             eduOperatorStudentsSelectFilter($operator),
