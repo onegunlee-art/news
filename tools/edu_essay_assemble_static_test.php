@@ -120,6 +120,8 @@ ok('wait panel no fake draft assembler', !str_contains($panel, 'assembleDraftFro
 ok('wait panel reflection before after', str_contains($panel, '처음:') && str_contains($panel, '지금:'));
 ok('wait panel cycling status lines', str_contains($panel, '논증 구조를 세우는 중'));
 ok('wait panel no empty silhouette box', !str_contains($panel, 'aria-hidden'));
+ok('wait panel single AnimatePresence wait', str_contains($panel, 'mode="wait"'));
+ok('wait panel no boxShadow glow', !str_contains($panel, 'boxShadow'));
 
 $v2Path = $root . '/src/frontend/src/components/edu/QuestFlowNarrativeV2.tsx';
 $v2 = is_file($v2Path) ? (string) file_get_contents($v2Path) : '';

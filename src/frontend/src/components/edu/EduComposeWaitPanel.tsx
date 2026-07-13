@@ -8,7 +8,6 @@ type Props = {
   board: EduThoughtBoardSlot[]
   questTitle?: string | null
   turnCount: number
-  /** 모바일 세로 / PC 넓은 레이아웃 (Phase B) */
   layout?: 'mobile' | 'wide'
 }
 
@@ -31,6 +30,9 @@ const STATUS_LINES = [
 
 const LAYER_CIRCLES = ['①', '②', '③', '④', '⑤', '⑥']
 
+const SCATTER_MS = 1500
+const GATHER_MS = 1500
+
 function layerCircle(index: number): string {
   return LAYER_CIRCLES[index - 1] ?? String(index)
 }
@@ -52,9 +54,7 @@ function usePrefersReducedMotion(): boolean {
 
 function reflectionSlots(board: EduThoughtBoardSlot[]) {
   const byIndex = (n: number) => board.find(s => s.index === n)
-  const first = byIndex(1)
-  const last = byIndex(6)
-  return { first, last }
+  return { first: byIndex(1), last: byIndex(6) }
 }
 
 type ReflectionCardProps = {
@@ -65,6 +65,7 @@ type ReflectionCardProps = {
   wide: boolean
 }
 
+/** 3막 회고 — 유일한 bordered 박스 */
 function ReflectionCard({ first, last, turnCount, statusLine, wide }: ReflectionCardProps) {
   return (
     <div
@@ -72,7 +73,6 @@ function ReflectionCard({ first, last, turnCount, statusLine, wide }: Reflection
       style={{
         borderColor: eduGame.primary,
         backgroundColor: 'rgba(216, 90, 48, 0.08)',
-        boxShadow: '0 0 28px rgba(216, 90, 48, 0.28)',
       }}
     >
       <p className="text-sm font-bold" style={{ color: '#f5f5f5' }}>
@@ -110,7 +110,68 @@ function ReflectionCard({ first, last, turnCount, statusLine, wide }: Reflection
   )
 }
 
-/** compose 대기 — 조각 흩어짐 → 모임 → 회고 카드. 상태 전환 책임 없음(순수 view). */
+type PieceGridProps = {
+  act: 'scatter' | 'gather'
+  pieces: ReturnType<typeof piecesFromThoughtBoard>
+  wide: boolean
+  reducedMotion: boolean
+}
+
+/** 1~2막 — 생각 카드만 (회고 박스 없음) */
+function PieceGrid({ act, pieces, wide, reducedMotion }: PieceGridProps) {
+  const gathered = act === 'gather'
+
+  return (
+    <div
+      className={`grid gap-3 w-full place-items-center ${
+        wide ? 'grid-cols-3 max-w-2xl' : 'grid-cols-1 sm:grid-cols-2 max-w-md'
+      }`}
+    >
+      {pieces.map((piece, i) => {
+        const offset = SCATTER_OFFSETS[i % SCATTER_OFFSETS.length]
+        return (
+          <motion.div
+            key={piece.layerId}
+            initial={
+              reducedMotion
+                ? { opacity: 0 }
+                : { opacity: 0, x: offset.x, y: offset.y, rotate: offset.rotate, scale: 0.9 }
+            }
+            animate={
+              gathered
+                ? { opacity: 0, x: 0, y: 0, rotate: 0, scale: 0.15 }
+                : {
+                    opacity: 1,
+                    x: offset.x,
+                    y: offset.y,
+                    rotate: offset.rotate,
+                    scale: 1,
+                  }
+            }
+            transition={{ duration: reducedMotion ? 0.2 : gathered ? 1.2 : 0.5, ease: 'easeOut' }}
+            className="rounded-xl border-2 px-3 py-2.5 w-full max-w-[17rem]"
+            style={{
+              borderColor: eduGame.primary,
+              backgroundColor: eduGame.primaryLight,
+            }}
+          >
+            <p className="text-xs font-bold mb-1 truncate" style={{ color: eduGame.primary }}>
+              {piece.index}. {piece.label}
+            </p>
+            <p
+              className={`text-sm leading-snug line-clamp-2 ${eduGameClasses.textKo}`}
+              style={{ color: eduGame.ink }}
+            >
+              {piece.displayText}
+            </p>
+          </motion.div>
+        )
+      })}
+    </div>
+  )
+}
+
+/** compose 대기 — scatter → gather(페이드아웃) → reflect(박스 1개). 순수 view. */
 export default function EduComposeWaitPanel({
   board,
   questTitle,
@@ -127,8 +188,8 @@ export default function EduComposeWaitPanel({
 
   useEffect(() => {
     if (reducedMotion) return
-    const t1 = window.setTimeout(() => setAct('gather'), 1000)
-    const t2 = window.setTimeout(() => setAct('reflect'), 2500)
+    const t1 = window.setTimeout(() => setAct('gather'), SCATTER_MS)
+    const t2 = window.setTimeout(() => setAct('reflect'), SCATTER_MS + GATHER_MS)
     return () => {
       window.clearTimeout(t1)
       window.clearTimeout(t2)
@@ -144,8 +205,6 @@ export default function EduComposeWaitPanel({
   }, [act])
 
   const wide = layout === 'wide'
-  const showPieces = act === 'scatter' || act === 'gather'
-  const gathered = act === 'gather'
 
   return (
     <div
@@ -177,91 +236,38 @@ export default function EduComposeWaitPanel({
           </h1>
         </header>
 
-        <div className="flex-1 min-h-0 flex flex-col items-center justify-center gap-5 overflow-y-auto">
-          <div
-            className={`relative w-full flex items-center justify-center ${wide ? 'min-h-[300px]' : 'min-h-[240px]'}`}
-          >
-            <AnimatePresence>
-              {showPieces ? (
-                <motion.div
-                  key="pieces"
-                  className="absolute inset-0 flex items-center justify-center"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0, scale: 0.92 }}
-                  transition={{ duration: reducedMotion ? 0.15 : 0.45 }}
-                >
-                  <div
-                    className={`grid gap-3 w-full place-items-center ${
-                      wide ? 'grid-cols-3 max-w-2xl' : 'grid-cols-1 sm:grid-cols-2 max-w-md'
-                    }`}
-                  >
-                    {pieces.map((piece, i) => {
-                      const offset = SCATTER_OFFSETS[i % SCATTER_OFFSETS.length]
-                      return (
-                        <motion.div
-                          key={piece.layerId}
-                          layout={!reducedMotion}
-                          initial={
-                            reducedMotion
-                              ? { opacity: 0 }
-                              : { opacity: 0, x: offset.x, y: offset.y, rotate: offset.rotate, scale: 0.9 }
-                          }
-                          animate={
-                            gathered
-                              ? { opacity: 0, x: 0, y: 0, rotate: 0, scale: 0.3 }
-                              : {
-                                  opacity: 1,
-                                  x: offset.x,
-                                  y: offset.y,
-                                  rotate: offset.rotate,
-                                  scale: 1,
-                                }
-                          }
-                          transition={{ duration: reducedMotion ? 0.2 : 0.55, ease: 'easeOut' }}
-                          className="rounded-xl border-2 px-3 py-2.5 w-full max-w-[17rem]"
-                          style={{
-                            borderColor: eduGame.primary,
-                            backgroundColor: eduGame.primaryLight,
-                          }}
-                        >
-                          <p className="text-xs font-bold mb-1 truncate" style={{ color: eduGame.primary }}>
-                            {piece.index}. {piece.label}
-                          </p>
-                          <p
-                            className={`text-sm leading-snug line-clamp-2 ${eduGameClasses.textKo}`}
-                            style={{ color: eduGame.ink }}
-                          >
-                            {piece.displayText}
-                          </p>
-                        </motion.div>
-                      )
-                    })}
-                  </div>
-                </motion.div>
-              ) : null}
-            </AnimatePresence>
-
-            <AnimatePresence>
-              {act === 'reflect' ? (
-                <motion.div
-                  key="reflect"
-                  className="w-full flex items-center justify-center px-1"
-                  initial={{ opacity: 0, y: 16, scale: 0.96 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  transition={{ duration: reducedMotion ? 0.2 : 0.5, ease: 'easeOut' }}
-                >
-                  <ReflectionCard
-                    first={first}
-                    last={last}
-                    turnCount={turnCount}
-                    statusLine={STATUS_LINES[statusIdx]}
-                    wide={wide}
-                  />
-                </motion.div>
-              ) : null}
-            </AnimatePresence>
-          </div>
+        <div className="flex-1 min-h-0 flex items-center justify-center overflow-y-auto">
+          <AnimatePresence mode="wait">
+            {act === 'reflect' ? (
+              <motion.div
+                key="reflect"
+                className="w-full flex justify-center px-1"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: reducedMotion ? 0.15 : 0.4, ease: 'easeOut' }}
+              >
+                <ReflectionCard
+                  first={first}
+                  last={last}
+                  turnCount={turnCount}
+                  statusLine={STATUS_LINES[statusIdx]}
+                  wide={wide}
+                />
+              </motion.div>
+            ) : (
+              <motion.div
+                key={act}
+                className="w-full flex justify-center"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: reducedMotion ? 0.1 : 0.35 }}
+              >
+                <PieceGrid act={act} pieces={pieces} wide={wide} reducedMotion={reducedMotion} />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </div>
