@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import CoachMessageText from './CoachMessageText'
 import EduArticleSnippetCard from './EduArticleSnippetCard'
 import EduCoachWaitingPanel from './EduCoachWaitingPanel'
-import EduEssayAssemblePanel from './EduEssayAssemblePanel'
+import EduComposeWaitPanel from './EduComposeWaitPanel'
 import EduEssayCompletionPanel from './EduEssayCompletionPanel'
 import EduQuestComboContinue from './EduQuestComboContinue'
 import EduQuestCompletionCelebration from './EduQuestCompletionCelebration'
@@ -35,6 +35,7 @@ import {
 import { type EssayArtifact } from './EssayRevealCard'
 
 const PAGE_MAX = 'max-w-2xl'
+const COMPOSE_MIN_DISPLAY_MS = 1500
 
 type Choice = { id: string; label: string }
 
@@ -189,7 +190,6 @@ export default function QuestFlowNarrativeV2() {
   const [loading, setLoading] = useState(true)
   const [sending, setSending] = useState(false)
   const [assembling, setAssembling] = useState(false)
-  const [composeReady, setComposeReady] = useState(false)
   const [completed, setCompleted] = useState(false)
   const [error, setError] = useState('')
   const [essay, setEssay] = useState<EssayArtifact | null>(null)
@@ -205,13 +205,21 @@ export default function QuestFlowNarrativeV2() {
   const initCalledRef = useRef(false)
   const composeStartedRef = useRef(false)
   const composeInFlightRef = useRef(false)
-  const composeDoneRef = useRef(false)
-  const animDoneRef = useRef(false)
   const composeResultRef = useRef<EduComposeResponse | null>(null)
   const composeErrorRef = useRef<string | null>(null)
+  const composeShownAtRef = useRef(0)
+  const composeRevealTimerRef = useRef<number | null>(null)
   const comboRecordedRef = useRef(false)
   const boardPeekTimerRef = useRef<number | null>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+
+  useEffect(() => {
+    return () => {
+      if (composeRevealTimerRef.current != null) {
+        window.clearTimeout(composeRevealTimerRef.current)
+      }
+    }
+  }, [])
 
   useEffect(() => {
     if (boardCollapsedTouched) return
@@ -308,11 +316,8 @@ export default function QuestFlowNarrativeV2() {
     setPlayEssayReveal(true)
   }, [])
 
-  const finishComposeFlow = useCallback(() => {
-    if (!composeDoneRef.current || !animDoneRef.current) return
-
+  const revealComposeResult = useCallback(() => {
     setAssembling(false)
-    setComposeReady(false)
 
     if (composeErrorRef.current) {
       composeStartedRef.current = false
@@ -324,7 +329,20 @@ export default function QuestFlowNarrativeV2() {
     if (composeResultRef.current) {
       applyComposeResult(composeResultRef.current)
     }
+    composeInFlightRef.current = false
   }, [applyComposeResult])
+
+  const scheduleComposeReveal = useCallback(() => {
+    const elapsed = Date.now() - composeShownAtRef.current
+    const wait = Math.max(0, COMPOSE_MIN_DISPLAY_MS - elapsed)
+    if (composeRevealTimerRef.current != null) {
+      window.clearTimeout(composeRevealTimerRef.current)
+    }
+    composeRevealTimerRef.current = window.setTimeout(() => {
+      composeRevealTimerRef.current = null
+      revealComposeResult()
+    }, wait)
+  }, [revealComposeResult])
 
   const startParallelCompose = useCallback(
     (sid: string) => {
@@ -332,11 +350,9 @@ export default function QuestFlowNarrativeV2() {
 
       composeInFlightRef.current = true
       composeStartedRef.current = true
-      composeDoneRef.current = false
-      animDoneRef.current = false
+      composeShownAtRef.current = Date.now()
       composeResultRef.current = null
       composeErrorRef.current = null
-      setComposeReady(false)
       setAssembling(true)
       setError('')
 
@@ -344,24 +360,15 @@ export default function QuestFlowNarrativeV2() {
         .composeEssay(sid)
         .then(res => {
           composeResultRef.current = res
-          composeDoneRef.current = true
-          setComposeReady(true)
-          finishComposeFlow()
+          scheduleComposeReveal()
         })
         .catch(e => {
           composeErrorRef.current = e instanceof Error ? e.message : '글 생성 실패'
-          composeDoneRef.current = true
-          setComposeReady(true)
-          finishComposeFlow()
+          scheduleComposeReveal()
         })
     },
-    [finishComposeFlow]
+    [scheduleComposeReveal]
   )
-
-  const handleAnimComplete = useCallback(() => {
-    animDoneRef.current = true
-    finishComposeFlow()
-  }, [finishComposeFlow])
 
   const handleChatResponse = useCallback(
     async (res: EduChatResponse, sid: string) => {
@@ -675,12 +682,7 @@ export default function QuestFlowNarrativeV2() {
       </footer>
 
       {assembling && sessionId ? (
-        <EduEssayAssemblePanel
-          board={board}
-          questTitle={quest?.quest_title}
-          composeReady={composeReady}
-          onAnimComplete={handleAnimComplete}
-        />
+        <EduComposeWaitPanel board={board} questTitle={quest?.quest_title} turnCount={turnCount} />
       ) : null}
     </div>
   )

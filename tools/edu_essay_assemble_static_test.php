@@ -112,15 +112,21 @@ ok('assemble util exists', $assembleUtil !== '');
 ok('assemble util no nuke fallback string', !str_contains($assembleUtil, '핵 억지'));
 ok('assemble util no hardcoded piece text', !str_contains($assembleUtil, '핵이') && !str_contains($assembleUtil, '630'));
 
-$panelPath = $root . '/src/frontend/src/components/edu/EduEssayAssemblePanel.tsx';
+$panelPath = $root . '/src/frontend/src/components/edu/EduComposeWaitPanel.tsx';
 $panel = is_file($panelPath) ? (string) file_get_contents($panelPath) : '';
-ok('assemble panel exists', $panel !== '');
-ok('assemble panel uses piecesFromThoughtBoard', str_contains($panel, 'piecesFromThoughtBoard'));
-ok('assemble panel parallel compose gate', str_contains($panel, 'composeReady'));
+ok('compose wait panel exists', $panel !== '');
+ok('wait panel uses piecesFromThoughtBoard', str_contains($panel, 'piecesFromThoughtBoard'));
+ok('wait panel no fake draft assembler', !str_contains($panel, 'assembleDraftFromBoard'));
+ok('wait panel reflection before after', str_contains($panel, '처음:') && str_contains($panel, '지금:'));
+ok('wait panel cycling status lines', str_contains($panel, '논증 구조를 세우는 중'));
 
 $v2Path = $root . '/src/frontend/src/components/edu/QuestFlowNarrativeV2.tsx';
 $v2 = is_file($v2Path) ? (string) file_get_contents($v2Path) : '';
-ok('v2 parallel compose flow', str_contains($v2, 'startParallelCompose') && str_contains($v2, 'finishComposeFlow'));
+ok('v2 parallel compose flow', str_contains($v2, 'startParallelCompose') && str_contains($v2, 'scheduleComposeReveal'));
+ok('v2 compose response drives transition', str_contains($v2, 'revealComposeResult') && str_contains($v2, 'applyComposeResult'));
+ok('v2 no animDoneRef gate', !str_contains($v2, 'animDoneRef'));
+ok('v2 no handleAnimComplete', !str_contains($v2, 'handleAnimComplete'));
+ok('v2 uses compose wait panel', str_contains($v2, 'EduComposeWaitPanel'));
 
 $scriptDir = $root . '/docs/coach_scripts';
 $scriptFiles = glob($scriptDir . '/*_narrative_v2.json') ?: [];
