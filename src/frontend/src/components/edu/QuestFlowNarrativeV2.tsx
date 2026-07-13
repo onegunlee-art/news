@@ -209,7 +209,8 @@ export default function QuestFlowNarrativeV2() {
       composeInFlightRef.current = true
       composeStartedRef.current = true
       composeDoneRef.current = false
-      animDoneRef.current = mobileCompactRef.current
+      // PC: assemble 애니 없음 → anim 게이트 즉시 통과. Mobile: 현재 배포 동작 유지.
+      animDoneRef.current = true
       composeResultRef.current = null
       composeErrorRef.current = null
       setComposeReady(false)
@@ -222,12 +223,18 @@ export default function QuestFlowNarrativeV2() {
           composeResultRef.current = res
           composeDoneRef.current = true
           setComposeReady(true)
+          if (!mobileCompactRef.current) {
+            animDoneRef.current = true
+          }
           finishComposeFlow()
         })
         .catch(e => {
           composeErrorRef.current = e instanceof Error ? e.message : '글 생성 실패'
           composeDoneRef.current = true
           setComposeReady(true)
+          if (!mobileCompactRef.current) {
+            animDoneRef.current = true
+          }
           finishComposeFlow()
         })
     },
@@ -328,9 +335,6 @@ export default function QuestFlowNarrativeV2() {
     setChoices([])
     if (choice.id === 'go_compose') {
       setAssembling(true)
-      if (!mobileCompactRef.current) {
-        animDoneRef.current = true
-      }
     }
     try {
       const res = await eduApi.sendChat(sessionId, { action: 'narrative_v2_choice', choice_id: choice.id })
