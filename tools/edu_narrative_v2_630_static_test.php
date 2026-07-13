@@ -78,14 +78,39 @@ $paths = eduNarrativeV2EnumeratePaths($script, (string) $script['start_node']);
 ok('paths enumerated', count($paths) >= 1);
 echo 'INFO path_count=' . count($paths) . "\n";
 
+$v2UiPaths = [
+    '/src/frontend/src/components/edu/QuestFlowNarrativeV2.tsx',
+    '/src/frontend/src/components/edu/QuestFlowNarrativeV2Mobile.tsx',
+    '/src/frontend/src/components/edu/QuestFlowNarrativeV2Pc.tsx',
+    '/src/frontend/src/components/edu/questFlowNarrativeV2Shared.ts',
+];
+$v2UiCombined = '';
+foreach (glob($root . '/src/frontend/src/components/edu/pc/*.tsx') ?: [] as $pcFile) {
+    $v2UiPaths[] = str_replace($root, '', $pcFile);
+}
+foreach ($v2UiPaths as $rel) {
+    $path = $root . $rel;
+    if (is_file($path)) {
+        $v2UiCombined .= (string) file_get_contents($path);
+    }
+}
+
 $ui = is_file($root . '/src/frontend/src/components/edu/QuestFlowNarrativeV2.tsx')
     ? (string) file_get_contents($root . '/src/frontend/src/components/edu/QuestFlowNarrativeV2.tsx')
     : '';
 ok('V2 UI exists', $ui !== '');
-ok('thought board panel', str_contains($ui, 'EduThoughtBoardPanel'));
-ok('mobile keyboard inset', str_contains($ui, 'useVisualViewportLayout'));
-ok('card snippet parsing', str_contains($ui, 'parseCoachCardContent'));
-ok('article snippet card', str_contains($ui, 'EduArticleSnippetCard'));
+ok(
+    'thought board panel',
+    str_contains($v2UiCombined, 'EduThoughtBoardPanel')
+        || str_contains($v2UiCombined, 'EduPcThoughtBoardSidebar')
+);
+ok('mobile keyboard inset', str_contains($v2UiCombined, 'useVisualViewportLayout'));
+ok(
+    'card snippet parsing',
+    str_contains($v2UiCombined, 'parseCoachCardContent')
+        || str_contains($v2UiCombined, 'parseCoachAssistantMessage')
+);
+ok('article snippet card', str_contains($v2UiCombined, 'EduArticleSnippetCard'));
 
 $page = is_file($root . '/src/frontend/src/pages/edu/QuestFlowPage.tsx')
     ? (string) file_get_contents($root . '/src/frontend/src/pages/edu/QuestFlowPage.tsx')
