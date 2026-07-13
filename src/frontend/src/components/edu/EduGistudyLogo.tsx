@@ -6,9 +6,6 @@ type Props = {
   variant?: 'light' | 'dark'
   to?: string
   className?: string
-  /** PC redesign accent override */
-  accentColor?: string
-  fontFamily?: string
 }
 
 /** ● gistudy — the gist + study 워드플레이 */
@@ -17,15 +14,11 @@ export default function EduGistudyLogo({
   variant = 'light',
   to = '/edu',
   className = '',
-  accentColor,
-  fontFamily,
 }: Props) {
   const scale = size === 'sm' ? 1 : size === 'lg' ? 1.35 : 1.15
   const dotSize = Math.round(10 * scale)
   const fontSize = size === 'sm' ? '1.125rem' : size === 'lg' ? '1.625rem' : '1.375rem'
   const textColor = variant === 'dark' ? '#ffffff' : eduGame.ink
-  const dotColor = accentColor ?? eduGame.primary
-  const logoFont = fontFamily ?? eduGame.fontLogo
 
   const inner = (
     <span
@@ -37,14 +30,14 @@ export default function EduGistudyLogo({
         style={{
           width: dotSize,
           height: dotSize,
-          backgroundColor: dotColor,
+          backgroundColor: eduGame.primary,
         }}
         aria-hidden
       />
       <span
         className="font-semibold tracking-tight leading-none"
         style={{
-          fontFamily: logoFont,
+          fontFamily: eduGame.fontLogo,
           fontSize,
           color: textColor,
         }}

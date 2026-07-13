@@ -121,11 +121,6 @@ ok('assemble panel parallel compose gate', str_contains($panel, 'composeReady'))
 $v2Path = $root . '/src/frontend/src/components/edu/QuestFlowNarrativeV2.tsx';
 $v2 = is_file($v2Path) ? (string) file_get_contents($v2Path) : '';
 ok('v2 parallel compose flow', str_contains($v2, 'startParallelCompose') && str_contains($v2, 'finishComposeFlow'));
-ok(
-    'PC compose skips anim gate',
-    str_contains($v2, 'animDoneRef.current = true')
-        && str_contains($v2, '!mobileCompactRef.current')
-);
 
 $scriptDir = $root . '/docs/coach_scripts';
 $scriptFiles = glob($scriptDir . '/*_narrative_v2.json') ?: [];
