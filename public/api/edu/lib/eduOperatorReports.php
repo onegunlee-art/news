@@ -11,6 +11,7 @@ require_once __DIR__ . '/eduQuest.php';
 require_once __DIR__ . '/eduTier.php';
 require_once __DIR__ . '/eduCoachLevel.php';
 require_once __DIR__ . '/eduOperatorScope.php';
+require_once __DIR__ . '/eduStudentsExport.php';
 
 function eduOperatorReportsHandle(
     \Agents\Services\SupabaseService $supabase,
@@ -55,6 +56,25 @@ function eduOperatorReportsHandle(
         }
 
         eduSendJson(['success' => true, 'students' => $items, 'count' => count($items)]);
+    }
+
+    if ($action === 'export_csv' && $method === 'GET') {
+        try {
+            $result = eduStudentsExportBuild(
+                $supabase,
+                eduStudentsExportSelectFilter($operator)
+            );
+        } catch (Throwable $e) {
+            error_log('edu operator students export_csv: ' . $e->getMessage());
+            eduSendError('CSV export failed', 500);
+        }
+
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="' . $result['filename'] . '"');
+        header('Content-Length: ' . strlen($result['csv']));
+        header('Cache-Control: no-store');
+        echo $result['csv'];
+        exit;
     }
 
     if ($studentId === '' && in_array($action, ['preview', 'pdf', 'share_link'], true)) {

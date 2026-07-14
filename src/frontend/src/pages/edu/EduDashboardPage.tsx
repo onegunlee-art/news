@@ -4,6 +4,7 @@ import EduOperatorReportPanel from '../../components/edu/EduOperatorReportPanel'
 import { eduGame } from '../../constants/eduGameTheme'
 import {
   eduOperatorDownloadPdf,
+  eduOperatorDownloadStudentsCsv,
   eduOperatorCreateReportShareLink,
   eduOperatorListStudents,
   eduOperatorPreviewReport,
@@ -48,6 +49,7 @@ export default function EduDashboardPage() {
   const [loadingList, setLoadingList] = useState(true)
   const [loadingPreview, setLoadingPreview] = useState(false)
   const [loadingPdf, setLoadingPdf] = useState(false)
+  const [loadingCsv, setLoadingCsv] = useState(false)
   const [loadingShare, setLoadingShare] = useState(false)
   const [error, setError] = useState('')
   const [shareHint, setShareHint] = useState('')
@@ -162,6 +164,21 @@ export default function EduDashboardPage() {
     }
   }
 
+  const handleExportCsv = async () => {
+    setShareHint('')
+    setError('')
+    setLoadingCsv(true)
+    try {
+      const result = await eduOperatorDownloadStudentsCsv()
+      downloadPdfFile(result.blob, result.filename)
+      setShareHint(`학생 목록 CSV(${summary.count}명) 다운로드가 시작됐어요. Excel에서 열 수 있어요.`)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'CSV 추출 실패')
+    } finally {
+      setLoadingCsv(false)
+    }
+  }
+
   const handleLogout = () => {
     clearEduOperatorSession()
     navigate(LOGIN_PATH, { replace: true })
@@ -235,6 +252,22 @@ export default function EduDashboardPage() {
             </div>
           ))}
         </section>
+
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={() => void handleExportCsv()}
+            disabled={loadingCsv || loadingList || students.length === 0}
+            className="rounded-lg px-4 py-2 text-sm font-semibold border transition-opacity disabled:opacity-50"
+            style={{
+              borderColor: eduGame.primary,
+              color: eduGame.bg,
+              backgroundColor: eduGame.primary,
+            }}
+          >
+            {loadingCsv ? '추출 중…' : '학생 목록 Excel 추출'}
+          </button>
+        </div>
 
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
           <section

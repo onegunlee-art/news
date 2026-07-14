@@ -3,6 +3,7 @@
  * EDU 운영자 — 부모 리포트 API (X-Edu-Operator-Token)
  *
  * GET  ?action=students
+ * GET  ?action=export_csv
  * GET  ?action=preview&student_id=
  * POST { action: pdf, student_id }
  */

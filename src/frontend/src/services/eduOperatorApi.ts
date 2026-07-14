@@ -142,3 +142,26 @@ export async function eduOperatorDownloadPdf(
   const filename = match?.[1] ?? `gistudy-report-${studentId.slice(0, 8)}.pdf`
   return { blob, filename }
 }
+
+export async function eduOperatorDownloadStudentsCsv(): Promise<{ blob: Blob; filename: string }> {
+  const res = await operatorFetch(`${BASE}?action=export_csv`)
+  if (!res.ok) {
+    let msg = `HTTP ${res.status}`
+    try {
+      const err = await res.json()
+      msg = err.error || err.message || msg
+    } catch {
+      /* binary */
+    }
+    throw new Error(msg)
+  }
+  const blob = await res.blob()
+  const contentType = res.headers.get('Content-Type') ?? ''
+  if (!contentType.includes('text/csv') && blob.size < 50) {
+    throw new Error('CSV 추출에 실패했습니다.')
+  }
+  const disposition = res.headers.get('Content-Disposition') ?? ''
+  const match = disposition.match(/filename="([^"]+)"/)
+  const filename = match?.[1] ?? `gistudy-students-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}.csv`
+  return { blob, filename }
+}
