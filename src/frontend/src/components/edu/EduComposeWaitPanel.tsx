@@ -205,12 +205,13 @@ export default function EduComposeWaitPanel({
   }, [act])
 
   const wide = layout === 'wide'
+  const shellBg = wide ? '#070707' : '#0d0d0d'
 
   return (
     <div
       className="fixed inset-0 z-50 flex flex-col overflow-hidden"
       style={{
-        backgroundColor: '#0d0d0d',
+        backgroundColor: shellBg,
         paddingTop: 'env(safe-area-inset-top, 0px)',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
       }}

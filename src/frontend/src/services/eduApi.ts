@@ -216,6 +216,7 @@ export interface EduChatResponse {
   board_pulse_layer?: string | null
   narrative_turn_count?: number
   narrative_v2_input_mode?: string
+  narrative_v2_node?: string | null
   narrative_v2_polluted?: boolean
   narrative_v2_session_reset?: boolean
   board_diff?: { first: string; latest: string; lines: string[] } | null
@@ -293,6 +294,7 @@ export interface EduSessionState {
   board_pulse_layer?: string | null
   narrative_turn_count?: number
   narrative_v2_input_mode?: string
+  narrative_v2_node?: string | null
   narrative_v2_polluted?: boolean
   narrative_v2_session_reset?: boolean
 }

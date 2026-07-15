@@ -129,7 +129,23 @@ ok('v2 parallel compose flow', str_contains($v2, 'startParallelCompose') && str_
 ok('v2 compose response drives transition', str_contains($v2, 'revealComposeResult') && str_contains($v2, 'applyComposeResult'));
 ok('v2 no animDoneRef gate', !str_contains($v2, 'animDoneRef'));
 ok('v2 no handleAnimComplete', !str_contains($v2, 'handleAnimComplete'));
-ok('v2 uses compose wait panel', str_contains($v2, 'EduComposeWaitPanel'));
+
+$mobilePath = $root . '/src/frontend/src/components/edu/QuestFlowNarrativeV2Mobile.tsx';
+$mobile = is_file($mobilePath) ? (string) file_get_contents($mobilePath) : '';
+ok('v2 uses compose wait panel', str_contains($mobile, 'EduComposeWaitPanel') || str_contains($v2, 'EduComposeWaitPanel'));
+ok('v2 mobile pc split', str_contains($v2, 'QuestFlowNarrativeV2Mobile') && str_contains($v2, 'QuestFlowNarrativeV2Pc'));
+ok('v2 no assembleDraftFromBoard import', !str_contains($v2, 'assembleDraftFromBoard'));
+
+$pcThemePath = $root . '/src/frontend/src/constants/eduPcRedesignTheme.ts';
+$pcTheme = is_file($pcThemePath) ? (string) file_get_contents($pcThemePath) : '';
+ok('eduPcRedesignTheme exists', $pcTheme !== '');
+ok('eduPcRedesignTheme isolated', str_contains($pcTheme, '#070707') && !str_contains($pcTheme, "bg: '#ffffff'"));
+
+$gameThemePath = $root . '/src/frontend/src/constants/eduGameTheme.ts';
+$gameTheme = is_file($gameThemePath) ? (string) file_get_contents($gameThemePath) : '';
+ok('eduGameTheme bg still white mobile', str_contains($gameTheme, "bg: '#ffffff'"));
+
+ok('mobile view frozen component exists', $mobile !== '');
 
 $scriptDir = $root . '/docs/coach_scripts';
 $scriptFiles = glob($scriptDir . '/*_narrative_v2.json') ?: [];
