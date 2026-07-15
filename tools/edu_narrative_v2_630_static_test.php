@@ -81,11 +81,19 @@ echo 'INFO path_count=' . count($paths) . "\n";
 $ui = is_file($root . '/src/frontend/src/components/edu/QuestFlowNarrativeV2.tsx')
     ? (string) file_get_contents($root . '/src/frontend/src/components/edu/QuestFlowNarrativeV2.tsx')
     : '';
+$mobileUi = is_file($root . '/src/frontend/src/components/edu/QuestFlowNarrativeV2Mobile.tsx')
+    ? (string) file_get_contents($root . '/src/frontend/src/components/edu/QuestFlowNarrativeV2Mobile.tsx')
+    : '';
+$pcUi = is_file($root . '/src/frontend/src/components/edu/QuestFlowNarrativeV2Pc.tsx')
+    ? (string) file_get_contents($root . '/src/frontend/src/components/edu/QuestFlowNarrativeV2Pc.tsx')
+    : '';
 ok('V2 UI exists', $ui !== '');
-ok('thought board panel', str_contains($ui, 'EduThoughtBoardPanel'));
+ok('thought board panel', str_contains($mobileUi, 'EduThoughtBoardPanel')
+    && str_contains($pcUi, 'EduPcThoughtBoardColumn'));
 ok('mobile keyboard inset', str_contains($ui, 'useVisualViewportLayout'));
 ok('card snippet parsing', str_contains($ui, 'parseCoachCardContent'));
-ok('article snippet card', str_contains($ui, 'EduArticleSnippetCard'));
+ok('article snippet card', str_contains($mobileUi, 'EduArticleSnippetCard')
+    && str_contains($pcUi, 'EduArticleSnippetCard'));
 
 $page = is_file($root . '/src/frontend/src/pages/edu/QuestFlowPage.tsx')
     ? (string) file_get_contents($root . '/src/frontend/src/pages/edu/QuestFlowPage.tsx')
