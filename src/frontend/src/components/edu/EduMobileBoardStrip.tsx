@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef } from 'react'
+import { useLayoutEffect, useMemo, useRef } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import type { EduThoughtBoardSlot } from '../../services/eduApi'
 import { eduGame, eduGameClasses } from '../../constants/eduGameTheme'
@@ -20,10 +20,13 @@ function circledIndex(index: number): string {
 }
 
 export default function EduMobileBoardStrip({ board, hidden = false, onChipTap }: Props) {
-  const sorted = [...board].sort((a, b) => a.index - b.index)
-  const filled = sorted.filter(slot => slot.filled && slot.text.trim() !== '')
-  const current = sorted.find(slot => !slot.filled) ?? null
-  const filledIds = filled.map(slot => slot.layer_id)
+  const sorted = useMemo(() => [...board].sort((a, b) => a.index - b.index), [board])
+  const filled = useMemo(
+    () => sorted.filter(slot => slot.filled && slot.text.trim() !== ''),
+    [sorted]
+  )
+  const current = useMemo(() => sorted.find(slot => !slot.filled) ?? null, [sorted])
+  const filledIds = useMemo(() => filled.map(slot => slot.layer_id), [filled])
 
   /** null = 첫 hydrate(복원) — popIn 없음. view only, 상태 게이트 0 */
   const prevFilledRef = useRef<string[] | null>(null)
@@ -38,7 +41,7 @@ export default function EduMobileBoardStrip({ board, hidden = false, onChipTap }
 
   useLayoutEffect(() => {
     prevFilledRef.current = filledIds
-  }, [filledIds.join('|')])
+  }, [filledIds])
 
   if (hidden) return null
 
