@@ -22,6 +22,17 @@ import { DEFAULT_VISION } from '../constants/site';
 import { useMenuConfig } from '../hooks/useMenuConfig';
 import { normalizeMenuTabs } from '../utils/menuTabs';
 
+/** 사이드바에서만 숨김 — 탭 본문/로직은 유지 (나중에 재노출) */
+const HIDDEN_ADMIN_SIDEBAR_TAB_IDS = new Set<string>([
+  'ai',
+  'workspace',
+  'persona',
+  'knowledge',
+  'agi',
+  'usage',
+  'strategic-hub',
+]);
+
 /** Listen과 동일한 구조로 TTS params 구성 (캐시 공유) */
 function buildTtsParamsForListen(params: {
   title: string
@@ -578,6 +589,12 @@ const AdminPage: React.FC = () => {
     }
   }, [user, isAuthenticated, isLoading, isInitialized, navigate]);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'news' | 'drafts' | 'ai' | 'workspace' | 'persona' | 'knowledge' | 'agi' | 'usage' | 'settings' | 'promotions' | 'cancel' | 'strategic-hub'>('dashboard');
+
+  useEffect(() => {
+    if (HIDDEN_ADMIN_SIDEBAR_TAB_IDS.has(activeTab)) {
+      setActiveTab('dashboard');
+    }
+  }, [activeTab]);
 
   const { subCategoryToLabel } = useMenuConfig();
   const subCategoryOptions = useMemo(
@@ -1581,7 +1598,7 @@ const AdminPage: React.FC = () => {
           </div>
 
           <nav className="space-y-2">
-            {tabs.map((tab) => (
+            {tabs.filter((tab) => !HIDDEN_ADMIN_SIDEBAR_TAB_IDS.has(tab.id)).map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => {
