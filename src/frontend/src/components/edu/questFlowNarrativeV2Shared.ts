@@ -29,6 +29,7 @@ export type QuestFlowNarrativeV2ViewProps = {
   pulseLayer: string | null
   boardCollapsed: boolean
   toggleBoardCollapsed: () => void
+  openBoardPanel: () => void
   turnCount: number
   progressPct: number
   phase: string

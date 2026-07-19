@@ -4,6 +4,7 @@ import EduArticleSnippetCard from './EduArticleSnippetCard'
 import EduCoachWaitingPanel from './EduCoachWaitingPanel'
 import EduComposeWaitPanel from './EduComposeWaitPanel'
 import EduQuestHomeButton from './EduQuestHomeButton'
+import EduMobileBoardStrip from './EduMobileBoardStrip'
 import EduThoughtBoardPanel from './EduThoughtBoardPanel'
 import { eduGame, eduGameClasses } from '../../constants/eduGameTheme'
 import { lastStudentAnswer } from './questFlowNarrativeV2Utils'
@@ -22,6 +23,7 @@ export default function QuestFlowNarrativeV2Mobile(props: QuestFlowNarrativeV2Vi
     pulseLayer,
     boardCollapsed,
     toggleBoardCollapsed,
+    openBoardPanel,
     turnCount,
     progressPct,
     sending,
@@ -78,6 +80,12 @@ export default function QuestFlowNarrativeV2Mobile(props: QuestFlowNarrativeV2Vi
           </span>
         </div>
       </header>
+
+      <EduMobileBoardStrip
+        board={board}
+        hidden={keyboardOpen || assembling}
+        onChipTap={() => openBoardPanel()}
+      />
 
       <div className={`${QUEST_FLOW_PAGE_MAX} mx-auto w-full shrink-0`}>
         <EduThoughtBoardPanel

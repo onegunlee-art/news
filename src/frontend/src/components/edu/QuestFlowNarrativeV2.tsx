@@ -176,6 +176,15 @@ export default function QuestFlowNarrativeV2() {
     setBoardCollapsed(v => !v)
   }, [])
 
+  const openBoardPanel = useCallback(() => {
+    setBoardCollapsedTouched(true)
+    if (boardPeekTimerRef.current != null) {
+      window.clearTimeout(boardPeekTimerRef.current)
+      boardPeekTimerRef.current = null
+    }
+    setBoardCollapsed(false)
+  }, [])
+
   const applyResponse = useCallback((res: EduChatResponse) => {
     if (res.phase) setPhase(res.phase)
     if (res.progress_pct != null) setProgressPct(res.progress_pct)
@@ -449,6 +458,7 @@ export default function QuestFlowNarrativeV2() {
           pulseLayer={null}
           boardCollapsed={false}
           toggleBoardCollapsed={() => {}}
+          openBoardPanel={() => {}}
           turnCount={turnCount}
           progressPct={progressPct}
           phase={phase}
@@ -538,6 +548,7 @@ export default function QuestFlowNarrativeV2() {
     pulseLayer,
     boardCollapsed,
     toggleBoardCollapsed,
+    openBoardPanel,
     turnCount,
     progressPct,
     phase,

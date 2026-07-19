@@ -147,6 +147,23 @@ ok('eduGameTheme bg still white mobile', str_contains($gameTheme, "bg: '#ffffff'
 
 ok('mobile view frozen component exists', $mobile !== '');
 
+$stripPath = $root . '/src/frontend/src/components/edu/EduMobileBoardStrip.tsx';
+$strip = is_file($stripPath) ? (string) file_get_contents($stripPath) : '';
+$chipUtilPath = $root . '/src/frontend/src/utils/eduBoardChipSummary.ts';
+$chipUtil = is_file($chipUtilPath) ? (string) file_get_contents($chipUtilPath) : '';
+ok('mobile board strip exists', $strip !== '');
+ok('mobile board strip uses chip summary', str_contains($strip, 'summarizeBoardChipText'));
+ok('mobile board strip popIn animation', str_contains($strip, 'scale: 0.8'));
+ok('mobile uses board strip', str_contains($mobile, 'EduMobileBoardStrip'));
+ok('strip hidden on keyboard compose', str_contains($mobile, 'keyboardOpen || assembling'));
+ok('strip chip opens board panel', str_contains($mobile, 'openBoardPanel'));
+ok('chip summary util prefix strip', str_contains($chipUtil, 'LAYER_PREFIX_RE'));
+ok('chip summary max 10 chars', str_contains($chipUtil, 'maxLen = 10'));
+ok('v2 openBoardPanel handler', str_contains($v2, 'openBoardPanel'));
+$pcPath = $root . '/src/frontend/src/components/edu/QuestFlowNarrativeV2Pc.tsx';
+$pc = is_file($pcPath) ? (string) file_get_contents($pcPath) : '';
+ok('pc unchanged no mobile strip', !str_contains($pc, 'EduMobileBoardStrip'));
+
 $scriptDir = $root . '/docs/coach_scripts';
 $scriptFiles = glob($scriptDir . '/*_narrative_v2.json') ?: [];
 ok('narrative_v2 script count >= 45', count($scriptFiles) >= 45);

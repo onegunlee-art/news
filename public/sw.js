@@ -5,7 +5,7 @@
  * v4: ASSETS_CACHE를 빌드마다 치환 — 옛 해시 번들이 Cache Storage에 영구 잔존하던 문제 수정
  * ASSETS_CACHE placeholder는 vite build 시 buildVersion 타임스탬프로 치환됨
  */
-const ASSETS_CACHE = 'gist-assets-__BUILD_VERSION__'
+const ASSETS_CACHE = 'gist-assets-1784429607992'
 const ASSETS_PREFIX = '/assets/'
 
 self.addEventListener('install', (event) => {
