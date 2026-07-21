@@ -154,9 +154,15 @@ $chipUtil = is_file($chipUtilPath) ? (string) file_get_contents($chipUtilPath) :
 ok('mobile board strip exists', $strip !== '');
 ok('mobile board strip uses chip summary', str_contains($strip, 'summarizeBoardChipText'));
 ok('mobile board strip popIn animation', str_contains($strip, 'scale: 0.8'));
+ok('mobile board strip layoutId dotted-solid handoff', str_contains($strip, 'layoutId'));
+ok('mobile board strip no animDoneRef gate', !str_contains($strip, 'animDoneRef'));
+ok('popIn util hydrate skip', is_file($root . '/src/frontend/src/utils/eduMobileBoardStripPopIn.ts'));
 ok('mobile uses board strip', str_contains($mobile, 'EduMobileBoardStrip'));
-ok('strip hidden on keyboard compose', str_contains($mobile, 'keyboardOpen || assembling'));
-ok('strip chip opens board panel', str_contains($mobile, 'openBoardPanel'));
+ok('strip hidden on keyboard compose', str_contains($mobile, 'keyboardOpen || assembling || completed'));
+ok('strip chip opens board panel with layer', str_contains($mobile, 'openBoardPanel(layerId)'));
+ok('board panel focus layer scroll', str_contains((string) file_get_contents($root . '/src/frontend/src/components/edu/EduThoughtBoardPanel.tsx'), 'focusLayer'));
+ok('board panel scroll into view', str_contains((string) file_get_contents($root . '/src/frontend/src/components/edu/EduThoughtBoardPanel.tsx'), 'scrollIntoView'));
+ok('v2 boardFocusLayer state', str_contains($v2, 'boardFocusLayer'));
 ok('chip summary util prefix strip', str_contains($chipUtil, 'LAYER_PREFIX_RE'));
 ok('chip summary max 10 chars', str_contains($chipUtil, 'maxLen = 10'));
 ok('v2 openBoardPanel handler', str_contains($v2, 'openBoardPanel'));

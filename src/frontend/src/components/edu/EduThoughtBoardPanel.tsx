@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { eduGame, eduGameClasses } from '../../constants/eduGameTheme'
 import type { EduThoughtBoardSlot } from '../../services/eduApi'
@@ -5,6 +6,8 @@ import type { EduThoughtBoardSlot } from '../../services/eduApi'
 type Props = {
   board: EduThoughtBoardSlot[]
   pulseLayer: string | null
+  /** 칩 탭 등 — 해당 slot 하이라이트·스크롤 */
+  focusLayer?: string | null
   collapsed: boolean
   onToggle: () => void
   filledCount: number
@@ -15,18 +18,30 @@ type Props = {
 export default function EduThoughtBoardPanel({
   board,
   pulseLayer,
+  focusLayer = null,
   collapsed,
   onToggle,
   filledCount,
   compact = false,
 }: Props) {
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (collapsed || !focusLayer) return
+    const root = scrollRef.current
+    if (!root) return
+    const slotEl = root.querySelector<HTMLElement>(`[data-board-layer="${focusLayer}"]`)
+    slotEl?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+  }, [focusLayer, collapsed, board])
+
   const slots = (
     <>
       {board.map(slot => {
-        const pulsing = pulseLayer === slot.layer_id
+        const pulsing = pulseLayer === slot.layer_id || focusLayer === slot.layer_id
         return (
           <motion.div
             key={slot.layer_id}
+            data-board-layer={slot.layer_id}
             animate={
               pulsing
                 ? {
@@ -46,7 +61,12 @@ export default function EduThoughtBoardPanel({
                 : 'rounded-xl border-2 p-2.5 min-h-[4.5rem]'
             }
             style={{
-              borderColor: slot.filled ? eduGame.primary : eduGame.border,
+              borderColor:
+                focusLayer === slot.layer_id
+                  ? eduGame.primary
+                  : slot.filled
+                    ? eduGame.primary
+                    : eduGame.border,
               backgroundColor: slot.filled ? eduGame.primaryLight : eduGame.surface,
             }}
           >
@@ -91,11 +111,13 @@ export default function EduThoughtBoardPanel({
 
       {!collapsed &&
         (compact ? (
-          <div className="overflow-x-auto px-3 pb-2" style={{ maxHeight: '28vh' }}>
+          <div ref={scrollRef} className="overflow-x-auto px-3 pb-2" style={{ maxHeight: '28vh' }}>
             <div className="flex gap-2 pb-1">{slots}</div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-2 px-3 pb-3 sm:grid-cols-2">{slots}</div>
+          <div ref={scrollRef} className="grid grid-cols-1 gap-2 px-3 pb-3 sm:grid-cols-2">
+            {slots}
+          </div>
         ))}
     </section>
   )
