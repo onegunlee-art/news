@@ -102,6 +102,7 @@ export default function QuestFlowNarrativeV2() {
   const [textInput, setTextInput] = useState('')
   const [inputFocused, setInputFocused] = useState(false)
   const [pulseLayer, setPulseLayer] = useState<string | null>(null)
+  const [boardFocusLayer, setBoardFocusLayer] = useState<string | null>(null)
   const [boardCollapsed, setBoardCollapsed] = useState(
     () => typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches
   )
@@ -176,13 +177,18 @@ export default function QuestFlowNarrativeV2() {
     setBoardCollapsed(v => !v)
   }, [])
 
-  const openBoardPanel = useCallback(() => {
+  const openBoardPanel = useCallback((layerId?: string) => {
     setBoardCollapsedTouched(true)
     if (boardPeekTimerRef.current != null) {
       window.clearTimeout(boardPeekTimerRef.current)
       boardPeekTimerRef.current = null
     }
     setBoardCollapsed(false)
+    const id = layerId?.trim() ?? ''
+    if (id !== '') {
+      setBoardFocusLayer(id)
+      window.setTimeout(() => setBoardFocusLayer(null), 2200)
+    }
   }, [])
 
   const applyResponse = useCallback((res: EduChatResponse) => {
@@ -459,12 +465,14 @@ export default function QuestFlowNarrativeV2() {
           boardCollapsed={false}
           toggleBoardCollapsed={() => {}}
           openBoardPanel={() => {}}
+          boardFocusLayer={null}
           turnCount={turnCount}
           progressPct={progressPct}
           phase={phase}
           narrativeV2Node={narrativeV2Node}
           sending={false}
           assembling={false}
+          completed
           error=""
           coachIndex={coachIndex}
           cardContent={cardContent}
@@ -549,12 +557,14 @@ export default function QuestFlowNarrativeV2() {
     boardCollapsed,
     toggleBoardCollapsed,
     openBoardPanel,
+    boardFocusLayer,
     turnCount,
     progressPct,
     phase,
     narrativeV2Node,
     sending,
     assembling,
+    completed,
     error,
     coachIndex,
     cardContent,

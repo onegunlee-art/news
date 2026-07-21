@@ -24,10 +24,12 @@ export default function QuestFlowNarrativeV2Mobile(props: QuestFlowNarrativeV2Vi
     boardCollapsed,
     toggleBoardCollapsed,
     openBoardPanel,
+    boardFocusLayer,
     turnCount,
     progressPct,
     sending,
     assembling,
+    completed,
     error,
     cardContent,
     cardParagraphs,
@@ -83,14 +85,15 @@ export default function QuestFlowNarrativeV2Mobile(props: QuestFlowNarrativeV2Vi
 
       <EduMobileBoardStrip
         board={board}
-        hidden={keyboardOpen || assembling}
-        onChipTap={() => openBoardPanel()}
+        hidden={keyboardOpen || assembling || completed}
+        onChipTap={layerId => openBoardPanel(layerId)}
       />
 
       <div className={`${QUEST_FLOW_PAGE_MAX} mx-auto w-full shrink-0`}>
         <EduThoughtBoardPanel
           board={board}
           pulseLayer={pulseLayer}
+          focusLayer={boardFocusLayer}
           collapsed={boardCollapsed}
           onToggle={toggleBoardCollapsed}
           filledCount={filledCount}

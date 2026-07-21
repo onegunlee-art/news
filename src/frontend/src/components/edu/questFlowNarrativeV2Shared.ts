@@ -29,13 +29,15 @@ export type QuestFlowNarrativeV2ViewProps = {
   pulseLayer: string | null
   boardCollapsed: boolean
   toggleBoardCollapsed: () => void
-  openBoardPanel: () => void
+  openBoardPanel: (layerId?: string) => void
+  boardFocusLayer: string | null
   turnCount: number
   progressPct: number
   phase: string
   narrativeV2Node: string
   sending: boolean
   assembling: boolean
+  completed: boolean
   error: string
   coachIndex: number
   cardContent: QuestFlowCoachCard
