@@ -433,6 +433,8 @@ jobs:
             ensure_env "EDU_ADMIN_API_KEY"      "${V_EDU_ADMIN:-}"
             ensure_env "EDU_INSIGHT_DEBUG_STUDENT_IDS" "f88c2fc2-132c-4f0c-9c7f-aa60d3ec3c01"
             ensure_env "EDU_LEVEL_DEBUG_STUDENT_IDS"   "f88c2fc2-132c-4f0c-9c7f-aa60d3ec3c01"
+            ensure_env "ENABLE_DISCOVERY"              "true"
+            ensure_env "ENABLE_DISCOVERY_PUBLIC"       "true"
             sudo chmod 644 "\$ENV_FILE" 2>/dev/null || true
           ENVEOF
 
@@ -466,6 +468,11 @@ jobs:
             sudo chown -R ubuntu:ubuntu docs/hinge_extractions docs/hinge_reviews docs/hinge_quest_drafts docs/coach_scripts docs/axis_extractions docs/structure_diagnoses docs/difficulty_ratings
             sudo chown ubuntu:www-data storage/logs
             sudo chmod 775 storage/logs
+
+            echo 'Running discovery DB migration...'
+            sudo -u www-data php tools/discovery_migrate.php 2>&1 \
+              || echo 'Discovery migrate had issues, continuing...'
+
             sudo systemctl restart php8.2-fpm
             echo 'Deploy complete: PHP-FPM restarted'
           REMOTEEOF
@@ -566,6 +573,29 @@ jobs:
           fi
           rm -f "$tmp"
           echo "✅ EDU compose bootstrap gate passed"
+
+      - name: Discovery public API gate (today.php JSON)
+        run: |
+          URL="${{ env.SITE_URL }}/api/discovery/today.php"
+          tmp=$(mktemp)
+          last=""
+          for i in $(seq 1 8); do
+            last=$(curl -sS -o "$tmp" -w "%{http_code}" --connect-timeout 15 --max-time 30 "$URL" 2>/dev/null) || true
+            last=$(echo "$last" | tr -d '[:space:]')
+            if [ "$last" = "200" ] && grep -q '"success":true' "$tmp"; then
+              echo "✅ Discovery today API OK (attempt $i)"
+              rm -f "$tmp"
+              exit 0
+            fi
+            echo "Attempt $i/8: HTTP ${last:-<empty>} — retry in 10s..."
+            head -c 400 "$tmp" 2>/dev/null || true
+            echo ""
+            sleep 10
+          done
+          echo "❌ Discovery today API failed. Last HTTP: ${last:-none}"
+          cat "$tmp" 2>/dev/null || true
+          rm -f "$tmp"
+          exit 1
 
       - name: Check homepage (retries)
         run: |
