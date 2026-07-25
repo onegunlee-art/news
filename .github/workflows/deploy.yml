@@ -158,6 +158,7 @@ jobs:
             for d in /var/www/thegist/public \
                      /var/www/thegist/src/backend \
                      /var/www/thegist/src/agents \
+                     /var/www/thegist/src/discovery \
                      /var/www/thegist/config \
                      /var/www/thegist/database \
                      /var/www/thegist/cron \
@@ -197,6 +198,10 @@ jobs:
           rsync -avz \
             -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
             src/agents/ "$REMOTE:$DEST/src/agents/"
+
+          rsync -avz \
+            -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
+            src/discovery/ "$REMOTE:$DEST/src/discovery/"
 
           rsync -avz \
             --exclude='database.php' \
@@ -254,6 +259,7 @@ jobs:
             --include='seed_japan_decision_quest.php' \
             --include='seed_iran_decision_quest.php' \
             --include='seed_hinge_auto_quest.php' \
+            --include='discovery_*.php' \
             --exclude='*' \
             tools/ "$REMOTE:$DEST/tools/"
 

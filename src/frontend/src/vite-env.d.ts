@@ -4,6 +4,7 @@ declare const __APP_BUILD_VERSION__: number
 
 interface ImportMetaEnv {
   readonly VITE_API_URL: string
+  readonly VITE_ENABLE_DISCOVERY?: string
 }
 
 interface ImportMeta {

@@ -17,10 +17,13 @@ import CorporateRegistrationModal from '../components/Admin/CorporateRegistratio
 import StrategicHub from '../components/Admin/StrategicHub';
 import SeriesCoverEditor from '../components/Admin/SeriesCoverEditor';
 import AGILab from '../components/Admin/AGILab';
+import DiscoveryPanel from '../components/Admin/Discovery/DiscoveryPanel';
 import GistLogo from '../components/Common/GistLogo';
 import { DEFAULT_VISION } from '../constants/site';
 import { useMenuConfig } from '../hooks/useMenuConfig';
 import { normalizeMenuTabs } from '../utils/menuTabs';
+
+const ENABLE_DISCOVERY = import.meta.env.VITE_ENABLE_DISCOVERY === 'true';
 
 /** 사이드바에서만 숨김 — 탭 본문/로직은 유지 (나중에 재노출) */
 const HIDDEN_ADMIN_SIDEBAR_TAB_IDS = new Set<string>([
@@ -588,7 +591,7 @@ const AdminPage: React.FC = () => {
       navigate('/', { replace: true });
     }
   }, [user, isAuthenticated, isLoading, isInitialized, navigate]);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'news' | 'drafts' | 'ai' | 'workspace' | 'persona' | 'knowledge' | 'agi' | 'usage' | 'settings' | 'promotions' | 'cancel' | 'strategic-hub'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'news' | 'drafts' | 'ai' | 'workspace' | 'persona' | 'knowledge' | 'agi' | 'usage' | 'settings' | 'promotions' | 'cancel' | 'strategic-hub' | 'discovery'>('dashboard');
 
   useEffect(() => {
     if (HIDDEN_ADMIN_SIDEBAR_TAB_IDS.has(activeTab)) {
@@ -1572,6 +1575,7 @@ const AdminPage: React.FC = () => {
     { id: 'promotions', name: '프로모션 코드', iconName: 'local_offer' },
     { id: 'cancel', name: '취소 요청', iconName: 'cancel' },
     { id: 'strategic-hub', name: 'Strategic Hub', iconName: 'hub' },
+    ...(ENABLE_DISCOVERY ? [{ id: 'discovery' as const, name: '오늘의 발견', iconName: 'explore' }] : []),
   ] as const;
 
   // 인증 초기화/검증 중 또는 권한 없음(리다이렉트 예정)에는 로딩 표시 (새로고침 시 어드민 유지)
@@ -5872,6 +5876,10 @@ const AdminPage: React.FC = () => {
                 }
               }}
             />
+          )}
+
+          {ENABLE_DISCOVERY && activeTab === 'discovery' && (
+            <DiscoveryPanel />
           )}
         </div>
       </div>
