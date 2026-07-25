@@ -12,12 +12,18 @@ final class DiscoveryPublicService
     ) {
     }
 
+    private function includeSeed(): bool
+    {
+        return !empty($this->config['show_seed']);
+    }
+
     /** @return array<string, mixed> */
     public function getToday(?string $deviceKey): array
     {
         $today = discoveryTodayKst();
-        $todayEdition = $this->repo->findPublishedEditionByDate($today);
-        $latestPublished = $this->repo->findLatestPublishedEdition();
+        $includeSeed = $this->includeSeed();
+        $todayEdition = $this->repo->findPublishedEditionByDate($today, $includeSeed);
+        $latestPublished = $this->repo->findLatestPublishedEdition($includeSeed);
 
         $displayEdition = $todayEdition ?? $latestPublished;
         $preparingToday = $todayEdition === null && $latestPublished !== null;
@@ -53,7 +59,7 @@ final class DiscoveryPublicService
     /** @return array<string, mixed>|null */
     public function getEditionByDate(string $date, ?string $deviceKey): ?array
     {
-        $edition = $this->repo->findPublishedEditionByDate($date);
+        $edition = $this->repo->findPublishedEditionByDate($date, $this->includeSeed());
         if (!$edition) {
             return null;
         }
@@ -70,13 +76,13 @@ final class DiscoveryPublicService
     public function listEditions(?string $cursor, int $limit): array
     {
         $limit = max(1, min(50, $limit));
-        return $this->repo->listPublishedEditionsCursor($cursor, $limit);
+        return $this->repo->listPublishedEditionsCursor($cursor, $limit, $this->includeSeed());
     }
 
     /** @return array<string, mixed>|null */
     public function getChange(int $changeId, ?string $deviceKey): ?array
     {
-        $change = $this->repo->findPublishedChangeById($changeId);
+        $change = $this->repo->findPublishedChangeById($changeId, $this->includeSeed());
         if (!$change) {
             return null;
         }
@@ -91,7 +97,7 @@ final class DiscoveryPublicService
     /** @return array<string, mixed>|null */
     public function getPoll(int $pollId, ?string $deviceKey): ?array
     {
-        $bundle = $this->repo->findPublishedPollBundle($pollId);
+        $bundle = $this->repo->findPublishedPollBundle($pollId, $this->includeSeed());
         if (!$bundle) {
             return null;
         }
@@ -107,7 +113,7 @@ final class DiscoveryPublicService
     /** @return array<string, mixed> */
     public function listComments(int $pollId, ?string $cursor, int $limit): array
     {
-        if (!$this->repo->findPublishedPollBundle($pollId)) {
+        if (!$this->repo->findPublishedPollBundle($pollId, $this->includeSeed())) {
             throw new \RuntimeException('Poll not found', 404);
         }
 
@@ -121,7 +127,7 @@ final class DiscoveryPublicService
         $this->rateLimiter->hit('vote:ip:' . DiscoveryRateLimiter::ipHash(), 30, 60);
         $this->rateLimiter->hit('vote:device:' . $deviceKey, 20, 3600);
 
-        if (!$this->repo->findPublishedPollBundle($pollId)) {
+        if (!$this->repo->findPublishedPollBundle($pollId, $this->includeSeed())) {
             throw new \RuntimeException('Poll not found', 404);
         }
 
@@ -139,7 +145,7 @@ final class DiscoveryPublicService
         $this->rateLimiter->hit('comment:ip:' . DiscoveryRateLimiter::ipHash(), 20, 60);
         $this->rateLimiter->hit('comment:device:' . $deviceKey, 5, 3600);
 
-        if (!$this->repo->findPublishedPollBundle($pollId)) {
+        if (!$this->repo->findPublishedPollBundle($pollId, $this->includeSeed())) {
             throw new \RuntimeException('Poll not found', 404);
         }
 

@@ -145,6 +145,30 @@ function discoveryEnsurePublicMigration(PDO $pdo, string $projectRoot): void
     }
 }
 
+function discoveryEnsureSeedMigration(PDO $pdo, string $projectRoot): void
+{
+    $sqlFile = $projectRoot . 'database/discovery_seed_migration.sql';
+    if (!is_file($sqlFile)) {
+        return;
+    }
+    $sql = file_get_contents($sqlFile);
+    if ($sql === false) {
+        return;
+    }
+    foreach (array_filter(array_map('trim', preg_split('/;\s*\n/', $sql) ?: [])) as $statement) {
+        if ($statement === '' || stripos($statement, 'SELECT 1') === 0) {
+            continue;
+        }
+        try {
+            $pdo->exec($statement);
+        } catch (Throwable $e) {
+            if (!str_contains($e->getMessage(), 'Duplicate')) {
+                error_log('discovery seed migration: ' . $e->getMessage());
+            }
+        }
+    }
+}
+
 function discoveryDeviceKey(): ?string
 {
     $key = trim((string) ($_SERVER['HTTP_X_DISCOVERY_DEVICE_KEY'] ?? ''));

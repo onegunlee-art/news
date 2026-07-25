@@ -246,10 +246,11 @@ final class DiscoveryRepository
     }
 
     /** @return array<string, mixed>|null */
-    public function findPublishedEditionByDate(string $date): ?array
+    public function findPublishedEditionByDate(string $date, bool $includeSeed = false): ?array
     {
+        $seedClause = $includeSeed ? '' : ' AND is_seed = 0';
         $stmt = $this->pdo->prepare(
-            'SELECT * FROM discovery_editions WHERE edition_date = ? AND status = ? LIMIT 1'
+            'SELECT * FROM discovery_editions WHERE edition_date = ? AND status = ?' . $seedClause . ' LIMIT 1'
         );
         $stmt->execute([$date, 'published']);
         $row = $stmt->fetch();
@@ -257,10 +258,11 @@ final class DiscoveryRepository
     }
 
     /** @return array<string, mixed>|null */
-    public function findLatestPublishedEdition(): ?array
+    public function findLatestPublishedEdition(bool $includeSeed = false): ?array
     {
+        $seedClause = $includeSeed ? '' : ' AND is_seed = 0';
         $stmt = $this->pdo->prepare(
-            'SELECT * FROM discovery_editions WHERE status = ? ORDER BY edition_date DESC LIMIT 1'
+            'SELECT * FROM discovery_editions WHERE status = ?' . $seedClause . ' ORDER BY edition_date DESC LIMIT 1'
         );
         $stmt->execute(['published']);
         $row = $stmt->fetch();
@@ -328,13 +330,14 @@ final class DiscoveryRepository
     }
 
     /** @return array<string, mixed>|null */
-    public function findPublishedChangeById(int $changeId): ?array
+    public function findPublishedChangeById(int $changeId, bool $includeSeed = false): ?array
     {
+        $seedClause = $includeSeed ? '' : ' AND e.is_seed = 0';
         $stmt = $this->pdo->prepare(
-            'SELECT c.*, e.edition_date, e.status AS edition_status
+            'SELECT c.*, e.edition_date, e.status AS edition_status, e.is_seed
              FROM discovery_changes c
              JOIN discovery_editions e ON e.id = c.edition_id
-             WHERE c.id = ? AND c.status = ? AND e.status = ?
+             WHERE c.id = ? AND c.status = ? AND e.status = ?' . $seedClause . '
              LIMIT 1'
         );
         $stmt->execute([$changeId, 'verified', 'published']);
@@ -364,15 +367,16 @@ final class DiscoveryRepository
     }
 
     /** @return array<string, mixed>|null */
-    public function findPublishedPollBundle(int $pollId): ?array
+    public function findPublishedPollBundle(int $pollId, bool $includeSeed = false): ?array
     {
+        $seedClause = $includeSeed ? '' : ' AND e.is_seed = 0';
         $stmt = $this->pdo->prepare(
             'SELECT p.*, c.id AS change_row_id, c.edition_id, c.`rank`, c.category, c.title, c.summary,
-                    c.briefing_json, c.status AS change_status, e.edition_date, e.status AS edition_status
+                    c.briefing_json, c.status AS change_status, e.edition_date, e.status AS edition_status, e.is_seed
              FROM discovery_polls p
              JOIN discovery_changes c ON c.id = p.change_id
              JOIN discovery_editions e ON e.id = c.edition_id
-             WHERE p.id = ? AND c.status = ? AND e.status = ?
+             WHERE p.id = ? AND c.status = ? AND e.status = ?' . $seedClause . '
              LIMIT 1'
         );
         $stmt->execute([$pollId, 'verified', 'published']);
@@ -418,7 +422,7 @@ final class DiscoveryRepository
     }
 
     /** @return array<string, mixed> */
-    public function listPublishedEditionsCursor(?string $cursor, int $limit): array
+    public function listPublishedEditionsCursor(?string $cursor, int $limit, bool $includeSeed = false): array
     {
         $params = ['published'];
         $cursorClause = '';
@@ -426,11 +430,12 @@ final class DiscoveryRepository
             $cursorClause = ' AND edition_date < ?';
             $params[] = $cursor;
         }
+        $seedClause = $includeSeed ? '' : ' AND is_seed = 0';
 
         $stmt = $this->pdo->prepare(
-            'SELECT id, edition_date, status, published_at, change_count
+            'SELECT id, edition_date, status, published_at, change_count, is_seed
              FROM discovery_editions
-             WHERE status = ?' . $cursorClause . '
+             WHERE status = ?' . $seedClause . $cursorClause . '
              ORDER BY edition_date DESC
              LIMIT ' . ($limit + 1)
         );
@@ -614,15 +619,16 @@ final class DiscoveryRepository
     }
 
     /** @return list<array<string, mixed>> */
-    public function searchPublishedChanges(string $query, int $limit = 50): array
+    public function searchPublishedChanges(string $query, int $limit = 50, bool $includeSeed = false): array
     {
+        $seedClause = $includeSeed ? '' : ' AND e.is_seed = 0';
         $stmt = $this->pdo->prepare(
-            'SELECT c.*, e.edition_date, e.status AS edition_status
+            'SELECT c.*, e.edition_date, e.status AS edition_status, e.is_seed
              FROM discovery_changes c
              JOIN discovery_editions e ON e.id = c.edition_id
              WHERE e.status = ?
                AND c.status = ?
-               AND (c.title LIKE ? OR c.summary LIKE ?)
+               AND (c.title LIKE ? OR c.summary LIKE ?)' . $seedClause . '
              ORDER BY e.edition_date DESC, c.`rank` ASC
              LIMIT ?'
         );
@@ -682,5 +688,161 @@ final class DiscoveryRepository
         foreach ($changeIds->fetchAll() ?: [] as $row) {
             $this->deleteChange((int) $row['id']);
         }
+    }
+
+    public function hasRealEditionForDate(string $date): bool
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT id FROM discovery_editions WHERE edition_date = ? AND is_seed = 0 LIMIT 1'
+        );
+        $stmt->execute([$date]);
+        return (bool) $stmt->fetch();
+    }
+
+    public function deleteAllSeedEditions(): int
+    {
+        $stmt = $this->pdo->query('SELECT id FROM discovery_editions WHERE is_seed = 1');
+        $rows = $stmt->fetchAll() ?: [];
+        foreach ($rows as $row) {
+            $this->deleteSeedEditionById((int) $row['id']);
+        }
+
+        return count($rows);
+    }
+
+    public function deleteSeedEditionByDate(string $date): void
+    {
+        $stmt = $this->pdo->prepare('SELECT id FROM discovery_editions WHERE edition_date = ? AND is_seed = 1 LIMIT 1');
+        $stmt->execute([$date]);
+        $row = $stmt->fetch();
+        if ($row) {
+            $this->deleteSeedEditionById((int) $row['id']);
+        }
+    }
+
+    private function deleteSeedEditionById(int $editionId): void
+    {
+        $this->clearEditionChildren($editionId);
+        $this->pdo->prepare('DELETE FROM discovery_editions WHERE id = ? AND is_seed = 1')->execute([$editionId]);
+    }
+
+    /**
+     * @param list<array<string, mixed>> $changes
+     * @return array<string, mixed>|null null if real edition exists for date
+     */
+    public function insertSeedEdition(string $date, array $changes, int $dayIndex): ?array
+    {
+        if ($this->hasRealEditionForDate($date)) {
+            return null;
+        }
+
+        $this->deleteSeedEditionByDate($date);
+
+        $count = count($changes);
+        $this->pdo->prepare(
+            'INSERT INTO discovery_editions (edition_date, status, change_count, is_seed, published_at)
+             VALUES (?, ?, ?, 1, NOW())'
+        )->execute([$date, 'published', $count]);
+
+        $editionId = (int) $this->pdo->lastInsertId();
+        $this->saveSeedChanges($editionId, $changes, $dayIndex);
+
+        return $this->findEditionById($editionId);
+    }
+
+    /** @param list<array<string, mixed>> $changes */
+    private function saveSeedChanges(int $editionId, array $changes, int $dayIndex): void
+    {
+        $rank = 1;
+        foreach ($changes as $change) {
+            $stmt = $this->pdo->prepare(
+                'INSERT INTO discovery_changes (edition_id, `rank`, category, title, summary, briefing_json, status)
+                 VALUES (?, ?, ?, ?, ?, ?, ?)'
+            );
+            $stmt->execute([
+                $editionId,
+                $rank,
+                $change['category'],
+                $change['title'],
+                $change['summary'],
+                json_encode($change['briefing'], JSON_UNESCAPED_UNICODE),
+                'verified',
+            ]);
+            $changeId = (int) $this->pdo->lastInsertId();
+
+            foreach ($change['sources'] as $source) {
+                $this->pdo->prepare(
+                    'INSERT INTO discovery_sources (change_id, name, url, article_title, verified, verified_at)
+                     VALUES (?, ?, ?, ?, 1, NOW())'
+                )->execute([
+                    $changeId,
+                    $source['name'],
+                    $source['url'],
+                    $source['article_title'] ?? null,
+                ]);
+            }
+
+            $poll = $change['poll'];
+            $this->pdo->prepare(
+                'INSERT INTO discovery_polls (change_id, question, options_json) VALUES (?, ?, ?)'
+            )->execute([
+                $changeId,
+                $poll['question'],
+                json_encode($poll['options'], JSON_UNESCAPED_UNICODE),
+            ]);
+            $pollId = (int) $this->pdo->lastInsertId();
+
+            $this->insertSeedDummyVotes(
+                $pollId,
+                (int) ($change['_seed_vote_total'] ?? 100),
+                (array) ($change['_seed_vote_percents'] ?? [45, 25, 20, 10])
+            );
+
+            $rank++;
+        }
+    }
+
+    /** @param list<int> $percents */
+    public function insertSeedDummyVotes(int $pollId, int $total, array $percents): void
+    {
+        $counts = [0, 0, 0, 0];
+        $assigned = 0;
+        foreach ($percents as $i => $pct) {
+            if ($i > 3) {
+                break;
+            }
+            $cnt = (int) floor($total * $pct / 100);
+            $counts[$i] = $cnt;
+            $assigned += $cnt;
+        }
+        $counts[0] += max(0, $total - $assigned);
+
+        $seq = 0;
+        foreach ($counts as $optionIdx => $cnt) {
+            for ($n = 0; $n < $cnt; $n++) {
+                $deviceKey = sprintf('seed-dummy-%d-%d-%04d', $pollId, $optionIdx, $seq++);
+                try {
+                    $this->pdo->prepare(
+                        'INSERT INTO discovery_votes (poll_id, device_key, option_idx) VALUES (?, ?, ?)'
+                    )->execute([$pollId, $deviceKey, $optionIdx]);
+                } catch (\PDOException) {
+                    // ignore duplicate on re-run fragments
+                }
+            }
+        }
+    }
+
+    public function countSeedEditions(): int
+    {
+        return (int) $this->pdo->query('SELECT COUNT(*) FROM discovery_editions WHERE is_seed = 1')->fetchColumn();
+    }
+
+    public function countSeedChanges(): int
+    {
+        return (int) $this->pdo->query(
+            'SELECT COUNT(*) FROM discovery_changes c
+             JOIN discovery_editions e ON e.id = c.edition_id
+             WHERE e.is_seed = 1'
+        )->fetchColumn();
     }
 }

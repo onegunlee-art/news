@@ -18,7 +18,7 @@ try {
     discoveryJson([
         'success' => true,
         'data' => [
-            'results' => $repo->searchPublishedChanges($query, $limit),
+            'results' => $repo->searchPublishedChanges($query, $limit, !empty($config['show_seed'])),
         ],
     ]);
 } catch (Throwable $e) {

@@ -9,12 +9,14 @@ CREATE TABLE IF NOT EXISTS `discovery_editions` (
     `status` ENUM('generating', 'draft', 'published') NOT NULL DEFAULT 'draft',
     `published_at` TIMESTAMP NULL DEFAULT NULL,
     `change_count` TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    `is_seed` TINYINT(1) NOT NULL DEFAULT 0,
     `warning_message` VARCHAR(500) NULL DEFAULT NULL,
     `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     UNIQUE KEY `uniq_discovery_edition_date` (`edition_date`),
-    KEY `idx_discovery_edition_status` (`status`)
+    KEY `idx_discovery_edition_status` (`status`),
+    KEY `idx_discovery_edition_seed` (`is_seed`, `edition_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `discovery_changes` (
