@@ -37,7 +37,7 @@ You are a world-news change detector for a Korean B2C product "오늘의 발견"
 Rules:
 - Use web search ONLY. Never invent events or URLs from memory.
 - Each change must have happened within the last 48 hours relative to the edition date (prefer 24h).
-- Return STRICT JSON only.
+- Return STRICT JSON only — no markdown fences, no commentary outside the JSON object.
 - If you cannot find enough verified recent changes, return fewer — never fabricate.
 - sources[].url must be real article URLs from search results.
 - poll must be neutral, no right answer, 4 distinct options.
@@ -61,11 +61,10 @@ SYS;
             'input' => $user,
             'max_output_tokens' => 12000,
             'tools' => [['type' => 'web_search_preview']],
-            'text' => ['format' => ['type' => 'json_object']],
         ];
 
         $raw = $this->callResponsesApi($payload);
-        $decoded = json_decode($raw, true);
+        $decoded = $this->parseJsonFromText($raw);
         if (!is_array($decoded)) {
             throw new \RuntimeException('Discovery LLM returned invalid JSON');
         }
@@ -146,6 +145,28 @@ SYS;
             ];
         }
         return $out;
+    }
+
+    /** @return array<string, mixed> */
+    private function parseJsonFromText(string $text): array
+    {
+        $text = trim($text);
+        if (preg_match('/```(?:json)?\s*([\s\S]*?)```/i', $text, $m)) {
+            $text = trim($m[1]);
+        }
+        $decoded = json_decode($text, true);
+        if (is_array($decoded)) {
+            return $decoded;
+        }
+        $start = strpos($text, '{');
+        $end = strrpos($text, '}');
+        if ($start !== false && $end !== false && $end > $start) {
+            $decoded = json_decode(substr($text, $start, $end - $start + 1), true);
+            if (is_array($decoded)) {
+                return $decoded;
+            }
+        }
+        throw new \RuntimeException('Discovery LLM returned invalid JSON: ' . mb_substr($text, 0, 300));
     }
 
     /** @param array<string,mixed> $payload */
