@@ -81,6 +81,7 @@ jobs:
         run: npm run build
         env:
           VITE_API_URL: /api
+          VITE_ENABLE_DISCOVERY: 'true'
 
       - name: List built files (배포될 프론트엔드 파일 확인)
         run: |
