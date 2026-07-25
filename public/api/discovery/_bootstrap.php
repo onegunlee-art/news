@@ -15,7 +15,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
     exit;
 }
 
-require_once __DIR__ . '/../../../../src/discovery/bootstrap.php';
+require_once __DIR__ . '/../../../src/discovery/bootstrap.php';
 
 try {
     $root = discoveryFindProjectRoot();
