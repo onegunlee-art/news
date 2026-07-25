@@ -82,6 +82,7 @@ jobs:
         env:
           VITE_API_URL: /api
           VITE_ENABLE_DISCOVERY: 'true'
+          VITE_ENABLE_DISCOVERY_PUBLIC: 'true'
 
       - name: List built files (배포될 프론트엔드 파일 확인)
         run: |

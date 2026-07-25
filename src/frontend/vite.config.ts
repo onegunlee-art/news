@@ -71,11 +71,26 @@ export default defineConfig({
     outDir: '../../public',
     emptyOutDir: false,
     sourcemap: false,
+    modulePreload: {
+      resolveDependencies: (_filename, deps) =>
+        deps.filter((dep) => !dep.includes('discovery-admin') && !dep.includes('discovery-public')),
+    },
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          ui: ['framer-motion', 'clsx'],
+        manualChunks(id) {
+          const normalized = id.replace(/\\/g, '/')
+          if (normalized.includes('/src/discovery/')) {
+            return 'discovery-public'
+          }
+          if (normalized.includes('/components/Admin/Discovery/')) {
+            return 'discovery-admin'
+          }
+          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom') || id.includes('node_modules/react-router-dom')) {
+            return 'vendor'
+          }
+          if (id.includes('node_modules/framer-motion') || id.includes('node_modules/clsx')) {
+            return 'ui'
+          }
         },
       },
     },

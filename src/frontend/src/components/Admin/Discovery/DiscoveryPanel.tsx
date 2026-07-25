@@ -19,6 +19,7 @@ type ViewMode = 'ops' | 'preview'
 export default function DiscoveryPanel() {
   const api = useDiscoveryApi()
   const [viewMode, setViewMode] = useState<ViewMode>('ops')
+  const [commentDeleteId, setCommentDeleteId] = useState('')
   const [editions, setEditions] = useState<DiscoveryEdition[]>([])
   const [changes, setChanges] = useState<DiscoveryChange[]>([])
   const [selectedEdition, setSelectedEdition] = useState<DiscoveryEdition | null>(null)
@@ -153,6 +154,29 @@ export default function DiscoveryPanel() {
       </div>
 
       {api.error && <div className="discovery-boundary">{api.error}</div>}
+
+      {viewMode === 'ops' && (
+        <div className="discovery-comment-delete-row">
+          <input
+            type="number"
+            placeholder="댓글 ID"
+            value={commentDeleteId}
+            onChange={(e) => setCommentDeleteId(e.target.value)}
+          />
+          <button
+            type="button"
+            className="discovery-btn discovery-btn-secondary"
+            onClick={async () => {
+              const id = Number(commentDeleteId)
+              if (!id) return
+              await api.deleteComment(id)
+              setCommentDeleteId('')
+            }}
+          >
+            댓글 삭제
+          </button>
+        </div>
+      )}
 
       {viewMode === 'ops' ? (
         <div className="discovery-panel">

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { formatSourceDisplayName, buildEditorialLine } from '../utils/formatSource'
@@ -17,7 +17,7 @@ import CorporateRegistrationModal from '../components/Admin/CorporateRegistratio
 import StrategicHub from '../components/Admin/StrategicHub';
 import SeriesCoverEditor from '../components/Admin/SeriesCoverEditor';
 import AGILab from '../components/Admin/AGILab';
-import DiscoveryPanel from '../components/Admin/Discovery/DiscoveryPanel';
+const DiscoveryPanel = lazy(() => import('../components/Admin/Discovery/DiscoveryPanel'));
 import GistLogo from '../components/Common/GistLogo';
 import { DEFAULT_VISION } from '../constants/site';
 import { useMenuConfig } from '../hooks/useMenuConfig';
@@ -5879,7 +5879,9 @@ const AdminPage: React.FC = () => {
           )}
 
           {ENABLE_DISCOVERY && activeTab === 'discovery' && (
-            <DiscoveryPanel />
+            <Suspense fallback={<div className="p-4 text-sm text-gray-500">오늘의 발견 불러오는 중…</div>}>
+              <DiscoveryPanel />
+            </Suspense>
           )}
         </div>
       </div>

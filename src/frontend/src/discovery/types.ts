@@ -48,6 +48,7 @@ export interface DiscoveryChange {
   status: string
   sources: DiscoverySource[]
   poll: DiscoveryPoll | null
+  edition_date?: string
 }
 
 export interface DiscoveryEdition {
@@ -59,17 +60,5 @@ export interface DiscoveryEdition {
   warning_message: string | null
 }
 
-export interface DiscoveryRun {
-  id: number
-  edition_date: string
-  generated_count: number
-  discarded_count: number
-  reasons_json: string | null
-  duration_sec: number | null
-  run_at: string
-}
-
-export type PreviewTab = 'home' | 'community' | 'search' | 'mypage'
-export type PreviewScreen = 'home' | 'changeDetail' | 'pollDetail'
-
+export type PublicTab = 'home' | 'community' | 'search' | 'mypage'
 export type SearchView = 'home' | 'results' | 'filter'

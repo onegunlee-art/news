@@ -156,7 +156,18 @@ final class DiscoveryRepository
     }
 
     /** @return array<string, mixed> */
-    public function getPollStats(int $pollId): array
+    public function getPollStats(int $pollId, bool $allowDummy = true): array
+    {
+        $stats = $this->getPollStatsReal($pollId);
+        if ($allowDummy && $stats['total'] === 0) {
+            return $this->generateDummyStats();
+        }
+
+        return $stats;
+    }
+
+    /** @return array<string, mixed> */
+    public function getPollStatsReal(int $pollId): array
     {
         $stmt = $this->pdo->prepare(
             'SELECT option_idx, COUNT(*) AS cnt FROM discovery_votes WHERE poll_id = ? GROUP BY option_idx'
@@ -164,10 +175,6 @@ final class DiscoveryRepository
         $stmt->execute([$pollId]);
         $rows = $stmt->fetchAll() ?: [];
         $total = array_sum(array_map(static fn($r) => (int) $r['cnt'], $rows));
-
-        if ($total === 0) {
-            return $this->generateDummyStats();
-        }
 
         $counts = [0, 0, 0, 0];
         foreach ($rows as $row) {
@@ -197,12 +204,349 @@ final class DiscoveryRepository
         ];
     }
 
-    public function recordVote(int $pollId, string $userKey, int $optionIdx): void
+    public function recordVote(int $pollId, string $deviceKey, int $optionIdx): void
     {
         $this->pdo->prepare(
-            'INSERT INTO discovery_votes (poll_id, user_key, option_idx) VALUES (?, ?, ?)
+            'INSERT INTO discovery_votes (poll_id, device_key, option_idx) VALUES (?, ?, ?)
              ON DUPLICATE KEY UPDATE option_idx = VALUES(option_idx), created_at = NOW()'
-        )->execute([$pollId, $userKey, $optionIdx]);
+        )->execute([$pollId, $deviceKey, $optionIdx]);
+    }
+
+    public function castVoteOnce(int $pollId, string $deviceKey, int $optionIdx): void
+    {
+        if ($optionIdx < 0 || $optionIdx > 3) {
+            throw new \InvalidArgumentException('option_idx must be 0-3');
+        }
+
+        if ($this->findVoteByDevice($pollId, $deviceKey)) {
+            throw new \RuntimeException('이미 투표했습니다. 변경할 수 없습니다.', 409);
+        }
+
+        try {
+            $this->pdo->prepare(
+                'INSERT INTO discovery_votes (poll_id, device_key, option_idx) VALUES (?, ?, ?)'
+            )->execute([$pollId, $deviceKey, $optionIdx]);
+        } catch (\PDOException $e) {
+            if ((int) ($e->errorInfo[1] ?? 0) === 1062) {
+                throw new \RuntimeException('이미 투표했습니다. 변경할 수 없습니다.', 409);
+            }
+            throw $e;
+        }
+    }
+
+    /** @return array<string, mixed>|null */
+    public function findVoteByDevice(int $pollId, string $deviceKey): ?array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT * FROM discovery_votes WHERE poll_id = ? AND device_key = ? LIMIT 1'
+        );
+        $stmt->execute([$pollId, $deviceKey]);
+        $row = $stmt->fetch();
+        return $row ?: null;
+    }
+
+    /** @return array<string, mixed>|null */
+    public function findPublishedEditionByDate(string $date): ?array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT * FROM discovery_editions WHERE edition_date = ? AND status = ? LIMIT 1'
+        );
+        $stmt->execute([$date, 'published']);
+        $row = $stmt->fetch();
+        return $row ?: null;
+    }
+
+    /** @return array<string, mixed>|null */
+    public function findLatestPublishedEdition(): ?array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT * FROM discovery_editions WHERE status = ? ORDER BY edition_date DESC LIMIT 1'
+        );
+        $stmt->execute(['published']);
+        $row = $stmt->fetch();
+        return $row ?: null;
+    }
+
+    /** @return list<array<string, mixed>> */
+    public function getPublicChangesForEdition(int $editionId, ?string $deviceKey): array
+    {
+        $changes = $this->getVerifiedChangesForEdition($editionId);
+        $out = [];
+        foreach ($changes as $change) {
+            $out[] = $this->hydratePublicChange($change, $deviceKey);
+        }
+        return $out;
+    }
+
+    /** @return list<array<string, mixed>> */
+    public function getVerifiedChangesForEdition(int $editionId): array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT * FROM discovery_changes WHERE edition_id = ? AND status = ? ORDER BY `rank` ASC'
+        );
+        $stmt->execute([$editionId, 'verified']);
+        $changes = $stmt->fetchAll() ?: [];
+
+        foreach ($changes as &$change) {
+            $changeId = (int) $change['id'];
+            $change['briefing'] = json_decode((string) ($change['briefing_json'] ?? '{}'), true) ?: [];
+            unset($change['briefing_json']);
+
+            $srcStmt = $this->pdo->prepare('SELECT * FROM discovery_sources WHERE change_id = ? ORDER BY id ASC');
+            $srcStmt->execute([$changeId]);
+            $change['sources'] = $srcStmt->fetchAll() ?: [];
+
+            $pollStmt = $this->pdo->prepare('SELECT * FROM discovery_polls WHERE change_id = ? LIMIT 1');
+            $pollStmt->execute([$changeId]);
+            $poll = $pollStmt->fetch() ?: null;
+            if ($poll) {
+                $poll['options'] = json_decode((string) ($poll['options_json'] ?? '[]'), true) ?: [];
+                unset($poll['options_json']);
+            }
+            $change['poll'] = $poll;
+        }
+        unset($change);
+
+        return $changes;
+    }
+
+    /** @param array<string, mixed> $change */
+    public function hydratePublicChange(array $change, ?string $deviceKey): array
+    {
+        if (!empty($change['poll']['id'])) {
+            $pollId = (int) $change['poll']['id'];
+            $change['poll']['stats'] = $this->getPollStatsReal($pollId);
+            if ($deviceKey) {
+                $vote = $this->findVoteByDevice($pollId, $deviceKey);
+                $change['poll']['viewer'] = [
+                    'has_voted' => $vote !== null,
+                    'option_idx' => $vote ? (int) $vote['option_idx'] : null,
+                ];
+            }
+        }
+        return $change;
+    }
+
+    /** @return array<string, mixed>|null */
+    public function findPublishedChangeById(int $changeId): ?array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT c.*, e.edition_date, e.status AS edition_status
+             FROM discovery_changes c
+             JOIN discovery_editions e ON e.id = c.edition_id
+             WHERE c.id = ? AND c.status = ? AND e.status = ?
+             LIMIT 1'
+        );
+        $stmt->execute([$changeId, 'verified', 'published']);
+        $row = $stmt->fetch();
+        if (!$row) {
+            return null;
+        }
+        $change = $row;
+        $changeId = (int) $change['id'];
+        $change['briefing'] = json_decode((string) ($change['briefing_json'] ?? '{}'), true) ?: [];
+        unset($change['briefing_json']);
+
+        $srcStmt = $this->pdo->prepare('SELECT id, name, url, article_title, verified FROM discovery_sources WHERE change_id = ? ORDER BY id ASC');
+        $srcStmt->execute([$changeId]);
+        $change['sources'] = $srcStmt->fetchAll() ?: [];
+
+        $pollStmt = $this->pdo->prepare('SELECT * FROM discovery_polls WHERE change_id = ? LIMIT 1');
+        $pollStmt->execute([$changeId]);
+        $poll = $pollStmt->fetch() ?: null;
+        if ($poll) {
+            $poll['options'] = json_decode((string) ($poll['options_json'] ?? '[]'), true) ?: [];
+            unset($poll['options_json']);
+        }
+        $change['poll'] = $poll;
+
+        return $change;
+    }
+
+    /** @return array<string, mixed>|null */
+    public function findPublishedPollBundle(int $pollId): ?array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT p.*, c.id AS change_row_id, c.edition_id, c.`rank`, c.category, c.title, c.summary,
+                    c.briefing_json, c.status AS change_status, e.edition_date, e.status AS edition_status
+             FROM discovery_polls p
+             JOIN discovery_changes c ON c.id = p.change_id
+             JOIN discovery_editions e ON e.id = c.edition_id
+             WHERE p.id = ? AND c.status = ? AND e.status = ?
+             LIMIT 1'
+        );
+        $stmt->execute([$pollId, 'verified', 'published']);
+        $row = $stmt->fetch();
+        if (!$row) {
+            return null;
+        }
+
+        $changeId = (int) $row['change_row_id'];
+        $change = [
+            'id' => $changeId,
+            'edition_id' => (int) $row['edition_id'],
+            'rank' => (int) $row['rank'],
+            'category' => $row['category'],
+            'title' => $row['title'],
+            'summary' => $row['summary'],
+            'briefing' => json_decode((string) ($row['briefing_json'] ?? '{}'), true) ?: [],
+            'status' => $row['change_status'],
+            'edition_date' => $row['edition_date'],
+        ];
+
+        $srcStmt = $this->pdo->prepare('SELECT id, name, url, article_title, verified FROM discovery_sources WHERE change_id = ? ORDER BY id ASC');
+        $srcStmt->execute([$changeId]);
+        $change['sources'] = $srcStmt->fetchAll() ?: [];
+
+        $poll = [
+            'id' => (int) $row['id'],
+            'change_id' => $changeId,
+            'question' => $row['question'],
+            'options' => json_decode((string) ($row['options_json'] ?? '[]'), true) ?: [],
+            'stats' => $this->getPollStatsReal($pollId),
+        ];
+        $change['poll'] = $poll;
+
+        return [
+            'poll' => $poll,
+            'change' => $change,
+            'edition' => [
+                'edition_date' => $row['edition_date'],
+                'status' => $row['edition_status'],
+            ],
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    public function listPublishedEditionsCursor(?string $cursor, int $limit): array
+    {
+        $params = ['published'];
+        $cursorClause = '';
+        if ($cursor) {
+            $cursorClause = ' AND edition_date < ?';
+            $params[] = $cursor;
+        }
+
+        $stmt = $this->pdo->prepare(
+            'SELECT id, edition_date, status, published_at, change_count
+             FROM discovery_editions
+             WHERE status = ?' . $cursorClause . '
+             ORDER BY edition_date DESC
+             LIMIT ' . ($limit + 1)
+        );
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll() ?: [];
+        $hasMore = count($rows) > $limit;
+        if ($hasMore) {
+            array_pop($rows);
+        }
+        $nextCursor = $hasMore && $rows !== [] ? (string) end($rows)['edition_date'] : null;
+
+        return [
+            'items' => $rows,
+            'next_cursor' => $nextCursor,
+            'has_more' => $hasMore,
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    public function addComment(int $pollId, string $deviceKey, string $body, ?string $ipHash = null): array
+    {
+        $body = trim(strip_tags($body));
+        if ($body === '') {
+            throw new \InvalidArgumentException('댓글 내용을 입력해 주세요.');
+        }
+        if (mb_strlen($body) > 500) {
+            throw new \InvalidArgumentException('댓글은 500자 이하로 작성해 주세요.');
+        }
+
+        $recent = $this->pdo->prepare(
+            'SELECT COUNT(*) FROM discovery_comments
+             WHERE device_key = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 1 HOUR)'
+        );
+        $recent->execute([$deviceKey]);
+        if ((int) $recent->fetchColumn() >= 10) {
+            throw new \RuntimeException('댓글 작성 한도를 초과했습니다. 잠시 후 다시 시도해 주세요.', 429);
+        }
+
+        $this->pdo->prepare(
+            'INSERT INTO discovery_comments (poll_id, device_key, body, ip_hash) VALUES (?, ?, ?, ?)'
+        )->execute([$pollId, $deviceKey, $body, $ipHash]);
+
+        $id = (int) $this->pdo->lastInsertId();
+        return $this->findCommentById($id) ?? [
+            'id' => $id,
+            'poll_id' => $pollId,
+            'device_key' => $deviceKey,
+            'body' => $body,
+            'created_at' => date('Y-m-d H:i:s'),
+        ];
+    }
+
+    /** @return array<string, mixed>|null */
+    public function findCommentById(int $id): ?array
+    {
+        $stmt = $this->pdo->prepare('SELECT * FROM discovery_comments WHERE id = ? LIMIT 1');
+        $stmt->execute([$id]);
+        $row = $stmt->fetch();
+        return $row ?: null;
+    }
+
+    /** @return array<string, mixed> */
+    public function listComments(int $pollId, ?string $cursor, int $limit): array
+    {
+        $params = [$pollId];
+        $cursorClause = '';
+        if ($cursor) {
+            $cursorClause = ' AND id < ?';
+            $params[] = (int) $cursor;
+        }
+
+        $stmt = $this->pdo->prepare(
+            'SELECT id, poll_id, body, created_at
+             FROM discovery_comments
+             WHERE poll_id = ? AND deleted = 0' . $cursorClause . '
+             ORDER BY id DESC
+             LIMIT ' . ($limit + 1)
+        );
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll() ?: [];
+        $hasMore = count($rows) > $limit;
+        if ($hasMore) {
+            array_pop($rows);
+        }
+        $nextCursor = $hasMore && $rows !== [] ? (string) end($rows)['id'] : null;
+
+        return [
+            'items' => $rows,
+            'next_cursor' => $nextCursor,
+            'has_more' => $hasMore,
+        ];
+    }
+
+    public function softDeleteComment(int $commentId): bool
+    {
+        $stmt = $this->pdo->prepare(
+            'UPDATE discovery_comments SET deleted = 1, deleted_at = NOW() WHERE id = ? AND deleted = 0'
+        );
+        $stmt->execute([$commentId]);
+        return $stmt->rowCount() > 0;
+    }
+
+    /** @return array<string, int> */
+    public function getDeviceParticipationStats(string $deviceKey): array
+    {
+        $votes = $this->pdo->prepare('SELECT COUNT(*) FROM discovery_votes WHERE device_key = ?');
+        $votes->execute([$deviceKey]);
+        $comments = $this->pdo->prepare(
+            'SELECT COUNT(*) FROM discovery_comments WHERE device_key = ? AND deleted = 0'
+        );
+        $comments->execute([$deviceKey]);
+
+        return [
+            'votes_count' => (int) $votes->fetchColumn(),
+            'comments_count' => (int) $comments->fetchColumn(),
+        ];
     }
 
     /** @param list<array<string, mixed>> $discarded */
@@ -267,6 +611,29 @@ final class DiscoveryRepository
         $params[] = $changeId;
         $this->pdo->prepare('UPDATE discovery_changes SET ' . implode(', ', $sets) . ', updated_at = NOW() WHERE id = ?')
             ->execute($params);
+    }
+
+    /** @return list<array<string, mixed>> */
+    public function searchPublishedChanges(string $query, int $limit = 50): array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT c.*, e.edition_date, e.status AS edition_status
+             FROM discovery_changes c
+             JOIN discovery_editions e ON e.id = c.edition_id
+             WHERE e.status = ?
+               AND c.status = ?
+               AND (c.title LIKE ? OR c.summary LIKE ?)
+             ORDER BY e.edition_date DESC, c.`rank` ASC
+             LIMIT ?'
+        );
+        $like = '%' . $query . '%';
+        $stmt->bindValue(1, 'published');
+        $stmt->bindValue(2, 'verified');
+        $stmt->bindValue(3, $like);
+        $stmt->bindValue(4, $like);
+        $stmt->bindValue(5, max(1, min(50, $limit)), PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll() ?: [];
     }
 
     /** @param list<string> $options */

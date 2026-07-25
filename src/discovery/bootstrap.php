@@ -43,6 +43,19 @@ function discoveryLoadEnv(string $projectRoot): void
 function discoveryGetDb(string $projectRoot): PDO
 {
     $dbConfig = require $projectRoot . 'config/database.php';
+    return discoveryConnectDb($dbConfig);
+}
+
+function discoveryGetDbByName(string $projectRoot, string $database): PDO
+{
+    $dbConfig = require $projectRoot . 'config/database.php';
+    $dbConfig['database'] = $database;
+    return discoveryConnectDb($dbConfig);
+}
+
+/** @param array<string, mixed> $dbConfig */
+function discoveryConnectDb(array $dbConfig): PDO
+{
     $dsn = sprintf(
         'mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4',
         $dbConfig['host'],
@@ -91,6 +104,76 @@ function discoveryJson(array $data, int $code = 200): never
     header('Content-Type: application/json; charset=utf-8');
     echo json_encode($data, JSON_UNESCAPED_UNICODE);
     exit;
+}
+
+function discoveryTodayKst(): string
+{
+    return (new DateTimeImmutable('now', new DateTimeZone('Asia/Seoul')))->format('Y-m-d');
+}
+
+function discoveryEnsurePublicEnabled(string $projectRoot): void
+{
+    discoveryEnsureEnabled($projectRoot);
+    $config = discoveryConfig($projectRoot);
+    if (empty($config['public_enabled'])) {
+        discoveryError('Discovery public service is disabled (ENABLE_DISCOVERY_PUBLIC=false)', 503);
+    }
+}
+
+function discoveryEnsurePublicMigration(PDO $pdo, string $projectRoot): void
+{
+    $sqlFile = $projectRoot . 'database/discovery_public_migration.sql';
+    if (!is_file($sqlFile)) {
+        return;
+    }
+    $sql = file_get_contents($sqlFile);
+    if ($sql === false) {
+        return;
+    }
+    foreach (array_filter(array_map('trim', preg_split('/;\s*\n/', $sql) ?: [])) as $statement) {
+        if ($statement === '' || stripos($statement, 'SELECT 1') === 0) {
+            continue;
+        }
+        try {
+            $pdo->exec($statement);
+        } catch (Throwable $e) {
+            // Prepared migration blocks may noop on repeat runs.
+            if (!str_contains($e->getMessage(), 'Duplicate')) {
+                error_log('discovery public migration: ' . $e->getMessage());
+            }
+        }
+    }
+}
+
+function discoveryDeviceKey(): ?string
+{
+    $key = trim((string) ($_SERVER['HTTP_X_DISCOVERY_DEVICE_KEY'] ?? ''));
+    if ($key === '' || strlen($key) > 64 || !preg_match('/^[a-zA-Z0-9\-_]+$/', $key)) {
+        return null;
+    }
+
+    return $key;
+}
+
+function discoveryRequireDeviceKey(): string
+{
+    $key = discoveryDeviceKey();
+    if (!$key) {
+        discoveryError('X-Discovery-Device-Key header required', 401);
+    }
+
+    return $key;
+}
+
+function discoveryPublicException(Throwable $e): never
+{
+    $code = 400;
+    if ($e instanceof RuntimeException && $e->getCode() >= 400 && $e->getCode() < 600) {
+        $code = (int) $e->getCode();
+    } elseif ($e instanceof \InvalidArgumentException) {
+        $code = 422;
+    }
+    discoveryError($e->getMessage(), $code);
 }
 
 function discoveryError(string $message, int $code = 400): never

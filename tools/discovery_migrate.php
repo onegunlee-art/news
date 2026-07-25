@@ -7,5 +7,6 @@ $root = discoveryFindProjectRoot();
 discoveryLoadEnv($root);
 $pdo = discoveryGetDb($root);
 discoveryEnsureTables($pdo, $root);
+discoveryEnsurePublicMigration($pdo, $root);
 
 echo "Discovery tables ensured.\n";

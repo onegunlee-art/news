@@ -60,12 +60,36 @@ CREATE TABLE IF NOT EXISTS `discovery_polls` (
 CREATE TABLE IF NOT EXISTS `discovery_votes` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
     `poll_id` INT UNSIGNED NOT NULL,
-    `user_key` VARCHAR(64) NOT NULL,
+    `device_key` VARCHAR(64) NOT NULL,
+    `account_user_id` INT UNSIGNED NULL DEFAULT NULL,
     `option_idx` TINYINT UNSIGNED NOT NULL,
     `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
-    UNIQUE KEY `uniq_discovery_vote` (`poll_id`, `user_key`),
+    UNIQUE KEY `uniq_discovery_vote` (`poll_id`, `device_key`),
     KEY `idx_discovery_votes_poll` (`poll_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `discovery_comments` (
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `poll_id` INT UNSIGNED NOT NULL,
+    `device_key` VARCHAR(64) NOT NULL,
+    `body` VARCHAR(500) NOT NULL,
+    `ip_hash` CHAR(64) NULL DEFAULT NULL,
+    `deleted` TINYINT(1) NOT NULL DEFAULT 0,
+    `deleted_at` TIMESTAMP NULL DEFAULT NULL,
+    `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `idx_discovery_comments_poll` (`poll_id`, `deleted`, `created_at`),
+    KEY `idx_discovery_comments_device` (`device_key`, `created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `discovery_rate_limits` (
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `bucket_key` VARCHAR(128) NOT NULL,
+    `window_start` TIMESTAMP NOT NULL,
+    `hit_count` INT UNSIGNED NOT NULL DEFAULT 1,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uniq_discovery_rate_bucket` (`bucket_key`, `window_start`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `discovery_runs` (

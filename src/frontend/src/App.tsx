@@ -37,6 +37,7 @@ const SubscriptionPage = lazy(() => import('./pages/SubscriptionPage'))
 const SubscribeSuccessPage = lazy(() => import('./pages/SubscribeSuccessPage'))
 const SubscribeErrorPage = lazy(() => import('./pages/SubscribeErrorPage'))
 const SubscriptionManagePage = lazy(() => import('./pages/SubscriptionManagePage'))
+const DiscoveryApp = lazy(() => import('./discovery/DiscoveryApp'))
 
 function App() {
   const [showConsent, setShowConsent] = useState(() => localStorage.getItem('consent_required') === '1')
@@ -126,6 +127,7 @@ function App() {
           <Route path="/report/:token" element={<EduParentReportPublicPage />} />
           <Route path="/edu/report/:token" element={<EduParentReportPublicPage />} />
           <Route path="/share/:hash" element={<ShareCardPage />} />
+          <Route path="/discovery/*" element={<DiscoveryApp />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Suspense>

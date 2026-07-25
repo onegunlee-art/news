@@ -104,6 +104,15 @@ export function useDiscoveryApi() {
     return data.data.results as DiscoveryChange[]
   }, [])
 
+  const deleteComment = useCallback(async (id: number) => {
+    const res = await adminFetch('/api/admin/discovery/comments.php', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    })
+    return parseJson(res)
+  }, [])
+
   return {
     loading,
     error,
@@ -115,5 +124,6 @@ export function useDiscoveryApi() {
     deleteChange,
     vote,
     search,
+    deleteComment,
   }
 }
