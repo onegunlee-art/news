@@ -1,6 +1,6 @@
 import { ReactNode } from 'react'
 import GistLogo from '../../components/Common/GistLogo'
-import MaterialIcon from '../../components/Common/MaterialIcon'
+import DiscoveryIcon from './ui/DiscoveryIcon'
 import { formatEditionDate } from '../fixtures/dummyFixtures'
 import type { PublicTab } from '../types'
 
@@ -14,9 +14,10 @@ interface Props {
   editionDate?: string
 }
 
-const NAV_TABS: { id: PublicTab; label: string; icon: string }[] = [
+/** §0-1: 3탭 확정 — 커뮤니티 · 마이페이지 · 검색 */
+const NAV_TABS: { id: PublicTab; label: string; icon: 'forum' | 'user' | 'search' }[] = [
   { id: 'community', label: '커뮤니티', icon: 'forum' },
-  { id: 'mypage', label: '마이페이지', icon: 'person' },
+  { id: 'mypage', label: '마이페이지', icon: 'user' },
   { id: 'search', label: '검색', icon: 'search' },
 ]
 
@@ -38,10 +39,10 @@ export default function DiscoveryAppShell({
           </button>
           <div className="discovery-header-actions">
             <button type="button" className="discovery-icon-btn" onClick={onSearchTap ?? (() => onTabChange('search'))} aria-label="검색">
-              <MaterialIcon name="search" size={22} />
+              <DiscoveryIcon name="search" size={20} />
             </button>
             <button type="button" className="discovery-icon-btn" aria-label="다크모드">
-              <MaterialIcon name="dark_mode" size={22} />
+              <DiscoveryIcon name="theme-toggle" size={20} />
             </button>
           </div>
         </header>
@@ -58,7 +59,7 @@ export default function DiscoveryAppShell({
             className={`discovery-bottom-nav-item${activeTab === tab.id ? ' active' : ''}`}
             onClick={() => onTabChange(tab.id)}
           >
-            <MaterialIcon name={tab.icon} size={20} />
+            <DiscoveryIcon name={tab.icon} size={20} />
             <span>{tab.label}</span>
           </button>
         ))}

@@ -317,9 +317,10 @@ function CommunityPage() {
 
 function SearchPage() {
   const api = useDiscoveryPublicApi()
+  const [hideHeader, setHideHeader] = useState(false)
   return (
-    <DiscoveryShell activeTab="search">
-      <SearchTab onSearch={api.search} />
+    <DiscoveryShell activeTab="search" showHeader={!hideHeader}>
+      <SearchTab onSearch={api.search} onViewChange={(v) => setHideHeader(v === 'results')} />
     </DiscoveryShell>
   )
 }

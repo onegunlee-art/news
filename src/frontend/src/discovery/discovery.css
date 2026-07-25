@@ -1,9 +1,17 @@
 .discovery-root {
-  --discovery-bg: #ffffff;
-  --discovery-text: #111111;
-  --discovery-accent: #d72638;
+  /* §1 JSON 디자인 토큰 */
+  --color-bg: #ffffff;
+  --color-primary: #e60012;
+  --color-text: #111111;
+  --color-border: #eaeaea;
+  --radius-card: 24px;
+
+  /* 레거시 alias (discovery 공개 트리 공통) */
+  --discovery-bg: var(--color-bg);
+  --discovery-text: var(--color-text);
+  --discovery-accent: var(--color-primary);
+  --discovery-border: var(--color-border);
   --discovery-gray: #f5f5f5;
-  --discovery-border: #e5e5e5;
   --discovery-muted: #666666;
   --discovery-subtle: #888888;
   color: var(--discovery-text);
@@ -662,11 +670,11 @@
 .discovery-search-bar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  border: 1px solid var(--discovery-border);
-  border-radius: 14px;
-  padding: 12px 14px;
-  margin: 16px 0;
+  gap: 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: 14px 16px;
+  margin: 0;
   background: var(--discovery-gray);
 }
 
@@ -674,38 +682,269 @@
   flex: 1;
   border: none;
   background: transparent;
-  font-size: 14px;
+  font-size: 15px;
   outline: none;
+  color: var(--color-text);
+}
+
+.discovery-search-bar input::placeholder {
+  color: var(--discovery-subtle);
+}
+
+.discovery-search-home {
+  padding-top: 8px;
+}
+
+.discovery-search-title {
+  margin: 0 0 10px;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.35;
+  letter-spacing: -0.02em;
+}
+
+.discovery-search-subtitle {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0 0 24px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--discovery-subtle);
+}
+
+.discovery-search-subtitle .discovery-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--discovery-subtle);
+}
+
+.discovery-search-section-label {
+  margin: 28px 0 12px;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--color-text);
 }
 
 .discovery-recent-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 0;
-  font-size: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.discovery-recent-item:last-child {
+  border-bottom: none;
+}
+
+.discovery-recent-term {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--color-text);
+  text-align: left;
+}
+
+.discovery-recent-term .discovery-icon {
+  color: var(--discovery-subtle);
+}
+
+.discovery-recent-remove {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: var(--discovery-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .discovery-archive-card {
-  border: 1px solid var(--discovery-border);
-  border-radius: 16px;
-  padding: 16px;
-  margin-top: 16px;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-card);
+  padding: 18px 16px;
+  margin-top: 28px;
+  background: var(--color-bg);
+}
+
+.discovery-archive-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.discovery-archive-card-head .discovery-icon {
+  color: var(--color-primary);
+}
+
+.discovery-archive-card-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--color-text);
+}
+
+.discovery-archive-card-desc {
+  margin: 0 0 4px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--discovery-muted);
+}
+
+.discovery-archive-card-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-top: 10px;
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-primary);
+  cursor: pointer;
+}
+
+.discovery-search-results-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: -4px -4px 16px;
+  padding-bottom: 12px;
+}
+
+.discovery-search-back {
+  background: none;
+  border: none;
+  padding: 6px;
+  cursor: pointer;
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+}
+
+.discovery-search-term-pill {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: 10px 14px;
   background: var(--discovery-gray);
-  font-size: 14px;
+  min-width: 0;
+}
+
+.discovery-search-term-pill input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 15px;
   font-weight: 600;
+  outline: none;
+  min-width: 0;
+}
+
+.discovery-search-filter-btn {
+  background: none;
+  border: none;
+  padding: 6px;
+  cursor: pointer;
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+}
+
+.discovery-search-chips {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.discovery-search-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-bg);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.discovery-search-chip.active {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.discovery-search-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: var(--discovery-muted);
+}
+
+.discovery-search-meta strong {
+  color: var(--color-text);
+  font-weight: 700;
 }
 
 .discovery-result-item {
-  padding: 16px 0;
-  border-bottom: 1px solid var(--discovery-border);
+  padding: 18px 0;
+  border-bottom: 1px solid var(--color-border);
+  position: relative;
+}
+
+.discovery-result-item:last-child {
+  border-bottom: none;
+}
+
+.discovery-result-bookmark {
+  position: absolute;
+  top: 18px;
+  right: 0;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--discovery-subtle);
 }
 
 .discovery-result-date {
-  color: var(--discovery-accent);
-  font-size: 11px;
+  color: var(--color-primary);
+  font-size: 12px;
   font-weight: 700;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+}
+
+.discovery-result-title {
+  font-weight: 800;
+  font-size: 16px;
+  line-height: 1.4;
+  margin: 0 32px 8px 0;
+  letter-spacing: -0.01em;
+}
+
+.discovery-result-sources {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--discovery-subtle);
 }
 
 .discovery-filter-sheet {
@@ -719,19 +958,106 @@
 }
 
 .discovery-filter-panel {
-  background: #fff;
+  background: var(--color-bg);
   width: 100%;
   max-width: 375px;
-  border-radius: 20px 20px 0 0;
-  padding: 20px 18px 24px;
-  max-height: 70vh;
+  border-radius: var(--radius-card) var(--radius-card) 0 0;
+  padding: 20px 18px 28px;
+  max-height: 78vh;
   overflow: auto;
+}
+
+.discovery-filter-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.discovery-filter-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.discovery-filter-close {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: var(--color-text);
+}
+
+.discovery-filter-section {
+  margin-bottom: 22px;
+}
+
+.discovery-filter-section-title {
+  font-weight: 800;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.discovery-filter-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.discovery-filter-option input {
+  accent-color: var(--color-primary);
+  width: 18px;
+  height: 18px;
+}
+
+.discovery-filter-topic-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 12px;
 }
 
 .discovery-filter-actions {
   display: flex;
-  gap: 10px;
-  margin-top: 20px;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.discovery-filter-reset {
+  background: none;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--discovery-muted);
+  cursor: pointer;
+  padding: 8px;
+}
+
+.discovery-btn-filter-apply {
+  width: 100%;
+  border: none;
+  border-radius: var(--radius-card);
+  padding: 16px;
+  font-size: 15px;
+  font-weight: 700;
+  background: var(--color-primary);
+  color: #fff;
+  cursor: pointer;
+}
+
+.discovery-search-empty {
+  color: var(--discovery-subtle);
+  font-size: 13px;
+  text-align: center;
+  padding: 24px 0;
+}
+
+.discovery-icon {
+  display: block;
+  flex-shrink: 0;
 }
 
 .discovery-mypage-hero {
