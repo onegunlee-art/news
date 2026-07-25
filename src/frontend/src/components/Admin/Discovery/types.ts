@@ -5,6 +5,7 @@ export interface DiscoveryBriefing {
   why_changed: string
   why_important: string
   future_impact: string
+  highlights?: string[]
 }
 
 export interface DiscoverySource {
@@ -64,3 +65,5 @@ export interface DiscoveryRun {
 
 export type PreviewTab = 'home' | 'community' | 'search' | 'mypage'
 export type PreviewScreen = 'home' | 'changeDetail' | 'pollDetail'
+
+export type SearchView = 'home' | 'results' | 'filter'
