@@ -80,7 +80,7 @@ final class DiscoveryRepository
         $rank = 1;
         foreach ($changes as $change) {
             $stmt = $this->pdo->prepare(
-                'INSERT INTO discovery_changes (edition_id, rank, category, title, summary, briefing_json, status)
+                'INSERT INTO discovery_changes (edition_id, `rank`, category, title, summary, briefing_json, status)
                  VALUES (?, ?, ?, ?, ?, ?, ?)'
             );
             $stmt->execute([
@@ -126,7 +126,7 @@ final class DiscoveryRepository
     public function getChangesForEdition(int $editionId): array
     {
         $stmt = $this->pdo->prepare(
-            'SELECT * FROM discovery_changes WHERE edition_id = ? AND status != ? ORDER BY rank ASC'
+            'SELECT * FROM discovery_changes WHERE edition_id = ? AND status != ? ORDER BY `rank` ASC'
         );
         $stmt->execute([$editionId, 'discarded']);
         $changes = $stmt->fetchAll() ?: [];
@@ -252,7 +252,8 @@ final class DiscoveryRepository
         $params = [];
         foreach (['title', 'summary', 'category', 'rank', 'status'] as $key) {
             if (array_key_exists($key, $fields)) {
-                $sets[] = "$key = ?";
+                $column = $key === 'rank' ? '`rank`' : $key;
+                $sets[] = "$column = ?";
                 $params[] = $fields[$key];
             }
         }
@@ -299,7 +300,7 @@ final class DiscoveryRepository
              WHERE e.edition_date >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
                AND c.status != ?
                AND (c.title LIKE ? OR c.summary LIKE ?)
-             ORDER BY e.edition_date DESC, c.rank ASC
+             ORDER BY e.edition_date DESC, c.`rank` ASC
              LIMIT 50'
         );
         $like = '%' . $query . '%';
