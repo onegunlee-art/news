@@ -7,8 +7,35 @@ use PDO;
 
 final class DiscoveryRepository
 {
+    private ?bool $hasSeedColumnCache = null;
+
     public function __construct(private readonly PDO $pdo)
     {
+    }
+
+    public function hasSeedColumn(): bool
+    {
+        if ($this->hasSeedColumnCache !== null) {
+            return $this->hasSeedColumnCache;
+        }
+        try {
+            $stmt = $this->pdo->query("SHOW COLUMNS FROM discovery_editions LIKE 'is_seed'");
+            $this->hasSeedColumnCache = (bool) ($stmt && $stmt->fetch());
+        } catch (\Throwable) {
+            $this->hasSeedColumnCache = false;
+        }
+
+        return $this->hasSeedColumnCache;
+    }
+
+    private function seedEditionFilter(bool $includeSeed, string $alias = ''): string
+    {
+        if ($includeSeed || !$this->hasSeedColumn()) {
+            return '';
+        }
+        $col = $alias !== '' ? "{$alias}.is_seed" : 'is_seed';
+
+        return " AND {$col} = 0";
     }
 
     /** @return array<string, mixed>|null */
@@ -248,7 +275,7 @@ final class DiscoveryRepository
     /** @return array<string, mixed>|null */
     public function findPublishedEditionByDate(string $date, bool $includeSeed = false): ?array
     {
-        $seedClause = $includeSeed ? '' : ' AND is_seed = 0';
+        $seedClause = $this->seedEditionFilter($includeSeed);
         $stmt = $this->pdo->prepare(
             'SELECT * FROM discovery_editions WHERE edition_date = ? AND status = ?' . $seedClause . ' LIMIT 1'
         );
@@ -260,7 +287,7 @@ final class DiscoveryRepository
     /** @return array<string, mixed>|null */
     public function findLatestPublishedEdition(bool $includeSeed = false): ?array
     {
-        $seedClause = $includeSeed ? '' : ' AND is_seed = 0';
+        $seedClause = $this->seedEditionFilter($includeSeed);
         $stmt = $this->pdo->prepare(
             'SELECT * FROM discovery_editions WHERE status = ?' . $seedClause . ' ORDER BY edition_date DESC LIMIT 1'
         );
@@ -332,9 +359,9 @@ final class DiscoveryRepository
     /** @return array<string, mixed>|null */
     public function findPublishedChangeById(int $changeId, bool $includeSeed = false): ?array
     {
-        $seedClause = $includeSeed ? '' : ' AND e.is_seed = 0';
+        $seedClause = $this->seedEditionFilter($includeSeed, 'e');
         $stmt = $this->pdo->prepare(
-            'SELECT c.*, e.edition_date, e.status AS edition_status, e.is_seed
+            'SELECT c.*, e.edition_date, e.status AS edition_status' . ($this->hasSeedColumn() ? ', e.is_seed' : '') . '
              FROM discovery_changes c
              JOIN discovery_editions e ON e.id = c.edition_id
              WHERE c.id = ? AND c.status = ? AND e.status = ?' . $seedClause . '
@@ -369,10 +396,11 @@ final class DiscoveryRepository
     /** @return array<string, mixed>|null */
     public function findPublishedPollBundle(int $pollId, bool $includeSeed = false): ?array
     {
-        $seedClause = $includeSeed ? '' : ' AND e.is_seed = 0';
+        $seedClause = $this->seedEditionFilter($includeSeed, 'e');
         $stmt = $this->pdo->prepare(
             'SELECT p.*, c.id AS change_row_id, c.edition_id, c.`rank`, c.category, c.title, c.summary,
-                    c.briefing_json, c.status AS change_status, e.edition_date, e.status AS edition_status, e.is_seed
+                    c.briefing_json, c.status AS change_status, e.edition_date, e.status AS edition_status' .
+                    ($this->hasSeedColumn() ? ', e.is_seed' : '') . '
              FROM discovery_polls p
              JOIN discovery_changes c ON c.id = p.change_id
              JOIN discovery_editions e ON e.id = c.edition_id
@@ -430,10 +458,11 @@ final class DiscoveryRepository
             $cursorClause = ' AND edition_date < ?';
             $params[] = $cursor;
         }
-        $seedClause = $includeSeed ? '' : ' AND is_seed = 0';
+        $seedClause = $this->seedEditionFilter($includeSeed);
+        $seedSelect = $this->hasSeedColumn() ? ', is_seed' : '';
 
         $stmt = $this->pdo->prepare(
-            'SELECT id, edition_date, status, published_at, change_count, is_seed
+            'SELECT id, edition_date, status, published_at, change_count' . $seedSelect . '
              FROM discovery_editions
              WHERE status = ?' . $seedClause . $cursorClause . '
              ORDER BY edition_date DESC
@@ -621,9 +650,9 @@ final class DiscoveryRepository
     /** @return list<array<string, mixed>> */
     public function searchPublishedChanges(string $query, int $limit = 50, bool $includeSeed = false): array
     {
-        $seedClause = $includeSeed ? '' : ' AND e.is_seed = 0';
+        $seedClause = $this->seedEditionFilter($includeSeed, 'e');
         $stmt = $this->pdo->prepare(
-            'SELECT c.*, e.edition_date, e.status AS edition_status, e.is_seed
+            'SELECT c.*, e.edition_date, e.status AS edition_status' . ($this->hasSeedColumn() ? ', e.is_seed' : '') . '
              FROM discovery_changes c
              JOIN discovery_editions e ON e.id = c.edition_id
              WHERE e.status = ?
@@ -692,6 +721,9 @@ final class DiscoveryRepository
 
     public function hasRealEditionForDate(string $date): bool
     {
+        if (!$this->hasSeedColumn()) {
+            return (bool) $this->findEditionByDate($date);
+        }
         $stmt = $this->pdo->prepare(
             'SELECT id FROM discovery_editions WHERE edition_date = ? AND is_seed = 0 LIMIT 1'
         );
@@ -701,6 +733,9 @@ final class DiscoveryRepository
 
     public function deleteAllSeedEditions(): int
     {
+        if (!$this->hasSeedColumn()) {
+            return 0;
+        }
         $stmt = $this->pdo->query('SELECT id FROM discovery_editions WHERE is_seed = 1');
         $rows = $stmt->fetchAll() ?: [];
         foreach ($rows as $row) {
@@ -732,6 +767,9 @@ final class DiscoveryRepository
      */
     public function insertSeedEdition(string $date, array $changes, int $dayIndex): ?array
     {
+        if (!$this->hasSeedColumn()) {
+            throw new \RuntimeException('is_seed column missing — run php tools/discovery_migrate.php first');
+        }
         if ($this->hasRealEditionForDate($date)) {
             return null;
         }
@@ -834,11 +872,17 @@ final class DiscoveryRepository
 
     public function countSeedEditions(): int
     {
+        if (!$this->hasSeedColumn()) {
+            return 0;
+        }
         return (int) $this->pdo->query('SELECT COUNT(*) FROM discovery_editions WHERE is_seed = 1')->fetchColumn();
     }
 
     public function countSeedChanges(): int
     {
+        if (!$this->hasSeedColumn()) {
+            return 0;
+        }
         return (int) $this->pdo->query(
             'SELECT COUNT(*) FROM discovery_changes c
              JOIN discovery_editions e ON e.id = c.edition_id

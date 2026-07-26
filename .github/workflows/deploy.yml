@@ -470,10 +470,13 @@ jobs:
             sudo chmod 775 storage/logs
 
             echo 'Running discovery DB migration...'
-            sudo -u www-data php tools/discovery_migrate.php 2>&1 \
-              || echo 'Discovery migrate had issues, continuing...'
+            if ! sudo -u www-data php tools/discovery_migrate.php 2>&1; then
+              echo 'ERROR: discovery_migrate.php failed'
+              exit 1
+            fi
 
             sudo systemctl restart php8.2-fpm
+            sleep 3
             echo 'Deploy complete: PHP-FPM restarted'
           REMOTEEOF
 
@@ -519,7 +522,7 @@ jobs:
 
     steps:
       - name: Wait for deployment
-        run: sleep 20
+        run: sleep 35
 
       # curl -w "%{http_code}"는 연결 실패 시에도 000을 stdout에 씀.
       # 여기에 || echo "000"을 붙이면 000000처럼 이어붙어 실패 메시지가 왜곡됨.

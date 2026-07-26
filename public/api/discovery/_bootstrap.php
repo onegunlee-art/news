@@ -23,12 +23,11 @@ try {
     discoveryEnsurePublicEnabled($root);
     $pdo = discoveryGetDb($root);
     discoveryEnsureTables($pdo, $root);
+    $config = discoveryConfig($root);
+    $repo = new Discovery\DiscoveryRepository($pdo);
+    $rateLimiter = new Discovery\DiscoveryRateLimiter($pdo);
+    $public = new Discovery\DiscoveryPublicService($repo, $rateLimiter, $config);
 } catch (Throwable $e) {
     $code = str_contains($e->getMessage(), 'disabled') ? 503 : 500;
     discoveryError($e->getMessage(), $code);
 }
-
-$config = discoveryConfig($root);
-$repo = new Discovery\DiscoveryRepository($pdo);
-$rateLimiter = new Discovery\DiscoveryRateLimiter($pdo);
-$public = new Discovery\DiscoveryPublicService($repo, $rateLimiter, $config);

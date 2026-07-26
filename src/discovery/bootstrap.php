@@ -147,24 +147,20 @@ function discoveryEnsurePublicMigration(PDO $pdo, string $projectRoot): void
 
 function discoveryEnsureSeedMigration(PDO $pdo, string $projectRoot): void
 {
-    $sqlFile = $projectRoot . 'database/discovery_seed_migration.sql';
-    if (!is_file($sqlFile)) {
-        return;
-    }
-    $sql = file_get_contents($sqlFile);
-    if ($sql === false) {
-        return;
-    }
-    foreach (array_filter(array_map('trim', preg_split('/;\s*\n/', $sql) ?: [])) as $statement) {
-        if ($statement === '' || stripos($statement, 'SELECT 1') === 0) {
-            continue;
+    try {
+        $stmt = $pdo->query("SHOW COLUMNS FROM discovery_editions LIKE 'is_seed'");
+        if ($stmt && $stmt->fetch()) {
+            return;
         }
-        try {
-            $pdo->exec($statement);
-        } catch (Throwable $e) {
-            if (!str_contains($e->getMessage(), 'Duplicate')) {
-                error_log('discovery seed migration: ' . $e->getMessage());
-            }
+        $pdo->exec(
+            'ALTER TABLE discovery_editions
+             ADD COLUMN is_seed TINYINT(1) NOT NULL DEFAULT 0 AFTER change_count,
+             ADD KEY idx_discovery_edition_seed (is_seed, edition_date)'
+        );
+    } catch (Throwable $e) {
+        if (!str_contains($e->getMessage(), 'Duplicate')) {
+            error_log('discovery seed migration: ' . $e->getMessage());
+            throw $e;
         }
     }
 }
