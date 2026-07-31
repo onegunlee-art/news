@@ -13,8 +13,14 @@ final class DiscoveryPipeline
     ) {
     }
 
-    public function run(string $date): DiscoveryRunResult
+    public function run(string $date, bool $forceRegenerate = false): DiscoveryRunResult
     {
+        if (!$forceRegenerate && $this->repo->hasPublishedRealEditionForDate($date)) {
+            throw new \RuntimeException(
+                sprintf('Published real edition already exists for %s. Use --force to regenerate.', $date)
+            );
+        }
+
         $started = time();
         $edition = $this->repo->createEdition($date, 'generating');
 

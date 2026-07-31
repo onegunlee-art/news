@@ -17,7 +17,10 @@ $agent = new Discovery\DiscoveryAgent($llm, $config);
 $verifier = new Discovery\SourceVerifier();
 $pipeline = new Discovery\DiscoveryPipeline($repo, $agent, $verifier, $config);
 
-$date = $argv[1] ?? date('Y-m-d');
-$result = $pipeline->run($date);
+$args = array_slice($argv, 1);
+$force = in_array('--force', $args, true);
+$dateArgs = array_values(array_filter($args, static fn($a) => $a !== '--force'));
+$date = $dateArgs[0] ?? date('Y-m-d');
+$result = $pipeline->run($date, $force);
 
 echo json_encode($result->toArray(), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) . PHP_EOL;

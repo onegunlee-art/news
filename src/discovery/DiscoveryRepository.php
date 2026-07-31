@@ -731,6 +731,19 @@ final class DiscoveryRepository
         return (bool) $stmt->fetch();
     }
 
+    public function hasPublishedRealEditionForDate(string $date): bool
+    {
+        $edition = $this->findEditionByDate($date);
+        if (!$edition || ($edition['status'] ?? '') !== 'published') {
+            return false;
+        }
+        if ($this->hasSeedColumn() && (int) ($edition['is_seed'] ?? 0) === 1) {
+            return false;
+        }
+
+        return (int) ($edition['change_count'] ?? 0) > 0;
+    }
+
     public function deleteAllSeedEditions(): int
     {
         if (!$this->hasSeedColumn()) {

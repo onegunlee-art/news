@@ -3,7 +3,8 @@ declare(strict_types=1);
 
 /**
  * Phase 1: generate → preview summary → publish (single manual run).
- * Usage: php tools/discovery_phase1_run.php [YYYY-MM-DD]
+ * Usage: php tools/discovery_phase1_run.php [YYYY-MM-DD] [--force]
+ * Skips if a published real edition (is_seed=0) already exists unless --force.
  * Exit 1 if verified_count < 1 or publish fails.
  */
 require_once __DIR__ . '/../src/discovery/bootstrap.php';
@@ -22,13 +23,27 @@ $agent = new Discovery\DiscoveryAgent($llm, $config);
 $verifier = new Discovery\SourceVerifier();
 $pipeline = new Discovery\DiscoveryPipeline($repo, $agent, $verifier, $config);
 
-$date = $argv[1] ?? discoveryTodayKst();
+$args = array_slice($argv, 1);
+$force = in_array('--force', $args, true);
+$dateArgs = array_values(array_filter($args, static fn($a) => $a !== '--force'));
+$date = $dateArgs[0] ?? discoveryTodayKst();
 
 echo "=== Discovery Phase 1 run date={$date} ===\n";
 echo 'OPENAI configured=' . ($llm->isConfigured() ? 'yes' : 'no') . "\n";
 
+if (!$force && $repo->hasPublishedRealEditionForDate($date)) {
+    $edition = $repo->findPublishedEditionByDate($date, false) ?? $repo->findEditionByDate($date);
+    echo "SKIP: published real edition already exists for {$date}\n";
+    if ($edition) {
+        echo json_encode($edition, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) . "\n";
+        echo "change_count=" . (int) ($edition['change_count'] ?? 0) . "\n";
+    }
+    echo "Use --force to regenerate (will replace today's content).\n";
+    exit(0);
+}
+
 $started = microtime(true);
-$result = $pipeline->run($date);
+$result = $pipeline->run($date, $force);
 $elapsed = round(microtime(true) - $started, 1);
 
 $summary = $result->toArray();
