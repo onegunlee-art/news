@@ -1,0 +1,131 @@
+# One-shot: discovery generate → publish → verify (Phase 1 manual complete)
+# Trigger: Actions → Discovery Phase 1 Manual → Run workflow
+name: Discovery Phase 1 Manual
+
+on:
+  workflow_dispatch:
+    inputs:
+      edition_date:
+        description: 'Edition date YYYY-MM-DD (empty = server today)'
+        required: false
+        default: ''
+
+jobs:
+  phase1:
+    name: Generate, publish, verify
+    runs-on: ubuntu-latest
+    env:
+      SITE_URL: https://www.thegist.co.kr
+
+    steps:
+      - name: Setup SSH key
+        run: |
+          mkdir -p "$HOME/.ssh"
+          printf '%s\n' "${{ secrets.EC2_SSH_KEY }}" | tr -d '\r' > "$HOME/.ssh/ec2_key"
+          chmod 600 "$HOME/.ssh/ec2_key"
+          ssh-keyscan -H "${{ secrets.EC2_HOST }}" >> "$HOME/.ssh/known_hosts" 2>/dev/null || true
+
+      - name: Preflight (env + DB)
+        run: |
+          REMOTE="${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}"
+          KEY="$HOME/.ssh/ec2_key"
+          ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" bash -s << 'REMOTEEOF'
+            set -e
+            cd /var/www/thegist
+            echo "=== Preflight ==="
+            grep -E '^(ENABLE_DISCOVERY|ENABLE_DISCOVERY_PUBLIC|DISCOVERY_SHOW_SEED)=' .env 2>/dev/null || echo "WARN: discovery env keys missing"
+            php -r "echo 'pdo_mysql=' . (extension_loaded('pdo_mysql') ? 'yes' : 'no') . PHP_EOL;"
+            test -f tools/discovery_generate.php && echo "OK: discovery_generate.php"
+            test -f tools/discovery_publish.php && echo "OK: discovery_publish.php"
+          REMOTEEOF
+
+      - name: Generate edition
+        id: generate
+        run: |
+          REMOTE="${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}"
+          KEY="$HOME/.ssh/ec2_key"
+          DATE="${{ github.event.inputs.edition_date }}"
+          ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" bash -s "$DATE" << 'REMOTEEOF' | tee generate_output.json
+            set -e
+            cd /var/www/thegist
+            DATE="${1:-$(TZ=Asia/Seoul date +%F)}"
+            echo "edition_date=${DATE}" >&2
+            sudo -u www-data php tools/discovery_generate.php "$DATE"
+          REMOTEEOF
+
+      - name: Summarize generate result
+        run: |
+          echo "=== Generate JSON ==="
+          cat generate_output.json
+          VERIFIED=$(python3 -c "import json; d=json.load(open('generate_output.json')); print(d.get('verified_count',0))")
+          DISCARDED=$(python3 -c "import json; d=json.load(open('generate_output.json')); print(d.get('discarded_count',0))")
+          echo "verified_count=${VERIFIED}"
+          echo "discarded_count=${DISCARDED}"
+          python3 - << 'PY'
+          import json
+          d = json.load(open("generate_output.json"))
+          print("\n=== Discarded reasons ===")
+          for item in d.get("discarded") or []:
+              print(f"- {item.get('title','?')[:80]} | reason={item.get('reason')}")
+              for s in item.get("sources") or []:
+                  if not s.get("verified"):
+                      print(f"    fail: {s.get('fail_reason')} url={s.get('url','')[:80]}")
+          PY
+
+      - name: Admin preview dump (changes list)
+        run: |
+          REMOTE="${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}"
+          KEY="$HOME/.ssh/ec2_key"
+          DATE="${{ github.event.inputs.edition_date }}"
+          ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" bash -s "$DATE" << 'REMOTEEOF'
+            set -e
+            cd /var/www/thegist
+            DATE="${1:-$(TZ=Asia/Seoul date +%F)}"
+            export EDITION_DATE="$DATE"
+            sudo -E -u www-data php -r '
+              require "src/discovery/bootstrap.php";
+              $root = discoveryFindProjectRoot();
+              discoveryLoadEnv($root);
+              $pdo = discoveryGetDb($root);
+              $repo = new Discovery\DiscoveryRepository($pdo);
+              $date = getenv("EDITION_DATE") ?: date("Y-m-d");
+              $edition = $repo->findEditionByDate($date);
+              if (!$edition) { echo "No edition\n"; exit(1); }
+              echo "edition_id={$edition["id"]} status={$edition["status"]} change_count={$edition["change_count"]} is_seed=" . ($edition["is_seed"] ?? "?") . "\n";
+              foreach ($repo->getChangesForEdition((int)$edition["id"]) as $c) {
+                  echo sprintf("#%d [%s] %s\n", (int)$c["rank"], $c["category"], $c["title"]);
+                  $src = $c["sources"][0]["name"] ?? "?";
+                  echo "  source: {$src}\n";
+              }
+            '
+          REMOTEEOF
+
+      - name: Publish edition
+        run: |
+          REMOTE="${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}"
+          KEY="$HOME/.ssh/ec2_key"
+          DATE="${{ github.event.inputs.edition_date }}"
+          ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" bash -s "$DATE" << 'REMOTEEOF' | tee publish_output.json
+            set -e
+            cd /var/www/thegist
+            DATE="${1:-$(TZ=Asia/Seoul date +%F)}"
+            sudo -u www-data php tools/discovery_publish.php "$DATE"
+          REMOTEEOF
+
+      - name: Verify public API
+        run: |
+          echo "=== today.php ==="
+          curl -sS "${{ env.SITE_URL }}/api/discovery/today.php" | tee today.json
+          python3 - << 'PY'
+          import json
+          d = json.load(open("today.json"))["data"]
+          n = len(d.get("changes") or [])
+          ed = d.get("edition") or {}
+          print(f"\nchanges_on_today_api={n}")
+          print(f"edition_status={ed.get('status')} edition_date={ed.get('edition_date')} is_seed={ed.get('is_seed')}")
+          for c in (d.get("changes") or [])[:12]:
+              print(f"  - [{c.get('rank')}] {c.get('title','')[:70]}")
+          if n < 1:
+              raise SystemExit("FAIL: no published changes on today API")
+          PY
+          echo "OK: public API has changes"
