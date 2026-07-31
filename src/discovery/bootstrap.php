@@ -65,6 +65,7 @@ function discoveryConnectDb(array $dbConfig): PDO
     return new PDO($dsn, $dbConfig['username'], $dbConfig['password'], [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::MYSQL_ATTR_USE_BUFFERED_QUERY => true,
     ]);
 }
 
@@ -149,7 +150,11 @@ function discoveryEnsureSeedMigration(PDO $pdo, string $projectRoot): void
 {
     try {
         $stmt = $pdo->query("SHOW COLUMNS FROM discovery_editions LIKE 'is_seed'");
-        if ($stmt && $stmt->fetch()) {
+        $exists = $stmt && (bool) $stmt->fetch();
+        if ($stmt) {
+            $stmt->closeCursor();
+        }
+        if ($exists) {
             return;
         }
         $pdo->exec(

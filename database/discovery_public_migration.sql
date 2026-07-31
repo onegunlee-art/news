@@ -33,7 +33,7 @@ SET @has_user_key := (
 SET @sql_rename := IF(
     @has_user_key > 0,
     'ALTER TABLE `discovery_votes` CHANGE COLUMN `user_key` `device_key` VARCHAR(64) NOT NULL',
-    'SELECT 1'
+    'SET @noop = 0'
 );
 PREPARE stmt_rename FROM @sql_rename;
 EXECUTE stmt_rename;
@@ -48,7 +48,7 @@ SET @has_device_key := (
 SET @sql_add_device := IF(
     @has_device_key = 0,
     'ALTER TABLE `discovery_votes` ADD COLUMN `device_key` VARCHAR(64) NOT NULL AFTER `poll_id`',
-    'SELECT 1'
+    'SET @noop = 0'
 );
 PREPARE stmt_add_device FROM @sql_add_device;
 EXECUTE stmt_add_device;
@@ -63,7 +63,7 @@ SET @has_account_user := (
 SET @sql_add_account := IF(
     @has_account_user = 0,
     'ALTER TABLE `discovery_votes` ADD COLUMN `account_user_id` INT UNSIGNED NULL DEFAULT NULL AFTER `device_key`',
-    'SELECT 1'
+    'SET @noop = 0'
 );
 PREPARE stmt_add_account FROM @sql_add_account;
 EXECUTE stmt_add_account;
