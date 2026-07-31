@@ -438,6 +438,43 @@ jobs:
             sudo chmod 644 "\$ENV_FILE" 2>/dev/null || true
           ENVEOF
 
+      - name: Discovery Phase 1 manual (commit tag [discovery-phase1])
+        if: github.event_name == 'push' && contains(github.event.head_commit.message, '[discovery-phase1]')
+        timeout-minutes: 30
+        run: |
+          REMOTE="${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}"
+          KEY="$HOME/.ssh/ec2_key"
+          SSH_OPTS="-o StrictHostKeyChecking=no -o ServerAliveInterval=60 -o ServerAliveCountMax=10"
+          ssh -i "$KEY" $SSH_OPTS "$REMOTE" bash -s << 'REMOTEEOF' | tee discovery_phase1.log
+            set -e
+            cd /var/www/thegist
+            DATE=$(TZ=Asia/Seoul date +%F)
+            echo "=== Discovery Phase 1 date=${DATE} ==="
+            grep -E '^(ENABLE_DISCOVERY|ENABLE_DISCOVERY_PUBLIC|DISCOVERY_SHOW_SEED)=' .env || true
+            echo "--- generate ---"
+            sudo -u www-data php tools/discovery_generate.php "$DATE"
+            echo "--- admin preview (titles) ---"
+            export EDITION_DATE="$DATE"
+            sudo -E -u www-data php -r '
+              require "src/discovery/bootstrap.php";
+              $root = discoveryFindProjectRoot();
+              discoveryLoadEnv($root);
+              $pdo = discoveryGetDb($root);
+              $repo = new Discovery\DiscoveryRepository($pdo);
+              $date = getenv("EDITION_DATE") ?: date("Y-m-d");
+              $edition = $repo->findEditionByDate($date);
+              if (!$edition) { echo "No edition\n"; exit(1); }
+              echo "edition status={$edition["status"]} change_count={$edition["change_count"]} is_seed=" . ($edition["is_seed"] ?? "?") . "\n";
+              foreach ($repo->getChangesForEdition((int)$edition["id"]) as $c) {
+                  echo sprintf("#%d [%s] %s\n", (int)$c["rank"], $c["category"], $c["title"]);
+              }
+            '
+            echo "--- publish ---"
+            sudo -u www-data php tools/discovery_publish.php "$DATE"
+            echo "--- today API ---"
+            curl -sS "https://www.thegist.co.kr/api/discovery/today.php"
+          REMOTEEOF
+
       - name: Post-deploy tasks
         run: |
           REMOTE="${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}"
@@ -503,43 +540,6 @@ jobs:
             sudo chown www-data:www-data /var/log/thegist-intelligence-collect.log /var/log/thegist-intelligence-report.log
             echo 'Intelligence cron installed'
           "
-
-      - name: Discovery Phase 1 manual (commit tag [discovery-phase1])
-        if: github.event_name == 'push' && contains(github.event.head_commit.message, '[discovery-phase1]')
-        timeout-minutes: 30
-        run: |
-          REMOTE="${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}"
-          KEY="$HOME/.ssh/ec2_key"
-          SSH_OPTS="-o StrictHostKeyChecking=no -o ServerAliveInterval=60 -o ServerAliveCountMax=10"
-          ssh -i "$KEY" $SSH_OPTS "$REMOTE" bash -s << 'REMOTEEOF' | tee discovery_phase1.log
-            set -e
-            cd /var/www/thegist
-            DATE=$(TZ=Asia/Seoul date +%F)
-            echo "=== Discovery Phase 1 date=${DATE} ==="
-            grep -E '^(ENABLE_DISCOVERY|ENABLE_DISCOVERY_PUBLIC|DISCOVERY_SHOW_SEED)=' .env || true
-            echo "--- generate ---"
-            sudo -u www-data php tools/discovery_generate.php "$DATE"
-            echo "--- admin preview (titles) ---"
-            export EDITION_DATE="$DATE"
-            sudo -E -u www-data php -r '
-              require "src/discovery/bootstrap.php";
-              $root = discoveryFindProjectRoot();
-              discoveryLoadEnv($root);
-              $pdo = discoveryGetDb($root);
-              $repo = new Discovery\DiscoveryRepository($pdo);
-              $date = getenv("EDITION_DATE") ?: date("Y-m-d");
-              $edition = $repo->findEditionByDate($date);
-              if (!$edition) { echo "No edition\n"; exit(1); }
-              echo "edition status={$edition["status"]} change_count={$edition["change_count"]} is_seed=" . ($edition["is_seed"] ?? "?") . "\n";
-              foreach ($repo->getChangesForEdition((int)$edition["id"]) as $c) {
-                  echo sprintf("#%d [%s] %s\n", (int)$c["rank"], $c["category"], $c["title"]);
-              }
-            '
-            echo "--- publish ---"
-            sudo -u www-data php tools/discovery_publish.php "$DATE"
-            echo "--- today API ---"
-            curl -sS "https://www.thegist.co.kr/api/discovery/today.php"
-          REMOTEEOF
 
       - name: Deployment notification
         run: |
