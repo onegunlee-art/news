@@ -54,4 +54,10 @@ return [
     'lawfaremedia.org',
     'atlanticcouncil.org',
     'rand.org',
+
+    // 과학·기술 전문
+    'nature.com',
+    'science.org',
+    'arstechnica.com',
+    'technologyreview.com',
 ];
