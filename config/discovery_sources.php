@@ -35,14 +35,19 @@ return [
 
     // 국제기구·EU
     'europa.eu',
+    'ec.europa.eu',
     'nato.int',
     'un.org',
+    'news.un.org',
     'imf.org',
     'worldbank.org',
     'oecd.org',
     'wto.org',
     'who.int',
     'ecb.europa.eu',
+
+    // UK Government
+    'gov.uk',
 
     // 싱크탱크
     'csis.org',

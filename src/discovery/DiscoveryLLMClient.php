@@ -64,33 +64,33 @@ RULES:
 - OUTPUT LANGUAGE: Korean 합니다체.
 - poll: neutral question, 4 distinct options.
 
-BRIEFING QUALITY — CRITICAL RULE: ONLY USE FACTS FROM THE ARTICLE.
-🚫 NEVER INVENT numbers, dates, amounts, percentages, or names that are NOT in the source article.
-🚫 If the article does not specify a number (e.g., sale price, percentage), do NOT make one up.
-✅ If specific figures are unavailable, describe the situation factually without inventing details.
+BRIEFING QUALITY — RICH BUT ACCURATE:
+Extract ALL relevant information from the article to make each section substantive.
+Do NOT invent numbers/names/dates that aren't in the article — but DO include everything that IS there.
 
-Each section: 2-3 sentences using ONLY information from the source article.
-- what_changed: What happened? Use only facts/numbers ACTUALLY in the article.
-- why_changed: Background/context as described in the article.
-- why_important: Significance based on what the article states.
-- future_impact: Consequences mentioned or implied in the article.
-- highlights: 4-6 bullet points — ONLY facts that appear in the source article.
+Each section: 2-3 FULL sentences. Extract richly from the article:
+- what_changed: The core event + specific details (who, what, when, where, numbers if stated).
+- why_changed: Background context, causes, prior events mentioned in the article.
+- why_important: Stakes, who is affected, scale of impact per the article.
+- future_impact: Next steps, timeline, responses expected — as stated or implied.
+- highlights: 4-6 bullets with specific facts, quotes, names, figures from the article.
 
-FORBIDDEN (hallucinated specifics):
-  ❌ "예상 매각가는 40억 달러입니다." (if 40억 is NOT in the article)
-  ❌ "연간 10만 배럴 생산" (if this figure is NOT in the article)
-  ❌ Inventing CEO names, dates, or percentages not mentioned
+BALANCE: Be RICH (use all article content) but ACCURATE (don't add what's not there).
 
-CORRECT (article-grounded):
-  ✅ "BP가 북해 유전 사업을 매각하기로 결정했습니다." (if article says this)
-  ✅ "구체적인 매각가는 공개되지 않았습니다." (if price not mentioned)
-  ✅ Use actual quotes, names, figures FROM the article only
+GOOD EXAMPLE (rich + accurate):
+  "약 60,000명의 이주민이 모로코에서 스페인령 세우타로 도착했습니다. 스페인 총리는 인신매매 조직을 비난했으며, 이는 수십 년간 가장 큰 규모의 난민 유입입니다. 스페인 정부는 비상 대응을 선언하고 추가 국경 경비를 배치했습니다."
+
+BAD EXAMPLE (too thin):
+  "이주민이 세우타로 이주했습니다."
+
+FORBIDDEN: Inventing specific numbers (e.g., "$4 billion") not stated in the article.
+REQUIRED: Include all context, background, quotes, and figures that ARE in the article.
 SYS;
 
         $candidateCount = (int) ($discoveryConfig['candidate_count'] ?? 12);
         $catalogJson = json_encode(array_slice($catalogArticles, 0, 40), JSON_UNESCAPED_UNICODE);
         $user = sprintf(
-            "Edition date (KST): %s\nGenerate up to %d changes from ARTICLE_CATALOG below.\n\nARTICLE_CATALOG:\n%s\n\nReturn JSON:\n{\n  \"changes\": [\n    {\n      \"article_index\": 0,\n      \"category\": \"geopolitics|business|tech|climate|other\",\n      \"title\": \"한 줄 제목 (기사의 핵심 내용)\",\n      \"summary\": \"카드용 2~3줄 요약 (기사 내용만)\",\n      \"briefing\": {\n        \"what_changed\": \"2-3문장: 기사에 있는 사실만\",\n        \"why_changed\": \"2-3문장: 기사에 언급된 배경\",\n        \"why_important\": \"2-3문장: 기사가 말하는 의미\",\n        \"future_impact\": \"2-3문장: 기사에 언급된 전망\",\n        \"highlights\": [\"기사 속 사실1\", \"기사 속 사실2\", \"...\", \"...\"]\n      },\n      \"sources\": [{\"name\":\"\",\"url\":\"\",\"article_title\":\"\"}],\n      \"poll\": {\"question\":\"\",\"options\":[\"\",\"\",\"\",\"\"]}\n    }\n  ]\n}\n\nREMEMBER: Use ONLY facts from the article. Do NOT invent numbers or details.",
+            "Edition date (KST): %s\nGenerate up to %d changes from ARTICLE_CATALOG below.\n\nARTICLE_CATALOG:\n%s\n\nReturn JSON:\n{\n  \"changes\": [\n    {\n      \"article_index\": 0,\n      \"category\": \"geopolitics|business|tech|climate|other\",\n      \"title\": \"한 줄 제목 (핵심 내용 + 수치가 있으면 포함)\",\n      \"summary\": \"카드용 2~3줄 요약\",\n      \"briefing\": {\n        \"what_changed\": \"2-3문장: 기사의 핵심 사건 + 구체적 디테일\",\n        \"why_changed\": \"2-3문장: 배경·원인·맥락\",\n        \"why_important\": \"2-3문장: 파급력·영향받는 대상·규모\",\n        \"future_impact\": \"2-3문장: 예상 전개·대응·시사점\",\n        \"highlights\": [\"구체적 사실 4-6개 (기사에서 추출)\"]\n      },\n      \"sources\": [{\"name\":\"\",\"url\":\"\",\"article_title\":\"\"}],\n      \"poll\": {\"question\":\"\",\"options\":[\"\",\"\",\"\",\"\"]}\n    }\n  ]\n}\n\nIMPORTANT: Each briefing section must be 2-3 FULL sentences with specific details from the article. Extract richly but accurately — include all relevant info from the article, but don't invent what's not there.",
             $date,
             $candidateCount,
             $catalogJson
@@ -127,20 +127,15 @@ CRITICAL: sources[].url MUST be exact URLs from your web search results — NEVE
 If you cannot find a real URL for an event, skip that event entirely.
 Return STRICT JSON only. Korean 합니다체.
 
-BRIEFING — ONLY USE FACTS FROM THE ARTICLE:
-🚫 NEVER INVENT numbers, dates, amounts, percentages, or names NOT in the source article.
-🚫 If specific figures are unavailable in the article, do NOT make them up.
-✅ Describe factually using only what the article actually states.
+BRIEFING — RICH BUT ACCURATE:
+Extract ALL relevant information from the article. Each section: 2-3 FULL sentences.
+- what_changed: Core event + specific details (who, what, when, numbers if stated).
+- why_changed: Background, causes, prior events mentioned.
+- why_important: Stakes, affected parties, scale of impact.
+- future_impact: Next steps, responses expected.
+- highlights: 4-6 bullets with specific facts, quotes, figures.
 
-Each section: 2-3 sentences using ONLY information from the source.
-- what_changed: Facts from article only.
-- why_changed: Background as described in article.
-- why_important: Significance per the article.
-- future_impact: Consequences mentioned in article.
-- highlights: 4-6 bullets — facts ACTUALLY in the article only.
-
-❌ FORBIDDEN: "예상 매각가 40억 달러" (if NOT in article)
-✅ CORRECT: "매각가는 공개되지 않았습니다" (if price not stated)
+BALANCE: Be RICH (extract all content) but ACCURATE (don't invent numbers not in article).
 SYS;
 
         $candidateCount = (int) ($discoveryConfig['candidate_count'] ?? 12);
