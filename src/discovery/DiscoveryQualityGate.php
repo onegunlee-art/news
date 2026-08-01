@@ -131,7 +131,10 @@ final class DiscoveryQualityGate
             return true;
         }
 
-        if (preg_match('/(동결|인상|인하|승인|거부|체결|발효|제재|해제|파산|인수|합병|퇴출|당선|낙선|승리|패배|지진|테러|공격|휴전)/u', $text) === 1) {
+        if (preg_match('/(동결|인상|인하|승인|거부|체결|발효|제재|해제|파산|인수|합병|퇴출|당선|낙선|승리|패배|'
+            . '지진|테러|공격|휴전|미사일|폭격|침공|'
+            . '중지|중단|가동|폐쇄|철수|대피|탈출|사망|사상|'
+            . '산불|화재|홍수|태풍|재난|쿠데타|탄핵|사임|석방|체포)/u', $text) === 1) {
             return true;
         }
 
@@ -278,7 +281,17 @@ final class DiscoveryQualityGate
     {
         return preg_match(
             '/(파급|영향|규제|정책|시장|공급망|안보|무역|금리|성장|제재|협정|법|관세|전쟁|분쟁|'
-            . '협상|동결|인상|인하|출시|금지|허가|실시|시행|발효|체결|조사|소송|과징금)/u',
+            . '협상|동결|인상|인하|출시|금지|허가|실시|시행|발효|체결|조사|소송|과징금|'
+            // Geopolitical events
+            . '공격|attack|미사일|missile|폭격|폭탄|테러|침공|invasion|strike|'
+            . '난민|refugee|migrant|이주민|망명|asylum|'
+            . '휴전|ceasefire|정전|종전|'
+            // Climate/disaster
+            . '산불|wildfire|화재|홍수|flood|지진|earthquake|태풍|허리케인|hurricane|'
+            . '재난|disaster|대피|evacuation|사망|death|사상자|casualty|'
+            // Political/structural
+            . '쿠데타|coup|탄핵|impeach|퇴진|사임|resign|선거|election|'
+            . '파산|bankrupt|인수|acquisition|합병|merger)/iu',
             $text
         ) === 1;
     }
