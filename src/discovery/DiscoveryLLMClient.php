@@ -64,26 +64,33 @@ RULES:
 - OUTPUT LANGUAGE: Korean 합니다체.
 - poll: neutral question, 4 distinct options.
 
-BRIEFING QUALITY (CRITICAL — each section must be SUBSTANTIVE):
-- what_changed: 2-3 sentences. State WHAT happened with specific numbers, names, dates. Include the key metric or outcome.
-- why_changed: 2-3 sentences. Explain the background/context — what led to this? Reference prior events, pressures, or decisions.
-- why_important: 2-3 sentences. Explain the significance — who is affected, what systems/markets/policies change, scale of impact.
-- future_impact: 2-3 sentences. Project concrete consequences — what happens next, timeline, who must respond.
-- highlights: 4-6 bullet points with specific facts (numbers, names, dates) from the article.
+BRIEFING QUALITY — CRITICAL RULE: ONLY USE FACTS FROM THE ARTICLE.
+🚫 NEVER INVENT numbers, dates, amounts, percentages, or names that are NOT in the source article.
+🚫 If the article does not specify a number (e.g., sale price, percentage), do NOT make one up.
+✅ If specific figures are unavailable, describe the situation factually without inventing details.
 
-BAD EXAMPLE (too vague):
-  "what_changed": "BP가 북해 사업 철수를 결정했습니다."
-  "why_changed": "BP의 사업 재검토 결과에 따른 결정입니다."
+Each section: 2-3 sentences using ONLY information from the source article.
+- what_changed: What happened? Use only facts/numbers ACTUALLY in the article.
+- why_changed: Background/context as described in the article.
+- why_important: Significance based on what the article states.
+- future_impact: Consequences mentioned or implied in the article.
+- highlights: 4-6 bullet points — ONLY facts that appear in the source article.
 
-GOOD EXAMPLE (specific and substantive):
-  "what_changed": "BP가 60년간 운영해온 북해 유전 사업을 매각하기로 결정했습니다. 연간 약 10만 배럴의 생산량을 보유한 자산으로, 예상 매각가는 40억 달러입니다."
-  "why_changed": "CEO 머레이 오킨클로스의 전략 전환으로, 탄소중립 목표 달성을 위해 화석연료 자산을 정리하고 재생에너지 투자를 확대하려는 것입니다. 최근 주주들의 친환경 전환 압박도 작용했습니다."
+FORBIDDEN (hallucinated specifics):
+  ❌ "예상 매각가는 40억 달러입니다." (if 40억 is NOT in the article)
+  ❌ "연간 10만 배럴 생산" (if this figure is NOT in the article)
+  ❌ Inventing CEO names, dates, or percentages not mentioned
+
+CORRECT (article-grounded):
+  ✅ "BP가 북해 유전 사업을 매각하기로 결정했습니다." (if article says this)
+  ✅ "구체적인 매각가는 공개되지 않았습니다." (if price not mentioned)
+  ✅ Use actual quotes, names, figures FROM the article only
 SYS;
 
         $candidateCount = (int) ($discoveryConfig['candidate_count'] ?? 12);
         $catalogJson = json_encode(array_slice($catalogArticles, 0, 40), JSON_UNESCAPED_UNICODE);
         $user = sprintf(
-            "Edition date (KST): %s\nGenerate up to %d changes from ARTICLE_CATALOG below.\n\nARTICLE_CATALOG:\n%s\n\nReturn JSON:\n{\n  \"changes\": [\n    {\n      \"article_index\": 0,\n      \"category\": \"geopolitics|business|tech|climate|other\",\n      \"title\": \"한 줄 제목 (수치·결과 포함)\",\n      \"summary\": \"카드용 2~3줄 요약\",\n      \"briefing\": {\n        \"what_changed\": \"2-3문장: 구체적 수치·날짜·이름 포함\",\n        \"why_changed\": \"2-3문장: 배경·맥락, 왜 지금인지\",\n        \"why_important\": \"2-3문장: 누가 영향받나, 규모\",\n        \"future_impact\": \"2-3문장: 다음에 뭐가 일어나나\",\n        \"highlights\": [\"수치 포함 핵심 사실1\", \"수치 포함 핵심 사실2\", \"...\", \"...\"]\n      },\n      \"sources\": [{\"name\":\"\",\"url\":\"\",\"article_title\":\"\"}],\n      \"poll\": {\"question\":\"\",\"options\":[\"\",\"\",\"\",\"\"]}\n    }\n  ]\n}",
+            "Edition date (KST): %s\nGenerate up to %d changes from ARTICLE_CATALOG below.\n\nARTICLE_CATALOG:\n%s\n\nReturn JSON:\n{\n  \"changes\": [\n    {\n      \"article_index\": 0,\n      \"category\": \"geopolitics|business|tech|climate|other\",\n      \"title\": \"한 줄 제목 (기사의 핵심 내용)\",\n      \"summary\": \"카드용 2~3줄 요약 (기사 내용만)\",\n      \"briefing\": {\n        \"what_changed\": \"2-3문장: 기사에 있는 사실만\",\n        \"why_changed\": \"2-3문장: 기사에 언급된 배경\",\n        \"why_important\": \"2-3문장: 기사가 말하는 의미\",\n        \"future_impact\": \"2-3문장: 기사에 언급된 전망\",\n        \"highlights\": [\"기사 속 사실1\", \"기사 속 사실2\", \"...\", \"...\"]\n      },\n      \"sources\": [{\"name\":\"\",\"url\":\"\",\"article_title\":\"\"}],\n      \"poll\": {\"question\":\"\",\"options\":[\"\",\"\",\"\",\"\"]}\n    }\n  ]\n}\n\nREMEMBER: Use ONLY facts from the article. Do NOT invent numbers or details.",
             $date,
             $candidateCount,
             $catalogJson
@@ -118,17 +125,22 @@ SYS;
 You are a world-news change detector. Use web search to find REAL recent articles.
 CRITICAL: sources[].url MUST be exact URLs from your web search results — NEVER invent or guess URLs.
 If you cannot find a real URL for an event, skip that event entirely.
-Return STRICT JSON only. Korean 합니다체. Include concrete numbers in titles.
+Return STRICT JSON only. Korean 합니다체.
 
-BRIEFING QUALITY (CRITICAL — each section must be SUBSTANTIVE):
-- what_changed: 2-3 sentences with specific numbers, names, dates. State the key metric or outcome.
-- why_changed: 2-3 sentences explaining background/context — what led to this, prior events, pressures.
-- why_important: 2-3 sentences on significance — who is affected, what changes, scale of impact.
-- future_impact: 2-3 sentences projecting consequences — what happens next, timeline, who responds.
-- highlights: 4-6 bullet points with specific facts (numbers, names, dates).
+BRIEFING — ONLY USE FACTS FROM THE ARTICLE:
+🚫 NEVER INVENT numbers, dates, amounts, percentages, or names NOT in the source article.
+🚫 If specific figures are unavailable in the article, do NOT make them up.
+✅ Describe factually using only what the article actually states.
 
-BAD: "BP가 북해 사업 철수를 결정했습니다."
-GOOD: "BP가 60년간 운영해온 북해 유전 사업을 매각하기로 결정했습니다. 연간 약 10만 배럴의 생산량을 보유한 자산으로, 예상 매각가는 40억 달러입니다."
+Each section: 2-3 sentences using ONLY information from the source.
+- what_changed: Facts from article only.
+- why_changed: Background as described in article.
+- why_important: Significance per the article.
+- future_impact: Consequences mentioned in article.
+- highlights: 4-6 bullets — facts ACTUALLY in the article only.
+
+❌ FORBIDDEN: "예상 매각가 40억 달러" (if NOT in article)
+✅ CORRECT: "매각가는 공개되지 않았습니다" (if price not stated)
 SYS;
 
         $candidateCount = (int) ($discoveryConfig['candidate_count'] ?? 12);
