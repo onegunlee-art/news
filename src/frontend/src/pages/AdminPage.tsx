@@ -18,6 +18,7 @@ import StrategicHub from '../components/Admin/StrategicHub';
 import SeriesCoverEditor from '../components/Admin/SeriesCoverEditor';
 import AGILab from '../components/Admin/AGILab';
 const DiscoveryPanel = lazy(() => import('../components/Admin/Discovery/DiscoveryPanel'));
+const YouTubePanel = lazy(() => import('../components/Admin/YouTube/YouTubePanel'));
 import GistLogo from '../components/Common/GistLogo';
 import { DEFAULT_VISION } from '../constants/site';
 import { useMenuConfig } from '../hooks/useMenuConfig';
@@ -1576,6 +1577,7 @@ const AdminPage: React.FC = () => {
     { id: 'cancel', name: '취소 요청', iconName: 'cancel' },
     { id: 'strategic-hub', name: 'Strategic Hub', iconName: 'hub' },
     ...(ENABLE_DISCOVERY ? [{ id: 'discovery' as const, name: '오늘의 발견', iconName: 'explore' }] : []),
+    ...(ENABLE_DISCOVERY ? [{ id: 'youtube' as const, name: '유튜브 검수', iconName: 'smart_display' }] : []),
   ] as const;
 
   // 인증 초기화/검증 중 또는 권한 없음(리다이렉트 예정)에는 로딩 표시 (새로고침 시 어드민 유지)
@@ -5881,6 +5883,12 @@ const AdminPage: React.FC = () => {
           {ENABLE_DISCOVERY && activeTab === 'discovery' && (
             <Suspense fallback={<div className="p-4 text-sm text-gray-500">오늘의 발견 불러오는 중…</div>}>
               <DiscoveryPanel />
+            </Suspense>
+          )}
+
+          {ENABLE_DISCOVERY && activeTab === 'youtube' && (
+            <Suspense fallback={<div className="p-4 text-sm text-gray-500">유튜브 검수 불러오는 중…</div>}>
+              <YouTubePanel />
             </Suspense>
           )}
         </div>
