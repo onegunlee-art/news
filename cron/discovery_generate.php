@@ -58,6 +58,7 @@ try {
         'edition_id' => $result->edition['id'] ?? null,
         'verified_count' => count($result->verifiedChanges),
         'discarded_count' => count($result->discardedChanges),
+        'discarded' => array_slice($result->discardedChanges, 0, 20),
         'extraction_full' => $result->meta['extraction_full'] ?? 0,
         'extraction_summary_only' => $result->meta['extraction_summary_only'] ?? 0,
         'stage_logs' => $result->meta['stage_logs'] ?? [],

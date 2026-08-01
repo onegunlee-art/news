@@ -81,7 +81,7 @@ try {
 $changes = [];
 $discarded = [];
 if ($edition !== null && $publishResult['published']) {
-    $changes = $repo->findChangesByEditionId((int) $edition['id']);
+    $changes = $repo->getChangesForEdition((int) $edition['id']);
 }
 if ($lastGen !== null && isset($lastGen['discarded'])) {
     $discarded = $lastGen['discarded'] ?? [];
