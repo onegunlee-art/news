@@ -145,7 +145,7 @@ PROMPT;
                 'max_tokens' => 2000,
             ]);
 
-            $evaluations = $this->parseEvaluations($response->content);
+            $evaluations = $this->parseEvaluations($response->text);
 
             foreach ($articles as $i => &$article) {
                 if (isset($evaluations[$i])) {
