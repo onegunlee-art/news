@@ -26,7 +26,8 @@ return [
     ],
     'pipeline' => [
         'curator_limit' => 15,
-        'max_body_chars' => 12000,
-        'extractor_timeout_sec' => 20,
+        'max_per_source' => 4,
+        'max_body_chars' => 15000,
+        'extractor_timeout_sec' => 25,
     ],
 ];

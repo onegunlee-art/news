@@ -20,8 +20,11 @@ final class Pipeline
     /** @var list<array<string, mixed>> */
     private array $stageLogs = [];
 
+    private bool $curatorUsedLlm = false;
+
     public function __construct(
         private readonly DiscoveryRepository $repo,
+        private readonly ?CuratorAgent $curator,
         private readonly ExtractorAgent $extractor,
         private readonly BrieferAgent $briefer,
         private readonly SourceVerifier $verifier,
@@ -53,10 +56,22 @@ final class Pipeline
             $articles = $catalog->fetch($date);
             $this->logStage('collector', count($articles), count($articles));
 
-            // B. Curator (Phase 1: top N from catalog)
-            $curatorLimit = (int) ($this->agentConfig['pipeline']['curator_limit'] ?? 15);
-            $selected = array_slice($articles, 0, $curatorLimit);
-            $this->logStage('curator', count($articles), count($selected));
+            // B. Curator (LLM-based importance evaluation + source diversity)
+            if ($this->curator !== null) {
+                $curated = $this->curator->process(['articles' => $articles], $this->agentConfig);
+                $selected = $curated->output['articles'] ?? [];
+                $this->curatorUsedLlm = true;
+                $this->logStage('curator', $curated->inputCount, $curated->outputCount, $curated->discarded, [
+                    'mode' => 'llm_evaluation',
+                ]);
+            } else {
+                $curatorLimit = (int) ($this->agentConfig['pipeline']['curator_limit'] ?? 15);
+                $selected = array_slice($articles, 0, $curatorLimit);
+                $this->curatorUsedLlm = false;
+                $this->logStage('curator', count($articles), count($selected), [], [
+                    'mode' => 'simple_slice',
+                ]);
+            }
 
             // C. Extractor
             $extracted = $this->extractor->process(['articles' => $selected], $this->agentConfig);
@@ -114,7 +129,7 @@ final class Pipeline
             }
 
             return new DiscoveryRunResult($freshEdition, $toSave, $discarded, $duration, [
-                'generation_mode' => 'multi_agent_v1',
+                'generation_mode' => $this->curatorUsedLlm ? 'multi_agent_v2_llm_curator' : 'multi_agent_v1',
                 'catalog_count' => count($articles),
                 'stage_logs' => $this->stageLogs,
                 'extraction_full' => $fullCount,
@@ -186,8 +201,16 @@ final class Pipeline
 
         $this->logStage('verifier', count($candidates), count($sourcePassed));
 
-        $afterImportance = $this->qualityGate->applyImportanceCategory($sourcePassed, $discarded);
-        $this->logStage('importance_gate', count($sourcePassed), count($afterImportance));
+        // Skip keyword-based importance gate if LLM curator already evaluated importance
+        if ($this->curatorUsedLlm) {
+            $afterImportance = $sourcePassed;
+            $this->logStage('importance_gate', count($sourcePassed), count($afterImportance), [], [
+                'skipped' => 'llm_curator_handled',
+            ]);
+        } else {
+            $afterImportance = $this->qualityGate->applyImportanceCategory($sourcePassed, $discarded);
+            $this->logStage('importance_gate', count($sourcePassed), count($afterImportance));
+        }
 
         $afterCompleteness = $this->qualityGate->applyCompleteness($afterImportance, $discarded);
         $this->logStage('completeness_gate', count($afterImportance), count($afterCompleteness));

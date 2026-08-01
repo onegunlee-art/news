@@ -21,18 +21,24 @@ $apiKey = discoveryOpenAiApiKey();
 $repo = new Discovery\DiscoveryRepository($pdo);
 $verifier = new Discovery\SourceVerifier();
 
+// Create agents
+$curatorLlm = Discovery\Agents\LLMClient::forAgent('curator', $agentConfig, $apiKey);
 $brieferLlm = Discovery\Agents\LLMClient::forAgent('briefer', $agentConfig, $apiKey);
+
+$curator = new Discovery\Agents\CuratorAgent($curatorLlm);
 $extractor = new Discovery\Agents\ExtractorAgent();
 $briefer = new Discovery\Agents\BrieferAgent($brieferLlm);
-$pipeline = new Discovery\Agents\Pipeline($repo, $extractor, $briefer, $verifier, $config, $agentConfig);
+
+$pipeline = new Discovery\Agents\Pipeline($repo, $curator, $extractor, $briefer, $verifier, $config, $agentConfig);
 
 $args = array_slice($argv, 1);
 $force = in_array('--force', $args, true);
 $dateArgs = array_values(array_filter($args, static fn($a) => $a !== '--force'));
 $date = $dateArgs[0] ?? discoveryTodayKst();
 
-echo "=== Discovery Multi-Agent Pipeline date={$date} ===\n";
+echo "=== Discovery Multi-Agent Pipeline (Phase 2) date={$date} ===\n";
 echo 'OPENAI configured=' . ($brieferLlm->isConfigured() ? 'yes' : 'no') . "\n";
+echo 'curator_model=' . $curatorLlm->getModel() . "\n";
 echo 'briefer_model=' . $brieferLlm->getModel() . "\n";
 
 if (!$force && $repo->hasPublishedRealEditionForDate($date)) {
@@ -64,6 +70,9 @@ foreach ($result->meta['stage_logs'] ?? [] as $log) {
     );
     if ($log['stage'] === 'extractor' && isset($log['full'])) {
         $line .= sprintf(" | full=%d summary_only=%d failed=%d", $log['full'], $log['summary_only'] ?? 0, $log['failed'] ?? 0);
+    }
+    if ($log['stage'] === 'curator' && isset($log['mode'])) {
+        $line .= sprintf(" | mode=%s", $log['mode']);
     }
     echo $line . "\n";
 }
