@@ -74,6 +74,22 @@ function discoveryConfig(string $projectRoot): array
     return require $projectRoot . 'config/discovery.php';
 }
 
+/** @return array<string, mixed> */
+function discoveryAgentsConfig(string $projectRoot): array
+{
+    $path = $projectRoot . 'config/discovery_agents.php';
+    if (!is_file($path)) {
+        return ['agents' => [], 'pipeline' => []];
+    }
+    return require $path;
+}
+
+function discoveryOpenAiApiKey(): string
+{
+    $openaiConfig = require discoveryFindProjectRoot() . 'config/openai.php';
+    return (string) ($openaiConfig['api_key'] ?? '');
+}
+
 function discoveryEnsureEnabled(string $projectRoot): void
 {
     $config = discoveryConfig($projectRoot);
