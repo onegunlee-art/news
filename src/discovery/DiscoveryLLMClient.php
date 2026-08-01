@@ -52,7 +52,8 @@ final class DiscoveryLLMClient
         $system = <<<'SYS'
 You are a world-news change detector for a Korean B2C product "오늘의 발견".
 You receive ARTICLE_CATALOG with REAL URLs from RSS feeds. You MUST NOT invent URLs or events.
-Rules:
+
+RULES:
 - Pick changes ONLY from ARTICLE_CATALOG entries (use article_index).
 - NEVER modify or guess URLs. sources[].url must be copied EXACTLY from the catalog entry.
 - Each change maps to one catalog article (article_index). One article = one change max.
@@ -60,16 +61,29 @@ Rules:
 - Generate up to 12 candidates (we filter to 5~7). Return fewer if not enough qualify — never fabricate.
 - EXCLUDE: entertainment/concerts/K-pop/sports, personal visit schedules, regional festivals.
 - INCLUDE: policy, diplomacy, economic indicators (with numbers), tech/industry, security, climate/energy.
-- briefing keys: what_changed, why_changed, why_important, future_impact, highlights (4-6 bullets).
 - OUTPUT LANGUAGE: Korean 합니다체.
-- COMPLETENESS: include concrete numbers/facts from the article in title and what_changed.
 - poll: neutral question, 4 distinct options.
+
+BRIEFING QUALITY (CRITICAL — each section must be SUBSTANTIVE):
+- what_changed: 2-3 sentences. State WHAT happened with specific numbers, names, dates. Include the key metric or outcome.
+- why_changed: 2-3 sentences. Explain the background/context — what led to this? Reference prior events, pressures, or decisions.
+- why_important: 2-3 sentences. Explain the significance — who is affected, what systems/markets/policies change, scale of impact.
+- future_impact: 2-3 sentences. Project concrete consequences — what happens next, timeline, who must respond.
+- highlights: 4-6 bullet points with specific facts (numbers, names, dates) from the article.
+
+BAD EXAMPLE (too vague):
+  "what_changed": "BP가 북해 사업 철수를 결정했습니다."
+  "why_changed": "BP의 사업 재검토 결과에 따른 결정입니다."
+
+GOOD EXAMPLE (specific and substantive):
+  "what_changed": "BP가 60년간 운영해온 북해 유전 사업을 매각하기로 결정했습니다. 연간 약 10만 배럴의 생산량을 보유한 자산으로, 예상 매각가는 40억 달러입니다."
+  "why_changed": "CEO 머레이 오킨클로스의 전략 전환으로, 탄소중립 목표 달성을 위해 화석연료 자산을 정리하고 재생에너지 투자를 확대하려는 것입니다. 최근 주주들의 친환경 전환 압박도 작용했습니다."
 SYS;
 
         $candidateCount = (int) ($discoveryConfig['candidate_count'] ?? 12);
         $catalogJson = json_encode(array_slice($catalogArticles, 0, 40), JSON_UNESCAPED_UNICODE);
         $user = sprintf(
-            "Edition date (KST): %s\nGenerate up to %d changes from ARTICLE_CATALOG below.\n\nARTICLE_CATALOG:\n%s\n\nReturn JSON:\n{\n  \"changes\": [\n    {\n      \"article_index\": 0,\n      \"category\": \"geopolitics|business|tech|climate|other\",\n      \"title\": \"한 줄 제목 (수치·결과 포함)\",\n      \"summary\": \"카드용 2~3줄 요약\",\n      \"briefing\": {\"what_changed\":\"\",\"why_changed\":\"\",\"why_important\":\"\",\"future_impact\":\"\",\"highlights\":[\"\",\"\",\"\",\"\"]},\n      \"sources\": [{\"name\":\"\",\"url\":\"\",\"article_title\":\"\"}],\n      \"poll\": {\"question\":\"\",\"options\":[\"\",\"\",\"\",\"\"]}\n    }\n  ]\n}",
+            "Edition date (KST): %s\nGenerate up to %d changes from ARTICLE_CATALOG below.\n\nARTICLE_CATALOG:\n%s\n\nReturn JSON:\n{\n  \"changes\": [\n    {\n      \"article_index\": 0,\n      \"category\": \"geopolitics|business|tech|climate|other\",\n      \"title\": \"한 줄 제목 (수치·결과 포함)\",\n      \"summary\": \"카드용 2~3줄 요약\",\n      \"briefing\": {\n        \"what_changed\": \"2-3문장: 구체적 수치·날짜·이름 포함\",\n        \"why_changed\": \"2-3문장: 배경·맥락, 왜 지금인지\",\n        \"why_important\": \"2-3문장: 누가 영향받나, 규모\",\n        \"future_impact\": \"2-3문장: 다음에 뭐가 일어나나\",\n        \"highlights\": [\"수치 포함 핵심 사실1\", \"수치 포함 핵심 사실2\", \"...\", \"...\"]\n      },\n      \"sources\": [{\"name\":\"\",\"url\":\"\",\"article_title\":\"\"}],\n      \"poll\": {\"question\":\"\",\"options\":[\"\",\"\",\"\",\"\"]}\n    }\n  ]\n}",
             $date,
             $candidateCount,
             $catalogJson
@@ -105,6 +119,16 @@ You are a world-news change detector. Use web search to find REAL recent article
 CRITICAL: sources[].url MUST be exact URLs from your web search results — NEVER invent or guess URLs.
 If you cannot find a real URL for an event, skip that event entirely.
 Return STRICT JSON only. Korean 합니다체. Include concrete numbers in titles.
+
+BRIEFING QUALITY (CRITICAL — each section must be SUBSTANTIVE):
+- what_changed: 2-3 sentences with specific numbers, names, dates. State the key metric or outcome.
+- why_changed: 2-3 sentences explaining background/context — what led to this, prior events, pressures.
+- why_important: 2-3 sentences on significance — who is affected, what changes, scale of impact.
+- future_impact: 2-3 sentences projecting consequences — what happens next, timeline, who responds.
+- highlights: 4-6 bullet points with specific facts (numbers, names, dates).
+
+BAD: "BP가 북해 사업 철수를 결정했습니다."
+GOOD: "BP가 60년간 운영해온 북해 유전 사업을 매각하기로 결정했습니다. 연간 약 10만 배럴의 생산량을 보유한 자산으로, 예상 매각가는 40억 달러입니다."
 SYS;
 
         $candidateCount = (int) ($discoveryConfig['candidate_count'] ?? 12);

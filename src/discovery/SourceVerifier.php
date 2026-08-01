@@ -18,12 +18,13 @@ final class SourceVerifier
      */
     public function verify(array $sources, string $changeTitle): array
     {
-        $keywords = $this->extractKeywords($changeTitle);
         $verified = [];
 
         foreach ($sources as $source) {
             $url = trim((string) ($source['url'] ?? ''));
             $name = trim((string) ($source['name'] ?? ''));
+            $articleTitle = trim((string) ($source['article_title'] ?? ''));
+
             if ($url === '' || !filter_var($url, FILTER_VALIDATE_URL)) {
                 $verified[] = array_merge($source, [
                     'verified' => false,
@@ -51,7 +52,22 @@ final class SourceVerifier
             }
 
             $plain = $this->htmlToText($html);
-            if (!$this->containsKeywords($plain, $keywords)) {
+
+            // Strategy: Use English article_title for primary matching (same language),
+            // with numbers/proper nouns from Korean title as fallback
+            $primaryKeywords = $articleTitle !== '' ? $this->extractKeywords($articleTitle) : [];
+            $fallbackTokens = $this->extractUniversalTokens($changeTitle);
+
+            $matched = false;
+            if ($primaryKeywords !== [] && $this->containsKeywords($plain, $primaryKeywords)) {
+                $matched = true;
+            } elseif ($fallbackTokens !== [] && $this->containsUniversalTokens($plain, $fallbackTokens)) {
+                $matched = true;
+            } elseif ($primaryKeywords === [] && $fallbackTokens === [] && mb_strlen($plain) > 200) {
+                $matched = true;
+            }
+
+            if (!$matched) {
                 $verified[] = array_merge($source, [
                     'verified' => false,
                     'fail_reason' => 'keyword_mismatch',
@@ -82,14 +98,72 @@ final class SourceVerifier
             }
             $keywords[] = $part;
         }
-        return array_slice(array_unique($keywords), 0, 6);
+        return array_slice(array_unique($keywords), 0, 8);
+    }
+
+    /**
+     * Extract language-agnostic tokens: numbers, proper nouns (ASCII), percentage patterns.
+     * These can match regardless of Korean vs English text.
+     * @return list<string>
+     */
+    private function extractUniversalTokens(string $title): array
+    {
+        $tokens = [];
+
+        // Numbers with optional comma/decimal (e.g., "60,000", "3.1", "2026")
+        if (preg_match_all('/\d[\d,\.]*/', $title, $matches)) {
+            foreach ($matches[0] as $num) {
+                $num = trim($num, '.,');
+                if (strlen($num) >= 2) {
+                    $tokens[] = $num;
+                }
+            }
+        }
+
+        // Proper nouns: capitalized ASCII words (e.g., "BP", "Anthropic", "Hamas", "NATO")
+        if (preg_match_all('/[A-Z][A-Za-z]{1,}/', $title, $matches)) {
+            foreach ($matches[0] as $word) {
+                if (strlen($word) >= 2) {
+                    $tokens[] = mb_strtolower($word);
+                }
+            }
+        }
+
+        // Percentage patterns
+        if (preg_match_all('/\d+(?:\.\d+)?%/', $title, $matches)) {
+            foreach ($matches[0] as $pct) {
+                $tokens[] = $pct;
+            }
+        }
+
+        return array_values(array_unique($tokens));
+    }
+
+    /**
+     * Check if text contains universal tokens (numbers, proper nouns).
+     * Requires at least 1 match since these are high-signal tokens.
+     * @param list<string> $tokens
+     */
+    private function containsUniversalTokens(string $text, array $tokens): bool
+    {
+        if ($tokens === []) {
+            return false;
+        }
+        $lower = mb_strtolower($text);
+        $hits = 0;
+        foreach ($tokens as $tok) {
+            if (mb_strpos($lower, $tok) !== false) {
+                $hits++;
+            }
+        }
+        return $hits >= 1;
     }
 
     /** @param list<string> $keywords */
     private function containsKeywords(string $text, array $keywords): bool
     {
         if ($keywords === []) {
-            return mb_strlen($text) > 200;
+            return false;
         }
         $lower = mb_strtolower($text);
         $hits = 0;
