@@ -592,7 +592,7 @@ const AdminPage: React.FC = () => {
       navigate('/', { replace: true });
     }
   }, [user, isAuthenticated, isLoading, isInitialized, navigate]);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'news' | 'drafts' | 'ai' | 'workspace' | 'persona' | 'knowledge' | 'agi' | 'usage' | 'settings' | 'promotions' | 'cancel' | 'strategic-hub' | 'discovery'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'news' | 'drafts' | 'ai' | 'workspace' | 'persona' | 'knowledge' | 'agi' | 'usage' | 'settings' | 'promotions' | 'cancel' | 'strategic-hub' | 'discovery' | 'youtube'>('dashboard');
 
   useEffect(() => {
     if (HIDDEN_ADMIN_SIDEBAR_TAB_IDS.has(activeTab)) {
