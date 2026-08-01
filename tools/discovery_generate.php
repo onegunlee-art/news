@@ -24,3 +24,9 @@ $date = $dateArgs[0] ?? date('Y-m-d');
 $result = $pipeline->run($date, $force);
 
 echo json_encode($result->toArray(), JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) . PHP_EOL;
+
+$reporter = new Discovery\DiscoveryRunReporter(new Discovery\SourceWhitelist(
+    $config['source_whitelist'] ?? [],
+    $config['source_blocklist'] ?? [],
+));
+$reporter->printReport($result->verifiedChanges, $result->discardedChanges);

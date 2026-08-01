@@ -8,6 +8,7 @@ final class DiscoveryLLMClient
     private string $apiKey;
     private string $model;
     private string $endpoint;
+    private DiscoveryUrlGuard $urlGuard;
 
     /** @param array<string, mixed> $config */
     public function __construct(array $config = [])
@@ -16,6 +17,7 @@ final class DiscoveryLLMClient
         $this->apiKey = (string) ($config['api_key'] ?? $openaiConfig['api_key'] ?? '');
         $this->model = (string) ($config['model'] ?? 'gpt-4o');
         $this->endpoint = (string) ($openaiConfig['endpoints']['chat'] ?? 'https://api.openai.com/v1/responses');
+        $this->urlGuard = new DiscoveryUrlGuard();
     }
 
     public function isConfigured(): bool
@@ -24,41 +26,53 @@ final class DiscoveryLLMClient
     }
 
     /**
-     * @return array{changes: list<array<string,mixed>>, raw: string, cost_usd: float|null}
+     * @param list<array{index:int,title:string,url:string,description:string,source_name:string,published_at:string}> $catalogArticles
+     * @return array{changes: list<array<string,mixed>>, raw: string, cost_usd: float|null, generation_mode: string}
      */
-    public function generateDailyChanges(string $date, array $discoveryConfig): array
+    public function generateDailyChanges(string $date, array $discoveryConfig, array $catalogArticles = []): array
     {
         if (!$this->isConfigured()) {
-            return $this->mockChanges($date);
+            return array_merge($this->mockChanges($date), ['generation_mode' => 'mock']);
         }
 
+        $minCatalog = (int) ($discoveryConfig['min_catalog_articles'] ?? 8);
+        if (count($catalogArticles) >= $minCatalog) {
+            return $this->generateFromCatalog($date, $discoveryConfig, $catalogArticles);
+        }
+
+        return $this->generateWithWebSearch($date, $discoveryConfig, $catalogArticles);
+    }
+
+    /**
+     * @param list<array{index:int,title:string,url:string,description:string,source_name:string,published_at:string}> $catalogArticles
+     * @return array{changes: list<array<string,mixed>>, raw: string, cost_usd: float|null, generation_mode: string}
+     */
+    private function generateFromCatalog(string $date, array $discoveryConfig, array $catalogArticles): array
+    {
         $system = <<<'SYS'
 You are a world-news change detector for a Korean B2C product "오늘의 발견".
+You receive ARTICLE_CATALOG with REAL URLs from RSS feeds. You MUST NOT invent URLs or events.
 Rules:
-- Use web search ONLY. Never invent events or URLs from memory.
-- Each change must have happened within the last 48 hours relative to the edition date (prefer 24h).
-- Return STRICT JSON only — no markdown fences, no commentary outside the JSON object.
-- If you cannot find enough verified recent changes, return fewer — never fabricate.
-- sources[].url must be real article URLs from search results (prefer Reuters, BBC, FT, AP, official EU/US/UN sources).
-- poll must be neutral, no right answer, 4 distinct options.
-- briefing must have keys: what_changed, why_changed, why_important, future_impact, highlights (array of 4-6 bullet strings).
-- OUTPUT LANGUAGE: Korean 합니다체. SUBJECT MATTER: global — NOT Korea-domestic-only news.
-- EXCLUDE: Korean local/municipal news, domestic-only corporate PR, regional church/school events, K-pop/entertainment without global spillover.
-- TARGET ~90% global: US, EU, Middle East, China/Taiwan, international geopolitics, macro, energy, global tech.
-- Each change must have international significance or cross-border impact.
-- GOOD examples: Yemen Houthi Red Sea blockade, Fed rate decision, DeepSeek AI chip, EU AI Act enforcement, UK fiscal policy shift.
-- BAD examples: Daegu city AI hub selection, local church photo album, Korean regional festival.
+- Pick changes ONLY from ARTICLE_CATALOG entries (use article_index).
+- NEVER modify or guess URLs. sources[].url must be copied EXACTLY from the catalog entry.
+- Each change maps to one catalog article (article_index). One article = one change max.
+- Return STRICT JSON only — no markdown fences.
+- Generate up to 12 candidates (we filter to 5~7). Return fewer if not enough qualify — never fabricate.
+- EXCLUDE: entertainment/concerts/K-pop/sports, personal visit schedules, regional festivals.
+- INCLUDE: policy, diplomacy, economic indicators (with numbers), tech/industry, security, climate/energy.
+- briefing keys: what_changed, why_changed, why_important, future_impact, highlights (4-6 bullets).
+- OUTPUT LANGUAGE: Korean 합니다체.
+- COMPLETENESS: include concrete numbers/facts from the article in title and what_changed.
+- poll: neutral question, 4 distinct options.
 SYS;
 
-        $targets = $discoveryConfig['category_targets'] ?? [];
+        $candidateCount = (int) ($discoveryConfig['candidate_count'] ?? 12);
+        $catalogJson = json_encode(array_slice($catalogArticles, 0, 40), JSON_UNESCAPED_UNICODE);
         $user = sprintf(
-            "Edition date (KST): %s\nTarget: up to 9 changes.\nCategory targets: geopolitics=%d, business=%d, tech=%d, climate=%d, other=%d\nGlobal-only (~90%%). Korean language output, global subject matter.\n\nReturn JSON:\n{\n  \"changes\": [\n    {\n      \"category\": \"geopolitics|business|tech|climate|other\",\n      \"title\": \"한 줄 제목\",\n      \"summary\": \"카드용 2~3줄 요약\",\n      \"briefing\": {\"what_changed\":\"\",\"why_changed\":\"\",\"why_important\":\"\",\"future_impact\":\"\",\"highlights\":[\"\",\"\",\"\",\"\"]},\n      \"sources\": [{\"name\":\"\",\"url\":\"\",\"article_title\":\"\"}],\n      \"poll\": {\"question\":\"\",\"options\":[\"\",\"\",\"\",\"\"]}\n    }\n  ]\n}",
+            "Edition date (KST): %s\nGenerate up to %d changes from ARTICLE_CATALOG below.\n\nARTICLE_CATALOG:\n%s\n\nReturn JSON:\n{\n  \"changes\": [\n    {\n      \"article_index\": 0,\n      \"category\": \"geopolitics|business|tech|climate|other\",\n      \"title\": \"한 줄 제목 (수치·결과 포함)\",\n      \"summary\": \"카드용 2~3줄 요약\",\n      \"briefing\": {\"what_changed\":\"\",\"why_changed\":\"\",\"why_important\":\"\",\"future_impact\":\"\",\"highlights\":[\"\",\"\",\"\",\"\"]},\n      \"sources\": [{\"name\":\"\",\"url\":\"\",\"article_title\":\"\"}],\n      \"poll\": {\"question\":\"\",\"options\":[\"\",\"\",\"\",\"\"]}\n    }\n  ]\n}",
             $date,
-            $targets['geopolitics'] ?? 4,
-            $targets['business'] ?? 3,
-            $targets['tech'] ?? 2,
-            $targets['climate'] ?? 1,
-            $targets['other'] ?? 2
+            $candidateCount,
+            $catalogJson
         );
 
         $payload = [
@@ -66,64 +80,127 @@ SYS;
             'instructions' => $system,
             'input' => $user,
             'max_output_tokens' => 12000,
-            'tools' => [['type' => 'web_search_preview']],
         ];
 
-        $raw = $this->callResponsesApi($payload);
-        $decoded = $this->parseJsonFromText($raw);
-        if (!is_array($decoded)) {
-            throw new \RuntimeException('Discovery LLM returned invalid JSON');
-        }
-        $changes = $decoded['changes'] ?? [];
-        if (!is_array($changes)) {
-            $changes = [];
-        }
+        $response = $this->callResponsesApi($payload);
+        $decoded = $this->parseJsonFromText($response['text']);
+        $changes = is_array($decoded['changes'] ?? null) ? $decoded['changes'] : [];
 
         return [
-            'changes' => $this->normalizeChanges($changes),
-            'raw' => $raw,
+            'changes' => $this->normalizeChanges($changes, $catalogArticles, []),
+            'raw' => $response['text'],
             'cost_usd' => null,
+            'generation_mode' => 'rss_catalog',
         ];
     }
 
-    /** @param list<array<string,mixed>> $changes @return list<array<string,mixed>> */
-    private function normalizeChanges(array $changes): array
+    /**
+     * @param list<array{index:int,title:string,url:string,description:string,source_name:string,published_at:string}> $catalogArticles
+     * @return array{changes: list<array<string,mixed>>, raw: string, cost_usd: float|null, generation_mode: string}
+     */
+    private function generateWithWebSearch(string $date, array $discoveryConfig, array $catalogArticles): array
     {
-        $allowed = ['geopolitics', 'business', 'tech', 'climate', 'other'];
+        $system = <<<'SYS'
+You are a world-news change detector. Use web search to find REAL recent articles.
+CRITICAL: sources[].url MUST be exact URLs from your web search results — NEVER invent or guess URLs.
+If you cannot find a real URL for an event, skip that event entirely.
+Return STRICT JSON only. Korean 합니다체. Include concrete numbers in titles.
+SYS;
+
+        $candidateCount = (int) ($discoveryConfig['candidate_count'] ?? 12);
+        $catalogHint = $catalogArticles !== []
+            ? "\n\nPartial RSS catalog (prefer these exact URLs when matching):\n" . json_encode(array_slice($catalogArticles, 0, 20), JSON_UNESCAPED_UNICODE)
+            : '';
+
+        $user = sprintf(
+            "Edition date (KST): %s\nSearch global geopolitics/economy/tech from overseas whitelist sources (Reuters, AP, BBC, Bloomberg, FT, etc.). Generate up to %d changes.%s\n\nReturn JSON with changes array (category, title, summary, briefing, sources with REAL urls, poll).",
+            $date,
+            $candidateCount,
+            $catalogHint
+        );
+
+        $payload = [
+            'model' => $this->model,
+            'instructions' => $system,
+            'input' => $user,
+            'max_output_tokens' => 12000,
+            'tools' => [['type' => 'web_search']],
+            'include' => ['web_search_call.action.sources'],
+        ];
+
+        $response = $this->callResponsesApi($payload);
+        $searchUrls = $this->extractWebSearchUrls($response['data']);
+        $catalogUrls = array_map(static fn(array $a) => (string) $a['url'], $catalogArticles);
+        $allowedUrls = array_values(array_unique(array_merge($searchUrls, $catalogUrls)));
+
+        $decoded = $this->parseJsonFromText($response['text']);
+        $changes = is_array($decoded['changes'] ?? null) ? $decoded['changes'] : [];
+
+        return [
+            'changes' => $this->normalizeChanges($changes, $catalogArticles, $allowedUrls),
+            'raw' => $response['text'],
+            'cost_usd' => null,
+            'generation_mode' => 'web_search',
+        ];
+    }
+
+    /**
+     * @param list<array<string,mixed>> $changes
+     * @param list<array{index:int,title:string,url:string,description:string,source_name:string,published_at:string}> $catalogArticles
+     * @param list<string> $allowedUrls
+     * @return list<array<string,mixed>>
+     */
+    private function normalizeChanges(array $changes, array $catalogArticles, array $allowedUrls): array
+    {
+        $catalogByIndex = [];
+        $catalogByUrl = [];
+        foreach ($catalogArticles as $article) {
+            $catalogByIndex[(int) $article['index']] = $article;
+            $catalogByUrl[$this->urlGuard->normalizeUrl((string) $article['url'])] = $article;
+        }
+
+        $allowed = [];
+        foreach ($allowedUrls as $url) {
+            $allowed[$this->urlGuard->normalizeUrl($url)] = $url;
+        }
+
         $out = [];
         foreach ($changes as $change) {
             if (!is_array($change)) {
                 continue;
             }
-            $category = (string) ($change['category'] ?? 'other');
-            if (!in_array($category, $allowed, true)) {
-                $category = 'other';
-            }
-            $briefing = $change['briefing'] ?? [];
-            if (!is_array($briefing)) {
-                $briefing = [];
-            }
-            $sources = $change['sources'] ?? [];
-            if (!is_array($sources)) {
-                $sources = [];
-            }
-            $poll = $change['poll'] ?? [];
-            if (!is_array($poll)) {
-                $poll = [];
-            }
-            $options = $poll['options'] ?? [];
-            if (!is_array($options) || count($options) < 4) {
+
+            $bound = $this->bindSources($change, $catalogByIndex, $catalogByUrl, $allowed);
+            if ($bound === null) {
                 continue;
             }
+            $change = $bound;
+
+            $category = (string) ($change['category'] ?? 'other');
+            $allowedCategories = ['geopolitics', 'business', 'tech', 'climate', 'other'];
+            if (!in_array($category, $allowedCategories, true)) {
+                $category = 'other';
+            }
+
+            $briefing = is_array($change['briefing'] ?? null) ? $change['briefing'] : [];
+            $poll = is_array($change['poll'] ?? null) ? $change['poll'] : [];
+            $options = is_array($poll['options'] ?? null) ? $poll['options'] : [];
+            if (count($options) < 4) {
+                continue;
+            }
+
             $title = trim((string) ($change['title'] ?? ''));
             $summary = trim((string) ($change['summary'] ?? ''));
             if ($title === '' || $summary === '') {
                 continue;
             }
-            $highlights = $briefing['highlights'] ?? [];
-            if (!is_array($highlights)) {
-                $highlights = [];
+
+            $sources = is_array($change['sources'] ?? null) ? $change['sources'] : [];
+            if ($sources === []) {
+                continue;
             }
+
+            $highlights = is_array($briefing['highlights'] ?? null) ? $briefing['highlights'] : [];
             $highlights = array_values(array_filter(array_map(static fn($h) => trim((string) $h), $highlights)));
 
             $out[] = [
@@ -137,27 +214,81 @@ SYS;
                     'future_impact' => (string) ($briefing['future_impact'] ?? ''),
                     'highlights' => array_slice($highlights, 0, 6),
                 ],
-                'sources' => array_values(array_filter(array_map(static function ($s) {
-                    if (!is_array($s)) {
-                        return null;
-                    }
-                    $url = trim((string) ($s['url'] ?? ''));
-                    if ($url === '') {
-                        return null;
-                    }
-                    return [
-                        'name' => trim((string) ($s['name'] ?? '')),
-                        'url' => $url,
-                        'article_title' => trim((string) ($s['article_title'] ?? '')),
-                    ];
-                }, $sources))),
+                'sources' => $sources,
                 'poll' => [
                     'question' => mb_substr(trim((string) ($poll['question'] ?? '')), 0, 300),
                     'options' => array_map(static fn($o) => mb_substr(trim((string) $o), 0, 120), array_slice($options, 0, 4)),
                 ],
             ];
         }
+
         return $out;
+    }
+
+    /**
+     * @param array<string,mixed> $change
+     * @param array<int, array{index:int,title:string,url:string,description:string,source_name:string,published_at:string}> $catalogByIndex
+     * @param array<string, array{index:int,title:string,url:string,description:string,source_name:string,published_at:string}> $catalogByUrl
+     * @param array<string, string> $allowed
+     * @return array<string,mixed>|null
+     */
+    private function bindSources(array $change, array $catalogByIndex, array $catalogByUrl, array $allowed): ?array
+    {
+        if (isset($change['article_index']) && is_numeric($change['article_index'])) {
+            $idx = (int) $change['article_index'];
+            if (!isset($catalogByIndex[$idx])) {
+                return null;
+            }
+            $article = $catalogByIndex[$idx];
+            $change['sources'] = [[
+                'name' => (string) $article['source_name'],
+                'url' => (string) $article['url'],
+                'article_title' => (string) $article['title'],
+            ]];
+
+            return $change;
+        }
+
+        $sources = is_array($change['sources'] ?? null) ? $change['sources'] : [];
+        $boundSources = [];
+        foreach ($sources as $source) {
+            if (!is_array($source)) {
+                continue;
+            }
+            $url = trim((string) ($source['url'] ?? ''));
+            if ($url === '' || $this->urlGuard->looksHallucinated($url)) {
+                continue;
+            }
+
+            $norm = $this->urlGuard->normalizeUrl($url);
+            if (isset($catalogByUrl[$norm])) {
+                $article = $catalogByUrl[$norm];
+                $boundSources[] = [
+                    'name' => (string) ($source['name'] ?: $article['source_name']),
+                    'url' => (string) $article['url'],
+                    'article_title' => (string) ($source['article_title'] ?: $article['title']),
+                ];
+                continue;
+            }
+
+            if ($allowed !== [] && !isset($allowed[$norm])) {
+                continue;
+            }
+
+            $boundSources[] = [
+                'name' => trim((string) ($source['name'] ?? '')),
+                'url' => $url,
+                'article_title' => trim((string) ($source['article_title'] ?? '')),
+            ];
+        }
+
+        if ($boundSources === []) {
+            return null;
+        }
+
+        $change['sources'] = $boundSources;
+
+        return $change;
     }
 
     /** @return array<string, mixed> */
@@ -182,8 +313,11 @@ SYS;
         throw new \RuntimeException('Discovery LLM returned invalid JSON: ' . mb_substr($text, 0, 300));
     }
 
-    /** @param array<string,mixed> $payload */
-    private function callResponsesApi(array $payload): string
+    /**
+     * @param array<string,mixed> $payload
+     * @return array{text:string,data:array<string,mixed>|null}
+     */
+    private function callResponsesApi(array $payload): array
     {
         $ch = curl_init($this->endpoint);
         curl_setopt_array($ch, [
@@ -214,11 +348,55 @@ SYS;
         }
 
         $data = json_decode((string) $response, true);
-        $text = $this->extractText($data);
+        $text = $this->extractText(is_array($data) ? $data : null);
         if ($text === null || trim($text) === '') {
             throw new \RuntimeException('Discovery LLM empty response');
         }
-        return $text;
+
+        return ['text' => $text, 'data' => is_array($data) ? $data : null];
+    }
+
+    /** @param array<string,mixed>|null $data @return list<string> */
+    private function extractWebSearchUrls(?array $data): array
+    {
+        if (!$data || empty($data['output']) || !is_array($data['output'])) {
+            return [];
+        }
+
+        $urls = [];
+        foreach ($data['output'] as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+
+            if (($item['type'] ?? '') === 'web_search_call') {
+                $sources = $item['action']['sources'] ?? [];
+                if (is_array($sources)) {
+                    foreach ($sources as $source) {
+                        if (is_array($source) && !empty($source['url'])) {
+                            $urls[] = (string) $source['url'];
+                        }
+                    }
+                }
+            }
+
+            if (($item['type'] ?? '') === 'message' && !empty($item['content']) && is_array($item['content'])) {
+                foreach ($item['content'] as $part) {
+                    if (!is_array($part)) {
+                        continue;
+                    }
+                    foreach ($part['annotations'] ?? [] as $annotation) {
+                        if (is_array($annotation)
+                            && ($annotation['type'] ?? '') === 'url_citation'
+                            && !empty($annotation['url'])) {
+                            $urls[] = (string) $annotation['url'];
+                        }
+                    }
+                }
+            }
+        }
+
+        return array_values(array_unique($urls));
     }
 
     /** @param array<string,mixed>|null $data */
@@ -241,6 +419,7 @@ SYS;
         if (!empty($data['output_text'])) {
             return (string) $data['output_text'];
         }
+
         return null;
     }
 
@@ -260,33 +439,9 @@ SYS;
                     'highlights' => ['해상 봉쇄 재개', '운임 상승 압력', '에너지 수송 리스크'],
                 ],
             ],
-            [
-                'category' => 'business',
-                'title' => '미 연준, 기준금리 동결 결정',
-                'summary' => '연준이 기준금리를 동결하면서 글로벌 자금 흐름과 달러 강세 기대가 재조정되고 있습니다.',
-                'briefing' => [
-                    'what_changed' => 'FOMC가 기준금리 동결을 결정했습니다.',
-                    'why_changed' => '인플레이션 둔화와 고용 지표의 혼조가 겹쳤습니다.',
-                    'why_important' => '신흥국 자본 흐름과 글로벌 채권 시장에 직접적 영향을 줍니다.',
-                    'future_impact' => '시장은 연내 인하 시점을 재가격할 가능성이 있습니다.',
-                    'highlights' => ['금리 동결', '달러·채권 재조정', '신흥국 자금'],
-                ],
-            ],
-            [
-                'category' => 'tech',
-                'title' => '중국 딥시크, 자체 AI 칩 개발 가속',
-                'summary' => '딥시크가 자체 AI 가속 칩 개발을 공개하며 글로벌 반도체·AI 경쟁 구도에 변수가 더해졌습니다.',
-                'briefing' => [
-                    'what_changed' => '딥시크가 자체 AI 칩 로드맵을 발표했습니다.',
-                    'why_changed' => '수출 통제와 공급망 불확실성이 자체 칩 필요성을 키웠습니다.',
-                    'why_important' => '글로벌 AI 인프라 경쟁과 GPU 수요 구조에 영향을 줍니다.',
-                    'future_impact' => '중국 AI 생태계의 독립성 강화가 가속될 수 있습니다.',
-                    'highlights' => ['자체 AI 칩', '공급망 독립', '글로벌 GPU 경쟁'],
-                ],
-            ],
         ];
         $changes = [];
-        foreach ($samples as $i => $sample) {
+        foreach ($samples as $sample) {
             $changes[] = array_merge($sample, [
                 'sources' => [
                     ['name' => 'Reuters', 'url' => 'https://www.reuters.com/world/', 'article_title' => 'Global News'],
@@ -297,6 +452,7 @@ SYS;
                 ],
             ]);
         }
+
         return [
             'changes' => $changes,
             'raw' => json_encode(['changes' => $changes], JSON_UNESCAPED_UNICODE),

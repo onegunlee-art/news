@@ -50,6 +50,19 @@ $summary = $result->toArray();
 $summary['elapsed_sec'] = $elapsed;
 echo json_encode($summary, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) . "\n";
 
+if (isset($result->verifiedChanges[0])) {
+    echo "\n=== Sample briefing (first verified change) ===\n";
+    $first = $result->verifiedChanges[0];
+    echo json_encode($first['briefing'] ?? [], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) . "\n";
+    echo 'source_url=' . (($first['sources'][0]['url'] ?? '?')) . "\n";
+}
+
+$reporter = new Discovery\DiscoveryRunReporter(new Discovery\SourceWhitelist(
+    $config['source_whitelist'] ?? [],
+    $config['source_blocklist'] ?? [],
+));
+$reporter->printReport($result->verifiedChanges, $result->discardedChanges);
+
 $verified = (int) ($summary['verified_count'] ?? 0);
 if ($verified < 1) {
     fwrite(STDERR, "FAIL: verified_count={$verified} (need >= 1)\n");

@@ -13,7 +13,9 @@ return [
     'public_enabled' => $publicEnabled,
     'show_seed' => $showSeed,
     'model' => $_ENV['DISCOVERY_LLM_MODEL'] ?? getenv('DISCOVERY_LLM_MODEL') ?: 'gpt-4o',
-    'target_changes' => 9,
+    'candidate_count' => 12,
+    'target_changes' => 7,
+    'min_changes' => 5,
     'max_age_hours' => 48,
     'category_targets' => [
         'geopolitics' => 4,
@@ -24,4 +26,8 @@ return [
     ],
     'archive_days' => 30,
     'use_dummy_preview_stats' => true,
+    'source_whitelist' => require __DIR__ . '/discovery_sources.php',
+    'source_blocklist' => require __DIR__ . '/discovery_source_blocklist.php',
+    'rss_feeds' => require __DIR__ . '/discovery_feeds.php',
+    'min_catalog_articles' => 8,
 ];

@@ -5,12 +5,22 @@ namespace Discovery;
 
 final class DiscoveryPipeline
 {
+    private SourceWhitelist $whitelist;
+    private DiscoveryQualityGate $qualityGate;
+    private DiscoveryUrlGuard $urlGuard;
+
     public function __construct(
         private readonly DiscoveryRepository $repo,
         private readonly DiscoveryAgent $agent,
         private readonly SourceVerifier $verifier,
         private readonly array $config,
     ) {
+        $this->whitelist = new SourceWhitelist(
+            $config['source_whitelist'] ?? [],
+            $config['source_blocklist'] ?? [],
+        );
+        $this->qualityGate = new DiscoveryQualityGate();
+        $this->urlGuard = new DiscoveryUrlGuard();
     }
 
     public function run(string $date, bool $forceRegenerate = false): DiscoveryRunResult
@@ -27,17 +37,70 @@ final class DiscoveryPipeline
         try {
             $llmResult = $this->agent->generateDailyChanges($date);
             $candidates = $llmResult['changes'] ?? [];
+            $generationMode = (string) ($llmResult['generation_mode'] ?? 'unknown');
+            $catalogCount = (int) ($llmResult['catalog_count'] ?? 0);
 
-            $verified = [];
             $discarded = [];
+            $sourcePassed = [];
 
             foreach ($candidates as $candidate) {
-                $sources = $this->verifier->verify($candidate['sources'] ?? [], $candidate['title']);
-                $validSources = array_values(array_filter($sources, static fn($s) => !empty($s['verified'])));
+                $title = (string) ($candidate['title'] ?? '');
+                $rawSources = is_array($candidate['sources'] ?? null) ? $candidate['sources'] : [];
+
+                $hallucinated = false;
+                foreach ($rawSources as $source) {
+                    if (!is_array($source)) {
+                        continue;
+                    }
+                    $url = trim((string) ($source['url'] ?? ''));
+                    if ($url !== '' && $this->urlGuard->looksHallucinated($url)) {
+                        $hallucinated = true;
+                        break;
+                    }
+                }
+                if ($hallucinated) {
+                    $discarded[] = [
+                        'title' => $title,
+                        'reason' => 'url_hallucination_suspected',
+                        'sources' => $rawSources,
+                    ];
+                    continue;
+                }
+
+                if ($this->whitelist->hasBlockedSource($rawSources)) {
+                    $discarded[] = [
+                        'title' => $title,
+                        'reason' => 'korean_media_source',
+                        'sources' => array_map(fn(array $s) => [
+                            'name' => $s['name'] ?? '',
+                            'url' => $s['url'] ?? '',
+                            'domain' => $this->whitelist->hostLabel((string) ($s['url'] ?? '')),
+                        ], $rawSources),
+                    ];
+                    continue;
+                }
+
+                if (!$this->whitelist->hasWhitelistedSource($rawSources)) {
+                    $discarded[] = [
+                        'title' => $title,
+                        'reason' => 'whitelist_failed',
+                        'sources' => array_map(fn(array $s) => [
+                            'name' => $s['name'] ?? '',
+                            'url' => $s['url'] ?? '',
+                            'domain' => $this->whitelist->hostLabel((string) ($s['url'] ?? '')),
+                        ], $rawSources),
+                    ];
+                    continue;
+                }
+
+                $sources = $this->verifier->verify($rawSources, $title);
+                $validSources = $this->whitelist->filterWhitelistedSources(
+                    array_values(array_filter($sources, static fn($s) => !empty($s['verified'])))
+                );
 
                 if (count($validSources) < 1) {
                     $discarded[] = [
-                        'title' => $candidate['title'] ?? '',
+                        'title' => $title,
                         'reason' => 'source_verification_failed',
                         'sources' => $sources,
                     ];
@@ -46,24 +109,39 @@ final class DiscoveryPipeline
 
                 if (!$this->pollOptionsDistinct($candidate['poll']['options'] ?? [])) {
                     $discarded[] = [
-                        'title' => $candidate['title'] ?? '',
+                        'title' => $title,
                         'reason' => 'poll_options_overlap',
                     ];
                     continue;
                 }
 
                 $candidate['sources'] = $validSources;
-                $verified[] = $candidate;
-
-                if (count($verified) >= (int) ($this->config['target_changes'] ?? 9)) {
-                    break;
-                }
+                $sourcePassed[] = $candidate;
             }
 
-            $target = (int) ($this->config['target_changes'] ?? 9);
+            $afterImportance = $this->qualityGate->applyImportanceCategory($sourcePassed, $discarded);
+            $afterCompleteness = $this->qualityGate->applyCompleteness($afterImportance, $discarded);
+            $deduped = $this->qualityGate->applyDeduplication($afterCompleteness, $discarded);
+
+            $maxTarget = (int) ($this->config['target_changes'] ?? 7);
+            $verified = array_slice($deduped, 0, $maxTarget);
+
+            $minTarget = (int) ($this->config['min_changes'] ?? 5);
             $warning = null;
-            if (count($verified) < $target) {
-                $warning = sprintf('%d개만 생성됨 (목표 %d개). 억지로 채우지 않았습니다.', count($verified), $target);
+            if (count($verified) < $minTarget) {
+                $warning = sprintf(
+                    '%d개만 생성됨 (목표 %d~%d개). 억지로 채우지 않았습니다.',
+                    count($verified),
+                    $minTarget,
+                    $maxTarget
+                );
+            } elseif (count($verified) < $maxTarget) {
+                $warning = sprintf(
+                    '%d개 생성됨 (목표 %d~%d개). 품질 게이트 통과분만 반영했습니다.',
+                    count($verified),
+                    $minTarget,
+                    $maxTarget
+                );
             }
 
             $this->repo->saveChanges((int) $edition['id'], $verified);
@@ -75,7 +153,10 @@ final class DiscoveryPipeline
 
             $freshEdition = $this->repo->findEditionById((int) $edition['id']) ?? $edition;
 
-            return new DiscoveryRunResult($freshEdition, $verified, $discarded, $duration);
+            return new DiscoveryRunResult($freshEdition, $verified, $discarded, $duration, [
+                'generation_mode' => $generationMode,
+                'catalog_count' => $catalogCount,
+            ]);
         } catch (\Throwable $e) {
             $this->repo->updateEditionStatus((int) $edition['id'], 'draft', '생성 실패: ' . $e->getMessage());
             throw $e;
