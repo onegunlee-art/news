@@ -1,0 +1,34 @@
+# Discovery 자동화 cron (KST 기준)
+# 설치: sudo cp cron/discovery.cron /etc/cron.d/discovery
+# 또는: crontab -e 로 직접 추가
+#
+# 서버 타임존이 UTC인 경우:
+#   KST 05:00 = UTC 20:00 (전날)
+#   KST 06:00 = UTC 21:00 (전날)
+#
+# 킬스위치: env.txt에 ENABLE_DISCOVERY_CRON=false 추가하면 실행 안 됨
+
+SHELL=/bin/bash
+PATH=/usr/local/bin:/usr/bin:/bin
+MAILTO=""
+
+# === KST 기준 (서버가 KST인 경우) ===
+# 05:00 KST - 생성
+0 5 * * * www-data cd /var/www/thegist && php cron/discovery_generate.php >> /var/log/discovery_generate.log 2>&1
+
+# 05:30 KST - 재시도 (05시 실패 시에만)
+30 5 * * * www-data cd /var/www/thegist && [ ! -f storage/discovery_last_generate.json ] || grep -q '"success":false' storage/discovery_last_generate.json && php cron/discovery_generate.php >> /var/log/discovery_generate.log 2>&1
+
+# 06:00 KST - 발행 + 이메일
+0 6 * * * www-data cd /var/www/thegist && php cron/discovery_publish.php >> /var/log/discovery_publish.log 2>&1
+
+
+# === UTC 기준 (서버가 UTC인 경우 - 아래 사용) ===
+# 20:00 UTC (= 05:00 KST) - 생성
+# 0 20 * * * www-data cd /var/www/thegist && php cron/discovery_generate.php >> /var/log/discovery_generate.log 2>&1
+
+# 20:30 UTC (= 05:30 KST) - 재시도
+# 30 20 * * * www-data cd /var/www/thegist && [ ! -f storage/discovery_last_generate.json ] || grep -q '"success":false' storage/discovery_last_generate.json && php cron/discovery_generate.php >> /var/log/discovery_generate.log 2>&1
+
+# 21:00 UTC (= 06:00 KST) - 발행 + 이메일
+# 0 21 * * * www-data cd /var/www/thegist && php cron/discovery_publish.php >> /var/log/discovery_publish.log 2>&1
