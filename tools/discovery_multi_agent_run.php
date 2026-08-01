@@ -55,13 +55,38 @@ echo json_encode($summary, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) . "\n";
 
 echo "\n=== Stage Logs ===\n";
 foreach ($result->meta['stage_logs'] ?? [] as $log) {
-    echo sprintf(
-        "  %s: input=%d output=%d discarded=%d\n",
+    $line = sprintf(
+        "  %s: input=%d output=%d discarded=%d",
         $log['stage'] ?? '?',
         $log['input'] ?? 0,
         $log['output'] ?? 0,
         $log['discarded'] ?? 0,
     );
+    if ($log['stage'] === 'extractor' && isset($log['full'])) {
+        $line .= sprintf(" | full=%d summary_only=%d failed=%d", $log['full'], $log['summary_only'] ?? 0, $log['failed'] ?? 0);
+    }
+    echo $line . "\n";
+}
+
+// Extraction stats by domain
+$extractorLog = null;
+foreach ($result->meta['stage_logs'] ?? [] as $log) {
+    if (($log['stage'] ?? '') === 'extractor') {
+        $extractorLog = $log;
+        break;
+    }
+}
+if ($extractorLog !== null && !empty($extractorLog['by_domain'])) {
+    echo "\n=== Extraction by Domain ===\n";
+    foreach ($extractorLog['by_domain'] as $domain => $stats) {
+        echo sprintf(
+            "  %-30s full=%d summary=%d failed=%d\n",
+            $domain,
+            $stats['full'] ?? 0,
+            $stats['summary'] ?? 0,
+            $stats['failed'] ?? 0,
+        );
+    }
 }
 
 if (isset($result->verifiedChanges[0])) {

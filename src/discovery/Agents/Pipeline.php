@@ -60,7 +60,13 @@ final class Pipeline
 
             // C. Extractor
             $extracted = $this->extractor->process(['articles' => $selected], $this->agentConfig);
-            $this->logStage('extractor', $extracted->inputCount, $extracted->outputCount, $extracted->discarded);
+            $extractionStats = $extracted->output['extraction_stats'] ?? [];
+            $this->logStage('extractor', $extracted->inputCount, $extracted->outputCount, $extracted->discarded, [
+                'full' => $extractionStats['full'] ?? 0,
+                'summary_only' => $extractionStats['summary_only'] ?? 0,
+                'failed' => $extractionStats['failed'] ?? 0,
+                'by_domain' => $extractionStats['by_domain'] ?? [],
+            ]);
 
             /** @var list<array<string, mixed>> $extractedArticles */
             $extractedArticles = $extracted->output['articles'] ?? [];
@@ -228,15 +234,22 @@ final class Pipeline
         return null;
     }
 
-    /** @param list<array<string, mixed>> $discarded */
-    private function logStage(string $stage, int $input, int $output, array $discarded = []): void
+    /**
+     * @param list<array<string, mixed>> $discarded
+     * @param array<string, mixed> $extra
+     */
+    private function logStage(string $stage, int $input, int $output, array $discarded = [], array $extra = []): void
     {
-        $this->stageLogs[] = [
+        $log = [
             'stage' => $stage,
             'input' => $input,
             'output' => $output,
             'discarded' => count($discarded),
         ];
+        if (!empty($extra)) {
+            $log = array_merge($log, $extra);
+        }
+        $this->stageLogs[] = $log;
     }
 
     /** @return list<array<string, mixed>> */
