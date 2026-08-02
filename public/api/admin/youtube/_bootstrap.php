@@ -10,19 +10,25 @@ $projectRoot = dirname(__DIR__, 4);
 require_once $projectRoot . '/vendor/autoload.php';
 require_once $projectRoot . '/src/youtube/bootstrap.php';
 require_once $projectRoot . '/src/discovery/bootstrap.php';
+require_once __DIR__ . '/../../lib/admin_auth.php';
 
 youtubeLoadEnv($projectRoot);
 
 header('Content-Type: application/json; charset=utf-8');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
+
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
 
 function youtubeAdminAuth(): void
 {
-    session_start();
-    if (empty($_SESSION['user']) || ($_SESSION['user']['role'] ?? '') !== 'admin') {
-        http_response_code(401);
-        echo json_encode(['error' => 'Unauthorized']);
-        exit;
-    }
+    global $projectRoot;
+    $pdo = youtubeGetDb($projectRoot);
+    requireAdminApi($pdo);
 }
 
 function youtubeJsonResponse(array $data, int $status = 200): void
