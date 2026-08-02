@@ -188,19 +188,19 @@ final class MapGenerator
     private function addLocationLabel(\GdImage $image, string $location): void
     {
         $gold = imagecolorallocate($image, ...$this->style['primary_rgb'] ?? [212, 175, 55]);
-        $fontSize = 32;
+        $fontSize = 64;
         
         $fontPath = dirname(__DIR__, 4) . '/public/fonts/noto/noto_sans_kr_bold_b1d8ccaef03cabe0c50be6a406ebee03.ttf';
         
         if (!file_exists($fontPath)) {
-            imagestring($image, 5, (int) ($this->width / 2 - 50), $this->height - 150, $location, $gold);
+            imagestring($image, 5, (int) ($this->width / 2 - 50), $this->height - 200, $location, $gold);
             return;
         }
 
         $bbox = imagettfbbox($fontSize, 0, $fontPath, $location);
         $textWidth = abs($bbox[2] - $bbox[0]);
         $x = ($this->width - $textWidth) / 2;
-        $y = $this->height - 120;
+        $y = $this->height - 150;
 
         imagettftext($image, $fontSize, 0, (int) $x, (int) $y, $gold, $fontPath, $location);
     }

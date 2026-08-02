@@ -69,23 +69,23 @@ final class FixedAssetManager
         $subText = 'CHANGED TODAY';
         
         if (file_exists($this->fontBold)) {
-            $mainSize = 72;
+            $mainSize = 110;
             $bbox = imagettfbbox($mainSize, 0, $this->fontBold, $mainText);
             $mainWidth = abs($bbox[2] - $bbox[0]);
             $mainX = ($this->width - $mainWidth) / 2;
-            imagettftext($image, $mainSize, 0, (int) $mainX, (int) ($this->height / 2 - 60), $white, $this->fontBold, $mainText);
+            imagettftext($image, $mainSize, 0, (int) $mainX, (int) ($this->height / 2 - 80), $white, $this->fontBold, $mainText);
             
             $bbox = imagettfbbox($mainSize, 0, $this->fontBold, $subText);
             $subWidth = abs($bbox[2] - $bbox[0]);
             $subX = ($this->width - $subWidth) / 2;
-            imagettftext($image, $mainSize, 0, (int) $subX, (int) ($this->height / 2 + 60), $gold, $this->fontBold, $subText);
+            imagettftext($image, $mainSize, 0, (int) $subX, (int) ($this->height / 2 + 100), $gold, $this->fontBold, $subText);
             
             $logoText = 'the gist.';
-            $logoSize = 36;
+            $logoSize = 56;
             $bbox = imagettfbbox($logoSize, 0, $this->fontRegular, $logoText);
             $logoWidth = abs($bbox[2] - $bbox[0]);
             $logoX = ($this->width - $logoWidth) / 2;
-            imagettftext($image, $logoSize, 0, (int) $logoX, $this->height - 200, $gold, $this->fontRegular, $logoText);
+            imagettftext($image, $logoSize, 0, (int) $logoX, $this->height - 250, $gold, $this->fontRegular, $logoText);
         } else {
             $this->renderTextFallback($image, $mainText, $this->height / 2 - 50, $white);
             $this->renderTextFallback($image, $subText, $this->height / 2 + 50, $gold);
@@ -107,24 +107,24 @@ final class FixedAssetManager
         
         if (file_exists($this->fontBold)) {
             $logoText = 'the gist.';
-            $logoSize = 64;
+            $logoSize = 100;
             $bbox = imagettfbbox($logoSize, 0, $this->fontBold, $logoText);
             $logoWidth = abs($bbox[2] - $bbox[0]);
             $logoX = ($this->width - $logoWidth) / 2;
-            imagettftext($image, $logoSize, 0, (int) $logoX, (int) ($this->height / 2 - 80), $gold, $this->fontBold, $logoText);
+            imagettftext($image, $logoSize, 0, (int) $logoX, (int) ($this->height / 2 - 100), $gold, $this->fontBold, $logoText);
             
             $tagline = 'Essential truth.';
-            $tagSize = 32;
+            $tagSize = 48;
             $bbox = imagettfbbox($tagSize, 0, $this->fontRegular, $tagline);
             $tagWidth = abs($bbox[2] - $bbox[0]);
             $tagX = ($this->width - $tagWidth) / 2;
-            imagettftext($image, $tagSize, 0, (int) $tagX, (int) ($this->height / 2 + 40), $white, $this->fontRegular, $tagline);
+            imagettftext($image, $tagSize, 0, (int) $tagX, (int) ($this->height / 2 + 60), $white, $this->fontRegular, $tagline);
             
             $tagline2 = 'A clear view of the world.';
             $bbox = imagettfbbox($tagSize, 0, $this->fontRegular, $tagline2);
             $tag2Width = abs($bbox[2] - $bbox[0]);
             $tag2X = ($this->width - $tag2Width) / 2;
-            imagettftext($image, $tagSize, 0, (int) $tag2X, (int) ($this->height / 2 + 90), $gray, $this->fontRegular, $tagline2);
+            imagettftext($image, $tagSize, 0, (int) $tag2X, (int) ($this->height / 2 + 130), $gray, $this->fontRegular, $tagline2);
         } else {
             $this->renderTextFallback($image, 'the gist.', $this->height / 2 - 50, $gold);
             $this->renderTextFallback($image, 'Essential truth.', $this->height / 2 + 30, $white);

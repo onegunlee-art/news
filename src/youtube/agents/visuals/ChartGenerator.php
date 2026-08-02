@@ -103,8 +103,8 @@ final class ChartGenerator
         $count = count($numbers);
         $sectionHeight = $this->height / ($count + 1);
         
-        $numberSize = $count <= 2 ? 200 : 150;
-        $labelSize = $count <= 2 ? 48 : 36;
+        $numberSize = $count <= 2 ? 280 : 200;
+        $labelSize = $count <= 2 ? 72 : 56;
 
         foreach ($numbers as $i => $num) {
             $y = (int) (($i + 1) * $sectionHeight);
@@ -112,11 +112,11 @@ final class ChartGenerator
         }
 
         $title = '핵심 수치';
-        $titleSize = 36;
+        $titleSize = 64;
         if (file_exists($this->fontBold)) {
             $bbox = imagettfbbox($titleSize, 0, $this->fontBold, $title);
             $titleWidth = abs($bbox[2] - $bbox[0]);
-            imagettftext($image, $titleSize, 0, (int) (($this->width - $titleWidth) / 2), 120, $gray, $this->fontBold, $title);
+            imagettftext($image, $titleSize, 0, (int) (($this->width - $titleWidth) / 2), 180, $gray, $this->fontBold, $title);
         }
     }
 

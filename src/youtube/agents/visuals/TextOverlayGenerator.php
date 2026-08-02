@@ -75,7 +75,7 @@ final class TextOverlayGenerator
     private function renderTitle(\GdImage $image, string $title): void
     {
         $gold = imagecolorallocate($image, ...$this->style['primary_rgb'] ?? [212, 175, 55]);
-        $fontSize = 42;
+        $fontSize = 80;
         
         if (!file_exists($this->fontBold)) {
             imagestring($image, 5, 100, 200, $title, $gold);
@@ -86,7 +86,7 @@ final class TextOverlayGenerator
         $textWidth = abs($bbox[2] - $bbox[0]);
         $x = ($this->width - $textWidth) / 2;
         
-        imagettftext($image, $fontSize, 0, (int) $x, 280, $gold, $this->fontBold, $title);
+        imagettftext($image, $fontSize, 0, (int) $x, 300, $gold, $this->fontBold, $title);
     }
 
     private function renderPoints(\GdImage $image, array $points, int $sceneNum): void
@@ -98,11 +98,11 @@ final class TextOverlayGenerator
         $white = imagecolorallocate($image, ...$this->style['text_rgb'] ?? [255, 255, 255]);
         $gold = imagecolorallocate($image, ...$this->style['primary_rgb'] ?? [212, 175, 55]);
         
-        $startY = 450;
-        $lineHeight = 200;
-        $fontSize = 36;
-        $numberSize = 64;
-        $marginLeft = 120;
+        $startY = 500;
+        $lineHeight = 280;
+        $fontSize = 52;
+        $numberSize = 96;
+        $marginLeft = 100;
 
         foreach ($points as $i => $point) {
             $y = $startY + ($i * $lineHeight);
