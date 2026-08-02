@@ -44,22 +44,9 @@ function youtubeLoadEnv(string $root): void
 
 function youtubeGetDb(string $root): \PDO
 {
-    $dbConfigPath = $root . '/config/database.php';
-    $dbConfig = file_exists($dbConfigPath) ? require $dbConfigPath : [];
-    
-    $host = $dbConfig['host'] ?? $_ENV['DB_HOST'] ?? getenv('DB_HOST') ?: 'localhost';
-    $port = $dbConfig['port'] ?? $_ENV['DB_PORT'] ?? getenv('DB_PORT') ?: '3306';
-    $name = $dbConfig['name'] ?? $_ENV['DB_NAME'] ?? getenv('DB_NAME') ?: 'thegist';
-    $user = $dbConfig['user'] ?? $_ENV['DB_USER'] ?? getenv('DB_USER') ?: 'root';
-    $pass = $dbConfig['password'] ?? $_ENV['DB_PASS'] ?? getenv('DB_PASS') ?: '';
-
-    $dsn = "mysql:host={$host};port={$port};dbname={$name};charset=utf8mb4";
-    
-    return new \PDO($dsn, $user, $pass, [
-        \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-        \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
-        \PDO::ATTR_EMULATE_PREPARES => false,
-    ]);
+    // Reuse Discovery's DB connection (same config/database.php)
+    require_once $root . '/src/discovery/bootstrap.php';
+    return discoveryGetDb($root . '/');
 }
 
 function youtubeGetConfig(string $root): array
