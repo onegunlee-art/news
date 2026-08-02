@@ -30,9 +30,10 @@ return [
     ],
     
     'fonts' => [
-        'title' => $projectRoot . '/public/fonts/noto/noto_sans_kr_bold_b1d8ccaef03cabe0c50be6a406ebee03.ttf',
-        'body' => $projectRoot . '/public/fonts/noto/noto_sans_kr_normal_f720aac0493f6f2cdc1ac7555480ae45.ttf',
+        'title' => null,
+        'body' => null,
         'fallback' => 'NotoSansKR',
+        'subtitle_size' => 52,
     ],
     
     'scenes' => [
@@ -99,6 +100,7 @@ return [
         'pixel_format' => 'yuv420p',
         'crf' => 23,
         'preset' => 'medium',
+        'subtitle_size' => 52,
     ],
     
     'llm' => [

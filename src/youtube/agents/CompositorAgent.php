@@ -143,16 +143,19 @@ final class CompositorAgent
         $finalPath = $projectPath . '/final.mp4';
 
         $projectRoot = dirname(__DIR__, 3);
-        $fontPath = $projectRoot . '/public/fonts/noto/noto_sans_kr_normal_f720aac0493f6f2cdc1ac7555480ae45.ttf';
-        
-        if (!file_exists($fontPath)) {
+        require_once $projectRoot . '/src/youtube/bootstrap.php';
+        $fontPath = youtubeResolveFontPath($projectRoot, 'regular');
+        $subtitleSize = (int) ($this->ffmpegConfig['subtitle_size'] ?? 52);
+
+        if ($fontPath === '' || !file_exists($fontPath)) {
             copy($inputPath, $finalPath);
             return $finalPath;
         }
 
         $subtitlesFilter = sprintf(
-            "subtitles=%s:force_style='FontName=NotoSansKR,FontSize=24,PrimaryColour=&Hffffff,OutlineColour=&H000000,BorderStyle=3,Outline=2,Shadow=1,MarginV=80'",
-            str_replace(['\\', ':'], ['\\\\', '\\:'], $srtPath)
+            "subtitles=%s:force_style='FontName=Noto Sans CJK KR,FontSize=%d,PrimaryColour=&Hffffff,OutlineColour=&H000000,BorderStyle=3,Outline=3,Shadow=1,MarginV=120'",
+            str_replace(['\\', ':'], ['\\\\', '\\:'], $srtPath),
+            $subtitleSize
         );
 
         $cmd = sprintf(

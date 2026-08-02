@@ -17,6 +17,7 @@ final class MapGenerator
     private int $height;
     private array $style;
     private string $storagePath;
+    private string $fontBold;
 
     public function __construct(array $config)
     {
@@ -24,6 +25,8 @@ final class MapGenerator
         $this->height = (int) ($config['resolution']['height'] ?? 1920);
         $this->style = $config['style'] ?? [];
         $this->storagePath = $config['storage_path'] ?? 'storage/youtube';
+        $projectRoot = dirname(__DIR__, 4);
+        $this->fontBold = $config['fonts']['title'] ?? $projectRoot . '/public/fonts/noto/NotoSansKR-Bold.otf';
     }
 
     /**
@@ -190,19 +193,17 @@ final class MapGenerator
         $gold = imagecolorallocate($image, ...$this->style['primary_rgb'] ?? [212, 175, 55]);
         $fontSize = 64;
         
-        $fontPath = dirname(__DIR__, 4) . '/public/fonts/noto/NotoSansKR-Bold.otf';
-        
-        if (!file_exists($fontPath)) {
+        if (!file_exists($this->fontBold)) {
             imagestring($image, 5, (int) ($this->width / 2 - 50), $this->height - 200, $location, $gold);
             return;
         }
 
-        $bbox = imagettfbbox($fontSize, 0, $fontPath, $location);
+        $bbox = imagettfbbox($fontSize, 0, $this->fontBold, $location);
         $textWidth = abs($bbox[2] - $bbox[0]);
         $x = ($this->width - $textWidth) / 2;
         $y = $this->height - 150;
 
-        imagettftext($image, $fontSize, 0, (int) $x, (int) $y, $gold, $fontPath, $location);
+        imagettftext($image, $fontSize, 0, (int) $x, (int) $y, $gold, $this->fontBold, $location);
     }
 
     private function lonToTileX(float $lon, int $zoom): float

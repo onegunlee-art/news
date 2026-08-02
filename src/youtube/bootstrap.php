@@ -49,13 +49,41 @@ function youtubeGetDb(string $root): \PDO
     return discoveryGetDb($root . '/');
 }
 
+function youtubeResolveFontPath(string $root, string $weight = 'bold'): string
+{
+    $fontDir = $root . '/public/fonts/noto';
+    $candidates = $weight === 'bold'
+        ? ['NotoSansKR-Bold.otf', 'noto_sans_kr_bold_b1d8ccaef03cabe0c50be6a406ebee03.ttf']
+        : ['NotoSansKR-Regular.otf', 'noto_sans_kr_normal_f720aac0493f6f2cdc1ac7555480ae45.ttf'];
+
+    foreach ($candidates as $filename) {
+        $path = $fontDir . '/' . $filename;
+        if (is_file($path)) {
+            return $path;
+        }
+    }
+
+    $pattern = $weight === 'bold' ? 'noto_sans_kr_bold*.ttf' : 'noto_sans_kr_normal*.ttf';
+    $matches = glob($fontDir . '/' . $pattern) ?: [];
+    if ($matches !== []) {
+        return $matches[0];
+    }
+
+    return '';
+}
+
 function youtubeGetConfig(string $root): array
 {
     $configPath = $root . '/config/youtube.php';
     if (!file_exists($configPath)) {
         throw new \RuntimeException('YouTube config not found: ' . $configPath);
     }
-    return require $configPath;
+
+    $config = require $configPath;
+    $config['fonts']['title'] = youtubeResolveFontPath($root, 'bold');
+    $config['fonts']['body'] = youtubeResolveFontPath($root, 'regular');
+
+    return $config;
 }
 
 function youtubeGetOpenAiApiKey(): string
