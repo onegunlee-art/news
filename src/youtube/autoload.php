@@ -6,29 +6,22 @@ spl_autoload_register(static function (string $class): void {
         return;
     }
     $relative = str_replace('Youtube\\', '', $class);
-    $relativePath = str_replace('\\', '/', $relative);
+    $parts = explode('\\', $relative);
     
-    // Try exact case first, then lowercase (for Linux compatibility)
-    $path = __DIR__ . '/' . $relativePath . '.php';
+    // Filename is last part (keep original case)
+    $filename = array_pop($parts);
+    
+    // All directories to lowercase (Linux compatibility: agents vs Agents, visuals vs Visuals)
+    $dirs = array_map('strtolower', $parts);
+    
+    // Build path: lowercase dirs + original case filename
+    $path = __DIR__ . '/';
+    if (!empty($dirs)) {
+        $path .= implode('/', $dirs) . '/';
+    }
+    $path .= $filename . '.php';
+    
     if (is_file($path)) {
         require_once $path;
-        return;
-    }
-    
-    // Try lowercase path (contracts vs Contracts)
-    $pathLower = __DIR__ . '/' . strtolower($relativePath) . '.php';
-    if (is_file($pathLower)) {
-        require_once $pathLower;
-        return;
-    }
-    
-    // Try with first directory lowercase (Contracts/Project -> contracts/Project)
-    $parts = explode('/', $relativePath);
-    if (count($parts) > 1) {
-        $parts[0] = strtolower($parts[0]);
-        $pathMixed = __DIR__ . '/' . implode('/', $parts) . '.php';
-        if (is_file($pathMixed)) {
-            require_once $pathMixed;
-        }
     }
 });
