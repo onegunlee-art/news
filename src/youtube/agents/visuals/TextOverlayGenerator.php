@@ -22,8 +22,8 @@ final class TextOverlayGenerator
         $this->style = $config['style'] ?? [];
         
         $projectRoot = dirname(__DIR__, 4);
-        $this->fontBold = $config['fonts']['title'] ?? $projectRoot . '/public/fonts/noto/noto_sans_kr_bold_b1d8ccaef03cabe0c50be6a406ebee03.ttf';
-        $this->fontRegular = $config['fonts']['body'] ?? $projectRoot . '/public/fonts/noto/noto_sans_kr_normal_f720aac0493f6f2cdc1ac7555480ae45.ttf';
+        $this->fontBold = $config['fonts']['title'] ?? $projectRoot . '/public/fonts/noto/NotoSansKR-Bold.otf';
+        $this->fontRegular = $config['fonts']['body'] ?? $projectRoot . '/public/fonts/noto/NotoSansKR-Regular.otf';
     }
 
     /**

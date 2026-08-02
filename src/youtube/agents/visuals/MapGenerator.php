@@ -190,7 +190,7 @@ final class MapGenerator
         $gold = imagecolorallocate($image, ...$this->style['primary_rgb'] ?? [212, 175, 55]);
         $fontSize = 64;
         
-        $fontPath = dirname(__DIR__, 4) . '/public/fonts/noto/noto_sans_kr_bold_b1d8ccaef03cabe0c50be6a406ebee03.ttf';
+        $fontPath = dirname(__DIR__, 4) . '/public/fonts/noto/NotoSansKR-Bold.otf';
         
         if (!file_exists($fontPath)) {
             imagestring($image, 5, (int) ($this->width / 2 - 50), $this->height - 200, $location, $gold);
