@@ -25,6 +25,7 @@ import { useMenuConfig } from '../hooks/useMenuConfig';
 import { normalizeMenuTabs } from '../utils/menuTabs';
 
 const ENABLE_DISCOVERY = import.meta.env.VITE_ENABLE_DISCOVERY === 'true';
+const ENABLE_YOUTUBE = import.meta.env.VITE_ENABLE_YOUTUBE === 'true';
 
 /** 사이드바에서만 숨김 — 탭 본문/로직은 유지 (나중에 재노출) */
 const HIDDEN_ADMIN_SIDEBAR_TAB_IDS = new Set<string>([
@@ -1577,7 +1578,7 @@ const AdminPage: React.FC = () => {
     { id: 'cancel', name: '취소 요청', iconName: 'cancel' },
     { id: 'strategic-hub', name: 'Strategic Hub', iconName: 'hub' },
     ...(ENABLE_DISCOVERY ? [{ id: 'discovery' as const, name: '오늘의 발견', iconName: 'explore' }] : []),
-    ...(ENABLE_DISCOVERY ? [{ id: 'youtube' as const, name: '유튜브 검수', iconName: 'smart_display' }] : []),
+    ...(ENABLE_DISCOVERY && ENABLE_YOUTUBE ? [{ id: 'youtube' as const, name: '유튜브 검수', iconName: 'smart_display' }] : []),
   ] as const;
 
   // 인증 초기화/검증 중 또는 권한 없음(리다이렉트 예정)에는 로딩 표시 (새로고침 시 어드민 유지)
@@ -5886,7 +5887,7 @@ const AdminPage: React.FC = () => {
             </Suspense>
           )}
 
-          {ENABLE_DISCOVERY && activeTab === 'youtube' && (
+          {ENABLE_DISCOVERY && ENABLE_YOUTUBE && activeTab === 'youtube' && (
             <Suspense fallback={<div className="p-4 text-sm text-gray-500">유튜브 검수 불러오는 중…</div>}>
               <YouTubePanel />
             </Suspense>

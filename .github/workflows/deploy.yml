@@ -83,6 +83,7 @@ jobs:
           VITE_API_URL: /api
           VITE_ENABLE_DISCOVERY: 'true'
           VITE_ENABLE_DISCOVERY_PUBLIC: 'true'
+          VITE_ENABLE_YOUTUBE: 'false'
 
       - name: List built files (배포될 프론트엔드 파일 확인)
         run: |
@@ -206,14 +207,6 @@ jobs:
             src/discovery/ "$REMOTE:$DEST/src/discovery/"
 
           rsync -avz \
-            -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
-            src/youtube/ "$REMOTE:$DEST/src/youtube/"
-
-          rsync -avz \
-            -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
-            public/api/admin/youtube/ "$REMOTE:$DEST/public/api/admin/youtube/"
-
-          rsync -avz \
             --exclude='database.php' \
             -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
             config/ "$REMOTE:$DEST/config/"
@@ -270,7 +263,6 @@ jobs:
             --include='seed_iran_decision_quest.php' \
             --include='seed_hinge_auto_quest.php' \
             --include='discovery_*.php' \
-            --include='youtube_*.php' \
             --exclude='*' \
             tools/ "$REMOTE:$DEST/tools/"
 
@@ -512,6 +504,26 @@ jobs:
             sudo chown www-data:www-data /var/log/thegist-intelligence-collect.log /var/log/thegist-intelligence-report.log
             echo 'Intelligence cron installed'
           "
+
+      - name: Install discovery cron (cron.d)
+        run: |
+          REMOTE="${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}"
+          KEY="$HOME/.ssh/ec2_key"
+          scp -i "$KEY" -o StrictHostKeyChecking=no cron/discovery.cron "$REMOTE:/tmp/discovery.cron"
+          ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" "
+            sudo cp /tmp/discovery.cron /etc/cron.d/discovery
+            sudo chmod 644 /etc/cron.d/discovery
+            sudo touch /var/log/discovery_generate.log /var/log/discovery_publish.log
+            sudo chown www-data:www-data /var/log/discovery_generate.log /var/log/discovery_publish.log
+            echo 'Discovery cron installed'
+          "
+
+      - name: Verify discovery email (smoke)
+        run: |
+          REMOTE="${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}"
+          KEY="$HOME/.ssh/ec2_key"
+          ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" \
+            "cd /var/www/thegist && sudo -u www-data php tools/discovery_test_email.php onegunlee@gmail.com"
 
       - name: Deployment notification
         run: |

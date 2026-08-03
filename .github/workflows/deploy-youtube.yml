@@ -1,22 +1,15 @@
 name: Deploy YouTube Only
 
-# gist 본체(public/assets, frontend) 건드리지 않고 YouTube 파이프라인만 EC2에 반영
+# DISABLED: YouTube 파이프라인 잠시 중단 — 운영(discovery/www) 보호 우선.
+# 코드(src/youtube 등)는 레포에 보존. 재개 시 push 트리거와 if: false 제거.
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - 'src/youtube/**'
-      - 'config/youtube.php'
-      - 'public/api/admin/youtube/**'
-      - 'tools/youtube_*.php'
-      - '.github/workflows/deploy-youtube.yml'
 
 jobs:
   deploy-youtube:
     name: Deploy YouTube pipeline to EC2
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
+    if: false
 
     steps:
       - name: Checkout code
