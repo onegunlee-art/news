@@ -206,6 +206,14 @@ jobs:
             src/discovery/ "$REMOTE:$DEST/src/discovery/"
 
           rsync -avz \
+            -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
+            src/youtube/ "$REMOTE:$DEST/src/youtube/"
+
+          rsync -avz \
+            -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
+            public/api/admin/youtube/ "$REMOTE:$DEST/public/api/admin/youtube/"
+
+          rsync -avz \
             --exclude='database.php' \
             -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
             config/ "$REMOTE:$DEST/config/"
@@ -262,6 +270,7 @@ jobs:
             --include='seed_iran_decision_quest.php' \
             --include='seed_hinge_auto_quest.php' \
             --include='discovery_*.php' \
+            --include='youtube_*.php' \
             --exclude='*' \
             tools/ "$REMOTE:$DEST/tools/"
 

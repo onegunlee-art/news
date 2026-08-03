@@ -1,0 +1,124 @@
+name: Deploy YouTube Only
+
+# gist 본체(public/assets, frontend) 건드리지 않고 YouTube 파이프라인만 EC2에 반영
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'src/youtube/**'
+      - 'config/youtube.php'
+      - 'public/api/admin/youtube/**'
+      - 'tools/youtube_*.php'
+      - '.github/workflows/deploy-youtube.yml'
+
+jobs:
+  deploy-youtube:
+    name: Deploy YouTube pipeline to EC2
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p "$HOME/.ssh"
+          printf '%s\n' "${{ secrets.EC2_SSH_KEY }}" | tr -d '\r' > "$HOME/.ssh/ec2_key"
+          chmod 600 "$HOME/.ssh/ec2_key"
+          ssh-keyscan -H "${{ secrets.EC2_HOST }}" >> "$HOME/.ssh/known_hosts" 2>/dev/null || true
+
+      - name: Prepare remote dirs
+        run: |
+          REMOTE="${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}"
+          KEY="$HOME/.ssh/ec2_key"
+          ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" bash -c '
+            U=$(whoami)
+            for d in /var/www/thegist/src/youtube \
+                     /var/www/thegist/public/api/admin/youtube \
+                     /var/www/thegist/tools; do
+              sudo mkdir -p "$d"
+              sudo chown -R "$U:$U" "$d"
+            done
+          '
+
+      - name: Rsync YouTube files only
+        run: |
+          REMOTE="${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}"
+          KEY="$HOME/.ssh/ec2_key"
+          DEST="/var/www/thegist"
+
+          rsync -avz \
+            -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
+            src/youtube/ "$REMOTE:$DEST/src/youtube/"
+
+          rsync -avz \
+            -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
+            config/youtube.php "$REMOTE:$DEST/config/youtube.php"
+
+          rsync -avz \
+            -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
+            public/api/admin/youtube/ "$REMOTE:$DEST/public/api/admin/youtube/"
+
+          rsync -avz \
+            -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
+            tools/youtube_generate.php tools/youtube_font_probe.php "$REMOTE:$DEST/tools/"
+
+      - name: Fix ownership (youtube paths only)
+        run: |
+          REMOTE="${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}"
+          KEY="$HOME/.ssh/ec2_key"
+          ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" bash -c '
+            sudo chown -R www-data:www-data \
+              /var/www/thegist/src/youtube \
+              /var/www/thegist/config/youtube.php \
+              /var/www/thegist/public/api/admin/youtube \
+              /var/www/thegist/tools/youtube_generate.php \
+              /var/www/thegist/tools/youtube_font_probe.php
+          '
+
+      - name: Font probe on EC2
+        run: |
+          REMOTE="${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}"
+          KEY="$HOME/.ssh/ec2_key"
+          ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" \
+            "cd /var/www/thegist && sudo -u www-data php tools/youtube_font_probe.php"
+
+      - name: Regenerate sample video (change 90)
+        run: |
+          REMOTE="${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}"
+          KEY="$HOME/.ssh/ec2_key"
+          ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" bash -c '
+            set -e
+            rm -f /var/www/thegist/storage/youtube/_fixed/opening.png
+            rm -f /var/www/thegist/storage/youtube/_fixed/ending.png
+            rm -rf /var/www/thegist/storage/youtube/20260802/90/
+            cd /var/www/thegist
+            sudo -u www-data php tools/youtube_generate.php --change-id=90
+          '
+
+      - name: Verify generated assets
+        run: |
+          REMOTE="${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}"
+          KEY="$HOME/.ssh/ec2_key"
+          ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" bash -c '
+            set -e
+            DIR=/var/www/thegist/storage/youtube/20260802/90
+            test -f "$DIR/scene_5_chart.png"
+            test -f "$DIR/scene_2_map.png"
+            test -f "$DIR/final.mp4"
+            CHART_SIZE=$(stat -c%s "$DIR/scene_5_chart.png")
+            MAP_SIZE=$(stat -c%s "$DIR/scene_2_map.png")
+            echo "scene_5_chart.png: ${CHART_SIZE} bytes"
+            echo "scene_2_map.png: ${MAP_SIZE} bytes"
+            if [ "$CHART_SIZE" -lt 30000 ]; then
+              echo "FAIL: chart image too small (font likely missing)"
+              exit 1
+            fi
+            if [ "$MAP_SIZE" -lt 30000 ]; then
+              echo "FAIL: map image too small"
+              exit 1
+            fi
+            echo "OK: asset sizes look healthy"
+          '
