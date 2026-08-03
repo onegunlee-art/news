@@ -58,9 +58,9 @@ jobs:
             -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
             src/youtube/ "$REMOTE:$DEST/src/youtube/"
 
-          rsync -avz --no-times \
-            -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
-            config/youtube.php "$REMOTE:$DEST/config/youtube.php"
+          scp -i "$KEY" -o StrictHostKeyChecking=no config/youtube.php "$REMOTE:/tmp/youtube.php"
+          ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" \
+            "sudo cp /tmp/youtube.php $DEST/config/youtube.php && rm -f /tmp/youtube.php"
 
           rsync -avz \
             -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
@@ -91,6 +91,7 @@ jobs:
             "cd /var/www/thegist && sudo -u www-data php tools/youtube_font_probe.php"
 
       - name: Regenerate sample video (change 90)
+        timeout-minutes: 20
         run: |
           REMOTE="${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}"
           KEY="$HOME/.ssh/ec2_key"
