@@ -52,6 +52,14 @@ function youtubeGetDb(string $root): \PDO
 function youtubeResolveFontPath(string $root, string $weight = 'bold'): string
 {
     $fontDir = $root . '/public/fonts/noto';
+
+    // GD/FreeType는 .ttf가 .otf보다 안정적 — EC2 hashed ttf 우선
+    $pattern = $weight === 'bold' ? 'noto_sans_kr_bold*.ttf' : 'noto_sans_kr_normal*.ttf';
+    $matches = glob($fontDir . '/' . $pattern) ?: [];
+    if ($matches !== []) {
+        return $matches[0];
+    }
+
     $candidates = $weight === 'bold'
         ? ['NotoSansKR-Bold.otf', 'noto_sans_kr_bold_b1d8ccaef03cabe0c50be6a406ebee03.ttf']
         : ['NotoSansKR-Regular.otf', 'noto_sans_kr_normal_f720aac0493f6f2cdc1ac7555480ae45.ttf'];
@@ -61,12 +69,6 @@ function youtubeResolveFontPath(string $root, string $weight = 'bold'): string
         if (is_file($path)) {
             return $path;
         }
-    }
-
-    $pattern = $weight === 'bold' ? 'noto_sans_kr_bold*.ttf' : 'noto_sans_kr_normal*.ttf';
-    $matches = glob($fontDir . '/' . $pattern) ?: [];
-    if ($matches !== []) {
-        return $matches[0];
     }
 
     return '';

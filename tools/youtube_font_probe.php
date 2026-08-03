@@ -5,16 +5,25 @@ $root = dirname(__DIR__);
 require_once $root . '/src/youtube/bootstrap.php';
 
 youtubeLoadEnv($root);
+
+if (!function_exists('imagettftext')) {
+    fwrite(STDERR, "ERROR: PHP GD/FreeType (imagettftext) not available\n");
+    exit(1);
+}
+
 $config = youtubeGetConfig($root);
 
 echo "=== YouTube Font Probe ===\n\n";
 echo 'Bold: ' . ($config['fonts']['title'] ?: '(not found)') . "\n";
 echo 'Regular: ' . ($config['fonts']['body'] ?: '(not found)') . "\n\n";
 
+$failed = false;
+
 foreach (['title' => 'bold', 'body' => 'regular'] as $key => $weight) {
     $path = $config['fonts'][$key] ?? '';
     if ($path === '' || !is_file($path)) {
         echo strtoupper($key) . ": MISSING\n";
+        $failed = true;
         continue;
     }
 
@@ -25,7 +34,7 @@ foreach (['title' => 'bold', 'body' => 'regular'] as $key => $weight) {
 
     $sample = $weight === 'bold' ? '9' : '명 사망';
     $size = $weight === 'bold' ? 280 : 72;
-    $result = imagettftext($image, $size, 0, 80, 280, $gold, $path, $sample);
+    $result = @imagettftext($image, $size, 0, 80, 280, $gold, $path, $sample);
 
     $out = $root . '/storage/youtube/_fixed/probe_' . $weight . '.png';
     if (!is_dir(dirname($out))) {
@@ -34,7 +43,25 @@ foreach (['title' => 'bold', 'body' => 'regular'] as $key => $weight) {
     imagepng($image, $out);
     imagedestroy($image);
 
-    echo strtoupper($key) . ": OK -> {$out} (" . filesize($out) . " bytes)\n";
+    $bytes = filesize($out) ?: 0;
+    if ($result === false) {
+        echo strtoupper($key) . ": RENDER FAILED ({$path})\n";
+        $failed = true;
+        continue;
+    }
+    if ($bytes < 5000) {
+        echo strtoupper($key) . ": TOO SMALL ({$bytes} bytes)\n";
+        $failed = true;
+        continue;
+    }
+
+    echo strtoupper($key) . ": OK -> {$out} ({$bytes} bytes)\n";
 }
 
-echo "\nDone.\n";
+echo "\n";
+if ($failed) {
+    echo "FAIL: font probe did not pass\n";
+    exit(1);
+}
+
+echo "Done.\n";

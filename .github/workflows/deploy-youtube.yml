@@ -39,10 +39,14 @@ jobs:
             for d in /var/www/thegist/src/youtube \
                      /var/www/thegist/public/api/admin/youtube \
                      /var/www/thegist/tools \
-                     /var/www/thegist/config; do
+                     /var/www/thegist/config \
+                     /var/www/thegist/storage/youtube/_fixed; do
               sudo mkdir -p "$d"
               sudo chown -R "$U:$U" "$d"
             done
+            sudo mkdir -p /var/www/thegist/storage/youtube
+            sudo chown -R www-data:www-data /var/www/thegist/storage/youtube
+            sudo chmod -R 775 /var/www/thegist/storage/youtube
             if [ -f /var/www/thegist/config/youtube.php ]; then
               sudo chown "$U:$U" /var/www/thegist/config/youtube.php
             fi
@@ -97,9 +101,11 @@ jobs:
           KEY="$HOME/.ssh/ec2_key"
           ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" bash -c '
             set -e
-            rm -f /var/www/thegist/storage/youtube/_fixed/opening.png
-            rm -f /var/www/thegist/storage/youtube/_fixed/ending.png
-            rm -rf /var/www/thegist/storage/youtube/20260802/90/
+            sudo rm -f /var/www/thegist/storage/youtube/_fixed/opening.png
+            sudo rm -f /var/www/thegist/storage/youtube/_fixed/ending.png
+            sudo rm -f /var/www/thegist/storage/youtube/_fixed/probe_bold.png
+            sudo rm -f /var/www/thegist/storage/youtube/_fixed/probe_regular.png
+            sudo rm -rf /var/www/thegist/storage/youtube/20260802/90/
             cd /var/www/thegist
             sudo -u www-data php tools/youtube_generate.php --change-id=90
           '
