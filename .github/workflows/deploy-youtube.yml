@@ -35,12 +35,17 @@ jobs:
           KEY="$HOME/.ssh/ec2_key"
           ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" bash -c '
             U=$(whoami)
+            sudo mkdir -p /var/www/thegist/config
             for d in /var/www/thegist/src/youtube \
                      /var/www/thegist/public/api/admin/youtube \
-                     /var/www/thegist/tools; do
+                     /var/www/thegist/tools \
+                     /var/www/thegist/config; do
               sudo mkdir -p "$d"
               sudo chown -R "$U:$U" "$d"
             done
+            if [ -f /var/www/thegist/config/youtube.php ]; then
+              sudo chown "$U:$U" /var/www/thegist/config/youtube.php
+            fi
           '
 
       - name: Rsync YouTube files only
@@ -53,7 +58,7 @@ jobs:
             -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
             src/youtube/ "$REMOTE:$DEST/src/youtube/"
 
-          rsync -avz \
+          rsync -avz --no-times \
             -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
             config/youtube.php "$REMOTE:$DEST/config/youtube.php"
 
