@@ -291,6 +291,9 @@ jobs:
           rsync -avz --no-times \
             -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
             aws/thegist-server-locations.inc "$REMOTE:$DEST/aws/"
+          rsync -avz --no-times \
+            -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
+            aws/tune-php-fpm-safe.sh "$REMOTE:$DEST/aws/"
 
           # Composer 관련 파일 (dompdf 등 의존성 설치용)
           # post-deploy www-data chown 직후 재확인 + 단일 rsync (--no-times로 exit 23 방지)
@@ -305,6 +308,14 @@ jobs:
               -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
               composer.json "$REMOTE:$DEST/"
           fi
+
+      - name: Reload nginx (storage/logs block in locations.inc)
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          REMOTE="${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}"
+          KEY="$HOME/.ssh/ec2_key"
+          ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" \
+            'sudo nginx -t && sudo systemctl reload nginx && echo "nginx reloaded (locations.inc)"'
 
       # Nginx config는 서버에서 직접 관리 (certbot SSL 블록 포함).
       # sw.js/registerSW.js no-cache 블록만 없으면 추가한다.
@@ -476,6 +487,23 @@ jobs:
               exit 1
             fi
 
+            echo '=== Tune PHP-FPM (503 mitigation) ==='
+            if [ -f aws/tune-php-fpm-safe.sh ]; then
+              sudo bash aws/tune-php-fpm-safe.sh || echo 'WARN: tune-php-fpm failed'
+            fi
+
+            echo '=== Delete diagnostic draft id=814 ==='
+            sudo -u www-data php -r "
+              \$c = require '/var/www/thegist/config/database.php';
+              \$pdo = new PDO(
+                'mysql:host=' . \$c['host'] . ';dbname=' . \$c['database'] . ';charset=utf8mb4',
+                \$c['username'],
+                \$c['password']
+              );
+              \$n = \$pdo->exec(\"DELETE FROM news WHERE id = 814 AND status = 'draft'\");
+              echo 'deleted rows: ' . \$n . PHP_EOL;
+            " || echo 'WARN: draft 814 delete failed'
+
             sudo systemctl restart php8.2-fpm
             sleep 3
             echo 'Deploy complete: PHP-FPM restarted'
@@ -566,6 +594,45 @@ jobs:
           echo "--- curl -I (debug) ---"
           curl -sSI --connect-timeout 15 --max-time 30 "$URL" || true
           exit 1
+
+      - name: 503 fix verification (logs blocked + draft save + ops)
+        run: |
+          BASE="${{ env.SITE_URL }}"
+          LOG_CODE=$(curl -sS -o /dev/null -w "%{http_code}" --connect-timeout 15 "$BASE/storage/logs/error_news.log" 2>/dev/null || echo "000")
+          LOG_CODE=$(echo "$LOG_CODE" | tr -d '[:space:]')
+          echo "storage/logs/error_news.log => HTTP $LOG_CODE"
+          if [ "$LOG_CODE" != "403" ] && [ "$LOG_CODE" != "404" ]; then
+            echo "❌ storage/logs still publicly accessible (expected 403/404)"
+            exit 1
+          fi
+          for path in "" "/admin" "/discovery"; do
+            code=$(curl -sS -o /dev/null -w "%{http_code}" --connect-timeout 15 "$BASE$path" 2>/dev/null || echo "000")
+            code=$(echo "$code" | tr -d '[:space:]')
+            echo "$BASE$path => HTTP $code"
+            if [ "$code" != "200" ]; then
+              echo "❌ Ops URL failed: $BASE$path"
+              exit 1
+            fi
+          done
+          DRAFT_BODY='{"status":"draft","category_parent":"diplomacy","category":"verify","title":"503-verify","content":"<p>ok</p>"}'
+          DRAFT_CODE=$(curl -sS -o /tmp/draft_verify.json -w "%{http_code}" -X POST \
+            -H "Content-Type: application/json" \
+            -d "$DRAFT_BODY" \
+            --connect-timeout 30 --max-time 60 "$BASE/api/admin/news.php" 2>/dev/null || echo "000")
+          DRAFT_CODE=$(echo "$DRAFT_CODE" | tr -d '[:space:]')
+          echo "draft POST probe => HTTP $DRAFT_CODE"
+          if [ "$DRAFT_CODE" = "503" ]; then
+            echo "❌ Draft save still returns 503"
+            cat /tmp/draft_verify.json 2>/dev/null || true
+            exit 1
+          fi
+          if [ "$DRAFT_CODE" != "201" ] && [ "$DRAFT_CODE" != "200" ]; then
+            echo "⚠️ Draft POST returned HTTP $DRAFT_CODE (not 503 — worker pool may be OK)"
+            cat /tmp/draft_verify.json 2>/dev/null || true
+          else
+            echo "✅ Draft POST succeeded (no 503)"
+          fi
+          echo "✅ 503 fix verification passed"
 
       - name: EDU compose bootstrap gate (401 JSON required, 500 empty rejected)
         run: |

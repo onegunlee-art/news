@@ -38,6 +38,12 @@
         return 404;
     }
 
+    # storage/logs — 에러 로그 웹 노출 차단 (storage/youtube 등 다른 경로는 유지)
+    location ^~ /storage/logs/ {
+        deny all;
+        return 403;
+    }
+
     # ──────────────────────────────────────
     # 오디오 파일 CORS
     # ──────────────────────────────────────
