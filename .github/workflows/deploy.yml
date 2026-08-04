@@ -294,6 +294,9 @@ jobs:
           rsync -avz --no-times \
             -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
             aws/tune-php-fpm-safe.sh "$REMOTE:$DEST/aws/"
+          rsync -avz --no-times \
+            -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
+            aws/ensure-storage-logs-block.sh "$REMOTE:$DEST/aws/"
 
           # Composer 관련 파일 (dompdf 등 의존성 설치용)
           # post-deploy www-data chown 직후 재확인 + 단일 rsync (--no-times로 exit 23 방지)
@@ -314,26 +317,8 @@ jobs:
         run: |
           REMOTE="${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}"
           KEY="$HOME/.ssh/ec2_key"
-          HAS=$(ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" \
-            'grep -c "location \^~ /storage/logs/" /etc/nginx/sites-available/thegist 2>/dev/null || echo 0')
-          HAS=$(echo "$HAS" | tr -d '[:space:]')
-          if [ "$HAS" != "0" ]; then
-            echo "storage/logs deny block already present — skipping patch"
-          else
-            echo "Adding storage/logs deny block to Nginx config..."
-            printf '%s\n' \
-              '    # storage/logs — 에러 로그 웹 노출 차단 (auto-added by CI)' \
-              '    location ^~ /storage/logs/ {' \
-              '        deny all;' \
-              '        return 403;' \
-              '    }' \
-              '' > /tmp/storage-logs-snippet.conf
-            scp -i "$KEY" -o StrictHostKeyChecking=no /tmp/storage-logs-snippet.conf "$REMOTE:/tmp/"
-            ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" \
-              'CONF=/etc/nginx/sites-available/thegist && sudo awk "/location ~ \/\\\\\\.(env|git|htaccess)/{while((getline line < \"/tmp/storage-logs-snippet.conf\") > 0) print line; close(\"/tmp/storage-logs-snippet.conf\")} {print}" "$CONF" | sudo tee /tmp/thegist-logs-patched > /dev/null && sudo cp /tmp/thegist-logs-patched "$CONF" && echo "storage/logs block patched into $CONF"'
-          fi
           ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" \
-            'sudo nginx -t && sudo systemctl reload nginx && echo "nginx reloaded (storage/logs block)"'
+            'sudo bash /var/www/thegist/aws/ensure-storage-logs-block.sh'
 
       # Nginx config는 서버에서 직접 관리 (certbot SSL 블록 포함).
       # sw.js/registerSW.js no-cache 블록만 없으면 추가한다.
