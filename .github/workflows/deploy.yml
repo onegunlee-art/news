@@ -503,7 +503,7 @@ jobs:
                 \$c['username'],
                 \$c['password']
               );
-              \$n = \$pdo->exec(\"DELETE FROM news WHERE id = 814 AND status = 'draft'\");
+              \$n = \$pdo->exec(\"DELETE FROM news WHERE id = 814\");
               echo 'deleted rows: ' . \$n . PHP_EOL;
             " || echo 'WARN: draft 814 delete failed'
 
