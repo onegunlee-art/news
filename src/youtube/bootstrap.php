@@ -51,18 +51,41 @@ function youtubeGetDb(string $root): \PDO
 
 function youtubeResolveFontPath(string $root, string $weight = 'bold'): string
 {
-    $fontDir = $root . '/public/fonts/noto';
+    // 1. 시스템 폰트 우선 (Linux/Windows 차이 제거)
+    $systemFonts = $weight === 'bold'
+        ? [
+            '/usr/share/fonts/opentype/noto/NotoSansCJK-Bold.ttc',
+            '/usr/share/fonts/truetype/noto/NotoSansCJK-Bold.ttc',
+            '/usr/share/fonts/noto-cjk/NotoSansCJK-Bold.ttc',
+            '/usr/share/fonts/opentype/noto/NotoSansCJKkr-Bold.otf',
+            '/usr/share/fonts/truetype/noto/NotoSansKR-Bold.ttf',
+        ]
+        : [
+            '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc',
+            '/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc',
+            '/usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc',
+            '/usr/share/fonts/opentype/noto/NotoSansCJKkr-Regular.otf',
+            '/usr/share/fonts/truetype/noto/NotoSansKR-Regular.ttf',
+        ];
 
-    // GD/FreeType는 .ttf가 .otf보다 안정적 — EC2 hashed ttf 우선
+    foreach ($systemFonts as $path) {
+        if (is_file($path)) {
+            return $path;
+        }
+    }
+
+    // 2. 프로젝트 폰트 폴더 (EC2 hashed ttf 우선)
+    $fontDir = $root . '/public/fonts/noto';
     $pattern = $weight === 'bold' ? 'noto_sans_kr_bold*.ttf' : 'noto_sans_kr_normal*.ttf';
     $matches = glob($fontDir . '/' . $pattern) ?: [];
     if ($matches !== []) {
         return $matches[0];
     }
 
+    // 3. 프로젝트 폰트 개별 파일
     $candidates = $weight === 'bold'
-        ? ['NotoSansKR-Bold.otf', 'noto_sans_kr_bold_b1d8ccaef03cabe0c50be6a406ebee03.ttf']
-        : ['NotoSansKR-Regular.otf', 'noto_sans_kr_normal_f720aac0493f6f2cdc1ac7555480ae45.ttf'];
+        ? ['NotoSansKR-Bold.otf', 'NotoSansKR-Bold.ttf']
+        : ['NotoSansKR-Regular.otf', 'NotoSansKR-Regular.ttf'];
 
     foreach ($candidates as $filename) {
         $path = $fontDir . '/' . $filename;

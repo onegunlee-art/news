@@ -23,9 +23,15 @@ final class FixedAssetManager
         $this->style = $config['style'] ?? [];
         $this->fixedPath = $config['fixed_assets_path'] ?? 'storage/youtube/_fixed';
         
-        $projectRoot = dirname(__DIR__, 4);
-        $this->fontBold = $config['fonts']['title'] ?? $projectRoot . '/public/fonts/noto/NotoSansKR-Bold.otf';
-        $this->fontRegular = $config['fonts']['body'] ?? $projectRoot . '/public/fonts/noto/NotoSansKR-Regular.otf';
+        $this->fontBold = $config['fonts']['title'] ?? '';
+        $this->fontRegular = $config['fonts']['body'] ?? '';
+        
+        if ($this->fontBold === '' || !is_file($this->fontBold)) {
+            throw new \RuntimeException("FixedAssetManager: Bold font not found. Path: {$this->fontBold}");
+        }
+        if ($this->fontRegular === '' || !is_file($this->fontRegular)) {
+            throw new \RuntimeException("FixedAssetManager: Regular font not found. Path: {$this->fontRegular}");
+        }
         
         $this->ensureDirectory($this->fixedPath);
     }
@@ -68,28 +74,23 @@ final class FixedAssetManager
         $mainText = 'THE WORLD';
         $subText = 'CHANGED TODAY';
         
-        if (file_exists($this->fontBold)) {
-            $mainSize = 110;
-            $bbox = imagettfbbox($mainSize, 0, $this->fontBold, $mainText);
-            $mainWidth = abs($bbox[2] - $bbox[0]);
-            $mainX = ($this->width - $mainWidth) / 2;
-            imagettftext($image, $mainSize, 0, (int) $mainX, (int) ($this->height / 2 - 80), $white, $this->fontBold, $mainText);
-            
-            $bbox = imagettfbbox($mainSize, 0, $this->fontBold, $subText);
-            $subWidth = abs($bbox[2] - $bbox[0]);
-            $subX = ($this->width - $subWidth) / 2;
-            imagettftext($image, $mainSize, 0, (int) $subX, (int) ($this->height / 2 + 100), $gold, $this->fontBold, $subText);
-            
-            $logoText = 'the gist.';
-            $logoSize = 56;
-            $bbox = imagettfbbox($logoSize, 0, $this->fontRegular, $logoText);
-            $logoWidth = abs($bbox[2] - $bbox[0]);
-            $logoX = ($this->width - $logoWidth) / 2;
-            imagettftext($image, $logoSize, 0, (int) $logoX, $this->height - 250, $gold, $this->fontRegular, $logoText);
-        } else {
-            $this->renderTextFallback($image, $mainText, $this->height / 2 - 50, $white);
-            $this->renderTextFallback($image, $subText, $this->height / 2 + 50, $gold);
-        }
+        $mainSize = 110;
+        $bbox = imagettfbbox($mainSize, 0, $this->fontBold, $mainText);
+        $mainWidth = abs($bbox[2] - $bbox[0]);
+        $mainX = ($this->width - $mainWidth) / 2;
+        imagettftext($image, $mainSize, 0, (int) $mainX, (int) ($this->height / 2 - 80), $white, $this->fontBold, $mainText);
+        
+        $bbox = imagettfbbox($mainSize, 0, $this->fontBold, $subText);
+        $subWidth = abs($bbox[2] - $bbox[0]);
+        $subX = ($this->width - $subWidth) / 2;
+        imagettftext($image, $mainSize, 0, (int) $subX, (int) ($this->height / 2 + 100), $gold, $this->fontBold, $subText);
+        
+        $logoText = 'the gist.';
+        $logoSize = 56;
+        $bbox = imagettfbbox($logoSize, 0, $this->fontRegular, $logoText);
+        $logoWidth = abs($bbox[2] - $bbox[0]);
+        $logoX = ($this->width - $logoWidth) / 2;
+        imagettftext($image, $logoSize, 0, (int) $logoX, $this->height - 250, $gold, $this->fontRegular, $logoText);
 
         $this->addGoldAccentLines($image);
         
@@ -105,30 +106,25 @@ final class FixedAssetManager
         $white = imagecolorallocate($image, ...$this->style['text_rgb'] ?? [255, 255, 255]);
         $gray = imagecolorallocate($image, ...$this->style['secondary_text_rgb'] ?? [136, 136, 136]);
         
-        if (file_exists($this->fontBold)) {
-            $logoText = 'the gist.';
-            $logoSize = 100;
-            $bbox = imagettfbbox($logoSize, 0, $this->fontBold, $logoText);
-            $logoWidth = abs($bbox[2] - $bbox[0]);
-            $logoX = ($this->width - $logoWidth) / 2;
-            imagettftext($image, $logoSize, 0, (int) $logoX, (int) ($this->height / 2 - 100), $gold, $this->fontBold, $logoText);
-            
-            $tagline = 'Essential truth.';
-            $tagSize = 48;
-            $bbox = imagettfbbox($tagSize, 0, $this->fontRegular, $tagline);
-            $tagWidth = abs($bbox[2] - $bbox[0]);
-            $tagX = ($this->width - $tagWidth) / 2;
-            imagettftext($image, $tagSize, 0, (int) $tagX, (int) ($this->height / 2 + 60), $white, $this->fontRegular, $tagline);
-            
-            $tagline2 = 'A clear view of the world.';
-            $bbox = imagettfbbox($tagSize, 0, $this->fontRegular, $tagline2);
-            $tag2Width = abs($bbox[2] - $bbox[0]);
-            $tag2X = ($this->width - $tag2Width) / 2;
-            imagettftext($image, $tagSize, 0, (int) $tag2X, (int) ($this->height / 2 + 130), $gray, $this->fontRegular, $tagline2);
-        } else {
-            $this->renderTextFallback($image, 'the gist.', $this->height / 2 - 50, $gold);
-            $this->renderTextFallback($image, 'Essential truth.', $this->height / 2 + 30, $white);
-        }
+        $logoText = 'the gist.';
+        $logoSize = 100;
+        $bbox = imagettfbbox($logoSize, 0, $this->fontBold, $logoText);
+        $logoWidth = abs($bbox[2] - $bbox[0]);
+        $logoX = ($this->width - $logoWidth) / 2;
+        imagettftext($image, $logoSize, 0, (int) $logoX, (int) ($this->height / 2 - 100), $gold, $this->fontBold, $logoText);
+        
+        $tagline = 'Essential truth.';
+        $tagSize = 48;
+        $bbox = imagettfbbox($tagSize, 0, $this->fontRegular, $tagline);
+        $tagWidth = abs($bbox[2] - $bbox[0]);
+        $tagX = ($this->width - $tagWidth) / 2;
+        imagettftext($image, $tagSize, 0, (int) $tagX, (int) ($this->height / 2 + 60), $white, $this->fontRegular, $tagline);
+        
+        $tagline2 = 'A clear view of the world.';
+        $bbox = imagettfbbox($tagSize, 0, $this->fontRegular, $tagline2);
+        $tag2Width = abs($bbox[2] - $bbox[0]);
+        $tag2X = ($this->width - $tag2Width) / 2;
+        imagettftext($image, $tagSize, 0, (int) $tag2X, (int) ($this->height / 2 + 130), $gray, $this->fontRegular, $tagline2);
 
         $this->addGoldAccentLines($image);
         
@@ -152,12 +148,6 @@ final class FixedAssetManager
         imagesetthickness($image, 3);
         imageline($image, 100, 300, $this->width - 100, 300, $gold);
         imageline($image, 100, $this->height - 300, $this->width - 100, $this->height - 300, $gold);
-    }
-
-    private function renderTextFallback(\GdImage $image, string $text, int $y, int $color): void
-    {
-        $x = ($this->width - strlen($text) * 12) / 2;
-        imagestring($image, 5, (int) $x, $y, $text, $color);
     }
 
     private function ensureDirectory(string $dir): void

@@ -21,9 +21,15 @@ final class ChartGenerator
         $this->height = (int) ($config['resolution']['height'] ?? 1920);
         $this->style = $config['style'] ?? [];
         
-        $projectRoot = dirname(__DIR__, 4);
-        $this->fontBold = $config['fonts']['title'] ?? $projectRoot . '/public/fonts/noto/NotoSansKR-Bold.otf';
-        $this->fontRegular = $config['fonts']['body'] ?? $projectRoot . '/public/fonts/noto/NotoSansKR-Regular.otf';
+        $this->fontBold = $config['fonts']['title'] ?? '';
+        $this->fontRegular = $config['fonts']['body'] ?? '';
+        
+        if ($this->fontBold === '' || !is_file($this->fontBold)) {
+            throw new \RuntimeException("ChartGenerator: Bold font not found. Path: {$this->fontBold}");
+        }
+        if ($this->fontRegular === '' || !is_file($this->fontRegular)) {
+            throw new \RuntimeException("ChartGenerator: Regular font not found. Path: {$this->fontRegular}");
+        }
     }
 
     /**
@@ -113,11 +119,9 @@ final class ChartGenerator
 
         $title = '핵심 수치';
         $titleSize = 64;
-        if (file_exists($this->fontBold)) {
-            $bbox = imagettfbbox($titleSize, 0, $this->fontBold, $title);
-            $titleWidth = abs($bbox[2] - $bbox[0]);
-            imagettftext($image, $titleSize, 0, (int) (($this->width - $titleWidth) / 2), 180, $gray, $this->fontBold, $title);
-        }
+        $bbox = imagettfbbox($titleSize, 0, $this->fontBold, $title);
+        $titleWidth = abs($bbox[2] - $bbox[0]);
+        imagettftext($image, $titleSize, 0, (int) (($this->width - $titleWidth) / 2), 180, $gray, $this->fontBold, $title);
     }
 
     private function renderSingleNumber(\GdImage $image, array $num, int $y, int $numberSize, int $labelSize, int $gold, int $white): void
@@ -136,14 +140,11 @@ final class ChartGenerator
             $labelY = $y;
         }
 
-        if ($label !== '' && file_exists($this->fontRegular)) {
+        if ($label !== '') {
             $bbox = imagettfbbox($labelSize, 0, $this->fontRegular, $label);
             $labelWidth = abs($bbox[2] - $bbox[0]);
             $labelX = ($this->width - $labelWidth) / 2;
             imagettftext($image, $labelSize, 0, (int) $labelX, $labelY, $white, $this->fontRegular, $label);
-        } elseif ($label !== '') {
-            $labelX = ($this->width - strlen($label) * 10) / 2;
-            imagestring($image, 5, (int) $labelX, $labelY - 10, $label, $white);
         }
     }
 

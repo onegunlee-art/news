@@ -21,9 +21,15 @@ final class TextOverlayGenerator
         $this->height = (int) ($config['resolution']['height'] ?? 1920);
         $this->style = $config['style'] ?? [];
         
-        $projectRoot = dirname(__DIR__, 4);
-        $this->fontBold = $config['fonts']['title'] ?? $projectRoot . '/public/fonts/noto/NotoSansKR-Bold.otf';
-        $this->fontRegular = $config['fonts']['body'] ?? $projectRoot . '/public/fonts/noto/NotoSansKR-Regular.otf';
+        $this->fontBold = $config['fonts']['title'] ?? '';
+        $this->fontRegular = $config['fonts']['body'] ?? '';
+        
+        if ($this->fontBold === '' || !is_file($this->fontBold)) {
+            throw new \RuntimeException("TextOverlayGenerator: Bold font not found. Path: {$this->fontBold}");
+        }
+        if ($this->fontRegular === '' || !is_file($this->fontRegular)) {
+            throw new \RuntimeException("TextOverlayGenerator: Regular font not found. Path: {$this->fontRegular}");
+        }
     }
 
     /**
@@ -76,11 +82,6 @@ final class TextOverlayGenerator
     {
         $gold = imagecolorallocate($image, ...$this->style['primary_rgb'] ?? [212, 175, 55]);
         $fontSize = 80;
-        
-        if (!file_exists($this->fontBold)) {
-            imagestring($image, 5, 100, 200, $title, $gold);
-            return;
-        }
 
         $bbox = imagettfbbox($fontSize, 0, $this->fontBold, $title);
         $textWidth = abs($bbox[2] - $bbox[0]);
@@ -108,21 +109,17 @@ final class TextOverlayGenerator
             $y = $startY + ($i * $lineHeight);
             $number = (string) ($i + 1);
             
-            if (file_exists($this->fontBold)) {
-                $circleX = $marginLeft + 30;
-                $circleY = $y;
-                imagefilledellipse($image, $circleX, $circleY - 20, 70, 70, $gold);
-                
-                $black = imagecolorallocate($image, 10, 10, 10);
-                $bbox = imagettfbbox($numberSize * 0.6, 0, $this->fontBold, $number);
-                $numWidth = abs($bbox[2] - $bbox[0]);
-                imagettftext($image, (int)($numberSize * 0.6), 0, (int)($circleX - $numWidth / 2), $circleY + 5, $black, $this->fontBold, $number);
-                
-                $textX = $marginLeft + 100;
-                $this->renderWrappedText($image, $point, $textX, $y, $fontSize, $white);
-            } else {
-                imagestring($image, 5, $marginLeft, $y - 10, "{$number}. {$point}", $white);
-            }
+            $circleX = $marginLeft + 30;
+            $circleY = $y;
+            imagefilledellipse($image, $circleX, $circleY - 20, 70, 70, $gold);
+            
+            $black = imagecolorallocate($image, 10, 10, 10);
+            $bbox = imagettfbbox($numberSize * 0.6, 0, $this->fontBold, $number);
+            $numWidth = abs($bbox[2] - $bbox[0]);
+            imagettftext($image, (int)($numberSize * 0.6), 0, (int)($circleX - $numWidth / 2), $circleY + 5, $black, $this->fontBold, $number);
+            
+            $textX = $marginLeft + 100;
+            $this->renderWrappedText($image, $point, $textX, $y, $fontSize, $white);
         }
     }
 

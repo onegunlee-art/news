@@ -25,8 +25,11 @@ final class MapGenerator
         $this->height = (int) ($config['resolution']['height'] ?? 1920);
         $this->style = $config['style'] ?? [];
         $this->storagePath = $config['storage_path'] ?? 'storage/youtube';
-        $projectRoot = dirname(__DIR__, 4);
-        $this->fontBold = $config['fonts']['title'] ?? $projectRoot . '/public/fonts/noto/NotoSansKR-Bold.otf';
+        
+        $this->fontBold = $config['fonts']['title'] ?? '';
+        if ($this->fontBold === '' || !is_file($this->fontBold)) {
+            throw new \RuntimeException("MapGenerator: Bold font not found. Path: {$this->fontBold}");
+        }
     }
 
     /**
@@ -192,11 +195,6 @@ final class MapGenerator
     {
         $gold = imagecolorallocate($image, ...$this->style['primary_rgb'] ?? [212, 175, 55]);
         $fontSize = 64;
-        
-        if (!file_exists($this->fontBold)) {
-            imagestring($image, 5, (int) ($this->width / 2 - 50), $this->height - 200, $location, $gold);
-            return;
-        }
 
         $bbox = imagettfbbox($fontSize, 0, $this->fontBold, $location);
         $textWidth = abs($bbox[2] - $bbox[0]);
