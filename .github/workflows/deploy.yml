@@ -549,6 +549,19 @@ jobs:
             echo 'Discovery cron installed'
           "
 
+      - name: Install ai-analyze queue cron (cron.d)
+        run: |
+          REMOTE="${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}"
+          KEY="$HOME/.ssh/ec2_key"
+          scp -i "$KEY" -o StrictHostKeyChecking=no cron/ai-analyze.cron "$REMOTE:/tmp/ai-analyze.cron"
+          ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" "
+            sudo cp /tmp/ai-analyze.cron /etc/cron.d/ai-analyze
+            sudo chmod 644 /etc/cron.d/ai-analyze
+            sudo touch /var/log/ai_analyze_worker.log
+            sudo chown www-data:www-data /var/log/ai_analyze_worker.log
+            echo 'AI analyze queue cron installed (inactive until ENABLE_AI_ANALYZE_QUEUE=true)'
+          "
+
       - name: Verify discovery email (smoke)
         run: |
           REMOTE="${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}"

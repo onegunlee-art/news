@@ -1,0 +1,12 @@
+# GPT 분석 큐 워커 (KST/UTC 공통 — 매분 pending job 확인)
+# 설치: sudo cp cron/ai-analyze.cron /etc/cron.d/ai-analyze
+#
+# 킬스위치: env.txt에 ENABLE_AI_ANALYZE_QUEUE=false (기본) — 큐 off면 워커 즉시 exit
+# 큐 on: ENABLE_AI_ANALYZE_QUEUE=true
+
+SHELL=/bin/bash
+PATH=/usr/local/bin:/usr/bin:/bin
+MAILTO=""
+
+# 매분 — pending job 있으면 CLI로 처리 (웹 PHP-FPM 워커 미사용)
+* * * * * www-data cd /var/www/thegist && php cron/ai_analyze_worker.php >> /var/log/ai_analyze_worker.log 2>&1

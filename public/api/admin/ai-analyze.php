@@ -132,6 +132,7 @@ foreach ($envFiles as $f) {
 
 // Agent System 로드
 require_once $projectRoot . 'src/agents/autoload.php';
+require_once __DIR__ . '/../lib/aiAnalyzeQueue.php';
 
 use Agents\Pipeline\AgentPipeline;
 use Agents\Agents\LearningAgent;
@@ -188,34 +189,22 @@ function extractFaPipelineOptions(array $options): array
  */
 function getJobsDir(): string {
     global $projectRoot;
-    $dir = rtrim($projectRoot, '/\\') . '/storage/jobs';
-    if (!is_dir($dir)) {
-        @mkdir($dir, 0755, true);
-    }
-    return $dir . '/';
+    return aiAnalyzeGetJobsDir($projectRoot);
 }
 
 function getJobFilePath(string $jobId): string {
-    $safe = preg_replace('/[^a-zA-Z0-9_-]/', '', $jobId);
-    if ($safe !== $jobId || strlen($jobId) > 64) {
-        throw new \InvalidArgumentException('Invalid job_id');
-    }
-    return getJobsDir() . $jobId . '.json';
+    global $projectRoot;
+    return aiAnalyzeGetJobFilePath($jobId, $projectRoot);
 }
 
 function writeJobStatus(string $jobId, array $data): void {
-    $path = getJobFilePath($jobId);
-    file_put_contents($path, json_encode($data, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT), LOCK_EX);
+    global $projectRoot;
+    aiAnalyzeWriteJob($jobId, $data, $projectRoot);
 }
 
 function readJobStatus(string $jobId): ?array {
-    $path = getJobFilePath($jobId);
-    if (!is_file($path) || !is_readable($path)) {
-        return null;
-    }
-    $raw = file_get_contents($path);
-    $data = json_decode($raw, true);
-    return is_array($data) ? $data : null;
+    global $projectRoot;
+    return aiAnalyzeReadJob($jobId, $projectRoot);
 }
 
 /**
@@ -911,7 +900,11 @@ function testOpenAICall(): array {
     }
 }
 
-// 요청 처리
+// 요청 처리 (CLI 워커는 ai-analyze-cli.php 경유 — HTTP 핸들러 스킵)
+if (defined('AI_ANALYZE_CLI') && AI_ANALYZE_CLI) {
+    return;
+}
+
 $method = $_SERVER['REQUEST_METHOD'];
 
 try {
@@ -929,12 +922,15 @@ try {
                 if ($job === null) {
                     sendResponse(['success' => false, 'status' => 'unknown', 'error' => 'Job not found']);
                 }
-                if (($job['status'] ?? '') === 'processing') {
+                if (($job['status'] ?? '') === 'pending' || ($job['status'] ?? '') === 'processing') {
                     sendResponse([
                         'success' => true,
                         'status' => 'processing',
                         'job_id' => $jobId,
-                        'message' => '분석 중... 잠시만 기다려주세요.',
+                        'queue_status' => $job['status'] ?? 'processing',
+                        'message' => ($job['status'] ?? '') === 'pending'
+                            ? '분석 대기 중... 곧 시작됩니다.'
+                            : '분석 중... 잠시만 기다려주세요.',
                     ]);
                 }
                 if (($job['status'] ?? '') === 'done' || ($job['status'] ?? '') === 'failed') {
@@ -957,6 +953,7 @@ try {
                 'project_root' => $projectRoot ?? 'not set',
                 'agents' => $pipeline->getAgentNames(),
                 'enable_fa_prompt_b' => isFaPromptBEnabled(),
+                'queue_enabled' => aiAnalyzeQueueEnabled(),
                 'message' => 'The Gist AI 분석 시스템 준비 완료'
             ]);
             break;
@@ -995,7 +992,27 @@ try {
                         }
                     }
                     
-                    // 504 회피: job 생성 후 즉시 반환, 파이프라인은 백그라운드 실행
+                    // 큐 모드: pending 등록만 하고 웹 워커 즉시 해제 (CLI 워커가 처리)
+                    if (aiAnalyzeQueueEnabled()) {
+                        $jobId = 'job_' . bin2hex(random_bytes(12));
+                        writeJobStatus($jobId, [
+                            'status' => 'pending',
+                            'action' => 'analyze',
+                            'url' => $url,
+                            'options' => $options,
+                            'created_at' => date('c'),
+                        ]);
+                        sendResponse([
+                            'success' => true,
+                            'job_id' => $jobId,
+                            'status' => 'processing',
+                            'queue_mode' => true,
+                            'message' => '분석 요청이 큐에 등록되었습니다. 잠시만 기다려주세요.',
+                            'analysis' => null,
+                        ]);
+                    }
+
+                    // 레거시: fastcgi_finish_request 후 동일 워커에서 백그라운드 실행
                     $jobId = 'job_' . bin2hex(random_bytes(12));
                     writeJobStatus($jobId, [
                         'status' => 'processing',
@@ -1047,6 +1064,28 @@ try {
                         if (!in_array($contentOptions['prompt_track'], ['A', 'B'], true)) {
                             $contentOptions['prompt_track'] = 'A';
                         }
+                    }
+
+                    if (aiAnalyzeQueueEnabled()) {
+                        $jobId = 'job_' . bin2hex(random_bytes(12));
+                        writeJobStatus($jobId, [
+                            'status' => 'pending',
+                            'action' => 'analyze_content',
+                            'url' => $contentUrl,
+                            'title' => $contentTitle,
+                            'content' => $content,
+                            'options' => $contentOptions,
+                            'source' => 'pasted_content',
+                            'created_at' => date('c'),
+                        ]);
+                        sendResponse([
+                            'success' => true,
+                            'job_id' => $jobId,
+                            'status' => 'processing',
+                            'queue_mode' => true,
+                            'message' => '붙여넣은 본문 분석이 큐에 등록되었습니다.',
+                            'analysis' => null,
+                        ]);
                     }
 
                     $jobId = 'job_' . bin2hex(random_bytes(12));
