@@ -136,6 +136,37 @@ function aiAnalyzeCountJobsByStatus(?string $projectRoot = null): array
 }
 
 /**
+ * processing 상태가 maxAgeSec 초과면 failed 처리 (CLI 비정상 종료 복구)
+ */
+function aiAnalyzeRecoverStaleJobs(?string $projectRoot = null, int $maxAgeSec = 900): int
+{
+    $root = $projectRoot ?? aiAnalyzeFindProjectRoot();
+    $dir = aiAnalyzeGetJobsDir($root);
+    $now = time();
+    $recovered = 0;
+    foreach (glob($dir . 'job_*.json') ?: [] as $path) {
+        $raw = @file_get_contents($path);
+        $data = json_decode($raw ?: '', true);
+        if (!is_array($data) || ($data['status'] ?? '') !== 'processing') {
+            continue;
+        }
+        $started = $data['started_at'] ?? $data['updated_at'] ?? $data['created_at'] ?? null;
+        $ts = $started ? strtotime((string) $started) : false;
+        if ($ts === false || ($now - $ts) < $maxAgeSec) {
+            continue;
+        }
+        $jobId = basename($path, '.json');
+        $data['status'] = 'failed';
+        $data['success'] = false;
+        $data['error'] = 'Job timed out in processing (stale recovery)';
+        $data['recovered_at'] = date('c');
+        aiAnalyzeWriteJob($jobId, $data, $root);
+        $recovered++;
+    }
+    return $recovered;
+}
+
+/**
  * pending job 1건 claim → processing. null if 없음.
  * @return array{job_id: string, data: array}|null
  */

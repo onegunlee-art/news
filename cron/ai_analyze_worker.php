@@ -22,6 +22,11 @@ if (!aiAnalyzeQueueEnabled()) {
     exit(0);
 }
 
+$recovered = aiAnalyzeRecoverStaleJobs($projectRoot, 600);
+if ($recovered > 0) {
+    echo "Recovered stale processing jobs: {$recovered}\n";
+}
+
 $maxConcurrent = (int) ($_ENV['AI_ANALYZE_MAX_CONCURRENT'] ?? getenv('AI_ANALYZE_MAX_CONCURRENT') ?: 2);
 if ($maxConcurrent < 1) {
     $maxConcurrent = 1;
