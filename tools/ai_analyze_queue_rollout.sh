@@ -88,7 +88,7 @@ ensure_env_key "ENABLE_AI_ANALYZE_QUEUE" "true"
 sleep 2
 
 queue_json=$(curl -sS --connect-timeout 15 "${SITE}/api/admin/ai-analyze.php" || echo "")
-echo "$queue_json" | grep -q '"queue_enabled": true' || fail "API queue_enabled is not true after flag ON"
+echo "$queue_json" | tr -d '\n' | grep -qE '"queue_enabled"[[:space:]]*:[[:space:]]*true' || fail "API queue_enabled is not true after flag ON"
 log "OK: queue_enabled=true"
 
 log "=== Step 3: 큐 등록 API 즉시 반환 (3건) ==="
@@ -99,11 +99,11 @@ for i in 1 2 3; do
     --connect-timeout 30 --max-time 60 \
     -d "{\"action\":\"analyze\",\"url\":\"${TEST_URL}\",\"enable_tts\":false,\"enable_interpret\":false,\"enable_learning\":false}" \
     "${SITE}/api/admin/ai-analyze.php" || echo "")
-  echo "$resp" | head -c 300
+  echo "$resp" | head -c 400
   echo ""
-  jid=$(echo "$resp" | grep -o '"job_id":"[^"]*"' | head -1 | cut -d'"' -f4)
-  [ -n "$jid" ] || fail "analyze POST #$i did not return job_id"
-  echo "$resp" | grep -q '"queue_mode":true' || fail "analyze POST #$i missing queue_mode"
+  jid=$(echo "$resp" | tr -d '\n' | sed -n 's/.*"job_id"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' | head -1)
+  [ -n "$jid" ] || fail "analyze POST #$i did not return job_id (resp above)"
+  echo "$resp" | tr -d '\n' | grep -qE '"queue_mode"[[:space:]]*:[[:space:]]*true' || fail "analyze POST #$i missing queue_mode"
   job_ids+=("$jid")
   log "queued job #$i: $jid"
 done
@@ -146,11 +146,12 @@ done_poll=0
 for i in $(seq 1 30); do
   st=$(curl -sS --connect-timeout 15 "${SITE}/api/admin/ai-analyze.php?action=job_status&job_id=${first_job}" || echo "")
   echo "poll $i: $(echo "$st" | head -c 200)"
-  if echo "$st" | grep -q '"status":"processing"'; then
+  st1=$(echo "$st" | tr -d '\n')
+  if echo "$st1" | grep -qE '"status"[[:space:]]*:[[:space:]]*"processing"'; then
     sleep 3
     continue
   fi
-  if echo "$st" | grep -q '"success":true' && echo "$st" | grep -q '"analysis"'; then
+  if echo "$st1" | grep -qE '"success"[[:space:]]*:[[:space:]]*true' && echo "$st1" | grep -q '"analysis"'; then
     done_poll=1
     log "OK: first job completed with analysis payload"
     break

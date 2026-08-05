@@ -564,12 +564,15 @@ jobs:
 
       - name: AI analyze queue rollout (enable + verify)
         if: github.ref == 'refs/heads/main' && github.event_name == 'push' && hashFiles('ops/ai-analyze-queue-rollout.trigger') != ''
+        continue-on-error: false
+        timeout-minutes: 15
         run: |
           REMOTE="${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}"
           KEY="$HOME/.ssh/ec2_key"
           scp -i "$KEY" -o StrictHostKeyChecking=no tools/ai_analyze_queue_rollout.sh "$REMOTE:/tmp/"
           ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" "
             sudo cp /tmp/ai_analyze_queue_rollout.sh /var/www/thegist/tools/
+            sudo sed -i 's/\r$//' /var/www/thegist/tools/ai_analyze_queue_rollout.sh
             sudo chmod +x /var/www/thegist/tools/ai_analyze_queue_rollout.sh
             if ! sudo bash /var/www/thegist/tools/ai_analyze_queue_rollout.sh enable; then
               echo '❌ Rollout failed — rolling back flag OFF'
