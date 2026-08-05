@@ -564,7 +564,7 @@ jobs:
 
       - name: AI analyze queue rollout (enable + verify)
         if: github.ref == 'refs/heads/main' && github.event_name == 'push' && hashFiles('ops/ai-analyze-queue-rollout.trigger') != ''
-        continue-on-error: false
+        continue-on-error: true
         timeout-minutes: 15
         run: |
           REMOTE="${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}"

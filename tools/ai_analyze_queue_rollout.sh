@@ -120,25 +120,36 @@ log "draft POST => HTTP ${draft_code}"
 [ "$draft_code" = "201" ] || [ "$draft_code" = "200" ] || log "WARN: draft HTTP ${draft_code} (not 503 — worker pool OK)"
 
 log "=== Step 5: 워커가 job 처리 시작 (Spawned CLI) ==="
-sudo -u www-data php cron/ai_analyze_worker.php 2>&1 || true
+out1=$(sudo -u www-data php cron/ai_analyze_worker.php 2>&1 || true)
+echo "$out1"
 sleep 3
-sudo -u www-data php cron/ai_analyze_worker.php 2>&1 || true
+out2=$(sudo -u www-data php cron/ai_analyze_worker.php 2>&1 || true)
+echo "$out2"
 sleep 5
 
-if [ -f "$WORKER_LOG" ]; then
-  tail -30 "$WORKER_LOG"
-else
-  fail "worker log missing: $WORKER_LOG"
-fi
-
-spawned=0
-for jid in "${job_ids[@]}"; do
-  if grep -q "Spawned CLI for job ${jid}" "$WORKER_LOG" 2>/dev/null; then
-    spawned=$((spawned + 1))
-    log "OK: Spawned CLI for $jid"
+STORAGE_LOG="${ROOT}/storage/logs/ai_analyze_worker.log"
+for lf in "$WORKER_LOG" "$STORAGE_LOG"; do
+  if [ -f "$lf" ]; then
+    log "--- tail $lf ---"
+    tail -15 "$lf" || true
   fi
 done
-[ "$spawned" -ge 1 ] || fail "no Spawned CLI for any test job in $WORKER_LOG"
+
+spawned=0
+worker_out="${out1}"$'\n'"${out2}"
+for jid in "${job_ids[@]}"; do
+  if echo "$worker_out" | grep -q "Spawned CLI for job ${jid}"; then
+    spawned=$((spawned + 1))
+    log "OK: Spawned CLI for $jid (worker stdout)"
+  elif [ -f "$WORKER_LOG" ] && grep -q "Spawned CLI for job ${jid}" "$WORKER_LOG" 2>/dev/null; then
+    spawned=$((spawned + 1))
+    log "OK: Spawned CLI for $jid (in $WORKER_LOG)"
+  elif [ -f "$STORAGE_LOG" ] && grep -q "Spawned CLI for job ${jid}" "$STORAGE_LOG" 2>/dev/null; then
+    spawned=$((spawned + 1))
+    log "OK: Spawned CLI for $jid (in $STORAGE_LOG)"
+  fi
+done
+[ "$spawned" -ge 1 ] || fail "no Spawned CLI for any test job (check worker stdout above)"
 
 log "=== Step 6: job_status 폴링 (첫 job, 최대 90초) ==="
 first_job="${job_ids[0]}"
