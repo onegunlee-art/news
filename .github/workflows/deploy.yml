@@ -562,6 +562,22 @@ jobs:
             echo 'AI analyze queue cron installed (inactive until ENABLE_AI_ANALYZE_QUEUE=true)'
           "
 
+      - name: AI analyze queue rollout (enable + verify)
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push' && hashFiles('ops/ai-analyze-queue-rollout.trigger') != ''
+        run: |
+          REMOTE="${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}"
+          KEY="$HOME/.ssh/ec2_key"
+          scp -i "$KEY" -o StrictHostKeyChecking=no tools/ai_analyze_queue_rollout.sh "$REMOTE:/tmp/"
+          ssh -i "$KEY" -o StrictHostKeyChecking=no "$REMOTE" "
+            sudo cp /tmp/ai_analyze_queue_rollout.sh /var/www/thegist/tools/
+            sudo chmod +x /var/www/thegist/tools/ai_analyze_queue_rollout.sh
+            if ! sudo bash /var/www/thegist/tools/ai_analyze_queue_rollout.sh enable; then
+              echo '❌ Rollout failed — rolling back flag OFF'
+              sudo bash /var/www/thegist/tools/ai_analyze_queue_rollout.sh disable || true
+              exit 1
+            fi
+          "
+
       - name: Verify discovery email (smoke)
         run: |
           REMOTE="${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}"
