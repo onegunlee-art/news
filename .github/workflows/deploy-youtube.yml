@@ -65,7 +65,11 @@ jobs:
 
           rsync -avz \
             -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
-            tools/youtube_generate.php tools/youtube_font_probe.php "$REMOTE:$DEST/tools/"
+            data/geo/ "$REMOTE:$DEST/data/geo/"
+
+          rsync -avz \
+            -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
+            tools/youtube_generate.php tools/youtube_font_probe.php tools/youtube_visual_preview.php "$REMOTE:$DEST/tools/"
 
       - name: Fix ownership (youtube paths only)
         run: |
@@ -121,7 +125,7 @@ jobs:
               echo "FAIL: chart image too small (font likely missing)"
               exit 1
             fi
-            if [ "$MAP_SIZE" -lt 30000 ]; then
+            if [ "$MAP_SIZE" -lt 20000 ]; then
               echo "FAIL: map image too small"
               exit 1
             fi

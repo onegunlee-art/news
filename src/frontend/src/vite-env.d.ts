@@ -6,6 +6,7 @@ interface ImportMetaEnv {
   readonly VITE_API_URL: string
   readonly VITE_ENABLE_DISCOVERY?: string
   readonly VITE_ENABLE_DISCOVERY_PUBLIC?: string
+  readonly VITE_ENABLE_YOUTUBE?: string
 }
 
 interface ImportMeta {

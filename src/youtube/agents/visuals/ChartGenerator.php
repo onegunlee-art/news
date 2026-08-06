@@ -107,25 +107,40 @@ final class ChartGenerator
         $gray = imagecolorallocate($image, ...$this->style['secondary_text_rgb'] ?? [136, 136, 136]);
 
         $count = count($numbers);
-        $sectionHeight = $this->height / ($count + 1);
-        
         $numberSize = $count <= 2 ? 280 : 200;
         $labelSize = $count <= 2 ? 72 : 56;
-
-        foreach ($numbers as $i => $num) {
-            $y = (int) (($i + 1) * $sectionHeight);
-            $this->renderSingleNumber($image, $num, $y, $numberSize, $labelSize, $gold, $white);
-        }
+        $labelGap = $count <= 2 ? 56 : 44;
+        $blockGap = $count <= 2 ? 220 : 160;
 
         $title = '핵심 수치';
         $titleSize = 64;
+        $titleY = 200;
         $bbox = imagettfbbox($titleSize, 0, $this->fontBold, $title);
         $titleWidth = abs($bbox[2] - $bbox[0]);
-        imagettftext($image, $titleSize, 0, (int) (($this->width - $titleWidth) / 2), 180, $gray, $this->fontBold, $title);
+        imagettftext($image, $titleSize, 0, (int) (($this->width - $titleWidth) / 2), $titleY, $gray, $this->fontBold, $title);
+
+        $contentTop = 320;
+        $contentBottom = $this->height - 220;
+        $contentHeight = $contentBottom - $contentTop;
+        $totalBlockHeight = ($count * ($numberSize + $labelGap + $labelSize)) + (($count - 1) * $blockGap);
+        $startY = (int) ($contentTop + max(0, ($contentHeight - $totalBlockHeight) / 2) + $numberSize);
+
+        foreach ($numbers as $i => $num) {
+            $y = $startY + ($i * ($numberSize + $labelGap + $labelSize + $blockGap));
+            $this->renderSingleNumber($image, $num, $y, $numberSize, $labelSize, $labelGap, $gold, $white);
+        }
     }
 
-    private function renderSingleNumber(\GdImage $image, array $num, int $y, int $numberSize, int $labelSize, int $gold, int $white): void
-    {
+    private function renderSingleNumber(
+        \GdImage $image,
+        array $num,
+        int $y,
+        int $numberSize,
+        int $labelSize,
+        int $labelGap,
+        int $gold,
+        int $white
+    ): void {
         $value = (string) ($num['value'] ?? '');
         $label = (string) ($num['label'] ?? '');
 
@@ -134,8 +149,8 @@ final class ChartGenerator
             $valueWidth = abs($bbox[2] - $bbox[0]);
             $valueX = ($this->width - $valueWidth) / 2;
             imagettftext($image, $numberSize, 0, (int) $valueX, $y, $gold, $this->fontBold, $value);
-            
-            $labelY = $y + 80;
+
+            $labelY = $y + $labelGap;
         } else {
             $labelY = $y;
         }
@@ -144,7 +159,7 @@ final class ChartGenerator
             $bbox = imagettfbbox($labelSize, 0, $this->fontRegular, $label);
             $labelWidth = abs($bbox[2] - $bbox[0]);
             $labelX = ($this->width - $labelWidth) / 2;
-            imagettftext($image, $labelSize, 0, (int) $labelX, $labelY, $white, $this->fontRegular, $label);
+            imagettftext($image, $labelSize, 0, (int) $labelX, $labelY + $labelSize, $white, $this->fontRegular, $label);
         }
     }
 

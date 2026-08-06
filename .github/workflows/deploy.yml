@@ -83,7 +83,7 @@ jobs:
           VITE_API_URL: /api
           VITE_ENABLE_DISCOVERY: 'true'
           VITE_ENABLE_DISCOVERY_PUBLIC: 'true'
-          VITE_ENABLE_YOUTUBE: 'false'
+          VITE_ENABLE_YOUTUBE: 'true'
 
       - name: List built files (배포될 프론트엔드 파일 확인)
         run: |
@@ -162,6 +162,8 @@ jobs:
                      /var/www/thegist/src/backend \
                      /var/www/thegist/src/agents \
                      /var/www/thegist/src/discovery \
+                     /var/www/thegist/src/youtube \
+                     /var/www/thegist/data/geo \
                      /var/www/thegist/config \
                      /var/www/thegist/database \
                      /var/www/thegist/cron \
@@ -205,6 +207,14 @@ jobs:
           rsync -avz \
             -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
             src/discovery/ "$REMOTE:$DEST/src/discovery/"
+
+          rsync -avz \
+            -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
+            src/youtube/ "$REMOTE:$DEST/src/youtube/"
+
+          rsync -avz \
+            -e "ssh -i $KEY -o StrictHostKeyChecking=no" \
+            data/geo/ "$REMOTE:$DEST/data/geo/"
 
           rsync -avz \
             --exclude='database.php' \
@@ -263,6 +273,9 @@ jobs:
             --include='seed_iran_decision_quest.php' \
             --include='seed_hinge_auto_quest.php' \
             --include='discovery_*.php' \
+            --include='youtube_generate.php' \
+            --include='youtube_visual_preview.php' \
+            --include='youtube_font_probe.php' \
             --exclude='*' \
             tools/ "$REMOTE:$DEST/tools/"
 

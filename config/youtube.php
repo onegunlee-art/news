@@ -83,9 +83,8 @@ return [
     ],
     
     'map' => [
-        'provider' => 'carto',
-        'style' => 'dark_all',
-        'zoom' => 10,
+        'provider' => 'silhouette',
+        'geo_json_path' => $projectRoot . '/data/geo/ne_110m_admin_0_countries.geojson',
         'marker_color' => '#d4af37',
     ],
     
