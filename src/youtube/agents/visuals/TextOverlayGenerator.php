@@ -5,7 +5,7 @@ namespace Youtube\Agents\Visuals;
 
 /**
  * Generates text overlay images with bullet points.
- * Creates 1080x1920 vertical images with dark background and gold/white text.
+ * Uses LayoutHelper for safe zone enforcement and overlap prevention.
  */
 final class TextOverlayGenerator
 {
@@ -14,42 +14,37 @@ final class TextOverlayGenerator
     private array $style;
     private string $fontBold;
     private string $fontRegular;
+    private LayoutHelper $layout;
 
     public function __construct(array $config)
     {
         $this->width = (int) ($config['resolution']['width'] ?? 1080);
         $this->height = (int) ($config['resolution']['height'] ?? 1920);
         $this->style = $config['style'] ?? [];
-        
+
         $this->fontBold = $config['fonts']['title'] ?? '';
         $this->fontRegular = $config['fonts']['body'] ?? '';
-        
+
         if ($this->fontBold === '' || !is_file($this->fontBold)) {
             throw new \RuntimeException("TextOverlayGenerator: Bold font not found. Path: {$this->fontBold}");
         }
         if ($this->fontRegular === '' || !is_file($this->fontRegular)) {
             throw new \RuntimeException("TextOverlayGenerator: Regular font not found. Path: {$this->fontRegular}");
         }
+
+        $this->layout = new LayoutHelper($this->width, $this->height);
     }
 
-    /**
-     * Generate a text overlay image.
-     * @param int $sceneNum Scene number (3 or 4)
-     * @param mixed $textOverlay Array of points or single text
-     * @param string $title Scene title
-     * @return string Path to generated image
-     */
     public function generate(int $sceneNum, mixed $textOverlay, string $title, string $projectPath): string
     {
         $image = $this->createBaseImage();
-        
+
         $points = $this->parseTextOverlay($textOverlay);
-        $this->renderTitle($image, $title);
-        $this->renderPoints($image, $points, $sceneNum);
+        $this->renderContent($image, $title, $points);
 
         $outputPath = $projectPath . "/scene_{$sceneNum}_text.png";
         $this->ensureDirectory(dirname($outputPath));
-        
+
         imagepng($image, $outputPath);
         imagedestroy($image);
 
@@ -61,7 +56,7 @@ final class TextOverlayGenerator
         $image = imagecreatetruecolor($this->width, $this->height);
         $bgColor = imagecolorallocate($image, ...$this->style['bg_rgb'] ?? [10, 10, 10]);
         imagefill($image, 0, 0, $bgColor);
-        
+
         return $image;
     }
 
@@ -70,85 +65,95 @@ final class TextOverlayGenerator
         if (is_array($data)) {
             return array_values(array_filter($data, 'is_string'));
         }
-        
+
         if (is_string($data)) {
             return [$data];
         }
-        
+
         return [];
     }
 
-    private function renderTitle(\GdImage $image, string $title): void
+    /**
+     * Render title and points with proper vertical stacking.
+     */
+    private function renderContent(\GdImage $image, string $title, array $points): void
     {
         $gold = imagecolorallocate($image, ...$this->style['primary_rgb'] ?? [212, 175, 55]);
-        $fontSize = 80;
-
-        $bbox = imagettfbbox($fontSize, 0, $this->fontBold, $title);
-        $textWidth = abs($bbox[2] - $bbox[0]);
-        $x = ($this->width - $textWidth) / 2;
-        
-        imagettftext($image, $fontSize, 0, (int) $x, 300, $gold, $this->fontBold, $title);
-    }
-
-    private function renderPoints(\GdImage $image, array $points, int $sceneNum): void
-    {
-        if (empty($points)) {
-            return;
-        }
-
         $white = imagecolorallocate($image, ...$this->style['text_rgb'] ?? [255, 255, 255]);
-        $gold = imagecolorallocate($image, ...$this->style['primary_rgb'] ?? [212, 175, 55]);
-        
-        $startY = 500;
-        $lineHeight = 280;
-        $fontSize = 52;
-        $numberSize = 96;
-        $marginLeft = 100;
+        $black = imagecolorallocate($image, 10, 10, 10);
 
-        foreach ($points as $i => $point) {
-            $y = $startY + ($i * $lineHeight);
+        $titleFontSize = 72;
+        $pointFontSize = 48;
+        $numberFontSize = 52;
+        $circleSize = 64;
+        $lineHeight = (int) ($pointFontSize * 1.6);
+        $pointGap = 60;
+        $titleGap = 80;
+        $textLeftOffset = 100;
+        $maxTextWidth = $this->layout->getSafeWidth() - $textLeftOffset - 20;
+
+        $titleFontSize = $this->layout->fitFontToWidth(
+            $title,
+            $titleFontSize,
+            48,
+            $this->layout->getSafeWidth(),
+            $this->fontBold
+        );
+        $titleMetrics = $this->layout->measureText($title, $titleFontSize, $this->fontBold);
+
+        $pointBlocks = [];
+        foreach ($points as $point) {
+            $lines = $this->layout->wrapText($point, $pointFontSize, $this->fontRegular, $maxTextWidth);
+            $blockHeight = count($lines) * $lineHeight;
+            $pointBlocks[] = [
+                'lines' => $lines,
+                'height' => max($blockHeight, $circleSize + 10),
+            ];
+        }
+
+        $heights = [$titleMetrics['height']];
+        foreach ($pointBlocks as $block) {
+            $heights[] = $block['height'];
+        }
+
+        $gaps = array_fill(0, count($heights) - 1, $pointGap);
+        if (count($gaps) > 0) {
+            $gaps[0] = $titleGap;
+        }
+
+        $totalHeight = array_sum($heights) + array_sum($gaps);
+        $availableHeight = $this->layout->getSafeHeight();
+        $startY = $this->layout->getSafeTop() + max(60, (int) (($availableHeight - $totalHeight) / 2));
+
+        $currentY = $startY + $titleMetrics['height'];
+        $titleX = $this->layout->centerX($titleMetrics['width']);
+        imagettftext($image, $titleFontSize, 0, $titleX, $currentY, $gold, $this->fontBold, $title);
+
+        $currentY += $titleGap;
+
+        $circleX = $this->layout->getSafeLeft() + 40;
+
+        foreach ($pointBlocks as $i => $block) {
+            $circleY = $currentY + (int) ($circleSize / 2);
+
+            imagefilledellipse($image, $circleX, $circleY, $circleSize, $circleSize, $gold);
+
             $number = (string) ($i + 1);
-            
-            $circleX = $marginLeft + 30;
-            $circleY = $y;
-            imagefilledellipse($image, $circleX, $circleY - 20, 70, 70, $gold);
-            
-            $black = imagecolorallocate($image, 10, 10, 10);
-            $bbox = imagettfbbox($numberSize * 0.6, 0, $this->fontBold, $number);
-            $numWidth = abs($bbox[2] - $bbox[0]);
-            imagettftext($image, (int)($numberSize * 0.6), 0, (int)($circleX - $numWidth / 2), $circleY + 5, $black, $this->fontBold, $number);
-            
-            $textX = $marginLeft + 100;
-            $this->renderWrappedText($image, $point, $textX, $y, $fontSize, $white);
-        }
-    }
+            $numMetrics = $this->layout->measureText($number, (int) ($numberFontSize * 0.55), $this->fontBold);
+            $numX = $circleX - (int) ($numMetrics['width'] / 2);
+            $numY = $circleY + (int) ($numMetrics['height'] / 2) - 2;
+            imagettftext($image, (int) ($numberFontSize * 0.55), 0, $numX, $numY, $black, $this->fontBold, $number);
 
-    private function renderWrappedText(\GdImage $image, string $text, int $x, int $y, int $fontSize, int $color): void
-    {
-        $maxWidth = $this->width - $x - 80;
-        $words = preg_split('/\s+/', $text);
-        $lines = [];
-        $currentLine = '';
+            $textX = $this->layout->getSafeLeft() + $textLeftOffset;
+            $textY = $currentY + $pointFontSize;
 
-        foreach ($words as $word) {
-            $testLine = $currentLine === '' ? $word : $currentLine . ' ' . $word;
-            $bbox = imagettfbbox($fontSize, 0, $this->fontRegular, $testLine);
-            $lineWidth = abs($bbox[2] - $bbox[0]);
-            
-            if ($lineWidth > $maxWidth && $currentLine !== '') {
-                $lines[] = $currentLine;
-                $currentLine = $word;
-            } else {
-                $currentLine = $testLine;
+            foreach ($block['lines'] as $line) {
+                $textY = $this->layout->clampY($textY, $pointFontSize);
+                imagettftext($image, $pointFontSize, 0, $textX, $textY, $white, $this->fontRegular, $line);
+                $textY += $lineHeight;
             }
-        }
-        if ($currentLine !== '') {
-            $lines[] = $currentLine;
-        }
 
-        $lineHeight = $fontSize * 1.5;
-        foreach ($lines as $i => $line) {
-            imagettftext($image, $fontSize, 0, $x, (int) ($y + $i * $lineHeight), $color, $this->fontRegular, $line);
+            $currentY += $block['height'] + $pointGap;
         }
     }
 

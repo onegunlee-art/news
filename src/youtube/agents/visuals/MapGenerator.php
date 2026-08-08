@@ -14,6 +14,7 @@ final class MapGenerator
     private array $style;
     private string $fontBold;
     private CountryGeoData $geoData;
+    private LayoutHelper $layout;
 
     public function __construct(array $config)
     {
@@ -28,6 +29,7 @@ final class MapGenerator
 
         $geoPath = $config['map']['geo_json_path'] ?? '';
         $this->geoData = new CountryGeoData($geoPath);
+        $this->layout = new LayoutHelper($this->width, $this->height);
     }
 
     /**
@@ -68,10 +70,10 @@ final class MapGenerator
         }
 
         $bbox = $this->geoData->computeBoundingBox($rings);
-        $mapTop = 140;
-        $mapBottom = 1500;
-        $mapLeft = 40;
-        $mapRight = $this->width - 40;
+        $mapTop = $this->layout->getSafeTop();
+        $mapBottom = $this->layout->getSafeBottom() - 120;
+        $mapLeft = $this->layout->getSafeLeft();
+        $mapRight = $this->width - $this->layout->getSafeLeft();
         $mapWidth = $mapRight - $mapLeft;
         $mapHeight = $mapBottom - $mapTop;
 
@@ -105,34 +107,34 @@ final class MapGenerator
         $gold = imagecolorallocate($image, ...($this->style['primary_rgb'] ?? [212, 175, 55]));
         $gray = imagecolorallocate($image, ...($this->style['secondary_text_rgb'] ?? [136, 136, 136]));
 
-        $fontSize = 88;
-        while ($fontSize >= 40) {
-            $bbox = imagettfbbox($fontSize, 0, $this->fontBold, $label);
-            $textWidth = abs($bbox[2] - $bbox[0]);
-            if ($textWidth <= $this->width - 120) {
-                break;
-            }
-            $fontSize -= 4;
-        }
-        $textHeight = abs($bbox[7] - $bbox[1]);
-        $x = (int) (($this->width - $textWidth) / 2);
-        $y = (int) (($this->height + $textHeight) / 2);
-        imagettftext($image, $fontSize, 0, $x, $y, $gold, $this->fontBold, $label);
+        $maxWidth = $this->layout->getSafeWidth();
+        $fontSize = $this->layout->fitFontToWidth($label, 80, 48, $maxWidth, $this->fontBold);
+
+        $labelLines = $this->layout->wrapText($label, $fontSize, $this->fontBold, $maxWidth);
+        $lineHeight = (int) ($fontSize * 1.3);
+        $labelTotalHeight = count($labelLines) * $lineHeight;
 
         $subtitle = 'Location';
-        $subSize = 48;
-        $subBox = imagettfbbox($subSize, 0, $this->fontBold, $subtitle);
-        $subWidth = abs($subBox[2] - $subBox[0]);
-        imagettftext(
-            $image,
-            $subSize,
-            0,
-            (int) (($this->width - $subWidth) / 2),
-            $y + 90,
-            $gray,
-            $this->fontBold,
-            $subtitle
-        );
+        $subSize = 44;
+        $subMetrics = $this->layout->measureText($subtitle, $subSize, $this->fontBold);
+
+        $gap = 50;
+        $totalHeight = $labelTotalHeight + $gap + $subMetrics['height'];
+        $centerY = (int) ($this->height / 2);
+        $startY = $centerY - (int) ($totalHeight / 2) + $fontSize;
+
+        $currentY = $startY;
+        foreach ($labelLines as $line) {
+            $lineMetrics = $this->layout->measureText($line, $fontSize, $this->fontBold);
+            $lineX = $this->layout->centerX($lineMetrics['width']);
+            $lineY = $this->layout->clampY($currentY, $fontSize);
+            imagettftext($image, $fontSize, 0, $lineX, $lineY, $gold, $this->fontBold, $line);
+            $currentY += $lineHeight;
+        }
+
+        $subX = $this->layout->centerX($subMetrics['width']);
+        $subY = $this->layout->clampY($currentY + $gap, $subMetrics['height']);
+        imagettftext($image, $subSize, 0, $subX, $subY, $gray, $this->fontBold, $subtitle);
 
         return $image;
     }
@@ -207,12 +209,12 @@ final class MapGenerator
     private function addLocationLabel(\GdImage $image, string $location): void
     {
         $gold = imagecolorallocate($image, ...($this->style['primary_rgb'] ?? [212, 175, 55]));
-        $fontSize = 72;
 
-        $bbox = imagettfbbox($fontSize, 0, $this->fontBold, $location);
-        $textWidth = abs($bbox[2] - $bbox[0]);
-        $x = (int) (($this->width - $textWidth) / 2);
-        $y = $this->height - 180;
+        $fontSize = $this->layout->fitFontToWidth($location, 72, 40, $this->layout->getSafeWidth(), $this->fontBold);
+        $metrics = $this->layout->measureText($location, $fontSize, $this->fontBold);
+
+        $x = $this->layout->centerX($metrics['width']);
+        $y = $this->layout->clampY($this->layout->getSafeBottom() - 40, $metrics['height']);
 
         imagettftext($image, $fontSize, 0, $x, $y, $gold, $this->fontBold, $location);
     }
